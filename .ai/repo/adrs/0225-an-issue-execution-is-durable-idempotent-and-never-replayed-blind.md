@@ -1,0 +1,118 @@
+---
+schema: adr/v1
+id: adr-0225
+kind: adr
+title: An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried
+status: proposed
+date: 2026-10-23
+tags:
+  - execution
+  - ui
+  - mesh-runtime
+related:
+  - file:.ai/repo/adrs/0135-majordomus-ui-is-the-primary-surface.md
+  - file:.ai/repo/project/intents/an-issue-is-implemented-from-one-click.yaml
+  - file:.ai/repo/project/milestones/one-click-implement.yaml
+  - file:apps/majordomus-cli/src/execution/mod.rs
+  - file:apps/majordomus-cli/src/execution/store.rs
+  - file:apps/majordomus-cli/src/execution/engine.rs
+  - file:apps/majordomus-cli/src/http/events.rs
+  - file:apps/majordomus-cli/src/economics/runner.rs
+provenance:
+  origin: authored
+---
+
+# 225. An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried
+
+## Context
+
+On 2026-10-23 the owner made "One-Click Mission Control" the product's P0. The flow is
+`majordomus serve`, then `/ui/idd`, then an issue, then **Implement**. That click starts a
+durable, typed and auditable operation. A worker carries the operation out under a scope claim
+in its own worktree, and the owner follows it live until it ends with a testable result and its
+evidence. The owner was explicit about one thing: the button must not merely open Claude Code
+with a prompt. Its state must survive a browser refresh, the loss of a mesh node and a restart
+of the machine.
+
+A study of `origin/master` (355a0cee79a, 2026-10-22) found that about half of that path exists.
+
+What exists:
+
+- A click on an issue move starts an execution (`POST /api/v1/executions/start`, from
+  `share/cockpit/moves.js`).
+- Its events carry a dense sequence number (`execution/event.rs`), and the WebSocket at
+  `/events?execution=<id>&after=<seq>` replays from a cursor (`http/events.rs`). Test 3220
+  walks the IDD loop in a browser.
+
+What the same study found missing:
+
+- `execution/mod.rs` says the module is "not a job system", with "no durable queue, no retry, no
+  schedule and no execution that outlives the process". The store is memory only
+  (`execution/store.rs`), and nothing is recovered when the server starts.
+- `executions.start` takes no idempotency key. The only guard against a double click is that
+  `share/cockpit/executions.js` disables the button.
+- No execution runs an AI worker. The only harness spawner in the tree is the benchmark runner,
+  `economics/runner.rs`.
+- A worktree (`worktree/*`) and a scope claim (`mesh.claim`) both exist, but neither is tied to
+  an execution. Nothing in the source is called a lease.
+
+## Decision
+
+1. **An execution is durable.** Its record and its event stream are appended to a journal under
+   `.ai/local/state/executions/` before each event is acknowledged, and the server folds that
+   journal back when it starts. The in-memory bounds of `store.rs` stay as the bounds of what is
+   kept live. The journal is the record.
+2. **A restart never re-runs anything.** An execution that was Queued or Running when its
+   server stopped is recovered according to where its work ran:
+   - If it ran in the stopped process, the thread that ran its handler is gone. The
+     execution is recovered as `failed` with the error code `interrupted`, and the error
+     names the sequence it had reached. This is the vocabulary that `abandon_silent` already
+     uses for a reporter that stopped reporting (`unavailable`), so no client learns a new
+     state.
+   - If another process runs and reports it, it is recovered as reported. If that process
+     is alive, its next report continues the execution under the same id and cursor. If it
+     never reports again, the existing silence rule fails it.
+   
+   An outcome that is unknown is never taken as a reason to repeat a mutation. Starting a
+   new execution is left to a person, or to a policy that names the case.
+3. **A start is idempotent.** `executions.start` accepts an `idempotency_key`. A second start
+   with the same key and the same input answers the first execution. The same key with a
+   different input is refused, and the refusal names the conflicting execution.
+4. **An issue is implemented by one capability.** `issue.implement` judges the issue the way
+   `devtask.issue` reports its readiness. It then does three things, each recorded as a step of
+   the execution:
+   - It takes the issue's scope as an exclusive mesh claim held by the execution's session.
+   - It creates the issue's canonical worktree (`majordomus worktree create`).
+   - It hands the work to a worker adapter.
+   
+   The claim is the execution's lease. It ends with the execution's terminal state, or it
+   expires with the runtime's heartbeat.
+5. **A worker is an adapter, never a requirement.** Each adapter is declared beside its provider
+   (`share/providers.yaml`), Claude Code headless first, the way `economics/runner.rs` already
+   drives it. An adapter streams its progress into the execution's events. When no adapter is
+   available, the request stays Queued, and the reason is shown on the execution.
+6. **Done is not delivered.** An execution that ends Succeeded with its evidence recorded means
+   the issue's work is done. Delivery (PR, CI, merge, release, deploy) is a separate execution,
+   governed by the release policy. No surface shows one state as the other.
+
+## Consequences
+
+- `execution/mod.rs`'s statement that no execution outlives its process is withdrawn for every
+  execution. The module documentation is rewritten in the issue that adds the journal (I3980).
+- The UI offers one primary move per issue state:
+
+  | issue state | move |
+  |---|---|
+  | READY | Implement |
+  | ACTIVE | Open execution |
+  | VERIFY | Verify |
+  | DONE | Deliver |
+  | BLOCKED | View blockers |
+
+  The move goes through the shared start path (ADR 0135). No second scheduler, no
+  `ui_tasks.json` and no parallel orchestrator is introduced.
+- Every mutating click carries an idempotency key, leaves an audit record and is refused with
+  the executor's reason when it may not run. Each move has a positive and a negative end-to-end
+  case.
+- A published snapshot shows the state and links to the live server. It never offers the
+  control.

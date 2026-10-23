@@ -1,0 +1,37 @@
+id: one-click-implement
+title: "One click on a ready issue starts a durable execution that works it, followed live across a browser close and a server restart"
+slug: one-click-implement
+order: 514
+priority: p0
+problem: "The owner's P0 of 2026-10-23 (One-Click Mission Control). Verified on master 355a0cee79a: a move on an issue starts an execution and its WebSocket replays from a cursor. But the execution store is memory only and nothing is recovered on start (execution/mod.rs: 'no execution that outlives the process'). executions.start takes no idempotency key. No execution runs an AI worker; the only harness spawner is economics/runner.rs. Worktrees and mesh claims exist but are not tied to an execution. /ui/idd offers only plan.transition. Test 3220 neither restarts the server nor uses a worker."
+outcome: "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0225 and the intent an-issue-is-implemented-from-one-click."
+current_state: "serve, /ui/idd, executions.start, the event cursor and test 3220 exist; durability, idempotency, issue.implement, a worker adapter, the lease and a restart-surviving browser case do not."
+desired_state: "The owner's P0 Definition of Done holds: serve, open the UI, pick a real issue, click Implement, an authorised worker starts, close the browser, restart the server, come back to the same execution continuing or correctly recovered, and end with a testable result and its evidence."
+scope:
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/worker"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/cockpit/plan.rs"
+  - "share/cockpit"
+  - "share/ui"
+  - "share/providers.yaml"
+  - "test/cases"
+non_scope:
+  - "Remote execution on another mesh node (P1)"
+  - "Click-to-deliver: PR, CI, merge, release, deploy from the UI (P2)"
+  - "A second scheduler or orchestrator"
+  - "Running anything from the published site"
+acceptance_criteria:
+  - "Each issue's evidence_required is recorded and its validation passes"
+  - "majordomus intent explain an-issue-is-implemented-from-one-click reads every criterion satisfied"
+validation:
+  - "majordomus plan validate"
+  - "majordomus intent explain an-issue-is-implemented-from-one-click"
+evidence_required: []
+risks:
+  - "I3225 (a capability runs from /ui) is BLOCKED; I3984 reuses the move path that works today (share/cockpit/moves.js) and must not wait for it, and I3225 then folds both onto one shared start path"
+  - "A worker run on the owner's machine spends real tokens; the browser case uses a fixture adapter, never a provider"
+  - "p12 (repair lane) touches apps/majordomus-cli/src/ui/idd.rs; I3984 rebases on its landing"
+created_at: 2026-10-23
