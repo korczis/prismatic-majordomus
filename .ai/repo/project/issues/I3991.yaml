@@ -1,0 +1,36 @@
+id: I3991
+milestone: mcp-transports-are-reliable
+title: "The integration lease lives by its executor's progress through the queue, not by its process existing"
+slug: the-integration-lease-lives-by-queue-progress
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Make the integration executor's exclusive mesh claim on integration/<repository>/<base> beat only when the executor advances its queue (a pull request planned, repaired, merged or refused, a derive or a CI verdict observed), so an executor that holds the lease and does nothing is suspended by the rule of I3990 and another machine's executor is admitted; and make the clone's flock lease carry the same progress stamp, so prs brief and the Cockpit show how long the holder has made no progress."
+why: "On 2026-10-22 the executor of seat 5d (pid 70881, claim c-b237f187784f) held integration/korczis/prismatic-majordomus/master for hours without answering, and every prs repair --apply was refused. I3990 suspends an exclusive claim whose session stops beating, but the executor's session beats for any MCP request; the lease must instead be judged by the work it exists to do."
+current_state: "integration::exclusive takes the mesh claim and the flock lease once and holds both until the executor exits; the claim is kept alive by the stream beat and, after I3990, by any real work of the executor's session. Nothing records when the executor last advanced its queue."
+desired_state: "The executor beats its integration session (mesh.beat with the phase it is in) exactly when it advances the queue; an executor that has not advanced for cooperation.session_ttl_seconds has its integration claim suspended, a second executor is admitted and the first releases with OVERTAKEN when it resumes; the lease record carries progressed_at and prs brief names a lease held without progress."
+scope:
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
+  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/repair.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "docs/INTEGRATION.md"
+  - ".ai/repo/project/issues/I3991.yaml"
+non_scope:
+  - "The session-beat substrate itself: I3990"
+  - "Fencing a resumed executor's writes with an epoch: I3174"
+acceptance_criteria:
+  - "An executor that advances its queue beats its integration session with the phase it is in, and only then"
+  - "An executor that holds the lease and advances nothing for the progress ttl has its integration claim suspended while its process lives, and a second executor is admitted"
+  - "The first executor, resuming after another was admitted, releases its claim with OVERTAKEN and does not merge"
+  - "The lease record carries progressed_at, and prs brief names a lease held without progress for longer than the ttl"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: lease::"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "the_integration_lease_lives_by_queue_progress"
+depends_on:
+  - "I3990"
+created_at: 2026-10-23
+updated_at: 2026-10-23

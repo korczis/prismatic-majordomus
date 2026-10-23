@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "140f1b5383e5c31f422af1f109bbbc74290989e413b95ff5da817e255b2db473",
+    "fingerprint": "cd661f07a49a91d14b4add0416f0739adc860f7a5a5a5dfd1333698f40d85141",
     "summary": {
-      "total": 3317,
+      "total": 3321,
       "builtin": 209,
-      "declarative": 3108,
+      "declarative": 3112,
       "by_kind": {
         "command": 33,
         "query": 176,
-        "resource": 3108
+        "resource": 3112
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3118
+        "implemented": 3122
       },
       "mcp_tools": 198,
-      "mcp_resources": 3163,
+      "mcp_resources": 3167,
       "http_routes": 203,
       "cli_commands": 112,
       "modules": 92,
@@ -86473,7 +86473,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 899,
+        "capabilities": 903,
         "capability_ids": []
       },
       {
@@ -87141,7 +87141,7 @@
     ]
   },
   "index": {
-    "fingerprint": "551db3a28fdcc75eaa2cd949ccda8396abacbf09cf8b197d98d04018c1937ba0",
+    "fingerprint": "832135a29102dcfd6616aa2837c9779ada935ce2e6403d75428a4c26b2aadfd7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87181,7 +87181,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 899,
+      "issue": 903,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -94433,7 +94433,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 803686
+        "bytes": 804498
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108152,6 +108152,50 @@
         "bytes": 7833
       },
       {
+        "uri": "majordomus://issue/I3991",
+        "kind": "issue",
+        "identity": "I3991",
+        "title": "The integration lease lives by its executor's progress through the queue, not by its process existing",
+        "description": "Make the integration executor's exclusive mesh claim on integration/<repository>/<base> beat only when the executor advances its queue (a pull request planned, repaired, merged or refused, a derive or a CI verdict observed), so an executor that holds the lease and does nothing is suspended by the rule of I3990 and another machine's executor is admitted; and make the clone's flock lease carry the same progress stamp, so prs brief and the Cockpit show how long the holder has made no progress.",
+        "path": ".ai/repo/project/issues/I3991.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3143
+      },
+      {
+        "uri": "majordomus://issue/I3992",
+        "kind": "issue",
+        "identity": "I3992",
+        "title": "A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh",
+        "description": "When a Claude Code session raises a permission dialog or an idle notification (the Notification hook) or ends its turn waiting for input (the Stop hook), record on the mesh that the session is blocked on a person, with the reason, so peers and the landing seat see it at once instead of after the progress ttl; and clear the mark at the session's next real work.",
+        "path": ".ai/repo/project/issues/I3992.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2512
+      },
+      {
+        "uri": "majordomus://issue/I3993",
+        "kind": "issue",
+        "identity": "I3993",
+        "title": "Every wait on a peer is bounded and says what it waited for when the bound is reached",
+        "description": "Find every place the executable waits on another session or runtime (a mesh review answer, a handover consumer, a derive or offload queue, a lease, a claim admission retry) and give each an explicit bound read from the declaration, after which it stops waiting, names what it waited for and who held it, and routes around (another host, another seat, or a report) instead of hanging.",
+        "path": ".ai/repo/project/issues/I3993.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2271
+      },
+      {
+        "uri": "majordomus://issue/I3994",
+        "kind": "issue",
+        "identity": "I3994",
+        "title": "Superseded session beats are compacted, so liveness never spends a node's event quota",
+        "description": "Compact a session's superseded session_beat events in the journal (only the newest beat of a session decides its liveness), so a long-lived runtime's beats do not accumulate toward the per-node event quota that I2825 showed can deadlock a node, while keeping the (stream, seq) order every consumer relies on.",
+        "path": ".ai/repo/project/issues/I3994.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1948
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -121093,7 +121137,7 @@
       "identity": [
         "id"
       ],
-      "objects": 899
+      "objects": 903
     },
     {
       "name": "knowledge",

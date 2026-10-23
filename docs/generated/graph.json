@@ -64100,6 +64100,179 @@
         }
       },
       {
+        "id": "majordomus://issue/I3991",
+        "kind": "issue",
+        "label": "I3991",
+        "summary": "The integration lease lives by its executor's progress through the queue, not by its process existing",
+        "route": "/cockpit/objects/issue/i3991",
+        "source": ".ai/repo/project/issues/I3991.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An executor that advances its queue beats its integration session with the phase it is in, and only then",
+            "An executor that holds the lease and advances nothing for the progress ttl has its integration claim suspended while its process lives, and a second executor is admitted",
+            "The first executor, resuming after another was admitted, releases its claim with OVERTAKEN and does not merge",
+            "The lease record carries progressed_at, and prs brief names a lease held without progress for longer than the ttl"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3990"
+          ],
+          "evidence_required": [
+            "the_integration_lease_lives_by_queue_progress"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "The session-beat substrate itself: I3990",
+            "Fencing a resumed executor's writes with an epoch: I3174"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/repair.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "docs/INTEGRATION.md",
+            ".ai/repo/project/issues/I3991.yaml"
+          ],
+          "slug": "the-integration-lease-lives-by-queue-progress",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: lease::",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3992",
+        "kind": "issue",
+        "label": "I3992",
+        "summary": "A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh",
+        "route": "/cockpit/objects/issue/i3992",
+        "source": ".ai/repo/project/issues/I3992.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A Notification hook event marks the session blocked on the mesh with its reason within seconds",
+            "The session's next real work clears the mark",
+            "mesh.peers and the board show a blocked session and its reason"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3990"
+          ],
+          "evidence_required": [
+            "a_session_waiting_on_a_person_says_so"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Suspending the claims at once: the progress ttl stays the one rule that suspends; the mark is information",
+            "Hooks of other clients (Codex, Gemini): a later slice once their notification events are known"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".claude/hooks",
+            ".claude/settings.json",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/peers.rs",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I3992.yaml"
+          ],
+          "slug": "a-session-waiting-on-a-person-says-so",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::mesh peers::",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3993",
+        "kind": "issue",
+        "label": "I3993",
+        "summary": "Every wait on a peer is bounded and says what it waited for when the bound is reached",
+        "route": "/cockpit/objects/issue/i3993",
+        "source": ".ai/repo/project/issues/I3993.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every peer wait of the executable is listed with its bound and its routing at the bound",
+            "mesh doctor fails a peer wait that has no bound",
+            "A wait that reaches its bound stops, names what it waited for and who held it, and routes around"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3990"
+          ],
+          "evidence_required": [
+            "every_wait_on_a_peer_is_bounded"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Shell scripts' own waits: their callers bound them; this slice is the executable's"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I3993.yaml"
+          ],
+          "slug": "every-wait-on-a-peer-is-bounded",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3994",
+        "kind": "issue",
+        "label": "I3994",
+        "summary": "Superseded session beats are compacted, so liveness never spends a node's event quota",
+        "route": "/cockpit/objects/issue/i3994",
+        "source": ".ai/repo/project/issues/I3994.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A journal holds at most one session_beat per session after compaction, and session_progress reads the same as before it",
+            "Replay and replication across runtimes are unchanged by a compacted beat"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "session_beat events are stored like every other event and are never removed; only the newest one is read by Journal::session_progress.",
+          "depends_on": [
+            "I3990"
+          ],
+          "evidence_required": [
+            "superseded_session_beats_are_compacted"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Compacting other event kinds"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "docs/MESH.md",
+            ".ai/repo/project/issues/I3994.yaml"
+          ],
+          "slug": "superseded-session-beats-are-compacted",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::journal mesh::state",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -123200,6 +123373,66 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3991",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3991",
+        "target": "majordomus://issue/I3990",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3991",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3992",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3992",
+        "target": "majordomus://issue/I3990",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3992",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3993",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3993",
+        "target": "majordomus://issue/I3990",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3993",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3994",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3994",
+        "target": "majordomus://issue/I3990",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3994",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -134446,8 +134679,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3771,
-      "edges": 8720,
+      "nodes": 3775,
+      "edges": 8732,
       "acyclic": false,
       "truncated": false
     }
