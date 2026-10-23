@@ -39068,7 +39068,7 @@
           "url",
           "checked"
         ],
-        "description": "Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\"{\"url\":\"https://acme.example/docs\",\"checked\":\"2026-10-21\",\"quote\":\"Pay as you go.\"}\"#,\n).unwrap();\nassert_eq!(e.checked, \"2026-10-21\");\nassert!(serde_json::from_str::<FundingEvidence>(r#\"{\"url\":\"x\",\"checked\":\"y\",\"price\":1}\"#).is_err(),\n    \"no field could carry an amount\");\n```"
+        "description": "Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\"{\"url\":\"https://acme.example/docs\",\"checked\":\"2026-10-21\",\"quote\":\"Pay as you go.\"}\"#,\n).unwrap();\nassert_eq!(e.checked, \"2026-10-21\");\nassert!(serde_json::from_str::<FundingEvidence>(r#\"{\"url\":\"x\",\"checked\":\"y\",\"note\":1}\"#).is_err(),\n    \"a field the evidence does not declare is refused, so none could carry an amount\");\n```"
       },
       "FundingKind": {
         "oneOf": [

@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "fc8c83c653d5e983d12add4b894d30cd7092bfab7f27ed6051776d1033c81c96",
+    "fingerprint": "ae2b497e30bfac3502cc545357dcc9c4933b32e5e27ee78b2638815e318cf734",
     "summary": {
       "total": 3529,
       "builtin": 219,
@@ -58348,7 +58348,7 @@
                   "url",
                   "checked"
                 ],
-                "description": "Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\"{\"url\":\"https://acme.example/docs\",\"checked\":\"2026-10-21\",\"quote\":\"Pay as you go.\"}\"#,\n).unwrap();\nassert_eq!(e.checked, \"2026-10-21\");\nassert!(serde_json::from_str::<FundingEvidence>(r#\"{\"url\":\"x\",\"checked\":\"y\",\"price\":1}\"#).is_err(),\n    \"no field could carry an amount\");\n```"
+                "description": "Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\"{\"url\":\"https://acme.example/docs\",\"checked\":\"2026-10-21\",\"quote\":\"Pay as you go.\"}\"#,\n).unwrap();\nassert_eq!(e.checked, \"2026-10-21\");\nassert!(serde_json::from_str::<FundingEvidence>(r#\"{\"url\":\"x\",\"checked\":\"y\",\"note\":1}\"#).is_err(),\n    \"a field the evidence does not declare is refused, so none could carry an amount\");\n```"
               },
               "ModelEntry": {
                 "type": "object",
@@ -91810,7 +91810,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a41891a0bcd7ba80d2d4f5df1729d165ff9712a1beb415b40db820c9a12473ff",
+    "fingerprint": "bf60990b71a3583e0430ed0f74d0e7b342ee2460a21086c3f7b888aeddbc0ab4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

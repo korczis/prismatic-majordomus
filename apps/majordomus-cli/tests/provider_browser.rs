@@ -178,8 +178,8 @@ fn the_providers_document_shows_the_browser_column_from_the_declaration() {
             {"id": "c", "title": "C", "bootstraps": [], "hooks": [], "scratch_roots": []}
         ]
     }));
-    assert!(md.contains("| hooks | browser | scratch roots |"), "{md}");
+    assert!(md.contains("| hooks | browser | usage | scratch roots |"), "{md}");
     assert!(md.contains("| `bridge` (`com.example.host`) |"), "{md}");
-    assert!(md.contains("| `b` | B | — | — | — | `none` | — |"), "{md}");
-    assert!(md.contains("| `c` | C | — | — | — | — | — |"), "{md}");
+    assert!(md.contains("| `b` | B | — | — | — | `none` | — | — |"), "{md}");
+    assert!(md.contains("| `c` | C | — | — | — | — | — | — |"), "{md}");
 }

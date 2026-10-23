@@ -144,8 +144,8 @@ pub enum Renewal {
 ///     r#"{"url":"https://acme.example/docs","checked":"2026-10-21","quote":"Pay as you go."}"#,
 /// ).unwrap();
 /// assert_eq!(e.checked, "2026-10-21");
-/// assert!(serde_json::from_str::<FundingEvidence>(r#"{"url":"x","checked":"y","price":1}"#).is_err(),
-///     "no field could carry an amount");
+/// assert!(serde_json::from_str::<FundingEvidence>(r#"{"url":"x","checked":"y","note":1}"#).is_err(),
+///     "a field the evidence does not declare is refused, so none could carry an amount");
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
