@@ -62,11 +62,12 @@ pub fn run(args: RunArgs) -> Result<u8> {
     // subscribe before starting: an execution this fast would otherwise be over before
     // anything was listening
     let (subscriber, rx) = ctx.executions.store().subscribe(Filter::All);
+    let mut start = json!({ "capability": args.capability, "input": input });
+    if let Some(key) = &args.idempotency_key {
+        start["idempotency_key"] = json!(key);
+    }
     let started = ctx
-        .execute(
-            cli_capability(ctx, &["run"])?,
-            json!({ "capability": args.capability, "input": input }),
-        )
+        .execute(cli_capability(ctx, &["run"])?, start)
         .map_err(map)?;
     let id = started["id"].as_str().unwrap_or_default().to_string();
     // the id is the one this process just minted, so it parses whenever a server serves
@@ -1265,6 +1266,7 @@ mod tests {
             },
             capability: "executions.demonstrate".into(),
             input: Some(r#"{ "steps": 1, "delay_ms": 0 }"#.into()),
+            idempotency_key: None,
             follow: !quiet,
             quiet,
             format,

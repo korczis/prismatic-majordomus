@@ -7,7 +7,7 @@ info:
   title: Majordomus
   version: 1.0.0-alpha.6
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
-  description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
+  description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 409 `conflict` and 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
     name: MIT
     identifier: MIT
@@ -1096,6 +1096,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -1227,6 +1233,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -1352,6 +1364,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -1470,6 +1488,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -3760,6 +3784,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -3823,6 +3853,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -4191,6 +4227,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -4533,6 +4575,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -4567,7 +4615,7 @@ paths:
     post:
       operationId: executions.start
       summary: Start a capability as an execution
-      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
+      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
       tags:
         - executions
       requestBody:
@@ -4590,7 +4638,7 @@ paths:
           content:
             "application/json":
               schema:
-                "$ref": "#/components/schemas/ExecutionView"
+                "$ref": "#/components/schemas/StartedExecution"
         "400":
           description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
           content:
@@ -4599,6 +4647,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -5407,6 +5461,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -6282,6 +6342,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -6347,6 +6413,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -6664,6 +6736,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -6731,6 +6809,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -6858,6 +6942,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -6921,6 +7011,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7224,6 +7320,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -7290,6 +7392,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7365,6 +7473,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -7432,6 +7546,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7506,6 +7626,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -7571,6 +7697,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7758,6 +7890,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -8791,6 +8929,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -9496,6 +9640,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -11018,6 +11168,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -11088,6 +11244,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -23645,7 +23807,7 @@ components:
       properties:
         code:
           type: string
-          description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+          description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
         message:
           type: string
           description: "What went wrong, for a person."
@@ -24107,6 +24269,11 @@ components:
         correlation_id:
           type: string
           description: "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
         links:
           "$ref": "#/components/schemas/ExecutionLinks"
           description: Where to read more.
@@ -41491,9 +41658,129 @@ components:
         input:
           description: "Its input, as its own input schema describes it; an empty object when it takes none."
           default: null
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution."
+          minLength: 1
+          maxLength: 128
+          pattern: "^[A-Za-z0-9._:-]+$"
       required:
         - capability
       description: "The input of `executions.start`: which capability to run, and with what."
+    StartedExecution:
+      type: object
+      properties:
+        id:
+          "$ref": "#/components/schemas/ExecutionId"
+          description: The identity.
+        capability:
+          type: string
+          description: "The capability that ran, by its canonical id."
+        title:
+          type: string
+          description: "That capability's title, so a list needs no second lookup."
+        state:
+          "$ref": "#/components/schemas/ExecutionState"
+          description: Where it is.
+        created_at:
+          type: string
+          description: "When it was accepted, RFC 3339 in UTC."
+        started_at:
+          type:
+            - string
+            - "null"
+          description: When the handler was entered.
+        finished_at:
+          type:
+            - string
+            - "null"
+          description: When it reached a final state.
+        duration_ms:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long it ran, in milliseconds, once it has finished."
+        input:
+          description: "The input it was given, with every value the input schema marks sensitive replaced."
+        output:
+          description: "What the handler returned, for a succeeded execution and never before."
+        error:
+          anyOf:
+            - "$ref": "#/components/schemas/ExecutionError"
+            - type: "null"
+          description: "Why it failed, for a failed execution and never before."
+        progress:
+          anyOf:
+            - "$ref": "#/components/schemas/ProgressView"
+            - type: "null"
+          description: The last progress the handler reported.
+        steps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/StepView"
+          description: "The steps it entered, in order."
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionDiagnostic"
+          description: The findings it reported.
+        last_sequence:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The sequence number of the last event: the cursor a client subscribes from."
+        event_count:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "How many events it has produced, including the ones no longer retained."
+        events_truncated:
+          type: boolean
+          description: Whether the retained event history has lost its oldest entries to the bound.
+        cancellable:
+          type: boolean
+          description: "Whether asking to cancel this execution will do anything: the capability's policy."
+        actor:
+          "$ref": "#/components/schemas/Actor"
+          description: Who asked for it.
+        repository:
+          "$ref": "#/components/schemas/RepositoryRef"
+          description: Which repository it ran against.
+        correlation_id:
+          type: string
+          description: "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+        links:
+          "$ref": "#/components/schemas/ExecutionLinks"
+          description: Where to read more.
+        deduplicated:
+          type: boolean
+          description: "`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began."
+      required:
+        - id
+        - capability
+        - title
+        - state
+        - created_at
+        - input
+        - last_sequence
+        - event_count
+        - events_truncated
+        - cancellable
+        - actor
+        - repository
+        - correlation_id
+        - links
+        - deduplicated
+      description: "The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \"capability\": \"executions.demonstrate\",\n    \"input\": { \"steps\": 1, \"delay_ms\": 0 },\n    \"idempotency_key\": \"click-1\",\n});\nlet start = || -> StartedExecution {\n    serde_json::from_value(ctx.execute(\"executions.start\", input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated && again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```"
     State:
       oneOf:
         - type: string
@@ -44639,6 +44926,9 @@ x-majordomus:
     - status: "404"
       code: not_found
       reason: The input names something the repository does not hold.
+    - status: "409"
+      code: conflict
+      reason: "The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
     - status: "422"
       code: refused
       reason: The command was understood and turned down for the reason the message gives.

@@ -176,7 +176,7 @@ Output: `ReportAnswer`.
 
 ## `executions.start` — Start a capability as an execution
 
-Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.
+Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.
 
 | | |
 |---|---|
@@ -194,6 +194,12 @@ Run any executable capability of this registry as an execution: the input is che
 |---|---|---|---|
 | `capability` | string | yes | The canonical id of the capability to run (`health.report`, `objects.verify`). |
 | `input` | object | no | Its input, as its own input schema describes it; an empty object when it takes none. |
+| `idempotency_key` | string or null | no | A key that makes a repeated start one execution (I4000): sent again with the same
+capability and input, it is answered the execution it started, `deduplicated`, and
+nothing new runs; sent again with another input, it is refused 409 `conflict`,
+naming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this
+repository and the capability, and held for as long as the server holds the
+execution it started. Without one, every start starts an execution. |
 
-Output: `ExecutionView`.
+Output: `StartedExecution`.
 
