@@ -21688,6 +21688,37 @@
         }
       },
       {
+        "id": "majordomus://intent/a-session-proceeds-through-the-mesh",
+        "kind": "intent",
+        "label": "a-session-proceeds-through-the-mesh",
+        "summary": "Every supervised session realises intents by proceeding through the mesh, unasked, resumably and watched",
+        "route": "/cockpit/objects/intent/a-session-proceeds-through-the-mesh",
+        "source": ".ai/repo/project/intents/a-session-proceeds-through-the-mesh.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.no-new-nouns",
+            "adr:adr-0200"
+          ],
+          "invariants": [
+            "No new store, scheduler, journal kind or registry: state is the intent, the plan, the ledger and the mesh journal",
+            "Every provider projection is generated from one canonical declaration; a hand-edited copy fails generate --check",
+            "A session never stops or kills what it does not own (ADR 0200)",
+            "Every wait has a deadline and a recovery path"
+          ],
+          "milestones": [
+            "a-session-proceeds-through-the-mesh"
+          ],
+          "non_goals": [
+            "Push assignment of work to peers before I3198",
+            "Changing a profile automatically from inferred routing",
+            "Editing a person's .claude/settings.json or personal commands"
+          ],
+          "updated_at": "2026-10-23"
+        }
+      },
+      {
         "id": "majordomus://intent/a-session-record-says-what-it-served",
         "kind": "intent",
         "label": "a-session-record-says-what-it-served",
@@ -64026,6 +64057,445 @@
         }
       },
       {
+        "id": "majordomus://issue/I4000",
+        "kind": "issue",
+        "label": "I4000",
+        "summary": "A repeated executions.start with the same key answers one execution",
+        "route": "/cockpit/objects/issue/i4000",
+        "source": ".ai/repo/project/issues/I4000.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A repeated executions.start with the same key answers the same execution id and starts no second execution",
+            "A different key, or no key, behaves as before",
+            "The key lives in the execution's own record: no new store"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "desired_state": "The acceptance criteria below hold and case 4000 proves them.",
+          "evidence_required": [
+            "case_4000_executions_start_takes_an_idempotency_key"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "objective": "Give executions.start an optional idempotency key; ExecutionStore::create returns the existing execution id for a key it has already seen instead of creating a second execution (Mission Control B1).",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/execution/store.rs",
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "docs/EXECUTIONS.md",
+            "test/cases/4000_executions_start_takes_an_idempotency_key.sh",
+            ".ai/repo/project/issues/I4000.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
+          ],
+          "slug": "executions-start-takes-an-idempotency-key",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4000_executions_start_takes_an_idempotency_key"
+          ],
+          "why": "A double click or a retried client starts two executions of the same capability today; nothing in ExecutionStore::create recognises a repeat."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4001",
+        "kind": "issue",
+        "label": "I4001",
+        "summary": "The execution state machine has Authorizing, Claimed, Verifying, Refused and UnknownOutcome",
+        "route": "/cockpit/objects/issue/i4001",
+        "source": ".ai/repo/project/issues/I4001.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "may_move_to admits exactly the declared edges and refuses every other",
+            "Every event carries a schema version and an older reader refuses a newer one by name",
+            "An execution whose outcome cannot be read ends UnknownOutcome, never completed"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "depends_on": [
+            "I4000"
+          ],
+          "desired_state": "The acceptance criteria below hold and case 4001 proves them.",
+          "evidence_required": [
+            "case_4001_the_execution_state_machine_names_authorizing_to_unknown_outcome"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "objective": "Add Authorizing, Claimed, Verifying, Refused and UnknownOutcome to the execution state machine with may_move_to for each edge and a versioned event schema (Mission Control B3).",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/execution/model.rs",
+            "apps/majordomus-cli/src/execution",
+            "share/schemas/majordomus",
+            "docs/EXECUTIONS.md",
+            "test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+            ".ai/repo/project/issues/I4001.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
+          ],
+          "slug": "the-execution-state-machine-names-authorizing-to-unknown-outcome",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4001_the_execution_state_machine_names_authorizing_to_unknown_outcome"
+          ],
+          "why": "The executor knows only running and its terminal states, so a refused start, a claimed-but-not-started item and a run whose outcome is unknown are indistinguishable."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4002",
+        "kind": "issue",
+        "label": "I4002",
+        "summary": "Worktree.create is a typed writing capability",
+        "route": "/cockpit/objects/issue/i4002",
+        "source": ".ai/repo/project/issues/I4002.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "worktree.create plans and applies the canonical <repository>-wt/<branch> path and refuses a misplaced or existing one with a reason",
+            "It reuses the git calls of integration/drain.rs and adds no second implementation",
+            "Its declaration projects to the command, the MCP tool and the skill from one definition"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "desired_state": "The acceptance criteria below hold and case 4002 proves them.",
+          "evidence_required": [
+            "case_4002_worktree_create_is_a_typed_writing_capability"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/integration/drain.rs",
+            "docs/WORKTREES.md",
+            "test/cases/4002_worktree_create_is_a_typed_writing_capability.sh",
+            ".ai/repo/project/issues/I4002.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-fresh-session-finds-the-right-work"
+          ],
+          "slug": "worktree-create-is-a-typed-writing-capability",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4002_worktree_create_is_a_typed_writing_capability"
+          ],
+          "why": "Creating the worktree is a shell step of the CLI; a loop that proceeds unasked cannot do it as a declared, refusable, audited act."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4003",
+        "kind": "issue",
+        "label": "I4003",
+        "summary": "Devtask.implement runs readiness, preflight, claim, worktree and one execution",
+        "route": "/cockpit/objects/issue/i4003",
+        "source": ".ai/repo/project/issues/I4003.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A ready issue with a valid intent starts one execution holding its mesh claim in a new worktree",
+            "An overlapping claim or an invalid intent is refused with the reason and nothing is created",
+            "No attached worker answers pending, not failed",
+            "The same request twice answers the same execution (I4000)"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "depends_on": [
+            "I4000",
+            "I4001",
+            "I4002",
+            "I4004"
+          ],
+          "desired_state": "The acceptance criteria below hold and case 4003 proves them.",
+          "evidence_required": [
+            "case_4003_devtask_implement_claims_creates_and_starts_once"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+            "apps/majordomus-cli/src/execution",
+            "docs/EXECUTIONS.md",
+            "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+            ".ai/repo/project/issues/I4003.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
+          ],
+          "slug": "devtask-implement-claims-creates-and-starts-once",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4003_devtask_implement_claims_creates_and_starts_once"
+          ],
+          "why": "Taking an issue is a hand-run sequence; two sessions can follow it at once and a double request starts two runs."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4004",
+        "kind": "issue",
+        "label": "I4004",
+        "summary": "The executor takes the issue's mesh claim in the handler and releases it when the run ends",
+        "route": "/cockpit/objects/issue/i4004",
+        "source": ".ai/repo/project/issues/I4004.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The claim exists exactly while the run does, and is released on completion, failure, cancellation and an unknown outcome",
+            "A second start for a claimed item is refused naming the holder",
+            "Fencing is not written here: it is I3174's, and this issue records the dependency"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "depends_on": [
+            "I4000"
+          ],
+          "desired_state": "The acceptance criteria below hold and case 4004 proves them.",
+          "evidence_required": [
+            "case_4004_the_executor_holds_the_issues_claim_while_it_runs"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "objective": "The executor takes the issue's mesh claim in the handler of an execution and releases it when the run ends, however it ends; fencing is deferred to I3174 (Mission Control B6).",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/mesh",
+            "docs/MESH.md",
+            "test/cases/4004_the_executor_holds_the_issues_claim_while_it_runs.sh",
+            ".ai/repo/project/issues/I4004.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#two-sessions-never-share-an-item"
+          ],
+          "slug": "the-executor-holds-the-issues-claim-while-it-runs",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4004_the_executor_holds_the_issues_claim_while_it_runs"
+          ],
+          "why": "A claim taken by the caller outlives a caller that died and is not tied to the run that holds the work."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4005",
+        "kind": "issue",
+        "label": "I4005",
+        "summary": "Proceed.step answers one idempotent work order",
+        "route": "/cockpit/objects/issue/i4005",
+        "source": ".ai/repo/project/issues/I4005.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Repeating the step at the same state answers the same work order",
+            "An intent whose realisation is met answers done and schedules nothing (it-stops-when-the-intent-is-met)",
+            "The /proceed skill of every provider is generated and a hand edit fails generate --check",
+            "The stack I2972-I2976 and I3040 is extended, not duplicated"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "depends_on": [
+            "I4003"
+          ],
+          "desired_state": "The acceptance criteria below hold and case 4005 proves them.",
+          "evidence_required": [
+            "case_4005_proceed_step_is_one_idempotent_work_order"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/skills",
+            "docs/PROCEED.md",
+            "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
+            ".ai/repo/project/issues/I4005.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#it-stops-when-the-intent-is-met",
+            "a-session-proceeds-through-the-mesh#a-fresh-session-finds-the-right-work"
+          ],
+          "slug": "proceed-step-is-one-idempotent-work-order",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4005_proceed_step_is_one_idempotent_work_order"
+          ],
+          "why": "/proceed names work but does not claim it, fan it out, report it or schedule the next step, and a hand-written skill drifts from the capability."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4006",
+        "kind": "issue",
+        "label": "I4006",
+        "summary": "Machine.slot is a counting machine-wide slot for heavy work",
+        "route": "/cockpit/objects/issue/i4006",
+        "source": ".ai/repo/project/issues/I4006.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "At most N holders run at once and below the disk floor none starts",
+            "A full queue answers within a deadline naming each holder, never waits unbounded",
+            "A holder that died releases its slot by deadline, and the slot adds no new store"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "desired_state": "The acceptance criteria below hold and case 4006 proves them.",
+          "evidence_required": [
+            "case_4006_machine_slot_shares_heavy_work"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "objective": "machine.slot: a counting slot, N and the disk floor read from rule data, taken by pre-push, coverage and builds; a full queue answers a bounded wait naming its holders.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/machine",
+            "docs/MACHINE.md",
+            "test/cases/4006_machine_slot_shares_heavy_work.sh",
+            ".ai/repo/project/issues/I4006.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
+          ],
+          "slug": "machine-slot-shares-heavy-work",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4006_machine_slot_shares_heavy_work"
+          ],
+          "why": "Heavy work serialises on one lock or starves on it; nine sessions make the machine the bottleneck and a waiter cannot tell who holds it."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4007",
+        "kind": "issue",
+        "label": "I4007",
+        "summary": "An idle serve exits by itself after a bound",
+        "route": "/cockpit/objects/issue/i4007",
+        "source": ".ai/repo/project/issues/I4007.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A serve with a lease, a peer or a running execution never exits",
+            "An idle one exits after the bound and says why on stderr",
+            "The bound is policy data"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "desired_state": "The acceptance criteria below hold and case 4007 proves them.",
+          "evidence_required": [
+            "case_4007_an_idle_serve_exits_by_itself"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "objective": "An idle serve that holds no lease, has no peers and no executions exits by itself after a bound read from policy.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/serve",
+            "docs/SERVE.md",
+            "test/cases/4007_an_idle_serve_exits_by_itself.sh",
+            ".ai/repo/project/issues/I4007.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
+          ],
+          "slug": "an-idle-serve-exits-by-itself",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4007_an_idle_serve_exits_by_itself"
+          ],
+          "why": "Idle servers accumulate across worktrees and keep their claims live; each costs memory and a port on a shared machine."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4008",
+        "kind": "issue",
+        "label": "I4008",
+        "summary": "A push that only deletes refs runs no plan in the pre-push hook",
+        "route": "/cockpit/objects/issue/i4008",
+        "source": ".ai/repo/project/issues/I4008.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A push of only deletions runs no plan and exits 0",
+            "A push of any non-deletion ref runs the plan as before",
+            "The exemption is declared data beside the refs/majordomus/* one"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "desired_state": "The acceptance criteria below hold and case 4008 proves them.",
+          "evidence_required": [
+            "case_4008_a_push_that_only_deletes_runs_no_plan"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "objective": "A push whose every ref is a deletion runs no plan in the pre-push hook, by the reasoning of the refs/majordomus/* exemption: no source travels.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".githooks/pre-push",
+            "apps/majordomus-cli/src/hooks",
+            "docs/HOOKS.md",
+            "test/cases/4008_a_push_that_only_deletes_runs_no_plan.sh",
+            ".ai/repo/project/issues/I4008.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
+          ],
+          "slug": "a-push-that-only-deletes-runs-no-plan",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4008_a_push_that_only_deletes_runs_no_plan"
+          ],
+          "why": "Deleting a merged branch runs the whole pre-push plan, which takes tens of minutes on a loaded machine and judges nothing."
+        }
+      },
+      {
+        "id": "majordomus://issue/I4009",
+        "kind": "issue",
+        "label": "I4009",
+        "summary": "/watchdog reads liveness and runs wake, handover, reap",
+        "route": "/cockpit/objects/issue/i4009",
+        "source": ".ai/repo/project/issues/I4009.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A suspended claim, a missed phase beat or an overdue deadline is signalled with its claim, holder and phase",
+            "Wake precedes handover precedes reap, and each is recorded",
+            "Reap by anyone but the owner or a seat is refused (ADR 0200), and only after assess-before-deleting",
+            "It depends on the liveness substrate I3990-I3994 (branch feature/a-claim-lives-by-its-holders-progress); this issue adds none of it"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
+          "depends_on": [
+            "I4005"
+          ],
+          "desired_state": "The acceptance criteria below hold and case 4009 proves them.",
+          "evidence_required": [
+            "case_4009_watchdog_wakes_hands_over_and_reaps"
+          ],
+          "milestone": "a-session-proceeds-through-the-mesh",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/skills",
+            "docs/PROCEED.md",
+            "test/cases/4009_watchdog_wakes_hands_over_and_reaps.sh",
+            ".ai/repo/project/issues/I4009.yaml"
+          ],
+          "serves": [
+            "a-session-proceeds-through-the-mesh#a-dead-loop-resumes",
+            "a-session-proceeds-through-the-mesh#a-stall-is-signalled"
+          ],
+          "slug": "watchdog-wakes-hands-over-and-reaps",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4009_watchdog_wakes_hands_over_and_reaps"
+          ],
+          "why": "A stuck, silent or dead loop is found by a person; nothing wakes it, hands its work over or reaps what it left."
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -66162,6 +66632,48 @@
             "bash test/run.sh 981_an_observation_becomes_a_grouped_candidate",
             "bash test/run.sh 982_a_candidate_is_routed_by_what_it_is_about",
             "bash test/run.sh 564_knowledge_derivation_is_idempotent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "milestone",
+        "label": "a-session-proceeds-through-the-mesh",
+        "summary": "A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met",
+        "route": "/cockpit/objects/milestone/a-session-proceeds-through-the-mesh",
+        "source": ".ai/repo/project/milestones/a-session-proceeds-through-the-mesh.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "current_state": "Planned only. Records I4000 to I4009 and cases 4000 to 4009 exist as plan; no code is written by this milestone's planning pull request.",
+          "depends_on": [],
+          "desired_state": "Every satisfaction criterion of the intent is proved by its case; no new store, scheduler, journal kind or registry exists; every projection is generated.",
+          "evidence_required": [],
+          "non_scope": [
+            "Push assignment of work to peers before I3198",
+            "Changing a profile automatically from inferred routing",
+            "Editing a person's .claude/settings.json or personal commands"
+          ],
+          "order": 520,
+          "priority": "p1",
+          "risks": [
+            "The liveness substrate I3990-I3994 and the fencing epoch I3174 are other sessions' work; I4004 and I4009 name them and write none of them.",
+            "The /proceed stack I2972-I2976 and I3040 is unpushed or unmerged; I4005 must build on it, and waits for it to land if it has not."
+          ],
+          "scope": [
+            "apps/majordomus-cli/src",
+            "share/skills",
+            "share/schemas",
+            "docs",
+            ".githooks",
+            "test/cases",
+            ".ai/repo/project"
+          ],
+          "slug": "a-session-proceeds-through-the-mesh",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate",
+            "majordomus generate --check"
           ]
         }
       },
@@ -109877,6 +110389,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/a-session-proceeds-through-the-mesh",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/a-session-record-says-what-it-served",
         "target": "kind:intent",
         "kind": "is_a"
@@ -123072,6 +123589,146 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4000",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4000",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4001",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4001",
+        "target": "majordomus://issue/I4000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4001",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4002",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4002",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4003",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4003",
+        "target": "majordomus://issue/I4000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4003",
+        "target": "majordomus://issue/I4001",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4003",
+        "target": "majordomus://issue/I4002",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4003",
+        "target": "majordomus://issue/I4004",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4003",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4004",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4004",
+        "target": "majordomus://issue/I4000",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4004",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4005",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4005",
+        "target": "majordomus://issue/I4003",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4005",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4006",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4006",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4007",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4007",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4008",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4008",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4009",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4009",
+        "target": "majordomus://issue/I4005",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4009",
+        "target": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -123503,6 +124160,11 @@
       },
       {
         "source": "majordomus://milestone/a-session-leaves-what-it-observed",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/a-session-proceeds-through-the-mesh",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -134293,8 +134955,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3779,
+      "edges": 8740,
       "acyclic": false,
       "truncated": false
     }
