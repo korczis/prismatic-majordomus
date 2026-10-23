@@ -12,7 +12,7 @@
 //! reading the snapshot and a client reading the stream can never disagree about what
 //! happened, only about how much of it they have seen.
 
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::{BTreeMap, HashMap, VecDeque};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -21,8 +21,8 @@ use serde_json::Value;
 
 use super::event::{EventPayload, ExecutionEvent};
 use super::model::{
-    Actor, Execution, ExecutionError, ExecutionId, ExecutionState, ProgressView, RepositoryRef,
-    StepState, StepView,
+    Actor, Execution, ExecutionError, ExecutionId, ExecutionState, IdempotencyKey, ProgressView,
+    RepositoryRef, StepState, StepView,
 };
 
 /// What the store keeps, and how much of it.
@@ -253,12 +253,74 @@ struct Record {
     started: Option<Instant>,
     /// Present when the work runs in another process that reports it here.
     reported: Option<Reported>,
+    /// The digest of the input a keyed start was sent with: what a repeated start with the
+    /// same key must match to be answered this execution.
+    digest: Option<String>,
+}
+
+/// What an idempotency key is unique within: one repository's one capability. The same key
+/// sent to two capabilities, or by two repositories to one process, names two requests.
+type KeyScope = (String, String, IdempotencyKey);
+
+/// The scope a keyed execution's key is held under; `None` for one started without a key.
+fn scope_of(snapshot: &Execution) -> Option<KeyScope> {
+    let key = IdempotencyKey::parse(snapshot.idempotency_key.as_deref()?).ok()?;
+    Some((
+        snapshot.repository.id.clone(),
+        snapshot.capability.clone(),
+        key,
+    ))
 }
 
 struct Inner {
     records: BTreeMap<ExecutionId, Record>,
     order: VecDeque<ExecutionId>,
     subscribers: Vec<Subscriber>,
+    /// Which execution each idempotency key started, for as long as that execution is held:
+    /// the entry goes when [`ExecutionStore::evict`] forgets the record, and with it the
+    /// only thing a repeated start could be answered with.
+    keys: HashMap<KeyScope, ExecutionId>,
+}
+
+/// What a keyed start is held to: the key the client sent, and the digest of the input it
+/// sent with it (the engine takes it over the capability's input in canonical JSON, so two
+/// inputs equal as data are one input whatever order a client wrote their keys in).
+///
+/// The digest never leaves the store: it is not in the snapshot, the events or any answer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Idempotency {
+    /// The key.
+    pub key: IdempotencyKey,
+    /// The digest of the input the key was sent with.
+    pub digest: String,
+}
+
+/// What [`ExecutionStore::create_once`] did.
+#[derive(Debug, Clone)]
+pub enum Admission {
+    /// A new execution was recorded; this is its cancellation token.
+    Created(Arc<AtomicBool>),
+    /// The key had already started this execution with the same input: nothing new was
+    /// recorded, and this is the execution's snapshot as it stands.
+    Existing(Box<Execution>),
+}
+
+/// A key sent again with a different input: refused, because answering the first execution
+/// would tell the client its second request ran when it did not, and starting a second one
+/// would make the key mean nothing.
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
+#[error(
+    "the idempotency key '{key}' already started {existing} of {capability} with a different \
+     input; send the same input to be answered {existing}, or a new key to start another \
+     execution"
+)]
+pub struct KeyConflict {
+    /// The key.
+    pub key: String,
+    /// The capability it was sent to.
+    pub capability: String,
+    /// The execution the key already started.
+    pub existing: ExecutionId,
 }
 
 /// The executions of one process.
@@ -277,6 +339,7 @@ impl ExecutionStore {
                 records: BTreeMap::new(),
                 order: VecDeque::new(),
                 subscribers: Vec::new(),
+                keys: HashMap::new(),
             }),
             next_subscriber: AtomicU64::new(1),
         }
@@ -309,8 +372,8 @@ impl ExecutionStore {
         actor: Actor,
         repository: RepositoryRef,
     ) -> Arc<AtomicBool> {
-        let created = self.insert(
-            id,
+        let (record, created) = self.record(
+            &id,
             Seed {
                 capability,
                 title,
@@ -320,8 +383,81 @@ impl ExecutionStore {
                 repository,
             },
             None,
+            None,
         );
-        self.publish_created(created)
+        let cancel = Arc::clone(&record.cancel);
+        self.hold(&mut self.lock(), id.clone(), record);
+        self.publish(&id, created);
+        cancel
+    }
+
+    /// Record a new execution unless its idempotency key already started one (I4000).
+    ///
+    /// Without a key this is [`Self::create`]. With one, the key is looked up and the
+    /// record inserted under one hold of the lock, so two starts sent at once with one key
+    /// record one execution, never two: the second is answered the first's snapshot when
+    /// its input digest is the same, and refused with [`KeyConflict`] when it is not. A key
+    /// is held for as long as the execution it started is: once the bound forgets a
+    /// finished execution, its key starts a new one.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, Admission, ExecutionId, ExecutionStore};
+    /// use majordomus_cli::execution::{Idempotency, IdempotencyKey, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let keyed = |digest: &str| Some(Idempotency {
+    ///     key: IdempotencyKey::parse("click-1").unwrap(),
+    ///     digest: digest.into(),
+    /// });
+    /// let first = ExecutionId::fresh();
+    /// assert!(matches!(store.create_once(first.clone(), seed(), keyed("a")), Ok(Admission::Created(_))));
+    /// match store.create_once(ExecutionId::fresh(), seed(), keyed("a")).unwrap() {
+    ///     Admission::Existing(e) => assert_eq!(e.id, first),
+    ///     Admission::Created(_) => panic!("a repeated start started a second execution"),
+    /// }
+    /// let refused = store.create_once(ExecutionId::fresh(), seed(), keyed("b")).unwrap_err();
+    /// assert_eq!(refused.existing, first);
+    /// assert_eq!(store.len(), 1);
+    /// ```
+    pub fn create_once(
+        &self,
+        id: ExecutionId,
+        seed: Seed<'_>,
+        idempotency: Option<Idempotency>,
+    ) -> Result<Admission, KeyConflict> {
+        let (record, created) = self.record(&id, seed, None, idempotency.as_ref());
+        let cancel = Arc::clone(&record.cancel);
+        {
+            let mut inner = self.lock();
+            if let Some(scope) = scope_of(&record.snapshot) {
+                let held = inner
+                    .keys
+                    .get(&scope)
+                    .and_then(|existing| inner.records.get(existing));
+                if let Some(held) = held {
+                    return if held.digest == record.digest {
+                        Ok(Admission::Existing(Box::new(held.snapshot.clone())))
+                    } else {
+                        Err(KeyConflict {
+                            key: scope.2.to_string(),
+                            capability: scope.1,
+                            existing: held.snapshot.id.clone(),
+                        })
+                    };
+                }
+                inner.keys.insert(scope, id.clone());
+            }
+            self.hold(&mut inner, id.clone(), record);
+        }
+        self.publish(&id, created);
+        Ok(Admission::Created(cancel))
     }
 
     /// Hold an execution another process runs and reports here, so that this process's
@@ -360,8 +496,8 @@ impl ExecutionStore {
                 };
             }
         }
-        let created = self.insert(
-            id,
+        let (record, created) = self.record(
+            &id,
             seed,
             Some(Reported {
                 // the reporter's first event is its own `created`, which this store has
@@ -370,8 +506,10 @@ impl ExecutionStore {
                 heard: Instant::now(),
                 pid,
             }),
+            None,
         );
-        self.publish_created(created);
+        self.hold(&mut self.lock(), id.clone(), record);
+        self.publish(&id, created);
         Ok(())
     }
 
@@ -555,14 +693,15 @@ impl ExecutionStore {
             .is_some_and(|r| r.reported.is_some())
     }
 
-    /// Insert a record, queued, and evict what the bound asks. Its `created` event is not
-    /// published yet: [`Self::publish_created`] does that once the lock is let go.
-    fn insert(
+    /// A new record, queued, and the `created` event to publish for it once it is held and
+    /// the lock is let go. Built outside the lock: nothing in it reads the store.
+    fn record(
         &self,
-        id: ExecutionId,
+        id: &ExecutionId,
         seed: Seed<'_>,
         reported: Option<Reported>,
-    ) -> (ExecutionId, Arc<AtomicBool>, EventPayload) {
+        idempotency: Option<&Idempotency>,
+    ) -> (Record, EventPayload) {
         let Seed {
             capability,
             title,
@@ -595,38 +734,32 @@ impl ExecutionStore {
             actor,
             repository,
             correlation_id: id.to_string(),
+            idempotency_key: idempotency.map(|i| i.key.to_string()),
         };
-        {
-            let mut inner = self.lock();
-            inner.records.insert(
-                id.clone(),
-                Record {
-                    snapshot,
-                    events: VecDeque::new(),
-                    first_retained: 1,
-                    cancel: Arc::clone(&cancel),
-                    cancel_requested: false,
-                    started: None,
-                    reported,
-                },
-            );
-            inner.order.push_back(id.clone());
-            self.evict(&mut inner);
-        }
         let created = EventPayload::Created {
             capability: capability.to_string(),
             title: title.to_string(),
             input,
         };
-        (id, cancel, created)
+        let record = Record {
+            snapshot,
+            events: VecDeque::new(),
+            first_retained: 1,
+            cancel,
+            cancel_requested: false,
+            started: None,
+            reported,
+            digest: idempotency.map(|i| i.digest.clone()),
+        };
+        (record, created)
     }
 
-    fn publish_created(
-        &self,
-        (id, cancel, created): (ExecutionId, Arc<AtomicBool>, EventPayload),
-    ) -> Arc<AtomicBool> {
-        self.publish(&id, created);
-        cancel
+    /// Hold a record and evict what the bound asks. Its `created` event is not published
+    /// here: the caller does that once the lock is let go.
+    fn hold(&self, inner: &mut Inner, id: ExecutionId, record: Record) {
+        inner.records.insert(id.clone(), record);
+        inner.order.push_back(id);
+        self.evict(inner);
     }
 
     /// Forget the oldest finished executions until the bound holds. A running execution is
@@ -643,7 +776,15 @@ impl ExecutionStore {
                 break;
             };
             if let Some(id) = inner.order.remove(position) {
-                inner.records.remove(&id);
+                if let Some(gone) = inner.records.remove(&id) {
+                    // the key goes with the execution it started: the store answers a
+                    // repeated start for as long as it holds the execution, and no longer
+                    if let Some(scope) = scope_of(&gone.snapshot) {
+                        if inner.keys.get(&scope) == Some(&id) {
+                            inner.keys.remove(&scope);
+                        }
+                    }
+                }
             }
         }
     }
@@ -1625,5 +1766,167 @@ mod tests {
         assert_eq!(store.list(None, Some("demo.x"), 10).len(), 2);
         assert!(store.list(None, Some("nothing.here"), 10).is_empty());
         assert_eq!(store.list(None, None, 1).len(), 1);
+    }
+
+    fn keyed(key: &str, digest: &str) -> Option<Idempotency> {
+        Some(Idempotency {
+            key: IdempotencyKey::parse(key).unwrap(),
+            digest: digest.into(),
+        })
+    }
+
+    fn seed_in(repository_id: &str, capability: &'static str) -> Seed<'static> {
+        Seed {
+            capability,
+            title: "Demo",
+            input: serde_json::json!({}),
+            cancellable: true,
+            actor: Actor::of(ActorKind::Http),
+            repository: RepositoryRef {
+                name: "r".into(),
+                id: repository_id.into(),
+                branch: None,
+            },
+        }
+    }
+
+    #[test]
+    fn two_starts_sent_at_once_with_one_key_record_one_execution() {
+        // I4000: the double click. Every thread is released at the same instant and sends
+        // the same key with the same input; exactly one may be told it created anything.
+        let store = Arc::new(store());
+        let threads = 16;
+        let gate = Arc::new(std::sync::Barrier::new(threads));
+        let handles: Vec<_> = (0..threads)
+            .map(|_| {
+                let store = Arc::clone(&store);
+                let gate = Arc::clone(&gate);
+                std::thread::spawn(move || {
+                    let id = ExecutionId::fresh();
+                    gate.wait();
+                    match store.create_once(id.clone(), seed_in("id", "demo.x"), keyed("k", "d")) {
+                        Ok(Admission::Created(_)) => (true, id),
+                        Ok(Admission::Existing(e)) => (false, e.id),
+                        Err(e) => panic!("the same input was refused: {e}"),
+                    }
+                })
+            })
+            .collect();
+        let answers: Vec<(bool, ExecutionId)> =
+            handles.into_iter().map(|h| h.join().unwrap()).collect();
+        let created: Vec<_> = answers.iter().filter(|(c, _)| *c).collect();
+        assert_eq!(
+            created.len(),
+            1,
+            "one start created, the rest were answered it"
+        );
+        let first = &created[0].1;
+        assert!(
+            answers.iter().all(|(_, id)| id == first),
+            "every answer names one id"
+        );
+        assert_eq!(store.len(), 1, "one execution is held");
+        assert_eq!(
+            store.get(first).unwrap().idempotency_key.as_deref(),
+            Some("k"),
+            "the key is carried on the record"
+        );
+    }
+
+    #[test]
+    fn a_key_sent_again_with_another_input_is_refused_and_names_what_it_started() {
+        let store = store();
+        let first = ExecutionId::fresh();
+        store
+            .create_once(first.clone(), seed_in("id", "demo.x"), keyed("k", "a"))
+            .unwrap();
+        let refused = store
+            .create_once(
+                ExecutionId::fresh(),
+                seed_in("id", "demo.x"),
+                keyed("k", "b"),
+            )
+            .unwrap_err();
+        assert_eq!(refused.existing, first);
+        assert_eq!(
+            (refused.key.as_str(), refused.capability.as_str()),
+            ("k", "demo.x")
+        );
+        assert!(refused.to_string().contains(first.as_str()), "{refused}");
+        assert_eq!(store.len(), 1, "a refusal records nothing");
+    }
+
+    #[test]
+    fn a_key_is_scoped_to_its_repository_and_capability_and_absent_keys_never_match() {
+        let store = store();
+        for (repository_id, capability) in [("id", "demo.x"), ("id", "demo.y"), ("other", "demo.x")]
+        {
+            assert!(matches!(
+                store.create_once(
+                    ExecutionId::fresh(),
+                    seed_in(repository_id, capability),
+                    keyed("k", "a")
+                ),
+                Ok(Admission::Created(_))
+            ));
+        }
+        for _ in 0..2 {
+            assert!(matches!(
+                store.create_once(ExecutionId::fresh(), seed_in("id", "demo.x"), None),
+                Ok(Admission::Created(_))
+            ));
+        }
+        assert_eq!(
+            store.len(),
+            5,
+            "three scopes of one key, and two starts without one"
+        );
+    }
+
+    #[test]
+    fn a_key_is_held_as_long_as_its_execution_and_freed_when_it_is_forgotten() {
+        let store = ExecutionStore::new(Limits {
+            max_executions: 1,
+            ..Limits::default()
+        });
+        let first = ExecutionId::fresh();
+        store
+            .create_once(first.clone(), seed_in("id", "demo.x"), keyed("k", "a"))
+            .unwrap();
+        store.publish(&first, EventPayload::Started);
+        store.publish(
+            &first,
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+        );
+        // finished and still held: a repeated start is answered it, not run again
+        match store
+            .create_once(
+                ExecutionId::fresh(),
+                seed_in("id", "demo.x"),
+                keyed("k", "a"),
+            )
+            .unwrap()
+        {
+            Admission::Existing(e) => {
+                assert_eq!((e.id, e.state), (first.clone(), ExecutionState::Succeeded))
+            }
+            Admission::Created(_) => panic!("a finished execution's key started another"),
+        }
+        // another execution pushes the finished one out of the bound, and its key with it
+        start(&store);
+        assert!(store.get(&first).is_none());
+        assert!(
+            matches!(
+                store.create_once(
+                    ExecutionId::fresh(),
+                    seed_in("id", "demo.x"),
+                    keyed("k", "b")
+                ),
+                Ok(Admission::Created(_))
+            ),
+            "a forgotten execution's key is free, whatever input it is sent with now"
+        );
     }
 }

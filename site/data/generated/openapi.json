@@ -1113,6 +1113,7 @@
     "schema-Stance": "docs/api/reasoning/",
     "schema-Standing": "docs/api/worktree/",
     "schema-StartInput": "docs/api/executions/",
+    "schema-StartedExecution": "docs/api/executions/",
     "schema-State": "docs/api/repository/",
     "schema-StateView": "docs/api/session-domain/",
     "schema-Status": "docs/api/continuity/",
@@ -1277,7 +1278,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 202,
-    "schemas": 1013,
+    "schemas": 1014,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1291,6 +1292,11 @@
       "code": "not_found",
       "reason": "The input names something the repository does not hold.",
       "status": "404"
+    },
+    {
+      "code": "conflict",
+      "reason": "The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+      "status": "409"
     },
     {
       "code": "refused",
@@ -1312,7 +1318,7 @@
   "info": {
     "contact_name": "Majordomus",
     "contact_url": "https://github.com/korczis/prismatic-majordomus",
-    "description_md": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "description_md": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 409 `conflict` and 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
@@ -2486,6 +2492,7 @@
     "Stance": "reasoning",
     "Standing": "worktree",
     "StartInput": "executions",
+    "StartedExecution": "executions",
     "State": "repository",
     "StateView": "session-domain",
     "Status": "continuity",
@@ -2745,7 +2752,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -21584,7 +21592,8 @@
       "used_by": [],
       "used_by_schemas": [
         "ExecutionEvent",
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -21628,7 +21637,7 @@
       "name": "ExecutionError",
       "properties": [
         {
-          "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.",
+          "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`.",
           "name": "code",
           "refs": [],
           "required": true,
@@ -21660,7 +21669,8 @@
       "used_by": [],
       "used_by_schemas": [
         "ExecutionEvent",
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -22006,7 +22016,8 @@
       "used_by": [],
       "used_by_schemas": [
         "ExecutionEvent",
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -22056,7 +22067,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -22186,7 +22198,8 @@
       ],
       "used_by_schemas": [
         "EventHistory",
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [
         {
@@ -22386,6 +22399,13 @@
           "type": "string"
         },
         {
+          "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000).",
+          "name": "idempotency_key",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "Where to read more.",
           "name": "links",
           "refs": [
@@ -22397,8 +22417,7 @@
       ],
       "type": "object",
       "used_by": [
-        "executions.get",
-        "executions.start"
+        "executions.get"
       ],
       "used_by_schemas": [
         "CancelReport",
@@ -40142,7 +40161,8 @@
       "used_by": [],
       "used_by_schemas": [
         "ExecutionEvent",
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -47375,7 +47395,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -53708,6 +53729,214 @@
           "refs": [],
           "required": false,
           "type": "any"
+        },
+        {
+          "description": "A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution.",
+          "name": "idempotency_key",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "executions.start"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `executions.start`: the execution, and whether this start began it.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "StartedExecution",
+      "properties": [
+        {
+          "description": "The identity.",
+          "name": "id",
+          "refs": [
+            "ExecutionId"
+          ],
+          "required": true,
+          "type": "ExecutionId"
+        },
+        {
+          "description": "The capability that ran, by its canonical id.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That capability's title, so a list needs no second lookup.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it is.",
+          "name": "state",
+          "refs": [
+            "ExecutionState"
+          ],
+          "required": true,
+          "type": "ExecutionState"
+        },
+        {
+          "description": "When it was accepted, RFC 3339 in UTC.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the handler was entered.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it reached a final state.",
+          "name": "finished_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How long it ran, in milliseconds, once it has finished.",
+          "name": "duration_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The input it was given, with every value the input schema marks sensitive replaced.",
+          "name": "input",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "What the handler returned, for a succeeded execution and never before.",
+          "name": "output",
+          "refs": [],
+          "required": false,
+          "type": "any"
+        },
+        {
+          "description": "Why it failed, for a failed execution and never before.",
+          "name": "error",
+          "refs": [
+            "ExecutionError"
+          ],
+          "required": false,
+          "type": "ExecutionError | null"
+        },
+        {
+          "description": "The last progress the handler reported.",
+          "name": "progress",
+          "refs": [
+            "ProgressView"
+          ],
+          "required": false,
+          "type": "ProgressView | null"
+        },
+        {
+          "description": "The steps it entered, in order.",
+          "name": "steps",
+          "refs": [
+            "StepView"
+          ],
+          "required": false,
+          "type": "array of StepView"
+        },
+        {
+          "description": "The findings it reported.",
+          "name": "diagnostics",
+          "refs": [
+            "ExecutionDiagnostic"
+          ],
+          "required": false,
+          "type": "array of ExecutionDiagnostic"
+        },
+        {
+          "description": "The sequence number of the last event: the cursor a client subscribes from.",
+          "name": "last_sequence",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How many events it has produced, including the ones no longer retained.",
+          "name": "event_count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether the retained event history has lost its oldest entries to the bound.",
+          "name": "events_truncated",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether asking to cancel this execution will do anything: the capability's policy.",
+          "name": "cancellable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Who asked for it.",
+          "name": "actor",
+          "refs": [
+            "Actor"
+          ],
+          "required": true,
+          "type": "Actor"
+        },
+        {
+          "description": "Which repository it ran against.",
+          "name": "repository",
+          "refs": [
+            "RepositoryRef"
+          ],
+          "required": true,
+          "type": "RepositoryRef"
+        },
+        {
+          "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects.",
+          "name": "correlation_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000).",
+          "name": "idempotency_key",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where to read more.",
+          "name": "links",
+          "refs": [
+            "ExecutionLinks"
+          ],
+          "required": true,
+          "type": "ExecutionLinks"
+        },
+        {
+          "description": "`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began.",
+          "name": "deduplicated",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
         }
       ],
       "type": "object",
@@ -54089,7 +54318,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "ExecutionView"
+        "ExecutionView",
+        "StartedExecution"
       ],
       "values": [],
       "variants": []
@@ -60253,6 +60483,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -60384,6 +60619,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -60506,6 +60746,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -60622,6 +60867,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -63137,6 +63387,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -63199,6 +63454,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -63590,6 +63850,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -63930,6 +64195,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -63963,7 +64233,7 @@
           "cache_detail": "",
           "cli": "run",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/start\" -H \"content-type: application/json\" -d '{\"capability\":\"executions.demonstrate\",\"input\":{\"steps\":1,\"delay_ms\":0}}'",
-          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+          "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
           "home": "executions",
           "id": "executions.start",
           "kind": "command",
@@ -63980,7 +64250,7 @@
           "responses": [
             {
               "description": "Start a capability as an execution: the result.",
-              "schema": "ExecutionView",
+              "schema": "StartedExecution",
               "status": "200"
             },
             {
@@ -63992,6 +64262,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -64009,7 +64284,7 @@
               "status": "default"
             }
           ],
-          "result_schema": "ExecutionView",
+          "result_schema": "StartedExecution",
           "stability": "behaviorally_verified",
           "summary": "Start a capability as an execution"
         }
@@ -65476,6 +65751,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -66273,6 +66553,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -66335,6 +66620,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -66652,6 +66942,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -66714,6 +67009,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -66834,6 +67134,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -66896,6 +67201,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -67206,6 +67516,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -67268,6 +67583,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -67334,6 +67654,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -67396,6 +67721,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -67462,6 +67792,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -67524,6 +67859,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -67711,6 +68051,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -68957,6 +69302,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -69726,6 +70076,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
@@ -70889,6 +71244,11 @@
               "status": "404"
             },
             {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",
               "schema": "ErrorBody",
               "status": "422"
@@ -70962,6 +71322,11 @@
               "description": "`not_found`: The input names something the repository does not hold.",
               "schema": "ErrorBody",
               "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
             },
             {
               "description": "`refused`: The command was understood and turned down for the reason the message gives.",

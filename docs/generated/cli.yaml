@@ -13309,6 +13309,16 @@ cli:
           global: false
           possible_values: []
           defaults: []
+        - name: idempotency_key
+          long: idempotency-key
+          positional: false
+          help: "The execution's idempotency key (executions.start's `idempotency_key`): a repeated start with it is the execution it started. A run executes in its own process, so the key is held there; a server's start is where repeated sends meet (I4000)"
+          value_name: KEY
+          takes_value: true
+          required: false
+          global: false
+          possible_values: []
+          defaults: []
         - name: follow
           long: follow
           positional: false

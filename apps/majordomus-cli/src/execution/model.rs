@@ -80,6 +80,60 @@ impl std::fmt::Display for ExecutionId {
     }
 }
 
+/// The longest idempotency key a start accepts, in characters.
+pub const MAX_IDEMPOTENCY_KEY: usize = 128;
+
+/// The key a client sends with a start so that sending it again — a double click, a retry
+/// after a timeout whose answer never arrived — answers the execution the first send
+/// started instead of starting a second one (I4000).
+///
+/// One to [`MAX_IDEMPOTENCY_KEY`] characters of `A-Z a-z 0-9 . _ : -`: enough for a UUID,
+/// a ULID or `issue:I4000:implement`, and nothing a log line, a URL or a shell has to
+/// escape. A key names a request, not a secret, and is shown in the snapshot it started.
+///
+/// ```
+/// use majordomus_cli::execution::IdempotencyKey;
+/// assert_eq!(IdempotencyKey::parse("issue:I4000:implement").unwrap().as_str(), "issue:I4000:implement");
+/// assert!(IdempotencyKey::parse("").is_err(), "empty");
+/// assert!(IdempotencyKey::parse("two words").is_err(), "a space");
+/// assert!(IdempotencyKey::parse(&"k".repeat(129)).is_err(), "too long");
+/// assert!(IdempotencyKey::parse(&"k".repeat(128)).is_ok());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct IdempotencyKey(String);
+
+impl IdempotencyKey {
+    /// Parse a key a client sent, or say why it is not one.
+    pub fn parse(text: &str) -> Result<Self, String> {
+        let length = text.chars().count();
+        if length == 0 || length > MAX_IDEMPOTENCY_KEY {
+            return Err(format!(
+                "an idempotency key is 1 to {MAX_IDEMPOTENCY_KEY} characters; this one has {length}"
+            ));
+        }
+        if let Some(bad) = text
+            .chars()
+            .find(|c| !(c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | ':' | '-')))
+        {
+            return Err(format!(
+                "an idempotency key is made of A-Z a-z 0-9 . _ : - only, and {bad:?} is not"
+            ));
+        }
+        Ok(IdempotencyKey(text.to_string()))
+    }
+
+    /// The key as text.
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for IdempotencyKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
 /// `YYYYMMDDTHHMMSSZ` in UTC from a Unix second, the compact form of the layer's own
 /// timestamps.
 ///
@@ -258,7 +312,8 @@ impl ProgressView {
 /// on the process's own error stream, where the operator running the server can read it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionError {
-    /// `invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`.
+    /// `invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,
+    /// `unavailable`.
     pub code: String,
     /// What went wrong, for a person.
     pub message: String,
@@ -430,6 +485,10 @@ pub struct Execution {
     /// The id used in this process's logs and tracing spans for this execution; the
     /// execution id itself, carried under the name a reader of a log expects.
     pub correlation_id: String,
+    /// The idempotency key the start was sent with, when it was sent with one: a repeated
+    /// start with this key answers this execution instead of starting another (I4000).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
 }
 
 impl Execution {

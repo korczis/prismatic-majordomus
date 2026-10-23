@@ -128,6 +128,21 @@ it is what a run sends to a server, not something an agent or a person asks for.
 handler. The state in that first answer is `queued`, which is what it is: this server
 answers `200` with the truth rather than `202` with a promise.
 
+A start may carry an `idempotency_key` (I4000; `majordomus run --idempotency-key`): 1 to 128
+characters of `A-Z a-z 0-9 . _ : -`, scoped to this repository and the capability started.
+Sent again with the same input — a double click, a retry after an answer that never
+arrived — it is answered `200` with the execution it already started, as that execution
+stands now, and `"deduplicated": true`; nothing new is queued. Sent again with a different
+input it is refused `409` `conflict`, and the message names the execution the key started.
+Every answer of `start` carries `deduplicated`, `false` for an execution the start began.
+The key is looked up and the execution recorded under one hold of the store's lock, so two
+starts sent at the same instant with one key are one execution. A key is held exactly as
+long as the store holds the execution it started — the bound below forgets the oldest
+finished one, and the server's memory ends with the server — and since `majordomus run`
+executes in its own process, a key given to it is held there. The input is matched by the
+digest of its canonical JSON, so the order a client wrote the keys in does not matter; the
+digest never leaves the store. Without a key every start starts an execution, as before.
+
 ## One plane per checkout: `majordomus run` and the server
 
 `majordomus run` executes in its own process — the cost and the failure modes of a run are
@@ -391,6 +406,7 @@ answers the ones this process is running with.
 | `no capability 'x'; the executable ones are listed by capabilities.list` | the id is not in the registry | check `majordomus capabilities list` |
 | `not executable: 'x' is a resource: it is read, never executed` | a declarative object was named | read it with `objects.get` |
 | `invalid input: /steps: "many" is not of type "integer"` | the input does not satisfy the capability's own schema | the schema is in the OpenAPI document and on the capability's Cockpit page |
+| `409 conflict: the idempotency key 'k' already started x-… of … with a different input` | a start reused a key with another input | send the same input to be answered that execution, or a new key to start another |
 | `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the server that holds it; `executions.list` says what is remembered |
 | `majordomus run: no server is serving this repository, so this execution is visible to this process only…` | `run` found no server answering for this checkout | start `majordomus serve` before the run to see it there; a run never starts one |
 | `majordomus run: the server at … did not take this run's report (…)` | the server refused or did not answer; an older server has no `executions.report` | the run carries on; the reason in parentheses is the server's |

@@ -46,15 +46,16 @@ pub mod redact;
 pub mod sink;
 pub mod store;
 
-pub use engine::{ExecutionEngine, SubmitError};
+pub use engine::{ExecutionEngine, SubmitError, Submitted};
 pub use event::{EventPayload, ExecutionEvent, PROTOCOL_VERSION};
 pub use model::{
     Actor, ActorKind, Execution, ExecutionDiagnostic, ExecutionError, ExecutionId, ExecutionState,
-    LogStream, ProgressView, RepositoryRef, StepState, StepView,
+    IdempotencyKey, LogStream, ProgressView, RepositoryRef, StepState, StepView,
+    MAX_IDEMPOTENCY_KEY,
 };
 pub use redact::redact;
 pub use sink::Progress;
 pub use store::{
-    AdoptError, CancelOutcome, Delivery, EventPage, ExecutionStore, Filter, Limits, ReportOutcome,
-    Seed, REPORT_HEARTBEAT, REPORT_SILENCE,
+    Admission, AdoptError, CancelOutcome, Delivery, EventPage, ExecutionStore, Filter, Idempotency,
+    KeyConflict, Limits, ReportOutcome, Seed, REPORT_HEARTBEAT, REPORT_SILENCE,
 };

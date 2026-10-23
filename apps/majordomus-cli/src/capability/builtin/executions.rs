@@ -26,7 +26,7 @@ use crate::capability::CanonicalSchema;
 use crate::execution::engine::repository_of;
 use crate::execution::{
     redact, Actor, ActorKind, CancelOutcome, Execution, ExecutionEvent, ExecutionId,
-    ExecutionState, Seed, SubmitError, PROTOCOL_VERSION, REPORT_SILENCE,
+    ExecutionState, IdempotencyKey, Seed, SubmitError, PROTOCOL_VERSION, REPORT_SILENCE,
 };
 use crate::{capability, module};
 
@@ -134,6 +134,15 @@ pub struct StartInput {
     /// Its input, as its own input schema describes it; an empty object when it takes none.
     #[serde(default)]
     pub input: Option<Value>,
+    /// A key that makes a repeated start one execution (I4000): sent again with the same
+    /// capability and input, it is answered the execution it started, `deduplicated`, and
+    /// nothing new runs; sent again with another input, it is refused 409 `conflict`,
+    /// naming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this
+    /// repository and the capability, and held for as long as the server holds the
+    /// execution it started. Without one, every start starts an execution.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(length(min = 1, max = 128), regex(pattern = r"^[A-Za-z0-9._:-]+$"))]
+    pub idempotency_key: Option<String>,
 }
 
 impl BenchmarkCases for StartInput {
@@ -143,18 +152,43 @@ impl BenchmarkCases for StartInput {
             StartInput {
                 capability: "executions.demonstrate".into(),
                 input: Some(serde_json::json!({ "steps": 1, "delay_ms": 0 })),
+                idempotency_key: None,
             },
         )]
     }
 }
 
-fn executions_start(ctx: &Context, input: StartInput) -> Result<ExecutionView, CapabilityError> {
+/// The answer of `executions.start`: the execution, and whether this start began it.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct StartedExecution {
+    /// The execution, with the links to follow it.
+    #[serde(flatten)]
+    pub view: ExecutionView,
+    /// `true` when this start began nothing: its idempotency key had already started this
+    /// execution with the same input, and the answer is that execution as it stands now.
+    /// `false` for an execution this start began.
+    pub deduplicated: bool,
+}
+
+fn executions_start(ctx: &Context, input: StartInput) -> Result<StartedExecution, CapabilityError> {
+    let key = input
+        .idempotency_key
+        .as_deref()
+        .map(IdempotencyKey::parse)
+        .transpose()
+        .map_err(CapabilityError::InvalidInput)?;
     let payload = input.input.unwrap_or_else(|| serde_json::json!({}));
     match ctx
         .executions
-        .submit(ctx, &input.capability, payload, actor(ctx))
+        .submit_once(ctx, &input.capability, payload, actor(ctx), key)
     {
-        Ok(execution) => Ok(ExecutionView::of(ctx, execution)),
+        Ok(started) => Ok(StartedExecution {
+            view: ExecutionView::of(ctx, started.execution),
+            deduplicated: started.deduplicated,
+        }),
+        Err(SubmitError::Conflict(conflict)) => {
+            Err(CapabilityError::Conflict(conflict.to_string()))
+        }
         Err(SubmitError::UnknownCapability(id)) => Err(CapabilityError::NotFound(format!(
             "no capability '{id}'; the executable ones are listed by capabilities.list"
         ))),
@@ -700,9 +734,9 @@ pub fn module() -> ModuleDescriptor {
                 id: "executions.start",
                 kind: CapabilityKind::Command,
                 title: "Start a capability as an execution",
-                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
                 input: StartInput,
-                output: ExecutionView,
+                output: StartedExecution,
                 stability: Stability::BehaviorallyVerified,
                 exposure: Exposure { mcp: mcp("majordomus_execution_start"), http: post("/api/v1/executions/start"), cli: Some(crate::capability::CliExposure { path: vec!["run".into()] }) },
                 tags: ["executions", "control-plane"],
@@ -1086,6 +1120,53 @@ mod tests {
         .expect("held");
         assert_eq!((answer.applied, answer.through), (0, 1));
         assert_eq!(answer.execution.execution.state, ExecutionState::Queued);
+    }
+
+    /// I4000 through the capability every transport calls: the key on the answer, the flag
+    /// that says whether this start began anything, the conflict's own error, and a key
+    /// that is not one refused before anything is created.
+    #[test]
+    fn a_start_with_a_key_is_answered_once_and_a_bad_key_is_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let start = |key: &str, steps: u64| {
+            executions_start(
+                &ctx,
+                StartInput {
+                    capability: "executions.demonstrate".into(),
+                    input: Some(serde_json::json!({ "steps": steps, "delay_ms": 0 })),
+                    idempotency_key: Some(key.into()),
+                },
+            )
+        };
+        let first = start("implement-I4000", 1).expect("started");
+        assert!(!first.deduplicated);
+        let again = start("implement-I4000", 1).expect("answered");
+        assert!(again.deduplicated);
+        assert_eq!(again.view.execution.id, first.view.execution.id);
+        let answer = serde_json::to_value(&again).unwrap();
+        assert_eq!(answer["deduplicated"], true, "{answer}");
+        assert_eq!(answer["idempotency_key"], "implement-I4000", "{answer}");
+        assert_eq!(
+            answer["id"],
+            first.view.execution.id.as_str(),
+            "flattened: {answer}"
+        );
+
+        let conflict = start("implement-I4000", 2).unwrap_err();
+        assert_eq!(conflict.code(), "conflict");
+        assert!(conflict
+            .to_string()
+            .contains(first.view.execution.id.as_str()));
+        for bad in ["", "two words", "../x", &"k".repeat(129)] {
+            let refused = start(bad, 1).unwrap_err();
+            assert_eq!(refused.code(), "invalid_input", "{bad:?}: {refused}");
+        }
+        assert_eq!(
+            ctx.executions.store().len(),
+            1,
+            "one execution, whatever was sent"
+        );
     }
 
     /// The Cockpit's page about one execution names the process that runs a reported one and

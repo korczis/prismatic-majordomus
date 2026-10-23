@@ -27251,6 +27251,13 @@
                   "type": "string",
                   "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                 },
+                "idempotency_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+                },
                 "links": {
                   "$ref": "#/$defs/ExecutionLinks",
                   "description": "Where to read more."
@@ -27318,7 +27325,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -28331,7 +28338,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -28546,6 +28553,13 @@
               "type": "string",
               "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
             },
+            "idempotency_key": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+            },
             "links": {
               "$ref": "#/$defs/ExecutionLinks",
               "description": "Where to read more."
@@ -28614,7 +28628,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -29200,6 +29214,13 @@
                   "type": "string",
                   "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                 },
+                "idempotency_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+                },
                 "links": {
                   "$ref": "#/$defs/ExecutionLinks",
                   "description": "Where to read more."
@@ -29267,7 +29288,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -30319,7 +30340,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -30502,6 +30523,13 @@
                   "type": "string",
                   "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                 },
+                "idempotency_key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+                },
                 "links": {
                   "$ref": "#/$defs/ExecutionLinks",
                   "description": "Where to read more."
@@ -30569,7 +30597,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",
@@ -30895,7 +30923,7 @@
       "module": "executions",
       "kind": "command",
       "title": "Start a capability as an execution",
-      "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+      "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
       "input": {
         "name": "StartInput",
         "schema": {
@@ -30909,6 +30937,16 @@
             "input": {
               "description": "Its input, as its own input schema describes it; an empty object when it takes none.",
               "default": null
+            },
+            "idempotency_key": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution.",
+              "minLength": 1,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9._:-]+$"
             }
           },
           "required": [
@@ -30919,7 +30957,7 @@
         }
       },
       "output": {
-        "name": "ExecutionView",
+        "name": "StartedExecution",
         "schema": {
           "type": "object",
           "properties": {
@@ -31040,9 +31078,20 @@
               "type": "string",
               "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
             },
+            "idempotency_key": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+            },
             "links": {
               "$ref": "#/$defs/ExecutionLinks",
               "description": "Where to read more."
+            },
+            "deduplicated": {
+              "type": "boolean",
+              "description": "`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began."
             }
           },
           "required": [
@@ -31059,10 +31108,11 @@
             "actor",
             "repository",
             "correlation_id",
-            "links"
+            "links",
+            "deduplicated"
           ],
-          "description": "One execution with the links to everything else about it.",
-          "title": "ExecutionView",
+          "description": "The answer of `executions.start`: the execution, and whether this start began it.",
+          "title": "StartedExecution",
           "$defs": {
             "ExecutionId": {
               "type": "string",
@@ -31108,7 +31158,7 @@
               "properties": {
                 "code": {
                   "type": "string",
-                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+                  "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
                 },
                 "message": {
                   "type": "string",

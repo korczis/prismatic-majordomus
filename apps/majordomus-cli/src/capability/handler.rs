@@ -90,6 +90,10 @@ pub enum CapabilityError {
     /// The caller may not run this from where it is: a request from another host for a
     /// capability that changes something and does not authenticate its input (ADR 0126).
     Forbidden(String),
+    #[error("conflict: {0}")]
+    /// The request contradicts what the server already holds: an idempotency key sent again
+    /// with a different input, the message naming what the key already started (I4000).
+    Conflict(String),
 }
 
 impl CapabilityError {
@@ -105,6 +109,7 @@ impl CapabilityError {
     /// assert_eq!(CapabilityError::Refused("x".into()).code(), "refused");
     /// assert_eq!(CapabilityError::Internal("x".into()).code(), "internal");
     /// assert_eq!(CapabilityError::Forbidden("x".into()).code(), "forbidden");
+    /// assert_eq!(CapabilityError::Conflict("x".into()).code(), "conflict");
     /// ```
     pub fn code(&self) -> &'static str {
         match self {
@@ -113,6 +118,7 @@ impl CapabilityError {
             CapabilityError::Refused(_) => "refused",
             CapabilityError::Internal(_) => "internal",
             CapabilityError::Forbidden(_) => "forbidden",
+            CapabilityError::Conflict(_) => "conflict",
         }
     }
 

@@ -29,9 +29,9 @@ use serde_json::Value;
 use crate::capability::{Capability, CapabilityError, CapabilityKind, Concurrency, Context};
 
 use super::event::EventPayload;
-use super::model::{Actor, Execution, ExecutionError, ExecutionId, RepositoryRef};
+use super::model::{Actor, Execution, ExecutionError, ExecutionId, IdempotencyKey, RepositoryRef};
 use super::redact::redact;
-use super::store::{ExecutionStore, Limits};
+use super::store::{Admission, ExecutionStore, Idempotency, KeyConflict, Limits, Seed};
 
 /// Why an execution was not accepted. Refused before anything is created, so a client that
 /// is told no knows nothing started.
@@ -50,6 +50,10 @@ pub enum SubmitError {
     /// The engine is stopping and accepts nothing further.
     #[error("unavailable: {0}")]
     Unavailable(String),
+    /// The idempotency key already started an execution of this capability with a
+    /// different input (I4000).
+    #[error("conflict: {0}")]
+    Conflict(KeyConflict),
 }
 
 impl SubmitError {
@@ -60,8 +64,20 @@ impl SubmitError {
             SubmitError::NotExecutable(_) => "action_unavailable",
             SubmitError::InvalidInput(_) => "validation_error",
             SubmitError::Unavailable(_) => "unavailable",
+            SubmitError::Conflict(_) => "conflict",
         }
     }
+}
+
+/// What a start was answered with: the execution, and whether it is one an earlier start
+/// with the same idempotency key began rather than one this start did.
+#[derive(Debug, Clone)]
+pub struct Submitted {
+    /// The execution, as accepted, or as it stands when the key had already started it.
+    pub execution: Execution,
+    /// `true` when nothing was started: the key had already started this execution with
+    /// the same input, and this is that execution.
+    pub deduplicated: bool,
 }
 
 struct Pending {
@@ -194,6 +210,27 @@ impl ExecutionEngine {
         input: Value,
         actor: Actor,
     ) -> Result<Execution, SubmitError> {
+        self.submit_once(ctx, capability, input, actor, None)
+            .map(|s| s.execution)
+    }
+
+    /// [`Self::submit`], held to an idempotency key when the client sent one (I4000).
+    ///
+    /// The key is scoped to this repository and this capability, and is matched with the
+    /// digest of the input in canonical JSON: the same key with the same input is answered
+    /// the execution it started, `deduplicated`, and nothing is queued; the same key with
+    /// another input is refused with [`SubmitError::Conflict`], naming that execution. The
+    /// lookup and the record are one step of the store, so two starts sent at once with
+    /// one key start one execution. The store holds a key for as long as it holds the
+    /// execution the key started, and is in memory: a key does not outlive the server.
+    pub fn submit_once(
+        &self,
+        ctx: &Context,
+        capability: &str,
+        input: Value,
+        actor: Actor,
+        idempotency_key: Option<IdempotencyKey>,
+    ) -> Result<Submitted, SubmitError> {
         if self.stopping.load(Ordering::SeqCst) {
             return Err(SubmitError::Unavailable(
                 "this server is shutting down and is accepting no further executions".into(),
@@ -224,15 +261,28 @@ impl ExecutionEngine {
 
         let id = ExecutionId::fresh();
         let stored = redact(&c.input.schema, &input);
-        self.store.create(
-            id.clone(),
-            c.id.as_str(),
-            &c.title,
-            stored,
-            c.execution.cancellable,
+        let idempotency = idempotency_key.map(|key| Idempotency {
+            key,
+            digest: crate::policy::sha256_hex(&crate::capability::executor::canonical_json(&input)),
+        });
+        let seed = Seed {
+            capability: c.id.as_str(),
+            title: &c.title,
+            input: stored,
+            cancellable: c.execution.cancellable,
             actor,
-            repository_of(ctx),
-        );
+            repository: repository_of(ctx),
+        };
+        match self.store.create_once(id.clone(), seed, idempotency) {
+            Ok(Admission::Created(_)) => {}
+            Ok(Admission::Existing(execution)) => {
+                return Ok(Submitted {
+                    execution: *execution,
+                    deduplicated: true,
+                })
+            }
+            Err(conflict) => return Err(SubmitError::Conflict(conflict)),
+        }
         let pending = Pending {
             id: id.clone(),
             capability: c.id.to_string(),
@@ -253,9 +303,14 @@ impl ExecutionEngine {
             self.store.get(&id)
         };
         self.dispatch();
-        accepted.ok_or_else(|| {
-            SubmitError::Unavailable("the execution was forgotten as it was created".into())
-        })
+        accepted
+            .map(|execution| Submitted {
+                execution,
+                deduplicated: false,
+            })
+            .ok_or_else(|| {
+                SubmitError::Unavailable("the execution was forgotten as it was created".into())
+            })
     }
 
     /// Start whatever may start now: the bound on concurrent handlers, and the serial
@@ -458,6 +513,7 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
         CapabilityError::NotFound(_) => ("not_found", None),
         CapabilityError::Refused(_) => ("refused", None),
         CapabilityError::Forbidden(_) => ("forbidden", None),
+        CapabilityError::Conflict(_) => ("conflict", None),
         CapabilityError::Internal(_) => (
             "internal",
             Some(format!("search the server's output for execution_id={id}")),
@@ -470,7 +526,8 @@ fn failure(id: &ExecutionId, error: &CapabilityError) -> ExecutionError {
             | CapabilityError::NotFound(m)
             | CapabilityError::Refused(m)
             | CapabilityError::Internal(m)
-            | CapabilityError::Forbidden(m) => m.clone(),
+            | CapabilityError::Forbidden(m)
+            | CapabilityError::Conflict(m) => m.clone(),
         },
         suggestion,
         correlation_id: id.to_string(),

@@ -127,7 +127,7 @@ pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENV
 pub use episodes::{AttachInput, DetachInput, EpisodeList};
 pub use executions::{
     CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
-    EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
+    StartedExecution, EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
 };
 pub use gates::{CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
