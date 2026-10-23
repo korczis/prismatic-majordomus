@@ -55,6 +55,10 @@ fn standalone(repo: &RepoArgs) -> Result<Server> {
     // a stdio session outlives commits like any other: it follows the repository too
     let live = Arc::new(Live::watching(repo.clone(), app.context.clone()));
     let peer = live.current().peers.attach(PeerTransport::Stdio);
+    // as on a shared server, the stdio client is the worker that started this process (I3956)
+    if let Some(address) = crate::peers::PeerAddress::of_this_process() {
+        live.current().peers.locate(&peer, address);
+    }
     Ok(Server::new(
         Surface::new(Arc::clone(&live)).for_peer(peer),
         crate::VERSION,
@@ -196,6 +200,11 @@ impl Session {
             &crate::shared::MeshHosting::default(),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
+        // the client on this process's own stdio started this process: its address is this
+        // process's environment (I3956); a bridged client's is carried in its initialize
+        if let Some(address) = crate::peers::PeerAddress::of_this_process() {
+            ctx.peers.locate(&peer, address);
+        }
         let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)
             .with_endpoint(Some(shared.url()));
         if let Some(client) = resume {

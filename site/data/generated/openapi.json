@@ -831,6 +831,7 @@
     "schema-PathChange": "docs/api/commit/",
     "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
+    "schema-PeerAddress": "docs/api/peers/",
     "schema-PeerCheckout": "docs/api/peers/",
     "schema-PeerDetail": "docs/api/mesh/",
     "schema-PeerId": "docs/api/shared/",
@@ -1281,7 +1282,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 203,
-    "schemas": 1016,
+    "schemas": 1017,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2208,6 +2209,7 @@
     "PathChange": "commit",
     "PathOverlap": "integration",
     "Peer": "peers",
+    "PeerAddress": "peers",
     "PeerCheckout": "peers",
     "PeerDetail": "mesh",
     "PeerId": "shared",
@@ -3367,6 +3369,15 @@
           ],
           "required": false,
           "type": "PeerCheckout | null"
+        },
+        {
+          "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it.",
+          "name": "address",
+          "refs": [
+            "PeerAddress"
+          ],
+          "required": false,
+          "type": "PeerAddress | null"
         },
         {
           "description": "Every other peer whose claimed scope meets this one. Empty is the ordinary case.",
@@ -37610,12 +37621,72 @@
           ],
           "required": false,
           "type": "PeerCheckout | null"
+        },
+        {
+          "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it.",
+          "name": "address",
+          "refs": [
+            "PeerAddress"
+          ],
+          "required": false,
+          "type": "PeerAddress | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
         "PeerList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```",
+      "home": "peers",
+      "is_enum": false,
+      "name": "PeerAddress",
+      "properties": [
+        {
+          "description": "The provider whose session this is (`claude-code`), when its environment says so.",
+          "name": "provider",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The machine the worker runs on.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worker's own process: the provider's pid, not the MCP bridge it started.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The provider's id for the session, the one its lifecycle hooks are given.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The socket other sessions on the same machine message this one through.",
+          "name": "socket",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Announced",
+        "Peer"
       ],
       "values": [],
       "variants": []

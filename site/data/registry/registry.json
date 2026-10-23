@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "b4b45b65b970f7fde163883bfddf9291927eda25e711607613850ea24cea3c21",
+    "fingerprint": "6f98792d4318476ccf5587b324727375403750be1d46f0d5568ba0191480195a",
     "summary": {
-      "total": 3328,
+      "total": 3330,
       "builtin": 209,
-      "declarative": 3119,
+      "declarative": 3121,
       "by_kind": {
         "command": 32,
         "query": 177,
-        "resource": 3119
+        "resource": 3121
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3129
+        "implemented": 3131
       },
       "mcp_tools": 198,
-      "mcp_resources": 3174,
+      "mcp_resources": 3176,
       "http_routes": 203,
       "cli_commands": 113,
       "modules": 92,
@@ -57066,6 +57066,17 @@
                 ],
                 "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
               },
+              "address": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/PeerAddress"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
+              },
               "overlaps": {
                 "type": "array",
                 "items": {
@@ -57198,6 +57209,49 @@
                   "this_checkout"
                 ],
                 "description": "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
+              },
+              "PeerAddress": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider whose session this is (`claude-code`), when its environment says so."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The machine the worker runs on."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's own process: the provider's pid, not the MCP bridge it started."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's id for the session, the one its lifecycle hooks are given."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions on the same machine message this one through."
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
               },
               "Overlap": {
                 "type": "object",
@@ -57451,6 +57505,17 @@
                       }
                     ],
                     "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+                  },
+                  "address": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PeerAddress"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
                   }
                 },
                 "required": [
@@ -57565,6 +57630,49 @@
                   "this_checkout"
                 ],
                 "description": "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
+              },
+              "PeerAddress": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider whose session this is (`claude-code`), when its environment says so."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The machine the worker runs on."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's own process: the provider's pid, not the MCP bridge it started."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's id for the session, the one its lifecycle hooks are given."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions on the same machine message this one through."
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
               },
               "Overlap": {
                 "type": "object",
@@ -86423,7 +86531,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 904,
+        "capabilities": 905,
         "capability_ids": []
       },
       {
@@ -86999,7 +87107,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 603,
+        "capabilities": 604,
         "capability_ids": []
       },
       {
@@ -87091,7 +87199,7 @@
     ]
   },
   "index": {
-    "fingerprint": "87286ba4af065056b220e161d970417483416320e55f58cacd323ebd41194b0c",
+    "fingerprint": "40f9f605738d4d7ae6f7de20b0d88cd3ef3ad4f55b5d9c0fad21f97fe922401c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87131,7 +87239,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 37,
-      "issue": 904,
+      "issue": 905,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 104,
@@ -87145,7 +87253,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 603,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },
@@ -94340,7 +94448,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 80600
+        "bytes": 81575
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -94421,7 +94529,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 804401
+        "bytes": 804640
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108206,6 +108314,17 @@
         "bytes": 2790
       },
       {
+        "uri": "majordomus://issue/I3956",
+        "kind": "issue",
+        "identity": "I3956",
+        "title": "Every worker, and every process it starts on any machine, is traced to its session, and the board names the address that reaches it",
+        "description": "Derive, never ask, who owns work: the board row of a Claude Code session carries the address that reaches it (its cross-session name and socket), announced by the session-start hook; every remote run (offload derive, remote test or build on a cluster host) carries its owner (session key, board peer, issue) in its process environment and in a run record on the host; `majordomus mesh who <pid|path|issue|host-pid>` answers the owner and the address; a remote cargo started around the offload path is refused by a hook.",
+        "path": ".ai/repo/project/issues/I3956.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3648
+      },
+      {
         "uri": "majordomus://issue/I3957",
         "kind": "issue",
         "identity": "I3957",
@@ -118489,6 +118608,14 @@
         "bytes": 6520
       },
       {
+        "uri": "majordomus://test/test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "kind": "test",
+        "identity": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "source_class": "case",
+        "bytes": 5713
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -121163,7 +121290,7 @@
       "identity": [
         "id"
       ],
-      "objects": 904
+      "objects": 905
     },
     {
       "name": "knowledge",
@@ -121325,7 +121452,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 603
+      "objects": 604
     },
     {
       "name": "use-case",
