@@ -9894,6 +9894,11 @@ capabilities:
               - boolean
               - "null"
             description: "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+          source_ranges:
+            type:
+              - boolean
+              - "null"
+            description: "Outline the Rust source under the work's paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer's objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it."
         description: "The input of `devcontext.compile`: what to compile a context about."
         title: DevContextInput
     output:
@@ -9945,6 +9950,9 @@ capabilities:
             items:
               "$ref": "#/$defs/Diagnostic"
             description: "What the compiler could not read: a knowledge source the layer names and does not\nhold, a session record that no longer describes this checkout. Never an error: an\nabsent source is an answer."
+          sources:
+            "$ref": "#/$defs/SourceCoverage"
+            description: "The source files the request's paths reach, outlined into ranges: what each whole\nfile would cost, what its selected ranges cost instead, and what was not read and\nwhy. Absent when the request reaches no tracked source, so an answer about the layer\nalone is unchanged."
         required:
           - schema
           - fingerprint
@@ -10438,6 +10446,109 @@ capabilities:
                 const: error
                 description: The file is excluded and the index is degraded.
             description: "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+          SourceCoverage:
+            type: object
+            properties:
+              parser:
+                type: string
+                description: "What parsed the files, and what that parser does not see."
+              files:
+                type: array
+                items:
+                  "$ref": "#/$defs/SourceFile"
+                description: "The files outlined, in path order."
+              unread:
+                type: array
+                items:
+                  "$ref": "#/$defs/UnreadSource"
+                description: "Source the paths reach and the compiler did not outline, with the reason: out of\nthe repository scope, a symbolic link, over the size bound, not valid syntax."
+              unparsed:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: "Tracked files under the paths that no parser here covers, counted by extension.\nThese have no ranges; an empty outline for them would read as complete."
+              truncated:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Source files past the per-request bound, counted and not read."
+            description: "What the compiler read of the source under a request's paths, and what that saved.\n\nThe index `fingerprint` covers the layer's objects, not\nthe source files the ranges come from, so each file carries the digest of the bytes\nthat were parsed: a range is true of those bytes, which may be a dirty work tree's\nrather than any commit's, and two answers agree about a file exactly when its digests\ndo.\n\nEvery number here is an estimate in the same unit as the budget (`BYTES_PER_TOKEN`),\nand the saving is measured against reading each outlined file whole — the reading this\nreplaces — not against an ideal reader.\n\n```\nuse majordomus_cli::devcontext::{SourceCoverage, SourceFile};\n\nlet file = SourceFile {\n    path: \"src/big.rs\".into(),\n    digest: \"sha256:00\".into(),\n    bytes: 40_000,\n    whole_tokens: 10_000,\n    definitions: 120,\n    ranges: 120, truncated: 0,\n    selected: 3,\n    selected_tokens: 900,\n    saved_tokens: 9_100,\n};\nlet c = SourceCoverage { files: vec![file], ..Default::default() };\nassert!(!c.is_empty());\nassert_eq!(c.whole_tokens(), 10_000);\nassert_eq!(c.selected_tokens(), 900);\nassert_eq!(c.saved_tokens(), 9_100);\n\n// an answer that read no source has no coverage section at all\nassert!(SourceCoverage::default().is_empty());\n```"
+          SourceFile:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative.
+              digest:
+                type: string
+                description: "`sha256:<hex>` of the bytes parsed."
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Its size.
+              whole_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What reading it whole costs, in estimated tokens."
+              definitions:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many definitions the parser found in it.
+              ranges:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many ranges they were offered as: definitions written on the same lines share\none. Every range is either selected or excluded, so this is `selected` plus the\nfile's ranges in `excluded`."
+              truncated:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Definitions past the per-file bound, not offered."
+              selected:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of its ranges the budget selected.
+              selected_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What those ranges cost, in estimated tokens."
+              saved_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "`whole_tokens - selected_tokens`: what reading the selected ranges instead of the\nfile saves. Zero when the ranges cost as much as the file, and zero when none of its\nranges was selected: a file the answer gives nothing of was not read more cheaply,\nit was not read at all."
+            required:
+              - path
+              - digest
+              - bytes
+              - whole_tokens
+              - definitions
+              - ranges
+              - truncated
+              - selected
+              - selected_tokens
+              - saved_tokens
+            description: "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"ranges\": 11, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```"
+          UnreadSource:
+            type: object
+            properties:
+              path:
+                type: string
+                description: Repository-relative.
+              reason:
+                type: string
+                description: "Which guard refused it, or what the parser said."
+            required:
+              - path
+              - reason
+            description: "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::devcontext
@@ -10533,6 +10644,11 @@ capabilities:
               - boolean
               - "null"
             description: "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop."
+          source_ranges:
+            type:
+              - boolean
+              - "null"
+            description: "Outline the Rust source under the work's paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer's objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it."
         required:
           - uri
         description: "The input of `devcontext.explain`: one identifier, and the request to judge it under."

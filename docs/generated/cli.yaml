@@ -14080,6 +14080,17 @@ cli:
               possible_values: []
               defaults:
                 - "false"
+            - name: source_ranges
+              long: source-ranges
+              positional: false
+              help: "Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects"
+              value_name: SOURCE_RANGES
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
             - name: repo
               long: repo
               positional: false
@@ -14270,6 +14281,17 @@ cli:
               positional: false
               help: "Every blocking rule of the layer, not only the ones the work reaches"
               value_name: ALL_BLOCKING_RULES
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: source_ranges
+              long: source-ranges
+              positional: false
+              help: "Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects"
+              value_name: SOURCE_RANGES
               takes_value: false
               required: false
               global: false

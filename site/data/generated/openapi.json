@@ -1107,6 +1107,8 @@
     "schema-SnapshotSection": "docs/api/integration/",
     "schema-Source": "docs/api/design/",
     "schema-SourceCheck": "docs/api/continuity/",
+    "schema-SourceCoverage": "docs/api/devcontext/",
+    "schema-SourceFile": "docs/api/devcontext/",
     "schema-SourceRelation": "docs/api/continuity/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
@@ -1191,6 +1193,7 @@
     "schema-UncommittedReport": "docs/api/worktree/",
     "schema-UncommittedTallies": "docs/api/worktree/",
     "schema-UncommittedWorktree": "docs/api/worktree/",
+    "schema-UnreadSource": "docs/api/devcontext/",
     "schema-UpstreamState": "docs/api/worktree/",
     "schema-UseCaseRef": "docs/api/product/",
     "schema-ValidationOutcome": "docs/api/reasoning/",
@@ -1277,7 +1280,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 202,
-    "schemas": 1013,
+    "schemas": 1016,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2480,6 +2483,8 @@
     "SnapshotSection": "integration",
     "Source": "design",
     "SourceCheck": "continuity",
+    "SourceCoverage": "devcontext",
+    "SourceFile": "devcontext",
     "SourceRelation": "continuity",
     "Spelling": "session-domain",
     "Stability": "shared",
@@ -2564,6 +2569,7 @@
     "UncommittedReport": "worktree",
     "UncommittedTallies": "worktree",
     "UncommittedWorktree": "worktree",
+    "UnreadSource": "devcontext",
     "UpstreamState": "worktree",
     "UseCaseRef": "product",
     "ValidationOutcome": "reasoning",
@@ -10043,6 +10049,15 @@
           ],
           "required": true,
           "type": "array of Diagnostic"
+        },
+        {
+          "description": "The source files the request's paths reach, outlined into ranges: what each whole\nfile would cost, what its selected ranges cost instead, and what was not read and\nwhy. Absent when the request reaches no tracked source, so an answer about the layer\nalone is unchanged.",
+          "name": "sources",
+          "refs": [
+            "SourceCoverage"
+          ],
+          "required": false,
+          "type": "SourceCoverage"
         }
       ],
       "type": "object",
@@ -53511,6 +53526,145 @@
       "variants": []
     },
     {
+      "description": "What the compiler read of the source under a request's paths, and what that saved.\n\nThe index `fingerprint` covers the layer's objects, not\nthe source files the ranges come from, so each file carries the digest of the bytes\nthat were parsed: a range is true of those bytes, which may be a dirty work tree's\nrather than any commit's, and two answers agree about a file exactly when its digests\ndo.\n\nEvery number here is an estimate in the same unit as the budget (`BYTES_PER_TOKEN`),\nand the saving is measured against reading each outlined file whole — the reading this\nreplaces — not against an ideal reader.\n\n```\nuse majordomus_cli::devcontext::{SourceCoverage, SourceFile};\n\nlet file = SourceFile {\n    path: \"src/big.rs\".into(),\n    digest: \"sha256:00\".into(),\n    bytes: 40_000,\n    whole_tokens: 10_000,\n    definitions: 120,\n    ranges: 120, truncated: 0,\n    selected: 3,\n    selected_tokens: 900,\n    saved_tokens: 9_100,\n};\nlet c = SourceCoverage { files: vec![file], ..Default::default() };\nassert!(!c.is_empty());\nassert_eq!(c.whole_tokens(), 10_000);\nassert_eq!(c.selected_tokens(), 900);\nassert_eq!(c.saved_tokens(), 9_100);\n\n// an answer that read no source has no coverage section at all\nassert!(SourceCoverage::default().is_empty());\n```",
+      "home": "devcontext",
+      "is_enum": false,
+      "name": "SourceCoverage",
+      "properties": [
+        {
+          "description": "What parsed the files, and what that parser does not see.",
+          "name": "parser",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The files outlined, in path order.",
+          "name": "files",
+          "refs": [
+            "SourceFile"
+          ],
+          "required": false,
+          "type": "array of SourceFile"
+        },
+        {
+          "description": "Source the paths reach and the compiler did not outline, with the reason: out of\nthe repository scope, a symbolic link, over the size bound, not valid syntax.",
+          "name": "unread",
+          "refs": [
+            "UnreadSource"
+          ],
+          "required": false,
+          "type": "array of UnreadSource"
+        },
+        {
+          "description": "Tracked files under the paths that no parser here covers, counted by extension.\nThese have no ranges; an empty outline for them would read as complete.",
+          "name": "unparsed",
+          "refs": [],
+          "required": false,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Source files past the per-request bound, counted and not read.",
+          "name": "truncated",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompiledContext"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"ranges\": 11, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```",
+      "home": "devcontext",
+      "is_enum": false,
+      "name": "SourceFile",
+      "properties": [
+        {
+          "description": "Repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`sha256:<hex>` of the bytes parsed.",
+          "name": "digest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its size.",
+          "name": "bytes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What reading it whole costs, in estimated tokens.",
+          "name": "whole_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How many definitions the parser found in it.",
+          "name": "definitions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many ranges they were offered as: definitions written on the same lines share\none. Every range is either selected or excluded, so this is `selected` plus the\nfile's ranges in `excluded`.",
+          "name": "ranges",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Definitions past the per-file bound, not offered.",
+          "name": "truncated",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of its ranges the budget selected.",
+          "name": "selected",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "What those ranges cost, in estimated tokens.",
+          "name": "selected_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`whole_tokens - selected_tokens`: what reading the selected ranges instead of the\nfile saves. Zero when the ranges cost as much as the file, and zero when none of its\nranges was selected: a file the answer gives nothing of was not read more cheaply,\nit was not read at all.",
+          "name": "saved_tokens",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SourceCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How the local source stands towards the record's.",
       "home": "continuity",
       "is_enum": true,
@@ -58016,6 +58170,35 @@
       "variants": []
     },
     {
+      "description": "A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \"src/link.rs\".into(), reason: \"a symbolic link; not followed\".into() };\nassert_eq!(serde_json::to_value(&u).unwrap()[\"reason\"], \"a symbolic link; not followed\");\n```",
+      "home": "devcontext",
+      "is_enum": false,
+      "name": "UnreadSource",
+      "properties": [
+        {
+          "description": "Repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which guard refused it, or what the parser said.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SourceCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A branch's upstream and how far the two have moved apart, from `for-each-ref` in one\nsubprocess for every branch, never a fetch.",
       "home": "worktree",
       "is_enum": false,
@@ -61406,7 +61589,7 @@
           "cache": "process",
           "cache_detail": "max_entries=16",
           "cli": "devcontext compile",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext?issue=I0001&milestone=M000&intent=the%20context%20a%20session%20is%20given%20and%20the%20budget%20it%20costs\"",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/devcontext?issue=I0001&milestone=M000&intent=the%20context%20a%20session%20is%20given%20and%20the%20budget%20it%20costs&paths=%5B%22apps%2Fmajordomus-cli%2Fsrc%2Fdevcontext%22%5D&budget_tokens=24000&max_depth=3&floor=0.25&source_ranges=true\"",
           "description": "The objects a session working on this issue, milestone, intent or set of paths should be given: each with its canonical identifier, the index's own provenance, every discovery path that reached it with the reason and the confidence, its version, its tier and its cost in estimated tokens — followed by everything reached and not given with the reason for each, everything that collapsed into one entry, every pair that does not agree, and the per-tier spend against the budget. Deterministic for a given tree and request; the index fingerprint it was compiled from is in the answer.",
           "home": "devcontext",
           "id": "devcontext.compile",
@@ -61445,6 +61628,10 @@
                 {
                   "case": "intent",
                   "value": "\"the context a session is given and the budget it costs\""
+                },
+                {
+                  "case": "source-ranges",
+                  "value": "\"the budget spend\""
                 }
               ],
               "name": "intent",
@@ -61453,7 +61640,12 @@
             },
             {
               "description": "Repository-relative paths the work touches, added to whatever the seeds declare.",
-              "examples": [],
+              "examples": [
+                {
+                  "case": "source-ranges",
+                  "value": "[\"apps/majordomus-cli/src/devcontext\"]"
+                }
+              ],
               "name": "paths",
               "required": false,
               "type": "array of string"
@@ -61467,21 +61659,36 @@
             },
             {
               "description": "The ceiling in estimated tokens; `DEFAULT_BUDGET_TOKENS` when absent.",
-              "examples": [],
+              "examples": [
+                {
+                  "case": "source-ranges",
+                  "value": "24000"
+                }
+              ],
               "name": "budget_tokens",
               "required": false,
               "type": "integer (uint64)"
             },
             {
               "description": "How far from a seed the walk goes; `DEFAULT_MAX_DEPTH` when absent.",
-              "examples": [],
+              "examples": [
+                {
+                  "case": "source-ranges",
+                  "value": "3"
+                }
+              ],
               "name": "max_depth",
               "required": false,
               "type": "integer (uint)"
             },
             {
               "description": "Relevance below which an entry is reported rather than given; `DEFAULT_FLOOR`\nwhen absent.",
-              "examples": [],
+              "examples": [
+                {
+                  "case": "source-ranges",
+                  "value": "0.25"
+                }
+              ],
               "name": "floor",
               "required": false,
               "type": "number (double)"
@@ -61490,6 +61697,18 @@
               "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
               "examples": [],
               "name": "all_blocking_rules",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Outline the Rust source under the work's paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer's objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it.",
+              "examples": [
+                {
+                  "case": "source-ranges",
+                  "value": "true"
+                }
+              ],
+              "name": "source_ranges",
               "required": false,
               "type": "boolean"
             }
@@ -61624,6 +61843,13 @@
               "description": "Every blocking rule of the layer, not only the ones the work reaches. Honest and\nusually over budget: the answer then says `over_budget` rather than dropping what it\nmay not drop.",
               "examples": [],
               "name": "all_blocking_rules",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Outline the Rust source under the work's paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer's objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it.",
+              "examples": [],
+              "name": "source_ranges",
               "required": false,
               "type": "boolean"
             }
