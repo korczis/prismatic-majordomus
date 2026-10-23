@@ -171,7 +171,12 @@ pub(crate) fn cache_dir(home: Option<&Path>, xdg_cache: Option<&str>) -> PathBuf
 impl Machine {
     /// This machine, as the environment describes it, with the policy's bound.
     pub(crate) fn from_env(local_max_gib: Option<u64>) -> Machine {
-        let var = |n: &str| std::env::var(n).ok();
+        Machine::from_env_with(local_max_gib, |n| std::env::var(n).ok())
+    }
+
+    /// [`Machine::from_env`] over any lookup of environment values, so that the reading is
+    /// testable without touching the process's environment.
+    fn from_env_with(local_max_gib: Option<u64>, var: impl Fn(&str) -> Option<String>) -> Machine {
         let home = var("HOME").filter(|h| !h.is_empty()).map(PathBuf::from);
         let config = home
             .clone()
@@ -1497,34 +1502,34 @@ mod tests {
         (fs::read(&a).unwrap(), sum.into_bytes())
     }
 
-    static ENV: Mutex<()> = Mutex::new(());
-
     #[test]
     fn the_machine_reads_its_floor_its_switch_and_a_missing_home_from_the_environment() {
-        let _guard = ENV.lock().unwrap_or_else(|e| e.into_inner());
-        let saved: Vec<(&str, Option<String>)> = ["HOME", "MAJORDOMUS_MIN_FREE_MB", SWITCH]
-            .iter()
-            .map(|n| (*n, std::env::var(n).ok()))
-            .collect();
-        std::env::set_var("HOME", "");
-        std::env::set_var("MAJORDOMUS_MIN_FREE_MB", " 7 ");
-        std::env::set_var(SWITCH, " OFF ");
-        let m = Machine::from_env(None);
-        std::env::set_var("MAJORDOMUS_MIN_FREE_MB", "lots");
-        std::env::set_var(SWITCH, "on");
-        let unparsed = Machine::from_env(None);
-        for (n, v) in saved {
-            match v {
-                Some(v) => std::env::set_var(n, v),
-                None => std::env::remove_var(n),
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |n: &str| {
+                pairs
+                    .iter()
+                    .find(|(k, _)| *k == n)
+                    .map(|(_, v)| v.to_string())
             }
-        }
+        };
+        let m = Machine::from_env_with(
+            None,
+            env(&[
+                ("HOME", ""),
+                ("MAJORDOMUS_MIN_FREE_MB", " 7 "),
+                (SWITCH, " OFF "),
+            ]),
+        );
         assert_eq!(m.home, None);
         assert_eq!(m.min_free_mb, 7);
         assert!(m.bypass);
         assert_eq!(
             m.node_file,
             PathBuf::from("./.config/majordomus/build-cache.json")
+        );
+        let unparsed = Machine::from_env_with(
+            None,
+            env(&[("MAJORDOMUS_MIN_FREE_MB", "lots"), (SWITCH, "on")]),
         );
         assert_eq!(
             unparsed.min_free_mb, DEFAULT_MIN_FREE_MB,
