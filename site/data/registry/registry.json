@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "29a9db240b6711548cb4ba361655017f69c8790f6215afff3805865860180178",
+    "fingerprint": "a6331e35ba4425de9f6efc85ddecb61c0225f85bf9eb3b9465adec2e626ead0f",
     "summary": {
-      "total": 3322,
+      "total": 3323,
       "builtin": 209,
-      "declarative": 3113,
+      "declarative": 3114,
       "by_kind": {
         "command": 33,
         "query": 176,
-        "resource": 3113
+        "resource": 3114
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3123
+        "implemented": 3124
       },
       "mcp_tools": 198,
-      "mcp_resources": 3168,
+      "mcp_resources": 3169,
       "http_routes": 203,
       "cli_commands": 112,
       "modules": 92,
@@ -33341,6 +33341,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -34842,6 +34847,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -36706,6 +36716,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -36892,6 +36907,24 @@
                       "null"
                     ],
                     "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
+                  },
+                  "progressed_at": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote."
+                  },
+                  "progress_ttl_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`)."
                   }
                 },
                 "required": [
@@ -87063,7 +87096,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 604,
+        "capabilities": 605,
         "capability_ids": []
       },
       {
@@ -87155,7 +87188,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8695438079c30f3288581f549a6c0aedd2551f404386019251a7f39aa520ab23",
+    "fingerprint": "4fe554419dc40379fc1b0860e6c8493c27c9c4509cd4dbdf3ab2227852eeed04",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87209,7 +87242,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 604,
+      "test": 605,
       "use-case": 49,
       "workspace": 1
     },
@@ -94321,7 +94354,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 72184
+        "bytes": 73734
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -108174,7 +108207,7 @@
         "path": ".ai/repo/project/issues/I3991.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3143
+        "bytes": 3220
       },
       {
         "uri": "majordomus://issue/I3992",
@@ -118477,6 +118510,14 @@
         "bytes": 10374
       },
       {
+        "uri": "majordomus://test/test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "kind": "test",
+        "identity": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "path": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "source_class": "case",
+        "bytes": 10890
+      },
+      {
         "uri": "majordomus://test/test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
         "kind": "test",
         "identity": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
@@ -121321,7 +121362,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 604
+      "objects": 605
     },
     {
       "name": "use-case",

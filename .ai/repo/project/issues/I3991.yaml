@@ -10,11 +10,12 @@ why: "On 2026-10-22 the executor of seat 5d (pid 70881, claim c-b237f187784f) he
 current_state: "integration::exclusive takes the mesh claim and the flock lease once and holds both until the executor exits; the claim is kept alive by the stream beat and, after I3990, by any real work of the executor's session. Nothing records when the executor last advanced its queue."
 desired_state: "The executor beats its integration session (mesh.beat with the phase it is in) exactly when it advances the queue; an executor that has not advanced for cooperation.session_ttl_seconds has its integration claim suspended, a second executor is admitted and the first releases with OVERTAKEN when it resumes; the lease record carries progressed_at and prs brief names a lease held without progress."
 scope:
-  - "apps/majordomus-cli/src/integration/exclusive.rs"
   - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/integration/exclusive.rs"
   - "apps/majordomus-cli/src/integration/repair.rs"
-  - "apps/majordomus-cli/src/lease.rs"
-  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "apps/majordomus-cli/src/integration/tests.rs"
+  - "apps/majordomus-cli/src/commands/prs.rs"
+  - "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh"
   - "docs/INTEGRATION.md"
   - ".ai/repo/project/issues/I3991.yaml"
 non_scope:
@@ -26,7 +27,7 @@ acceptance_criteria:
   - "The first executor, resuming after another was admitted, releases its claim with OVERTAKEN and does not merge"
   - "The lease record carries progressed_at, and prs brief names a lease held without progress for longer than the ttl"
 validation:
-  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: lease::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: commands::prs"
   - "bin/majordomus plan validate"
 evidence_required:
   - "the_integration_lease_lives_by_queue_progress"

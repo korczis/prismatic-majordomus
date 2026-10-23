@@ -58674,11 +58674,12 @@
       ],
       "dependents": [],
       "scope": [
-        "apps/majordomus-cli/src/integration/exclusive.rs",
         "apps/majordomus-cli/src/integration/drain.rs",
+        "apps/majordomus-cli/src/integration/exclusive.rs",
         "apps/majordomus-cli/src/integration/repair.rs",
-        "apps/majordomus-cli/src/lease.rs",
-        "apps/majordomus-cli/src/capability/builtin/brief.rs",
+        "apps/majordomus-cli/src/integration/tests.rs",
+        "apps/majordomus-cli/src/commands/prs.rs",
+        "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
         "docs/INTEGRATION.md",
         ".ai/repo/project/issues/I3991.yaml"
       ],
@@ -58697,7 +58698,7 @@
         "The lease record carries progressed_at, and prs brief names a lease held without progress for longer than the ttl"
       ],
       "validation": [
-        "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: lease::",
+        "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: commands::prs",
         "bin/majordomus plan validate"
       ],
       "evidence_required": [
