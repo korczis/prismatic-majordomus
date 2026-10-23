@@ -47,6 +47,7 @@ pub mod git;
 pub mod graph;
 pub mod guard;
 pub mod http;
+pub mod idle;
 pub mod index;
 pub(crate) mod integration;
 pub mod intent;

@@ -1325,7 +1325,10 @@ enum Answer {
 /// Ask a published URL the probe's three questions within `timeout`, telling a server that
 /// said no apart from one that said nothing in time.
 fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
-    match bridge::request(url, "GET", "/", &[], None, timeout) {
+    // marked as a probe, so that asking whether a server is there does not keep it there
+    // (I4007): a server's idle timer counts a client reading its home page, not this
+    let probe = [(crate::idle::PROBE_HEADER, "1")];
+    match bridge::request(url, "GET", "/", &probe, None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves

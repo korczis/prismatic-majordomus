@@ -39,6 +39,9 @@ pub struct SharedServer {
     /// Set by [`SharedServer::take_stop_requests`]: the owner's loop answers a stop signal
     /// itself, and the reader thread leaves it to it.
     owner_answers: Arc<AtomicBool>,
+    /// The repository as this server reads it, for what the idle timer asks of its current
+    /// context: the executions it is running and the board of its peers (I4007).
+    live: Arc<crate::live::Live>,
 }
 
 /// How a hosted hub differs from a checkout's server on the mesh (ADR 0220 decisions 2
@@ -248,7 +251,7 @@ impl SharedServer {
         let url = bound.url();
         let ctx_for_mesh = live.current();
         let endpoint = Arc::new(McpEndpoint::new(Arc::clone(&live), version, url.clone()));
-        let router = Router::new(live, version)
+        let router = Router::new(Arc::clone(&live), version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir)
             .with_ui(share_dir);
@@ -354,6 +357,7 @@ impl SharedServer {
             mesh: ctx_for_mesh.mesh.clone(),
             claimed,
             owner_answers,
+            live,
         })
     }
 
@@ -371,6 +375,20 @@ impl SharedServer {
     pub fn peers_attached(&self) -> usize {
         self.endpoint.reap();
         self.endpoint.active()
+    }
+
+    /// What keeps this server in use right now, for its idle timer: the peers attached (its
+    /// MCP sessions, or the rows of its peer board, whichever is more), the executions it
+    /// has not finished, its live channels, and whether a client's request was answered
+    /// within `window` — machine traffic is not counted ([`crate::idle::counts_as_use`]).
+    pub(crate) fn activity(&self, window: Duration) -> crate::idle::Activity {
+        let ctx = self.live.current();
+        crate::idle::Activity {
+            peers: self.peers_attached().max(ctx.peers.len()),
+            executions: ctx.executions.store().active(),
+            channels: server::open_channels(),
+            client_request: server::used_within(window),
+        }
     }
 
     /// Block until no HTTP session remains, or a signal asks this process to stop: a server
