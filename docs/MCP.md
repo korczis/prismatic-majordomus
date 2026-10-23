@@ -484,6 +484,18 @@ transport, when it attached and when it was last seen. The `initialize` result's
 `instructions` tell a client the server's URL, its own peer id and every other peer with
 what it announced, before its first tool call.
 
+A peer's row also carries its `address` (I3956): where the worker behind it can be reached
+from outside its connection — the machine, the worker's own process (`CLAUDE_PID`, else the
+parent of the process it started), the provider's session id and the socket other sessions
+message it through (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_CODE_MESSAGING_SOCKET`). It is derived
+from the environment the provider hands the process it starts, never announced by hand: the
+server's own stdio client is located from the server's environment, and a bridged
+`majordomus mcp` carries its own under `_meta["dev.majordomus/address"]` in the `initialize`
+it forwards. The provider's messaging token is a credential and is never read. A client that
+exposes none of it is still named by its machine and its process. The provider and session
+id together spell the mesh session the edit guard judges the provider's claims under
+(`claude-code-<session id>`), which joins the board row to the mesh.
+
 | tool | capability | arguments | answers |
 |---|---|---|---|
 | `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |

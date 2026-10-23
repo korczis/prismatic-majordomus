@@ -5080,7 +5080,14 @@ fn peers_of(b: &PeerList) -> Page {
                         row(vec![
                             cell(mono(p.id.as_str())),
                             cell(checkout),
-                            cell(el("span").text(p.client.name.clone())),
+                            cell(match &p.address {
+                                // where the worker can be reached, beside what it is (I3956)
+                                Some(a) => el("span")
+                                    .text(p.client.name.clone())
+                                    .text(" ")
+                                    .child(mono(a.line())),
+                                None => el("span").text(p.client.name.clone()),
+                            }),
                             cell(if p.attached {
                                 badge("ok", "attached")
                             } else {

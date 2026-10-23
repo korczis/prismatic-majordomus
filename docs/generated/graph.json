@@ -64398,6 +64398,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I3956",
+        "kind": "issue",
+        "label": "I3956",
+        "summary": "Every worker, and every process it starts on any machine, is traced to its session, and the board names the address that reaches it",
+        "route": "/cockpit/objects/issue/i3956",
+        "source": ".ai/repo/project/issues/I3956.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "trace_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Stopping another session's process: the trace names the owner, the owner acts"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mesh/",
+            "apps/majordomus-cli/src/offload/",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            ".claude/hooks/",
+            ".ai/repo/providers/",
+            "test/cases/3957_every_process_is_traced_to_its_session.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+          ],
+          "slug": "every-process-is-traced-to-its-session",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3957_every_process_is_traced_to_its_session"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3957",
         "kind": "issue",
         "label": "I3957",
@@ -87097,6 +87139,13 @@
         "label": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
         "route": "/cockpit/objects/test/test-cases-3950-a-cache-key-is-a-derived-triplet-sh",
         "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "kind": "test",
+        "label": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "route": "/cockpit/objects/test/test-cases-3957-every-process-is-traced-to-its-session-sh",
+        "source": "test/cases/3957_every_process_is_traced_to_its_session.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -123754,6 +123803,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3956",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3956",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3957",
         "target": "kind:issue",
         "kind": "is_a"
@@ -129899,6 +129958,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -135010,8 +135074,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3782,
-      "edges": 8751,
+      "nodes": 3784,
+      "edges": 8754,
       "acyclic": false,
       "truncated": false
     }
