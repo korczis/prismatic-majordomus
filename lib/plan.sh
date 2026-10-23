@@ -539,8 +539,10 @@ mj_plan_done() {
     printf 'plan: %s %s\n' "$id" "$(printf '%s' "$out" | jq -r '.output.to')"
     return 0
   fi
-  code="$(printf '%s' "$out" | jq -r '.error.code // empty' 2>/dev/null)"
-  msg="$(printf '%s' "$out" | jq -r '.error.message // empty' 2>/dev/null)"
+  # An answer that is not JSON is no answer: jq's failure on it must not end this command
+  # under `set -e` with jq's exit status and no word said (case 582, the `broken` arm).
+  code="$(printf '%s' "$out" | jq -r '.error.code // empty' 2>/dev/null || true)"
+  msg="$(printf '%s' "$out" | jq -r '.error.message // empty' 2>/dev/null || true)"
   case "$code" in
     refused)
       case "$msg" in

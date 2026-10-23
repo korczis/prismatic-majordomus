@@ -19432,6 +19432,33 @@
           "artifact": "",
           "commit": "9a5a9b77520bbe9504b04ff89235a6f232377788",
           "recorded_at": "2026-10-20T16:49:38Z"
+        },
+        {
+          "covers": "transition_is_a_capability",
+          "type": "test",
+          "command": "bash test/run.sh 99_plan_capabilities 582_the_done_guard_holds_in_both_engines",
+          "result": "ok, both, with a 1.0.0-alpha.6 executable of master 575d39f8d24 on this branch's tree (2026-10-23, macbook-2): tools/call majordomus_plan_transition moves an ACTIVE issue to DONE and appends plan_done; plan done does the same through the executable; every branch of mj_plan_done answers its exit (12 not_found, 10 evidence, 15 refusal, 10 no answer, 10 no jq) and writes nothing. Against master's lib/plan.sh both cases fail; against deafcecd21c's, the no-answer arm exits 5 silently (fixed here).",
+          "artifact": "",
+          "commit": "10b61bb5d41a39e59f5edc9fbd3212b228117eff",
+          "recorded_at": "2026-10-23T16:43:58Z"
+        },
+        {
+          "covers": "projection_not_handwritten",
+          "type": "test",
+          "command": "bash test/run.sh 99_plan_capabilities; bin/majordomus-cli capabilities validate; bin/majordomus-cli generate --check",
+          "result": "ok: /api/v1/plan/transition is POST only in docs/generated/openapi.json and byte-equal to what generate openapi derives from the declaration; development-semantics-check reports no backing:plan, refuses its return to the baseline as stale (exit 10), and reports it as a regression when the registry loses plan's command. No file under apps/majordomus-cli/src/cockpit is changed by this branch; tests/cockpit_plan.rs drives the move through the generic route and execution runner.",
+          "artifact": "",
+          "commit": "10b61bb5d41a39e59f5edc9fbd3212b228117eff",
+          "recorded_at": "2026-10-23T16:44:39Z"
+        },
+        {
+          "covers": "two_engines_still_agree",
+          "type": "test",
+          "command": "MJ_TEST_JOBS=4 bash test/run.sh 41 43 45 46 47 49 53 99_work_graph_chain 129 133 388 581 617 890 894 940 962 1038 1086 3104 3363 97 33 (full names)",
+          "result": "23 passed, 0 failed, 0 skipped; 99_plan_capabilities ok: the shell and the executable agree byte for byte on this repository and on the fixture before and after done through the MCP tool and through the shell",
+          "artifact": "",
+          "commit": "10b61bb5d41a39e59f5edc9fbd3212b228117eff",
+          "recorded_at": "2026-10-23T16:45:07Z"
         }
       ],
       "risk": "High value, contained blast radius. The real risk is scope: a branch that ports lib/plan.sh wholesale proves nothing and cannot be reviewed. One transition, or stop.",
