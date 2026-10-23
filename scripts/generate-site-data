@@ -1879,8 +1879,11 @@ if mj_project_load; then
   for pair in "milestones:$MS" "issues:$IS" "waves:$WV" "edges:$EG" "findings:$FD"; do
     printf '%s' "${pair#*:}" > "$STAGE/plan-${pair%%:*}.json"
   done
+  # The complete graph grows with the plan too. Preserve command substitution's
+  # trailing-newline handling, but carry its bytes through a file instead of argv.
+  printf '%s' "$(mj_project_mermaid)" > "$STAGE/plan-mermaid.txt"
   jq -n --arg name "$(mj_pj_project_name)" --arg repo "$(mj_pj_repository)" --arg branch "$(mj_pj_default_branch)" \
-    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --arg mermaid "$(mj_project_mermaid)" \
+    --arg active "$(mj_pj_active)" --arg next "$(mj_pj_next_ready)" --rawfile mermaid "$STAGE/plan-mermaid.txt" \
     --argjson statuses "$ST" --argjson worker_sequence "$WS" \
     --slurpfile milestones "$STAGE/plan-milestones.json" --slurpfile issues "$STAGE/plan-issues.json" \
     --slurpfile waves "$STAGE/plan-waves.json" --slurpfile edges "$STAGE/plan-edges.json" \

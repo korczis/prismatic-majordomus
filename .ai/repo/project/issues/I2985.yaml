@@ -1,0 +1,28 @@
+id: I2985
+milestone: peer-blackboard
+title: "The Observatory's cooperation scene draws the blackboard, not a second join of the journal"
+slug: the-observatory-draws-the-blackboard
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - the-peer-blackboard-is-one-reality#every-surface-reads-it
+objective: "Read blackboard.snapshot for the Observatory's coop scene (ui/observatory.rs, Cooperation Choreography) instead of mesh.state. A dancer is a worker of the blackboard: a board peer or a mesh session, joined only where the blackboard joined them. Its ribbons are the claims it holds, conflicted ones marked, and its sparks are the reviews and handovers that wait for it. Pairs whose claims meet are drawn as the blackboard's conflicts. The projection keeps the scene's existing rule that what is projected is what the screen may show: a worker's key, origin and presence, counts and kinds, and never an intent's text, a path, a scope or a host name. The mesh scene (machines and runtimes, from mesh.peers) is left as it is, because it draws the topology and not the workers."
+why: "The milestone's invariant is that every surface that shows peers reads the one projection. The coop scene joins sessions, claims and reviews from mesh.state itself. It counts only mesh sessions, so a worker attached to a board without a mesh session is missing from the wall display that is meant to show who works here."
+current_state: "The coop scene reads mesh.state and joins its sessions, claims, reviews and handovers itself."
+desired_state: "The coop scene draws the blackboard's workers, conflicts, reviews and handovers, so the wall display and /ui/peers show the same workers."
+scope:
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "share/ui/observatory-kiosk.js"
+  - "docs/MAJORDOMUS_UI.md"
+depends_on:
+  - "I2983"
+acceptance_criteria:
+  - "The coop scene of a repository with a board peer and no mesh session draws that worker, and one with two meeting claims draws their conflict"
+  - "The projection carries no intent text, path, scope or host name, as the scene's rule says"
+validation:
+  - "majordomus plan validate"
+evidence_required:
+  - "case_observatory_draws_the_blackboard"
+created_at: 2026-10-19
+updated_at: 2026-10-19
