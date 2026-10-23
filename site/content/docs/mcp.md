@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 61
+weight = 62
 [extra]
 source = "docs/MCP.md"
 +++
@@ -537,6 +537,18 @@ transport, when it attached and when it was last seen. The `initialize` result's
 `instructions` tell a client the server's URL, its own peer id and every other peer with
 what it announced, before its first tool call.
 
+A peer's row also carries its `address` (I3956): where the worker behind it can be reached
+from outside its connection — the machine, the worker's own process (`CLAUDE_PID`, else the
+parent of the process it started), the provider's session id and the socket other sessions
+message it through (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_CODE_MESSAGING_SOCKET`). It is derived
+from the environment the provider hands the process it starts, never announced by hand: the
+server's own stdio client is located from the server's environment, and a bridged
+`majordomus mcp` carries its own under `_meta["dev.majordomus/address"]` in the `initialize`
+it forwards. The provider's messaging token is a credential and is never read. A client that
+exposes none of it is still named by its machine and its process. The provider and session
+id together spell the mesh session the edit guard judges the provider's claims under
+(`claude-code-<session id>`), which joins the board row to the mesh.
+
 <div class="overflow-x-auto" tabindex="0">
 
 | tool | capability | arguments | answers |
@@ -577,9 +589,12 @@ with the reason instead.
 |---|---|
 | `peers[].checkout` | the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: `p1` is the first session of *every* board, so a merged listing without it holds several `p1`s |
 | `overlaps` | every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on |
-| `boards` | one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read |
+| `covered` | how many checkouts the answer covered, listed in `boards` or counted in `omitted` |
+| `boards` | one entry per checkout the answer lists, reached or not, with its standing and the reason it was not read. Under the default `view: summary` that is this checkout, every checkout with a worker or a standing server, and every board that could not be read; `view: full` lists every covered checkout |
+| `omitted` | the covered checkouts the summary counts rather than lists, by standing (`absent`, `stale`): no server, nobody attached, no board. On 2026-10-22 that was 601 of 625, and the default answer went from 168 kB to about 18 kB |
 | `complete` | whether every board covered could be read. `false` means a checkout could not be asked — a short board is never to be mistaken for an empty repository |
-| `checkouts` | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `checkouts` (input) | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `view` (input) | `summary` (the default) or `full`, the same words as `majordomus_mesh_peers` |
 
 </div>
 

@@ -30,7 +30,11 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub(crate) mod archive;
+pub(crate) mod ensure;
+pub mod env;
 pub mod key;
+pub mod offer;
 pub(crate) mod s3;
 
 /// The only protocol a client of this model speaks.
@@ -49,6 +53,7 @@ pub const PROTOCOL_S3: &str = "s3";
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "BuildCacheScope")]
 pub enum Scope {
     /// Reachable from the machine that offers it and no other.
     Host,
@@ -69,6 +74,7 @@ pub enum Scope {
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "BuildCacheHealth")]
 pub enum Health {
     /// Ready and answering.
     Healthy,
@@ -96,6 +102,7 @@ pub enum Health {
 /// assert!(!serde_json::to_string(&offer).unwrap().contains("secret"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "BuildCacheNodeOffer")]
 pub struct Offer {
     /// The offering node's id: the last tie-break, so ordering is total.
     pub node: String,
@@ -174,6 +181,7 @@ impl Default for Policy {
 /// assert!(passed.is_empty());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "BuildCachePassedOver")] // integration::model has a PassedOver: one component namespace
 pub struct PassedOver {
     /// The offer's node.
     pub node: String,

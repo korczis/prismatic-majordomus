@@ -1,0 +1,29 @@
+id: I3796
+milestone: one-kit-on-every-surface
+title: "Every command and its output is one shell block, on every surface"
+slug: one-shell-block
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make terminal-run.html's contract the one shell block: the prompt is drawn and never copied, the copy control copies the command alone, an exit status is a word, and long output folds into a disclosure. Render the kit's terminal components and the /ui and Cockpit reproduce commands through it, so a command looks and copies the same wherever it is shown."
+why: "On 2026-10-20 commands were shown three ways on the site (recorded runs, the kit's term_* components, sh/bash fences) and as bare code.mj-ui-mono on /ui (claim.rs, idd.rs), with no prompt and no copy control; a reader copying a reproduce command from /ui got nothing to click."
+current_state: "terminal-run.html: prompt not copied, status word, folded output. Kit term_*: a different look. /ui: bare monospace reproduce lines."
+desired_state: "One shell block component, server-rendered on /ui and the Cockpit with the same markup and classes as the site's, using I3793's copy control; the kit's term_* components are that block."
+scope:
+  - "site/templates/partials/terminal-run.html"
+  - "site/templates/kit/code.html"
+  - "share/design/kit.css"
+  - "apps/majordomus-cli/src/ui/claim.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+depends_on: [I3793]
+acceptance_criteria:
+  - "The site, /ui and the Cockpit render a command with the same markup and classes, the prompt outside the copied text"
+  - "Copying a /ui reproduce command yields the command alone"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib ui::"
+evidence_required:
+  - "one_shell_block_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

@@ -56,6 +56,7 @@ pub(crate) mod mesh;
 pub(crate) mod milestone;
 pub(crate) mod navbar;
 pub(crate) mod observatory;
+pub(crate) mod peers;
 pub(crate) mod prose;
 pub(crate) mod prs;
 pub(crate) mod roadmap;
@@ -64,6 +65,7 @@ pub(crate) mod shell;
 pub(crate) mod skills;
 pub(crate) mod source;
 pub(crate) mod timings;
+pub(crate) mod trends;
 pub(crate) mod view;
 pub(crate) mod work;
 
@@ -197,6 +199,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which machines and runtimes are on the mesh, and what they recorded.",
     },
     Screen {
+        route: peers::ROUTE,
+        title: "Peers",
+        icon: "users",
+        answers: "Who works on this repository, what each claims, and what waits for whom.",
+    },
+    Screen {
         route: delivery::ROUTE,
         title: "CI/CD & Releases",
         icon: "layers",
@@ -207,6 +215,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Deployments",
         icon: "server",
         answers: "What is live, and whether it is what was built.",
+    },
+    Screen {
+        route: trends::ROUTE,
+        title: "Trends",
+        icon: "chart",
+        answers: "How coverage and CI time move from run to run, and which jobs are slowest.",
     },
     Screen {
         route: evidence::ROUTE,
@@ -461,12 +475,14 @@ impl Ui {
             issues::ROUTE => issues::screen(ctx, query),
             prs::ROUTE => prs::screen(ctx, query),
             mesh::ROUTE => mesh::screen(ctx, query),
+            peers::ROUTE => peers::screen(ctx, &self.assets.url(peers::LIB)),
             delivery::ROUTE => delivery::screen(ctx),
             deployments::ROUTE => deployments::screen(ctx),
             command::ROUTE => command::screen(ctx, query),
             capabilities::ROUTE => capabilities::screen(ctx, query),
             skills::ROUTE => skills::screen(ctx),
             docs::ROUTE => docs::screen(ctx),
+            trends::ROUTE => trends::screen(ctx),
             evidence::ROUTE => evidence::screen(ctx, query),
             knowledge::ROUTE => knowledge::screen(ctx),
             governance::ROUTE => governance::screen(ctx, query),
@@ -800,6 +816,7 @@ mod tests {
                 mesh::ROUTE,
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
+            (peers::ROUTE, peers::screen(&ctx, "/ui/assets/live.js")),
             (delivery::ROUTE, delivery::screen(&ctx)),
             (
                 evidence::ROUTE,
@@ -815,6 +832,7 @@ mod tests {
                 capabilities::screen(&ctx, &[("id".into(), "plan.status".into())]),
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
+            (trends::ROUTE, trends::screen(&ctx)),
             (skills::ROUTE, skills::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
             (knowledge::ROUTE, knowledge::screen(&ctx)),

@@ -384,6 +384,16 @@ checkout:
     warn_behind: 100                     # about a day of this trunk's commits
     fail_behind: 400                     # several days: what it serves is not the trunk
 
+# ---------------------------------------------------------------- the build cache's local level
+# `majordomus mesh build-cache ensure` keeps every npm, mix and cargo build-directory archive it
+# restores or saves under ~/.cache/majordomus/build-cache, shared by every checkout of the
+# machine (ADR 0157 decision 13, I3952). It is held under this bound, oldest archive first,
+# whenever an archive is added, and scripts/reap-orphans measures it and reduces it to the same
+# bound. 20 GiB is several lockfiles' worth of each kind: a cargo build directory archive was
+# measured at about 1 GB compressed (2.9 GB uncompressed) on 2026-10-22.
+build_cache:
+  local_max_gib: 20
+
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four
 # numbers are what a contest between two processes is judged by, and until 2026-09-15 all

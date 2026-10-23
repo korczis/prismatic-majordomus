@@ -1,7 +1,7 @@
 +++
 title = "majordomus delivery report"
 description = "Every feature against every dimension, with the development stage of what does not exist"
-weight = 202
+weight = 206
 [extra]
 route = "/docs/cli/delivery/report/"
 command = "majordomus delivery report"

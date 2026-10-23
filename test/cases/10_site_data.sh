@@ -3,7 +3,49 @@
 command -v jq >/dev/null || skip "jq absent"
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
+
+# --- Linux's per-argument cap, measured on every host (I3942)
+# Linux refuses an exec whose any one argument exceeds MAX_ARG_STRLEN, 131072 bytes; macOS
+# has no such cap, so a payload that fails every CI run passes on the machine it is written
+# on. scripts/ci/argv-limit-check refuses the spellings it knows, and three times a new one
+# crossed the cap (the claims matrix, forge_paths, then mj_project_mermaid at 132474 bytes
+# on train 4). Here the generator runs over every one of its real inputs with a jq on PATH
+# that measures each argument instead: over the cap it refuses as Linux does, exit 126;
+# over three quarters of it the argument is named, so a growing payload is seen before it
+# breaks. Byte lengths are taken under LC_ALL=C by the shell itself, with no fork per call.
+cap="$T/.argv-cap"; mkdir -p "$cap"
+real_jq="$(command -v jq)"
+cat > "$cap/jq" <<EOF
+#!/usr/bin/env bash
+LC_ALL=C
+i=0
+for a in "\$@"; do
+  i=\$((i + 1)); n=\${#a}
+  if [ "\$n" -gt 131072 ]; then
+    echo "argv-cap: jq argument \$i is \$n bytes, over Linux's 131072-byte MAX_ARG_STRLEN; pass it with --slurpfile/--rawfile or stdin" >&2
+    exit 126
+  fi
+  if [ "\$n" -gt 98304 ]; then
+    h="\${a:0:60}"; h="\${h//\$'\n'/ }"; h="\${h//\$'\t'/ }"
+    printf '%s\t%s\n' "\$n" "\$h" >> "$cap/near"
+  fi
+done
+exec "$real_jq" "\$@"
+EOF
+chmod +x "$cap/jq"
+# the shim is held to what it claims: one byte over is refused, the cap itself is not
+big="$(head -c 131073 /dev/zero | tr '\0' a)"
+rc=0; PATH="$cap:$PATH" jq -n --arg x "$big" '1' >/dev/null 2>&1 || rc=$?
+[ "$rc" = 126 ] || { echo "    the argv-cap shim let a 131073-byte argument through (exit $rc)"; exit 1; }
+PATH="$cap:$PATH" jq -n --arg x "${big%a}" '1' >/dev/null \
+  || { echo "    the argv-cap shim refused an argument at exactly the cap"; exit 1; }
+unset big; : > "$cap/near"
+path_before="$PATH"; PATH="$cap:$PATH"
 expect_exit 0 "$T/scripts/generate-site-data"
+PATH="$path_before"
+while IFS="$(printf '\t')" read -r n head; do
+  echo "    NEAR  a jq argument of $n bytes is within a quarter of Linux's cap: $head..."
+done < "$cap/near"
 for f in project profiles policy capabilities lifecycle docs diagrams source context; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
 # version comes from the one place it is authored (read by its one shell reader, never parsed
 # here), profiles from the skeleton, claims from CLAIMS.yaml

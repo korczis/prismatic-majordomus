@@ -85,7 +85,8 @@ for g in rust-check rust-coverage rust-bench shell-suite site-build site-probe m
 p="$(plan_od .github/workflows/validate.yml)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = full ] || { echo "    a workflow change did not escalate"; exit 1; }
 printf '%s' "$p" | jq -r .reason | grep -q 'escalates: .github/workflows/validate.yml' || { echo "    the escalation does not name the path"; exit 1; }
-[ "$(printf '%s' "$p" | jq -r '[.gates[] | select(.selected)] | length')" = "$(printf '%s' "$p" | jq -r '.gates | length')" ] || { echo "    the full plan left a gate out"; exit 1; }
+# every gate is in the full plan but the ones another planned gate subsumes, each of which says so
+[ "$(printf '%s' "$p" | jq -r '[.gates[] | select(.selected | not) | select(.reason | startswith("subsumed by ") | not)] | length')" = 0 ] || { echo "    the full plan left a gate out"; exit 1; }
 p="$(plan some/new/thing.txt)"
 [ "$(printf '%s' "$p" | jq -r .mode)" = full ] || { echo "    an unclassified path did not escalate"; exit 1; }
 printf '%s' "$p" | jq -r .unclassified[0] | grep -qx 'some/new/thing.txt' || { echo "    the plan does not name the unclassified path"; exit 1; }
@@ -359,6 +360,51 @@ want="$(grep -l -E '\.ai/repo/project/(issues|milestones)|PLAN_STATUS|majordomus
 [ -n "$want" ] || { echo "    no case names a plan record; the assertion is vacuous"; exit 1; }
 for c in $want; do has "$named" "$c" || { echo "    $c reads the plan and plan-record-cases does not run it"; exit 1; }; done
 for c in $named; do [ -f "$ROOT/test/cases/$c.sh" ] || { echo "    plan-record-cases names $c, which is not a case"; exit 1; }; done
+
+# --- a gate whose cases the planned suite already runs is not planned beside it. The two case
+#     gates exist for the record shapes, which do not run the suite; a plan that does (the
+#     full one) ran the same cases twice, ~34 minutes of the rust job's third lane (I3937).
+#     The relation is declared in the model (`subsumed-by`) and applied by the planner after
+#     the whole selection, so the plan says why the gate is absent.
+for g in release-record-cases plan-record-cases; do
+  awk -v g="$g" '$0 == "  - id: " g { f = 1; next } f && /^  - id: / { exit } f && /^    subsumed-by: shell-suite$/ { found = 1 } END { exit !found }' "$MODEL" \
+    || { echo "    the model does not declare $g subsumed by shell-suite"; exit 1; }
+done
+full="$("$PLAN" --full)"
+fs="$(printf '%s' "$full" | jq -r '.selected | join(" ")')"
+has "$fs" shell-suite || { echo "    the full plan does not plan the suite: $fs"; exit 1; }
+for g in release-record-cases plan-record-cases; do
+  lacks "$fs" "$g" || { echo "    the full plan plans $g beside the suite that runs its cases"; exit 1; }
+  [ "$(printf '%s' "$full" | jq -r --arg g "$g" '.gates[] | select(.id == $g) | .selected')" = false ] || { echo "    the full plan's entry for $g says it is selected"; exit 1; }
+  printf '%s' "$full" | jq -r --arg g "$g" '.gates[] | select(.id == $g) | .reason' | grep -q '^subsumed by shell-suite: ' \
+    || { echo "    the full plan does not say the suite subsumed $g"; exit 1; }
+  "$PLAN" --full --format text | grep -q "^  skip  $g .*subsumed by shell-suite" || { echo "    the text plan does not show $g skipped as subsumed"; exit 1; }
+  "$PLAN" --full --format github | grep -qx "$(printf '%s' "$g" | tr '-' '_')=false" || { echo "    the github output does not say $g is not planned"; exit 1; }
+done
+# nothing else leaves the full plan: it is the model's gates but the on-demand and subsumed ones
+for g in $(printf '%s' "$full" | jq -r '.gates[] | select(.selected | not) | .id'); do
+  has "$ondemand release-record-cases plan-record-cases" "$g" || { echo "    the full plan left out $g, which is neither on demand nor subsumed"; exit 1; }
+done
+# vacuity: without the declaration the same full plan plans both
+grep -v '^    subsumed-by: ' "$MODEL" > unsubsumed.yaml
+u="$("$PLAN" --model unsubsumed.yaml --full | jq -r '.selected | join(" ")')"
+has "$u" release-record-cases && has "$u" plan-record-cases || { echo "    the mutation is vacuous: without subsumed-by the full plan lacks a case gate: $u"; exit 1; }
+# the record shapes do not run the suite, so nothing subsumes the gates and they are planned
+rr="$(rplan < rec976.txt)"; pr="$(rplan < rec1151.txt)"
+has "$(printf '%s' "$rr" | jq -r '.selected | join(" ")')" release-record-cases || { echo "    the release-record shape no longer plans release-record-cases"; exit 1; }
+has "$(printf '%s' "$pr" | jq -r '.selected | join(" ")')" plan-record-cases || { echo "    the plan-record shape no longer plans plan-record-cases"; exit 1; }
+lacks "$(printf '%s' "$rr" | jq -r '.selected | join(" ")')" shell-suite && lacks "$(printf '%s' "$pr" | jq -r '.selected | join(" ")')" shell-suite \
+  || { echo "    a record shape plans the suite"; exit 1; }
+# the relation is validated: it names a gate that exists, not the gate itself, and no chain
+sed 's/^    subsumed-by: shell-suite$/    subsumed-by: no-such-gate/' "$MODEL" > sub-missing.yaml
+expect_exit 10 "$PLAN" --model sub-missing.yaml --check
+expect_grep 'subsumed by a gate that does not exist: no-such-gate'
+awk '/^  - id: release-record-cases$/{f=1} f && /^    subsumed-by: /{print "    subsumed-by: release-record-cases"; f=0; next} {print}' "$MODEL" > sub-self.yaml
+expect_exit 10 "$PLAN" --model sub-self.yaml --check
+expect_grep 'release-record-cases is subsumed by itself'
+sed 's/^    subsumed-by: shell-suite$/    subsumed-by: plan-record-cases/' "$MODEL" > sub-chain.yaml
+expect_exit 10 "$PLAN" --model sub-chain.yaml --check
+expect_grep 'which is itself subsumed'
 
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection

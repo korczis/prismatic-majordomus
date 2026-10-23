@@ -45,9 +45,11 @@
 pub mod address;
 pub mod broadcast;
 pub mod build_cache;
+pub(crate) mod cache_provision;
 pub mod config;
 pub mod cooperation;
 pub mod doctor;
+pub mod enrol;
 pub mod firewall;
 pub mod handover;
 pub mod identity;
@@ -63,6 +65,7 @@ pub mod rendezvous;
 pub mod repository;
 pub mod root;
 pub mod state;
+pub mod tailscale;
 pub mod trust;
 
 #[cfg(test)]

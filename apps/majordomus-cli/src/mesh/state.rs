@@ -714,6 +714,10 @@ pub fn fold(
                     view.result = note;
                 }
             }
+            // An offer's freshness is the age of its stream's beat on the reader's clock,
+            // not a verdict every runtime shares, so it stays out of the state two runtimes
+            // compare: mesh::build_cache::offer reads it.
+            EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {}
         }
     }
 
