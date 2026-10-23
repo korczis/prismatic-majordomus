@@ -430,6 +430,10 @@ pub struct Execution {
     /// The id used in this process's logs and tracing spans for this execution; the
     /// execution id itself, carried under the name a reader of a log expects.
     pub correlation_id: String,
+    /// The key the client started it under, when it gave one: a second start with the same
+    /// key and input answers this execution rather than starting another (ADR 0225).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
 }
 
 impl Execution {

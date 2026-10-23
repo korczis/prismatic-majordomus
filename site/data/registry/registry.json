@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "b873480b20cbdb5cb4c2965beca6493351977c89ad82b9da8c7c8be3f11183ea",
+    "fingerprint": "f0ff2fc1b3f7ac2f3f7de6b677ce2a10e11d24279285bafe0432cdbb378f3428",
     "summary": {
       "total": 3323,
       "builtin": 208,
@@ -26813,6 +26813,13 @@
                     "type": "string",
                     "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                   },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+                  },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
                     "description": "Where to read more."
@@ -28108,6 +28115,13 @@
                 "type": "string",
                 "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
               },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+              },
               "links": {
                 "$ref": "#/$defs/ExecutionLinks",
                 "description": "Where to read more."
@@ -28761,6 +28775,13 @@
                   "correlation_id": {
                     "type": "string",
                     "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+                  },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
                   },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
@@ -30064,6 +30085,13 @@
                     "type": "string",
                     "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
                   },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+                  },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
                     "description": "Where to read more."
@@ -30471,6 +30499,13 @@
               "input": {
                 "description": "Its input, as its own input schema describes it; an empty object when it takes none.",
                 "default": null
+              },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A key that makes the start idempotent (ADR 0225): the same key with the same\ncapability and input answers the execution it already started, and the same key\nwith anything else is refused, naming that execution. 1 to 128 letters, digits and\n`. _ : -`; a client sends a fresh one per click and the same one on a retried request."
               }
             },
             "required": [
@@ -30601,6 +30636,13 @@
               "correlation_id": {
                 "type": "string",
                 "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+              },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
               },
               "links": {
                 "$ref": "#/$defs/ExecutionLinks",
@@ -86889,7 +86931,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2111692954dcf740190819823dc75acfaf6c1037ca97ce28d1578509bbb3c32b",
+    "fingerprint": "2261f92b5851ed704c424fffe030171761beca1bfe6532513bd43276fe5329cd",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -107935,7 +107977,7 @@
         "path": ".ai/repo/project/issues/I3981.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2013
+        "bytes": 2040
       },
       {
         "uri": "majordomus://issue/I3982",

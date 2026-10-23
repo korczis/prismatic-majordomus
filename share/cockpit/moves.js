@@ -12,7 +12,7 @@
 // this module shows that answer as it came, and reads the page again so that every status
 // on it is the server's rather than the one the button promised.
 
-import { api } from './api.js';
+import { api, idempotencyKey, spendKey } from './api.js';
 
 // a wait is bounded: an execution that has not finished in this many reads is reported
 // as still running, with the link to its own page, and the page is not reloaded
@@ -45,11 +45,14 @@ export function install(form) {
     }
     for (const button of buttons) button.disabled = true; // a double click must not move twice
     show({ pending: 'starting ' + capability + ' (' + transition + ')' });
+    // a lost request leaves the key on the form, so moving again is the same start
+    const idempotency_key = idempotencyKey(form);
     const started = await api(start, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capability, input: { issue, transition } }),
+      body: JSON.stringify({ capability, input: { issue, transition }, idempotency_key }),
     });
+    spendKey(form);
     if (!started.ok || !started.body || !started.body.id) {
       show({ failed: started });
       for (const button of buttons) button.disabled = false;

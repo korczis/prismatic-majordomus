@@ -35637,6 +35637,13 @@
             "type": "string",
             "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
           },
+          "idempotency_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The key the client started it under, when it gave one: a second start with the same\nkey and input answers this execution rather than starting another (ADR 0225)."
+          },
           "links": {
             "$ref": "#/components/schemas/ExecutionLinks",
             "description": "Where to read more."
@@ -59929,6 +59936,13 @@
           "input": {
             "description": "Its input, as its own input schema describes it; an empty object when it takes none.",
             "default": null
+          },
+          "idempotency_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "A key that makes the start idempotent (ADR 0225): the same key with the same\ncapability and input answers the execution it already started, and the same key\nwith anything else is refused, naming that execution. 1 to 128 letters, digits and\n`. _ : -`; a client sends a fresh one per click and the same one on a retried request."
           }
         },
         "required": [
