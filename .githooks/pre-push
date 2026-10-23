@@ -4,12 +4,21 @@
 # finish contract asks whether the task's work may be published, which is not this
 # question, and asking it would refuse a handover for exactly the task it hands over.
 # Any other ref in the same push and the contract applies to the whole push, as before.
-only_layer=1 any=0 heads=""
+# Nor does a push that only deletes refs: every pushed ref's local sha is all zeros, so no
+# commit travels and there is nothing to plan or to ask the finish contract about. On
+# 2026-10-22 a push of 16 deletions and nothing else ran finish --check, the case-number
+# check and run-plan (27 gates, 122 cases), and timed out twice, at 900 s and 2400 s, on the
+# shared cargo build lock; nothing was deleted until it rode along with a larger push.
+# `finish --check` is skipped too, as for refs/majordomus/*: the contract asks whether work
+# may be published, and a deletion publishes none. One ref that carries a commit and the
+# whole hook applies to the whole push, as before.
+any=0 carries=0 heads=""
 while read -r _local_ref local_sha remote_ref _remote_sha; do
   any=1
-  case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0; heads="$heads $local_sha" ;; esac
+  case "$remote_ref" in refs/majordomus/*) continue ;; esac
+  case "$local_sha" in *[!0]*) carries=1; heads="$heads $local_sha" ;; esac
 done
-[ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
+[ "$any" = 1 ] && [ "$carries" = 0 ] && exit 0
 # A hook never starts a cold build of the executable: when it is missing, bin/majordomus-cli
 # asks the installed release instead (I3831). Every check below runs and refuses as before.
 MAJORDOMUS_HOOK=1; export MAJORDOMUS_HOOK
