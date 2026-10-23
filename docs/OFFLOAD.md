@@ -211,6 +211,37 @@ The offload is a shared resource, and the peer board and the mesh are how sessio
 - Never run `scripts/derive` on a host by hand while offloads run there. It takes neither the
   queue nor the offload lock.
 
+## A build over ssh is refused before it runs
+
+A build started with a bare `ssh <host> '…; cargo test'` waits for no queue, carries no owner
+and is stopped as no group: on 2026-10-22 one such `cargo test --doc` kept lundra at load 21
+for 33 minutes, and its `rustc` outlived the shell that was killed above it (I3956). So the
+provider's pre-tool hook asks of every shell command what it asks of every edit:
+`.claude/hooks/majordomus-edit-guard` hands a Bash payload to `majordomus guard hook`, which
+exits 2 when the command starts a build on a declared host, with the rule
+(`project.a-derive-offload-waits-its-turn`) and the way, `majordomus offload derive --host
+<id> <worktree>` and `majordomus offload stop <tag>`.
+
+- **The hosts are the declaration's.** A destination is a declared host by its `id`, the host
+  of its `address`, or a name whose first label is its id (`lundra.<tailnet>.ts.net`); the
+  login (`user@`) and the `ssh://…:port` form are read through. A host no declaration names
+  is not judged.
+- **The command is read as a shell reads it**: quotes, `;`, `&&`, `|`, newlines, redirections,
+  assignments and the wrappers that run another program (`env A=B`, `nice -n 10`, `nohup`,
+  `timeout`, `sudo`). A script given to `bash -c`, `sh -lc` or `eval` is read again, and so
+  is ssh's remote command, after its options (`-o X`, `-p22`, `-tt`, options after the
+  destination, `--`); a hop through an undeclared host to a declared one is judged too.
+- **A build** is `cargo` (but not `cargo --version` or `--list`), `rustc`, `scripts/derive`
+  or a `scripts/rust-*` script, wherever it is spelt from. A read (`ps`, `df`, `uptime`,
+  `grep cargo`), `ssh <host> majordomus offload …` and an interactive login are let through.
+- **The offload itself is never judged**: its ssh runs inside the executable, not through the
+  provider's shell tool. What the hook cannot read, a payload that is not JSON or a checkout
+  with no layer above its `cwd`, is let through.
+- **The wiring.** Like the edit guard, the hook runs only when the provider's configuration
+  names it for the tool: a PreToolUse entry with the matcher `Bash` (beside
+  `Edit|Write|MultiEdit|NotebookEdit`) whose command is the shim. `capture install` writes
+  neither entry yet; I3322 is the issue that wires the guard.
+
 ## Tests
 
 | file | proves |
@@ -222,6 +253,7 @@ The offload is a shared resource, and the peer board and the mesh are how sessio
 | `apps/majordomus-cli/src/offload/stop.rs` (unit) | the stop: only the owner without `--force`, every refusal before a signal, a leftover record removed, a live run's group stopped with its grandchild |
 | `apps/majordomus-cli/src/offload/run.rs` (unit) | the host's derive script itself: the owner exported, the derive leading its group, the record written and removed, a caller that goes away stopping the group |
 | `test/cases/3957_every_process_is_traced_to_its_session.sh` | the command end to end through a stand-in ssh: the owner exported and never the token, the group, the record's fields, another session's stop refused, the owner's stop ending the group |
+| `apps/majordomus-cli/src/guard/remote_build.rs` (unit) | the remote-build guard: every refused form, every allowed one, an undeclared host, the shell's quoting, wrappers, ssh's options, the nesting limit, the declared hosts read from the layer |
 | `apps/majordomus-cli/tests/offload.rs` | the queue against a real directory with real holder processes, and the command end to end against hosts that are directories on this machine, reached through a local stand-in for ssh |
 
 The end-to-end tests need no network. `MAJORDOMUS_OFFLOAD_SSH` names the stand-in, which

@@ -44,6 +44,20 @@
 #   unknown                           no owner evidence: exit 10, every missing fact listed
 #   MCP                               the same answer as a tools/call
 #
+# Slice 4, a raw ssh build on a cluster host is refused before it runs: Claude Code's
+# PreToolUse payload for the Bash tool piped into `majordomus guard hook` and into the tracked
+# shim, the hosts read from this checkout's offload declaration (ssh is a stand-in that logs;
+# nothing is run):
+#
+#   refused, exit 2                   cargo, rustc, scripts/derive, scripts/rust-* over ssh on
+#                                     the declared host — options, quotes, env and nice
+#                                     prefixes, `--`, bash -c on either side, user@ and a
+#                                     tailnet name — naming the rule and `offload derive` /
+#                                     `offload stop` as the way
+#   let through, exit 0               a read (ps, df, uptime), `majordomus offload` on the
+#                                     host, the offload command itself, a local build, and
+#                                     any build on a host no declaration names
+#
 # Real processes over real MCP, an ephemeral port, the server ended with its last client.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -409,3 +423,59 @@ sed -n 2p "$W/mcp.out" | jq -e '.result.structuredContent | .known and .leftover
   and .owners[0].session == "claude-code-sess-r"' >/dev/null \
   || { echo "    majordomus_mesh_who over MCP does not answer the leftover:"; cat "$W/mcp.out"; exit 1; }
 echo "    majordomus_mesh_who answers the same over MCP"
+
+# ---------------------------------------------------------------- 7. a raw ssh build on a cluster host is refused
+G7="$S/guard"
+mkdir -p "$G7/bin"
+printf '#!/bin/sh\necho "$*" >> "%s/ssh.log"\nexit 0\n' "$G7" > "$G7/bin/ssh"
+chmod +x "$G7/bin/ssh"
+HERE="$(pwd)"
+# hook <command> [executable]: the exit code a Claude Code PreToolUse payload of the Bash tool
+# running <command> in this checkout gets from `guard hook` (or from the given executable)
+hook() {
+  c="$1"; shift
+  [ $# -gt 0 ] || set -- "$RB" guard hook --provider claude-code
+  jq -nc --arg c "$c" --arg d "$HERE" \
+    '{session_id:"s7",hook_event_name:"PreToolUse",tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
+    | PATH="$G7/bin:$PATH" MAJORDOMUS_BIN="$RB" "$@" 2> "$G7/err"
+}
+for c in \
+  "ssh -o BatchMode=yes h0 'cd ~/dev/p; cargo test --doc'" \
+  "ssh h0 -- cargo build" \
+  "ssh u@h0 env CARGO_BUILD_JOBS=3 cargo clippy" \
+  "ssh -tt h0 \"nice -n 10 ~/.cargo/bin/cargo test\"" \
+  "ssh h0 rustc main.rs" \
+  "ssh h0 'cd dev/p && scripts/derive'" \
+  "ssh h0.tailnet.ts.net ./scripts/rust-check --doc" \
+  "ssh h0 \"bash -lc 'cargo test'\"" \
+  "bash -c 'ssh h0 cargo test 2>&1 | tail -5'"
+do
+  rc=0; hook "$c" || rc=$?
+  [ "$rc" = 2 ] && grep -q 'project.a-derive-offload-waits-its-turn' "$G7/err" \
+    && grep -q 'majordomus offload derive --host h0' "$G7/err" && grep -q 'majordomus offload stop' "$G7/err" \
+    || { echo "    a raw ssh build was not refused ($rc): $c"; cat "$G7/err"; exit 1; }
+done
+echo "    every raw ssh build on the declared host is refused, naming the rule and the offload"
+
+for c in \
+  "ssh h0 ps aux" \
+  "ssh h0 'df -h / ; uptime'" \
+  "ssh h0 'ps aux | grep cargo'" \
+  "ssh u@h0 majordomus offload stop 0123456789" \
+  "majordomus offload derive --host h0 ." \
+  "cargo build" \
+  "ssh nowhere cargo build" \
+  "ssh nowhere 'cd x; scripts/derive'"
+do
+  rc=0; hook "$c" || rc=$?
+  [ "$rc" = 0 ] && [ ! -s "$G7/err" ] || { echo "    refused ($rc): $c"; cat "$G7/err"; exit 1; }
+done
+echo "    a read, the offload, a local build and an undeclared host are let through"
+
+rc=0; hook "ssh h0 cargo test" "$ROOT/.claude/hooks/majordomus-edit-guard" || rc=$?
+[ "$rc" = 2 ] && grep -q 'majordomus offload derive --host h0' "$G7/err" \
+  || { echo "    the tracked shim did not pass on the refusal ($rc)"; cat "$G7/err"; exit 1; }
+rc=0; hook "ssh h0 uptime" "$ROOT/.claude/hooks/majordomus-edit-guard" || rc=$?
+[ "$rc" = 0 ] || { echo "    the tracked shim refused a read ($rc)"; cat "$G7/err"; exit 1; }
+[ ! -e "$G7/ssh.log" ] || { echo "    ssh was run:"; cat "$G7/ssh.log"; exit 1; }
+echo "    the tracked shim passes the refusal on, and ssh is never run"
