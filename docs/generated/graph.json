@@ -8054,7 +8054,7 @@
             "test:test/cases/3177_a_client_always_gets_a_server.sh",
             "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
           ],
-          "superseded_by": "adr-0223",
+          "superseded_by": "adr-0224",
           "tags": [
             "coordination",
             "mesh",
@@ -9285,12 +9285,12 @@
         }
       },
       {
-        "id": "majordomus://adr/adr-0223",
+        "id": "majordomus://adr/adr-0224",
         "kind": "adr",
-        "label": "adr-0223",
+        "label": "adr-0224",
         "summary": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
-        "route": "/cockpit/objects/adr/adr-0223",
-        "source": ".ai/repo/adrs/0223-no-ordinary-command-builds.md",
+        "route": "/cockpit/objects/adr/adr-0224",
+        "source": ".ai/repo/adrs/0224-no-ordinary-command-builds.md",
         "status": "accepted",
         "facts": {
           "date": "2026-10-22",
@@ -21984,7 +21984,7 @@
             "No caller passes silently on a missing or stale executable",
             "Ownership is a projection of the existing registries (rule project.no-new-nouns, ADR 0069); only disposition, exemption and migration obligation stay hand-written",
             "The migration itself is intent repository-automation-is-typed: its criteria are served there, not restated here",
-            "ADR 0223 (accepted 2026-10-22, superseding ADR 0172) is the decision this intent realises; I3180 is cancelled"
+            "ADR 0224 (accepted 2026-10-22, superseding ADR 0172) is the decision this intent realises; I3180 is cancelled"
           ],
           "milestones": [
             "ordinary-commands-never-build"
@@ -102299,47 +102299,47 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "file:.ai/repo/ci/gates.yaml",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "kind:adr",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://adr/adr-0172",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://adr/adr-0172",
         "kind": "supersedes"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://implementation/bin/majordomus-cli",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://implementation/lib/rust_bin.sh",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0223",
+        "source": "majordomus://adr/adr-0224",
         "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
         "kind": "put_in_force"
       },

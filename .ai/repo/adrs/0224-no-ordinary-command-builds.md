@@ -1,19 +1,31 @@
-+++
-title = "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds"
-description = "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds"
-weight = 161
-[extra]
-kind = "adr"
-slug = "adr-0223"
-identity = "adr-0223"
-status = "accepted"
-source = ".ai/repo/adrs/0223-no-ordinary-command-builds.md"
-+++
-{% raw %}
+---
+schema: adr/v1
+id: adr-0224
+kind: adr
+title: No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds
+status: accepted
+date: 2026-10-22
+tags:
+  - launcher
+  - build
+  - enforcement
+supersedes:
+  - adr-0172
+related:
+  - file:.ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md
+  - file:.ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml
+  - file:bin/majordomus-cli
+  - file:lib/rust_bin.sh
+  - file:.ai/repo/ci/gates.yaml
+  - test:test/cases/3177_a_client_always_gets_a_server.sh
+  - test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh
+provenance:
+  origin: authored
+---
 
-## 222. No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds
+# 222. No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds
 
-### Context
+## Context
 
 On 2026-10-22 a pre-push on a loaded machine sat forty minutes in one gate and then timed out at
 ninety, all of it queued behind the shared build lock, with the tree's executable already built:
@@ -28,7 +40,7 @@ only; I3180 planned a background build on entering a checkout. The owner, the sa
 architecture review recorded as intent every-capability-has-one-owner-and-the-cli-never-builds:
 "ADR 0172 is replaced, I3180 is cancelled".
 
-### Decision
+## Decision
 
 1. **An ordinary command never starts a build.** A missing or stale executable makes every command
    that does not declare a toolchain requirement either exit 12 naming the explicit build, or answer
@@ -49,11 +61,10 @@ architecture review recorded as intent every-capability-has-one-owner-and-the-cl
    (`.ai/repo/prompts/session-start.md`, `share/shell/session-start.sh`) with its opt-outs; and
    autonomy is bounded in that prompt, not assumed.
 
-### Consequences
+## Consequences
 
 - A push stops compiling in its gates; a loaded machine queues one build per tree, not one per gate.
 - A contributor whose executable is stale is told the one command to run instead of waiting on a
   hidden build; a matching installed release keeps every client working.
 - I3957 carries the first slice: the launcher, `lib/rust_bin.sh`, `test/lib.sh`, the just bridge and
   the gates, proved by a case that counts cargo invocations across every path.
-{% endraw %}
