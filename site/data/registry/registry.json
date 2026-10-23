@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "bbd02ea7665a1c38f4431b6ee035d7a4f2ad586b7588fc9f1aed1101880397ad",
+    "fingerprint": "35406f414c1cce6652c13c23a71dc2fb746bf6af04a80a48c0218ce7d073bc36",
     "summary": {
       "total": 3314,
       "builtin": 208,
@@ -30673,7 +30673,7 @@
               "links",
               "deduplicated"
             ],
-            "description": "The answer of `executions.start`: the execution, and whether this start began it.",
+            "description": "The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \"capability\": \"executions.demonstrate\",\n    \"input\": { \"steps\": 1, \"delay_ms\": 0 },\n    \"idempotency_key\": \"click-1\",\n});\nlet start = || -> StartedExecution {\n    serde_json::from_value(ctx.execute(\"executions.start\", input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated && again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```",
             "title": "StartedExecution",
             "$defs": {
               "ExecutionId": {
@@ -86939,7 +86939,7 @@
     ]
   },
   "index": {
-    "fingerprint": "948b31b7de3312fb248bf2d72445854bdaabb8470b5d18d5f453b835a31ea0a3",
+    "fingerprint": "0ff9a9edfdbe53c41f92bb6b5bbd5f7e477c8bebf30362120f0c89588d232a8a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

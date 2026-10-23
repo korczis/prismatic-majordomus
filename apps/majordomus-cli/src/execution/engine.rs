@@ -71,6 +71,24 @@ impl SubmitError {
 
 /// What a start was answered with: the execution, and whether it is one an earlier start
 /// with the same idempotency key began rather than one this start did.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, ActorKind, IdempotencyKey, Submitted};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let start = || ctx.executions.submit_once(
+///     &ctx,
+///     "executions.demonstrate",
+///     serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+///     Actor::of(ActorKind::Internal),
+///     Some(IdempotencyKey::parse("click-1").unwrap()),
+/// );
+/// let first: Submitted = start().unwrap();
+/// let again: Submitted = start().unwrap();
+/// assert!(!first.deduplicated && again.deduplicated);
+/// assert_eq!(first.execution.id, again.execution.id, "one execution");
+/// ```
 #[derive(Debug, Clone)]
 pub struct Submitted {
     /// The execution, as accepted, or as it stands when the key had already started it.
@@ -223,6 +241,24 @@ impl ExecutionEngine {
     /// lookup and the record are one step of the store, so two starts sent at once with
     /// one key start one execution. The store holds a key for as long as it holds the
     /// execution the key started, and is in memory: a key does not outlive the server.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, IdempotencyKey};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let start = || ctx.executions.submit_once(
+    ///     &ctx,
+    ///     "executions.demonstrate",
+    ///     serde_json::json!({ "steps": 1, "delay_ms": 0 }),
+    ///     Actor::of(ActorKind::Internal),
+    ///     Some(IdempotencyKey::parse("click-1").unwrap()),
+    /// );
+    /// let first = start().unwrap();
+    /// let again = start().unwrap();
+    /// assert!(!first.deduplicated && again.deduplicated);
+    /// assert_eq!(first.execution.id, again.execution.id, "one execution");
+    /// ```
     pub fn submit_once(
         &self,
         ctx: &Context,

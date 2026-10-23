@@ -158,7 +158,27 @@ impl BenchmarkCases for StartInput {
     }
 }
 
-/// The answer of `executions.start`: the execution, and whether this start began it.
+/// The answer of `executions.start`: the execution, flattened as every other execution
+/// answer is, and whether this start began it or was answered one its idempotency key had
+/// already started.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::StartedExecution;
+/// use majordomus_cli::synthetic::SyntheticRepository;
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let input = serde_json::json!({
+///     "capability": "executions.demonstrate",
+///     "input": { "steps": 1, "delay_ms": 0 },
+///     "idempotency_key": "click-1",
+/// });
+/// let start = || -> StartedExecution {
+///     serde_json::from_value(ctx.execute("executions.start", input.clone()).unwrap()).unwrap()
+/// };
+/// let (first, again) = (start(), start());
+/// assert!(!first.deduplicated && again.deduplicated);
+/// assert_eq!(first.view.execution.id, again.view.execution.id);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct StartedExecution {
     /// The execution, with the links to follow it.

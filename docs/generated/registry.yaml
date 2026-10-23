@@ -22056,7 +22056,7 @@ capabilities:
           - correlation_id
           - links
           - deduplicated
-        description: "The answer of `executions.start`: the execution, and whether this start began it."
+        description: "The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \"capability\": \"executions.demonstrate\",\n    \"input\": { \"steps\": 1, \"delay_ms\": 0 },\n    \"idempotency_key\": \"click-1\",\n});\nlet start = || -> StartedExecution {\n    serde_json::from_value(ctx.execute(\"executions.start\", input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated && again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```"
         title: StartedExecution
         "$defs":
           ExecutionId:

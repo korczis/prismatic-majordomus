@@ -103,7 +103,15 @@ pub const MAX_IDEMPOTENCY_KEY: usize = 128;
 pub struct IdempotencyKey(String);
 
 impl IdempotencyKey {
-    /// Parse a key a client sent, or say why it is not one.
+    /// Parse a key a client sent, or say why it is not one. Nothing is trimmed or folded:
+    /// a key is compared byte for byte, so `Click-1` and `click-1` are two requests.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::IdempotencyKey;
+    /// assert_ne!(IdempotencyKey::parse("Click-1"), IdempotencyKey::parse("click-1"));
+    /// let refused = IdempotencyKey::parse("a/b").unwrap_err();
+    /// assert!(refused.contains("'/'"), "the refusal names the character: {refused}");
+    /// ```
     pub fn parse(text: &str) -> Result<Self, String> {
         let length = text.chars().count();
         if length == 0 || length > MAX_IDEMPOTENCY_KEY {
@@ -122,7 +130,13 @@ impl IdempotencyKey {
         Ok(IdempotencyKey(text.to_string()))
     }
 
-    /// The key as text.
+    /// The key exactly as the client sent it, for the snapshot and for a refusal that
+    /// quotes it back.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::IdempotencyKey;
+    /// assert_eq!(IdempotencyKey::parse("retry.7").unwrap().as_str(), "retry.7");
+    /// ```
     pub fn as_str(&self) -> &str {
         &self.0
     }

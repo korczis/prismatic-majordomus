@@ -287,6 +287,16 @@ struct Inner {
 /// inputs equal as data are one input whatever order a client wrote their keys in).
 ///
 /// The digest never leaves the store: it is not in the snapshot, the events or any answer.
+///
+/// ```
+/// use majordomus_cli::execution::{Idempotency, IdempotencyKey};
+/// let held = Idempotency {
+///     key: IdempotencyKey::parse("click-1").unwrap(),
+///     digest: majordomus_cli::policy::sha256_hex(r#"{"steps":1}"#),
+/// };
+/// assert_eq!(held.key.as_str(), "click-1");
+/// assert_eq!(held.digest.len(), 64, "a hex SHA-256");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Idempotency {
     /// The key.
@@ -295,7 +305,25 @@ pub struct Idempotency {
     pub digest: String,
 }
 
-/// What [`ExecutionStore::create_once`] did.
+/// What [`ExecutionStore::create_once`] did with a start: recorded a new execution, or
+/// found the one its key had already started and recorded nothing.
+///
+/// ```
+/// use majordomus_cli::execution::{Actor, ActorKind, Admission, ExecutionId, ExecutionStore};
+/// use majordomus_cli::execution::{Limits, RepositoryRef, Seed};
+/// let store = ExecutionStore::new(Limits::default());
+/// let seed = Seed {
+///     capability: "executions.demonstrate",
+///     title: "Demonstrate an execution",
+///     input: serde_json::json!({}),
+///     cancellable: true,
+///     actor: Actor::of(ActorKind::Http),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+/// };
+/// // without a key there is nothing to find: every start is created
+/// let created = store.create_once(ExecutionId::fresh(), seed, None).unwrap();
+/// assert!(matches!(created, Admission::Created(token) if !token.load(std::sync::atomic::Ordering::SeqCst)));
+/// ```
 #[derive(Debug, Clone)]
 pub enum Admission {
     /// A new execution was recorded; this is its cancellation token.
@@ -308,6 +336,17 @@ pub enum Admission {
 /// A key sent again with a different input: refused, because answering the first execution
 /// would tell the client its second request ran when it did not, and starting a second one
 /// would make the key mean nothing.
+///
+/// ```
+/// use majordomus_cli::execution::{ExecutionId, KeyConflict};
+/// let existing = ExecutionId::fresh();
+/// let refused = KeyConflict {
+///     key: "click-1".into(),
+///     capability: "executions.demonstrate".into(),
+///     existing: existing.clone(),
+/// };
+/// assert!(refused.to_string().contains(existing.as_str()), "the refusal names what the key started");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 #[error(
     "the idempotency key '{key}' already started {existing} of {capability} with a different \
