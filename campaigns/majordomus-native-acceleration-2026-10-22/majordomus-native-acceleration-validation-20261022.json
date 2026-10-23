@@ -1,0 +1,66 @@
+{
+  "status": "pass",
+  "files": 29,
+  "lanes": 10,
+  "proposed_acceptance_scenarios": 80,
+  "sources": 20,
+  "product_tests_executed": false,
+  "errors": [],
+  "self_tests": [
+    {
+      "test": "changed_bytes",
+      "detected": true,
+      "errors": [
+        "Checksum mismatch: README.md"
+      ]
+    },
+    {
+      "test": "dependency_cycle",
+      "detected": true,
+      "errors": [
+        "Dependency cycle at P00"
+      ]
+    },
+    {
+      "test": "unknown_source",
+      "detected": true,
+      "errors": [
+        "Unknown source MISSING in P01"
+      ]
+    },
+    {
+      "test": "missing_acceptance",
+      "detected": true,
+      "errors": [
+        "Acceptance coverage mismatch in P09"
+      ]
+    },
+    {
+      "test": "unsafe_inventory",
+      "detected": true,
+      "errors": [
+        "Unsafe or malformed file inventory."
+      ]
+    },
+    {
+      "test": "broken_link",
+      "detected": true,
+      "errors": [
+        "Broken local link: README.md -> absent-file.md"
+      ]
+    },
+    {
+      "test": "untracked_extra_file",
+      "detected": true,
+      "errors": [
+        "Inventory mismatch: missing=[]; extra=['extra.txt']"
+      ]
+    }
+  ],
+  "zip_crc": "pass",
+  "extracted_archive_validation": "pass",
+  "combined_local_anchors": "pass",
+  "markdown_fences": "pass",
+  "archive_sha256": "9938a44b925ff14d21d1a93c53f21e3a12e0bd94b902347425cd06bef0013b53",
+  "artifact_scope": "Prompt pack integrity only; no Majordomus code changed or product tests executed."
+}

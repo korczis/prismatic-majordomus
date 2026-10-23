@@ -1,0 +1,2 @@
+# Cross-cutting: coordinated execution
+Reuse Majordomus existing intent/task/mesh orchestration if functional. Assign isolated worktrees and explicit ownership to independent workers; use one deployment coordinator. Periodically detect stuck tasks, failing gates, stale evidence, zombie sessions and conflicting edits. Retry only idempotent safe operations with bounded backoff. Do not invent daemon infrastructure if existing CI/task coordination suffices. Emit structured progress events and persist handovers in the existing canonical mechanism.

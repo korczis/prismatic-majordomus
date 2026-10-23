@@ -1,0 +1,2 @@
+# Wave 6: Production acceptance
+Verify actual published HTTPS targets and API/MCP endpoints from outside the deploy environment; compare source, artifact and deployment SHAs. Test response codes, security boundaries, asset links, mobile layout, timestamps, health, rollback readiness and a real event flow. Produce an evidence-linked release manifest and a concise executive report with SHIPPED / VERIFIED / BLOCKED / DEFERRED. Never invent metrics or infer success from an open PR.

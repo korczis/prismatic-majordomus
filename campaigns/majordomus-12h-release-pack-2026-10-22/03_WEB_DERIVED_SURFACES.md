@@ -1,0 +1,2 @@
+# Wave 3: Site and cockpit
+Audit majordomus.dev, /ui, /cockpit, docs and GitHub Pages generation. Derive release status, capabilities, intents, issues and evidence from canonical data, with clear snapshot/live/unavailable labeling. Show provenance, freshness, links and accessible responsive states. Avoid static vanity metrics, duplicate JS registries and fake 'online' indicators. Validate published assets and external URLs after deployment.

@@ -1,0 +1,2 @@
+# Wave 5: Realtime and mesh
+Discover existing PubSub/WebSocket/SSE, peer discovery, MCP, intent and mesh contracts. Select one smallest useful end-to-end proof: authenticated peer connects, advertises capability, accepts a task, emits canonical events, completes with evidence, and UI observes live state. Test reconnect, dedupe, timeout, offline fallback and authorization. If the implementation cannot be safely completed in the window, report a precise blocker and do not present mock data as live.
