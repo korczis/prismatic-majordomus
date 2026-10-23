@@ -29,6 +29,25 @@
 //! sessions and episodes closed, listeners closed, mesh drained, lease released — and `serve`
 //! returns 0. That is the server leaving on its own, which ADR 0200 permits; nothing here
 //! signals or kills another process.
+//!
+//! The lifecycle, as the serve loop runs it once a second:
+//!
+//! ```
+//! use std::time::{Duration, Instant};
+//! use majordomus_cli::idle::{counts_as_use, Activity, IdleTimer};
+//!
+//! let start = Instant::now();
+//! let mut timer = IdleTimer::new(Duration::from_secs(3), start);
+//! let at = |s| start + Duration::from_secs(s);
+//! // every second another server's mesh sync arrives: it is not a client
+//! let sync = counts_as_use("POST", "/api/v1/mesh/link/sync", false);
+//! let look = Activity { client_request: sync, ..Activity::default() };
+//! assert!(timer.observe(&look, at(1)).is_none());
+//! assert!(timer.observe(&look, at(2)).is_none());
+//! // three idle seconds: the server logs why, stops in order and exits 0
+//! let why = timer.observe(&look, at(3)).unwrap();
+//! assert!(why.to_string().contains("machine traffic"));
+//! ```
 
 use std::fmt;
 use std::time::{Duration, Instant};
@@ -111,6 +130,16 @@ pub struct Activity {
 
 impl Activity {
     /// What keeps the server in use, in words; `None` when nothing does.
+    ///
+    /// ```
+    /// use majordomus_cli::idle::Activity;
+    /// let watched = Activity { peers: 1, channels: 1, ..Activity::default() };
+    /// assert_eq!(
+    ///     watched.busy_because().as_deref(),
+    ///     Some("1 peer(s) attached, 1 live channel(s) open")
+    /// );
+    /// assert_eq!(Activity::default().busy_because(), None);
+    /// ```
     pub fn busy_because(&self) -> Option<String> {
         let mut why = Vec::new();
         if self.peers > 0 {
@@ -166,11 +195,33 @@ pub struct IdleTimer {
 
 impl IdleTimer {
     /// A clock with `bound`, idle from `now` (a server is idle from the moment it starts).
+    ///
+    /// ```
+    /// use std::time::{Duration, Instant};
+    /// use majordomus_cli::idle::{Activity, IdleTimer};
+    /// let start = Instant::now();
+    /// let mut timer = IdleTimer::new(Duration::from_secs(2), start);
+    /// // nobody ever came: due two seconds after the start
+    /// assert!(timer.observe(&Activity::default(), start + Duration::from_secs(2)).is_some());
+    /// ```
     pub fn new(bound: Duration, now: Instant) -> Self {
         Self { bound, since: now }
     }
 
     /// Look once: `Some` when the server has been idle for the whole bound.
+    ///
+    /// ```
+    /// use std::time::{Duration, Instant};
+    /// use majordomus_cli::idle::{Activity, IdleTimer};
+    /// let start = Instant::now();
+    /// let mut timer = IdleTimer::new(Duration::from_secs(5), start);
+    /// // an execution queued or running holds the clock at every look
+    /// let running = Activity { executions: 1, ..Activity::default() };
+    /// assert!(timer.observe(&running, start + Duration::from_secs(60)).is_none());
+    /// assert!(timer.observe(&Activity::default(), start + Duration::from_secs(64)).is_none());
+    /// let due = timer.observe(&Activity::default(), start + Duration::from_secs(65)).unwrap();
+    /// assert_eq!(due.idle_for, Duration::from_secs(5));
+    /// ```
     pub fn observe(&mut self, activity: &Activity, now: Instant) -> Option<IdleExit> {
         if !activity.is_idle() {
             self.since = now;
