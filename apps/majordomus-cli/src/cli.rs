@@ -3935,6 +3935,12 @@ pub struct OffloadArgs {
 /// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
 /// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
 /// assert_eq!((worktree.to_str(), host.as_deref(), keep), (Some("../wt"), Some("lundra"), true));
+///
+/// // a run is stopped by its tag, as a group, after a grace period
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "stop", "0123456789", "--host", "lundra"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Stop { tag, host, force, grace } = offload.command else { panic!() };
+/// assert_eq!((tag.as_str(), host.as_deref(), force, grace), ("0123456789", Some("lundra"), false, 10));
 /// ```
 pub enum OffloadCommand {
     /// The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0
@@ -3952,6 +3958,20 @@ pub enum OffloadCommand {
         /// Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)
         #[arg(long)]
         keep: bool,
+    },
+    /// Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session
+    Stop {
+        /// The run's tag, as `offload derive` printed it
+        tag: String,
+        /// A declared host, by id or address; the declaration's only host when absent
+        #[arg(long, value_name = "HOST")]
+        host: Option<String>,
+        /// Stop it although its record names another session, or none
+        #[arg(long)]
+        force: bool,
+        /// Seconds between TERM and KILL
+        #[arg(long, value_name = "SECONDS", default_value_t = 10)]
+        grace: u64,
     },
 }
 
@@ -7370,6 +7390,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "A derive with nowhere to go is refused before anything travels",
             description: "Sends the worktree as it stands to a declared host as a git bundle, waits its turn in the host's FIFO queue, derives in a build directory of its own and stages the files the derive changed; nothing is committed or pushed. With no host declared it refuses with 12 before it reads the worktree, contacts anything or writes a ref.",
             argv: &["offload", "derive", "."],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "offload stop",
+        examples: &[ExampleDoc {
+            id: "offload-stop-undeclared",
+            title: "A stop with no declared host signals nothing",
+            description: "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything.",
+            argv: &["offload", "stop", "0123456789"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],

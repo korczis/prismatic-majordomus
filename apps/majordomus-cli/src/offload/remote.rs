@@ -144,6 +144,29 @@ impl Remote {
         })
     }
 
+    /// Run a script to its end with its standard input held open by this process until the
+    /// script ends: a script that watches its input (the derive does) learns that this
+    /// process is gone — killed, disconnected, crashed — when the input reaches its end, and
+    /// stops what it started (I3956).
+    pub fn run_held(&self, script: &str, args: &[&str]) -> std::io::Result<RemoteOutput> {
+        let mut child = self
+            .command(script, args)
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+        // taken out of the child so that waiting does not close it: it is closed after
+        let held = child.stdin.take();
+        let out = child.wait_with_output();
+        drop(held);
+        let out = out?;
+        Ok(RemoteOutput {
+            code: out.status.code(),
+            stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
+        })
+    }
+
     /// Run a script with its standard output written to a local file, as a download.
     pub fn run_to_file(
         &self,
