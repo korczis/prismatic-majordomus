@@ -244,6 +244,76 @@ pub struct Readiness {
     /// diagnostics, and a client decides whether that is enough.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub reasons: Vec<String>,
+    /// The mesh, as this process decided it: present only in a process that holds a lease,
+    /// because only a shared server runs a mesh. It never makes `ready` false — a server
+    /// whose mesh is not running still answers every request — but it is what
+    /// `server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`
+    /// with (I3179).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mesh: Option<MeshReadiness>,
+}
+
+/// The mesh in a readiness report: whether the repository declares it enabled, whether this
+/// server has decided it yet, and the verdict `mesh doctor`'s runtime check gives.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::health::MeshReadiness;
+/// let m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: "deciding".into() };
+/// assert_eq!(serde_json::to_value(&m).unwrap()["attaching"], true);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct MeshReadiness {
+    /// Whether the repository declares its mesh enabled.
+    pub enabled: bool,
+    /// Whether the declaration is enabled and this server has not decided the mesh yet.
+    pub attaching: bool,
+    /// Whether the mesh stands as declared: off when it is not declared, running when it is.
+    pub ok: bool,
+    /// The verdict's words.
+    pub detail: String,
+}
+
+/// The mesh of this process, for its readiness report: `None` in a process that holds no
+/// lease, which runs no mesh to report.
+fn mesh_readiness(ctx: &Context) -> Option<MeshReadiness> {
+    crate::lease::held()?;
+    let declaration = super::mesh::declaration(ctx);
+    Some(mesh_readiness_of(
+        declaration,
+        ctx.mesh.decided().then(|| ctx.mesh.status()).as_ref(),
+    ))
+}
+
+/// The decision [`mesh_readiness`] makes, over the declaration and the runtime's status
+/// (`None` while the server has not decided the mesh).
+fn mesh_readiness_of(
+    declaration: Option<Result<crate::mesh::MeshConfig, crate::mesh::MeshError>>,
+    decided: Option<&crate::mesh::manager::MeshStatus>,
+) -> MeshReadiness {
+    let enabled = matches!(&declaration, Some(Ok(c)) if c.enabled);
+    match decided {
+        None if enabled => MeshReadiness {
+            enabled,
+            attaching: true,
+            ok: true,
+            detail: "the mesh is declared enabled and this server has not decided it yet".into(),
+        },
+        None => MeshReadiness {
+            enabled,
+            attaching: false,
+            ok: true,
+            detail: "the mesh is not declared enabled: nothing to attach".into(),
+        },
+        Some(status) => {
+            let verdict = crate::mesh::doctor::runtime_verdict(declaration, Some(status));
+            MeshReadiness {
+                enabled,
+                attaching: false,
+                ok: verdict.ok,
+                detail: verdict.detail,
+            }
+        }
+    }
 }
 
 /// Liveness. No filesystem, no index traversal, no network: two fields this process can
@@ -261,6 +331,12 @@ fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
 /// resident: the registry it built, the index it built, and how that index read. Nothing
 /// here contacts a provider, a database or another service, and nothing here walks a tree.
 fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
+    Ok(readiness_report(ctx))
+}
+
+/// The readiness report of this process: what `health.ready` answers, for a reader in this
+/// process that must not ask itself over the wire (`server.status` about its own server).
+pub(crate) fn readiness_report(ctx: &Context) -> Readiness {
     let capabilities = ctx.registry.summary().total;
     let objects = ctx.index.objects.len();
     let stale = crate::lease::serving_replaced_code();
@@ -278,7 +354,7 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
             ctx.index.diagnostics.len()
         ));
     }
-    Ok(Readiness {
+    Readiness {
         ready: capabilities > 0 && stale.is_none() && !lost,
         reasons,
         version: crate::VERSION.into(),
@@ -291,7 +367,8 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
             State::Ok => HealthStatus::Ok,
         },
         stale,
-    })
+        mesh: mesh_readiness(ctx),
+    }
 }
 
 /// Record one dimension, and say on the execution's stream that it was decided.
@@ -670,6 +747,15 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
                     ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
                         HealthStatus::Ok
                     }
+                    // the runtime's refinements are never what `standing_at` decides; each is
+                    // judged as the lease's word it refines would be, and a gone or not whole
+                    // runtime is somebody's to clear like a stale lease
+                    ServerStanding::Building
+                    | ServerStanding::MeshAttaching
+                    | ServerStanding::Operational
+                    | ServerStanding::Stopping
+                    | ServerStanding::Stopped => HealthStatus::Ok,
+                    ServerStanding::Degraded | ServerStanding::Failed => HealthStatus::Warn,
                     // A server answering from code this tree no longer has says yesterday's
                     // truth in today's words, and a lease naming one that answers for
                     // nobody sends the next reader at a dead address. Both are somebody's
@@ -874,6 +960,42 @@ fn continuity_health(
 mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// The mesh in a readiness report, for each way it can stand: not declared, declared
+    /// and not decided yet (attaching), decided and running or declined (I3179).
+    #[test]
+    fn the_mesh_in_a_readiness_report_says_attaching_running_or_not() {
+        use crate::mesh::manager::MeshRuntime;
+        use crate::mesh::MeshConfig;
+        let declared = |enabled: bool| -> Option<Result<MeshConfig, crate::mesh::MeshError>> {
+            Some(Ok(serde_json::from_value(serde_json::json!({
+                "schema": "mesh/v1", "kind": "mesh-declaration", "id": "x", "enabled": enabled,
+            }))
+            .unwrap()))
+        };
+        let none = mesh_readiness_of(None, None);
+        assert!(!none.enabled && !none.attaching && none.ok, "{none:?}");
+        let off = mesh_readiness_of(declared(false), None);
+        assert!(!off.enabled && !off.attaching && off.ok, "{off:?}");
+        let attaching = mesh_readiness_of(declared(true), None);
+        assert!(
+            attaching.enabled && attaching.attaching && attaching.ok,
+            "{attaching:?}"
+        );
+        let server = MeshRuntime::new();
+        server.decline("the node identity did not load");
+        let declined = mesh_readiness_of(declared(true), Some(&server.status()));
+        assert!(
+            declined.enabled && !declined.attaching && !declined.ok,
+            "{declined:?}"
+        );
+        assert!(declined.detail.ends_with("the node identity did not load"));
+        let not_declared = mesh_readiness_of(None, Some(&server.status()));
+        assert!(
+            !not_declared.attaching && not_declared.ok,
+            "{not_declared:?}"
+        );
+    }
 
     /// No board is no evidence: a process that holds no lease cannot say who is attached,
     /// and says so rather than reporting an empty board as a healthy one.

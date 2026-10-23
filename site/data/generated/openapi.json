@@ -750,6 +750,7 @@
     "schema-MeshIdentityReport": "docs/api/mesh/",
     "schema-MeshKind": "docs/api/mesh/",
     "schema-MeshProviderState": "docs/api/mesh/",
+    "schema-MeshReadiness": "docs/api/health/",
     "schema-MeshRepositoryBasis": "docs/api/mesh/",
     "schema-MeshRepositoryIdentity": "docs/api/mesh/",
     "schema-MeshReviewBrief": "docs/api/mesh/",
@@ -1042,7 +1043,10 @@
     "schema-RulesReport": "docs/api/rules/",
     "schema-RulesVerdict": "docs/api/rules/",
     "schema-RuntimeNode": "docs/api/mesh/",
+    "schema-RuntimeState": "docs/api/shared/",
+    "schema-RuntimeTransition": "docs/api/shared/",
     "schema-RuntimeView": "docs/api/lifecycle/",
+    "schema-RuntimeWriter": "docs/api/shared/",
     "schema-RustdocAcceptedLinks": "docs/api/quality/",
     "schema-RustdocCounts": "docs/api/quality/",
     "schema-RustdocFinding": "docs/api/quality/",
@@ -1277,7 +1281,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 202,
-    "schemas": 1013,
+    "schemas": 1017,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2123,6 +2127,7 @@
     "MeshIdentityReport": "mesh",
     "MeshKind": "mesh",
     "MeshProviderState": "mesh",
+    "MeshReadiness": "health",
     "MeshRepositoryBasis": "mesh",
     "MeshRepositoryIdentity": "mesh",
     "MeshReviewBrief": "mesh",
@@ -2415,7 +2420,10 @@
     "RulesReport": "rules",
     "RulesVerdict": "rules",
     "RuntimeNode": "mesh",
+    "RuntimeState": "shared",
+    "RuntimeTransition": "shared",
     "RuntimeView": "lifecycle",
+    "RuntimeWriter": "shared",
     "RustdocAcceptedLinks": "quality",
     "RustdocCounts": "quality",
     "RustdocFinding": "quality",
@@ -32860,6 +32868,49 @@
       "variants": []
     },
     {
+      "description": "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```",
+      "home": "health",
+      "is_enum": false,
+      "name": "MeshReadiness",
+      "properties": [
+        {
+          "description": "Whether the repository declares its mesh enabled.",
+          "name": "enabled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the declaration is enabled and this server has not decided the mesh yet.",
+          "name": "attaching",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the mesh stands as declared: off when it is not declared, running when it is.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The verdict's words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Readiness"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the repository identity was derived from, which a reader needs in order to judge\nit: an identity taken from the root commits is a fact about the history two clones\nshare, while a declared one is a decision somebody made, and only the second can be\nchanged by editing a file.\n\n```\nuse majordomus_cli::mesh::repository::{declared, of_root_commits, MeshRepositoryBasis};\n\nassert_eq!(declared(\"majordomus\").unwrap().basis, MeshRepositoryBasis::Declared);\nassert_eq!(\n    of_root_commits(&[\"a\".repeat(40)]).basis,\n    MeshRepositoryBasis::RootCommits,\n);\n```",
       "home": "mesh",
       "is_enum": true,
@@ -42049,6 +42100,15 @@
           "refs": [],
           "required": false,
           "type": "array of string"
+        },
+        {
+          "description": "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179).",
+          "name": "mesh",
+          "refs": [
+            "MeshReadiness"
+          ],
+          "required": false,
+          "type": "MeshReadiness | null"
         }
       ],
       "type": "object",
@@ -50308,6 +50368,118 @@
       "variants": []
     },
     {
+      "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "RuntimeState",
+      "properties": [
+        {
+          "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition.",
+          "name": "state",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "Why, when the state is not `operational`.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record.",
+          "name": "transition",
+          "refs": [
+            "RuntimeTransition"
+          ],
+          "required": false,
+          "type": "RuntimeTransition | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus",
+        "ServerView",
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "RuntimeTransition",
+      "properties": [
+        {
+          "description": "`RUNTIME_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the runtime became.",
+          "name": "state",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "What it was, by the previous record; absent for the first.",
+          "name": "from",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": false,
+          "type": "ServerStanding | null"
+        },
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why, in the recorder's words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who recorded it.",
+          "name": "by",
+          "refs": [
+            "RuntimeWriter"
+          ],
+          "required": true,
+          "type": "RuntimeWriter"
+        },
+        {
+          "description": "The server process the transition is about, when there is one.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \"the\nrepository is fine\" but \"the answers you are reading are about the tree you are looking\nat\". When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &str, repo: &str, agree: bool| -> RuntimeView {\n    serde_json::from_value(json!({\n        \"root\": \"example/repo\",\n        \"served_head\": served, \"served_branch\": \"master\", \"served_working_tree\": \"clean\",\n        \"repository_head\": repo, \"repository_branch\": \"master\",\n        \"repository_working_tree\": \"clean\",\n        \"agree\": agree, \"objects\": 1319, \"index_state\": \"ok\",\n        \"note\": \"as measured on this call\",\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\"a1b2c3d\", \"a1b2c3d\", true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \"ok\");\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\"a1b2c3d\", \"9f8e7d6\", false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```",
       "home": "lifecycle",
       "is_enum": false,
@@ -50397,6 +50569,37 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "RuntimeWriter",
+      "properties": [],
+      "type": "\"server\" | \"serve_ensure\" | \"reap_orphans\" | \"server_status\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeTransition"
+      ],
+      "values": [
+        {
+          "description": "The serving process, about itself.",
+          "value": "server"
+        },
+        {
+          "description": "`serve ensure`, which found the lease stale.",
+          "value": "serve_ensure"
+        },
+        {
+          "description": "`scripts/reap-orphans`, through `serve status` after its sweep.",
+          "value": "reap_orphans"
+        },
+        {
+          "description": "`server.status`, on any surface.",
+          "value": "server_status"
+        }
+      ],
       "variants": []
     },
     {
@@ -51442,15 +51645,17 @@
       "variants": []
     },
     {
-      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
+      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```",
       "home": "shared",
       "is_enum": true,
       "name": "ServerStanding",
       "properties": [],
-      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\"",
+      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\" | \"building\" | \"mesh_attaching\" | \"operational\" | \"degraded\" | \"stopping\" | \"stopped\" | \"failed\"",
       "used_by": [],
       "used_by_schemas": [
         "BoardView",
+        "RuntimeState",
+        "RuntimeTransition",
         "ServerStatus",
         "ServerView"
       ],
@@ -51474,12 +51679,40 @@
         {
           "description": "The lease names a server that does not answer, or is not a lease at all.",
           "value": "stale"
+        },
+        {
+          "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive.",
+          "value": "building"
+        },
+        {
+          "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.",
+          "value": "mesh_attaching"
+        },
+        {
+          "description": "The server is ready, says so itself, and its mesh runs or is not declared.",
+          "value": "operational"
+        },
+        {
+          "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.",
+          "value": "degraded"
+        },
+        {
+          "description": "The process that holds the lease recorded that it is stopping, and it is still alive.",
+          "value": "stopping"
+        },
+        {
+          "description": "The server is gone after it recorded that it was stopping.",
+          "value": "stopped"
+        },
+        {
+          "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.",
+          "value": "failed"
         }
       ],
       "variants": []
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
       "home": "server",
       "is_enum": false,
       "name": "ServerStatus",
@@ -51553,6 +51786,15 @@
           ],
           "required": false,
           "type": "TrunkDistance | null"
+        },
+        {
+          "description": "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": false,
+          "type": "RuntimeState | null"
         }
       ],
       "type": "object",
@@ -51564,7 +51806,7 @@
       "variants": []
     },
     {
-      "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```",
+      "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```",
       "home": "server",
       "is_enum": false,
       "name": "ServerView",
@@ -51635,6 +51877,15 @@
           "refs": [],
           "required": false,
           "type": "integer | null"
+        },
+        {
+          "description": "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": false,
+          "type": "RuntimeState | null"
         }
       ],
       "type": "object",
@@ -51827,6 +52078,15 @@
           ],
           "required": true,
           "type": "BriefDeriveSection"
+        },
+        {
+          "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": false,
+          "type": "RuntimeState | null"
         }
       ],
       "type": "object",
@@ -71841,7 +72101,7 @@
       "slug": "served"
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
       "name": "server",
       "operations": [
         {
@@ -71853,7 +72113,7 @@
           "cache_detail": "",
           "cli": "serve status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "home": "server",
           "id": "server.status",
           "kind": "query",
