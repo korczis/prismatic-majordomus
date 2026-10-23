@@ -150,7 +150,7 @@ fn a_decided_mesh_that_is_declared_but_not_active_fails_the_check() {
     let f = Fixture::new();
     f.write(
         ".ai/repo/mesh/majordomus.yaml",
-        "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n",
+        "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n",
     );
     f.commit("the mesh declaration");
     let app = common::load_app(&f);

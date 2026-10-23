@@ -114,6 +114,15 @@ their declared `scope` paths overlap — one equal to, inside, or containing ano
 overlap is reported and they serialise. The direction is deliberate: a false serialisation
 costs time, a false parallel costs a conflict discovered after the work is done.
 
+A scope names the files the record plans to add or change, never a bare shared directory.
+`test/cases` holds every other issue's planned case, so a scope entry of `test/cases`
+contains all of them: the record serialises against every issue that plans a case,
+`docs/PLAN_STATUS.md` lists `scope_conflict` warnings naming case files that do not exist
+yet, and case 59 (`test/cases/59_reference_integrity.sh`) refuses the push over those names.
+Name the case file instead, `test/cases/<number>_<slug>.sh`, with its number taken from
+`scripts/case-numbers next` or from the block the seat announced. `plan validate` does not
+warn on a bare shared directory yet, so the record's author is the check.
+
 ## Evidence
 
 An issue declares `evidence_required` as a list of tokens. `majordomus plan evidence`
@@ -571,6 +580,14 @@ person rewritten the region since it was posted, and has the canonical record mo
 
 and, of a remote record rather than a canonical one, `unmanaged`: an issue claiming a
 canonical id this repository does not have.
+
+A title GitHub would refuse is refused before it merges. GitHub caps a milestone title at
+255 characters and an issue title at 256, and the projected title is `<id> — <title>`.
+`scripts/github-sync --plan`, `--render` and `--apply` count each projected title in
+characters and exit 14 naming every record over its limit, and `scripts/ci/core-check` runs
+`--plan` in the structure job. Before this, a 282-character milestone title passed every
+offline step, the landing's apply got 422, the milestone never existed, and every pull
+request's structure job was red on it until an admin landing broke the deadlock.
 
 Applying is a consequence of landing; agreement is a gate. Every push to the default branch
 starts `.github/workflows/github.yml`, which runs `--check`, then `--apply` when something is

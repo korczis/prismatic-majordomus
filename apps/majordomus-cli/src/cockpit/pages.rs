@@ -9,8 +9,12 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::blackboard::{
+    Blackboard, BlackboardCertainty, BlackboardClaim, BlackboardClaimRef, BlackboardConflict,
+    BlackboardEvidence, BlackboardHandover, BlackboardPresence, BlackboardRelation,
+    BlackboardReview, BlackboardSourceState, BlackboardWorker,
+};
 use crate::capability::builtin::dashboard::DashboardOverview;
-use crate::capability::builtin::peers::PeerList;
 use crate::capability::builtin::{
     ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, CheckState, CommandIndex,
     CommandSummary, Continuity, DesignReport, DirectoryReport, DirectoryState, EventHistory,
@@ -25,6 +29,7 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::{Graph, NodeState, ObservedGraph, RuntimeState};
 use crate::http::router::percent_encode;
+use crate::mesh::journal::ClaimMode;
 use crate::peers::OverlapPath;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
@@ -4949,72 +4954,113 @@ pub fn worktrees(ctx: &Context) -> Page {
 
 // ------------------------------------------------------------------ peers
 
-/// Who else is working in this repository, and where two of them are about to collide.
+/// The capability the Peers page renders, named once: what the page asks is what each of its
+/// statistics says it read.
+const BLACKBOARD: &str = "blackboard.snapshot";
+
+/// Who works on what in this repository, on every checkout's board and every linked machine,
+/// and where two of them are about to collide (ADR 0176).
 ///
-/// The board is the repository's, not this process's: `peers.list` gathers every checkout's
-/// board and returns them together (ADR 0044). That answer has been reachable over MCP and
-/// over HTTP since it was written, and by no person looking at the Cockpit — which is where
-/// somebody looks *before* starting, and is why "is anyone else on this" kept being answered
-/// by messaging other sessions, twice too late.
+/// The page renders one answer, `blackboard.snapshot`, asked as every follower of the live
+/// channel asks it (`http::follow`): every checkout's board and the mesh, without signals,
+/// because the page follows the blackboard's snapshot frames and not its signals. The
+/// capability joined the boards with the mesh, found the claims that meet and decided whether
+/// the answer is complete; nothing here does any of it again, and `/ui/peers` renders the same
+/// answer. The page names the channel it follows, the snapshot frames `/ui/peers` follows
+/// (`data-mj-peers-live`), and `peers.js` reads the page again from its own address on every
+/// snapshot frame and says whether it is live. Without JavaScript the page is complete, and a
+/// reload reads it again.
 ///
 /// The distinction this page exists to keep is **absent against empty**. A board that could
-/// not be asked is not a board with nobody on it, so `complete: false` is rendered as loudly
-/// as the peers themselves, with the checkout that could not be reached and the reason it
-/// gave. Rendering silence for an unreachable server is the failure the capability was
-/// written to avoid, and a page is the easiest place to reintroduce it.
+/// not be asked, or a mesh that is declared and not running, is not a source with nobody in
+/// it, so an incomplete answer is rendered as loudly as the workers themselves, with the
+/// checkout or the source that could not be read and the reason it gave. Rendering silence
+/// for an unreachable server is the failure the capability was written to avoid, and a page is
+/// the easiest place to reintroduce it.
 pub fn peers(ctx: &Context) -> Page {
-    match ask(ctx, "peers.list", json!({})) {
+    match ask(
+        ctx,
+        BLACKBOARD,
+        json!({ "checkouts": "repository", "signals": 0 }),
+    ) {
         Ok(b) => peers_of(&b),
         Err(e) => failed(Area::Peers, "Peers", e),
     }
 }
 
-/// The Peers page of one `peers.list` answer: the rendering, apart from the asking, so that
-/// a board that could not be read — which no single process can produce on demand — is
-/// rendered by the same code as one that could.
-fn peers_of(b: &PeerList) -> Page {
-    let attached = b.peers.iter().filter(|p| p.attached).count();
+/// The Peers page of one blackboard: the rendering, apart from the asking, so that an answer
+/// no single process can produce on demand — a board that could not be read, a mesh that is
+/// not running, two exclusive claims that meet — is rendered by the same code as one it can.
+fn peers_of(b: &Blackboard) -> Page {
     let unread = b.boards.iter().filter(|v| v.reason.is_some()).count();
 
     let statistics = el("div")
         .class("mj-stats")
-        .child(statistic(b.count.to_string(), "peers", "peers.list"))
-        .child(statistic(
-            attached.to_string(),
-            "attached now",
-            "peers.list",
+        .child(super::view::asked_statistic(
+            b.workers.len().to_string(),
+            "workers",
+            BLACKBOARD,
+            "workers",
         ))
-        .child(statistic(
+        .child(super::view::asked_statistic(
+            b.present.to_string(),
+            "here now",
+            BLACKBOARD,
+            "present",
+        ))
+        .child(super::view::asked_statistic(
+            b.conflicts_total.to_string(),
+            "claims that meet",
+            BLACKBOARD,
+            "conflicts_total",
+        ))
+        .child(super::view::asked_statistic(
+            b.reviews.len().to_string(),
+            "reviews open",
+            BLACKBOARD,
+            "reviews",
+        ))
+        .child(super::view::asked_statistic(
+            b.handovers.len().to_string(),
+            "handovers waiting",
+            BLACKBOARD,
+            "handovers",
+        ))
+        .child(super::view::asked_statistic(
             b.boards.len().to_string(),
             "checkouts",
-            "peers.list",
-        ))
-        .child(statistic(unread.to_string(), "boards unread", "peers.list"))
-        .child(statistic(
-            b.overlaps.len().to_string(),
-            "overlapping claims",
-            "peers.list",
+            BLACKBOARD,
+            "boards",
         ));
 
     let identity = card(
-        "This board",
+        "This blackboard",
         facts(vec![
             (
                 "Coverage",
                 Node::Element(if b.complete {
+                    badge("ok", "complete: every board, and the mesh the repository declares")
+                } else {
+                    badge(
+                        "fail",
+                        "incomplete: a board or the mesh could not be read, and Sources says which and why",
+                    )
+                }),
+            ),
+            (
+                "Boards",
+                Node::Element(if unread == 0 {
                     badge("ok", "every checkout answered")
                 } else {
                     badge("fail", format!("{unread} checkout(s) could not be asked"))
                 }),
             ),
+            ("Read at", Node::Element(mono(b.at.clone()))),
             (
-                "You are",
-                Node::Element(match &b.caller {
-                    Some(id) => el("span")
-                        .child(mono(id.as_str()))
-                        .text(" — a position on this checkout's board, handed out again after a reconnect"),
-                    None => el("span").text("not on the board: this page was not opened through an MCP session"),
-                }),
+                "Following",
+                Node::Element(el("span").attr("data-mj-peers-note", "").text(
+                    "Read when this page was rendered. With its script running, the page follows the blackboard's live channel, is read again whenever the blackboard changes, and says here whether it is live.",
+                )),
             ),
         ]),
     );
@@ -5054,93 +5100,102 @@ fn peers_of(b: &PeerList) -> Page {
         ))
     };
 
-    let peers_card = card(
+    let sources = card(
+        "Sources",
+        table(
+            &["Source", "State", "Why"],
+            b.sources
+                .iter()
+                .map(|s| {
+                    row(vec![
+                        cell(mono(s.source.clone())),
+                        cell(source_state(s.state)),
+                        cell(
+                            el("span")
+                                .class("mj-muted mj-identity")
+                                .text(s.reason.clone().unwrap_or_default()),
+                        ),
+                    ])
+                })
+                .collect(),
+        ),
+    );
+
+    let conflicts = card(
+        "Claims that meet",
+        if b.conflicts.is_empty() {
+            el("p")
+                .class("mj-note")
+                .text("No two workers claim paths that meet.")
+        } else {
+            el("div")
+                .child(el("p").class("mj-note").text(
+                    "Each row is two claims of two workers whose scopes meet: confirmed when both \
+                     are exclusive or the mesh marked one conflicted, potential otherwise. A claim \
+                     is not a lock: the task's own scope and `check --overlap` are what refuse a \
+                     commit. This is the warning that comes first.",
+                ))
+                .child(table(
+                    &["Certainty", "One", "The other", "Where they meet"],
+                    b.conflicts.iter().map(conflict).collect(),
+                ))
+                .when(b.conflicts_total > b.conflicts.len(), |e| {
+                    e.child(el("p").class("mj-note").text(format!(
+                        "{} of the {} pairs are listed, the confirmed ones first.",
+                        b.conflicts.len(),
+                        b.conflicts_total
+                    )))
+                })
+        },
+    );
+
+    let workers = card(
         "Workers",
-        if b.peers.is_empty() {
+        if b.workers.is_empty() {
             el("p").class("mj-note").text(if b.complete {
-                "Every board of this repository answered, and none of them holds a worker."
+                "Every source answered, and no board or mesh session holds a worker."
             } else {
-                "No worker on the boards that answered. The boards above were not read, so this is not the whole repository."
+                "No worker on the sources that answered. A source above could not be read, so this is not the whole repository."
             })
         } else {
             table(
-                &["Peer", "Checkout", "Client", "Standing", "Intent", "Scope"],
-                b.peers
+                &["Worker", "Where", "Client", "Here", "Intent", "Claims"],
+                b.workers.iter().map(worker).collect(),
+            )
+        },
+    );
+
+    let waiting = card(
+        "What waits",
+        if b.reviews.is_empty() && b.handovers.is_empty() {
+            el("p")
+                .class("mj-note")
+                .text("No review and no handover waits.")
+        } else {
+            table(
+                &["What", "From", "For", "About"],
+                b.reviews
                     .iter()
-                    .map(|p| {
-                        let checkout = match &p.checkout {
-                            Some(c) => el("span")
-                                .child(mono(
-                                    c.branch.clone().unwrap_or_else(|| "(detached)".into()),
-                                ))
-                                .when(c.this_checkout, |e| e.text(" ").child(tag("here"))),
-                            None => el("span").text("(unknown)"),
-                        };
-                        let a = p.announcement.as_ref();
-                        row(vec![
-                            cell(mono(p.id.as_str())),
-                            cell(checkout),
-                            cell(el("span").text(p.client.name.clone())),
-                            cell(if p.attached {
-                                badge("ok", "attached")
-                            } else {
-                                badge("warn", "gone")
-                            }),
-                            cell(match a {
-                                Some(x) => el("span").text(x.intent.clone()),
-                                None => el("span").class("mj-note").text("announced nothing"),
-                            }),
-                            cell(match a {
-                                Some(x) if !x.scope.is_empty() => {
-                                    let mut e = el("span");
-                                    for path in &x.scope {
-                                        e = e.child(mono(path)).text(" ");
-                                    }
-                                    e
-                                }
-                                _ => el("span").class("mj-note").text("—"),
-                            }),
-                        ])
-                    })
+                    .map(review)
+                    .chain(b.handovers.iter().map(handover))
                     .collect(),
             )
         },
     );
 
-    let overlaps = if b.overlaps.is_empty() {
-        None
-    } else {
-        Some(card(
-            "Two workers, one scope",
-            el("div")
-                .child(el("p").class("mj-note").text(
-                    "Each row is a pair whose claimed scope meets. A claim is not a lock: the task's own \
-                     scope and `check --overlap` are what refuse a commit. This is the warning that comes first.",
-                ))
-                .child(table(
-                    &["Peer", "Standing", "Intent", "Where it meets"],
-                    b.overlaps
-                        .iter()
-                        .map(|o| {
-                            let mut paths = el("span");
-                            for path in &o.paths {
-                                paths = paths.child(mono(o_path(path))).text(" ");
-                            }
-                            row(vec![
-                                cell(mono(o.peer.as_str())),
-                                cell(if o.attached {
-                                    badge("fail", "attached")
-                                } else {
-                                    badge("warn", "gone")
-                                }),
-                                cell(el("span").text(o.intent.clone())),
-                                cell(paths),
-                            ])
-                        })
-                        .collect(),
-                )),
-        ))
-    };
+    let relations = card(
+        "Relations",
+        if b.relations.is_empty() {
+            el("p")
+                .class("mj-note")
+                .text("No record relates two workers.")
+        } else {
+            table(
+                &["Relation", "Evidence", "From", "To", "Record"],
+                b.relations.iter().map(relation).collect(),
+            )
+        },
+    );
 
     let boards = card(
         "Checkouts",
@@ -5176,22 +5231,217 @@ fn peers_of(b: &PeerList) -> Page {
         Area::Peers,
         "Peers",
         {
-            // The unread boards come before the workers, and the overlaps before both: a reader
-            // who stops early must not stop having read "nobody else is here".
-            let mut grid = el("div").class("mj-grid").child(statistics).child(identity);
+            // The unread boards and the sources come before the workers, and the claims that
+            // meet before them too: a reader who stops early must not stop having read
+            // "nobody else is here".
+            let mut grid = el("div")
+                .class("mj-grid")
+                // what `peers.js` replaces with the same element of the page read again, and
+                // the channel that says when to: the snapshot frames `/ui/peers` follows
+                .attr("data-mj-peers", "")
+                .attr("data-mj-peers-live", crate::ui::peers::CHANNEL)
+                .child(statistics)
+                .child(identity);
             if let Some(c) = unreachable {
                 grid = grid.child(c);
             }
-            if let Some(c) = overlaps {
-                grid = grid.child(c);
-            }
-            grid.child(peers_card).child(boards)
+            grid.child(sources)
+                .child(conflicts)
+                .child(workers)
+                .child(waiting)
+                .child(relations)
+                .child(boards)
         },
     )
     .subtitle(
-        "Every worker of this repository, gathered from every checkout's board — and the checkouts whose board could not be read, because a board nobody could ask is not a board with nobody on it.",
+        "Who works on what in this repository, on every checkout's board and every linked machine: what each claims, which claims meet and what waits for whom — and every source that could not be read, because a source nobody could read is not one with nobody in it.",
     )
     .trail(vec![("Cockpit", Some("/cockpit")), ("Peers", None)])
+    .script("peers.js")
+}
+
+/// An identity as it is written, monospaced and broken anywhere: a worker's key, a session or
+/// a record has no space to break at and is wider than a phone.
+fn id_mono(value: impl Into<String>) -> El {
+    mono(value).class("mj-mono mj-identity")
+}
+
+/// The parts that are there, as one line: `a · b`.
+fn joined(parts: &[Option<&str>]) -> String {
+    parts
+        .iter()
+        .flatten()
+        .filter(|s| !s.is_empty())
+        .copied()
+        .collect::<Vec<_>>()
+        .join(" · ")
+}
+
+/// One worker as a row: the name people use and its key, where it works, the client it is and
+/// where it was found, whether it is here, what it announced and what it claims.
+fn worker(w: &BlackboardWorker) -> El {
+    // its board position or its session is what people call it; the key is what it is,
+    // because a position such as p1 is handed out by every board
+    let name = w
+        .board_peer
+        .as_deref()
+        .or(w.session.as_deref())
+        .unwrap_or_default();
+    row(vec![
+        cell(
+            el("span")
+                .child(el("strong").text(name))
+                .text(" ")
+                .child(id_mono(w.key.clone())),
+        ),
+        cell(
+            el("div")
+                .child(el("div").text(joined(&[w.branch.as_deref(), w.machine.as_deref()])))
+                .node(match &w.worktree {
+                    Some(path) => {
+                        Node::Element(el("div").child(id_mono(path.display().to_string())))
+                    }
+                    None => empty(),
+                }),
+        ),
+        cell(
+            el("span")
+                .text(joined(&[Some(w.client.as_str()), w.title.as_deref()]))
+                .text(" ")
+                .child(tag(word(&w.origin))),
+        ),
+        cell(presence(w.presence)),
+        cell(match &w.intent {
+            Some(intent) => el("span").text(intent.clone()),
+            None => el("span").class("mj-note").text("announced nothing"),
+        }),
+        cell(if w.claims.is_empty() {
+            el("span").class("mj-note").text("no claim")
+        } else {
+            el("div").children(w.claims.iter().map(claim))
+        }),
+    ])
+}
+
+/// One claim: the paths it names, marked when it is exclusive and when the mesh found it
+/// conflicting with another live claim.
+fn claim(c: &BlackboardClaim) -> El {
+    let mut line = el("div");
+    for path in &c.scope {
+        line = line.child(id_mono(path.clone())).text(" ");
+    }
+    if c.scope.is_empty() {
+        line = line
+            .child(el("span").class("mj-note").text("no paths"))
+            .text(" ");
+    }
+    line.when(c.mode == ClaimMode::Exclusive, |l| {
+        l.child(tag("exclusive"))
+    })
+    .when(c.conflicted, |l| {
+        l.text(" ").child(badge("fail", "conflicted"))
+    })
+}
+
+/// One conflict as a row: how sure it is, the two claims, and where they meet.
+fn conflict(c: &BlackboardConflict) -> El {
+    let mut paths = el("span");
+    for path in &c.paths {
+        paths = paths.child(mono(o_path(path))).text(" ");
+    }
+    row(vec![
+        cell(certainty(c.certainty)),
+        cell(claim_ref(&c.first)),
+        cell(claim_ref(&c.second)),
+        cell(paths),
+    ])
+}
+
+/// One side of a conflict: the worker's key, and which of its claims — its name, and its
+/// record when it is one of the journal's.
+fn claim_ref(r: &BlackboardClaimRef) -> El {
+    id_mono(joined(&[
+        Some(r.worker.as_str()),
+        r.claim.as_deref(),
+        r.record.as_deref(),
+    ]))
+}
+
+/// A review nobody has answered, as a row of what waits: who asks, whom — anyone, when the
+/// request names nobody — and about what.
+fn review(r: &BlackboardReview) -> El {
+    row(vec![
+        cell(tag("review")),
+        cell(id_mono(r.from.clone())),
+        cell(el("span").text(r.reviewer.as_deref().unwrap_or("anyone"))),
+        cell(el("span").text(joined(&[r.issue.as_deref(), Some(r.subject.as_str())]))),
+    ])
+}
+
+/// A handover nobody has taken: the runtime that published it, for whoever takes it — the
+/// journal names no recipient — and what it continues, by the id it is taken with.
+fn handover(h: &BlackboardHandover) -> El {
+    row(vec![
+        cell(tag("handover")),
+        cell(id_mono(h.runtime.clone())),
+        cell(el("span").text("whoever takes it")),
+        cell(id_mono(joined(&[
+            Some(h.id.as_str()),
+            h.issue.as_deref(),
+            h.name.as_deref(),
+            h.branch.as_deref(),
+        ]))),
+    ])
+}
+
+/// A typed relation between two workers, with what it rests on and the record it rests on.
+fn relation(r: &BlackboardRelation) -> El {
+    row(vec![
+        cell(el("span").text(word(&r.kind).replace('_', " "))),
+        cell(evidence(r.evidence)),
+        cell(id_mono(r.from.clone())),
+        cell(id_mono(r.to.clone())),
+        cell(id_mono(r.record.clone())),
+    ])
+}
+
+/// Whether a worker is here: attached to its board, or in a session whose runtime beats; a
+/// departed one is kept for what it still claims.
+fn presence(p: BlackboardPresence) -> El {
+    let status = match p {
+        BlackboardPresence::Attached | BlackboardPresence::Active => "ok",
+        BlackboardPresence::Departed => "warn",
+    };
+    badge(status, word(&p))
+}
+
+/// How sure a conflict is: confirmed is what an exclusive claim exists to prevent.
+fn certainty(c: BlackboardCertainty) -> El {
+    let status = match c {
+        BlackboardCertainty::Confirmed => "fail",
+        BlackboardCertainty::Potential => "warn",
+    };
+    badge(status, word(&c))
+}
+
+/// What a relation rests on: an identifier that joins its ends, or a match that is only likely.
+fn evidence(e: BlackboardEvidence) -> El {
+    let status = match e {
+        BlackboardEvidence::Verified => "ok",
+        BlackboardEvidence::Candidate => "warn",
+    };
+    badge(status, word(&e))
+}
+
+/// How a source was read: a source that could not be is the loudest thing on the page.
+fn source_state(s: BlackboardSourceState) -> El {
+    let status = match s {
+        BlackboardSourceState::Ok => "ok",
+        BlackboardSourceState::Partial => "warn",
+        BlackboardSourceState::Absent => "fail",
+        BlackboardSourceState::Skipped => "unknown",
+    };
+    badge(status, word(&s))
 }
 
 /// One side of an overlap, as a path a reader can compare with their own.
@@ -7264,6 +7514,37 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
         ),
     };
 
+    // the commits that changed the file, as entity.show read them from git (I3314): a file
+    // with none says why, and a list cut at the bound says so
+    let h = &view.history;
+    let history_card = if !h.applicable {
+        card(
+            "Where it changed",
+            nothing(h.reason.as_deref().unwrap_or("No history applies.")),
+        )
+    } else {
+        let mut body = el("div").child(table(
+            &["Commit", "Date", "Subject"],
+            h.commits
+                .iter()
+                .map(|c| {
+                    row(vec![
+                        cell(mono(&c.commit[..12.min(c.commit.len())])),
+                        cell(mono(&c.date)),
+                        text_cell(&c.subject),
+                    ])
+                })
+                .collect(),
+        ));
+        if h.cut {
+            body = body.child(el("p").class("mj-note").text(format!(
+                "The {} most recent commits; older ones changed it too: git log --follow -- {}",
+                h.bound, view.provenance.path
+            )));
+        }
+        card("Where it changed", body)
+    };
+
     Page::new(
         Area::Objects,
         view.identity.clone(),
@@ -7279,6 +7560,7 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
             .child(card("What can be said about it", evidence_body))
             .child(relations_card)
             .child(surfaces_card)
+            .child(history_card)
             .child(metadata)
             .child(details("The file as it is", pre(&view.content))),
     )
@@ -7820,33 +8102,40 @@ mod tests {
         assert!(html.contains("review required: 1 approval(s);"), "{html}");
     }
 
-    /// One `peers.list` answer, from the JSON the capability serves: the page renders what
-    /// arrives over the wire, so the fixture is written in that shape and not in Rust's.
-    fn peer_list(value: Value) -> PeerList {
-        serde_json::from_value(value).expect("a peers.list answer")
-    }
-
-    /// A peer as a board serializes it, attached or not.
-    fn board_peer(id: &str, attached: bool) -> Value {
-        json!({
-            "id": id,
-            "client": { "name": format!("client-{id}"), "version": "1" },
-            "transport": "http",
-            "connected_at": "2026-10-01T00:00:00Z",
-            "last_seen_seconds_ago": 3,
-            "attached": attached,
-        })
+    /// One `blackboard.snapshot` answer, from the JSON the capability serves: the page renders
+    /// what arrives over the wire, so the fixture is written in that shape and not in Rust's.
+    /// `fields` are the answer's own; what they leave out is an empty, complete blackboard.
+    fn blackboard(fields: Value) -> Blackboard {
+        let mut answer = json!({
+            "at": "2026-10-19T00:00:00Z", "checkout": "repo-a", "complete": true,
+            "sources": [], "boards": [], "present": 0, "workers": [], "conflicts": [],
+            "conflicts_total": 0, "reviews": [], "handovers": [], "relations": [],
+            "signals": [], "for_you": 0, "cursor": "",
+        });
+        for (field, value) in fields.as_object().expect("the answer's fields") {
+            answer[field] = value.clone();
+        }
+        serde_json::from_value(answer).expect("a blackboard.snapshot answer")
     }
 
     /// Absent is not empty: a board that could not be read is named, with its reason, before
-    /// the workers — and a list with nobody on it says that it is not the whole repository,
-    /// rather than "nobody is here".
+    /// the workers, a mesh that is declared and not running is a source in red with its own,
+    /// and a list with nobody on it says that it is not the whole repository, rather than
+    /// "nobody is here".
     #[test]
-    fn the_peers_page_names_a_board_it_could_not_read_and_never_renders_it_as_nobody() {
-        let page = peers_of(&peer_list(json!({
-            "count": 0,
-            "peers": [],
+    fn the_peers_page_names_what_it_could_not_read_and_never_renders_it_as_nobody() {
+        let page = peers_of(&blackboard(json!({
             "complete": false,
+            "sources": [
+                {
+                    "source": "board", "state": "partial",
+                    "reason": "http://127.0.0.1:4200 did not answer (connection refused)",
+                },
+                {
+                    "source": "mesh", "state": "absent",
+                    "reason": "the mesh is not running in this server: other machines are not covered",
+                },
+            ],
             "boards": [
                 {
                     "id": "repo-a", "worktree": "/work/repo", "branch": "master",
@@ -7862,6 +8151,7 @@ mod tests {
         })));
         assert_eq!(page.status, 200);
         let html = page.main.render();
+        assert!(html.contains("incomplete: a board or the mesh"), "{html}");
         assert!(html.contains("1 checkout(s) could not be asked"), "{html}");
         assert!(html.contains("Boards that could not be asked"), "{html}");
         assert!(html.contains("/work/repo-wt/feature/x"), "{html}");
@@ -7869,132 +8159,270 @@ mod tests {
             html.contains("did not answer (connection refused)"),
             "{html}"
         );
+        // a source that could not be read is red, with its reason
+        assert!(
+            html.contains("<span class=\"mj-badge mj-badge--fail\"><span class=\"mj-badge-dot\" aria-hidden=\"true\"></span>absent</span>"),
+            "{html}"
+        );
+        assert!(html.contains("other machines are not covered"), "{html}");
         // a checkout with no branch is said to be detached, not left blank
         assert!(html.contains("(detached)"), "{html}");
-        // nobody on the boards that answered is not the same as nobody in the repository
+        // nobody on the sources that answered is not the same as nobody in the repository
         assert!(html.contains("not the whole repository"), "{html}");
-        assert!(!html.contains("none of them holds a worker"), "{html}");
+        assert!(!html.contains("holds a worker"), "{html}");
         // the reachable checkout carries its server's address, the unread one a dash
         assert!(html.contains("http://127.0.0.1:4100"), "{html}");
-        assert!(html.contains("not on the board"), "{html}");
-        // the unread boards come before the workers: a reader who stops early has read them
+        assert!(html.contains(">—<"), "{html}");
+        // nothing that meets, nothing waiting, nothing related: each said in words
+        assert!(
+            html.contains("No two workers claim paths that meet."),
+            "{html}"
+        );
+        assert!(html.contains("No review and no handover waits."), "{html}");
+        assert!(html.contains("No record relates two workers."), "{html}");
+        // the unread boards and the sources come before the workers: a reader who stops early
+        // has read them
         let unread = html.find("Boards that could not be asked").unwrap();
-        let workers = html.find("Workers").unwrap();
-        assert!(
-            unread < workers,
-            "the unread boards follow the workers: {html}"
-        );
-        assert!(
-            !html.contains("Two workers, one scope"),
-            "an overlap was invented"
-        );
+        let sources = html.find(">Sources<").unwrap();
+        let workers = html.find(">Workers<").unwrap();
+        assert!(unread < sources && sources < workers, "{html}");
     }
 
-    /// A whole board: every worker with where it is, whether it is still here, what it
-    /// announced and where it claimed — and every pair whose claims meet, before the workers.
+    /// A whole blackboard: every worker with its key, where it works, its client and where it
+    /// was found, whether it is here, its intent and its claims with the exclusive and the
+    /// conflicted ones marked; the claims that meet, before the workers; what waits for whom;
+    /// the typed relations; every source; and the channel the page follows, by the region it
+    /// replaces.
     #[test]
-    fn a_whole_board_shows_every_worker_and_where_two_of_them_meet() {
-        let mut here = board_peer("p1", true);
-        here["checkout"] = json!({
-            "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
-            "this_checkout": true,
-        });
-        here["announcement"] = json!({
-            "intent": "renders the board", "scope": ["src/cockpit", "docs"],
-            "at": "2026-10-01T00:00:00Z",
-        });
-        let mut silent = board_peer("p2", false);
-        silent["checkout"] = Value::Null;
-        let mut unscoped = board_peer("p3", true);
-        unscoped["announcement"] = json!({
-            "intent": "reads only", "scope": [], "at": "2026-10-01T00:00:00Z",
-        });
-        let page = peers_of(&peer_list(json!({
-            "count": 2,
-            "caller": "p1",
-            "peers": [here, silent, unscoped],
-            "overlaps": [
+    fn a_whole_blackboard_shows_every_worker_what_meets_what_waits_and_every_source() {
+        let page = peers_of(&blackboard(json!({
+            "complete": true,
+            "present": 2,
+            "sources": [
+                { "source": "board", "state": "ok" },
+                { "source": "mesh", "state": "ok" },
+                { "source": "monitor.executor", "state": "partial", "reason": "the trail is empty" },
+                { "source": "monitor.github", "state": "skipped", "reason": "not asked for" },
+            ],
+            "boards": [{
+                "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
+                "this_checkout": true, "standing": "ready", "attached": 1,
+            }],
+            "workers": [
                 {
-                    "peer": "p4", "attached": true, "intent": "edits the cockpit",
-                    "paths": [
-                        { "yours": "src/cockpit", "theirs": "src/cockpit/pages.rs" },
-                        { "yours": "docs", "theirs": "docs" },
+                    "key": "board:repo-a/p1", "origin": "board", "presence": "attached",
+                    "client": "claude-code", "title": "Claude Code", "intent": "renders the board",
+                    "worktree": "/work/repo", "branch": "feature/peers", "machine": "lundra",
+                    "board_peer": "p1",
+                    "claims": [
+                        { "scope": ["src/cockpit", "docs"], "mode": "advisory" },
+                        {
+                            "scope": ["src/cockpit/pages.rs"], "mode": "exclusive",
+                            "record": "s/c-1", "conflicted": true,
+                        },
                     ],
                 },
                 {
-                    "peer": "p5", "attached": false, "intent": "left",
+                    "key": "mesh:n-r-i/s1", "origin": "mesh", "presence": "active",
+                    "client": "cli", "intent": "the reviewed work", "session": "s1",
+                    "claims": [{ "scope": [], "mode": "exclusive" }],
+                },
+                {
+                    "key": "board:repo-a/p2", "origin": "board", "presence": "departed",
+                    "client": "codex", "board_peer": "p2",
+                },
+            ],
+            "conflicts": [
+                {
+                    "certainty": "confirmed",
+                    "first": { "worker": "board:repo-a/p1", "record": "s/c-1" },
+                    "second": { "worker": "mesh:n-r-i/s1", "claim": "pages" },
+                    "paths": [{ "yours": "src/cockpit/pages.rs", "theirs": "src/cockpit/pages.rs" }],
+                },
+                {
+                    "certainty": "potential",
+                    "first": { "worker": "board:repo-a/p1" },
+                    "second": { "worker": "board:repo-a/p2" },
                     "paths": [{ "yours": "docs", "theirs": "docs/x.md" }],
                 },
             ],
-            "complete": true,
-            "boards": [{
-                "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
-                "this_checkout": true, "standing": "ready", "attached": 2,
-            }],
+            "conflicts_total": 3,
+            "reviews": [
+                { "key": "r-1", "from": "mesh:n-r-i/s1", "subject": "read #1", "reviewer": "1b", "issue": "I1" },
+                { "key": "r-2", "from": "mesh:n-r-i/s1", "subject": "anyone, please" },
+            ],
+            "handovers": [{ "id": "h-1", "runtime": "n-r", "issue": "I2", "name": "the rest", "branch": "b" }],
+            "relations": [
+                {
+                    "kind": "same_worker", "evidence": "verified",
+                    "from": "board:repo-a/p1", "to": "mesh:n-r-i/board-p1", "record": "n-r-i/board-p1",
+                },
+                {
+                    "kind": "review", "evidence": "candidate",
+                    "from": "mesh:n-r-i/s1", "to": "1b", "record": "r-1",
+                },
+            ],
         })));
         let html = page.main.render();
+        assert_eq!(
+            page.scripts,
+            vec!["peers.js"],
+            "the page loads what follows it"
+        );
+        assert!(
+            html.starts_with("<div class=\"mj-grid\" data-mj-peers"),
+            "{html}"
+        );
+        assert!(
+            html.contains("data-mj-peers-live=\"/events?follow=blackboard&amp;frames=snapshot\""),
+            "{html}"
+        );
+        assert!(html.contains("<span data-mj-peers-note>"), "{html}");
+        // every statistic says the capability and the field it read
+        for field in [
+            "workers",
+            "present",
+            "conflicts_total",
+            "reviews",
+            "handovers",
+            "boards",
+        ] {
+            assert!(
+                html.contains(&format!(
+                    "data-capability=\"blackboard.snapshot\" data-field=\"{field}\""
+                )),
+                "{field}: {html}"
+            );
+        }
+        assert!(!html.contains("peers.list"), "{html}");
+        assert!(html.contains("complete: every board"), "{html}");
         assert!(html.contains("every checkout answered"), "{html}");
         assert!(!html.contains("Boards that could not be asked"), "{html}");
-        // the caller is told what its id is: a position, not an identity
         assert!(
-            html.contains("handed out again after a reconnect"),
+            html.contains("2026-10-19T00:00:00Z"),
+            "the time it was read: {html}"
+        );
+        for said in [
+            // the workers, each by the name people use and the key it is
+            "<strong>p1</strong>",
+            "board:repo-a/p1",
+            "<strong>s1</strong>",
+            "feature/peers · lundra",
+            "/work/repo",
+            "claude-code · Claude Code",
+            "<span class=\"mj-tag\">board</span>",
+            "<span class=\"mj-tag\">mesh</span>",
+            ">attached<",
+            ">active<",
+            ">departed<",
+            "renders the board",
+            "the reviewed work",
+            "announced nothing",
+            "no claim",
+            "no paths",
+            ">exclusive<",
+            ">conflicted<",
+            // the claims that meet, one path once and two as the pair they are
+            ">confirmed<",
+            ">potential<",
+            "board:repo-a/p1 · s/c-1",
+            "mesh:n-r-i/s1 · pages",
+            "<code class=\"mj-mono\">src/cockpit/pages.rs</code>",
+            "docs / docs/x.md",
+            "2 of the 3 pairs are listed",
+            // what waits, and for whom
+            ">1b<",
+            ">anyone<",
+            "I1 · read #1",
+            "whoever takes it",
+            "h-1 · I2 · the rest · b",
+            // the relations, with what each rests on
+            "same worker",
+            ">verified<",
+            ">candidate<",
+            "n-r-i/board-p1",
+            // every source with its state
+            "monitor.executor",
+            ">partial<",
+            ">skipped<",
+            "not asked for",
+        ] {
+            assert!(html.contains(said), "{said:?} is not in {html}");
+        }
+        assert!(
+            !html.contains("src/cockpit/pages.rs / src/cockpit/pages.rs"),
+            "a path both claimed is named twice: {html}"
+        );
+        // an exclusive claim the mesh found conflicting is red, beside its paths
+        assert!(
+            html.contains("<span class=\"mj-badge mj-badge--fail\"><span class=\"mj-badge-dot\" aria-hidden=\"true\"></span>conflicted</span>"),
             "{html}"
         );
-        // the workers, each as the board knows it
-        assert!(html.contains("feature/peers"), "{html}");
+        let meet = html.find(">Claims that meet<").unwrap();
+        let workers = html.find(">Workers<").unwrap();
         assert!(
-            html.contains(">here<"),
-            "this checkout is not marked: {html}"
+            meet < workers,
+            "the claims that meet follow the workers: {html}"
         );
-        assert!(
-            html.contains("(unknown)"),
-            "a peer with no checkout: {html}"
-        );
-        assert!(html.contains("announced nothing"), "{html}");
-        assert!(html.contains("renders the board"), "{html}");
-        assert!(
-            html.contains(">gone<"),
-            "a detached peer is not marked gone: {html}"
-        );
-        assert!(html.contains("reads only"), "{html}");
-        // the overlaps: a path both claimed once, two that meet as the pair they are
-        assert!(html.contains("Two workers, one scope"), "{html}");
-        assert!(
-            html.contains("src/cockpit / src/cockpit/pages.rs"),
-            "{html}"
-        );
-        assert!(
-            html.contains("<code class=\"mj-mono\">docs</code>"),
-            "a path both claimed is not named once, as itself: {html}"
-        );
-        assert!(
-            !html.contains("docs / docs<"),
-            "a shared path is named twice: {html}"
-        );
-        assert!(html.contains("docs / docs/x.md"), "{html}");
-        let overlap = html.find("Two workers, one scope").unwrap();
-        let workers = html.find("Workers").unwrap();
-        assert!(overlap < workers, "the overlaps follow the workers: {html}");
     }
 
-    /// A board that answered and holds nobody says so in words, and only then.
+    /// A blackboard that read every source and holds nobody says so in words, and only then.
     #[test]
-    fn an_empty_whole_board_says_nobody_is_here() {
-        let html = peers_of(&peer_list(json!({
-            "count": 0, "peers": [], "complete": true, "boards": [],
-        })))
-        .main
-        .render();
-        assert!(html.contains("none of them holds a worker"), "{html}");
+    fn an_empty_whole_blackboard_says_nobody_is_here() {
+        let html = peers_of(&blackboard(json!({}))).main.render();
+        assert!(
+            html.contains("Every source answered, and no board or mesh session holds a worker."),
+            "{html}"
+        );
         assert!(!html.contains("not the whole repository"), "{html}");
-        assert!(!html.contains("Two workers, one scope"), "{html}");
+        assert!(!html.contains("pairs are listed"), "{html}");
     }
 
-    /// The page asks the capability every other surface asks: the workers this process's
-    /// own board holds are on it, with their claims and the pair they make — and when the
-    /// capability cannot answer, the page is a failure that says so, never an empty board.
+    /// Each state the blackboard says has its word, and the colour that word deserves: what
+    /// could not be read, and two exclusive claims that meet, are red.
     #[test]
-    fn the_peers_page_renders_the_board_the_capability_answers_and_fails_when_it_cannot() {
+    fn every_state_of_the_blackboard_has_its_word_and_its_colour() {
+        let shown = |badges: Vec<El>| badges.iter().map(El::render).collect::<Vec<_>>().join("");
+        let html = shown(vec![
+            presence(BlackboardPresence::Attached),
+            presence(BlackboardPresence::Active),
+            presence(BlackboardPresence::Departed),
+            certainty(BlackboardCertainty::Confirmed),
+            certainty(BlackboardCertainty::Potential),
+            evidence(BlackboardEvidence::Verified),
+            evidence(BlackboardEvidence::Candidate),
+            source_state(BlackboardSourceState::Ok),
+            source_state(BlackboardSourceState::Partial),
+            source_state(BlackboardSourceState::Absent),
+            source_state(BlackboardSourceState::Skipped),
+        ]);
+        let dot = "<span class=\"mj-badge-dot\" aria-hidden=\"true\"></span>";
+        for (status, said) in [
+            ("ok", "attached"),
+            ("ok", "active"),
+            ("warn", "departed"),
+            ("fail", "confirmed"),
+            ("warn", "potential"),
+            ("ok", "verified"),
+            ("warn", "candidate"),
+            ("ok", "ok"),
+            ("warn", "partial"),
+            ("fail", "absent"),
+            ("unknown", "skipped"),
+        ] {
+            let expected =
+                format!("<span class=\"mj-badge mj-badge--{status}\">{dot}{said}</span>");
+            assert!(html.contains(&expected), "{expected} is not in {html}");
+        }
+        assert_eq!(joined(&[None, Some(""), Some("a"), Some("b")]), "a · b");
+    }
+
+    /// The page asks the capability every other surface asks, with the input every follower of
+    /// the live channel reads: the workers this process's own board holds are on it, with
+    /// their claims and the pair they make — and when the capability cannot answer, the page
+    /// is a failure that says so, never an empty board.
+    #[test]
+    fn the_peers_page_renders_the_blackboard_the_capability_answers_and_fails_when_it_cannot() {
         use crate::peers::Transport;
         let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
         let ctx = repo.context().expect("a context");
@@ -8008,34 +8436,26 @@ mod tests {
             vec!["src/cockpit/pages.rs".into()],
         );
 
-        let page = peers(&ctx.for_caller(mine.clone()));
+        let page = peers(&ctx);
         assert_eq!(page.status, 200);
         let html = page.main.render();
         assert!(html.contains("draws the peers page"), "{html}");
         assert!(html.contains("edits one page"), "{html}");
         assert!(html.contains("every checkout answered"), "{html}");
-        assert!(html.contains("Two workers, one scope"), "{html}");
-        // the pair the board found, as one path against the other, whichever side is whose
+        assert!(html.contains(">potential<"), "{html}");
+        // the pair the blackboard found, as one path against the other, whichever side is whose
         assert!(
             html.contains("src/cockpit/pages.rs / src/cockpit<")
                 || html.contains("src/cockpit / src/cockpit/pages.rs<"),
             "{html}"
         );
-        assert!(html.contains(mine.as_str()), "{html}");
+        assert!(html.contains(&format!(">{}<", mine.as_str())), "{html}");
 
-        // a registry with no peers.list: the capability cannot be asked at all
-        let index = repo.index().expect("an index");
-        let bare = Context::new(
-            std::sync::Arc::new(index),
-            std::sync::Arc::new(
-                crate::capability::registry::CapabilityRegistry::builder()
-                    .build()
-                    .expect("an empty registry"),
-            ),
-        );
-        let page = peers(&bare);
+        // a registry with no blackboard.snapshot: the capability cannot be asked at all
+        let page = peers(&context_without(&repo, &["blackboard.snapshot"]));
         assert_eq!(page.status, 500);
         let html = page.main.render();
+        assert!(html.contains("blackboard.snapshot"), "{html}");
         assert!(html.contains("did not answer"), "{html}");
         assert!(
             !html.contains("Workers"),
@@ -8093,6 +8513,42 @@ mod tests {
         let html = page.main.render();
         assert!(html.contains("mesh.peers"), "{html}");
         assert!(html.contains("did not answer"), "{html}");
+    }
+
+    /// Where an entity changed: the page says why there is nothing to list where git cannot
+    /// answer, and says the list was cut, with the command that lists the rest, once more
+    /// commits changed the file than the bound lets through.
+    #[test]
+    fn the_history_card_says_why_it_is_empty_and_when_it_was_cut() {
+        use crate::deploy::slug::testing::{commit, init};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let rule = ctx
+            .index
+            .objects
+            .iter()
+            .find(|o| o.provenance.path.ends_with("rule-0.v1.md"))
+            .expect("rule 0")
+            .clone();
+        let slug = crate::entity::slug(&rule.identity);
+        let page = entity(&ctx, &rule.kind, &slug);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("git cannot answer for this file"), "{html}");
+
+        init(repo.root(), &[]);
+        let bound = crate::capability::builtin::entity::HISTORY_BOUND;
+        for i in 0..=bound {
+            repo.touch_rule(0, &format!("change {i}")).unwrap();
+            commit(repo.root(), &format!("change {i}"));
+        }
+        let ctx = repo.context().unwrap();
+        let html = entity(&ctx, &rule.kind, &slug).main.render();
+        let note = format!(
+            "The {bound} most recent commits; older ones changed it too: git log --follow -- {}",
+            rule.provenance.path
+        );
+        assert!(html.contains(&note), "{html}");
     }
 }
 
@@ -8175,5 +8631,79 @@ mod titled_tests {
         value["store"].as_object_mut().unwrap().remove("remote");
         let alone: domain::Status = serde_json::from_value(value).unwrap();
         assert!(machines_card(&alone).render().contains("no remote"));
+    }
+
+    /// The overview's kinds are the kinds the layer holds (I1010): a kind with no object has
+    /// no row, the same kind gains one when its first objects appear with no change to this
+    /// page, and every row counts what the index counts.
+    #[test]
+    fn the_overview_lists_the_kinds_with_members_and_counts_them() {
+        let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+        let read = |prompts: usize| {
+            let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape {
+                prompts,
+                ..Default::default()
+            })
+            .expect("a synthetic repository");
+            let ctx = repo.context().expect("a context");
+            let kinds: Vec<(String, usize)> = ctx
+                .index
+                .kinds()
+                .into_iter()
+                .map(|(k, n)| (k.to_string(), n))
+                .collect();
+            let cockpit = crate::cockpit::Cockpit::new(
+                std::sync::Arc::clone(&ctx),
+                "0.0.0-test",
+                Some(&share),
+            );
+            let answer = cockpit.handle(&crate::http::router::Request::parse_target(
+                "GET",
+                "/cockpit",
+                Vec::new(),
+            ));
+            let html = answer.body.text().into_owned();
+            let start = html.find("What the layer holds").expect("the kinds card");
+            let card = &html[start..];
+            let card = &card[..card.find("Diagnostics").unwrap_or(card.len())];
+            let rows: Vec<String> = card
+                .split("<tr")
+                .skip(1)
+                .filter(|r| !r.contains("<th"))
+                .map(str::to_string)
+                .collect();
+            (kinds, rows)
+        };
+        let row_of = |rows: &[String], kind: &str| -> Option<String> {
+            let named = format!(">{kind}</code>");
+            rows.iter().find(|r| r.contains(&named)).cloned()
+        };
+
+        let (kinds, rows) = read(0);
+        assert!(
+            !kinds.iter().any(|(k, _)| k == "prompt"),
+            "the fixture holds no prompt"
+        );
+        assert_eq!(
+            row_of(&rows, "prompt"),
+            None,
+            "a kind with no member has no row"
+        );
+        assert_eq!(rows.len(), kinds.len(), "one row per kind held, no other");
+
+        let (kinds, rows) = read(2);
+        assert!(kinds.contains(&("prompt".to_string(), 2)));
+        assert_eq!(rows.len(), kinds.len(), "one row per kind held, no other");
+        for (kind, count) in &kinds {
+            let row = row_of(&rows, kind).unwrap_or_else(|| panic!("no row for {kind}"));
+            assert!(
+                row.contains(&format!(">{count}<")),
+                "{kind}'s row does not count {count}: {row}"
+            );
+            assert!(
+                row.contains(&format!("href=\"{}\"", crate::entity::kind_route(kind))),
+                "{kind}'s row does not lead to its listing: {row}"
+            );
+        }
     }
 }

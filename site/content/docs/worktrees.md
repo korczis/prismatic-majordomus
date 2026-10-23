@@ -743,6 +743,17 @@ the machine it measures. `scripts/ci/backlog-check` refuses a tree in which a bu
 sweeps before it starts, a sweep no longer takes cargo's lock or asks the process table, or the
 runner leaves them on (rule `project.accumulation-is-measured`).
 
+## What the sweeps do not see
+
+The floor, its refusal and the three sweeps measure build output only. On 2026-10-19 the
+volume fell to 17 GiB free while the worktrees' build directories were small: one session's
+scratch directory held 12 GB, `$TMPDIR` 9.6 GB and swap 5 GB. When the floor refuses and the
+five directories it names do not add up to what is missing, measure the rest before removing
+anything: `du -sh "$TMPDIR"`, each agent session's scratch directory, and `sysctl vm.swapusage`.
+A session's scratch directory is that session's: it is emptied by the session or after the
+session has ended, never under a live one. Swap shrinks only as memory is given back. Teaching
+the floor's refusal to name these is a tool change of its own.
+
 ## A path crate another worktree built
 
 Sharing the build directory shares every unit cargo names by its path relative to the

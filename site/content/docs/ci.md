@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 76
+weight = 77
 [extra]
 source = "docs/CI.md"
 +++
@@ -405,6 +405,14 @@ and a dispatch are never cancelled this way: the trunk's remaining jobs are the 
 its other lanes. Read a failed job's log through the jobs API (`gh run view --job <id> --log`)
 rather than waiting for the run. Case 3019 holds every job to it (I2664).
 
+A cancel GitHub accepted is a request, not an end. On 2026-10-19 a cancelled run's `suite` job
+went on running and held its slot in the pool; only
+`gh api -X POST repos/<owner>/<repo>/actions/runs/<id>/force-cancel` freed it. So after a cancel,
+read the run again (`gh run view <id> --json status,jobs`): one that has not completed a minute
+later, a job of it still `in_progress`, is force-cancelled. `scripts/ci/release-path preempt`
+does this by itself for the runs it cancels, after the model's `cancel_wait_seconds`; case 3027
+holds it.
+
 The release path goes first (I2710). Every workflow of this repository draws on one pool of
 job slots, first come, first served, and on 2026-10-14 v0.26.0 was published while its record's
 verdict and the Pages deploy that publishes it sat queued behind two pull requests' validates
@@ -420,7 +428,7 @@ release's token dispatched. While any of them is queued or running:
   to, and cancels itself;
 - a tag push preempts: `.github/workflows/release-path.yml` starts on the same push as the
   release and cancels every pull-request validate already queued or running, labelling and
-  telling each the same way;
+  telling each the same way, and force-cancels any of them that still runs after the wait;
 - once the path is clear, `scripts/ci/release-path resume` re-runs the newest validate run of
   each labelled pull request's head when that run is the cancelled one, and removes the label.
   It is asked at the end of every validate run that is not a pull request's (the record's

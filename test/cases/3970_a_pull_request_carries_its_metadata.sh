@@ -44,13 +44,15 @@ case "$1 ${2:-}" in
   "auth status") exit 0 ;;
   "label list") cat "$FX_L"; exit 0 ;;
   "label create") printf '%s\n' "$3" >> "$FX_L"; exit 0 ;;
+  # the issues as the adapter reads them (I3920): gh issue list, held to GraphQL's count
+  "issue list") cat "$FX_I"; exit 0 ;;
+  "api graphql") if [ -n "${FX_COUNT:-}" ]; then echo "$FX_COUNT"; else wc -l < "$FX_I" | tr -d ' '; fi; exit 0 ;;
 esac
 [ "$1" = api ] || { echo "scripted gh: unexpected call: $*" >&2; exit 1; }
 shift
 case "$*" in
   "--paginate repos/example/fixture/pulls?state=open"*) awk -F'\t' '$10 == "open"' "$FX_P"; exit 0 ;;
   "--paginate repos/example/fixture/milestones?"*) cat "$FX_M"; exit 0 ;;
-  "--paginate repos/example/fixture/issues?"*) cat "$FX_I"; exit 0 ;;
   repos/example/fixture/pulls/[0-9]*" --jq "*) n="${1##*/}"; awk -F'\t' -v n="$n" '$1 == n' "$FX_P"; exit 0 ;;
 esac
 method="$2"; path="$3"; shift 3
@@ -209,6 +211,12 @@ expect_grep 'github-sync prs apply: 5 pull request\(s\), 0 with drift, 0 drift f
 expect_exit 0 sync --check
 expect_exit 0 sync --pr 11 --check
 grep -q 'pulls/11 --jq' "$GH_LOG" || fail "--pr 11 did not read that one pull request"
+
+# a listing shorter than the repository's own count is unreadable, never a set of absences
+# (I3920's guard against the 487 duplicates of 2026-10-22), on this path as on the issues'
+expect_exit 12 env FX_COUNT=99 PATH="$FORGE:$PATH" MJ_GH_PACE=0 "$SYNC" --prs --check
+expect_grep 'could not list the issues of example/fixture'
+expect_no_grep '^DRIFT'
 
 # ---------------------------------------------------------------- 4. a person's edit of the region is kept
 body_of 10 | sed 's/^- Refs #7 (I0001 — Issue I0001)$/- Refs #7, the main one/' > "$T/edited"

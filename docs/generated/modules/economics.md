@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `economics` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.7 -->
 # Module `economics` — Token economics
 
 What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 5.
 
 ## `economics.check` — Refuse unsupported economics claims
 
@@ -98,4 +98,27 @@ Every metric of the economics benchmark with its value, measurement class, sampl
 | `model` | string or null | no | Only runs that asked for this model. |
 
 Output: `EconomicsSummary`.
+
+## `economics.tasks` — Each task's delivery economics
+
+One record per task, folded from the ledger of every checkout `git worktree list` reports and the archives a ledger rotation left: its issue and intent, checkout and branch, first start, last finish or refusal, wall seconds, refusal count, and the episodes that carried it with their spans. Interventions, CI reruns, spend and acceptance are present on every record as not_observed, each with the reason and the issue that will supply it. Lists every ledger read with its line and skipped-line counts and every checkout not read; an optional since/until window filters by each task's start.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_economics_tasks` |
+| HTTP | `GET /api/v1/economics/tasks` |
+| CLI | `majordomus economics tasks` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::economics |
+| tags | economics, evidence, delivery |
+
+| input | type | required | description |
+|---|---|---|---|
+| `since` | string or null | no | Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`). |
+| `until` | string or null | no | Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`). |
+
+Output: `TaskEconomicsList`.
 

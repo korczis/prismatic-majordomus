@@ -6,6 +6,7 @@
 //                                   [--route /path/]... [--max-batches N] [--offset N]
 //   scripts/site-translate import   [--lang cs] [--dry-run] FILE...
 //   scripts/site-translate reach    [--lang cs] [--against REV]
+//   scripts/site-translate rekey    [--lang cs] [--dry-run]
 //   scripts/site-translate run      [--lang cs] --advisor ID [--batch-chars 6000]
 //                                   [--concurrency 4] [--max-batches N] [--min-pages N]
 //
@@ -24,7 +25,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { admissible, loadMemory, memoryChanges, reachOf, saveMemory } from './lib/site-i18n.mjs';
+import { admissible, loadMemory, memoryChanges, reachOf, rekeyValues, saveMemory } from './lib/site-i18n.mjs';
 import { loadAdapter } from './lib/advisors/driver.mjs';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
@@ -34,7 +35,7 @@ const MISSING = path.join(ROOT, 'target', 'site-i18n', 'missing.json');
 const REACH = path.join(ROOT, 'target', 'site-i18n', 'reach.json');
 
 function usage(error) {
-  const text = 'usage: scripts/site-translate status|export|import|run [--lang LANG] ...';
+  const text = 'usage: scripts/site-translate status|export|import|run|reach|rekey [--lang LANG] ...';
   if (error) {
     process.stderr.write(`site-translate: ${error}\n${text}\n`);
     process.exit(2);
@@ -69,7 +70,7 @@ function parse(argv) {
     else if (a.startsWith('--')) usage(`unknown argument ${a}`);
     else opts.files.push(path.resolve(a));
   }
-  if (!['status', 'export', 'import', 'run', 'reach'].includes(cmd)) usage(`unknown command ${cmd}`);
+  if (!['status', 'export', 'import', 'run', 'reach', 'rekey'].includes(cmd)) usage(`unknown command ${cmd}`);
   return opts;
 }
 
@@ -262,4 +263,30 @@ if (opts.cmd === 'status') {
   const none = rows.filter((r) => !r.pages).length;
   process.stdout.write(`site-translate: ${opts.lang}: ${rows.length} key(s) changed since ${opts.against}, ${none} reaching no page\n`);
   process.exit(none ? 10 : 0);
+} else if (opts.cmd === 'rekey') {
+  // move every entry written before I3758 to the key the build now computes: a commit, version
+  // or date that is a whole element becomes a void placeholder in both languages. An entry whose
+  // translation does not carry the same value is named and left as it was.
+  const memory = loadMemory(memoryDir(opts.lang));
+  let moved = 0;
+  const refused = [];
+  const merged = [];
+  for (const e of [...memory.values()]) {
+    const r = rekeyValues(e, opts.lang);
+    if (!r) continue;
+    if (r.refused) { refused.push(`  ${e.k} keeps its key: the ${opts.lang} text lacks ${r.refused}`); continue; }
+    memory.delete(e.k);
+    const kept = memory.get(r.entry.k);
+    // two entries that differed only by the value are one sentence now: the first one loaded is
+    // kept, and a translation that read differently is named rather than dropped in silence
+    if (!kept) memory.set(r.entry.k, r.entry);
+    else if (kept[opts.lang] !== r.entry[opts.lang]) {
+      merged.push(`  ${r.entry.k} keeps ${JSON.stringify(kept[opts.lang])}, drops ${JSON.stringify(r.entry[opts.lang])}`);
+    }
+    moved += 1;
+  }
+  if (!opts.dryRun) saveMemory(memoryDir(opts.lang), memory);
+  if (refused.length) process.stdout.write(`${refused.join('\n')}\n`);
+  if (merged.length) process.stdout.write(`${merged.join('\n')}\n`);
+  process.stdout.write(`site-translate: ${opts.lang}: ${moved} entr(ies) re-keyed, ${merged.length} merged into another's key with a different translation, ${refused.length} left as they were${opts.dryRun ? ' (dry run)' : ''}\n`);
 }
