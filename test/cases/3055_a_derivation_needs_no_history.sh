@@ -65,7 +65,12 @@ MAJORDOMUS_BIN="$RB" "$RB" generate --repo "$W" >/dev/null 2>"$T/generate.err" |
   git status --porcelain | sed 's/^/    | /'; exit 1; }
 
 # 4 -------------------------------------------------------------------------------------
-printf '\n# a line that moves the registry\n' >> lib/context_docs.sh
+# an implementation file the index carries and the site generator does not read, so that only
+# the registry half moves: since I2847 every lib/*.sh is a site input
+moved="$(git ls-files -- bin lib | grep -vxF -f <(scripts/generate-site-data --inputs) \
+  | while read -r f; do grep -qF "\"path\": \"$f\"" site/data/registry/registry.json && { echo "$f"; break; }; done)"
+[ -n "$moved" ] || { echo "    no indexed implementation file is outside the site inputs"; exit 1; }
+printf '\n# a line that moves the registry\n' >> "$moved"
 rc=0; out="$(MAJORDOMUS_BIN="$RB" scripts/pages current 2>&1)" || rc=$?
 [ "$rc" = 10 ] || {
   echo "    a moved source file did not make the gate exit 10 (got $rc)"

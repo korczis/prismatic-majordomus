@@ -260,10 +260,12 @@ def read(path):
 #
 # Brace matching rather than a regex over the whole file: `#[cfg(test)] mod tests { ... }` is
 # a block, its end is a brace, and a regex looking for the next `^}` would stop at the first
-# closing brace of a nested item. Braces inside strings, chars and line comments are skipped,
-# because a test module containing a brace in a string literal would otherwise never close
+# closing brace of a nested item. Braces inside strings (plain, byte and raw, on one line or
+# across several), chars and comments are skipped, and that state is carried from line to
+# line, because a test module containing a brace in a string literal would otherwise never close
 # and the whole rest of the file would be called test code -- an exclusion that raises the
 # number, which is the one thing this script exists to refuse.
+RAW_OPEN = re.compile(r'b?r(#*)"')   # r"  r#"  br##"  -- the opening of a raw string
 ATTR = re.compile(r'^\s*#\[(cfg\(test\)|test|bench|cfg_attr\(test\b)')
 
 def test_lines(path):
@@ -282,25 +284,53 @@ def test_lines(path):
         if j >= len(src):
             break
         depth, k, opened = 0, j, False
+        # What the scan is inside when a line ends: None, "str" (a "..." or b"..." string,
+        # which runs on across lines), ("raw", hashes) for r#"..."#, or "block" for /* ... */.
+        # It is carried from line to line, because a string or comment need not end where
+        # its line does.
+        st = None
         while k < len(src):
             line, m = src[k], 0
             while m < len(line):
-                c = line[m]
-                if c == '"':
+                if st == "str":
+                    if line[m] == "\\":
+                        m += 2
+                        continue
+                    if line[m] == '"':
+                        st = None
                     m += 1
-                    while m < len(line):
-                        if line[m] == "\\":
-                            m += 2
-                            continue
-                        if line[m] == '"':
-                            break
+                    continue
+                if isinstance(st, tuple):
+                    if line.startswith('"' + "#" * st[1], m):
+                        m += 1 + st[1]
+                        st = None
+                    else:
                         m += 1
+                    continue
+                if st == "block":
+                    if line.startswith("*/", m):
+                        st = None
+                        m += 2
+                    else:
+                        m += 1
+                    continue
+                c = line[m]
+                raw = RAW_OPEN.match(line, m) if c in "rb" and (m == 0 or not (line[m - 1].isalnum() or line[m - 1] == "_")) else None
+                if raw:
+                    st = ("raw", len(raw.group(1)))
+                    m = raw.end()
+                    continue
+                if c == '"':
+                    st = "str"
                 elif c == "'" and m + 2 < len(line) and (line[m + 2] == "'" or line[m + 1] == "\\"):
                     m += 2
                     while m < len(line) and line[m] != "'":
                         m += 1
                 elif c == "/" and m + 1 < len(line) and line[m + 1] == "/":
                     break
+                elif c == "/" and m + 1 < len(line) and line[m + 1] == "*":
+                    st = "block"
+                    m += 1
                 elif c == "{":
                     depth += 1
                     opened = True

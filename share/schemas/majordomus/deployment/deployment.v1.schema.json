@@ -3,7 +3,7 @@
   "$id": "https://majordomus.dev/schemas/majordomus/deployment/deployment.v1.schema.json",
   "x-majordomus-schema": "majordomus.deployment/v1",
   "title": "Deployment",
-  "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every artifact built from it — the container image definition and its ignore file — is generated from this object and none of them is authoritative. No hosting provider is named: no provider is a target, so no provider configuration is generated.",
+  "description": "A deployment of this repository's executable, under .ai/repo/deployments/: the one place the application identity, the package and binary that are shipped, the address the process listens on, the routes a platform polls, the resources and machine count it is granted, the region it runs in, the inputs its image is built from and the budgets it is held to are stated. Every artifact built from it — the container image definition, its ignore file and the files of the provider it names — is generated from this object and none of them is authoritative. A provider is optional and, when named, one the contract knows (ADR 0219); its credential is never a field.",
   "x-majordomus-allow": "deployment",
   "type": "object",
   "additionalProperties": false,
@@ -77,6 +77,9 @@
     },
     "budgets": {
       "$ref": "#/$defs/budgets"
+    },
+    "provider": {
+      "$ref": "#/$defs/provider"
     },
     "created_at": {
       "type": "string"
@@ -286,6 +289,40 @@
           "description": "Longest accepted p99 for a served request.",
           "type": "integer",
           "minimum": 1
+        }
+      }
+    },
+    "provider": {
+      "description": "The hosting provider that runs this deployment, when one does (ADR 0219). Absent means no provider runs it: the image is published and nobody hosts it. Every file the provider reads is generated from this object under deploy/<name>/; the credential that authorises a push is never a field here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "app",
+        "stack",
+        "url"
+      ],
+      "properties": {
+        "name": {
+          "description": "Which provider. Only a provider the contract knows is accepted; another name is refused.",
+          "enum": [
+            "gigalixir"
+          ]
+        },
+        "app": {
+          "description": "The application's name at the provider.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{2,62}$"
+        },
+        "stack": {
+          "description": "The provider's stack the application runs on, in the provider's own vocabulary (gigalixir-24).",
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "description": "The public URL the deployment answers on. Always https.",
+          "type": "string",
+          "pattern": "^https://"
         }
       }
     }

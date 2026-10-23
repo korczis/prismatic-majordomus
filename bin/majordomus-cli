@@ -15,6 +15,8 @@
 #   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
 #   MAJORDOMUS_MCP_BUILD=1    `mcp` builds this checkout's executable like every other command
 #   MAJORDOMUS_INSTALLED_BIN  the installed release `mcp` falls back to (lib/rust_bin.sh)
+#   MAJORDOMUS_HOOK=1         a git hook is asking: an executable that is missing is not
+#                             built cold under the hook, the installed release answers (I3831)
 #
 # `mcp` is the command a client spawns and then waits on: a client that gets no handshake
 # in time reports the server as failed and the session goes on without it, silently, as the
@@ -54,6 +56,22 @@ use_installed_for_mcp() {
   exec "$mj_ui_bin" "$@"
 }
 
+# A git hook (MAJORDOMUS_HOOK=1) whose checkout has no executable at all: answer from the
+# installed release instead of a cold build. On 2026-10-21 a commit hook found its worktree's
+# target removed by a disk sweep, waited 60s on the shared build directory's lock and then
+# compiled every dependency cold in a private one, at a load of 77, for a check that takes a
+# second (I3831). A stale executable that exists is still rebuilt: that build is incremental,
+# and an older release must not judge a crate whose sources it was not built from. Returns
+# when there is no installed release, so the caller builds as before.
+use_installed_for_hook() {
+  [ "${MAJORDOMUS_HOOK:-0}" = 1 ] || return 0
+  [ -z "${MAJORDOMUS_BIN:-}" ] || return 0
+  mj_uh_bin="$(mj_rust_installed "$root")" || return 0
+  printf 'majordomus-cli: %s is missing; the hook asks the installed release %s (%s) instead of a cold build\n' \
+    "$bin" "$mj_uh_bin" "$("$mj_uh_bin" --version 2>/dev/null)" >&2
+  exec "$mj_uh_bin" "$@"
+}
+
 # Is the executable missing, or older than any source, manifest or lock file? Decided in
 # lib/rust_bin.sh, so that this script and the one `.envrc` calls cannot disagree about it.
 stale=0
@@ -61,6 +79,7 @@ mj_rust_stale "$root" "$bin" && stale=1
 
 if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
   [ -x "$bin" ] || use_installed_for_mcp "${1:-}" "$bin is missing" "$@"
+  [ -x "$bin" ] || use_installed_for_hook "$@"
   if [ "${MAJORDOMUS_NO_BUILD:-0}" = 1 ]; then
     use_installed_for_mcp "${1:-}" "the build is forbidden (MAJORDOMUS_NO_BUILD)" "$@"
     printf 'majordomus-cli: %s is missing or stale and MAJORDOMUS_NO_BUILD is set; run: cargo build --manifest-path %s/Cargo.toml\n' "$bin" "$crate" >&2
