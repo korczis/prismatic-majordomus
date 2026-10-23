@@ -5,8 +5,8 @@
 //! reconnects after a restart is shown.
 
 use majordomus_cli::execution::{
-    Actor, ActorKind, EventPayload, ExecutionId, ExecutionState, ExecutionStore, Journal, Limits,
-    RepositoryRef, Seed,
+    Actor, ActorKind, EventPayload, ExecutionId, ExecutionJournal, ExecutionState, ExecutionStore,
+    Limits, RepositoryRef, Seed,
 };
 
 fn repository() -> RepositoryRef {
@@ -18,7 +18,7 @@ fn repository() -> RepositoryRef {
 }
 
 fn server(dir: &std::path::Path, limits: Limits) -> ExecutionStore {
-    ExecutionStore::journaled(limits, Journal::open(dir).unwrap())
+    ExecutionStore::journaled(limits, ExecutionJournal::at(dir).unwrap())
 }
 
 fn start(store: &ExecutionStore) -> ExecutionId {

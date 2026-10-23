@@ -110,8 +110,17 @@ impl ExecutionEngine {
     }
 
     /// An engine whose executions are written to `journal` and recovered from it: a
-    /// server's (ADR 0222).
-    pub fn journaled(limits: Limits, journal: crate::execution::Journal) -> Self {
+    /// server's (ADR 0222). Its store answers every execution the journal held before the
+    /// engine accepts a new one, so nothing a reconnecting client asks about is missing.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ExecutionEngine, ExecutionJournal, Limits};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let engine = ExecutionEngine::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
+    /// assert!(engine.store().journal().is_some());
+    /// assert!(engine.store().is_empty(), "an empty journal recovers nothing");
+    /// ```
+    pub fn journaled(limits: Limits, journal: crate::execution::ExecutionJournal) -> Self {
         Self::over(ExecutionStore::journaled(limits, journal))
     }
 

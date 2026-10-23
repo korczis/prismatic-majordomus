@@ -20,7 +20,7 @@ use std::time::{Duration, Instant};
 use serde_json::Value;
 
 use super::event::{EventPayload, ExecutionEvent};
-use super::journal::{Journal, Line, SeedLine};
+use super::journal::{ExecutionJournal, Line, SeedLine};
 use super::model::{
     Actor, Execution, ExecutionError, ExecutionId, ExecutionState, ProgressView, RepositoryRef,
     StepState, StepView,
@@ -268,7 +268,7 @@ pub struct ExecutionStore {
     inner: Mutex<Inner>,
     next_subscriber: AtomicU64,
     /// Where every execution is written down, for a store that outlives its process.
-    journal: Option<Journal>,
+    journal: Option<ExecutionJournal>,
 }
 
 impl ExecutionStore {
@@ -296,23 +296,23 @@ impl ExecutionStore {
     ///
     /// ```
     /// use majordomus_cli::execution::{Actor, ActorKind, EventPayload, ExecutionId};
-    /// use majordomus_cli::execution::{ExecutionState, ExecutionStore, Journal, Limits, RepositoryRef};
+    /// use majordomus_cli::execution::{ExecutionState, ExecutionStore, ExecutionJournal, Limits, RepositoryRef};
     /// let dir = tempfile::tempdir().unwrap();
     /// let id = ExecutionId::fresh();
     /// {
-    ///     let before = ExecutionStore::journaled(Limits::default(), Journal::open(dir.path()).unwrap());
+    ///     let before = ExecutionStore::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
     ///     let repository = RepositoryRef { name: "r".into(), id: "id".into(), branch: None };
     ///     before.create(id.clone(), "executions.demonstrate", "Demonstrate",
     ///         serde_json::json!({}), true, Actor::of(ActorKind::Http), repository);
     ///     before.publish(&id, EventPayload::Started);
     /// } // the server stops with the execution running
-    /// let after = ExecutionStore::journaled(Limits::default(), Journal::open(dir.path()).unwrap());
+    /// let after = ExecutionStore::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
     /// let recovered = after.get(&id).unwrap();
     /// assert_eq!(recovered.state, ExecutionState::Failed);
     /// assert_eq!(recovered.error.unwrap().code, "interrupted");
     /// assert_eq!(recovered.last_sequence, 3, "created, started, and the failure it ends in");
     /// ```
-    pub fn journaled(limits: Limits, journal: Journal) -> Self {
+    pub fn journaled(limits: Limits, journal: ExecutionJournal) -> Self {
         let mut store = ExecutionStore::new(limits);
         store.journal = Some(journal);
         let recovered = store.recover();
@@ -323,7 +323,7 @@ impl ExecutionStore {
     }
 
     /// The journal this store writes, when it has one.
-    pub fn journal(&self) -> Option<&Journal> {
+    pub fn journal(&self) -> Option<&ExecutionJournal> {
         self.journal.as_ref()
     }
 

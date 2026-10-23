@@ -11,7 +11,7 @@
 //!
 //! The store writes a line under the same lock that publishes the event, before a subscriber
 //! or a caller can see it, so nothing a client was shown is missing from the file. Reading
-//! is the inverse: [`Journal::read`] answers every execution in the directory, oldest first,
+//! is the inverse: [`ExecutionJournal::read`] answers every execution in the directory, oldest first,
 //! and the store folds each one back (`ExecutionStore::journaled`).
 //!
 //! The journal changes what a restart means and nothing else. An execution this process
@@ -24,6 +24,13 @@
 //!
 //! A file is never deleted. The store's bound on how many executions it remembers moves the
 //! file of a forgotten execution into `archive/`.
+//!
+//! ```
+//! use majordomus_cli::execution::journal::{ExecutionJournal, DIR};
+//! let repository = tempfile::tempdir().unwrap();
+//! let journal = ExecutionJournal::at(repository.path().join(DIR)).unwrap();
+//! assert!(journal.dir().ends_with(".ai/local/state/executions"), "the checkout's own half");
+//! ```
 
 use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
@@ -41,7 +48,15 @@ pub const DIR: &str = ".ai/local/state/executions";
 /// The directory a forgotten execution's file is moved into.
 const ARCHIVE: &str = "archive";
 
-/// One line of an execution's file.
+/// One line of an execution's file, tagged by `line` so a person reading the file with
+/// `jq` sees what each line is without knowing this type.
+///
+/// ```
+/// use majordomus_cli::execution::journal::Line;
+/// let line: Line = serde_json::from_str(r#"{"line":"through","through":4}"#).unwrap();
+/// assert_eq!(line, Line::Through { through: 4 });
+/// assert!(serde_json::from_str::<Line>(r#"{"line":"other"}"#).is_err(), "a closed set");
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "line", rename_all = "snake_case")]
 pub enum Line {
@@ -58,7 +73,24 @@ pub enum Line {
     Final(Box<Execution>),
 }
 
-/// The part of an execution that does not move.
+/// The part of an execution that does not move: what a recovery needs to rebuild the
+/// snapshot before it folds the events. `reported_pid` is what decides, at a restart,
+/// whether the execution is waited for or failed as interrupted, and is left out of the
+/// line for one this process runs.
+///
+/// ```
+/// use majordomus_cli::execution::journal::SeedLine;
+/// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, RepositoryRef};
+/// let seed = SeedLine {
+///     id: ExecutionId::fresh(), capability: "executions.demonstrate".into(), title: "Demo".into(),
+///     input: serde_json::json!({}), cancellable: true, actor: Actor::of(ActorKind::Http),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+///     created_at: "2026-10-23T00:00:00Z".into(), reported_pid: None,
+/// };
+/// let text = serde_json::to_string(&seed).unwrap();
+/// assert!(!text.contains("reported_pid"), "run here: nothing to wait for at a restart");
+/// assert_eq!(serde_json::from_str::<SeedLine>(&text).unwrap(), seed);
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct SeedLine {
     /// The execution.
@@ -82,7 +114,27 @@ pub struct SeedLine {
     pub reported_pid: Option<u32>,
 }
 
-/// One execution as its file holds it.
+/// One execution as its file holds it: what a server folds back when it starts. The events
+/// are in the order they were written, which is their sequence, because the store writes
+/// each one under the lock that numbers it.
+///
+/// ```
+/// use majordomus_cli::execution::journal::{ExecutionJournal, Line, Recorded, SeedLine};
+/// use majordomus_cli::execution::{Actor, ActorKind, EventPayload, ExecutionEvent, ExecutionId, RepositoryRef};
+/// let dir = tempfile::tempdir().unwrap();
+/// let journal = ExecutionJournal::at(dir.path()).unwrap();
+/// let id = ExecutionId::fresh();
+/// journal.append(&id, &Line::Seed(SeedLine {
+///     id: id.clone(), capability: "executions.demonstrate".into(), title: "Demo".into(),
+///     input: serde_json::json!({}), cancellable: true, actor: Actor::of(ActorKind::Http),
+///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+///     created_at: "2026-10-23T00:00:00Z".into(), reported_pid: None,
+/// }));
+/// journal.append(&id, &Line::Event(ExecutionEvent::new(id.clone(), 1, EventPayload::Started)));
+/// let recorded: &Recorded = &journal.read()[0];
+/// assert_eq!((recorded.events.len(), recorded.through), (1, None));
+/// assert!(recorded.final_snapshot.is_none(), "it never reached a final state");
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Recorded {
     /// What it is.
@@ -95,21 +147,48 @@ pub struct Recorded {
     pub final_snapshot: Option<Execution>,
 }
 
-/// A directory of execution files.
+/// Executions are recovered oldest first, by when they were created and then by id, so a
+/// restarted server lists them in the order it accepted them.
+impl crate::order::Ordered for Recorded {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.seed.created_at, self.seed.id.as_str())
+    }
+}
+
+/// The directory a server writes its executions to, one append-only file per execution, so
+/// that they outlive the process (ADR 0222). Writing never fails an execution: a line that
+/// cannot be written is logged, and only the restart that would have read it is poorer.
+///
+/// ```
+/// use majordomus_cli::execution::journal::ExecutionJournal;
+/// let dir = tempfile::tempdir().unwrap();
+/// let journal = ExecutionJournal::at(dir.path().join("executions")).unwrap();
+/// assert!(journal.dir().is_dir(), "created on first use");
+/// assert!(journal.read().is_empty(), "nothing written, nothing recovered");
+/// ```
 #[derive(Debug, Clone)]
-pub struct Journal {
+pub struct ExecutionJournal {
     dir: PathBuf,
 }
 
-impl Journal {
-    /// Open the directory, creating it when it is not there.
-    pub fn open(dir: impl Into<PathBuf>) -> std::io::Result<Self> {
+impl ExecutionJournal {
+    /// The journal kept in `dir`, created when it is not there. Fails only when the
+    /// directory cannot be created, which a server reports and then runs without one.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::journal::ExecutionJournal;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let file = dir.path().join("not-a-directory");
+    /// std::fs::write(&file, b"").unwrap();
+    /// assert!(ExecutionJournal::at(&file).is_err(), "a file is in the way");
+    /// ```
+    pub fn at(dir: impl Into<PathBuf>) -> std::io::Result<Self> {
         let dir = dir.into();
         std::fs::create_dir_all(&dir)?;
-        Ok(Journal { dir })
+        Ok(ExecutionJournal { dir })
     }
 
-    /// The directory.
+    /// The directory the files are in, for a reader that names it in a diagnostic.
     pub fn dir(&self) -> &Path {
         &self.dir
     }
@@ -119,10 +198,21 @@ impl Journal {
         self.dir.join(format!("{}.jsonl", id.as_str()))
     }
 
-    /// Append one line to an execution's file.
+    /// Append one line to an execution's file, creating the file on its first line.
     ///
     /// A failure is logged and swallowed: an execution that cannot be written down still
     /// runs, and the log names the file a restart will not find complete.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::journal::{ExecutionJournal, Line};
+    /// use majordomus_cli::execution::ExecutionId;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let journal = ExecutionJournal::at(dir.path()).unwrap();
+    /// let id = ExecutionId::fresh();
+    /// journal.append(&id, &Line::Through { through: 3 });
+    /// let text = std::fs::read_to_string(dir.path().join(format!("{}.jsonl", id.as_str()))).unwrap();
+    /// assert_eq!(text, "{\"line\":\"through\",\"through\":3}\n");
+    /// ```
     pub fn append(&self, id: &ExecutionId, line: &Line) {
         let path = self.file(id);
         let written = serde_json::to_string(line)
@@ -142,7 +232,19 @@ impl Journal {
         }
     }
 
-    /// Move a forgotten execution's file into the archive. Never deletes it.
+    /// Move a forgotten execution's file into `archive/`, where no restart reads it. Never
+    /// deletes it: the store's bound protects memory, not the record of what ran.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::journal::{ExecutionJournal, Line};
+    /// use majordomus_cli::execution::ExecutionId;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let journal = ExecutionJournal::at(dir.path()).unwrap();
+    /// let id = ExecutionId::fresh();
+    /// journal.append(&id, &Line::Through { through: 1 });
+    /// journal.archive(&id);
+    /// assert!(dir.path().join("archive").join(format!("{}.jsonl", id.as_str())).exists());
+    /// ```
     pub fn archive(&self, id: &ExecutionId) {
         let from = self.file(id);
         if !from.exists() {
@@ -159,6 +261,16 @@ impl Journal {
     /// Every execution in the directory, oldest first. A file that does not start with a
     /// seed, or whose id is not one this executable mints, is skipped with a warning; a
     /// line that does not parse ends that file's reading there, as a torn last write would.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::journal::{ExecutionJournal, Line};
+    /// use majordomus_cli::execution::ExecutionId;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let journal = ExecutionJournal::at(dir.path()).unwrap();
+    /// // a file with no seed is not an execution anybody can recover
+    /// journal.append(&ExecutionId::fresh(), &Line::Through { through: 1 });
+    /// assert!(journal.read().is_empty());
+    /// ```
     pub fn read(&self) -> Vec<Recorded> {
         let Ok(entries) = std::fs::read_dir(&self.dir) else {
             return Vec::new();
@@ -169,10 +281,7 @@ impl Journal {
             .filter(|p| p.extension().is_some_and(|x| x == "jsonl"))
             .filter_map(|p| read_file(&p))
             .collect();
-        recorded.sort_by(|a, b| {
-            (a.seed.created_at.as_str(), a.seed.id.as_str())
-                .cmp(&(b.seed.created_at.as_str(), b.seed.id.as_str()))
-        });
+        crate::order::canonical(&mut recorded);
         recorded
     }
 }
@@ -242,7 +351,7 @@ mod tests {
     #[test]
     fn what_is_appended_is_read_back_in_order() {
         let dir = tempfile::tempdir().unwrap();
-        let journal = Journal::open(dir.path()).unwrap();
+        let journal = ExecutionJournal::at(dir.path()).unwrap();
         let id = ExecutionId::fresh();
         journal.append(&id, &Line::Seed(seed(&id)));
         journal.append(
@@ -261,7 +370,7 @@ mod tests {
     #[test]
     fn a_torn_last_line_ends_the_reading_and_keeps_what_came_before() {
         let dir = tempfile::tempdir().unwrap();
-        let journal = Journal::open(dir.path()).unwrap();
+        let journal = ExecutionJournal::at(dir.path()).unwrap();
         let id = ExecutionId::fresh();
         journal.append(&id, &Line::Seed(seed(&id)));
         journal.append(
@@ -280,7 +389,7 @@ mod tests {
     #[test]
     fn an_archived_execution_is_moved_never_deleted() {
         let dir = tempfile::tempdir().unwrap();
-        let journal = Journal::open(dir.path()).unwrap();
+        let journal = ExecutionJournal::at(dir.path()).unwrap();
         let id = ExecutionId::fresh();
         journal.append(&id, &Line::Seed(seed(&id)));
         journal.archive(&id);

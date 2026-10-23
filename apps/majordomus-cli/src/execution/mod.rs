@@ -35,7 +35,7 @@
 //! run says on stderr that nothing else can see it. A run never starts a server.
 //!
 //! A server's executions outlive it (ADR 0222). `majordomus serve` builds its store over a
-//! [`Journal`] under `.ai/local/state/executions/`: every execution and every event is
+//! [`ExecutionJournal`] under `.ai/local/state/executions/`: every execution and every event is
 //! written down before anybody is shown it, and a server that starts folds the journal
 //! back, so a browser that reconnects after a restart reads the same execution at the same
 //! cursor. A restart never runs anything again: an execution the stopped process was
@@ -57,7 +57,7 @@ pub mod store;
 
 pub use engine::{ExecutionEngine, SubmitError};
 pub use event::{EventPayload, ExecutionEvent, PROTOCOL_VERSION};
-pub use journal::Journal;
+pub use journal::ExecutionJournal;
 pub use model::{
     Actor, ActorKind, Execution, ExecutionDiagnostic, ExecutionError, ExecutionId, ExecutionState,
     LogStream, ProgressView, RepositoryRef, StepState, StepView,

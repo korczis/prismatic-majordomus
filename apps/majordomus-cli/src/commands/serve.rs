@@ -115,7 +115,7 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     let mut app = App::load(&args.repo)?;
     // The executions this server accepts outlive it (ADR 0222): written down as they
     // happen and folded back here, before anything can start a new one.
-    match crate::execution::Journal::open(repo.root().join(crate::execution::journal::DIR)) {
+    match crate::execution::ExecutionJournal::at(repo.root().join(crate::execution::journal::DIR)) {
         Ok(journal) => {
             let mut context = (*app.context).clone();
             context.executions = Arc::new(crate::execution::ExecutionEngine::journaled(
