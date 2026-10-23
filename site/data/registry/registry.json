@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "ef38b11d9bedf033ec3dd3b0585bce92890f9c1a9822a48566de22c9bafebc3d",
+    "fingerprint": "5a09f69b5826f75aa998f67db2ab014072c316eb1844db47c32678a03608a087",
     "summary": {
-      "total": 3313,
+      "total": 3315,
       "builtin": 208,
-      "declarative": 3105,
+      "declarative": 3107,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3105
+        "resource": 3107
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3115
+        "implemented": 3117
       },
       "mcp_tools": 197,
-      "mcp_resources": 3160,
+      "mcp_resources": 3162,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 899,
         "capability_ids": []
       },
       {
@@ -86797,7 +86797,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 602,
+        "capabilities": 603,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d7ce52574acf5ecf8311df861d65953b14a168f9491ed5cd0e1c095a980f2228",
+    "fingerprint": "abfa8dc806a8d4c68281f6737b24ceb606bf04681d77b1b69c5c250ec6620f6f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86929,7 +86929,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 898,
+      "issue": 899,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -86943,7 +86943,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 602,
+      "test": 603,
       "use-case": 49,
       "workspace": 1
     },
@@ -94181,7 +94181,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 795533
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -96305,7 +96305,7 @@
         "title": "A task is started with a declared file scope and a profile, and only one task is active per checkout",
         "path": "docs/claims/scoped-task.md",
         "source_class": "claim_page",
-        "bytes": 1912
+        "bytes": 1922
       },
       {
         "uri": "majordomus://document/docs/claims/semantic-retrieval.md",
@@ -97311,7 +97311,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 110089
+        "bytes": 110339
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -97599,7 +97599,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13370
+        "bytes": 13380
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -107889,6 +107889,17 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I3995",
+        "kind": "issue",
+        "identity": "I3995",
+        "title": "A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
+        "description": "mj_git_label (lib/common.sh) labels a recorded head of NONE, which mj_git_head writes when start runs on an unborn branch, as advanced once the branch has commits, so the state doctrine passes and check and a completed finish are no longer refused for a history that was never rewritten. start's refusal of a second task names the commands that release the first: finish, or handover --close.",
+        "path": ".ai/repo/project/issues/I3995.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3073
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -118131,6 +118142,14 @@
         "bytes": 9513
       },
       {
+        "uri": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "kind": "test",
+        "identity": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "source_class": "case",
+        "bytes": 1641
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -120805,7 +120824,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 899
     },
     {
       "name": "knowledge",
@@ -120967,7 +120986,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 602
+      "objects": 603
     },
     {
       "name": "use-case",

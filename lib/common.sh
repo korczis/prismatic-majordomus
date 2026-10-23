@@ -460,6 +460,9 @@ mj_git_label() {
   cur_head="$(mj_git_head)"; cur_branch="$(mj_git_branch)"
   if [ "$rec_branch" != "$cur_branch" ]; then printf 'different_context'; return; fi
   if [ "$rec_head" = "$cur_head" ]; then printf 'exact'; return; fi
+  # NONE is a task started before the first commit (mj_git_head): an empty history is an
+  # ancestor of every commit on its branch, and merge-base cannot be asked about a non-revision.
+  if [ "$rec_head" = NONE ]; then printf 'advanced'; return; fi
   if mj_git merge-base --is-ancestor "$rec_head" "$cur_head" 2>/dev/null; then printf 'advanced'; return; fi
   printf 'diverged'
 }
