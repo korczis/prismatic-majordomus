@@ -2306,6 +2306,60 @@ mod tests {
     }
 
     #[test]
+    fn an_ensure_of_npm_or_mix_without_its_install_command_is_refused_by_name() {
+        let (_repo, ctx) = context(false);
+        for kind in [
+            crate::mesh::build_cache::key::Kind::NpmModules,
+            crate::mesh::build_cache::key::Kind::MixDeps,
+        ] {
+            let refused = mesh_build_cache_ensure(
+                &ctx,
+                BuildCacheEnsureInput {
+                    kind,
+                    dir: None,
+                    command: Vec::new(),
+                },
+            );
+            let Err(CapabilityError::InvalidInput(why)) = refused else {
+                panic!("{} without a command was not refused", kind.as_str());
+            };
+            assert_eq!(
+                why,
+                format!("{} needs the install command after `--`", kind.as_str())
+            );
+        }
+    }
+
+    #[test]
+    fn the_env_asks_sccache_by_name_when_no_executable_is_given() {
+        let (repo, ctx) = context(false);
+        // the node file is absent, so no store is asked whatever sccache is installed here
+        let answer = mesh_build_cache_env(
+            &ctx,
+            BuildCacheEnvInput {
+                sccache: None,
+                node_file: Some(repo.root().join("absent.json").display().to_string()),
+                credentials: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            answer.mode,
+            crate::mesh::build_cache::env::Mode::LocalOnly,
+            "{}",
+            answer.reason
+        );
+        assert!(answer.variables.is_empty() && answer.store.is_none());
+        if !answer.sccache.found {
+            assert!(
+                answer.reason.starts_with("sccache does not answer"),
+                "the default executable is `sccache`: {}",
+                answer.reason
+            );
+        }
+    }
+
+    #[test]
     fn retrust_asks_the_running_cooperation_with_the_declaration_in_force() {
         let (_repo, ctx) = context(true);
         assert!(

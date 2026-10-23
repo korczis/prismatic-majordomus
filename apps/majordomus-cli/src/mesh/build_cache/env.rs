@@ -209,12 +209,33 @@ pub struct EnvOptions {
 
 /// `$XDG_CONFIG_HOME`, else `$HOME/.config`.
 fn config_dir() -> Option<PathBuf> {
-    if let Some(x) = std::env::var_os("XDG_CONFIG_HOME").filter(|v| !v.is_empty()) {
+    config_dir_from(
+        std::env::var_os("XDG_CONFIG_HOME"),
+        std::env::var_os("HOME"),
+    )
+}
+
+/// The configuration directory these values of `XDG_CONFIG_HOME` and `HOME` name: the first
+/// when it is set and not empty, else the second's `.config`, else none.
+fn config_dir_from(
+    xdg: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Option<PathBuf> {
+    if let Some(x) = xdg.filter(|v| !v.is_empty()) {
         return Some(PathBuf::from(x));
     }
-    std::env::var_os("HOME")
-        .filter(|v| !v.is_empty())
+    home.filter(|v| !v.is_empty())
         .map(|h| PathBuf::from(h).join(".config"))
+}
+
+/// The node file under a configuration directory.
+fn node_file_under(config: &Path) -> PathBuf {
+    config.join("majordomus").join("build-cache.json")
+}
+
+/// The credential file under a configuration directory.
+fn credentials_under(config: &Path) -> PathBuf {
+    config.join("mesh-build-cache").join("credentials")
 }
 
 /// Where this node keeps what it offers and knows.
@@ -228,7 +249,7 @@ fn config_dir() -> Option<PathBuf> {
 /// }
 /// ```
 pub fn default_node_file() -> Option<PathBuf> {
-    config_dir().map(|d| d.join("majordomus").join("build-cache.json"))
+    config_dir().as_deref().map(node_file_under)
 }
 
 /// Where this node keeps its own client credential, an AWS-format file.
@@ -242,7 +263,7 @@ pub fn default_node_file() -> Option<PathBuf> {
 /// }
 /// ```
 pub fn default_credentials() -> Option<PathBuf> {
-    config_dir().map(|d| d.join("mesh-build-cache").join("credentials"))
+    config_dir().as_deref().map(credentials_under)
 }
 
 /// A string on one line, so that a reason can be a shell comment.
@@ -287,12 +308,13 @@ fn private_port() -> Option<u16> {
 struct ScratchDir(PathBuf);
 
 impl ScratchDir {
-    fn new() -> Option<Self> {
+    /// A new private directory under `base`; `None` when it cannot be made there.
+    fn under(base: &Path) -> Option<Self> {
         let nanos = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_nanos())
             .unwrap_or_default();
-        let dir = std::env::temp_dir().join(format!(
+        let dir = base.join(format!(
             "majordomus-sccache-probe-{}-{nanos}",
             std::process::id()
         ));
@@ -322,10 +344,15 @@ fn sccache_version(program: &str) -> Option<String> {
 /// start and names the level; one that does not ignores the variable and starts, and that
 /// throwaway server is stopped again. `None` when the question could not be put.
 fn measure_multilevel(program: &str) -> (Option<bool>, String) {
+    measure_multilevel_under(program, &std::env::temp_dir())
+}
+
+/// [`measure_multilevel`], with the private home made under `scratch`.
+fn measure_multilevel_under(program: &str, scratch: &Path) -> (Option<bool>, String) {
     let Some(port) = private_port() else {
         return (None, "no private port to measure on".into());
     };
-    let Some(home) = ScratchDir::new() else {
+    let Some(home) = ScratchDir::under(scratch) else {
         return (None, "no scratch directory to measure in".into());
     };
     let mut start = Command::new(program);
@@ -390,7 +417,12 @@ fn local_only(reason: String, sccache: Sccache) -> EnvReport {
 
 /// The host triple the store's keys are prefixed with: rustc's own, else this executable's.
 fn host_triple() -> String {
-    let dir = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    host_triple_in(std::env::current_dir())
+}
+
+/// [`host_triple`], asking rustc in `dir`, or in `.` when the directory is not known.
+fn host_triple_in(dir: std::io::Result<PathBuf>) -> String {
+    let dir = dir.unwrap_or_else(|_| PathBuf::from("."));
     match super::key::state_toolchain(super::key::Kind::CargoBuildDir, &dir) {
         Ok((Some(host), _)) => host,
         _ => super::key::machine_triple(),
@@ -441,6 +473,12 @@ fn variables_for(store: &Store, credentials: &Path, triple: &str) -> Vec<EnvVar>
 /// assert!(!answer.sccache.found);
 /// ```
 pub fn report(opts: &EnvOptions) -> EnvReport {
+    report_under(opts, config_dir().as_deref())
+}
+
+/// [`report`], with the default node and credential files under `config`, or none when there
+/// is no configuration directory.
+fn report_under(opts: &EnvOptions, config: Option<&Path>) -> EnvReport {
     let Some(version) = sccache_version(&opts.sccache) else {
         return local_only(
             format!(
@@ -462,7 +500,10 @@ pub fn report(opts: &EnvOptions) -> EnvReport {
         detail: "not measured: an earlier condition already ended in local-only".into(),
     };
 
-    let node_file = opts.node_file.clone().or_else(default_node_file);
+    let node_file = opts
+        .node_file
+        .clone()
+        .or_else(|| config.map(node_file_under));
     let file = match node_file.as_deref().map(read_node_file) {
         Some(Ok(f)) => f,
         Some(Err(FileError::Invalid(why))) => {
@@ -490,7 +531,10 @@ pub fn report(opts: &EnvOptions) -> EnvReport {
         bucket: chosen.bucket.clone(),
     };
 
-    let credentials = opts.credentials.clone().or_else(default_credentials);
+    let credentials = opts
+        .credentials
+        .clone()
+        .or_else(|| config.map(credentials_under));
     let Some(credentials) = credentials else {
         let mut r = local_only(
             "this process has no home to find a credential file in".into(),
@@ -965,5 +1009,129 @@ mod tests {
             assert!(n.ends_with("majordomus/build-cache.json"));
             assert!(c.ends_with("mesh-build-cache/credentials"));
         }
+    }
+
+    #[test]
+    fn the_config_directory_is_xdg_when_set_else_homes_dot_config_else_none() {
+        let os = |s: &str| Some(std::ffi::OsString::from(s));
+        assert_eq!(
+            config_dir_from(os("/x"), os("/h")),
+            Some(PathBuf::from("/x"))
+        );
+        assert_eq!(
+            config_dir_from(os(""), os("/h")),
+            Some(PathBuf::from("/h/.config")),
+            "an empty XDG_CONFIG_HOME is not a directory"
+        );
+        assert_eq!(
+            config_dir_from(None, os("/h")),
+            Some(PathBuf::from("/h/.config"))
+        );
+        assert_eq!(
+            config_dir_from(None, os("")),
+            None,
+            "an empty HOME is no home"
+        );
+        assert_eq!(config_dir_from(None, None), None);
+    }
+
+    #[test]
+    fn without_a_configuration_directory_a_chosen_store_is_left_out_for_want_of_a_credential() {
+        let d = tempfile::tempdir().unwrap();
+        let port = store_up();
+        let r = report_under(
+            &opts(capable(d.path()), Some(node_file(d.path(), port)), None),
+            None,
+        );
+        assert_eq!(r.mode, Mode::LocalOnly);
+        assert!(
+            r.reason.contains("no home to find a credential file in"),
+            "{}",
+            r.reason
+        );
+        assert_eq!(r.store.as_ref().unwrap().bucket, "the-bucket");
+        assert!(r.variables.is_empty() && r.credentials_file.is_none());
+        assert_eq!(r.sccache.multilevel, None, "nothing was started");
+    }
+
+    #[test]
+    fn the_default_files_are_looked_for_under_the_configuration_directory() {
+        let d = tempfile::tempdir().unwrap();
+        let config = d.path().join("config");
+        // no node file under it: nothing is offered
+        let r = report_under(&opts(capable(d.path()), None, None), Some(&config));
+        assert_eq!(r.mode, Mode::LocalOnly);
+        assert!(r.reason.contains("no node offers"), "{}", r.reason);
+        // a node file given, the credential looked for under it, and not there
+        let port = store_up();
+        let r = report_under(
+            &opts(capable(d.path()), Some(node_file(d.path(), port)), None),
+            Some(&config),
+        );
+        assert_eq!(r.mode, Mode::LocalOnly);
+        let want = credentials_under(&config);
+        assert!(
+            r.reason
+                .contains(&format!("no credential file at {}", want.display())),
+            "{}",
+            r.reason
+        );
+        assert!(want.ends_with("mesh-build-cache/credentials"));
+        assert!(node_file_under(&config).ends_with("majordomus/build-cache.json"));
+    }
+
+    #[test]
+    fn a_credential_file_that_is_not_text_cannot_be_read_and_is_refused() {
+        let d = tempfile::tempdir().unwrap();
+        let path = d.path().join("credentials");
+        std::fs::write(&path, [0xff, 0xfe, 0x00, 0x80]).unwrap();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        let problem = credentials_problem(&path).expect("refused");
+        assert!(problem.ends_with("cannot be read"), "{problem}");
+    }
+
+    #[test]
+    fn an_sccache_whose_version_fails_is_taken_for_absent() {
+        let d = tempfile::tempdir().unwrap();
+        let path = d.path().join("sccache-broken");
+        write_exec(&path, "#!/bin/sh\necho 'sccache 0.18.0'\nexit 3\n");
+        let program = path.display().to_string();
+        assert_eq!(sccache_version(&program), None);
+        let r = report_under(&opts(program, None, None), None);
+        assert_eq!(r.mode, Mode::LocalOnly);
+        assert!(!r.sccache.found);
+    }
+
+    #[test]
+    fn a_multilevel_question_that_cannot_be_put_is_unknown_and_says_why() {
+        let d = tempfile::tempdir().unwrap();
+        let (answer, detail) = measure_multilevel("/no/such/sccache");
+        assert_eq!(answer, None, "a server that never started proves nothing");
+        assert!(detail.contains("did not answer"), "{detail}");
+        let (answer, detail) =
+            measure_multilevel_under(&capable(d.path()), &d.path().join("no-such-dir"));
+        assert_eq!(answer, None);
+        assert_eq!(detail, "no scratch directory to measure in");
+        assert!(
+            !d.path().join("capable.log").exists(),
+            "no server was started without a private home"
+        );
+        assert!(ScratchDir::under(&d.path().join("no-such-dir")).is_none());
+    }
+
+    #[test]
+    fn the_host_triple_falls_back_to_this_executables_when_rustc_cannot_be_asked() {
+        let d = tempfile::tempdir().unwrap();
+        let gone = d.path().join("no-such-dir");
+        assert_eq!(
+            host_triple_in(Ok(gone)),
+            super::super::key::machine_triple(),
+            "rustc cannot be started in a directory that is not there"
+        );
+        let unknown = host_triple_in(Err(std::io::Error::other("cwd removed")));
+        assert!(
+            unknown.contains('-'),
+            "an unknown directory is asked as `.`, and still names a triple: {unknown}"
+        );
     }
 }

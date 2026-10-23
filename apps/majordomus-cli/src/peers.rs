@@ -1243,6 +1243,48 @@ mod tests {
         assert!(a.pid.is_some(), "a test runs under some parent");
     }
 
+    /// An address names only what it knows: with no provider or no session there is no mesh
+    /// session to join, and its line leaves out the provider, the pid and the socket it lacks.
+    #[test]
+    fn an_address_without_a_provider_session_pid_or_socket_says_only_what_it_has() {
+        let bare = PeerAddress {
+            provider: None,
+            host: "mac".into(),
+            pid: None,
+            session: Some("s1".into()),
+            socket: None,
+        };
+        assert_eq!(bare.mesh_session(), None, "no provider, no mesh session");
+        assert_eq!(bare.line(), "on mac");
+        let sessionless = PeerAddress {
+            provider: Some("claude-code".into()),
+            session: None,
+            ..bare.clone()
+        };
+        assert_eq!(
+            sessionless.mesh_session(),
+            None,
+            "no session, no mesh session"
+        );
+        assert_eq!(sessionless.line(), "claude-code on mac");
+    }
+
+    /// An `initialize` carries an address only under `_meta["dev.majordomus/address"]`: no
+    /// `_meta`, or a `_meta` without the key, is no address; and a `_meta` that is not an
+    /// object is left as it is rather than replaced.
+    #[test]
+    fn an_address_is_read_and_written_only_under_its_meta_key() {
+        assert!(PeerAddress::from_initialize(&serde_json::json!({})).is_none());
+        assert!(
+            PeerAddress::from_initialize(&serde_json::json!({ "_meta": { "other": 1 } })).is_none()
+        );
+        let mine = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+        let mut odd = serde_json::json!({ "method": "initialize", "params": { "_meta": 5 } });
+        with_address(&mut odd, &mine);
+        assert_eq!(odd["params"]["_meta"], serde_json::json!(5));
+        assert!(PeerAddress::from_initialize(&odd["params"]).is_none());
+    }
+
     /// A board is now read back off the wire: `peers.list` gathers a sibling checkout's
     /// board from that checkout's own server, and `serde` parses the answer into these
     /// types. Every shape a board can serialise must therefore parse again — including the
