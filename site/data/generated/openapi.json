@@ -53526,7 +53526,7 @@
       "variants": []
     },
     {
-      "description": "What the compiler read of the source under a request's paths, and what that saved.\n\nThe index `fingerprint` covers the layer's objects, not\nthe source files the ranges come from, so each file carries the digest of the bytes\nthat were parsed: a range is true of those bytes, which may be a dirty work tree's\nrather than any commit's, and two answers agree about a file exactly when its digests\ndo.\n\nEvery number here is an estimate in the same unit as the budget (`BYTES_PER_TOKEN`),\nand the saving is measured against reading each outlined file whole — the reading this\nreplaces — not against an ideal reader.\n\n```\nuse majordomus_cli::devcontext::{SourceCoverage, SourceFile};\n\nlet file = SourceFile {\n    path: \"src/big.rs\".into(),\n    digest: \"sha256:00\".into(),\n    bytes: 40_000,\n    whole_tokens: 10_000,\n    definitions: 120,\n    truncated: 0,\n    selected: 3,\n    selected_tokens: 900,\n    saved_tokens: 9_100,\n};\nlet c = SourceCoverage { files: vec![file], ..Default::default() };\nassert!(!c.is_empty());\nassert_eq!(c.whole_tokens(), 10_000);\nassert_eq!(c.selected_tokens(), 900);\nassert_eq!(c.saved_tokens(), 9_100);\n\n// an answer that read no source has no coverage section at all\nassert!(SourceCoverage::default().is_empty());\n```",
+      "description": "What the compiler read of the source under a request's paths, and what that saved.\n\nThe index `fingerprint` covers the layer's objects, not\nthe source files the ranges come from, so each file carries the digest of the bytes\nthat were parsed: a range is true of those bytes, which may be a dirty work tree's\nrather than any commit's, and two answers agree about a file exactly when its digests\ndo.\n\nEvery number here is an estimate in the same unit as the budget (`BYTES_PER_TOKEN`),\nand the saving is measured against reading each outlined file whole — the reading this\nreplaces — not against an ideal reader.\n\n```\nuse majordomus_cli::devcontext::{SourceCoverage, SourceFile};\n\nlet file = SourceFile {\n    path: \"src/big.rs\".into(),\n    digest: \"sha256:00\".into(),\n    bytes: 40_000,\n    whole_tokens: 10_000,\n    definitions: 120,\n    ranges: 120, truncated: 0,\n    selected: 3,\n    selected_tokens: 900,\n    saved_tokens: 9_100,\n};\nlet c = SourceCoverage { files: vec![file], ..Default::default() };\nassert!(!c.is_empty());\nassert_eq!(c.whole_tokens(), 10_000);\nassert_eq!(c.selected_tokens(), 900);\nassert_eq!(c.saved_tokens(), 9_100);\n\n// an answer that read no source has no coverage section at all\nassert!(SourceCoverage::default().is_empty());\n```",
       "home": "devcontext",
       "is_enum": false,
       "name": "SourceCoverage",
@@ -53580,7 +53580,7 @@
       "variants": []
     },
     {
-      "description": "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```",
+      "description": "One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \"path\": \"src/big.rs\", \"digest\": \"sha256:00\", \"bytes\": 4000, \"whole_tokens\": 1000,\n    \"definitions\": 12, \"ranges\": 11, \"truncated\": 0, \"selected\": 2, \"selected_tokens\": 120,\n    \"saved_tokens\": 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```",
       "home": "devcontext",
       "is_enum": false,
       "name": "SourceFile",
@@ -53621,6 +53621,13 @@
           "type": "integer (uint)"
         },
         {
+          "description": "How many ranges they were offered as: definitions written on the same lines share\none. Every range is either selected or excluded, so this is `selected` plus the\nfile's ranges in `excluded`.",
+          "name": "ranges",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
           "description": "Definitions past the per-file bound, not offered.",
           "name": "truncated",
           "refs": [],
@@ -53642,7 +53649,7 @@
           "type": "integer (uint64)"
         },
         {
-          "description": "`whole_tokens - selected_tokens`: what reading the selected ranges instead of the\nfile saves. Zero when the ranges cost as much as the file.",
+          "description": "`whole_tokens - selected_tokens`: what reading the selected ranges instead of the\nfile saves. Zero when the ranges cost as much as the file, and zero when none of its\nranges was selected: a file the answer gives nothing of was not read more cheaply,\nit was not read at all.",
           "name": "saved_tokens",
           "refs": [],
           "required": true,

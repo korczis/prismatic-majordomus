@@ -979,7 +979,11 @@ fn source_coverage(outlined: source::Outlined, selected: &[ContextEntry]) -> Sou
         let (n, tokens) = spent.get(f.path.as_str()).copied().unwrap_or_default();
         f.selected = n;
         f.selected_tokens = tokens;
-        f.saved_tokens = f.whole_tokens.saturating_sub(tokens);
+        f.saved_tokens = if n == 0 {
+            0
+        } else {
+            f.whole_tokens.saturating_sub(tokens)
+        };
     }
     let read_any = !files.is_empty() || !outlined.unread.is_empty();
     SourceCoverage {
@@ -1109,6 +1113,8 @@ pub fn explain(ctx: &Context, input: ExplainInput) -> Result<Explanation, Capabi
         },
         detail: if known {
             format!("the index holds `{uri}` and no selector of this request reached it: no seed names it, no followed edge leads to it, no declared path contains it, and it is not governance")
+        } else if uri.starts_with(source::SCHEME) {
+            format!("`{uri}` is a source range, which the index does not hold: a range is offered only when the request sets `source_ranges` and the span is a definition in the file as it is now, so either the request did not ask for ranges or the file has moved under it")
         } else {
             format!("the index holds nothing under `{uri}`")
         },
@@ -2359,8 +2365,9 @@ mod tests {
         assert!(!guessed.selector.declared(), "a name match is an inference");
         assert!(guessed.confidence > 0.0 && guessed.confidence <= 1.0);
         assert!(
-            spend.relevance < 1.0,
-            "an inference never reaches a seed's relevance"
+            spend.relevance < 0.8,
+            "a range, even one the intent names, ranks below a whole object (0.8): {}",
+            spend.relevance
         );
 
         // homonyms stay apart, each under its own owner
@@ -2468,7 +2475,7 @@ mod tests {
             .filter(|x| x.uri.starts_with("source:src/big.rs#L"))
             .count();
         assert!(
-            left > 0 && left + file.selected == file.definitions,
+            left > 0 && left + file.selected == file.ranges,
             "{left} + {file:?}"
         );
     }
@@ -2535,6 +2542,47 @@ mod tests {
                 assert!(c.sources.files.is_empty(), "{path}: {:?}", c.sources);
             }
         }
+    }
+
+    #[test]
+    fn a_file_nothing_was_selected_from_saved_nothing() {
+        let (_r, ctx, outside) = with_source();
+        let _ = std::fs::remove_file(outside);
+        // a budget that what may not be dropped already fills: no range fits
+        let c = compile(
+            &ctx,
+            CompileInput {
+                paths: vec!["src/big.rs".into()],
+                budget_tokens: Some(1),
+                source_ranges: Some(true),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        let file = &c.sources.files[0];
+        assert_eq!(file.selected, 0, "{file:?}");
+        assert_eq!(
+            file.saved_tokens, 0,
+            "a file not read is not a saving: {file:?}"
+        );
+        assert_eq!(c.sources.saved_tokens(), 0);
+        // and explain says what a source range is rather than calling it unknown
+        let uri = c
+            .excluded
+            .iter()
+            .find(|x| x.uri.starts_with(source::SCHEME))
+            .expect("an excluded range")
+            .uri
+            .clone();
+        let why = explain(
+            &ctx,
+            ExplainInput {
+                uri: format!("{uri}0"),
+                request: CompileInput::default(),
+            },
+        )
+        .unwrap();
+        assert!(why.detail.contains("source range"), "{}", why.detail);
     }
 
     #[test]

@@ -85,13 +85,13 @@ pub const SCHEME: &str = "source:";
 pub const PARSER: &str =
     "syn 2 over the bytes read: Rust syntax only; macros not expanded, cfg not evaluated, names not resolved";
 
-/// The relevance of a range reached by a declared path alone: the same weight a whole
+/// The relevance of a range reached by a declared path alone: below the 0.8 a whole
 /// implementation object under a declared path gets, so a range is never preferred to it.
-const RELEVANCE: f64 = 0.8;
+const RELEVANCE: f64 = 0.7;
 
 /// How much an intent match may lift a range above its siblings: enough to order the
-/// ranges of one file, never enough to reach a seed.
-const INTENT_LIFT: f64 = 0.1;
+/// ranges of one file, never enough to reach a whole object (0.8), let alone a seed.
+const INTENT_LIFT: f64 = 0.09;
 
 /// What the source reading produced: the files outlined and the ones that were not.
 #[derive(Debug, Default)]
@@ -129,8 +129,15 @@ pub struct Definition {
 /// The definitions of one Rust file, in the order they are written.
 ///
 /// An `impl` block and an inline `mod` are decomposed into the definitions inside them, so
-/// the ranges of one file never overlap and their costs can be added up; every other item
-/// is one range, a `trait` included.
+/// the ranges of one file do not nest; every other item is one range, a `trait` included.
+/// Two definitions written on one line share their span, and the compiler offers that span
+/// once, naming both; adjacent items may share a boundary line, so the costs of a file's
+/// ranges add up to about, not exactly, the file.
+///
+/// The parser's span table is released before this returns: the spans are turned into line
+/// numbers here, and a long-lived server that parses source on every request must not keep
+/// every file it ever read. Spans of other parses held on this thread across the call are
+/// invalidated with it.
 ///
 /// ```
 /// use majordomus_cli::devcontext::source::outline;
@@ -154,6 +161,8 @@ pub fn outline(text: &str) -> Result<Vec<Definition>, String> {
     })?;
     let mut out = Vec::new();
     definitions(&file.items, "", &mut out);
+    drop(file);
+    proc_macro2::extra::invalidate_current_thread_spans();
     Ok(out)
 }
 
@@ -316,7 +325,12 @@ fn bytes_between(starts: &[usize], first: usize, last: usize) -> u64 {
 }
 
 /// Read one tracked, in-scope file through every guard, or say which guard refused it.
-fn read_guarded(ctx: &Context, root: &Path, rel: &str) -> Result<Vec<u8>, String> {
+fn read_guarded(
+    ctx: &Context,
+    root: &Path,
+    real_root: &Path,
+    rel: &str,
+) -> Result<Vec<u8>, String> {
     let judged = ctx.index.scoped.scope.classify(root, rel);
     if judged.verdict == Verdict::Out {
         return Err(format!(
@@ -340,18 +354,32 @@ fn read_guarded(ctx: &Context, root: &Path, rel: &str) -> Result<Vec<u8>, String
     }
     // a parent directory replaced by a link would pass the checks above: the real path is
     // what is opened, so the real path is what must stay inside the root
-    let real_root = root
-        .canonicalize()
-        .map_err(|e| format!("cannot resolve the repository root: {e}"))?;
     let real = abs
         .canonicalize()
         .map_err(|e| format!("cannot resolve: {e}"))?;
-    if !real.starts_with(&real_root) {
+    if !real.starts_with(real_root) {
         return Err("its real path leaves the repository; not read".into());
     }
+    // opened without following a final link, and judged by the handle that was opened
+    // rather than by the path, so a file swapped between the checks above and the read is
+    // refused instead of read
+    let mut options = std::fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    let file = options
+        .open(&real)
+        .map_err(|e| format!("cannot open without following a link: {e}"))?;
+    let opened = file.metadata().map_err(|e| format!("cannot stat: {e}"))?;
+    if !opened.is_file() {
+        return Err("not a regular file when it was opened".into());
+    }
     let mut bytes = Vec::new();
-    std::fs::File::open(&real)
-        .and_then(|f| f.take(MAX_SOURCE_BYTES + 1).read_to_end(&mut bytes))
+    file.take(MAX_SOURCE_BYTES + 1)
+        .read_to_end(&mut bytes)
         .map_err(|e| format!("cannot read: {e}"))?;
     if bytes.len() as u64 > MAX_SOURCE_BYTES {
         return Err("grew past the one-file bound while it was read".into());
@@ -404,13 +432,23 @@ pub(crate) fn offer(
         }
     }
     crate::order::canonical_strings(&mut rust);
+    let real_root = match root.canonicalize() {
+        Ok(r) => r,
+        Err(e) => {
+            out.unread.push(UnreadSource {
+                path: ".".into(),
+                reason: format!("the repository root cannot be resolved: {e}"),
+            });
+            return out;
+        }
+    };
     if rust.len() > MAX_SOURCE_FILES {
         out.truncated = rust.len() - MAX_SOURCE_FILES;
         rust.truncate(MAX_SOURCE_FILES);
     }
 
     for rel in rust {
-        let bytes = match read_guarded(ctx, root, &rel) {
+        let bytes = match read_guarded(ctx, root, &real_root, &rel) {
             Ok(b) => b,
             Err(reason) => {
                 out.unread.push(UnreadSource { path: rel, reason });
@@ -443,14 +481,37 @@ pub(crate) fn offer(
             .cloned()
             .unwrap_or_else(|| rel.clone());
         let cut = defs.len().saturating_sub(MAX_RANGES_PER_FILE);
+        // definitions written on the same lines are one span: offered once, naming each,
+        // so no definition is lost to another that shares its identifier
+        let mut spans: BTreeMap<(usize, usize), Vec<&Definition>> = BTreeMap::new();
         for d in defs.iter().take(MAX_RANGES_PER_FILE) {
-            let range_bytes = bytes_between(&starts, d.first, d.last);
-            let uri = format!("{SCHEME}{rel}#L{}-L{}", d.first, d.last);
+            spans.entry((d.first, d.last)).or_default().push(d);
+        }
+        for ((first, last), named) in &spans {
+            let (first, last) = (*first, *last);
+            let range_bytes = bytes_between(&starts, first, last);
+            let uri = format!("{SCHEME}{rel}#L{first}-L{last}");
+            let symbol = named
+                .iter()
+                .map(|d| d.symbol.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
+            let item = named
+                .iter()
+                .map(|d| d.item)
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect::<Vec<_>>()
+                .join(", ");
+            let title = named
+                .iter()
+                .map(|d| format!("{} {}", d.item, d.symbol))
+                .collect::<Vec<_>>()
+                .join(", ");
             let mut discovered_by = vec![Discovery {
                 selector: Selector::ScopePath,
                 reason: format!(
-                    "`{} {}` is written at lines {}–{} of `{rel}`, under `{via}`, which the work declares; the span is syntax, read by syn",
-                    d.item, d.symbol, d.first, d.last
+                    "`{title}` is written at lines {first}–{last} of `{rel}`, under `{via}`, which the work declares; the span is syntax, read by syn"
                 ),
                 via: Some(via.clone()),
                 edge: None,
@@ -460,10 +521,11 @@ pub(crate) fn offer(
             }];
             let mut relevance = RELEVANCE;
             if !terms.is_empty() {
-                let named = words(&d.symbol);
+                let words_of: BTreeSet<String> =
+                    named.iter().flat_map(|d| words(&d.symbol)).collect();
                 let hits: Vec<&str> = terms
                     .iter()
-                    .filter(|t| named.contains(*t))
+                    .filter(|t| words_of.contains(*t))
                     .map(String::as_str)
                     .collect();
                 if !hits.is_empty() {
@@ -472,9 +534,8 @@ pub(crate) fn offer(
                     discovered_by.push(Discovery {
                         selector: Selector::IntentMatch,
                         reason: format!(
-                            "the intent's term(s) {} are words of the name `{}`",
-                            hits.join(", "),
-                            d.symbol
+                            "the intent's term(s) {} are words of the name `{symbol}`",
+                            hits.join(", ")
                         ),
                         via: None,
                         edge: None,
@@ -486,9 +547,9 @@ pub(crate) fn offer(
             }
             let mut facts = BTreeMap::new();
             facts.insert("bytes".into(), range_bytes.to_string());
-            facts.insert("lines".into(), format!("{}-{}", d.first, d.last));
-            facts.insert("symbol".into(), d.symbol.clone());
-            facts.insert("item".into(), d.item.into());
+            facts.insert("lines".into(), format!("{first}-{last}"));
+            facts.insert("symbol".into(), symbol);
+            facts.insert("item".into(), item);
             facts.insert("file_digest".into(), digest.clone());
             facts.insert("parser".into(), PARSER.into());
             sel.candidates.insert(
@@ -496,7 +557,7 @@ pub(crate) fn offer(
                 Candidate {
                     uri,
                     kind: KIND.into(),
-                    title: Some(format!("{} {}", d.item, d.symbol)),
+                    title: Some(title),
                     tier: Tier::Source,
                     relevance,
                     depth: 1,
@@ -514,6 +575,7 @@ pub(crate) fn offer(
             bytes: bytes.len() as u64,
             whole_tokens: tokens_for(bytes.len() as u64),
             definitions: defs.len(),
+            ranges: spans.len(),
             truncated: cut,
             selected: 0,
             selected_tokens: 0,
@@ -564,6 +626,14 @@ mod tests {
             named,
             [("macro_rules", "twice"), ("macro call", "thread_local!")]
         );
+    }
+
+    #[test]
+    fn definitions_on_one_line_share_one_span_and_each_is_kept() {
+        let defs = outline("struct A; struct B;\nimpl A { fn a() {} fn b() {} }\n").unwrap();
+        let spans: BTreeSet<(usize, usize)> = defs.iter().map(|d| (d.first, d.last)).collect();
+        assert_eq!(defs.len(), 4, "every definition is found: {defs:?}");
+        assert_eq!(spans.len(), 2, "two lines, two spans: {spans:?}");
     }
 
     #[test]

@@ -1113,7 +1113,7 @@ pub struct CompiledContext {
 ///     bytes: 40_000,
 ///     whole_tokens: 10_000,
 ///     definitions: 120,
-///     truncated: 0,
+///     ranges: 120, truncated: 0,
 ///     selected: 3,
 ///     selected_tokens: 900,
 ///     saved_tokens: 9_100,
@@ -1179,7 +1179,7 @@ impl SourceCoverage {
     ///
     /// let f = |path: &str, whole: u64| SourceFile {
     ///     path: path.into(), digest: String::new(), bytes: whole * 4, whole_tokens: whole,
-    ///     definitions: 1, truncated: 0, selected: 0, selected_tokens: 0, saved_tokens: whole,
+    ///     definitions: 1, ranges: 1, truncated: 0, selected: 0, selected_tokens: 0, saved_tokens: whole,
     /// };
     /// let c = SourceCoverage { files: vec![f("a.rs", 10), f("b.rs", 32)], ..Default::default() };
     /// assert_eq!(c.whole_tokens(), 42);
@@ -1195,7 +1195,7 @@ impl SourceCoverage {
     ///
     /// let f = SourceFile {
     ///     path: "a.rs".into(), digest: String::new(), bytes: 400, whole_tokens: 100,
-    ///     definitions: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
+    ///     definitions: 3, ranges: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
     /// };
     /// let c = SourceCoverage { files: vec![f.clone(), f], ..Default::default() };
     /// assert_eq!(c.selected_tokens(), 50);
@@ -1211,7 +1211,7 @@ impl SourceCoverage {
     ///
     /// let f = SourceFile {
     ///     path: "a.rs".into(), digest: String::new(), bytes: 400, whole_tokens: 100,
-    ///     definitions: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
+    ///     definitions: 3, ranges: 3, truncated: 0, selected: 1, selected_tokens: 25, saved_tokens: 75,
     /// };
     /// let c = SourceCoverage { files: vec![f], ..Default::default() };
     /// assert_eq!(c.saved_tokens(), c.whole_tokens() - c.selected_tokens());
@@ -1228,7 +1228,7 @@ impl SourceCoverage {
 ///
 /// let f: SourceFile = serde_json::from_value(serde_json::json!({
 ///     "path": "src/big.rs", "digest": "sha256:00", "bytes": 4000, "whole_tokens": 1000,
-///     "definitions": 12, "truncated": 0, "selected": 2, "selected_tokens": 120,
+///     "definitions": 12, "ranges": 11, "truncated": 0, "selected": 2, "selected_tokens": 120,
 ///     "saved_tokens": 880,
 /// })).unwrap();
 /// assert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);
@@ -1245,6 +1245,10 @@ pub struct SourceFile {
     pub whole_tokens: u64,
     /// How many definitions the parser found in it.
     pub definitions: usize,
+    /// How many ranges they were offered as: definitions written on the same lines share
+    /// one. Every range is either selected or excluded, so this is `selected` plus the
+    /// file's ranges in `excluded`.
+    pub ranges: usize,
     /// Definitions past the per-file bound, not offered.
     pub truncated: usize,
     /// How many of its ranges the budget selected.
@@ -1252,7 +1256,9 @@ pub struct SourceFile {
     /// What those ranges cost, in estimated tokens.
     pub selected_tokens: u64,
     /// `whole_tokens - selected_tokens`: what reading the selected ranges instead of the
-    /// file saves. Zero when the ranges cost as much as the file.
+    /// file saves. Zero when the ranges cost as much as the file, and zero when none of its
+    /// ranges was selected: a file the answer gives nothing of was not read more cheaply,
+    /// it was not read at all.
     pub saved_tokens: u64,
 }
 
