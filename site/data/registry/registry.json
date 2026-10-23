@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "281d0e8f78991713e2c7a2d7aaf80554e28f4291a1b139ae4377dca1e234b355",
+    "fingerprint": "0835ff48f34fbd0d0416abef47e0633d9538e4403c51c438f9290dfe76ccda03",
     "summary": {
-      "total": 3529,
+      "total": 3531,
       "builtin": 219,
-      "declarative": 3310,
+      "declarative": 3312,
       "by_kind": {
         "command": 35,
         "query": 184,
-        "resource": 3310
+        "resource": 3312
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 62,
-        "implemented": 3320
+        "implemented": 3322
       },
       "mcp_tools": 205,
-      "mcp_resources": 3367,
+      "mcp_resources": 3369,
       "http_routes": 211,
       "cli_commands": 120,
       "modules": 94,
@@ -91121,7 +91121,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1021,
+        "capabilities": 1022,
         "capability_ids": []
       },
       {
@@ -91718,7 +91718,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 649,
+        "capabilities": 650,
         "capability_ids": []
       },
       {
@@ -91810,7 +91810,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e16c8856e4a1b9ad734e2cbd20332796eb5260562bfaf9dd266219bcb4a3a02e",
+    "fingerprint": "da0700f8ae1b61bf0aef8c69d4a04015ecbbf31c24a360bbf24ae62ff0a04195",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -91850,7 +91850,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1021,
+      "issue": 1022,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -91864,7 +91864,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 649,
+      "test": 650,
       "use-case": 49,
       "workspace": 1
     },
@@ -93464,7 +93464,7 @@
         "path": ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 5814,
+        "bytes": 6650,
         "tags": [
           "operations",
           "worktrees",
@@ -99295,7 +99295,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 946624
+        "bytes": 947701
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99475,7 +99475,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 49730
+        "bytes": 52647
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -102676,7 +102676,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 78596
+        "bytes": 105288
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -114125,6 +114125,17 @@
         "bytes": 2862
       },
       {
+        "uri": "majordomus://issue/I3959",
+        "kind": "issue",
+        "identity": "I3959",
+        "title": "The shared build directory stays under its bound while builds run: between builds, under cargo's lock, its stale units are evicted oldest first until it is under the bound",
+        "description": "Make the shared build directory's 6144MB bound (MAJORDOMUS_SHARED_BUILD_CAP_MB) hold on a machine where some cargo always runs: before and after every bounded build, and from scripts/reap-orphans when a build is running, evict whole stale units of the build directory, oldest first, until it is under its bound: a coverage run's llvm-cov-target, dependency generations whose crate version no worktree's Cargo.lock names, idle incremental sessions and idle generations of this crate's own units. Each profile's units are evicted only while cargo's lock on that profile is taken without waiting and no process names or holds them; a held lock is skipped and said, and what was evicted is reported per unit.",
+        "path": ".ai/repo/project/issues/I3959.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4395
+      },
+      {
         "uri": "majordomus://issue/I3960",
         "kind": "issue",
         "identity": "I3960",
@@ -122028,7 +122039,7 @@
         "identity": "test/cases/08_no_forbidden_constructs.sh",
         "path": "test/cases/08_no_forbidden_constructs.sh",
         "source_class": "case",
-        "bytes": 11659
+        "bytes": 13494
       },
       {
         "uri": "majordomus://test/test/cases/09_site_mobile_first.sh",
@@ -125151,6 +125162,14 @@
         "bytes": 12860
       },
       {
+        "uri": "majordomus://test/test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+        "kind": "test",
+        "identity": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+        "path": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+        "source_class": "case",
+        "bytes": 17141
+      },
+      {
         "uri": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
         "kind": "test",
         "identity": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
@@ -127873,7 +127892,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1021
+      "objects": 1022
     },
     {
       "name": "knowledge",
@@ -128035,7 +128054,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 649
+      "objects": 650
     },
     {
       "name": "use-case",
