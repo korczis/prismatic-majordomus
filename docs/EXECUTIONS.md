@@ -47,20 +47,66 @@ serving the checkout, so the history a surface shows is the history a person mad
 
 ```mermaid
 stateDiagram-v2
+  authorizing --> queued
+  authorizing --> refused
+  authorizing --> failed
+  authorizing --> cancelled
   queued --> running
+  queued --> claimed
+  queued --> refused
+  queued --> failed
   queued --> cancelled
+  claimed --> running
+  claimed --> queued: released before anything ran
+  claimed --> refused: authorised again on claim
+  claimed --> failed
+  claimed --> cancelling
+  claimed --> unknown_outcome
+  running --> verifying
   running --> succeeded
   running --> failed
   running --> cancelling
+  running --> unknown_outcome
+  verifying --> succeeded
+  verifying --> failed
+  verifying --> cancelling
+  verifying --> unknown_outcome
   cancelling --> cancelled
   cancelling --> succeeded: it finished before it noticed
   cancelling --> failed
+  cancelling --> unknown_outcome
+  unknown_outcome --> verifying: reconciled
+  unknown_outcome --> succeeded: reconciled
+  unknown_outcome --> failed: reconciled
+  unknown_outcome --> cancelled: reconciled
 ```
 
-`ExecutionState::may_move_to` is the whole contract and the store refuses anything else, so
-a client that reads a final state never sees it move again. There is no `starting`: an
-in-process engine claims an execution and enters its handler in the same instant, and a
-state nothing can reach is a state every client would have to handle and never see.
+| state | means | final |
+|---|---|---|
+| `authorizing` | accepted; a policy decision on whether it may run is not taken yet | no |
+| `queued` | waiting for a worker | no |
+| `claimed` | a worker holds it and has not entered the handler | no |
+| `running` | the handler is running | no |
+| `verifying` | the handler returned, and what it produced is being checked | no |
+| `cancelling` | a stop was asked for and the handler has not stopped | no |
+| `unknown_outcome` | whether the work happened is not known; only a reconciliation moves it | no |
+| `succeeded` | the handler returned an output | yes |
+| `failed` | the handler returned an error, or the worker could not run it | yes |
+| `cancelled` | it stopped because it was asked to | yes |
+| `refused` | a policy refused it before it ran | yes |
+
+`ExecutionState::EDGES` is the whole contract, `ExecutionState::may_move_to` reads it, and
+the store refuses every other move, so a client that reads a final state never sees it move
+again. `executions.protocol` answers the same table under `states`, so a client never
+restates it. The in-process engine moves `queued` straight to `running`: it claims an
+execution and enters its handler in the same instant, and nothing of it would be visible
+in `claimed`. `authorizing`, `claimed`, `verifying` and `refused` are entered by a worker
+that decides, holds or checks an execution in its own time (Mission Control B3); the store
+offers `create_authorizing` for an execution that waits for a policy decision, and the
+events below for every move after it. `unknown_outcome` is the state of a run whose outcome
+cannot be read. It never moves back to `running` by itself: a reconciliation reads the
+evidence first and moves it to `verifying` or straight to the outcome it found, and a stop
+asked of it answers `outcome_unknown` and changes nothing.
 
 ### What is not here
 
@@ -151,9 +197,11 @@ serve this checkout (its lease names a URL, and the server there answers for thi
   is started for it: a run never starts a server.
 - **The server stops answering mid-run.** The first failed report, or three in a row after
   one succeeded, make the run say on stderr that it is visible to this process only from
-  then on, and it carries on. The server, hearing nothing for 30 seconds, fails the
-  execution with `unavailable` and a message naming the process, rather than showing it
-  running for ever; a run that was killed is therefore never a phantom in the list.
+  then on, and it carries on. The server, hearing nothing for 30 seconds, moves the
+  execution to `unknown_outcome` with `unavailable` and a message naming the process,
+  rather than showing it running for ever or claiming it failed: a run that was killed is
+  never a phantom in the list, and never reported as completed. A run that comes back
+  reconciles it with the outcome it reports; a `started` from it is passed over.
 
 What this does not change: the work runs where the run is, never in the server, and the
 history is still the server's memory — it ends with that server.
@@ -170,6 +218,7 @@ members that vary, so a client switches on one string.
   "execution_id": "x-20260908T010203Z-0a1b2c3d",
   "sequence": 17,
   "timestamp": "2026-09-08T01:02:07Z",
+  "correlation_id": "x-20260908T010203Z-0a1b2c3d",
   "type": "execution.progress",
   "data": { "current": 17, "total": 42, "message": "137 file(s) read" }
 }
@@ -178,8 +227,11 @@ members that vary, so a client switches on one string.
 | type | when |
 |---|---|
 | `execution.created` | it exists; carries the capability and the input as it was stored |
+| `execution.authorizing` | a policy decision on whether it may run is being taken |
 | `execution.queued` | it is waiting for a worker, and how many are ahead of it |
+| `execution.claimed` | a worker holds it, named in `holder`, and has not entered the handler |
 | `execution.started` | the handler was entered |
+| `execution.verifying` | the handler returned, and what it produced is being checked |
 | `execution.progress` | how far along, with a total when the handler knows one |
 | `execution.step.started`, `execution.step.completed` | a named phase was entered, and how it went |
 | `execution.log` | a line of output, from the handler or from a process it ran |
@@ -187,6 +239,8 @@ members that vary, so a client switches on one string.
 | `execution.cancelling`, `execution.cancelled` | it was asked to stop; it stopped |
 | `execution.completed` | it finished, with what the handler returned |
 | `execution.failed` | it finished, with a typed error and a correlation id |
+| `execution.refused` | a policy refused it before it ran, with a typed error and, when one can be named, the `policy` |
+| `execution.unknown_outcome` | whether the work happened is not known, with what is known about why; a reconciliation follows |
 
 The output travels on `execution.completed` rather than on an event of its own, so no client
 can read "succeeded" and find no result. `sequence` is dense and starts at 1 within an
@@ -199,7 +253,12 @@ and output schemas are, and is served — with the whole contract — by
 
 **A client must ignore a `type` it does not know.** That is what lets a variant be added
 without a version change; `schema_version` moves only for a change a version-1 client could
-not ignore safely.
+not ignore safely. The five states of Mission Control B3 and their events, and the envelope's
+`correlation_id` (the execution id, under the name a log reader expects), were added that
+way: version 1 still. A reader of this executable refuses an event of a newer version by
+name — `an execution event of schema version 2 is newer than version 1, the newest this
+executable reads` — rather than misreading it, whatever transport brought it; an event an
+older writer produced without `correlation_id` is still read.
 
 ## The live channel
 
@@ -367,7 +426,7 @@ origin. The Cockpit's content-security policy allows connections to this origin 
 | one frame of the live channel | 256 KiB | an output or input over it is written as a reference to the snapshot |
 | a serial capability (a command) | one at a time | a second execution of it waits for the first |
 | events in one report from a run | 500, and three quarters of the 1 MiB body bound | refused above 500; the run sends the rest in the next report |
-| silence of a reported execution | 30 s (the run's heartbeat is 2 s) | the server fails it `unavailable`; the run itself is not touched |
+| silence of a reported execution | 30 s (the run's heartbeat is 2 s) | the server moves it to `unknown_outcome` (`unavailable`); the run itself is not touched |
 
 The defaults are for a development server a person is watching, and `executions.protocol`
 answers the ones this process is running with.
@@ -383,7 +442,8 @@ answers the ones this process is running with.
 | `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the server that holds it; `executions.list` says what is remembered |
 | `majordomus run: no server is serving this repository, so this execution is visible to this process only…` | `run` found no server answering for this checkout | start `majordomus serve` before the run to see it there; a run never starts one |
 | `majordomus run: the server at … did not take this run's report (…)` | the server refused or did not answer; an older server has no `executions.report` | the run carries on; the reason in parentheses is the server's |
-| `unavailable: process N, which ran this execution and reported it here, has not reported for … s` | the run was killed, or lost its way to the server, for 30 s | the terminal that ran it has the outcome |
+| `unavailable: process N, which ran this execution and reported it here, has not reported for … s` | the run was killed, or lost its way to the server, for 30 s; the execution is `unknown_outcome` | the terminal that ran it has the outcome; a run that reports again reconciles it |
+| `an execution event of schema version N is newer than version 1, the newest this executable reads` | a newer writer reported to an older server | upgrade the server |
 | `426 … /events is a WebSocket` | it was opened with a plain `GET` | open it with a WebSocket client, or read `executions.events` |
 | `403 … a WebSocket from origin '…' is refused` | a page on another origin tried to follow this server | open the Cockpit from this server's own address |
 | `stream.lagged` | this client could not keep up | read the snapshot and the history again from the last sequence seen |
@@ -393,7 +453,9 @@ answers the ones this process is running with.
 
 | | status |
 |---|---|
-| the state machine, its transitions and the refusal of an invalid one | behaviourally verified (`execution::model`, `execution::store`) |
+| the state machine, its transitions and the refusal of an invalid one | behaviourally verified, every pair of states (`execution::model`, `execution::store`) |
+| the transition table through the public surface: listed by `executions.protocol` and the OpenAPI document, a legal and an illegal move reported, a stop of an unknown outcome, a reconciliation, a newer schema refused | behaviourally verified (`test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh`) |
+| a worker that authorises, claims or verifies an execution | not implemented here; the states and events exist for it |
 | the store's bounds and the behaviour at each: eviction, truncation, lag, a gone subscriber | behaviourally verified (`execution::store`) |
 | redaction from the schema, through references, arrays and maps | behaviourally verified (`execution::redact`) |
 | the handshake, the framing and SHA-1 against the published vectors | behaviourally verified (`http::ws`) |
@@ -401,7 +463,7 @@ answers the ones this process is running with.
 | an existing capability observable with no second implementation | behaviourally verified (`tests/executions.rs`) |
 | an execution never answered from the cache | behaviourally verified (`tests/executions.rs`) |
 | the whole path from outside the executable | behaviourally verified (`test/cases/100_execution_plane.sh`) |
-| a run reported to the server: applied once and in order, resumed after a gap, a stop handed back, a silent reporter failed | behaviourally verified (`execution::store`) |
+| a run reported to the server: applied once and in order, resumed after a gap, a stop handed back, a silent reporter's outcome unknown and reconciled by its return | behaviourally verified (`execution::store`) |
 | a run listed by the server while in flight, the same outcome after it, a stop asked of the server reaching the run, the plain line with no server | behaviourally verified, by polling the server (`test/cases/3024_a_run_is_seen_by_the_server.sh`) |
 | durability, retry, scheduling, an execution outliving its process | not implemented, and `Limits` is where a durable store would be substituted |
 | a capability backed by a process, with its output as `stdout`/`stderr` log events | not implemented; the event model carries the streams for it |

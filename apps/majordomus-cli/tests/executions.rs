@@ -754,8 +754,12 @@ fn nothing_here_runs_anything_the_registry_does_not_declare() {
         schema["properties"]
             .as_object()
             .map(|p| p.keys().cloned().collect::<Vec<_>>()),
-        Some(vec!["capability".to_string(), "input".to_string()]),
-        "the only things a client may send"
+        Some(vec![
+            "capability".to_string(),
+            "input".to_string(),
+            "idempotency_key".to_string()
+        ]),
+        "the only things a client may send: a capability, its input, and the key that makes a repeated start one execution"
     );
 }
 

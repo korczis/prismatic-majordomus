@@ -6262,9 +6262,14 @@ pub(crate) fn param(query: &[(String, String)], key: &str) -> Option<String> {
 fn execution_status(state: ExecutionState) -> &'static str {
     match state {
         ExecutionState::Succeeded => "ok",
-        ExecutionState::Failed => "fail",
-        ExecutionState::Cancelled => "warn",
-        ExecutionState::Running | ExecutionState::Cancelling | ExecutionState::Queued => "info",
+        ExecutionState::Failed | ExecutionState::Refused => "fail",
+        ExecutionState::Cancelled | ExecutionState::UnknownOutcome => "warn",
+        ExecutionState::Authorizing
+        | ExecutionState::Queued
+        | ExecutionState::Claimed
+        | ExecutionState::Running
+        | ExecutionState::Verifying
+        | ExecutionState::Cancelling => "info",
     }
 }
 
@@ -6325,14 +6330,7 @@ pub fn executions(ctx: &Context, query: &[(String, String)]) -> Page {
             "http::events",
         ));
 
-    let states = [
-        ExecutionState::Queued,
-        ExecutionState::Running,
-        ExecutionState::Cancelling,
-        ExecutionState::Succeeded,
-        ExecutionState::Failed,
-        ExecutionState::Cancelled,
-    ];
+    let states = ExecutionState::ALL;
     let filters = el("form")
         .class("mj-filters")
         .attr("method", "get")

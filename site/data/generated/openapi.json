@@ -553,6 +553,7 @@
     "schema-ExecutionList": "docs/api/executions/",
     "schema-ExecutionPolicy": "docs/api/capabilities/",
     "schema-ExecutionState": "docs/api/executions/",
+    "schema-ExecutionStateView": "docs/api/executions/",
     "schema-ExecutionView": "docs/api/executions/",
     "schema-ExecutorWait": "docs/api/integration/",
     "schema-Exemption": "docs/api/quality/",
@@ -1278,7 +1279,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 202,
-    "schemas": 1014,
+    "schemas": 1015,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1932,6 +1933,7 @@
     "ExecutionList": "executions",
     "ExecutionPolicy": "capabilities",
     "ExecutionState": "executions",
+    "ExecutionStateView": "executions",
     "ExecutionView": "executions",
     "ExecutorWait": "integration",
     "Exemption": "quality",
@@ -6228,7 +6230,7 @@
       "name": "CancelReport",
       "properties": [
         {
-          "description": "What asking achieved: `requested`, `already_requested` or `already_finished`.",
+          "description": "What asking achieved: `requested`, `already_requested`, `already_finished`, or\n`outcome_unknown` for an execution whose outcome waits for a reconciliation, which a\nstop cannot change.",
           "name": "outcome",
           "refs": [],
           "required": true,
@@ -21682,7 +21684,7 @@
       "name": "ExecutionEvent",
       "properties": [
         {
-          "description": "The protocol version, `PROTOCOL_VERSION`.",
+          "description": "The protocol version, `PROTOCOL_VERSION`. A reader refuses a newer one by name.",
           "name": "schema_version",
           "refs": [],
           "required": true,
@@ -21717,9 +21719,16 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The id this execution's log lines and tracing spans carry: the execution id, under\nthe name a reader of a log expects, as the snapshot's own `correlation_id` is. Absent\nfrom an event an older writer produced, and read as empty there.",
+          "name": "correlation_id",
+          "refs": [],
+          "required": false,
+          "type": "string"
         }
       ],
-      "type": "one of 12 variants",
+      "type": "one of 17 variants",
       "used_by": [],
       "used_by_schemas": [
         "EventHistory",
@@ -21748,6 +21757,19 @@
           "type": "object"
         },
         {
+          "description": "A policy decision on whether it may run is being taken.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.authorizing\""
+            }
+          ],
+          "type": "object"
+        },
+        {
           "description": "It is waiting for a worker.",
           "properties": [
             {
@@ -21768,6 +21790,26 @@
           "type": "object"
         },
         {
+          "description": "A worker holds it and has not entered the handler yet.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.claimed\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
           "description": "A worker picked it up and is about to enter the handler.",
           "properties": [
             {
@@ -21776,6 +21818,19 @@
               "refs": [],
               "required": true,
               "type": "\"execution.started\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The handler returned, and what it produced is being checked.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.verifying\""
             }
           ],
           "type": "object"
@@ -21948,6 +22003,50 @@
               "refs": [],
               "required": true,
               "type": "\"execution.failed\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [
+                "ExecutionError"
+              ],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "A policy refused it before it ran: at the request, or when a worker claimed it.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.refused\""
+            },
+            {
+              "description": "",
+              "name": "data",
+              "refs": [
+                "ExecutionError"
+              ],
+              "required": true,
+              "type": "object"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Whether the work happened is not known: the worker went silent, or its answer could\nnot be read. Not the last event: a reconciliation that reads evidence follows it.",
+          "properties": [
+            {
+              "description": "",
+              "name": "type",
+              "refs": [],
+              "required": true,
+              "type": "\"execution.unknown_outcome\""
             },
             {
               "description": "",
@@ -22187,32 +22286,49 @@
       "variants": []
     },
     {
-      "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle.",
+      "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.",
       "home": "executions",
       "is_enum": true,
       "name": "ExecutionState",
       "properties": [],
-      "type": "\"queued\" | \"running\" | \"cancelling\" | \"succeeded\" | \"failed\" | \"cancelled\"",
+      "type": "\"authorizing\" | \"queued\" | \"claimed\" | \"running\" | \"verifying\" | \"cancelling\" | \"unknown_outcome\" | \"succeeded\" | \"failed\" | \"cancelled\" | \"refused\"",
       "used_by": [
         "executions.list"
       ],
       "used_by_schemas": [
         "EventHistory",
+        "ExecutionStateView",
         "ExecutionView",
         "StartedExecution"
       ],
       "values": [
         {
+          "description": "Accepted, and a policy decision on whether it may run has not been taken yet.",
+          "value": "authorizing"
+        },
+        {
           "description": "Accepted, and no worker has picked it up.",
           "value": "queued"
+        },
+        {
+          "description": "A worker holds it and has not entered the handler yet.",
+          "value": "claimed"
         },
         {
           "description": "The handler is running.",
           "value": "running"
         },
         {
+          "description": "The handler returned, and what it produced is being checked.",
+          "value": "verifying"
+        },
+        {
           "description": "Cancellation was asked for and the handler has not stopped yet.",
           "value": "cancelling"
+        },
+        {
+          "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun.",
+          "value": "unknown_outcome"
         },
         {
           "description": "The handler returned an output.",
@@ -22225,8 +22341,52 @@
         {
           "description": "It stopped because it was asked to.",
           "value": "cancelled"
+        },
+        {
+          "description": "A policy refused it before it ran, at the request or when a worker claimed it.",
+          "value": "refused"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One state of an execution, with the moves it allows.",
+      "home": "executions",
+      "is_enum": false,
+      "name": "ExecutionStateView",
+      "properties": [
+        {
+          "description": "The state, as the snapshot and the list filter spell it.",
+          "name": "state",
+          "refs": [
+            "ExecutionState"
+          ],
+          "required": true,
+          "type": "ExecutionState"
+        },
+        {
+          "description": "Whether nothing more will be said about an execution in it.",
+          "name": "final",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The states it may move to; every other move is refused.",
+          "name": "may_move_to",
+          "refs": [
+            "ExecutionState"
+          ],
+          "required": true,
+          "type": "array of ExecutionState"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProtocolReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -22310,7 +22470,7 @@
           "type": "any"
         },
         {
-          "description": "Why it failed, for a failed execution and never before.",
+          "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not.",
           "name": "error",
           "refs": [
             "ExecutionError"
@@ -40560,6 +40720,15 @@
           "type": "array of string"
         },
         {
+          "description": "Every state an execution may be in and the states it may move to: the transition\ntable the store holds every event to, so a client never has to restate it.",
+          "name": "states",
+          "refs": [
+            "ExecutionStateView"
+          ],
+          "required": true,
+          "type": "array of ExecutionStateView"
+        },
+        {
           "description": "The stream's own control messages.",
           "name": "stream_types",
           "refs": [],
@@ -53827,7 +53996,7 @@
           "type": "any"
         },
         {
-          "description": "Why it failed, for a failed execution and never before.",
+          "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not.",
           "name": "error",
           "refs": [
             "ExecutionError"
@@ -64107,7 +64276,7 @@
           "cache_detail": "",
           "cli": "executions protocol",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/executions/protocol\"",
-          "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+          "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
           "home": "executions",
           "id": "executions.protocol",
           "kind": "query",
@@ -64164,7 +64333,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/executions/report\" -H \"content-type: application/json\" -d '{}'",
-          "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+          "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only.",
           "home": "executions",
           "id": "executions.report",
           "kind": "command",
