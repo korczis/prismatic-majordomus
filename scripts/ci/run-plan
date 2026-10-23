@@ -98,6 +98,49 @@ else
     exit "$rc"; }
 fi
 
+# ---------------------------------------------------------------- the executable the gates run
+# Every gate that runs the executable asks bin/majordomus-cli, which never builds (ADR 0224): a
+# gate used to run `cargo run`, which waited for the shared build directory's lock while other
+# worktrees compiled — on 2026-10-21 economics-claims took 2158 s of #1753's 2872 s pre-push,
+# against the 6 s CI records for it (I2848), and on 2026-10-22 a pre-push timed out at ninety
+# minutes in those gates with the tree's executable already built. So the question is asked
+# once, here, and said in one line before any gate runs; each gate's own launcher call then
+# gets the same answer from the same environment.
+#
+# MAJORDOMUS_BIN is trusted by the launcher, so a gate must not inherit one that is not of this
+# tree: it is kept only when lib/rust_bin.sh's mj_rust_same_generation says the commit it was
+# built from (MAJORDOMUS_BIN_COMMIT, or the <sha> of a shared ~/.cache/majordomus-master-bin/
+# <sha>/) carries every crate input of this working tree unchanged, with nothing untracked in
+# it, and is unset for every gate otherwise, so a branch that changed the crate is judged by
+# its own executable and never by another tree's. `generate --check` is not this question: it
+# passes an executable whose registry matches the committed one even when the crate differs.
+# What answers then is the launcher's: the tree's own executable when it is current, the
+# installed release of this tree's generation, or exit 12 naming `just build` — a refusal, in
+# every gate that needs it, never a build.
+# majordomus-on-stale-executable: fallback, else refuse
+gate_executable() {
+  # shellcheck source=../../lib/rust_bin.sh
+  . "$ROOT/lib/rust_bin.sh"
+  if [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ]; then
+    if mj_rust_same_generation "$ROOT" "$MAJORDOMUS_BIN"; then
+      printf '  executable: %s is built from %s, whose crate this tree carries unchanged; the gates run it\n' \
+        "$MAJORDOMUS_BIN" "$(printf '%.11s' "$MJ_RUST_BUILT")"
+      return 0
+    fi
+    printf "  executable: %s is not used: %s; the gates ask this tree's own\n" "$MAJORDOMUS_BIN" "$MJ_RUST_GENERATION_WHY"
+    unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT
+  fi
+  local exe
+  if exe="$(mj_rust_resolve "$ROOT" '  executable: ' 2> "$plan.resolve")"; then
+    cat "$plan.resolve"
+    printf '  executable: the gates run %s, never a build\n' "$exe"
+  else
+    cat "$plan.resolve"
+    printf '  executable: none; every gate that runs it fails with exit 12 until `just build` has run\n'
+  fi
+  rm -f "$plan.resolve"
+}
+
 # ---------------------------------------------------------------- before a push
 if [ "$before_push" = 1 ]; then
   # MJ_PUSH_DURATIONS and MJ_PUSH_CASES read other files in their place (a case's fixture)
@@ -125,45 +168,11 @@ if [ "$before_push" = 1 ]; then
       spent=$(( spent + secs )); chosen="$chosen $id"
     done < <(LC_ALL=C sort -n "$plan.cand"); rm -f "$plan.cand"
   fi
-  # A gate that runs the executable does it through `cargo run`, which waits for the shared
-  # build directory's lock while other worktrees compile: on 2026-10-21 economics-claims took
-  # 2158 s of #1753's 2872 s pre-push, against the 6 s CI records for it (I2848). When the
-  # caller names an executable (MAJORDOMUS_BIN), the commit it was built from is known
-  # (MAJORDOMUS_BIN_COMMIT, or the <sha> of a shared ~/.cache/majordomus-master-bin/<sha>/), and
-  # every input of the crate in this working tree is byte-for-byte that commit's, with nothing
-  # untracked in it, the gates run that executable instead. Anything less keeps `cargo run`, so
-  # a branch that changed the crate is judged by its own code. `generate --check` is not this
-  # question: it passes an executable whose registry matches the committed one even when the
-  # crate differs, which is right for a derive and would let a gate run another tree's code.
-  cargo_cli='cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- '; gate_bin=""
-  crate_inputs=(apps/majordomus-cli rust-toolchain.toml docs/COCKPIT.md site/data/kit/icons.toml)
-  if [ -n "${MAJORDOMUS_BIN:-}" ] && [ -x "$MAJORDOMUS_BIN" ]; then
-    built="${MAJORDOMUS_BIN_COMMIT:-}"
-    if [ -z "$built" ]; then
-      case "$MAJORDOMUS_BIN" in */majordomus-master-bin/*/*)
-        built="${MAJORDOMUS_BIN#*/majordomus-master-bin/}"; built="${built%%/*}" ;;
-      esac
-    fi
-    why=""
-    if [ -z "$built" ]; then why="the commit it was built from is unknown (set MAJORDOMUS_BIN_COMMIT)"
-    elif ! git rev-parse -q --verify "$built^{commit}" > /dev/null; then why="its commit $built is not in this repository"
-    elif ! git diff --quiet "$built" -- "${crate_inputs[@]}" 2> /dev/null; then why="the crate differs from ${built:0:11}"
-    elif [ -n "$(git ls-files --others --exclude-standard -- "${crate_inputs[@]}")" ]; then why="the crate has untracked files"
-    fi
-    if [ -z "$why" ]; then
-      gate_bin="$MAJORDOMUS_BIN"
-      printf '  executable: %s is built from %s, whose crate this tree carries unchanged; the gates run it, not cargo run\n' "$gate_bin" "${built:0:11}"
-    else
-      printf '  executable: %s is not used: %s; the gates build with cargo run\n' "$MAJORDOMUS_BIN" "$why"
-    fi
-  fi
+  gate_executable
   # the chosen gates, in the plan's order, with stdin closed: a hook's stdin is the ref list
   for g in $(jq -r '.gates[] | select(.job == "structure" and .selected) | .id' "$plan"); do
     case " $chosen " in *" $g "*) ;; *) continue ;; esac
     cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
-    if [ -n "$gate_bin" ]; then
-      case "$cmd" in "$cargo_cli"*) cmd="$(printf '%q' "$gate_bin") ${cmd#"$cargo_cli"}" ;; esac
-    fi
     t0="$(date +%s)"
     if bash -c "$cmd" < /dev/null > "$plan.$g.log" 2>&1; then printf '  ok     %s (%ss)\n' "$g" "$(( $(date +%s) - t0 ))"; printf '%s %s\n' "$(( $(date +%s) - t0 ))" "$g" >> "$plan.times"
     else printf '  FAILED %s (%ss): %s\n' "$g" "$(( $(date +%s) - t0 ))" "$cmd"; sed 's/^/         | /' "$plan.$g.log" | tail -n 15
@@ -220,6 +229,7 @@ else
 fi
 printf 'run-plan: %s — %s\n' "$(jq -r .mode "$plan")" "$(jq -r .reason "$plan")"
 failed=""; ran=0; t_all="$(date +%s)"
+gate_executable
 for g in $gates; do
   cmd="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .runs' "$plan")"
   case "$skip" in *",$g,"*) printf '\n==> %s: run by the job in a step of its own\n' "$g"; continue ;; esac

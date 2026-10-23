@@ -606,7 +606,7 @@ mj_knowledge_nodes() {
     elif [ "$rc" = 3 ]; then
       printf 'X\tINFO\tschema_unasked\t.\tthe schema check was not asked for (MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked), so no file was checked against the schema of its kind\n'
     else
-      printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; run bin/majordomus-cli once to build it\n'
+      printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; build it: just build\n'
     fi
     # A source git tracks and the working tree no longer holds is a deletion in progress:
     # reported, never a failure, because work in progress is reported and not blocked.

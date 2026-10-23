@@ -512,12 +512,13 @@ MJ_TEST_JOBS=two bash "$H/test/run.sh" >/dev/null 2>&1 && { echo "    MJ_TEST_JO
 
 # --- the prebuilt executable: rust_bin hands a case MAJORDOMUS_BIN when one is given and
 #     never builds; refuses one that is not executable; and asks to skip when there is
-#     neither an executable nor cargo
+#     neither an executable of this tree (none in an empty target, no release of its
+#     generation) nor cargo
 printf '#!/bin/sh\necho fake\n' > "$T/fake-majordomus"; chmod +x "$T/fake-majordomus"
 [ "$(MAJORDOMUS_BIN="$T/fake-majordomus" rust_bin)" = "$T/fake-majordomus" ] || { echo "    rust_bin did not hand back MAJORDOMUS_BIN"; exit 1; }
 rc=0; MAJORDOMUS_BIN="$T/no-such-file" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 1 ] || { echo "    rust_bin accepted a MAJORDOMUS_BIN that is not executable (rc $rc)"; exit 1; }
-rc=0; MAJORDOMUS_BIN='' PATH="/usr/bin:/bin" rust_bin >/dev/null 2>&1 || rc=$?
+rc=0; MAJORDOMUS_BIN='' PATH="/usr/bin:/bin" CARGO_TARGET_DIR="$T/no-target" MAJORDOMUS_INSTALLED_BIN="$T/no-installed-release" rust_bin >/dev/null 2>&1 || rc=$?
 [ "$rc" = 3 ] || { echo "    rust_bin with neither cargo nor MAJORDOMUS_BIN returned $rc, not the skip code 3"; exit 1; }
 # --- a job gated on a plan output the plan job does not expose is a gate that never runs.
 #     The plan step emits one output per gate, but a workflow job reads them through the

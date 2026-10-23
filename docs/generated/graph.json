@@ -11858,12 +11858,11 @@
         "id": "majordomus://claim/mcp-client-always-served",
         "kind": "claim",
         "label": "mcp-client-always-served",
-        "summary": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+        "summary": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
         "route": "/cockpit/objects/claim/mcp-client-always-served",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
           "implementation": "bin/majordomus-cli",
           "responsibility": "none",
           "source": "docs/MCP.md",
@@ -11874,12 +11873,12 @@
         "id": "majordomus://claim/mcp-client-autostart",
         "kind": "claim",
         "label": "mcp-client-autostart",
-        "summary": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+        "summary": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
         "route": "/cockpit/objects/claim/mcp-client-autostart",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "claim": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
           "implementation": "bin/majordomus-mcp",
           "responsibility": "none",
           "source": "docs/MCP.md",
@@ -18142,7 +18141,7 @@
         "id": "majordomus://document/docs/claims/mcp-client-always-served.md",
         "kind": "document",
         "label": "docs/claims/mcp-client-always-served.md",
-        "summary": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+        "summary": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
         "route": "/cockpit/objects/document/docs-claims-mcp-client-always-served-md",
         "source": "docs/claims/mcp-client-always-served.md"
       },
@@ -18150,7 +18149,7 @@
         "id": "majordomus://document/docs/claims/mcp-client-autostart.md",
         "kind": "document",
         "label": "docs/claims/mcp-client-autostart.md",
-        "summary": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+        "summary": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
         "route": "/cockpit/objects/document/docs-claims-mcp-client-autostart-md",
         "source": "docs/claims/mcp-client-autostart.md"
       },
@@ -87099,6 +87098,13 @@
         "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3958_no_entry_path_or_gate_builds.sh",
+        "kind": "test",
+        "label": "test/cases/3958_no_entry_path_or_gate_builds.sh",
+        "route": "/cockpit/objects/test/test-cases-3958-no-entry-path-or-gate-builds-sh",
+        "source": "test/cases/3958_no_entry_path_or_gate_builds.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -129899,6 +129905,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3958_no_entry_path_or_gate_builds.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -135010,8 +135021,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3782,
-      "edges": 8751,
+      "nodes": 3783,
+      "edges": 8752,
       "acyclic": false,
       "truncated": false
     }
