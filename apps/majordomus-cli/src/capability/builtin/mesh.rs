@@ -2073,6 +2073,11 @@ mod tests {
                 "/api/v1/mesh/doctor",
             ),
             (
+                "mesh.build_cache.env",
+                Some("majordomus_mesh_build_cache_env"),
+                "/api/v1/mesh/build-cache/env",
+            ),
+            (
                 "mesh.build_cache.key",
                 Some("majordomus_mesh_build_cache_key"),
                 "/api/v1/mesh/build-cache/key",
@@ -2205,6 +2210,7 @@ mod tests {
             "mesh.nodes",
             "mesh.identity",
             "mesh.doctor",
+            "mesh.build_cache.env",
             "mesh.build_cache.key",
             "mesh.firewall",
             "mesh.cooperation",
