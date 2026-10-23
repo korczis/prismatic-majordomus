@@ -5,7 +5,7 @@ slug: a-worker-reports-into-the-execution
 priority: p0
 profile: implementation
 objective: "Declare a worker adapter per provider in share/providers.yaml (Claude Code headless first, reusing the stream-json driving of economics/runner.rs; Codex and Gemini declared, optional) and a fixture adapter for tests; an adapter is given the execution id, the worktree, the compiled context (devcontext) and the issue's objective, and its output is folded into ExecutionEvent progress and log events through the report path store.rs already has for majordomus run; an execution with no available adapter stays Queued with the reason as an event."
-why: "ADR 0222 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today."
+why: "ADR 0225 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today."
 current_state: "Only economics/runner.rs spawns a harness (benchmarks); no adapter declaration; ExecutionStore::report serves majordomus run only."
 desired_state: "An adapter is chosen from declarations, its process's progress is the execution's event stream, its exit is the step's outcome, and the absence of any adapter is a visible queued reason."
 scope:
