@@ -30,6 +30,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub mod env;
 pub mod key;
 pub(crate) mod s3;
 
@@ -174,6 +175,7 @@ impl Default for Policy {
 /// assert!(passed.is_empty());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "OfferPassedOver")] // integration::model has a PassedOver: one component namespace
 pub struct PassedOver {
     /// The offer's node.
     pub node: String,

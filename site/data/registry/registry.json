@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "b4b45b65b970f7fde163883bfddf9291927eda25e711607613850ea24cea3c21",
+    "fingerprint": "cb703b0abd978bf2306bb56224cf5a5cf2d3c521d0ba3a17acdac2e24164ad77",
     "summary": {
-      "total": 3328,
-      "builtin": 209,
-      "declarative": 3119,
+      "total": 3330,
+      "builtin": 210,
+      "declarative": 3120,
       "by_kind": {
         "command": 32,
-        "query": 177,
-        "resource": 3119
+        "query": 178,
+        "resource": 3120
       },
       "by_stability": {
         "behaviorally_verified": 143,
-        "experimental": 56,
-        "implemented": 3129
+        "experimental": 57,
+        "implemented": 3130
       },
-      "mcp_tools": 198,
-      "mcp_resources": 3174,
-      "http_routes": 203,
-      "cli_commands": 113,
+      "mcp_tools": 199,
+      "mcp_resources": 3175,
+      "http_routes": 204,
+      "cli_commands": 114,
       "modules": 92,
       "benchmark_required": 175,
-      "benchmark_waived": 34,
+      "benchmark_waived": 35,
       "cached": 54
     },
     "builtin": [
@@ -45250,6 +45250,260 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs"
       },
       {
+        "id": "mesh.build_cache.env",
+        "module": "mesh",
+        "kind": "query",
+        "title": "The sccache client configuration for the store this node selected",
+        "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+        "input": {
+          "name": "BuildCacheEnvInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "sccache": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The sccache executable to ask; `sccache` when absent."
+              },
+              "node_file": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The node file naming the store this node offers or knows."
+              },
+              "credentials": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The AWS-format credential file, mode 0600."
+              }
+            },
+            "description": "The input of `mesh.build_cache.env`.",
+            "title": "BuildCacheEnvInput"
+          }
+        },
+        "output": {
+          "name": "BuildCacheEnvReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "$ref": "#/$defs/Mode",
+                "description": "What the client is configured as."
+              },
+              "reason": {
+                "type": "string",
+                "description": "Why, always one sentence; for a local-only answer, the condition that did not hold."
+              },
+              "sccache": {
+                "$ref": "#/$defs/BuildCacheSccache",
+                "description": "The installed sccache."
+              },
+              "store": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/BuildCacheStore"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The selected store, when one was."
+              },
+              "credentials_file": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The path of the credential file the variables name; never its content."
+              },
+              "variables": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/BuildCacheEnvVar"
+                },
+                "description": "The variables to set in the environment of the process that starts the sccache\nserver; empty when the client is local-only."
+              },
+              "passed_over": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/OfferPassedOver"
+                },
+                "description": "The offers selection passed over, with the rule."
+              }
+            },
+            "required": [
+              "mode",
+              "reason",
+              "sccache",
+              "variables"
+            ],
+            "description": "The answer of `report`.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::{EnvReport, Mode, Sccache};\nlet r = EnvReport {\n    mode: Mode::LocalOnly, reason: \"sccache is not installed\".into(),\n    sccache: Sccache { found: false, version: None, multilevel: None, detail: String::new() },\n    store: None, credentials_file: None, variables: vec![], passed_over: vec![],\n};\nassert!(r.variables.is_empty());\n```",
+            "title": "BuildCacheEnvReport",
+            "$defs": {
+              "Mode": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "mesh",
+                    "description": "Local disk first, the selected store second."
+                  },
+                  {
+                    "type": "string",
+                    "const": "local-only",
+                    "description": "The local disk alone: the build is what it was."
+                  }
+                ],
+                "description": "What the client is configured as.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Mode;\nassert_ne!(Mode::Mesh, Mode::LocalOnly);\n```"
+              },
+              "BuildCacheSccache": {
+                "type": "object",
+                "properties": {
+                  "found": {
+                    "type": "boolean",
+                    "description": "Whether `--version` was answered."
+                  },
+                  "version": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version it stated."
+                  },
+                  "multilevel": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether it has the multi-level chain: measured, and unknown when the measurement\ncould not be made."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "How that was found out, in words."
+                  }
+                },
+                "required": [
+                  "found",
+                  "detail"
+                ],
+                "description": "What the installed sccache is, as measured.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Sccache;\nlet s = Sccache { found: false, version: None, multilevel: None, detail: \"absent\".into() };\nassert!(!s.found);\n```"
+              },
+              "BuildCacheStore": {
+                "type": "object",
+                "properties": {
+                  "node": {
+                    "type": "string",
+                    "description": "The offering node."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "description": "What serves the store."
+                  },
+                  "endpoint": {
+                    "type": "string",
+                    "description": "The non-secret endpoint."
+                  },
+                  "bucket": {
+                    "type": "string",
+                    "description": "The bucket."
+                  }
+                },
+                "required": [
+                  "node",
+                  "provider",
+                  "endpoint",
+                  "bucket"
+                ],
+                "description": "The store the second level is.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Store;\nlet s = Store { node: \"n1\".into(), provider: \"minio\".into(),\n    endpoint: \"http://192.168.100.30:9000\".into(), bucket: \"b\".into() };\nassert_eq!(s.provider, \"minio\");\n```"
+              },
+              "BuildCacheEnvVar": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The variable."
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Its value: never a key, at most the path of a credential file."
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "description": "One variable of the client's environment.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::EnvVar;\nlet v = EnvVar { name: \"SCCACHE_REGION\".into(), value: \"us-east-1\".into() };\nassert_eq!(v.name, \"SCCACHE_REGION\");\n```"
+              },
+              "OfferPassedOver": {
+                "type": "object",
+                "properties": {
+                  "node": {
+                    "type": "string",
+                    "description": "The offer's node."
+                  },
+                  "why": {
+                    "type": "string",
+                    "description": "The rule, in words."
+                  }
+                },
+                "required": [
+                  "node",
+                  "why"
+                ],
+                "description": "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_build_cache_env"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/build-cache/env"
+          },
+          "cli": {
+            "path": [
+              "mesh",
+              "build-cache",
+              "env"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "build",
+          "cache"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted",
+          "local_only": true
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
         "id": "mesh.build_cache.key",
         "module": "mesh",
         "kind": "query",
@@ -86497,8 +86751,9 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": [
+          "mesh.build_cache.env",
           "mesh.build_cache.key",
           "mesh.claim",
           "mesh.cooperation",
@@ -86999,7 +87254,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 603,
+        "capabilities": 604,
         "capability_ids": []
       },
       {
@@ -87091,7 +87346,7 @@
     ]
   },
   "index": {
-    "fingerprint": "87286ba4af065056b220e161d970417483416320e55f58cacd323ebd41194b0c",
+    "fingerprint": "56ccc156947659c0858368355c13a7a2880f266684c8d4fb32abf0a4bdfbb0f7",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87145,7 +87400,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 603,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },
@@ -94349,7 +94604,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 72201
+        "bytes": 75275
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -102516,7 +102771,7 @@
         "path": ".ai/repo/project/issues/I2673.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2220
+        "bytes": 3362
       },
       {
         "uri": "majordomus://issue/I2674",
@@ -118489,6 +118744,14 @@
         "bytes": 6520
       },
       {
+        "uri": "majordomus://test/test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "kind": "test",
+        "identity": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "path": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "source_class": "case",
+        "bytes": 15246
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -121325,7 +121588,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 603
+      "objects": 604
     },
     {
       "name": "use-case",
@@ -144125,6 +144388,97 @@
                   }
                 ],
                 "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "build-cache",
+                  "env"
+                ],
+                "route": "/docs/cli/mesh/build-cache/env/",
+                "executable": true,
+                "usage": "majordomus mesh build-cache env [OPTIONS]",
+                "about": "The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only",
+                "args": [
+                  {
+                    "name": "sccache",
+                    "long": "sccache",
+                    "positional": false,
+                    "help": "The sccache executable to ask (a name on PATH or a path); `sccache` when unset",
+                    "value_name": "SCCACHE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "node_file",
+                    "long": "node-file",
+                    "positional": false,
+                    "help": "The node file that names the store this node offers or knows; `~/.config/majordomus/build-cache.json` when unset",
+                    "value_name": "NODE_FILE",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "credentials",
+                    "long": "credentials",
+                    "positional": false,
+                    "help": "The AWS-format credential file, mode 0600, profile `mesh-build-cache`; `~/.config/mesh-build-cache/credentials` when unset",
+                    "value_name": "CREDENTIALS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` is the script an `eval` reads; `json` is the full answer, with its reason",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-build-cache-env",
+                    "title": "The sccache client of this node, derived",
+                    "description": "The environment the process that starts the sccache server should have: local disk first and the selected store second, only when sccache has the chain, a credential file of mode 0600 exists and the store answers now; otherwise nothing, and the comment line says which condition did not hold. The credential is a file path, never a key. `--format json` gives the whole answer.",
+                    "argv": [
+                      "mesh",
+                      "build-cache",
+                      "env",
+                      "--sccache",
+                      "no-such-sccache"
+                    ],
+                    "command": "majordomus mesh build-cache env --sccache no-such-sccache",
+                    "setup": [],
+                    "expectation": "exits 0; prints build cache: local-only"
+                  }
+                ],
+                "subcommands": []
               }
             ]
           }
@@ -156001,6 +156355,23 @@
         "output": "McpProjection"
       },
       {
+        "name": "majordomus_mesh_build_cache_env",
+        "id": "mesh.build_cache.env",
+        "title": "The sccache client configuration for the store this node selected",
+        "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "BuildCacheEnvInput",
+        "output": "BuildCacheEnvReport"
+      },
+      {
         "name": "majordomus_mesh_build_cache_key",
         "id": "mesh.build_cache.key",
         "title": "What every dependency install and build directory is cached under",
@@ -158707,6 +159078,12 @@
         "method": "GET",
         "path": "/api/v1/mcp",
         "id": "mcp.projection",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/build-cache/env",
+        "id": "mesh.build_cache.env",
         "kind": "query"
       },
       {
@@ -169137,6 +169514,30 @@
           "cases": 2
         },
         {
+          "subject": "mesh.build_cache.env",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "mesh.build_cache.env",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "mesh.build_cache.env",
+          "module": "mesh",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "mesh.build_cache.key",
           "module": "mesh",
           "transport": "direct",
@@ -171458,24 +171859,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 209,
+          "required": 210,
           "covered": 175,
           "missing": 0,
-          "waived": 34,
+          "waived": 35,
           "inapplicable": 0
         },
         "http": {
-          "required": 203,
+          "required": 204,
           "covered": 175,
           "missing": 0,
-          "waived": 28,
+          "waived": 29,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 198,
+          "required": 199,
           "covered": 171,
           "missing": 0,
-          "waived": 27,
+          "waived": 28,
           "inapplicable": 0
         },
         "system": {
@@ -171486,10 +171887,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 624,
+          "required": 627,
           "covered": 535,
           "missing": 0,
-          "waived": 89,
+          "waived": 92,
           "inapplicable": 0
         }
       }

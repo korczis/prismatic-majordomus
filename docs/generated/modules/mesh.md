@@ -5,7 +5,31 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 25.
+Stability: experimental. Capabilities: 26.
+
+## `mesh.build_cache.env` — The sccache client configuration for the store this node selected
+
+What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_build_cache_env` |
+| HTTP | `GET /api/v1/mesh/build-cache/env` |
+| CLI | `majordomus mesh build-cache env` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `sccache` | string or null | no | The sccache executable to ask; `sccache` when absent. |
+| `node_file` | string or null | no | The node file naming the store this node offers or knows. |
+| `credentials` | string or null | no | The AWS-format credential file, mode 0600. |
+
+Output: `BuildCacheEnvReport`.
 
 ## `mesh.build_cache.key` — What every dependency install and build directory is cached under
 

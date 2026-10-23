@@ -24,8 +24,8 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshBuildCacheCommand, MeshCommand, MeshFirewallCommand, MeshHandoverCommand,
-    MeshQueryArgs, MeshReviewCommand, MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnvArgs, MeshCommand, MeshFirewallCommand,
+    MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -56,6 +56,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 render_build_cache_key,
                 never,
             ),
+            MeshBuildCacheCommand::Env(e) => build_cache_env(e),
         },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
@@ -611,6 +612,25 @@ fn render_nodes(v: &Value) -> String {
         ));
     }
     out.trim_end().to_string()
+}
+
+/// `mesh build-cache env`: a fact of this machine (its sccache, its node file, its store), so
+/// it is answered without loading a repository: a compile in any directory asks it.
+fn build_cache_env(args: MeshBuildCacheEnvArgs) -> Result<u8> {
+    use crate::mesh::build_cache::env::{report, script, EnvOptions};
+    let answer = report(&EnvOptions {
+        sccache: args.sccache.unwrap_or_else(|| "sccache".to_string()),
+        node_file: args.node_file,
+        credentials: args.credentials,
+    });
+    match args.format {
+        OutputFormat::Json => println!(
+            "{}",
+            serde_json::to_string_pretty(&answer).unwrap_or_default()
+        ),
+        OutputFormat::Text => print!("{}", script(&answer)),
+    }
+    Ok(0)
 }
 
 /// `mesh build-cache key`: one line per cached thing, its key or why it has none.

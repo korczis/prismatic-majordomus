@@ -1,6 +1,6 @@
 ---
 name: mj-mesh
-description: "Majordomus mesh: What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This…"
+description: "Majordomus mesh: The sccache client configuration for the store this node selected; What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `mesh.build_cache.env` | The sccache client configuration for the store this node selected | `majordomus_mesh_build_cache_env` | `majordomus mesh build-cache env` | reads |
 | `mesh.build_cache.key` | What every dependency install and build directory is cached under | `majordomus_mesh_build_cache_key` | `majordomus mesh build-cache key` | reads |
 | `mesh.claim` | Claim a scope across the mesh | `majordomus_mesh_claim` | — | changes |
 | `mesh.cooperation` | Cooperation, at a glance | `majordomus_mesh_cooperation` | — | reads |

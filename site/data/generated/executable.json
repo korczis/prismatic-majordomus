@@ -1882,6 +1882,23 @@
       "tool": "majordomus_mcp"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-env",
+      "claims": [],
+      "cli": "majordomus mesh build-cache env",
+      "id": "mesh.build_cache.env",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-env/",
+      "slug": "mesh-build-cache-env",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The sccache client configuration for the store this node selected",
+      "tool": "majordomus_mesh_build_cache_env"
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-key",
       "claims": [],
       "cli": "majordomus mesh build-cache key",
@@ -4360,7 +4377,7 @@
     ]
   },
   "counts": {
-    "capabilities": 209,
+    "capabilities": 210,
     "claims": 93,
     "modules": 58
   },
@@ -5259,6 +5276,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "mesh.build_cache.env",
+          "route": "/registry/capabilities/mesh-build-cache-env/",
+          "slug": "mesh-build-cache-env"
+        },
         {
           "id": "mesh.build_cache.key",
           "route": "/registry/capabilities/mesh-build-cache-key/",

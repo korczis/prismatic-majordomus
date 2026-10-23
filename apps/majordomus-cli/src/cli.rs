@@ -767,7 +767,7 @@ pub enum MeshCommand {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
 /// let cache: MeshBuildCacheArgs = cache;
-/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
 /// assert_eq!(key.kind, Some(Kind::NpmModules));
 /// ```
 pub struct MeshBuildCacheArgs {
@@ -792,6 +792,39 @@ pub struct MeshBuildCacheArgs {
 pub enum MeshBuildCacheCommand {
     /// Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest
     Key(MeshBuildCacheKeyArgs),
+    /// The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only
+    Env(MeshBuildCacheEnvArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache env`: the sccache environment of this machine, for the process that
+/// starts the sccache server. It reads this machine alone, not a repository, so a compile in
+/// any directory can ask it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshBuildCacheEnvArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "env", "--sccache", "/opt/sccache"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Env(env) = cache.command else { panic!("expected `env`") };
+/// let env: MeshBuildCacheEnvArgs = env;
+/// assert_eq!(env.sccache.as_deref(), Some("/opt/sccache"));
+/// ```
+pub struct MeshBuildCacheEnvArgs {
+    #[arg(long)]
+    /// The sccache executable to ask (a name on PATH or a path); `sccache` when unset
+    pub sccache: Option<String>,
+    #[arg(long)]
+    /// The node file that names the store this node offers or knows; `~/.config/majordomus/build-cache.json` when unset
+    pub node_file: Option<std::path::PathBuf>,
+    #[arg(long)]
+    /// The AWS-format credential file, mode 0600, profile `mesh-build-cache`; `~/.config/mesh-build-cache/credentials` when unset
+    pub credentials: Option<std::path::PathBuf>,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// `text` is the script an `eval` reads; `json` is the full answer, with its reason
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -804,7 +837,7 @@ pub enum MeshBuildCacheCommand {
 /// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--format", "json"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
-/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
 /// let key: MeshBuildCacheKeyArgs = key;
 /// assert_eq!(key.kind, None);
 /// ```
@@ -7427,6 +7460,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
             setup: &[],
             expect: Expect::StdoutContains(&["platform"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache env",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-env",
+            title: "The sccache client of this node, derived",
+            description: "The environment the process that starts the sccache server should have: local disk first and the selected store second, only when sccache has the chain, a credential file of mode 0600 exists and the store answers now; otherwise nothing, and the comment line says which condition did not hold. The credential is a file path, never a key. `--format json` gives the whole answer.",
+            argv: &["mesh", "build-cache", "env", "--sccache", "no-such-sccache"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["build cache: local-only"]),
         }],
     },
     CommandExamples {
