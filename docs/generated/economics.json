@@ -1094,8 +1094,7 @@
       ],
       "warnings": [
         "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model",
-        "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving",
-        "stale: a measured mechanism changed since this record"
+        "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving"
       ]
     },
     {
@@ -2000,9 +1999,7 @@
         "I3841",
         "I3842"
       ],
-      "warnings": [
-        "stale: a measured mechanism changed since this record"
-      ]
+      "warnings": []
     }
   ],
   "suites": [
@@ -2011,9 +2008,8 @@
       "kind": "context",
       "version": 1,
       "title": "Context selection, counted",
-      "freshness": "stale",
-      "freshness_detail": "1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml",
-      "runs": 11,
+      "freshness": "current",
+      "runs": 12,
       "pairs": {
         "declared": 0,
         "attempted": 0,
@@ -2024,6 +2020,7 @@
         "other": 0
       },
       "revisions": [
+        "174b97284f65471eca99f7522d1425b3073e96f7",
         "1cc12af61de40456670620d92ba6ed6fb63aada4",
         "487cedf6f5a36eed7d0f6b3f5f0ad08bfcb176fe",
         "78f09f8af8e3372fd7a972c69307117a0e20af2b",
@@ -2219,8 +2216,8 @@
   ],
   "segments": [],
   "context": {
-    "revision": "f48de8a909081bf8e265a1afc04fceabe7b2a08b",
-    "measured_at": "2026-10-22T22:31:00Z",
+    "revision": "174b97284f65471eca99f7522d1425b3073e96f7",
+    "measured_at": "2026-10-23T00:22:43Z",
     "tokenizer": {
       "encoding": "o200k_base",
       "implementation": "tiktoken-rs 0.12.0"
@@ -2333,6 +2330,15 @@
       "methodology": 1,
       "revision": "f48de8a909081bf8e265a1afc04fceabe7b2a08b",
       "at": "2026-10-22T22:31:00Z",
+      "metric": "context_reduction_ratio",
+      "value": 0.979701046392,
+      "n": 888
+    },
+    {
+      "suite": "context",
+      "methodology": 1,
+      "revision": "174b97284f65471eca99f7522d1425b3073e96f7",
+      "at": "2026-10-23T00:22:43Z",
       "metric": "context_reduction_ratio",
       "value": 0.979701046392,
       "n": 888
