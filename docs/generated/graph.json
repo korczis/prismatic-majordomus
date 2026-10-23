@@ -64035,6 +64035,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I3999",
+        "kind": "issue",
+        "label": "I3999",
+        "summary": "A fixture holds the skills the site generator reads",
+        "route": "/cockpit/objects/issue/i3999",
+        "source": ".ai/repo/project/issues/I3999.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Cases 10, 11 and 37 pass on a checkout that has .claude/skills",
+            "Case 3999 fails when a fixture lacks a skill file the manifest names"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "test/lib.sh fixture_repo copies the generator's inputs, the layer and the generated registry files, and not .claude/skills.",
+          "depends_on": [],
+          "desired_state": "A fixture holds the skills directory; a new case proves every skill file the manifest names is present in it.",
+          "evidence_required": [
+            "fixture_holds_the_skills"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/lib.sh",
+            "test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh",
+            ".ai/repo/project/issues/I3999.yaml"
+          ],
+          "serves": [],
+          "slug": "a-fixture-holds-the-skills-the-generator-reads",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3999_a_fixture_holds_the_skills_the_generator_reads"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -86617,6 +86654,13 @@
         "label": "test/cases/391_skills_are_proven_capabilities.sh",
         "route": "/cockpit/objects/test/test-cases-391-skills-are-proven-capabilities-sh",
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh",
+        "kind": "test",
+        "label": "test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh",
+        "route": "/cockpit/objects/test/test-cases-3999-a-fixture-holds-the-skills-the-generator-reads-sh",
+        "source": "test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -123104,6 +123148,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3999",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3999",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -129224,6 +129278,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134330,8 +134389,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3768,
-      "edges": 8711,
+      "nodes": 3770,
+      "edges": 8714,
       "acyclic": false,
       "truncated": false
     }
