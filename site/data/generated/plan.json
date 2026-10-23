@@ -58731,7 +58731,13 @@
         ".claude/hooks",
         ".claude/settings.json",
         "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "apps/majordomus-cli/src/mesh/journal.rs",
+        "apps/majordomus-cli/src/commands/mesh.rs",
+        "apps/majordomus-cli/src/cli.rs",
         "apps/majordomus-cli/src/peers.rs",
+        ".ai/repo/automation/inventory.jsonl",
+        "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
         "docs/MESH.md",
         ".ai/repo/project/issues/I3992.yaml"
       ],
@@ -58744,12 +58750,15 @@
       "current_state": "The repository's Claude Code hooks (.claude/hooks) record session start, end, compaction, capture and edit guards; none fires on Notification or Stop, and the mesh has no way to say a session is waiting on a person.",
       "desired_state": "A Notification or Stop hook calls mesh.beat with a phase naming the wait (blocked: permission dialog, blocked: awaiting input), mesh.peers and the board show the session as blocked with that phase, and the session's next tool call clears it; the hooks are generated from the canonical hook declarations, like the others.",
       "acceptance_criteria": [
-        "A Notification hook event marks the session blocked on the mesh with its reason within seconds",
-        "The session's next real work clears the mark",
-        "mesh.peers and the board show a blocked session and its reason"
+        "A Notification hook event marks the session blocked on the mesh with its reason within seconds (case 3992; capability::builtin::mesh a_hook_event_is_a_wait_real_work_or_nothing, a_notification_names_its_wait_by_type_or_by_message)",
+        "The session's next real work clears the mark (case 3992; mesh::cooperation a_beat_is_progress_a_mark_or_the_clear_of_one, a_wait_on_a_person_is_written_at_once_and_spends_no_progress_beat)",
+        "mesh.peers and the board show a blocked session and its reason (case 3992; capability::builtin::mesh the_peer_tree_shows_a_waiting_session_until_its_next_work; commands::mesh a_session_line_says_what_it_does_or_whom_it_waits_on)",
+        "The mark is information: it moves no progress clock, so a session that worked and then only waits is suspended by its ttl as before and one that only ever waited keeps the stream rule (case 3992; mesh::journal a_wait_on_a_person_is_shown_and_is_not_progress)",
+        "The hook never fails or speaks: no payload, an event that is no beat, no repository and no server all exit 0 with nothing printed (case 3992; commands::mesh a_hook_beat_answers_zero_whatever_happens)"
       ],
       "validation": [
-        "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::mesh peers::",
+        "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::mesh peers:: mesh::cooperation mesh::journal commands::mesh",
+        "bash test/run.sh 3992_a_session_waiting_on_a_person_says_so 3990_a_claim_lapses_when_its_session_stops_progressing",
         "bin/majordomus plan validate"
       ],
       "evidence_required": [

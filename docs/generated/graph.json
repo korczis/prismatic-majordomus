@@ -64162,11 +64162,6 @@
         "route": "/cockpit/objects/issue/i3992",
         "source": ".ai/repo/project/issues/I3992.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A Notification hook event marks the session blocked on the mesh with its reason within seconds",
-            "The session's next real work clears the mark",
-            "mesh.peers and the board show a blocked session and its reason"
-          ],
           "created_at": "2026-10-23",
           "depends_on": [
             "I3990"
@@ -64186,14 +64181,21 @@
             ".claude/hooks",
             ".claude/settings.json",
             "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
             "apps/majordomus-cli/src/peers.rs",
+            ".ai/repo/automation/inventory.jsonl",
+            "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
             "docs/MESH.md",
             ".ai/repo/project/issues/I3992.yaml"
           ],
           "slug": "a-session-waiting-on-a-person-says-so",
           "updated_at": "2026-10-23",
           "validation": [
-            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::mesh peers::",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::mesh peers:: mesh::cooperation mesh::journal commands::mesh",
+            "bash test/run.sh 3992_a_session_waiting_on_a_person_says_so 3990_a_claim_lapses_when_its_session_stops_progressing",
             "bin/majordomus plan validate"
           ]
         }
@@ -86870,6 +86872,13 @@
         "label": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "route": "/cockpit/objects/test/test-cases-3990-a-claim-lapses-when-its-session-stops-progressing-sh",
         "source": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "kind": "test",
+        "label": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "route": "/cockpit/objects/test/test-cases-3992-a-session-waiting-on-a-person-says-so-sh",
+        "source": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -129577,6 +129586,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134688,8 +134702,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3775,
-      "edges": 8732,
+      "nodes": 3776,
+      "edges": 8733,
       "acyclic": false,
       "truncated": false
     }
