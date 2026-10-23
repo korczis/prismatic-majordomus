@@ -365,7 +365,8 @@ fn mesh_build_cache_ensure(
     .unwrap_or_else(|why| {
         ensure::unresolved(input.kind, input.dir.as_deref().or(cwd_rel.as_deref()), why)
     });
-    let declared = crate::repository::Repository::open(&root)
+    let declared = ctx
+        .repository()
         .ok()
         .and_then(|r| crate::policy::LoadedPolicy::load(&r).ok())
         .and_then(|p| p.policy.build_cache.local_max_gib);
