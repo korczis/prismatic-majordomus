@@ -533,6 +533,7 @@
           "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "33_event_registry",
+          "3995_a_task_started_before_the_first_commit_finishes",
           "821_a_session_moves_between_machines",
           "824_separate_work_on_two_machines_is_not_a_conflict"
         ],
@@ -744,10 +745,12 @@
           "20_checkpoint",
           "25_continuity_lifecycle",
           "284_a_record_reads_the_whole_declaration",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "33_event_registry"
         ],
         "negative": [
-          "20_checkpoint"
+          "20_checkpoint",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task"
         ]
       },
       "demo_data": {
@@ -800,7 +803,7 @@
           }
         ]
       },
-      "doc_md": "\nRecord compact progress inside an active task. Append-only; the body arrives on stdin.\n\nA checkpoint is not a small handover. A handover is a deliberate continuation package\nwritten when a worker stops; a checkpoint is what was true a moment ago, short enough that\nthe next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy\nenforces that difference — a body over the cap is refused with the suggestion to write a\nhandover instead, rather than truncated.\n\n**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created\natomically with `link`, never staged. Front matter is computed exactly as for a handover; a\nbody containing identity fields is refused. Also updates `checkpoint_at` on the task record\nand appends `task.checkpoint` to the ledger.\n\nAn empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what\n`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the\none that can also say what was true.\n\n- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,\n  the working tree, how many files have changed since the task started, the commits since\n  then, and the count of blockers. It stays inside the same cap, and it is what the\n  provider's compaction event runs — a compaction discards the conversation while the work\n  continues, and the moment it is announced is the only moment anything can be written about\n  a context that is about to stop being reachable.\n- `--show` prints the newest checkpoint for this worktree and branch — for the active task\n  when there is one, and otherwise the newest whatever task it names.\n- `--list` lists this worktree's checkpoints, newest first, with each one's git label.\n\nA checkpoint belongs to the **episode**, not to a task. It is written whether or not a task\nis open and whatever outcome the last one reached; the record's `task_id` is the task when\nthere is one and `none` otherwise, and the ledger event omits the field entirely rather than\nwriting a literal `none` that every reader of that event would collect as a task by that\nname. Only the task's own `checkpoint_at` is left alone when the task is over, because that\nfield is the task's.\n\nThis refused with `12` (no active task) and `15` (the task is no longer active) until ADR\n0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never\nreplaced silenced this repository's progress records for six days, while episodes went on\nopening and closing and every health check passed.\n\nExit `10` when the body carries identity fields or exceeds the cap.\n\n```\n$ majordomus checkpoint <<'EOF'\nOAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.\nCause is in callback normalisation, not in the comparison.\nNext: regression test before touching the implementation.\nEOF\n.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md\n```"
+      "doc_md": "\nRecord compact progress inside an active task. Append-only; the body arrives on stdin.\n\nA checkpoint is not a small handover. A handover is a deliberate continuation package\nwritten when a worker stops; a checkpoint is what was true a moment ago, short enough that\nthe next worker's context can quote it whole. `checkpoint.max_body_lines` in the policy\nenforces that difference — a body over the cap is refused with the suggestion to write a\nhandover instead, rather than truncated.\n\n**Writes:** `state/checkpoints/<ts>--<branch>--<head>--<rand>.md`, mode `0600`, created\natomically with `link`, never staged. Front matter is computed exactly as for a handover; a\nbody containing identity fields is refused. Also updates `checkpoint_at` on the task record\nand appends `task.checkpoint` to the ledger.\n\nAn empty body is allowed and writes no file: it updates `checkpoint_at` only, which is what\n`check --checkpoint` has always done. The two are the same operation; `checkpoint` is the\none that can also say what was true.\n\n- `--derive` composes the body from git and the ledger instead of reading stdin: the commit,\n  the working tree, how many files have changed since the task started, the commits since\n  then, and the count of blockers. It stays inside the same cap, and it is what the\n  provider's compaction event runs — a compaction discards the conversation while the work\n  continues, and the moment it is announced is the only moment anything can be written about\n  a context that is about to stop being reachable.\n- `--show` prints the newest checkpoint for this worktree and branch — for the active task\n  when there is one, and otherwise the newest whatever task it names.\n- `--list` lists this worktree's checkpoints, newest first, with each one's git label.\n\nA checkpoint belongs to the **episode**, not to a task. It is written whether or not a task\nis open and whatever outcome the last one reached. It relates the active task unless a\ndifferent, still-open episode opened that task (ADR 0164); then its Markdown `task_id` is\n`none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.\n`check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared\nrelation for its body; it cannot describe another episode's task as its own.\n\nThis refused with `12` (no active task) and `15` (the task is no longer active) until ADR\n0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never\nreplaced silenced this repository's progress records for six days, while episodes went on\nopening and closing and every health check passed.\n\nExit `10` when the body carries identity fields or exceeds the cap.\n\n```\n$ majordomus checkpoint <<'EOF'\nOAuth state mismatch reproduced with the fixture in test/fixtures/callback.json.\nCause is in callback normalisation, not in the comparison.\nNext: regression test before touching the implementation.\nEOF\n.ai/local/state/checkpoints/20260903T194500Z--main--3f2a9c1--8c1d0e4a2b6f9317.md\n```"
     },
     {
       "name": "handover",
@@ -842,6 +845,7 @@
           "15_command_surface",
           "19_end_to_end",
           "25_continuity_lifecycle",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "32_refusal_lifecycle",
           "33_event_registry",
           "368_mesh_handover_resolves",
@@ -854,7 +858,8 @@
           "827_a_record_is_admitted_before_it_is_read"
         ],
         "negative": [
-          "05_handover"
+          "05_handover",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task"
         ]
       },
       "demo_data": {
@@ -953,9 +958,11 @@
           "25_continuity_lifecycle",
           "2988_a_scope_admits_what_its_derive_wrote",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3151_a_task_is_claimed_when_it_starts",
           "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
+          "3995_a_task_started_before_the_first_commit_finishes",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
         ],
@@ -969,6 +976,7 @@
           "19_end_to_end",
           "21_decision_question",
           "25_continuity_lifecycle",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "707_knowledge_check_refuses_malformed_records"
@@ -1078,6 +1086,7 @@
           "3151_a_task_is_claimed_when_it_starts",
           "32_refusal_lifecycle",
           "33_event_registry",
+          "3995_a_task_started_before_the_first_commit_finishes",
           "572_verification_records_the_tree_it_proved",
           "578_an_unknown_gate_refuses_completed"
         ],
@@ -1396,12 +1405,14 @@
           "21_decision_question",
           "221_the_lifecycle_under_concurrency",
           "25_continuity_lifecycle",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3210_a_candidate_cites_its_own_commit",
           "33_event_registry",
           "821_a_session_moves_between_machines"
         ],
         "negative": [
-          "21_decision_question"
+          "21_decision_question",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task"
         ]
       },
       "demo_data": {
@@ -1458,7 +1469,7 @@
           }
         ]
       },
-      "doc_md": "\nRecord or read durable decisions. One append-only file: `state/decisions.md`.\n\n`decision add \"<what>\" --why \"<why>\"` appends an entry with the task id and git head\ncomputed. `--why` is required: a decision with no recorded reason cannot be reviewed later,\nonly re-argued. `--rejected` and `--evidence` are optional and default to `-`.\n\nAn entry is never edited or deleted. `--supersedes \"<text>\"` records that a later decision\nreplaced an earlier one. The text is matched against the titles of the recorded decisions\nonly, must identify exactly one of them, and that title is what is recorded; text matching\nno title, or more than one, is refused, so a supersession always points at one real\ndecision. `decision list` marks a replaced entry with `Superseded by: <title>`.\n\n`decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show\n\"<text>\"` prints the first entry whose title contains that text, or exits `12`.\n\nThe `deep-work` profile sets `verification.decision_record_required: true`; `finish` then\nrefuses `completed` unless an entry names the task.\n\n```\n$ majordomus decision add \"Normalise the callback URI before comparing state\" \\\n    --why \"the mismatch is a trailing-slash difference, not a forged state parameter\" \\\n    --rejected \"relaxing the comparison, which would accept genuinely forged states\" \\\n    --evidence \"test/auth/callback_test.exs:41\"\nrecorded: Normalise the callback URI before comparing state\n```"
+      "doc_md": "\nRecord or read durable decisions. One append-only file: `state/decisions.md`.\n\n`decision add \"<what>\" --why \"<why>\"` appends an entry with the task relation and git head\ncomputed. `--why` is required: a decision with no recorded reason cannot be reviewed later,\nonly re-argued. `--rejected` and `--evidence` are optional and default to `-`.\n\nAn entry is never edited or deleted. `--supersedes \"<text>\"` records that a later decision\nreplaced an earlier one. The text is matched against the titles of the recorded decisions\nonly, must identify exactly one of them, and that title is what is recorded; text matching\nno title, or more than one, is refused, so a supersession always points at one real\ndecision. `decision list` marks a replaced entry with `Superseded by: <title>`.\n\n`decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show\n\"<text>\"` prints the first entry whose title contains that text, or exits `12`.\n\nDecisions, questions, checkpoints, handovers and `knowledge observe` prepare attribution\nonce. An explicit caller identity resolves its own open episode or none; an unknown identity\nnever borrows the checkout's pointer. With no supplied identity, exactly one local open\nepisode is unambiguous; zero or several produce an event with no `session`, and status may\nstill show the pointer as a guess. A record relates the active task unless a different\nepisode that is still open opened it (its `task.started` event names that episode); a task\nwhose opener closed, or that opened outside an episode, is carried on by whoever continues\nit, and a handover never closes another live episode's task. Markdown uses `none` for an\nabsent task; the event omits `task_id`. The record is still written.\n\nThe `deep-work` profile sets `verification.decision_record_required: true`; `finish` then\nrefuses `completed` unless an entry names the task.\n\n```\n$ majordomus decision add \"Normalise the callback URI before comparing state\" \\\n    --why \"the mismatch is a trailing-slash difference, not a forged state parameter\" \\\n    --rejected \"relaxing the comparison, which would accept genuinely forged states\" \\\n    --evidence \"test/auth/callback_test.exs:41\"\nrecorded: Normalise the callback URI before comparing state\n```"
     },
     {
       "name": "question",
@@ -1493,11 +1504,13 @@
           "19_end_to_end",
           "21_decision_question",
           "25_continuity_lifecycle",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "32_refusal_lifecycle",
           "33_event_registry"
         ],
         "negative": [
           "21_decision_question",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "32_refusal_lifecycle"
         ]
       },
@@ -1553,7 +1566,7 @@
           }
         ]
       },
-      "doc_md": "\nOpen, resolve and list the questions that block acceptance. One mutable index:\n`state/open-questions.md`.\n\nUnresolved questions are explicit state, not prose inside a handover, because\n`finish --outcome completed` refuses while any entry names the active task. That gate is\nthe reason the file has a machine-written line format, and the reason `check`, `doctor` and\n`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate\nthat can be bypassed by mistyping one.\n\n- `question add \"<question>\"` appends `- [unresolved] <task id> — <question> (<date>)`.\n- `question resolve <n|\"<text>\"> --answer \"<answer>\"` rewrites that one line to\n  `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.\n  `--answer` is required, and an ambiguous selector is refused rather than guessed.\n- `question list [--all] [--task <id>]` shows every unresolved entry, because every one of\n  them refuses a completed finish here; `--task` narrows to what one task opened and\n  `--all` adds the resolved ones. The numbering is what `question resolve <n>` selects.\n  Any unresolved question can be resolved, not only one the active task opened: a gate\n  nobody can clear is a gate that gets worked around.\n\nResolving edits the index because an index of what is still open must not accumulate. The\nappend-only record of every opening and resolution, with its answer, is the ledger.\n\n```\n$ majordomus question add \"Does the legacy mobile callback still require the old URI form?\"\nopened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?\n$ majordomus finish --outcome completed --verify-command \"mix test\"\nFAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]\nfinish: refused, 1 unmet\n```"
+      "doc_md": "\nOpen, resolve and list the questions that block acceptance. One mutable index:\n`state/open-questions.md`.\n\nUnresolved questions are explicit state, not prose inside a handover, because\n`finish --outcome completed` refuses while any unresolved entry exists here, including an\nentry without a task relation. That gate is\nthe reason the file has a machine-written line format, and the reason `check`, `doctor` and\n`watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate\nthat can be bypassed by mistyping one.\n\n- `question add \"<question>\"` appends `- [unresolved] <task id> — <question> (<date>)`.\n  The task is `none` when a different, still-open episode opened the active task; a\n  question does not require an active task.\n- `question resolve <n|\"<text>\"> --answer \"<answer>\"` rewrites that one line to\n  `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.\n  `--answer` is required, and an ambiguous selector is refused rather than guessed.\n- `question list [--all] [--task <id>]` shows every unresolved entry, because every one of\n  them refuses a completed finish here; `--task` narrows to what one task opened and\n  `--all` adds the resolved ones. The numbering is what `question resolve <n>` selects.\n  Any unresolved question can be resolved, not only one the active task opened: a gate\n  nobody can clear is a gate that gets worked around.\n\nResolving edits the index because an index of what is still open must not accumulate. The\nappend-only record of every opening and resolution, with its answer, is the ledger.\nResolution preserves the index entry's original task token. Its ledger event describes\nthe resolving caller and relates that caller's active task only when attributable.\n\n```\n$ majordomus question add \"Does the legacy mobile callback still require the old URI form?\"\nopened for t-20260903193012-a4f1: Does the legacy mobile callback still require the old URI form?\n$ majordomus finish --outcome completed --verify-command \"mix test\"\nFAIL blockers   t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: majordomus question list]\nfinish: refused, 1 unmet\n```"
     },
     {
       "name": "prompt",
@@ -2574,6 +2587,7 @@
           "284_a_record_reads_the_whole_declaration",
           "2985_session_records_are_capped_and_archived",
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3060_trunk_stays_clean",
           "3063_a_branch_episode_drains_the_outbox",
           "494_the_mesh_is_declared_and_held",
@@ -2782,6 +2796,7 @@
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "3023_a_knowledge_record_outlives_the_file_it_cites",
           "3037_a_knowledge_lookup_explains_its_order",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "3060_trunk_stays_clean",
           "3063_a_branch_episode_drains_the_outbox",
           "3210_a_candidate_cites_its_own_commit",
@@ -2803,6 +2818,7 @@
         "negative": [
           "3015_an_unsupervised_repository_exits_12_from_both_tools",
           "3037_a_knowledge_lookup_explains_its_order",
+          "3049_a_second_workers_record_lands_on_the_first_workers_task",
           "405_the_knowledge_reader_honours_the_schema",
           "563_knowledge_is_derived_at_the_boundary",
           "64_knowledge_discovery",

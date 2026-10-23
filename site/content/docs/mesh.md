@@ -215,9 +215,12 @@ admits it only if, in the order the code checks:
    another runtime of the repository is refused `misaddressed`;
 8. the peer's repository identity equals its own;
 9. the peer's key is trusted by its policy;
-10. the nonce has not been answered before. It is checked last on purpose: the replay cache
-    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
-    fill it nor evict a real peer's nonce.
+10. the hello is no older than the one that made the peer's live link, and its nonce has not
+    been answered before. Both are checked last on purpose: the replay cache holds only nonces
+    of trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a
+    real peer's nonce. The age check is what the cache cannot be after a restart: a hello
+    captured before this runtime restarted, replayed within the skew window once the peer has
+    linked again, is refused `replay` rather than displacing that link.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -602,7 +605,7 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime, and a hello older than the one that made the peer's live link cannot replace it, even after a restart emptied the cache (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |

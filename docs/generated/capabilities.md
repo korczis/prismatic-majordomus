@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.7 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -18,7 +18,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `continuity` | Continuity | behaviorally_verified | 8 | [`modules/continuity.md`](modules/continuity.md) |
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
-| `delivery` | Delivery | experimental | 2 | [`modules/delivery.md`](modules/delivery.md) |
+| `delivery` | Delivery | experimental | 3 | [`modules/delivery.md`](modules/delivery.md) |
 | `deploy` | Deployment | behaviorally_verified | 5 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
 | `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
@@ -99,6 +99,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `dashboard.overview` | `dashboard` | query | behaviorally_verified | `majordomus_dashboard_overview` | — | `GET /api/v1/dashboard/overview` | `majordomus dashboard overview` | — | required |
 | `delivery.feature` | `delivery` | query | experimental | `majordomus_delivery_feature` | — | `GET /api/v1/delivery/feature` | `majordomus delivery show` | — | waived (external_dependency) |
 | `delivery.report` | `delivery` | query | experimental | `majordomus_delivery` | — | `GET /api/v1/delivery` | `majordomus delivery report` | — | waived (external_dependency) |
+| `delivery.trends` | `delivery` | query | experimental | — | — | `GET /api/v1/delivery/trends` | — | — | required |
 | `deploy.check` | `deploy` | query | behaviorally_verified | `majordomus_deploy_check` | — | `GET /api/v1/deployments/check` | — | process, 2 entries, 5s | required |
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |
 | `deploy.list` | `deploy` | query | behaviorally_verified | `majordomus_deployments` | `majordomus://deployments` | `GET /api/v1/deployments` | — | — | required |

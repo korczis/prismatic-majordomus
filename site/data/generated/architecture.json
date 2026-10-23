@@ -988,6 +988,11 @@
     },
     {
       "source": "lib/derive.sh",
+      "target": ".ai/local/state/current.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/derive.sh",
       "target": ".ai/local/state/decisions.md",
       "kind": "reads"
     },
@@ -1709,6 +1714,11 @@
     {
       "source": "lib/start.sh",
       "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/usecase.sh",
+      "target": "lib/capture.sh",
       "kind": "sources"
     },
     {

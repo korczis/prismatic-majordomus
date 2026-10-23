@@ -25,6 +25,7 @@
     "op-dashboard-overview": "docs/api/dashboard/",
     "op-delivery-feature": "docs/api/delivery/",
     "op-delivery-report": "docs/api/delivery/",
+    "op-delivery-trends": "docs/api/delivery/",
     "op-deploy-check": "docs/api/deploy/",
     "op-deploy-get": "docs/api/deploy/",
     "op-deploy-list": "docs/api/deploy/",
@@ -708,6 +709,7 @@
     "schema-IssueOrigin": "docs/api/intents/",
     "schema-IssuePurpose": "docs/api/intents/",
     "schema-IssueTrace": "docs/api/trace/",
+    "schema-JobMedian": "docs/api/delivery/",
     "schema-JournalTallies": "docs/api/mesh/",
     "schema-JudgedCommit": "docs/api/commit/",
     "schema-Judgement": "docs/api/served/",
@@ -1213,6 +1215,11 @@
     "schema-Transition": "docs/api/session-domain/",
     "schema-TransitionView": "docs/api/session-domain/",
     "schema-Transport": "docs/api/peers/",
+    "schema-TrendCoverage": "docs/api/delivery/",
+    "schema-TrendJob": "docs/api/delivery/",
+    "schema-TrendRatio": "docs/api/delivery/",
+    "schema-TrendRun": "docs/api/delivery/",
+    "schema-TrendsReport": "docs/api/delivery/",
     "schema-TrunkDistance": "docs/api/shared/",
     "schema-TrunkSource": "docs/api/worktree/",
     "schema-TrunkStanding": "docs/api/shared/",
@@ -1311,8 +1318,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 206,
-    "schemas": 1042,
+    "operations": 207,
+    "schemas": 1048,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1342,7 +1349,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.0-alpha.7",
+  "generated_by": "majordomus-cli 1.0.0-alpha.8",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1351,7 +1358,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.0-alpha.7"
+    "version": "1.0.0-alpha.8"
   },
   "infrastructure": [
     {
@@ -1429,6 +1436,7 @@
     "dashboard.overview": "dashboard",
     "delivery.feature": "delivery",
     "delivery.report": "delivery",
+    "delivery.trends": "delivery",
     "deploy.check": "deploy",
     "deploy.get": "deploy",
     "deploy.list": "deploy",
@@ -2116,6 +2124,7 @@
     "IssueOrigin": "intents",
     "IssuePurpose": "intents",
     "IssueTrace": "trace",
+    "JobMedian": "delivery",
     "JournalTallies": "mesh",
     "JudgedCommit": "commit",
     "Judgement": "served",
@@ -2621,6 +2630,11 @@
     "Transition": "session-domain",
     "TransitionView": "session-domain",
     "Transport": "peers",
+    "TrendCoverage": "delivery",
+    "TrendJob": "delivery",
+    "TrendRatio": "delivery",
+    "TrendRun": "delivery",
+    "TrendsReport": "delivery",
     "TrunkDistance": "shared",
     "TrunkSource": "worktree",
     "TrunkStanding": "shared",
@@ -20971,6 +20985,7 @@
         "dashboard.overview",
         "delivery.report",
         "delivery.feature",
+        "delivery.trends",
         "deploy.get",
         "deploy.list",
         "deploy.check",
@@ -25179,6 +25194,13 @@
           "type": "array of string"
         },
         {
+          "description": "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```",
+          "name": "subsumed-by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale.",
           "name": "inputs",
           "refs": [],
@@ -27815,7 +27837,7 @@
           "type": "FailureClass | null"
         },
         {
-          "description": "On `merge_succeeded`: the merge commit, once it is read.",
+          "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward.",
           "name": "merge_commit",
           "refs": [],
           "required": false,
@@ -28148,7 +28170,7 @@
           "type": "array of LabelPolicy"
         },
         {
-          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
+          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
           "name": "merge_method",
           "refs": [],
           "required": false,
@@ -30714,6 +30736,49 @@
       ],
       "used_by_schemas": [
         "TraceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The median of one job over the series.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "JobMedian",
+      "properties": [
+        {
+          "description": "The job's name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many runs the median is over.",
+          "name": "runs",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The median of its run time, in seconds.",
+          "name": "median_run_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "The median of its queue time, in seconds.",
+          "name": "median_queued_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendsReport"
       ],
       "values": [],
       "variants": []
@@ -59038,6 +59103,256 @@
       "variants": []
     },
     {
+      "description": "The coverage a run measured; each kind is `None` when the file does not give it.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendCoverage",
+      "properties": [
+        {
+          "description": "Source lines.",
+          "name": "lines",
+          "refs": [
+            "TrendRatio"
+          ],
+          "required": false,
+          "type": "TrendRatio | null"
+        },
+        {
+          "description": "Functions.",
+          "name": "functions",
+          "refs": [
+            "TrendRatio"
+          ],
+          "required": false,
+          "type": "TrendRatio | null"
+        },
+        {
+          "description": "Regions.",
+          "name": "regions",
+          "refs": [
+            "TrendRatio"
+          ],
+          "required": false,
+          "type": "TrendRatio | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendRun"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One job of a run.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendJob",
+      "properties": [
+        {
+          "description": "The job's name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds it waited for a runner, when the file gives them.",
+          "name": "queued_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Seconds it ran, when the file gives them.",
+          "name": "run_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "How it ended, when the file says.",
+          "name": "conclusion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendRun"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One covered-over-total figure of a run, with the percentage the two give.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendRatio",
+      "properties": [
+        {
+          "description": "What the run covered: lines, functions or regions.",
+          "name": "covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What there was to cover.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`covered` over `total` in percent, or `None` when there was nothing to cover.",
+          "name": "percent",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One run of the series.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendRun",
+      "properties": [
+        {
+          "description": "The forge's id of the run, as text.",
+          "name": "run_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the run judged.",
+          "name": "head_sha",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the run started, as the file wrote it.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How the run ended.",
+          "name": "conclusion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds from the run's start to its end.",
+          "name": "wall_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Seconds its jobs waited for a runner, summed.",
+          "name": "queued_seconds_total",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Its jobs.",
+          "name": "jobs",
+          "refs": [
+            "TrendJob"
+          ],
+          "required": true,
+          "type": "array of TrendJob"
+        },
+        {
+          "description": "The coverage it measured, or `None` when it measured none.",
+          "name": "coverage",
+          "refs": [
+            "TrendCoverage"
+          ],
+          "required": false,
+          "type": "TrendCoverage | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendsReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The series, or why this checkout holds none.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendsReport",
+      "properties": [
+        {
+          "description": "Whether the checkout holds a series of this schema.",
+          "name": "recorded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it does not, when it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The ids of the runs the series was written from, as the file gives them.",
+          "name": "generated_from",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The runs, oldest first.",
+          "name": "runs",
+          "refs": [
+            "TrendRun"
+          ],
+          "required": true,
+          "type": "array of TrendRun"
+        },
+        {
+          "description": "The medians of the jobs, the slowest first.",
+          "name": "job_medians",
+          "refs": [
+            "JobMedian"
+          ],
+          "required": true,
+          "type": "array of JobMedian"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "delivery.trends"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A checkout's distance from the remote trunk, judged.\n\n```\nuse majordomus_cli::worktree::trunk::{Distance, TrunkDistance, TrunkStanding};\nlet d: TrunkDistance = serde_json::from_value(serde_json::json!({\n    \"standing\": \"stale\", \"local_trunk_standing\": \"stale\",\n    \"worktree\": \"/repo\", \"on_trunk\": true,\n    \"checkout\": {\"behind\": 779, \"ahead\": 0},\n    \"thresholds\": {\"warn_behind\": 50, \"fail_behind\": 300},\n    \"message\": \"779 commits behind origin/master\",\n})).unwrap();\nassert_eq!(d.standing, TrunkStanding::Stale);\nassert_eq!(d.checkout, Some(Distance { behind: 779, ahead: 0 }));\n// what is absent stays absent in the answer\nassert!(serde_json::to_value(&d).unwrap().get(\"remedy\").is_none());\n```",
       "home": "shared",
       "is_enum": false,
@@ -62660,6 +62975,60 @@
           "result_schema": "FeatureDelivery",
           "stability": "experimental",
           "summary": "Does this feature exist"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/delivery/trends\"",
+          "description": "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series.",
+          "home": "delivery",
+          "id": "delivery.trends",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/delivery/trends",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::delivery",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "How CI runs trend: the result.",
+              "schema": "TrendsReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TrendsReport",
+          "stability": "experimental",
+          "summary": "How CI runs trend"
         }
       ],
       "slug": "delivery"

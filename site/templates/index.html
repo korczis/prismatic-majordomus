@@ -26,10 +26,11 @@
     available (docs/generated/web.json, projected by the generator). The interfaces block reads
     a mount and an availability from it and types neither. -#}
 {%- set web = load_data(path="data/generated/web.json") -%}
-{#- the plan and the releases, as the product's own first screen reads them: the hero counts
-    this project's issues from the dataset /plan/ is built from, and says what the newest
-    release record carried from the dataset /changelog/ is built from. Neither is described in
-    prose: the copy beside them names where they were read, never how the work stands. -#}
+{#- the plan and the releases, as the product's own first screen reads them: the blackboard
+    reads the waits of the plan's issues from the dataset /plan/ is built from, and the hero
+    says what the newest release record carried from the dataset /changelog/ is built from.
+    Neither is described in prose: the copy beside them names where they were read, never how
+    the work stands. -#}
 {%- set plan = load_data(path="data/generated/plan.json") -%}
 {%- set log = load_data(path="data/generated/changelog.json") -%}
 {#- how far each issue's work travelled, inferred from the history (plan.delivery, ADR 0166):
@@ -38,6 +39,13 @@
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
+{#- the evidence CI recorded for this deployment (data/evidence.json, written by scripts/pages
+    evidence and never committed): the dataset the evidence page reads. Its `claims` counts the
+    guaranteed claims the nearest complete run supports, beside the commit that run was
+    recorded at and how far behind this build that commit is. A build without it, or a run
+    that counted nothing, is not measured, and the proof band says so in words (I3916) -#}
+{%- set ci = load_data(path="data/evidence.json", required=false) -%}
+{%- set ci_measured = false -%}{%- if ci and ci.available and ci.claims and ci.claims.measured %}{% set ci_measured = true %}{% endif -%}
 {#- a rule "stops the command" only when it is blocking and a machine decides it: a validator
     or a gate's tests, never only a person's review (product.rs `machine_enforced`) -#}
 {%- set blocking = [r for r in model.rules if r.class == "blocking" and r.enforced] -%}
@@ -122,12 +130,13 @@
 
     {#- the product, in the hero: the first screen of the interface a person opens, drawn here
         from the datasets that screen's facts are published in — the release this site
-        offers, the plan's issues counted by the status their records declare, in the plan's
-        order, and what the newest release record carried, counted by the changelog's own
-        groups. A count that is zero is not drawn. There is no progress bar: /roadmap/ says why
-        it has none, and a share of done issues per milestone is a stamp count, not delivery
-        (ADR 0166). It is a picture read at this build's commit and names it; the link under it
-        opens the product itself. -#}
+        offers, the delivery the history proves, and what the newest release record carried,
+        counted by the changelog's own groups. A count that is zero is not drawn. The plan's
+        issues counted by status are not drawn here: the owner took the backlog off the hero
+        on 2026-10-22 (I3917), and /roadmap/ carries every status count. There is no progress
+        bar: /roadmap/ says why it has none, and a share of done issues per milestone is a
+        stamp count, not delivery (ADR 0166). It is a picture read at this build's commit and
+        names it; the link under it opens the product itself. -#}
     {%- if product %}
     {%- set released = [s for s in log.sections if not s.unreleased] -%}
     <figure class="relative min-w-0 self-start overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle" data-product-view="{{ product.id }}">
@@ -151,12 +160,6 @@
           {%- endif %}{% endfor %}
         </dl>
         {%- endif %}
-        <p class="mt-4 text-xs text-body-subtle">Issues of the plan, by the status their records declare</p>
-        <dl class="mt-2 flex flex-wrap gap-2" data-product-issues>
-          {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}
-          <div class="min-w-14 flex-1 rounded-base border border-default bg-neutral-primary px-2 py-2 sm:min-w-16 sm:px-3"><dt class="text-xs text-body">{{ st | lower }}</dt><dd class="mt-0.5 font-mono text-xl font-bold tracking-tight text-heading" data-issues="{{ st }}"><a href="{{ roadmap_href }}" class="hover:underline">{{ n }}</a></dd></div>
-          {%- endif %}{% endfor %}
-        </dl>
         {%- if released | length %}{% set rel = released[0] %}
         <p class="mt-4 text-xs text-body-subtle">Changes the release record of <a href="{{ rel.notes_url }}" class="font-mono text-heading hover:underline" data-product-release="{{ rel.version }}">v{{ rel.version }}</a> carries, <time datetime="{{ rel.date | truncate(length=10, end="") }}">{{ rel.date | truncate(length=10, end="") }}</time></p>
         <dl class="mt-2 flex flex-wrap gap-x-4 gap-y-1" data-product-landings="{{ rel.version }}">
@@ -310,7 +313,7 @@
         <p class="mt-1 hidden text-xs leading-relaxed text-body-subtle sm:block">{{ m.interfaces.snapshot }}</p>
         <p class="mt-2 text-xs leading-relaxed text-body">{{ m.interfaces.live }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
         {%- else %}
-        <p class="mt-3 text-xs leading-relaxed text-body">{{ m.interfaces.local }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
+        <p class="mt-3 text-xs leading-relaxed text-body">{{ m.interfaces.live }} <code class="rounded-base border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading">{{ w.mount }}</code></p>
         {%- endif %}
         <p class="mt-auto pt-4 text-sm font-medium"><a href="{{ base }}{% if doc | length %}{{ doc[0].route }}{% else %}{{ f.route }}{% endif %}" class="text-fg-brand hover:underline">What it shows, and how to open it &rarr;</a></p>
       </li>
@@ -325,11 +328,12 @@
     </ul>
     {#- the size of the one model every interface above is generated from: the product model's
         telemetry, none of it typed (scripts/site-check holds each figure to the dataset) -#}
-    <dl class="mt-6 grid grid-cols-2 gap-3 rounded-base border border-default bg-neutral-primary-soft p-4 sm:grid-cols-4" data-model-size>
-      {%- for label, key in {"capabilities in the registry": "capabilities", "MCP tools": "mcp_tools", "HTTP routes": "http_routes", "objects of the layer": "objects"} %}
+    <dl class="mt-6 grid grid-cols-2 gap-3 rounded-base border border-default bg-neutral-primary-soft p-4 sm:grid-cols-5" data-model-size>
+      {%- for label, key in {"capabilities in the registry": "capabilities", "built-in capabilities": "builtin", "generated resources, one per object of the layer": "declarative", "MCP tools": "mcp_tools", "HTTP routes": "http_routes"} %}
       <div class="min-w-0"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
       {%- endfor %}
     </dl>
+    <p class="mt-3 text-xs leading-relaxed text-body sm:text-sm" data-model-size-note>{{ m.surfaces.size }}</p>
     <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
       <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature against every interface &rarr;</a>
       <a href="{{ get_url(path="/registry/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The registry every interface is generated from &rarr;</a>
@@ -504,13 +508,15 @@
   <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
     {{ <landing_head number="07" kicker={x.proof.kicker} title={x.proof.title} lead={x.proof.lead} /> }}
     <p class="mb-6 max-w-3xl rounded-base border border-brand-subtle bg-brand-softer p-4 text-base leading-relaxed text-heading" data-proof-plain>{{ m.proof.plain }}</p>
-    {#- A status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
-        evidence verdict `majordomus evidence show` derives (product.json `evidence`), counted
-        apart and never folded into the declared figure. No dataset reads as unknown. -#}
+    {#- A status is what docs/CLAIMS.yaml declares; how many guaranteed claims a recorded run
+        supports is the count of the run the evidence page reads (data/evidence.json `claims`),
+        named by the commit it was recorded at and its distance from this build, counted apart
+        and never folded into the declared figure. Without that run the figure is words, never
+        a 0 (I3916); scripts/ci/homepage-check `declared` holds both pages to the one count. -#}
     <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4" data-claims-proof>
       {%- for sid in caps.status_order %}
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle"><a href="{{ get_url(path='/guarantees/', trailing_slash=true) }}#{{ sid }}" class="hover:underline">{{ sid }} claims, declared</a></dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="{{ sid }}">{{ [c for c in caps.claims if c.status == sid] | length }}</dd>
-        {%- if sid == "guaranteed" %}<dd class="mt-2 text-xs text-body" data-supported="{% if model.evidence.available %}{{ model.evidence.supported }}{% else %}unknown{% endif %}">{% if model.evidence.available %}<span class="font-mono font-bold text-heading">{{ model.evidence.supported }}</span> supported by a recorded run at this revision{% else %}{{ <badge status="unknown" /> }} support by a recorded run: no evidence is recorded{% endif %} · <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">the ledger</a></dd>{% endif %}
+        {%- if sid == "guaranteed" %}<dd class="mt-2 text-xs text-body" data-supported="{% if ci_measured %}{{ ci.claims.supported }}{% else %}unmeasured{% endif %}">{% if ci_measured %}<span class="font-mono font-bold text-heading">{{ ci.claims.supported }}</span> supported by the recorded run of <a href="{{ project.repository_url }}/commit/{{ ci.commit }}" class="font-mono underline" data-supported-commit="{{ ci.commit }}">{{ ci.commit | truncate(length=7, end="") }}</a>{% if ci.behind > 0 %}, <span data-supported-behind="{{ ci.behind }}">{{ ci.behind }} commit(s) behind</span> the one this page was built from{% else %}, the commit this page was built from{% endif %}{% else %}{{ <badge status="unknown" /> }} supported by a recorded run: not yet measured{% endif %} · <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">the evidence</a></dd>{% endif %}
         <dd class="mt-2 hidden text-xs leading-relaxed text-body sm:block">{{ caps.statuses[sid] }}</dd></div>
       {%- endfor %}
     </dl>

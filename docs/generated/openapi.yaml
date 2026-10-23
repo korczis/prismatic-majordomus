@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.7
+# Generator: majordomus-cli 1.0.0-alpha.8
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: 1.0.0-alpha.7
+  version: 1.0.0-alpha.8
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -1833,6 +1833,56 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_delivery_feature
       x-majordomus-cli: delivery show
+  "/api/v1/delivery/trends":
+    get:
+      operationId: delivery.trends
+      summary: How CI runs trend
+      description: "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series."
+      tags:
+        - delivery
+      parameters: []
+      responses:
+        "200":
+          description: "How CI runs trend: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/TrendsReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: delivery.trends
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::delivery
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
   "/api/v1/deployment":
     get:
       operationId: deploy.get
@@ -25948,6 +25998,12 @@ components:
             type: string
           description: Gates this one cannot run without.
           default: []
+        subsumed-by:
+          type:
+            - string
+            - "null"
+          description: "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```"
+          default: null
         inputs:
           type: array
           items:
@@ -27421,7 +27477,7 @@ components:
           type:
             - string
             - "null"
-          description: "On `merge_succeeded`: the merge commit, once it is read."
+          description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
       required:
         - at
         - actor
@@ -27609,7 +27665,7 @@ components:
           type:
             - string
             - "null"
-          description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+          description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
         merge_settings_unread:
           type: boolean
           description: "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them."
@@ -29025,6 +29081,34 @@ components:
         - commits
         - complete
       description: "Everything git knows about one issue's realisation."
+    JobMedian:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The job's name."
+        runs:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: How many runs the median is over.
+        median_run_seconds:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "The median of its run time, in seconds."
+        median_queued_seconds:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "The median of its queue time, in seconds."
+      required:
+        - name
+      description: The median of one job over the series.
     JournalTallies:
       type: object
       properties:
@@ -44748,6 +44832,153 @@ components:
           const: http
           description: "MCP over HTTP at `/mcp`: a `majordomus mcp` bridge, or a client speaking it directly."
       description: How a peer reached the server.
+    TrendCoverage:
+      type: object
+      properties:
+        lines:
+          anyOf:
+            - "$ref": "#/components/schemas/TrendRatio"
+            - type: "null"
+          description: Source lines.
+        functions:
+          anyOf:
+            - "$ref": "#/components/schemas/TrendRatio"
+            - type: "null"
+          description: Functions.
+        regions:
+          anyOf:
+            - "$ref": "#/components/schemas/TrendRatio"
+            - type: "null"
+          description: Regions.
+      description: "The coverage a run measured; each kind is `None` when the file does not give it."
+    TrendJob:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The job's name."
+        queued_seconds:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "Seconds it waited for a runner, when the file gives them."
+        run_seconds:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "Seconds it ran, when the file gives them."
+        conclusion:
+          type:
+            - string
+            - "null"
+          description: "How it ended, when the file says."
+      required:
+        - name
+      description: One job of a run.
+    TrendRatio:
+      type: object
+      properties:
+        covered:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "What the run covered: lines, functions or regions."
+        total:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: What there was to cover.
+        percent:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "`covered` over `total` in percent, or `None` when there was nothing to cover."
+      required:
+        - covered
+        - total
+      description: "One covered-over-total figure of a run, with the percentage the two give."
+    TrendRun:
+      type: object
+      properties:
+        run_id:
+          type: string
+          description: "The forge's id of the run, as text."
+        head_sha:
+          type:
+            - string
+            - "null"
+          description: The commit the run judged.
+        started_at:
+          type:
+            - string
+            - "null"
+          description: "When the run started, as the file wrote it."
+        conclusion:
+          type:
+            - string
+            - "null"
+          description: How the run ended.
+        wall_seconds:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "Seconds from the run's start to its end."
+        queued_seconds_total:
+          type:
+            - number
+            - "null"
+          format: double
+          description: "Seconds its jobs waited for a runner, summed."
+        jobs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TrendJob"
+          description: Its jobs.
+        coverage:
+          anyOf:
+            - "$ref": "#/components/schemas/TrendCoverage"
+            - type: "null"
+          description: "The coverage it measured, or `None` when it measured none."
+      required:
+        - run_id
+        - jobs
+      description: One run of the series.
+    TrendsReport:
+      type: object
+      properties:
+        recorded:
+          type: boolean
+          description: Whether the checkout holds a series of this schema.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why it does not, when it does not."
+        generated_from:
+          type: array
+          items:
+            type: string
+          description: "The ids of the runs the series was written from, as the file gives them."
+        runs:
+          type: array
+          items:
+            "$ref": "#/components/schemas/TrendRun"
+          description: "The runs, oldest first."
+        job_medians:
+          type: array
+          items:
+            "$ref": "#/components/schemas/JobMedian"
+          description: "The medians of the jobs, the slowest first."
+      required:
+        - recorded
+        - generated_from
+        - runs
+        - job_medians
+      description: "The series, or why this checkout holds none."
     TrunkDistance:
       type: object
       properties:
@@ -45763,7 +45994,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 1.0.0-alpha.7
+  generator: majordomus-cli 1.0.0-alpha.8
   infrastructure:
     - id: home
       path: /
@@ -45812,4 +46043,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 1.0.0-alpha.7
+x-majordomus-generator: majordomus-cli 1.0.0-alpha.8

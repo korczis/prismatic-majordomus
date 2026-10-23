@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you. This project is small on purpose. The best contribution is often a deletion.
+Thank you. The shell tool is small on purpose; the Rust executable beside it, `apps/majordomus-cli`, is where the rest lives. The best contribution is often a deletion.
 
 ## Working from a checkout
 
@@ -33,7 +33,7 @@ arbitrary. Most of them were paid for.
 
 - a failing test that shows a documented behaviour is not real
 - a smaller implementation of an existing command
-- a portability fix for bash 3.2 or BSD userland, with the platform named
+- a portability fix for the shell tool's bash 3.2 or BSD userland, with the platform named
 - a projection adapter for a provider, if it translates and adds no rules
 - a correction to a claim in any document, with the reproduce command
 

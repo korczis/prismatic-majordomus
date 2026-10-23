@@ -4,10 +4,10 @@ description = "The homepage tells the story its declaration names, in that order
 weight = 117
 [extra]
 kind = "rule"
-slug = "project-homepage-tells-a-declared-story-1"
-identity = "project.homepage-tells-a-declared-story@1"
+slug = "project-homepage-tells-a-declared-story-2"
+identity = "project.homepage-tells-a-declared-story@2"
 status = "active"
-source = ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md"
+source = ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md"
 +++
 {% raw %}
 
@@ -55,8 +55,17 @@ published surface local.
 The hero opens the product, and which product is the data's answer: the first of those
 interfaces. The hero carries exactly one call to open it, naming its feature; the call leads to
 its mount when a publication holds it there and to no such address when only a running process
-answers it; the view the hero draws beside the call is of that product, and the issues it
-counts are the plan's, by the plan's statuses, in the plan's order.
+answers it; the view the hero draws beside the call is of that product. The hero counts none
+of the plan's issues: `/roadmap/` counts them, by the plan's statuses, in the plan's order, and
+when it is built it is held to the plan's counts.
+
+### The plan's counts leave the hero (version 2, 2026-10-22)
+
+Version 1 required the hero's product view to count the plan's issues by status. On 2026-10-22
+an outside reviewer read the figures it drew (384 blocked against 228 ready and 5 active) as a
+sign of scope out of control rather than of discipline. The owner decided the same day to take
+the backlog off the hero (I3917): the counts stay on `/roadmap/` and in the UI, where a reader
+comes for them, and a count of the plan's issues on the hero is refused.
 
 What the homepage makes every visitor download is declared too, as `[budget]` in
 `site/data/homepage.toml`: the bytes of its own HTML, the bytes of scripts and stylesheets it
@@ -84,7 +93,7 @@ declaration.
 a clean tree passes, and a page loading Mermaid with no diagram, HTML, scripts or inline JSON over
 the declared budget, no budget declared, a budget without the HTML, a linked asset missing, an
 interface the page does not list or the data does not give, a published copy linked that the
-topology does not carry, a published surface still described as local, a hero that opens no product, one typed into the template, one sent to an address only a process answers, a published one the hero does not lead to, a view of something else, a figure the plan does not give, an undeclared section, a declared section not rendered, sections out of
+topology does not carry, a published surface still described as local, a hero that opens no product, one typed into the template, one sent to an address only a process answers, a published one the hero does not lead to, a view of something else, a count of the plan's issues on the hero, a /roadmap/ count the plan does not give, an undeclared section, a declared section not rendered, sections out of
 order, an empty section, a draft feature linked, a missing install command, a provider of the
 model the page does not name, a name the model does not carry, a trust card that disagrees with
 its dataset, a trust card missing altogether, a receipt page without noindex, a receipt page in

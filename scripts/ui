@@ -7,6 +7,9 @@
 #   scripts/ui check               the static invariants: markup a keyboard cannot use
 #   scripts/ui audit [OPTIONS]     visit every page in a browser and write the results document
 #   scripts/ui navbar [--write]    whether the bar of the UI is the site's (see below)
+#   scripts/ui union --from DIR [--out FILE] [--report]
+#                      join the results of the audit's shards under DIR into the one document a
+#                      single audit writes, and prove they are the whole audit (see MJ_UI_SHARD)
 #   scripts/ui test                the UI tooling's own tests
 #
 # Options of `audit`, and of `pages` and `viewports` where they apply:
@@ -19,6 +22,13 @@
 #   --report           render the results into the tests surface afterwards (/tests/ui)
 #
 #   MJ_UI_JOBS=N       how many pages are driven at once (default: the machine, 2-4)
+#   MJ_UI_SHARD=K/N    drive only shard K of N of the visits: those whose number in the plan's
+#                      order is K modulo N, the stride scripts/site-probe --partition cuts
+#                      routes by (I3940). The N shards together are the whole audit, each visit
+#                      in exactly one, and each writes its document to --out saying which it
+#                      drove; `union` joins them and refuses a set that is not the whole. A
+#                      shard does not judge the bar (see below): that is `navbar`, run once. A
+#                      malformed value is refused (exit 2) before anything is built or opened.
 #
 # `navbar` holds project.the-ui-wears-the-sites-navbar, and `audit` runs it first. The bar of
 # every UI screen is the site's bar as the built site renders it (scripts/lib/ui-navbar.mjs):
@@ -58,10 +68,10 @@ CSS="$ROOT/site/static/app.css"
 # cargo does not necessarily build into apps/majordomus-cli/target; ask it where
 MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-cargo)/debug/majordomus}"
 
-usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; }
 
 sub="${1:-pages}"; [ $# -gt 0 ] && shift || true
-json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""; write=0
+json=0; only=""; limit=""; out="$ROOT/target/web/run-ui.json"; origin=""; render=0; port=8790; build=""; write=0; from=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --json) json=1 ;;
@@ -73,6 +83,7 @@ while [ $# -gt 0 ]; do
     --no-build) build=0 ;;
     --report) render=1 ;;
     --write) write=1 ;;
+    --from) from="${2:?--from needs a directory}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "ui: unknown option '$1'" >&2; usage >&2; exit 2 ;;
   esac
@@ -83,9 +94,59 @@ case "$sub" in
   -h|--help|help) usage; exit 0 ;;
   test) exec node "$ROOT/scripts/lib/ui.test.mjs" ;;
   check) ;;
-  pages|viewports|audit|navbar) ;;
+  pages|viewports|audit|navbar|union) ;;
   *) echo "ui: unknown subcommand '$sub'" >&2; usage >&2; exit 2 ;;
 esac
+
+# A malformed shard is the one thing that could make an audit quietly drive nothing, so it is
+# refused here, before the site is built, a server started or a browser opened. The rule is
+# ui-shard.mjs's, the one place it is written.
+if [ "$sub" = audit ] && [ -n "${MJ_UI_SHARD:-}" ]; then
+  node --input-type=module -e '
+import { parseShard } from "'"$ROOT"'/scripts/lib/ui-shard.mjs";
+try { parseShard(process.env.MJ_UI_SHARD); } catch (e) { console.error(`ui: ${e.message}`); process.exit(2); }
+' || exit 2
+fi
+
+# ------------------------------------------------------------------ the union of the shards
+# Needs no site, no server and no browser: only the documents the shards wrote. The verdict is
+# the one a single audit gives — any finding fails — and a set of shards that is not the whole
+# audit fails before it: a shard that did not run is a part of the site nobody measured.
+if [ "$sub" = union ]; then
+  [ -n "$from" ] && [ -d "$from" ] || { echo "ui union: --from needs a directory of the shards' results, got '$from'" >&2; exit 2; }
+  node --input-type=module -e '
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { unionResults } from "'"$ROOT"'/scripts/lib/ui-shard.mjs";
+import { write } from "'"$ROOT"'/scripts/lib/ui-results.mjs";
+const [from, out, root] = process.argv.slice(1);
+const files = [];
+const walk = (dir) => {
+  for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (e.isDirectory()) walk(join(dir, e.name));
+    else if (/^run-ui.*\.json$/.test(e.name)) files.push(join(dir, e.name));
+  }
+};
+walk(from);
+const { problems, results } = unionResults(files.map((f) => JSON.parse(readFileSync(f, "utf8"))));
+for (const p of problems) console.log(`FAIL shards     ${p}`);
+if (!results) process.exit(10);
+for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
+if (!problems.length) {
+  write(out, results);
+  console.log(`OK   shards     ${files.length} shard(s) drove all ${results.visits} visit(s) of ${results.pages} page(s), each once`);
+}
+const total = results.findings.length;
+console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${results.complete ? "every page" : "a selected part of the site"} in ${results.seconds}s at ${results.concurrency} job(s) -> ${out.replace(root + "/", "")}`);
+process.exit(problems.length || total ? 10 : 0);
+' "$from" "$out" "$ROOT" || status=$?
+  status="${status:-0}"
+  # the report is rendered from the joined document, so it is rendered only from a whole one
+  if [ "$render" = 1 ] && [ -f "$out" ] && [ "$status" != 12 ]; then
+    "$MJ" web report ui --from "$out" --repo "$ROOT" || status=$?
+  fi
+  exit "$status"
+fi
 
 # `audit` builds the documentation it is about to measure; asking what the page set is does
 # not rebuild the site behind the caller's back.
@@ -279,7 +340,9 @@ if [ "$build" = 1 ]; then
 fi
 
 start_server
-if [ "$sub" = navbar ] || [ "$sub" = audit ]; then
+# A shard leaves the bar to `navbar`, which the workflow runs once: every shard would otherwise
+# compare the same bar again for the same verdict.
+if [ "$sub" = navbar ] || { [ "$sub" = audit ] && [ -z "${MJ_UI_SHARD:-}" ]; }; then
   nb=0
   navbar_copy check || nb=$?
   [ "$nb" != 0 ] || navbar_compare || nb=$?
@@ -299,11 +362,13 @@ if [ "$sub" = audit ]; then
   node --input-type=module -e '
 import { readFileSync } from "node:fs";
 import { run, write } from "'"$ROOT"'/scripts/lib/ui-run.mjs";
+import { parseShard } from "'"$ROOT"'/scripts/lib/ui-shard.mjs";
 const surfaces = JSON.parse(readFileSync(process.argv[1], "utf8"));
 const only = "'"$only"'" || undefined;
 const limit = "'"$limit"'" ? Number("'"$limit"'") : undefined;
+const shard = process.env.MJ_UI_SHARD ? parseShard(process.env.MJ_UI_SHARD) : undefined;
 const results = await run("'"$origin"'", surfaces, "'"$CSS"'", {
-  select: only, limit,
+  select: only, limit, shard,
   onVisit: (visit, done) => {
     if (visit.findings.length || done % 50 === 0)
       process.stderr.write(`  ${String(done).padStart(4)}  ${visit.route} @${visit.width}  ${visit.findings.length} finding(s)\n`);
@@ -314,7 +379,7 @@ const total = results.findings.length;
 if ('"$json"') { console.log(JSON.stringify(results, null, 2)); }
 else {
   for (const [rule, n] of Object.entries(results.rules)) console.log(`${String(n).padStart(5)}  ${rule}`);
-  const scope = results.complete ? "every page" : "a selected part of the site";
+  const scope = results.shard ? `shard ${results.shard.index}/${results.shard.of} of ${results.shard.planned} visit(s)` : results.complete ? "every page" : "a selected part of the site";
   console.log(`ui audit: ${results.pages} page(s), ${results.visits} visit(s), ${total} finding(s) over ${scope} in ${results.seconds}s at ${results.concurrency} job(s) -> ${"'"$out"'".replace("'"$ROOT"'/", "")}`);
 }
 process.exitCode = total ? 10 : 0;

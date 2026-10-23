@@ -38,8 +38,11 @@
 #               data/registry/product.json `evidence` is supported; a verdict badge names a claim
 #               that has one, and some page renders them at all
 #   declared    the homepage proof band gives the declared guaranteed figure of the matrix and,
-#               apart from it, the figure a recorded run supports, or `unknown` when the evidence
-#               is not available; and it never says a test proves it while fewer are supported
+#               apart from it, the count of guaranteed claims the recorded run supports, read
+#               from site/data/evidence.json (the run the evidence page reads, which says the
+#               same count), named by the commit it was recorded at and how far behind the
+#               built one, or the words "not yet measured" and no number when no run measured
+#               it (I3916); and it never says a test proves it while fewer are supported
 #   promises    a capability word site/data/homepage.toml [promises] declares appears in the
 #               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
 #               guaranteed and supported by a recorded run; a declaration naming a claim that does
@@ -68,9 +71,10 @@
 #   product     the hero opens the product: the first interface a person opens, as the data
 #               orders them — exactly once, named by its feature, at its mount when a
 #               publication holds it there and at no such address when only a running process
-#               answers it; the view beside it is of that product, the issues it counts
-#               are the plan's, by the plan's statuses, in the plan's order, and the changes
-#               it counts are the newest release record's, by the changelog's groups
+#               answers it; the view beside it is of that product, the changes it counts are
+#               the newest release record's, by the changelog's groups, and it counts none of
+#               the plan's issues (rule v2, the owner's decision of 2026-10-22): /roadmap/,
+#               when built, counts them, by the plan's statuses, in the plan's order
 #   weight      for every language site/i18n/languages.json declares, the homepage's own HTML, the
 #               scripts and stylesheets it loads from this site, and any graph data it carries
 #               inline weigh no more than site/data/homepage.toml's [budget] declares; a declared
@@ -545,7 +549,6 @@ statuses = list(caps.get("status_order") or [])
 ev = product.get("evidence")
 if not isinstance(ev, dict) or not isinstance(ev.get("claims"), dict):
     bad("evidence", "site/data/registry/product.json carries no evidence section, so no verdict stands behind any claim (regenerate: majordomus generate)")
-    bad("declared", "site/data/registry/product.json carries no evidence section, so the homepage cannot say what a recorded run supports")
 else:
     verdicts = ev["claims"]
     available = ev.get("available") is True
@@ -589,36 +592,84 @@ else:
     else:
         ok("evidence", f"{examined} claim evidence badge(s), each backed by a verdict, and no declared status or unsupported claim in the success colour")
 
-    # the homepage's proof band: the declared figure is the matrix's, and beside the guaranteed
-    # one the supported figure is the evidence's, or `unknown` when nothing is recorded — never
-    # a figure that reads as known without a dataset, and never "a test proves it" while the
-    # evidence supports fewer claims than are declared
-    wrong = []
-    band = re.search(r"<dl\b[^>]*\bdata-claims-proof\b[^>]*>(.*?)</dl>", home, re.S)
-    declared = sum(1 for c in caps.get("claims") or [] if c.get("status") == "guaranteed")
-    supported = sum(1 for v in verdicts.values() if v.get("supported") is True)
-    if not band:
-        wrong.append("the homepage has no claims proof band (<dl data-claims-proof>)")
+# the homepage's proof band (I3916): the declared figure is the matrix's, and beside the
+# guaranteed one the figure the recorded run supports is the count of the run the evidence page
+# reads — site/data/evidence.json `claims`, written by scripts/pages evidence for the deployment
+# and never committed — not the committed ledger's verdict in product.json. A measured figure
+# names the commit its run was recorded at and, when that commit is behind the built one, by
+# how many commits; with no measured run the figure is the words "not yet measured" and no
+# number at all, so a 0 can never stand for a run nobody recorded. The evidence page, when the
+# build wrote it, says the same count. And the page never says a test proves it while fewer are
+# supported than declared.
+wrong = []
+band = re.search(r"<dl\b[^>]*\bdata-claims-proof\b[^>]*>(.*?)</dl>", home, re.S)
+declared = sum(1 for c in caps.get("claims") or [] if c.get("status") == "guaranteed")
+ci = {}
+ci_path = os.path.join(root, "site", "data", "evidence.json")
+if os.path.exists(ci_path):
+    try:
+        with open(ci_path) as f:
+            ci = json.load(f)
+    except ValueError:
+        wrong.append("site/data/evidence.json cannot be read as JSON, so the run behind the proof band is not judged")
+    if not isinstance(ci, dict):
+        ci = {}
+cl = ci.get("claims") if ci.get("available") is True else None
+measured = isinstance(cl, dict) and cl.get("measured") is True and isinstance(cl.get("supported"), int)
+supported = cl["supported"] if measured else None
+want = str(supported) if measured else "unmeasured"
+run_commit = str(ci.get("commit") or "") if measured else ""
+behind = ci.get("behind") if measured and isinstance(ci.get("behind"), int) else 0
+if not band:
+    wrong.append("the homepage has no claims proof band (<dl data-claims-proof>)")
+else:
+    b = band.group(1)
+    dm = re.search(r'data-declared="guaranteed"[^>]*>\s*([^<]*?)\s*<', b)
+    if not dm or dm.group(1) != str(declared):
+        wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
+    sm = re.search(r'<dd\b[^>]*\bdata-supported="([^"]*)"[^>]*>(.*?)</dd>', b, re.S)
+    if not sm:
+        wrong.append("the proof band does not say how many guaranteed claims a recorded run supports")
     else:
-        b = band.group(1)
-        dm = re.search(r'data-declared="guaranteed"[^>]*>\s*([^<]*?)\s*<', b)
-        if not dm or dm.group(1) != str(declared):
-            wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
-        sm = re.search(r'data-supported="([^"]*)"[^>]*>(.*?)</dd>', b, re.S)
-        want = str(supported) if available else "unknown"
-        if not sm:
-            wrong.append("the proof band does not say how many guaranteed claims a recorded run supports")
+        got, inner = sm.group(1), sm.group(2)
+        said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", inner)).split())
+        if got != want:
+            wrong.append(f"the supported figure reads {got!r} ({said!r}), and the recorded run the evidence page reads says {want!r}")
+        elif measured:
+            if want not in said.split():
+                wrong.append(f"the supported figure is marked {got!r}, and its words do not show it: {said!r}")
+            cm = re.search(r'\bdata-supported-commit="([^"]*)"', inner)
+            if not cm or cm.group(1) != run_commit:
+                wrong.append(f"the supported figure names the revision {cm.group(1)[:12] if cm else 'nowhere'!r}, and its run was recorded at {run_commit[:12]!r}")
+            bm = re.search(r'\bdata-supported-behind="([0-9]+)"', inner)
+            if behind and (not bm or int(bm.group(1)) != behind):
+                wrong.append(f"the run behind the supported figure is {behind} commit(s) behind the built one, and the figure says {bm.group(1) if bm else 'nothing of it'}")
+            if not behind and bm:
+                wrong.append(f"the supported figure says its run is {bm.group(1)} commit(s) behind, and it was recorded at the built commit")
         else:
-            said = html.unescape(re.sub(r"<[^>]+>", " ", sm.group(2)))
-            if sm.group(1) != want or want not in said:
-                wrong.append(f"the supported figure reads {sm.group(1)!r} ({' '.join(said.split())!r}), and the evidence says {want!r}")
-    if supported < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
-        wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported} of {declared} declared guarantee(s)")
-    if wrong:
-        for w in wrong:
-            bad("declared", w)
-    else:
-        ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by a recorded run, as the matrix and the evidence give them")
+            if "not yet measured" not in said:
+                wrong.append(f"no recorded run measured the guaranteed claims, and the supported figure does not say 'not yet measured': {said!r}")
+            if re.search(r"\d", said):
+                wrong.append(f"no recorded run measured the guaranteed claims, and the supported figure shows a number: {said!r}")
+# the evidence page reads the same run, so it says the same count
+ev_page = os.path.join(pub, "evidence", "index.html")
+if os.path.exists(ev_page):
+    em = re.search(r'\bdata-ci-supported="([^"]*)"', open(ev_page, errors="replace").read())
+    if not em:
+        wrong.append("the evidence page does not say how many guaranteed claims the recorded run supports (data-ci-supported)")
+    elif em.group(1) != want:
+        wrong.append(f"the evidence page counts {em.group(1)!r} supported guaranteed claim(s), and the homepage's figure is {want!r}")
+if (supported or 0) < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
+    wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported if measured else 'an unmeasured number'} of {declared} declared guarantee(s)")
+if wrong:
+    for w in wrong:
+        bad("declared", w)
+elif measured:
+    ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by the recorded run of {run_commit[:12]}"
+                   + (f", {behind} commit(s) behind the built one" if behind else ", the built commit")
+                   + ", the count the evidence page reads")
+else:
+    ok("declared", f"the proof band says {declared} declared guaranteed and, with no recorded run measured, 'not yet measured' supported, never a number")
 
 # ---------------------------------------------------------------- promises
 # The site's two hand-written files are the only words on it nothing derives, so they are the
@@ -779,6 +830,10 @@ else:
     raw = open(tpl_path).read()
     spans = [m.span() for m in re.finditer(r"\{#.*?#\}", raw, re.S)]
     t = mask(raw, spans)
+    # the proof band's supported figure says "not yet measured" exactly when no recorded run
+    # measured it, and `declared` holds those words to site/data/evidence.json both ways: they
+    # are read, not stated, so they are not judged here (I3916). Nothing else is exempt.
+    t = mask(t, [m.span() for m in re.finditer(r"<dd\b[^>]*\bdata-supported=.*?</dd>", t, re.S)])
     # an expression or a statement is not text, but a string literal inside one is: a label
     # typed into a {% set %} is as hand-written as a sentence in the markup
     spans = []
@@ -873,7 +928,7 @@ else:
 # describing it: the first interface a person opens, in the order the list above is held
 # to. Where the call leads is decided the way an interface's own entry is — the published
 # copy exactly when a publication holds one — and the view the hero draws beside it is a
-# reading of this project's plan, so each figure in it is the plan's own count.
+# reading of this project's history and releases, so each figure in it is their own count.
 hero_m = re.search(r'<section\b[^>]*\bid="hero".*?</section>', home, re.S)
 hero = hero_m.group(0) if hero_m else ""
 opened = re.findall(r'<a\b[^>]*\bdata-cta="product"[^>]*>', hero)
@@ -907,21 +962,33 @@ else:
             pp.append(f"the hero opens {pid} at {pmount}, and no publication holds it: only a running process answers that address")
     if views != [pid]:
         pp.append(f"the hero shows the product view(s) [{', '.join(views)}], and the product is {pid}")
-    # a count may be a link (into /roadmap/): the number is read inside it
+    # the plan's issues counted by status are not the hero's (I3917, rule v2): the owner took
+    # the backlog off the front page on 2026-10-22, after an outside reader took its blocked
+    # count for scope out of control. A count may be a link: the number is read inside it, and
+    # a block marked as the plan's counts is refused even when it holds none
     shown = [(st, int(n)) for st, n in re.findall(r'\bdata-issues="([^"]+)"[^>]*>\s*(?:<a\b[^>]*>\s*)?([0-9]+)', hero)]
+    if shown or re.search(r'\bdata-(?:product-)?issues\b', hero):
+        pp.append("the hero counts the plan's issues by status [" + ", ".join(f"{st} {n}" for st, n in shown)
+                  + "]: the owner took the plan's counts off the hero on 2026-10-22, and /roadmap/ carries them")
+    # and /roadmap/, where a reader comes for them, counts every status the plan gives, in the
+    # plan's order, when the build wrote it
+    roadmap_path = os.path.join(pub, "roadmap", "index.html")
     plan_path = os.path.join(root, "site", "data", "generated", "plan.json")
-    if shown and not os.path.exists(plan_path):
-        pp.append("the product view counts issues, and site/data/generated/plan.json is missing (regenerate: scripts/generate-site-data)")
-    elif os.path.exists(plan_path):
-        with open(plan_path) as f:
-            plan = json.load(f)
-        tally = {}
-        for i in plan.get("issues") or []:
-            tally[i.get("status")] = tally.get(i.get("status"), 0) + 1
-        want_counts = [(st, tally[st]) for st in (plan.get("statuses") or {}).get("issue") or [] if tally.get(st)]
-        if views and shown != want_counts:
-            pp.append("the product view counts the issues as [" + ", ".join(f"{st} {n}" for st, n in shown)
-                      + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
+    if os.path.exists(roadmap_path):
+        rtext = open(roadmap_path, errors="replace").read()
+        rshown = [(st, int(n)) for st, n in re.findall(r'\bdata-roadmap-issue-status="([^"]+)"[^>]*>\s*([0-9]+)', rtext)]
+        if not os.path.exists(plan_path):
+            pp.append("/roadmap/ is built, and site/data/generated/plan.json is missing, so its issue counts are not judged (regenerate: scripts/generate-site-data)")
+        else:
+            with open(plan_path) as f:
+                plan = json.load(f)
+            tally = {}
+            for i in plan.get("issues") or []:
+                tally[i.get("status")] = tally.get(i.get("status"), 0) + 1
+            want_counts = [(st, tally[st]) for st in (plan.get("statuses") or {}).get("issue") or [] if tally.get(st)]
+            if rshown != want_counts:
+                pp.append("/roadmap/ counts the plan's issues as [" + ", ".join(f"{st} {n}" for st, n in rshown)
+                          + "], and the plan gives [" + ", ".join(f"{st} {n}" for st, n in want_counts) + "]")
     # how far the work travelled is the inferred delivery's count, stage by stage in its order
     # (plan.delivery, ADR 0166): a stage the history proves no issue reached is not drawn, and
     # `none` is the absence of a stage, never one; once the projection exists the view shows it
@@ -969,9 +1036,10 @@ if not pp:
     if faces:
         ok("product", f"the hero opens {faces[0]['id']}, the first interface the data gives, "
                       + ("at the copy the publication holds" if held else "at the page that says how to open it")
-                      + ", and the view beside it counts what the plan"
-                      + (", the inferred delivery" if shown_d else "")
-                      + " and the newest release record count")
+                      + ", and the view beside it counts what "
+                      + ("the inferred delivery and the newest release record count" if shown_d
+                         else "the newest release record counts")
+                      + ", and no count of the plan's issues")
     else:
         ok("product", "the data gives no interface a person opens, and the hero opens none")
 

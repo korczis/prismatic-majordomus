@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.7
+# Generator: majordomus-cli 1.0.0-alpha.8
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0-alpha.7
+generator: majordomus-cli 1.0.0-alpha.8
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -64,7 +64,7 @@ modules:
     description: "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery."
     stability: experimental
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: deploy
     title: Deployment
     description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
@@ -8513,6 +8513,220 @@ capabilities:
     benchmark:
       policy: waived
       reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/delivery.rs
+  - id: delivery.trends
+    module: delivery
+    kind: query
+    title: How CI runs trend
+    description: "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: TrendsReport
+      schema:
+        type: object
+        properties:
+          recorded:
+            type: boolean
+            description: Whether the checkout holds a series of this schema.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why it does not, when it does not."
+          generated_from:
+            type: array
+            items:
+              type: string
+            description: "The ids of the runs the series was written from, as the file gives them."
+          runs:
+            type: array
+            items:
+              "$ref": "#/$defs/TrendRun"
+            description: "The runs, oldest first."
+          job_medians:
+            type: array
+            items:
+              "$ref": "#/$defs/JobMedian"
+            description: "The medians of the jobs, the slowest first."
+        required:
+          - recorded
+          - generated_from
+          - runs
+          - job_medians
+        description: "The series, or why this checkout holds none."
+        title: TrendsReport
+        "$defs":
+          TrendRun:
+            type: object
+            properties:
+              run_id:
+                type: string
+                description: "The forge's id of the run, as text."
+              head_sha:
+                type:
+                  - string
+                  - "null"
+                description: The commit the run judged.
+              started_at:
+                type:
+                  - string
+                  - "null"
+                description: "When the run started, as the file wrote it."
+              conclusion:
+                type:
+                  - string
+                  - "null"
+                description: How the run ended.
+              wall_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds from the run's start to its end."
+              queued_seconds_total:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds its jobs waited for a runner, summed."
+              jobs:
+                type: array
+                items:
+                  "$ref": "#/$defs/TrendJob"
+                description: Its jobs.
+              coverage:
+                anyOf:
+                  - "$ref": "#/$defs/TrendCoverage"
+                  - type: "null"
+                description: "The coverage it measured, or `None` when it measured none."
+            required:
+              - run_id
+              - jobs
+            description: One run of the series.
+          TrendJob:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The job's name."
+              queued_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds it waited for a runner, when the file gives them."
+              run_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds it ran, when the file gives them."
+              conclusion:
+                type:
+                  - string
+                  - "null"
+                description: "How it ended, when the file says."
+            required:
+              - name
+            description: One job of a run.
+          TrendCoverage:
+            type: object
+            properties:
+              lines:
+                anyOf:
+                  - "$ref": "#/$defs/TrendRatio"
+                  - type: "null"
+                description: Source lines.
+              functions:
+                anyOf:
+                  - "$ref": "#/$defs/TrendRatio"
+                  - type: "null"
+                description: Functions.
+              regions:
+                anyOf:
+                  - "$ref": "#/$defs/TrendRatio"
+                  - type: "null"
+                description: Regions.
+            description: "The coverage a run measured; each kind is `None` when the file does not give it."
+          TrendRatio:
+            type: object
+            properties:
+              covered:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What the run covered: lines, functions or regions."
+              total:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What there was to cover.
+              percent:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "`covered` over `total` in percent, or `None` when there was nothing to cover."
+            required:
+              - covered
+              - total
+            description: "One covered-over-total figure of a run, with the percentage the two give."
+          JobMedian:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The job's name."
+              runs:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: How many runs the median is over.
+              median_run_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The median of its run time, in seconds."
+              median_queued_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The median of its queue time, in seconds."
+            required:
+              - name
+            description: The median of one job over the series.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::delivery
+    exposure:
+      http:
+        method: GET
+        path: /api/v1/delivery/trends
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - delivery
+      - ci
+      - trends
+    benchmark:
+      policy: required
     cache:
       policy: disabled
     execution:
@@ -23877,6 +24091,12 @@ capabilities:
                   type: string
                 description: Gates this one cannot run without.
                 default: []
+              subsumed-by:
+                type:
+                  - string
+                  - "null"
+                description: "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```"
+                default: null
               inputs:
                 type: array
                 items:
@@ -24925,7 +25145,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "On `merge_succeeded`: the merge commit, once it is read."
+                description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
             required:
               - at
               - actor
@@ -26431,7 +26651,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
               merge_settings_unread:
                 type: boolean
                 description: "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them."
@@ -27489,7 +27709,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "On `merge_succeeded`: the merge commit, once it is read."
+                description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
             required:
               - at
               - actor

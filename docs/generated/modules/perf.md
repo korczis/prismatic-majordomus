@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `perf` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.7 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 # Module `perf` — Performance
 
 This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence.

@@ -1,19 +1,19 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.7
+# Generator: majordomus-cli 1.0.0-alpha.8
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0-alpha.7
+generator: majordomus-cli 1.0.0-alpha.8
 coverage:
   - scope: direct
-    required: 212
-    covered: 178
+    required: 213
+    covered: 179
     missing: 0
     waived: 34
     inapplicable: 0
   - scope: http
-    required: 206
-    covered: 178
+    required: 207
+    covered: 179
     missing: 0
     waived: 28
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 633
-    covered: 544
+    required: 635
+    covered: 546
     missing: 0
     waived: 89
     inapplicable: 0
@@ -264,6 +264,15 @@ capabilities:
     mcp: waived
     http: waived
     cases: []
+  - id: delivery.trends
+    module: delivery
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
+    http: covered
+    cases:
+      - default
   - id: deploy.check
     module: deploy
     kind: query
@@ -2083,6 +2092,10 @@ pages:
     route: /ui/deployments
     view: pinned
     deferred: false
+  - key: system.http.ui.trends
+    route: /ui/trends
+    view: pinned
+    deferred: false
   - key: system.http.ui.evidence
     route: /ui/evidence
     view: pinned
@@ -2153,6 +2166,10 @@ pages:
     deferred: false
   - key: system.http.live.ui.deployments
     route: /ui/deployments
+    view: live
+    deferred: false
+  - key: system.http.live.ui.trends
+    route: /ui/trends
     view: live
     deferred: false
   - key: system.http.live.ui.evidence

@@ -1,0 +1,31 @@
+# The telemetry model of this repository: a completed validate run, shipped as one
+# OpenTelemetry trace to the endpoint the owner configures, and nothing at all when none is.
+# .github/workflows/telemetry.yml is an adapter over this file; it carries no rule of its own.
+#
+# Why: queueing across overlapping runs cost up to 774 summed job-minutes on master run
+# 39784979979 and nothing measured it continuously.
+version: 1
+
+trigger:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+  # one export per validate run, never cancelled: a cancelled export is a run nobody measured
+  concurrency: telemetry-<validate run id>
+
+# What a trace is: one per validate run, a span per job and per step, each with its queued
+# time, its run time and its conclusion.
+export:
+  protocol: otlp
+  service: majordomus-ci
+  action: dash0hq/otel-cicd-action
+  secrets: [OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HEADERS]
+  # without the endpoint the export is skipped and the job succeeds
+  endpoint_required: false
+  # an unreachable backend changes no verdict
+  continue_on_error: true
+
+forbidden:
+  - send anything when no endpoint is configured
+  - print the headers
+  - hand a secret to the job environment

@@ -65,6 +65,7 @@ pub(crate) mod shell;
 pub(crate) mod skills;
 pub(crate) mod source;
 pub(crate) mod timings;
+pub(crate) mod trends;
 pub(crate) mod view;
 pub(crate) mod work;
 
@@ -214,6 +215,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         title: "Deployments",
         icon: "server",
         answers: "What is live, and whether it is what was built.",
+    },
+    Screen {
+        route: trends::ROUTE,
+        title: "Trends",
+        icon: "chart",
+        answers: "How coverage and CI time move from run to run, and which jobs are slowest.",
     },
     Screen {
         route: evidence::ROUTE,
@@ -475,6 +482,7 @@ impl Ui {
             capabilities::ROUTE => capabilities::screen(ctx, query),
             skills::ROUTE => skills::screen(ctx),
             docs::ROUTE => docs::screen(ctx),
+            trends::ROUTE => trends::screen(ctx),
             evidence::ROUTE => evidence::screen(ctx, query),
             knowledge::ROUTE => knowledge::screen(ctx),
             governance::ROUTE => governance::screen(ctx, query),
@@ -824,6 +832,7 @@ mod tests {
                 capabilities::screen(&ctx, &[("id".into(), "plan.status".into())]),
             ),
             (deployments::ROUTE, deployments::screen(&ctx)),
+            (trends::ROUTE, trends::screen(&ctx)),
             (skills::ROUTE, skills::screen(&ctx)),
             (docs::ROUTE, docs::screen(&ctx)),
             (knowledge::ROUTE, knowledge::screen(&ctx)),

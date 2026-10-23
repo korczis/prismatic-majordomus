@@ -567,6 +567,23 @@ per step, with the commit, the runner, the event and whether the caches hit, so 
 regression has a table to be compared with. The budgets are those measurements; a budget
 written here would be stale the day after.
 
+## Telemetry
+
+When the repository configures an OTLP endpoint, `.github/workflows/telemetry.yml` exports every
+completed `validate` run as one OpenTelemetry trace: a span per job and per step, with its
+queued time, its run time and its conclusion (service name `majordomus-ci`). It exists because
+queueing across overlapping runs cost up to 774 summed job-minutes on master run 39784979979
+and nothing measured it continuously.
+
+The owner sets two repository secrets: `OTEL_EXPORTER_OTLP_ENDPOINT` (the OTLP/HTTP base URL)
+and `OTEL_EXPORTER_OTLP_HEADERS` (the authentication headers, for example `Authorization=Bearer
+...`). Without the endpoint nothing is sent: the workflow notices, skips the export and
+succeeds. The export step is `continue-on-error`, so a backend outage changes no verdict.
+
+To view the traces, point any OTLP backend at the endpoint (Grafana Tempo, Honeycomb, Jaeger)
+and search for service `majordomus-ci`. The action is pinned by commit SHA
+(dash0hq/otel-cicd-action v4.2.0).
+
 ## The critical path, measured on 2026-10-10
 
 `.ai/repo/ci/baseline-2026-10-10.json` holds the last 60 `validate` runs before the V4

@@ -113,4 +113,22 @@ norm="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/usecase
 want="$(printf '%s\n' '- head: <head>' '- head: <head> (opened at <head>)')"
 [ "$norm" = "$want" ] || {
   echo "    the session context head is not masked:"; printf '%s\n' "$norm"; exit 1; }
+
+# --- nor on the recorder's episode identity (I0703, ADR 0164): a writer names its caller's
+# episode or none, so a recorder running inside an agent session handed the scenario a
+# caller whose episode the scenario's repository never opened, and every writer refused. The
+# same scenario recorded from inside a foreign provider session and from none is the same.
+cp "$ROOT/.ai/repo/use-cases/keep-what-an-episode-learned.md" .ai/repo/use-cases/
+git add -A >/dev/null && git commit -qm "an episode's scenario"
+learned() { jq -r '[.steps[] | .output] | join("\n")' "$1/keep-what-an-episode-learned.json"; }
+env -u MJ_SESSION_KEY -u MAJORDOMUS_PROVIDER_SESSION -u CLAUDE_CODE_SESSION_ID \
+  MAJORDOMUS_BIN="$RB" "$MJ" usecase run --out "$T/ev-none" keep-what-an-episode-learned \
+  > run3.txt 2>&1 || { echo "    the episode scenario failed with no caller identity"; cat run3.txt; exit 1; }
+CLAUDE_CODE_SESSION_ID=a-session-the-scenario-never-opened MAJORDOMUS_BIN="$RB" "$MJ" usecase run \
+  --out "$T/ev-foreign" keep-what-an-episode-learned > run4.txt 2>&1 || {
+  echo "    the episode scenario failed when the recorder ran inside another provider session"
+  cat run4.txt; exit 1; }
+[ "$(learned "$T/ev-none")" = "$(learned "$T/ev-foreign")" ] || {
+  echo "    the recorded episode scenario depends on the recorder's provider session"
+  diff <(learned "$T/ev-none") <(learned "$T/ev-foreign") | head -20; exit 1; }
 exit 0

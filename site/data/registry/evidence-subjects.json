@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.7"
+    "version": "1.0.0-alpha.8"
   },
   "route": "/evidence/",
   "kinds": [
@@ -166,6 +166,11 @@
       "kind": "capability",
       "subject": "capability:delivery.report",
       "path": "/evidence/capabilities/delivery-report/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:delivery.trends",
+      "path": "/evidence/capabilities/delivery-trends/"
     },
     {
       "kind": "capability",
@@ -4245,6 +4250,16 @@
       "members": [
         "command:delivery report"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:delivery.trends": {
+      "kind": "capability",
+      "id": "delivery.trends",
+      "page": "/evidence/capabilities/delivery-trends/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -12724,6 +12739,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3151_a_task_is_claimed_when_it_starts",
           "path": "test/cases/3151_a_task_is_claimed_when_it_starts.sh",
           "category": "e2e"
@@ -12738,6 +12759,12 @@
           "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3995_a_task_started_before_the_first_commit_finishes",
+          "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
           "category": "e2e"
         },
         {
@@ -12804,6 +12831,12 @@
           "via": "negative",
           "test": "suite:25_continuity_lifecycle",
           "path": "test/cases/25_continuity_lifecycle.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
           "category": "e2e"
         },
         {
@@ -12875,6 +12908,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
           "category": "e2e"
@@ -12883,6 +12922,12 @@
           "via": "negative",
           "test": "suite:20_checkpoint",
           "path": "test/cases/20_checkpoint.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
           "category": "e2e"
         }
       ],
@@ -13465,6 +13510,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3210_a_candidate_cites_its_own_commit",
           "path": "test/cases/3210_a_candidate_cites_its_own_commit.sh",
           "category": "e2e"
@@ -13485,6 +13536,12 @@
           "via": "negative",
           "test": "suite:21_decision_question",
           "path": "test/cases/21_decision_question.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
           "category": "e2e"
         }
       ],
@@ -14895,6 +14952,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3995_a_task_started_before_the_first_commit_finishes",
+          "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:572_verification_records_the_tree_it_proved",
           "path": "test/cases/572_verification_records_the_tree_it_proved.sh",
           "category": "e2e"
@@ -15066,6 +15129,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -15128,6 +15197,12 @@
           "via": "negative",
           "test": "suite:05_handover",
           "path": "test/cases/05_handover.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
           "category": "e2e"
         }
       ],
@@ -15480,6 +15555,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3060_trunk_stays_clean",
           "path": "test/cases/3060_trunk_stays_clean.sh",
           "category": "e2e"
@@ -15590,6 +15671,12 @@
           "via": "negative",
           "test": "suite:3037_a_knowledge_lookup_explains_its_order",
           "path": "test/cases/3037_a_knowledge_lookup_explains_its_order.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
           "category": "e2e"
         },
         {
@@ -16988,6 +17075,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
@@ -17002,6 +17095,12 @@
           "via": "negative",
           "test": "suite:21_decision_question",
           "path": "test/cases/21_decision_question.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
           "category": "e2e"
         },
         {
@@ -17748,6 +17847,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:3060_trunk_stays_clean",
           "path": "test/cases/3060_trunk_stays_clean.sh",
           "category": "e2e"
@@ -18068,6 +18173,12 @@
           "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3995_a_task_started_before_the_first_commit_finishes",
+          "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
           "category": "e2e"
         },
         {
@@ -25133,7 +25244,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/333_homepage_narrative.sh",
-            ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md"
+            ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md"
           ]
         }
       ],
@@ -28986,7 +29097,6 @@
     "suite:3043_site_json_cannot_close_its_script",
     "suite:3047_a_leak_finding_names_where_it_is",
     "suite:3048_a_derivation_survives_an_unrelated_merge",
-    "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
     "suite:3050_doctor_says_it_checks_governance_only",
     "suite:3051_an_unlisted_event_field_fails_the_mesh_check",
     "suite:3053_a_repository_of_n_records_costs_n",
@@ -29080,6 +29190,12 @@
     "suite:3860_the_plan_graph_is_drawn_by_milestone",
     "suite:387_no_payload_is_passed_through_argv",
     "suite:390_unresolved_relation_refuses_generation",
+    "suite:3932_the_coverage_export_is_its_one_measurement",
+    "suite:3933_the_trends_are_read_from_the_runs_themselves",
+    "suite:3939_the_executable_is_built_once_per_run",
+    "suite:3940_every_ui_visit_is_driven_by_exactly_one_shard",
+    "suite:3943_a_second_gate_list_is_found",
+    "suite:3963_a_merge_of_master_derives_in_one_go",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",
     "suite:406_one_declaration_every_surface",

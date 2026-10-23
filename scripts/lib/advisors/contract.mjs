@@ -116,6 +116,28 @@ export function buildPrompt({ subject, question, hypothesis, facts = [], assumpt
 const STANCES = ['supports', 'opposes', 'alternative', 'inconclusive'];
 const CONFIDENCES = ['low', 'medium', 'high'];
 
+/**
+ * The answer's shape as a JSON Schema, for a client that can hold its final message to one
+ * (Codex: `--output-schema`). Built from the same stances and confidences `normalise`
+ * accepts, and strict in the subset such a client enforces: every property required, none
+ * added. It is a request to the client, never the acceptance: `normalise` still decides.
+ */
+const LIST = { type: 'array', items: { type: 'string' } };
+export const ANSWER_SCHEMA = Object.freeze({
+  type: 'object',
+  properties: {
+    conclusion: { type: 'string' },
+    stance: { type: 'string', enum: STANCES },
+    assumptions: LIST,
+    risks: LIST,
+    actions: LIST,
+    falsifiers: LIST,
+    confidence: { type: 'string', enum: CONFIDENCES },
+  },
+  required: ['conclusion', 'stance', 'assumptions', 'risks', 'actions', 'falsifiers', 'confidence'],
+  additionalProperties: false,
+});
+
 function strings(v) {
   return Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).map((x) => scrub(x.trim()).slice(0, 400)) : [];
 }

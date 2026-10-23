@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.7 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **1.0.0-alpha.7**
+Current version: **1.0.0-alpha.8**
 
 ## v1.0.0-alpha.5 — 2026-10-22
 
@@ -528,7 +528,7 @@ Current version: **1.0.0-alpha.7**
 
 - **ADR-0166** The plan's surfaces are inferred from delivery, and nothing the plan shows is typed beside it _(proposed)_
 - **ADR-0165** A skill is derived for every domain of the registry and shown wherever skills are _(accepted)_
-- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(proposed)_
+- **ADR-0164** A durable record names the session that wrote it, and relates a task only when the task is that session's _(accepted)_
 - **ADR-0163** A server serves only a share of its own version, with the surfaces it offers _(proposed)_
 - **ADR-0157** A mesh node may offer a shared build cache, peers discover and select it, and compilation never depends on it _(proposed)_
 - **ADR-0124** An uploaded prompt pack is a provenance-tracked input artifact, not a second intent model _(proposed)_

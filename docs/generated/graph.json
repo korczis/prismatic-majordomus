@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.7",
+  "generator": "majordomus-cli 1.0.0-alpha.8",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -291,6 +291,15 @@
         "label": "delivery.report",
         "summary": "Does each feature exist",
         "route": "/cockpit/capabilities/delivery.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:delivery.trends",
+        "kind": "capability",
+        "label": "delivery.trends",
+        "summary": "How CI runs trend",
+        "route": "/cockpit/capabilities/delivery.trends",
         "source": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
         "status": "query"
       },
@@ -7948,7 +7957,7 @@
         "summary": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
         "route": "/cockpit/objects/adr/adr-0164",
         "source": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
-        "status": "proposed",
+        "status": "accepted",
         "facts": {
           "date": "2026-10-15",
           "related": [
@@ -16239,6 +16248,18 @@
         }
       },
       {
+        "id": "majordomus://critique/merging-and-referencing-are-enforced",
+        "kind": "critique",
+        "label": "merging-and-referencing-are-enforced",
+        "summary": "merging-and-referencing-are-enforced",
+        "route": "/cockpit/objects/critique/merging-and-referencing-are-enforced",
+        "source": ".ai/repo/project/critiques/merging-and-referencing-are-enforced.yaml",
+        "facts": {
+          "intent": "merging-and-referencing-are-enforced",
+          "reviewed_at": "355a0cee79a"
+        }
+      },
+      {
         "id": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "kind": "critique",
         "label": "nothing-in-the-mesh-waits-on-something-dead",
@@ -22223,6 +22244,26 @@
             "A second executor beside crate::integration",
             "Landing a pull request whose required check is not success on its head",
             "Strong consistency of the mesh; the forge arbitrates, the mesh announces"
+          ],
+          "updated_at": "2026-10-22"
+        }
+      },
+      {
+        "id": "majordomus://intent/merging-and-referencing-are-enforced",
+        "kind": "intent",
+        "label": "merging-and-referencing-are-enforced",
+        "summary": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once",
+        "route": "/cockpit/objects/intent/merging-and-referencing-are-enforced",
+        "source": ".ai/repo/project/intents/merging-and-referencing-are-enforced.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "milestones": [
+            "merging-and-referencing-are-enforced"
+          ],
+          "non_goals": [
+            "Moving the plan to GitHub issues or GitHub Projects",
+            "Auto-merge on GitHub; landing stays with the integration executor (landing-survives-any-session)",
+            "Rewriting published history to satisfy a new commit rule; old debt is a baseline"
           ],
           "updated_at": "2026-10-22"
         }
@@ -36368,13 +36409,14 @@
             "A hello captured from a link to runtime A and replayed to runtime B within the skew window is refused with a typed refusal and changes no link of B",
             "A hello replayed to A after A restarts cannot displace an established link"
           ],
-          "completed_at": "2026-10-17T12:01:38Z",
-          "completed_event": "sha256:70274f38e185411af1da04f9c7a3647501af35df9972f3d2cf8939118cc8c156",
+          "completed_at": "2026-10-15T02:25:52Z",
+          "completed_event": "sha256:0d54c9be900260c6b4ca0ca1afc4d9d34ab7e4514e8b445ea5da634baeac0136",
           "created_at": "2026-10-09",
           "current_state": "A valid hello is accepted by any runtime of the repository that trusts its key and has not seen its nonce.",
           "depends_on": [],
           "evidence_required": [
-            "hello_replay_to_another_runtime_refused_test"
+            "hello_replay_to_another_runtime_refused_test",
+            "hello_replay_after_restart_refused_test"
           ],
           "milestone": "runtime-trust",
           "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
@@ -36389,16 +36431,16 @@
             ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
-          "started_at": "2026-10-17T12:01:16Z",
-          "started_event": "sha256:5f35c2ae5a6733c22d35a88068cbf88f32a126391ec7f3898c293469fd1bbd6c",
-          "updated_at": "2026-10-17T12:01:38Z",
+          "started_at": "2026-10-15T01:41:59Z",
+          "started_event": "sha256:2d3792ec1b2beaa4c0ec8fda08ce6ba0311e5135c25d583bf04e28323041cc26",
+          "updated_at": "2026-10-15T02:25:52Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation",
             "cargo test --lib mesh::cooperation"
           ],
-          "verified_at": "2026-10-17T12:01:30Z",
-          "verified_event": "sha256:edf7dc7eb244a178bd00c266ede26b34cac98395c560c38bc83e8acc42ad64bb"
+          "verified_at": "2026-10-15T02:25:40Z",
+          "verified_event": "sha256:14a07de235b6fbbf6ba88f10d71058a3711aa4e21e058e9c962670af39985f32"
         }
       },
       {
@@ -64954,6 +64996,8 @@
             "No tracked source file links the version 1 rule file",
             "Case 3824 fails on a bootstrap that says 'never merges', on templates that disagree with each other, and on a bootstrap that does not name the rule"
           ],
+          "completed_at": "2026-10-23T02:52:41Z",
+          "completed_event": "sha256:cd882ddb45462a09bb206fca7769fb2e44b7ffc58109886b5011a252c8837f31",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -64983,11 +65027,15 @@
           ],
           "serves": [],
           "slug": "the-relaxed-cooperation-is-recorded",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-23T02:51:47Z",
+          "started_event": "sha256:8fb567c78f2cce757f13acded0fd12754409e49cae7c1d80374a37a520445032",
+          "updated_at": "2026-10-23T02:52:41Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3824_the_bootstrap_says_what_the_cooperation_rule_says",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3150_the_cooperation_model_is_one_record"
-          ]
+          ],
+          "verified_at": "2026-10-23T02:52:05Z",
+          "verified_event": "sha256:95cb07713c545c76e49962cb45d989296aaa69908e245586a748efa1bb7dd20a"
         }
       },
       {
@@ -65228,6 +65276,8 @@
             "With a stale executable and no installed release, the hook skips the check with a line naming it and exits as its gate class says",
             "Outside a hook the launcher builds as before"
           ],
+          "completed_at": "2026-10-23T02:50:24Z",
+          "completed_event": "sha256:da121f5cc4949d3d102de258bf40dce45a31fbca2d89fc4ae24cc79713c8b51d",
           "created_at": "2026-10-21",
           "current_state": "bin/majordomus-cli builds whenever the executable is stale unless MAJORDOMUS_BIN or MAJORDOMUS_NO_BUILD is set; only `mcp` falls back to the installed release (use_installed_for_mcp).",
           "depends_on": [],
@@ -65250,11 +65300,15 @@
             "docs/WORKTREES.md"
           ],
           "slug": "the-worktree-guard-never-starts-a-cold-build",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-23T02:49:17Z",
+          "started_event": "sha256:b4981703519f37f25e29a7e1424ef8df48b1a7a78e0ca5adb350411f1e3e9eb4",
+          "updated_at": "2026-10-23T02:50:24Z",
           "validation": [
             "bash test/run.sh 3831_a_hook_never_starts_a_cold_build 96_worktree_topology",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-23T02:49:44Z",
+          "verified_event": "sha256:6c1e630cc09f49903a77bce7fcda293d49b98a855c80daae73cc12a9a1fd7582"
         }
       },
       {
@@ -65363,6 +65417,8 @@
             "MJ_TEST_KEEP=1 keeps exactly one directory and the runner prints its path",
             "Against the runner of master 573df967bb5 the interrupted run leaves its directory, so the case fails there"
           ],
+          "completed_at": "2026-10-23T02:48:51Z",
+          "completed_event": "sha256:34ba9f06d0ad1e82b0adcc30511455e267abbfa82ea52504b4ccae88c3de257d",
           "created_at": "2026-10-21",
           "current_state": "test/run.sh run_case calls rm -rf \\\"$T\\\" \\\"$mark\\\" after the case returns and after a timeout; no trap covers an interrupted runner; there is no keep flag.",
           "depends_on": [],
@@ -65383,11 +65439,15 @@
             "test/cases/3834_a_case_run_removes_its_own_dir.sh"
           ],
           "slug": "a-case-run-removes-its-own-dir",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-23T02:47:56Z",
+          "started_event": "sha256:c4cb06c1e5d94bb26836ab70cdee0837ccceeaae2ec12a4fa9c8cb4c547f6028",
+          "updated_at": "2026-10-23T02:48:51Z",
           "validation": [
             "bash test/run.sh 3834_a_case_run_removes_its_own_dir 123_case_bound 413_a_skipped_case_is_not_a_proof",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-23T02:48:30Z",
+          "verified_event": "sha256:fae8371717bd24e758cd4c79bd893c87561b62c9109d7bde0c9ae902afe8a275"
         }
       },
       {
@@ -65560,6 +65620,8 @@
         "route": "/cockpit/objects/issue/i3839",
         "source": ".ai/repo/project/issues/I3839.yaml",
         "facts": {
+          "completed_at": "2026-10-23T02:51:28Z",
+          "completed_event": "sha256:60aba258de68a87f6c34ca9e1a7ffbe7ac13b2160ca7b24c89ce1307614509e3",
           "created_at": "2026-10-21",
           "depends_on": [],
           "desired_state": "No build goes private below the bound; a refused one says why and what holds the lock, and the bound is the one the floor and the owner's relaxation name.",
@@ -65580,11 +65642,15 @@
             "docs/DEVELOPMENT_RUNTIME.md"
           ],
           "slug": "a-locked-build-never-goes-private-below-the-disk-bound",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-23T02:50:46Z",
+          "started_event": "sha256:9857fb1ab28b10f8738c5a342d830e74b86eefe04f597bf9df999be7d44a3e3c",
+          "updated_at": "2026-10-23T02:51:28Z",
           "validation": [
             "bash test/run.sh 3849_a_locked_build_never_goes_private_below_the_disk_bound",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-23T02:51:03Z",
+          "verified_event": "sha256:f7b02d97b0f23a7d71e5a6f25fbb523a1ed230816122b25ef8cde6f70f371901"
         }
       },
       {
@@ -66150,9 +66216,14 @@
           "profile": "implementation",
           "scope": [
             "site/templates/index.html",
+            "site/templates/evidence.html",
+            "site/templates/partials/evidence-chain.html",
             "apps/majordomus-cli/src/site.rs",
             "scripts/pages",
+            "scripts/ci/evidence-collect",
             "scripts/ci/homepage-check",
+            "test/cases/357_ci_records_evidence.sh",
+            "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
             "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
             "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
             ".ai/repo/project/issues/I3916.yaml"
@@ -66191,9 +66262,12 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+            ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md",
             "site/templates/index.html",
+            "site/templates/roadmap.html",
             "scripts/ci/homepage-check",
+            "test/cases/333_homepage_narrative.sh",
+            "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
             ".ai/repo/project/issues/I3917.yaml"
           ],
           "serves": [],
@@ -66281,6 +66355,1331 @@
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 132_coverage_differential"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3920",
+        "kind": "issue",
+        "label": "I3920",
+        "summary": "The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing",
+        "route": "/cockpit/objects/issue/i3920",
+        "source": ".ai/repo/project/issues/I3920.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "github-sync --check against the live repository reports no record missing that has an issue",
+            "A listing shorter than the repository issue count exits 12 and nothing is written",
+            "Cases 602, 894 and 1038 drive the adapter through issue list and api graphql"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "truncated_listing_is_unreadable",
+            "no_duplicate_on_apply"
+          ],
+          "milestone": "work-graph-github",
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+            "test/cases/1038_a_head_is_judged_against_what_it_changes.sh",
+            ".ai/repo/project/issues/I3920.yaml"
+          ],
+          "serves": [],
+          "slug": "the-projection-reads-every-issue",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3930",
+        "kind": "issue",
+        "label": "I3930",
+        "summary": "The suite is dealt from the seconds it costs now, and the record that deals it says when it falls behind",
+        "route": "/cockpit/objects/issue/i3930",
+        "source": ".ai/repo/project/issues/I3930.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An unrecorded case is dealt at the record's median, and case 721 fails when it is dealt above it",
+            "The record holds every case the measured runs ran, and the shards' simulated case seconds are within 1% of each other",
+            "suite-budget names STALE and DRIFT cases and writes the measured record without changing its exit status, and case 3084 holds all three",
+            "The suite job uploads the record it measured beside suite.tsv"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": ".ai/repo/ci/suite-durations.tsv was last refreshed on 2026-10-10; test/run.sh deals an unrecorded case at 300 s; scripts/ci/suite-budget reads the record only for NEAR lines.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Raising or lowering any budget or bound in .ai/repo/ci/suite.yaml",
+            "Making the slowest case cheaper (I2115 holds 486_rustdoc_composition at 4017 s, the shard floor)",
+            "Committing the record from CI; refreshing it stays a reviewed change"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "debugging",
+          "risk": "A refreshed record is a snapshot of one runner's load; the median default and the per-run STALE and DRIFT lines are what keep a stale record from costing wall clock again.",
+          "scope": [
+            "test/run.sh",
+            ".ai/repo/ci/suite-durations.tsv",
+            "scripts/ci/suite-budget",
+            ".github/workflows/validate.yml",
+            "test/cases/721_the_suite_shards_are_the_whole_suite.sh",
+            "test/cases/3084_a_case_near_its_budget_is_named.sh",
+            ".ai/repo/project/issues/I3930.yaml"
+          ],
+          "slug": "the-suite-is-dealt-from-current-seconds",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 721_the_suite_shards_are_the_whole_suite 3084_a_case_near_its_budget_is_named 94_ci_plan 1021_a_push_runs_what_ci_would_find_first 417_the_suite_finishes_inside_its_bound",
+            "scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3931",
+        "kind": "issue",
+        "label": "I3931",
+        "summary": "A stale UI bar is told in a minute, before the browser audit, and a branch does not spend the audit to learn it",
+        "route": "/cockpit/objects/issue/i3931",
+        "source": ".ai/repo/project/issues/I3931.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The ui job's navbar step runs before the audit, bounded and timed",
+            "On a branch the audit is skipped after a failed earlier step; on integration/* it runs unless the job was cancelled",
+            "Every case that reads .github/workflows/validate.yml passes"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "The ui job runs the warm-screen budget, then `scripts/ui audit --report`, which checks the bar, audits every page, and fails at the end when the bar is stale.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Changing what the audit or the navbar check judges",
+            "Making the audit itself faster or sharded (a separate issue)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "debugging",
+          "risk": "The audit also judges the bar, so the check runs twice on a green job, about a minute; the step's bound keeps a hung browser from costing more.",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".ai/repo/project/issues/I3931.yaml"
+          ],
+          "slug": "the-ui-bar-is-judged-before-the-audit",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh $(grep -lE 'validate\\\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\\\.sh$//')",
+            "actionlint .github/workflows/validate.yml"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3932",
+        "kind": "issue",
+        "label": "I3932",
+        "summary": "Coverage is exported as LCOV and Cobertura from its one measurement, and uploaded to Coveralls and Codecov when their secrets exist",
+        "route": "/cockpit/objects/issue/i3932",
+        "source": ".ai/repo/project/issues/I3932.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "LCOV and Cobertura line totals equal rust-coverage's for the same export, and a test-code line is absent from both",
+            "The coverage job keeps both files and uploads them only when the matching secret exists, never failing the job",
+            "docs/COVERAGE.md names the exports and the two secrets"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "rust-coverage writes coverage.json; validate.yml keeps it 14 days; nothing is uploaded.",
+          "depends_on": [
+            "I3919"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "non_scope": [
+            "The scanner I3919 changes in scripts/rust-coverage",
+            "Adding the repository secrets, which the owner does"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "An upload action that changes its inputs fails silently; continue-on-error keeps the verdict, and the artifact keeps the files whatever the service does.",
+          "scope": [
+            "scripts/rust-coverage",
+            ".github/workflows/validate.yml",
+            "docs/COVERAGE.md",
+            "test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+            ".ai/repo/project/issues/I3932.yaml",
+            ".ai/repo/project/milestones/measurements-are-tracked-over-time.yaml"
+          ],
+          "slug": "coverage-is-exported-from-its-one-measurement",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 3932_the_coverage_export_is_its_one_measurement",
+            "scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3933",
+        "kind": "issue",
+        "label": "I3933",
+        "summary": "Every master run's coverage and CI cost join a derived series that the site and the Cockpit draw",
+        "route": "/cockpit/objects/issue/i3933",
+        "source": ".ai/repo/project/issues/I3933.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A master run's coverage totals and CI cost are in the series with no command run by a person",
+            "The series' figures equal the gate's and ci-timings' for the same run, shown by a case",
+            "The site and the Cockpit draw the series"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3932"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "non_scope": [
+            "A store outside the repository's own publication",
+            "The homepage's proof figure (I3916, I3917)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Derived data must not read refs (it reads the run's own artifacts), and the pages path is shared with the homepage work; coordinate with its owner before touching scripts/pages.",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".github/workflows/pages.yml",
+            ".gitignore",
+            "scripts/pages",
+            "site/content-src/trends.md",
+            "site/content/trends.md",
+            "site/templates/trends.html",
+            "site/data/nav.toml",
+            "apps/majordomus-cli/src/ui",
+            "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+            ".ai/repo/project/issues/I3933.yaml",
+            ".ai/repo/project/milestones/measurements-are-tracked-over-time.yaml"
+          ],
+          "slug": "coverage-and-ci-cost-are-a-series",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3934",
+        "kind": "issue",
+        "label": "I3934",
+        "summary": "A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is",
+        "route": "/cockpit/objects/issue/i3934",
+        "source": ".ai/repo/project/issues/I3934.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the endpoint set a run's jobs and steps arrive as spans with timings and conclusions",
+            "With none the export is skipped and no verdict changes"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "scripts/ci-baseline reads runs back on request; no run is shipped to a tracing backend.",
+          "depends_on": [],
+          "desired_state": "A telemetry workflow exports each completed validate run to the configured OTLP endpoint, and skips silently without one.",
+          "evidence_required": [],
+          "milestone": "measurements-are-tracked-over-time",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/telemetry.yml",
+            "docs/CI.md",
+            ".ai/repo/ci/telemetry.yaml",
+            ".ai/repo/project/issues/I3934.yaml"
+          ],
+          "serves": [],
+          "slug": "a-ci-run-is-an-opentelemetry-trace",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "actionlint .github/workflows/telemetry.yml"
+          ],
+          "why": "Queueing across overlapping runs cost up to 774 summed job-minutes on master run 39784979979 and nothing measured it continuously."
+        }
+      },
+      {
+        "id": "majordomus://issue/I3935",
+        "kind": "issue",
+        "label": "I3935",
+        "summary": "An agent session's telemetry reaches the same OpenTelemetry endpoint, configured once and projected to every provider",
+        "route": "/cockpit/objects/issue/i3935",
+        "source": ".ai/repo/project/issues/I3935.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the local endpoint set, a Claude Code session exports its metrics to it",
+            "With nothing set, no provider exports anything and no projection differs except by the declared names"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "No provider projection carries telemetry settings; nothing is exported.",
+          "depends_on": [
+            "I3934"
+          ],
+          "desired_state": "The environment model names the endpoint once; provider projections export it only when the person's local environment supplies it; the headers stay in the local half and are never committed.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "non_scope": [
+            "Committing an endpoint, token or header value"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Telemetry settings are per person; projecting a value rather than a name would leak it into the tracked half.",
+          "scope": [
+            ".ai/repo/providers",
+            "share",
+            "docs",
+            ".ai/repo/project/issues/I3935.yaml"
+          ],
+          "slug": "agent-telemetry-reaches-the-endpoint",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3936",
+        "kind": "issue",
+        "label": "I3936",
+        "summary": "The pages gate judges master's deploy after the run's heavy jobs, not on a clock that expires while the deploy queues behind them",
+        "route": "/cockpit/objects/issue/i3936",
+        "source": ".ai/repo/project/issues/I3936.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "validate's pages job needs evidence and is skipped only when the run or evidence was cancelled, or pages-live is not planned",
+            "Every case that reads .github/workflows/validate.yml passes, and actionlint is clean",
+            "The next master run's pages-live passes without a rerun, or names a deploy that is slower than the heavy jobs"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "The pages job needs only plan, so it starts in the first wave beside about nineteen jobs and its wait expires while the deploy is still queued behind them.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "pages-check's own wait, bound and verdicts (scripts/ci/pages-check)",
+            "The pages.yml workflow"
+          ],
+          "objective": "Order validate's pages job behind the evidence job, so that the 1200 s wait for the deploy of the same push starts once this run's own jobs have released the runners the deploy queues for.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "debugging",
+          "risk": "The pages verdict of a master run arrives at its end instead of its first half hour; the ci verdict waited for every job already, so the run ends no later.",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".ai/repo/project/issues/I3936.yaml"
+          ],
+          "slug": "the-pages-gate-waits-behind-the-heavy-jobs",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "actionlint .github/workflows/validate.yml"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3937",
+        "kind": "issue",
+        "label": "I3937",
+        "summary": "A gate whose cases the planned suite runs is not planned beside it",
+        "route": "/cockpit/objects/issue/i3937",
+        "source": ".ai/repo/project/issues/I3937.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The full plan selects shell-suite and neither release-record-cases nor plan-record-cases, and each says it was subsumed by shell-suite in the JSON, text and github outputs",
+            "A change of the release-record or plan-record shape still plans its case gate and not the suite",
+            "Without the declaration the full plan plans both gates (the case is not vacuous), and a subsumed-by naming a missing gate, itself or a subsumed gate is refused by scripts/ci-plan --check",
+            "No gate other than the on-demand ones and the two subsumed ones leaves the full plan"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "scripts/ci-plan plans release-record-cases and plan-record-cases in every full plan next to shell-suite, which runs the same ~80 cases; nothing in the model relates the gates.",
+          "depends_on": [],
+          "evidence_required": [
+            "a_gate_the_suite_runs_is_not_planned_twice_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "apps/majordomus-cli/src/gates/model.rs: the executable's reader ignores the field and plans the wider set, as it already plans no shape",
+            "Skipping a step in .github/workflows/validate.yml: the plan decides, the workflow only reads its outputs",
+            "Removing, skipping or making advisory any case: the suite runs every case the dropped gates named"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/gates.yaml",
+            "scripts/ci-plan",
+            "test/cases/94_ci_plan.sh",
+            ".ai/repo/project/issues/I3937.yaml"
+          ],
+          "slug": "a-gate-the-suite-runs-is-not-planned-twice",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 94_ci_plan 26_ci_wiring 721_the_suite_shards_are_the_whole_suite",
+            "scripts/ci-plan --check",
+            "scripts/ci-plan --full --format text | grep record-cases"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3938",
+        "kind": "issue",
+        "label": "I3938",
+        "summary": "The rustdoc composition case proves its composition on a small site, not on the whole one",
+        "route": "/cockpit/objects/issue/i3938",
+        "source": ".ai/repo/project/issues/I3938.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The case's clone declares the source language alone and derives no language copy: no build of the case prints `== languages`",
+            "Every assertion of the case still executes: the number of expect_*, grep and refusal checks is unchanged or larger, and the case has no new skip_case path",
+            "scripts/site-build, scripts/site-check and every other case are unchanged by the change",
+            "On the same machine the case costs a small fraction of what it did before; the figures measured before and after are recorded on the pull request"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "rustdoc_composition_test"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/486_rustdoc_composition.sh"
+          ],
+          "slug": "the-rustdoc-composition-case-builds-a-small-site",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 486_rustdoc_composition",
+            "scripts/ci/shell-lint",
+            "scripts/ci/english-only-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3939",
+        "kind": "issue",
+        "label": "I3939",
+        "summary": "The executable and the rustdoc surface are built once per run and downloaded by the jobs that drive them",
+        "route": "/cockpit/objects/issue/i3939",
+        "source": ".ai/repo/project/issues/I3939.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Outside macos, the crate's cargo build appears only in the build job, and a case says so",
+            "Every consumer's plan-output condition is covered by its producer's, shown by a case; a narrow plan skips both producers",
+            "Cases 401, 357, 3019, 3402 and 26 pass; evidence is about 5 min shorter on a full plan than on run 39762797718"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            ".github/actions/rustdoc and pages.yml's use of it (case 97_pages_fast_path pins them)",
+            "rust lane 3's own rustdoc and its majordomus-cli-<triple> artifact (case 401 pins it)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".github/actions/majordomus-bin",
+            "test/cases",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/project/issues/I3939.yaml"
+          ],
+          "slug": "the-executable-is-built-once-per-run",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "actionlint .github/workflows/validate.yml"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3940",
+        "kind": "issue",
+        "label": "I3940",
+        "summary": "The UI audit runs as four shards side by side, and the long pole of a full run is a quarter as long",
+        "route": "/cockpit/objects/issue/i3940",
+        "source": ".ai/repo/project/issues/I3940.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3931"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Changing what the audit judges, which pages it visits or at which widths",
+            "The gate's id, its job (`ui`) or its entry in .ai/repo/ci/gates.yaml",
+            "Making a single visit faster, or the setup of the job shorter"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "debugging",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ui",
+            "scripts/lib/ui-run.mjs",
+            "scripts/lib/ui-shard.mjs",
+            "scripts/lib/ui-results.mjs",
+            "test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+            ".ai/repo/project/issues/I3940.yaml"
+          ],
+          "slug": "the-ui-audit-runs-in-shards",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 3940_every_ui_visit_is_driven_by_exactly_one_shard",
+            "bash test/run.sh $(grep -lE 'validate\\\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\\\.sh$//')",
+            "actionlint .github/workflows/validate.yml",
+            "scripts/ci/step-bound-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3941",
+        "kind": "issue",
+        "label": "I3941",
+        "summary": "The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs",
+        "route": "/cockpit/objects/issue/i3941",
+        "source": ".ai/repo/project/issues/I3941.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The screen draws coverage percentages computed from covered over total, and a run without coverage leaves a gap in the line",
+            "The screen draws wall and queued minutes per run and the job medians, slowest first",
+            "An absent file, a file that is not JSON and a file of another schema each answer 200 with the plain notice and no chart",
+            "Nothing is written, and no committed file depends on site/data/trends.json"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "scripts/pages trends writes site/data/trends.json at publish time from the forge; it is gitignored and nothing committed depends on it. No screen of the UI reads it.",
+          "depends_on": [],
+          "evidence_required": [
+            "trends_screen_draws_series",
+            "trends_screen_absent_file_says_so"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/delivery/mod.rs",
+            "apps/majordomus-cli/src/delivery/trends.rs",
+            "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/ui/trends.rs",
+            "test/fixtures/trends/trends.json",
+            ".ai/repo/project/issues/I3941.yaml"
+          ],
+          "serves": [],
+          "slug": "the-cockpit-draws-the-trends",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "cd apps/majordomus-cli && cargo test --lib trends",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3942",
+        "kind": "issue",
+        "label": "I3942",
+        "summary": "Linux's per-argument cap is measured on every host, so an oversized jq argument fails where it is written",
+        "route": "/cockpit/objects/issue/i3942",
+        "source": ".ai/repo/project/issues/I3942.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "On train 4's head without p1's repair, case 10 fails on macOS with the argv-cap refusal; with the repair it passes",
+            "On master, case 10 names the 126361-byte plan graph as NEAR and passes",
+            "The shim refuses a 131073-byte argument with exit 126 and admits a 131072-byte one"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "scripts/ci/argv-limit-check matches three spellings, plus mj_project_mermaid on train 4. A payload under a fourth spelling passes it and every macOS run, and fails only on Linux.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "scripts/generate-site-data and scripts/ci/argv-limit-check (p1's repair, r-c873f68b9658, carries the mermaid fix)",
+            "Other commands than jq; the generators' whole-collection payloads travel to jq"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "The shim adds one bash process per jq call in the first generator run of case 10; it measures with the shell's own length expansion under LC_ALL=C and forks nothing else.",
+          "scope": [
+            "test/cases/10_site_data.sh",
+            ".ai/repo/project/issues/I3942.yaml"
+          ],
+          "slug": "the-argument-cap-is-measured-on-every-host",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 10_site_data"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3943",
+        "kind": "issue",
+        "label": "I3943",
+        "summary": "A second list of gates outside the model is found when it is put back",
+        "route": "/cockpit/objects/issue/i3943",
+        "source": ".ai/repo/project/issues/I3943.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A file that runs the commands of two gates within ten lines, or enumerates three gate ids on a line, is reported with its file, line and gates, and the inventory exits 10",
+            "A baseline entry that matches nothing is reported STALE and fails; a finding the baseline does not hold fails",
+            "The repository's own tree passes the inventory against the committed baseline",
+            "Putting shell-lint and core-check back into the ci-structure recipe in a copy of .just/ci.just makes the inventory exit 10",
+            "The inventory runs in CI through the model"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "evidence_required": [
+            "a_second_gate_list_is_found_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "scripts/ci/core-check: its ordered checks are slice S6 of I2350, which makes it read its list from the model",
+            "The pre-push hook and docs/CI.md block: they remain in the baseline or out of the inventory's definition until their slices",
+            "A new gate: the inventory is added to the runs of an existing always gate of the structure job"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci-plan",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/ci/gate-list-baseline.txt",
+            ".just/ci.just",
+            "test/cases/3943_a_second_gate_list_is_found.sh",
+            ".ai/repo/project/issues/I3943.yaml"
+          ],
+          "slug": "a-second-gate-list-is-found",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3943_a_second_gate_list_is_found 94_ci_plan 26_ci_wiring 131_completion_gates",
+            "scripts/ci-plan --inventory",
+            "scripts/ci-plan --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3944",
+        "kind": "issue",
+        "label": "I3944",
+        "summary": "The two readers of the CI model give every gate, and the plan, the same reason in the same words",
+        "route": "/cockpit/objects/issue/i3944",
+        "source": ".ai/repo/project/issues/I3944.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "For each change set of case 131, the executable and scripts/ci-plan give the same mode, the same plan reason and the same reason for every gate, planned or left out",
+            "Reverting one of the executable's reason texts makes case 131 fail with the gate's id and both texts",
+            "A unit test in model.rs pins each corrected reason: the escalation's three paths and on-demand note, the class list, implied by and required by, full, and the two left-out reasons",
+            "A plan narrowed by a shape is not compared, and a shape note on a reason is the only text normalised away"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3937"
+          ],
+          "evidence_required": [
+            "the_two_gate_readers_give_one_reason_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Applying the shapes in the executable: the model's header says it plans the union, which can only be wider, and that stays",
+            "Changing any reason text of scripts/ci-plan beyond the trailing space, since case 94 and the CI logs read them",
+            "The selection rules themselves: no gate enters or leaves a plan of this repository's model because of this issue"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/gates/model.rs",
+            "scripts/ci-plan",
+            "test/cases/131_completion_gates.sh",
+            ".ai/repo/project/issues/I3944.yaml"
+          ],
+          "slug": "the-two-gate-readers-give-one-reason",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 131_completion_gates 94_ci_plan 26_ci_wiring",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3945",
+        "kind": "issue",
+        "label": "I3945",
+        "summary": "The site generator's input list reaches jq through a file, not as one command-line argument",
+        "route": "/cockpit/objects/issue/i3945",
+        "source": ".ai/repo/project/issues/I3945.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 10 with the argument measurement names no input-list argument as NEAR",
+            "generate-site-data --check passes on the unchanged tree: source.json is byte-identical"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Line 2006 of scripts/generate-site-data passes the whole newline-separated input list as one --arg.",
+          "depends_on": [],
+          "desired_state": "The list is written once to the stage directory and read with --rawfile; source.json is byte-identical to what --arg produced.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "The plan graph argument, which p1's repair (r-c873f68b9658) moves",
+            "scripts/ci/argv-limit-check, whose blind spot for a plain variable case 10's measurement covers"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "None beyond the stage file: --rawfile reads exactly the bytes --arg passed, shown on a list with newlines, an empty line, spaces and non-ASCII text.",
+          "scope": [
+            "scripts/generate-site-data",
+            ".ai/repo/project/issues/I3945.yaml"
+          ],
+          "slug": "the-inputs-list-reaches-jq-through-a-file",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 10_site_data 51_derived_artifacts_committed"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3962",
+        "kind": "issue",
+        "label": "I3962",
+        "summary": "The codex advisor's final message is held to the answer schema and read from its file alone",
+        "route": "/cockpit/objects/issue/i3962",
+        "source": ".ai/repo/project/issues/I3962.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "scripts/lib/advisors/codex-exec.mjs runs codex exec without --output-schema and falls back to run.stdout when the -o file is absent.",
+          "depends_on": [],
+          "evidence_required": [
+            "advisor_transport_contract"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "The gemini-cli adapter, whose JSON envelope does not enforce a schema on the response",
+            "A live model call, which needs an authorised budget"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/lib/advisors/codex-exec.mjs",
+            "scripts/lib/advisors/contract.mjs",
+            "scripts/lib/advisors/process.mjs",
+            "scripts/lib/advisors/contract.test.mjs"
+          ],
+          "slug": "the-codex-advisor-answers-to-a-schema",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "node --test scripts/lib/advisors/contract.test.mjs",
+            "bash test/run.sh 731_advisor_transport_contract",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3963",
+        "kind": "issue",
+        "label": "I3963",
+        "summary": "A merge of master derives in one go: scripts/derive derives the staged merge with both parents as history",
+        "route": "/cockpit/objects/issue/i3963",
+        "source": ".ai/repo/project/issues/I3963.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "scripts/derive exits 10 before anything runs while MERGE_HEAD, CHERRY_PICK_HEAD or REVERT_HEAD exists (case 3837).",
+          "depends_on": [],
+          "evidence_required": [
+            "a_merge_of_master_derives_in_one_go"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Teaching each history reader about MERGE_HEAD; the scratch commit makes HEAD the merge",
+            "Rebase, cherry-pick, am and revert, which stay refused"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/derive",
+            "test/cases/3837_a_derive_does_not_run_mid_merge.sh",
+            "test/cases/3963_a_merge_of_master_derives_in_one_go.sh"
+          ],
+          "slug": "a-merge-of-master-derives-in-one-go",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bash test/run.sh 3837_a_derive_does_not_run_mid_merge 3963_a_merge_of_master_derives_in_one_go",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3970",
+        "kind": "issue",
+        "label": "I3970",
+        "summary": "Every pull request carries its metadata, projected from the trunk's records: labels, milestone, assignee and Refs links, never a closing keyword",
+        "route": "/cockpit/objects/issue/i3970",
+        "source": ".ai/repo/project/issues/I3970.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3979"
+          ],
+          "evidence_required": [
+            "pr_metadata_projected"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Auto-merge or any landing; the integration executor lands",
+            "Projecting a pull request's labels into the records",
+            "Running the issue projection for a pull request"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            ".github/workflows",
+            ".github/pull_request_template.md",
+            ".ai/repo/ci/github.yaml",
+            ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md",
+            ".ai/repo/rules/project/github-projection-gated.v1.md",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/ui/prs.rs",
+            "test/cases/45_github_projection.sh",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/1097_the_projection_is_applied_at_landing.sh",
+            "CONTRIBUTING.md",
+            ".ai/repo/project/issues/I3970.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#pr-metadata-projected"
+          ],
+          "slug": "a-pull-request-carries-its-metadata",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 45_github_projection",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 1097_the_projection_is_applied_at_landing"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3971",
+        "kind": "issue",
+        "label": "I3971",
+        "summary": "Work in an open pull request or under a live branch claim is reported taken and is never the next issue",
+        "route": "/cockpit/objects/issue/i3971",
+        "source": ".ai/repo/project/issues/I3971.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3754"
+          ],
+          "desired_state": "plan next never names an issue with an open pull request or a live branch claim; plan ready lists it as taken with its evidence; the canonical six statuses are unchanged.",
+          "evidence_required": [
+            "work_in_review_is_not_next"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "A new canonical issue status",
+            "Writing any stamp from an observation; the record stays the person's or the lifecycle's"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/src/devtask/readiness.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "lib/plan.sh",
+            "lib/project.sh",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "test/cases/99_plan_capabilities.sh",
+            ".ai/repo/project/issues/I3971.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#work-in-review-is-not-next"
+          ],
+          "slug": "work-in-review-is-not-next",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 99_plan_capabilities"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3972",
+        "kind": "issue",
+        "label": "I3972",
+        "summary": "plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone's dependencies",
+        "route": "/cockpit/objects/issue/i3972",
+        "source": ".ai/repo/project/issues/I3972.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture plan with one issue held only by its milestone gets a held_only_by_milestone warning naming it and the milestone (case an_issue_held_only_by_its_milestone_is_named)",
+            "The same issue declaring milestone_gate: own derives READY; one with an unfinished dependency of its own stays BLOCKED",
+            "An opted-out issue that is ACTIVE or DONE under a blocked milestone raises neither premature_execution nor milestone_premature in either engine, and the milestone stays BLOCKED",
+            "plan.rs and lib/project.awk derive identical statuses on the fixture and on the repository"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3757"
+          ],
+          "desired_state": "plan validate lists the 26 (or however many there are then) with their milestones; an issue declaring milestone_gate: own is READY when its own dependencies are DONE; both engines agree.",
+          "evidence_required": [
+            "milestone_gate_is_explained"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Changing any milestone's depends_on or any existing issue's gate"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "apps/majordomus-cli/src/devtask/readiness.rs",
+            "test/cases/99_plan_capabilities.sh",
+            ".ai/repo/project/issues/I3972.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#milestone-gate-is-explained"
+          ],
+          "slug": "the-milestone-gate-is-explained",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 99_plan_capabilities"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3973",
+        "kind": "issue",
+        "label": "I3973",
+        "summary": "A record is referenced only once it is on master: a pull request naming an unlanded id is refused, and convergence reports stranded records",
+        "route": "/cockpit/objects/issue/i3973",
+        "source": ".ai/repo/project/issues/I3973.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "desired_state": "A pull request citing an id that exists only on another unmerged branch is refused until that branch lands or the record is brought in; convergence lists stranded records on master.",
+          "evidence_required": [
+            "references_resolve_on_master"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Rewriting a record that already cites an id; records state what was true when written"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commit/verdict.rs",
+            "apps/majordomus-cli/src/convergence",
+            "scripts/ci/reference-check",
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/gates.yaml",
+            "test/cases/274_commit_policy.sh",
+            "test/cases/383_convergence_is_enforced.sh",
+            ".ai/repo/project/issues/I3973.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#references-resolve-on-master"
+          ],
+          "slug": "a-record-is-referenced-once-it-is-on-master",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- commit:: convergence::",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 383_convergence_is_enforced"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3974",
+        "kind": "issue",
+        "label": "I3974",
+        "summary": "One allocator surveys every number (issue ids, ADR numbers, case numbers), and two branches adding one number under different names are refused",
+        "route": "/cockpit/objects/issue/i3974",
+        "source": ".ai/repo/project/issues/I3974.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "desired_state": "One command answers the next free number of each kind from one survey, and the collision gate refuses one number under two names across branches.",
+          "evidence_required": [
+            "one_allocator"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Renumbering any existing record; the case-numbers baseline stays the record of old collisions"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/adr.sh",
+            "scripts/case-numbers",
+            "scripts/ci/collision-gate",
+            "scripts/collision-check",
+            "test/cases/99_adr.sh",
+            "test/cases/271_adr_allocation.sh",
+            "test/cases/560_a_case_number_names_one_case.sh",
+            "test/cases/566_the_collision_guard_has_a_caller.sh",
+            ".ai/repo/rules/project/a-number-names-one-case.v1.md",
+            ".ai/repo/project/issues/I3974.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#one-allocator"
+          ],
+          "slug": "one-allocator-for-every-number",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 99_adr",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 271_adr_allocation",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 560_a_case_number_names_one_case",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 566_the_collision_guard_has_a_caller"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3975",
+        "kind": "issue",
+        "label": "I3975",
+        "summary": "GitHub issues are created only by github-sync: an agent's raw create is refused, an issue nobody projected is reported on GitHub, and an unmarked issue is never adopted",
+        "route": "/cockpit/objects/issue/i3975",
+        "source": ".ai/repo/project/issues/I3975.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3970",
+            "I3979"
+          ],
+          "desired_state": "No agent command with a hook creates a GitHub issue, every issue nobody projected is labelled and reported on GitHub, and no unmarked issue is adopted, each proven by a case.",
+          "evidence_required": [
+            "issues_come_from_the_projection"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Blocking a person's own gh use",
+            "Closing or deleting any issue a person opened",
+            "The short-listing refusal, which is the I3920 record's on train 4"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            ".claude/settings.json",
+            ".claude/hooks",
+            ".ai/repo/providers",
+            ".github/workflows",
+            ".ai/repo/ci/github.yaml",
+            "test/cases/894_github_sync_applies_only_the_trunk.sh",
+            "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+            ".ai/repo/rules/project/github-projection-gated.v1.md",
+            ".ai/repo/project/issues/I3975.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#issues-come-from-the-projection"
+          ],
+          "slug": "issues-come-from-the-projection",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 602_a_spliced_body_is_recognised_as_its_own"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3976",
+        "kind": "issue",
+        "label": "I3976",
+        "summary": "Every commit names the issue it serves, outside narrow machine-verifiable exemptions, with the earlier history as a baseline",
+        "route": "/cockpit/objects/issue/i3976",
+        "source": ".ai/repo/project/issues/I3976.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "commit validate refuses docs(plan): x with no issue id with code issue_missing and accepts docs(plan): x (I3976) (case a_commit_naming_no_issue_is_refused)",
+            "A message containing a closing keyword followed by an issue number is refused with code closing_keyword",
+            "Each exemption (git-generated subject, revert of a merge, root commit, a commit with two or more parents) is accepted, and a person typing an exemption word is not",
+            "The subjects the train composer and the release record step write name an issue and pass",
+            "commit-policy on the repository reports the count baseline unchanged, judges only commits after the recorded boundary, and refuses a new branch commit naming no issue"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3973",
+            "I3915"
+          ],
+          "desired_state": "A commit with no issue id is refused at commit time and in CI, the exemptions are tested one by one, and the history before the rule is a baseline that does not grow.",
+          "evidence_required": [
+            "every_commit_names_its_issue"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Rewriting published commits",
+            "A typed bypass marker of any kind"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commit/verdict.rs",
+            "apps/majordomus-cli/src/commit/policy.rs",
+            ".ai/repo/policy.yaml",
+            "scripts/ci/commit-policy",
+            ".ai/repo/commit-policy-baseline.txt",
+            ".githooks/commit-msg",
+            ".ai/repo/rules/project/conventional-commits.v2.md",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            ".github/workflows/release.yml",
+            "test/cases/274_commit_policy.sh",
+            ".ai/repo/project/issues/I3976.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#every-commit-names-its-issue"
+          ],
+          "slug": "every-commit-names-its-issue",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- commit::",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 274_commit_policy"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3977",
+        "kind": "issue",
+        "label": "I3977",
+        "summary": "Every page a deployment serves names only versions of the release model, checked after the deploy",
+        "route": "/cockpit/objects/issue/i3977",
+        "source": ".ai/repo/project/issues/I3977.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture deployment serving a page whose footer names a version the model does not hold is refused naming the URL and the string (case a_served_page_with_a_foreign_version_is_refused)",
+            "A page naming the offered release and the newer pre-release, each with its role, passes",
+            "A library test runs the one extractor on a fixture page and the site gate yields the same versions for it"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3449"
+          ],
+          "desired_state": "After every deploy each served page's versions agree with the release model of the served commit, or the deploy check names the page and the string.",
+          "evidence_required": [
+            "one_version_everywhere"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "The release model and the built-site gate, which are I3449's"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/served.rs",
+            "scripts/pages",
+            "scripts/site-check",
+            "test/cases/3110_a_served_surface_names_its_checkout.sh",
+            ".ai/repo/project/issues/I3977.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#one-version-everywhere"
+          ],
+          "slug": "one-version-on-every-served-page",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- served::",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3110_a_served_surface_names_its_checkout"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3978",
+        "kind": "issue",
+        "label": "I3978",
+        "summary": "Each train member is judged on its merged tree, and a fix member joins only with a test and its changed-code coverage",
+        "route": "/cockpit/objects/issue/i3978",
+        "source": ".ai/repo/project/issues/I3978.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture member whose merged tree fails one touched case is left out of the composed train with that case named (case a_train_member_is_judged_on_its_merged_tree)",
+            "The selector names, for a fixture change to one capability and one record, the cases whose covers header or text names them, and no other",
+            "A fixture fix member without a test among its files is left out; with a test and changed lines covered by rust-coverage --changed it joins",
+            "Every verdict names the merged commit it ran on"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "I3915"
+          ],
+          "desired_state": "Composing a train runs each member's merged-tree check and leaves out, with its reason, every member that fails or a fix member without a test and coverage.",
+          "evidence_required": [
+            "merged_result_is_judged"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Landing the train, which is I3910's"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/integration/train.rs",
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            "scripts/rust-coverage",
+            "docs/INTEGRATION.md",
+            ".ai/repo/project/issues/I3978.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#merged-result-is-judged"
+          ],
+          "slug": "a-train-member-is-judged-on-its-merged-tree",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test integration_executor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3979",
+        "kind": "issue",
+        "label": "I3979",
+        "summary": "Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked",
+        "route": "/cockpit/objects/issue/i3979",
+        "source": ".ai/repo/project/issues/I3979.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture workflow applying a label the declaration does not hold is refused naming the file and the label (case an_undeclared_label_is_refused)",
+            "A library test fails when a commit type in release/model.rs or a hold label in classify.rs is missing from the declaration, or the reverse",
+            "github-sync --apply against a scripted forge creates a declared label that is missing and updates one whose description differs",
+            "CONTRIBUTING.md's generated section matches the declaration, and editing the declaration without regenerating fails the check"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "desired_state": "The declaration is the one source of labels and conventions; the projection makes GitHub agree; CONTRIBUTING's section is generated; the check fails on any drift.",
+          "evidence_required": [
+            "conventions_declared_once"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "Deleting GitHub's default labels a person may still use; undeclared labels on GitHub are reported, not removed"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/github.yaml",
+            "scripts/github-sync",
+            "scripts/ci/github-check",
+            "CONTRIBUTING.md",
+            "apps/majordomus-cli/src/commit/scopes.rs",
+            "apps/majordomus-cli/src/release/model.rs",
+            "apps/majordomus-cli/src/integration/classify.rs",
+            "test/cases/97_github_gate.sh",
+            ".ai/repo/project/issues/I3979.yaml"
+          ],
+          "serves": [
+            "merging-and-referencing-are-enforced#conventions-declared-once"
+          ],
+          "slug": "conventions-are-declared-once",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::classify release::model",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 97_github_gate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3995",
+        "kind": "issue",
+        "label": "I3995",
+        "summary": "A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
+        "route": "/cockpit/objects/issue/i3995",
+        "source": ".ai/repo/project/issues/I3995.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fresh repository, start --scope . before the first commit, two commits, then check passes with state advanced and finish --outcome completed succeeds",
+            "With the NONE line of mj_git_label removed, the case fails at check with state diverged"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "lib/common.sh mj_git_label returns diverged for a recorded head of NONE once HEAD exists; lib/start.sh names majordomus handover as a way out of an active task.",
+          "depends_on": [],
+          "desired_state": "A task started on an unborn branch reads advanced after its commits, check passes the state doctrine and a completed finish succeeds; the start refusal names finish and handover --close.",
+          "evidence_required": [
+            "a_task_started_before_the_first_commit_finishes"
+          ],
+          "milestone": "a-stranger-adopts-it-unaided",
+          "non_scope": [
+            "mj_git_touched with a base of NONE, which counts only uncommitted paths for the scope doctrine; a separate issue if the scope of such a task must see its commits",
+            "A task whose branch changes between start and finish, which stays different_context"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/common.sh",
+            "lib/start.sh",
+            "docs/claims/scoped-task.md",
+            "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+            ".ai/repo/project/issues/I3995.yaml"
+          ],
+          "serves": [
+            "a-stranger-adopts-it-unaided#friction-becomes-a-case"
+          ],
+          "slug": "a-task-started-before-the-first-commit-finishes",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 3995_a_task_started_before_the_first_commit_finishes",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -69189,7 +70588,7 @@
             "test/cases"
           ],
           "slug": "ci-critical-path",
-          "updated_at": "2026-10-09",
+          "updated_at": "2026-10-22",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci-plan --check"
@@ -70546,6 +71945,102 @@
             "bin/majordomus plan validate",
             "cargo test --test mcp_shared --test mcp_conformance --test mcp_conformance_http --test shared_units --test providers_projection",
             "MJ_TEST_JOBS=4 bash test/run.sh 620_mcp_tools_are_invoked_and_answer 940_mcp_says_nothing_its_capability_does_not"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "milestone",
+        "label": "measurements-are-tracked-over-time",
+        "summary": "Coverage and CI cost are kept, exported and drawn over time, from the one measurement each has",
+        "route": "/cockpit/objects/milestone/measurements-are-tracked-over-time",
+        "source": ".ai/repo/project/milestones/measurements-are-tracked-over-time.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The export, the gate and the graph give the same line totals for the same run, shown by a case",
+            "A master run's coverage and CI cost are in the series without anyone running a command",
+            "With no secret or endpoint configured, every upload and export step is skipped and the run's verdict is unchanged"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "rust-coverage writes one JSON export per run; validate.yml uploads it for 14 days; .ai/repo/ci/suite-durations.tsv is the only kept CI cost, refreshed by hand.",
+          "evidence_required": [
+            "suite"
+          ],
+          "non_scope": [
+            "A second coverage counter, threshold or parser anywhere",
+            "Sending anything outside the repository without the owner's secret configured for it",
+            "Changing any gate's verdict"
+          ],
+          "order": 126,
+          "priority": "p1",
+          "scope": [
+            "scripts/rust-coverage",
+            ".github/workflows/validate.yml",
+            "docs/COVERAGE.md",
+            "test/cases",
+            ".ai/repo/project"
+          ],
+          "slug": "measurements-are-tracked-over-time",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "milestone",
+        "label": "merging-and-referencing-are-enforced",
+        "summary": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once",
+        "route": "/cockpit/objects/milestone/merging-and-referencing-are-enforced",
+        "source": ".ai/repo/project/milestones/merging-and-referencing-are-enforced.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every open pull request carries labels, the GitHub milestone of the issue it serves, an assignee and a managed body region of Refs links, projected from the records, with no closing keyword",
+            "An issue whose work sits in an open pull request or under a live branch claim is never the answer of plan next or plan ready",
+            "plan validate names every issue held only by its milestone gate, and an issue may declare that it needs nothing from its milestone dependencies",
+            "A pull request naming a record id that resolves neither on master nor in itself is refused, and convergence reports stranded records",
+            "Issue ids, ADR numbers and case numbers come from one survey, and two branches adding one number under different names are refused",
+            "A GitHub issue is created only by github-sync, an issue nobody projected is reported on GitHub, and an issue without a record marker is never adopted",
+            "A commit naming no issue or carrying a closing keyword is refused outside the narrow exemptions, judged after a recorded boundary",
+            "Every served page names only versions of the release model",
+            "Each train member is judged on its merged tree, and a fix member carries a test and its coverage",
+            "Every label and convention is declared once, projected and checked"
+          ],
+          "created_at": "2026-10-22",
+          "desired_state": "Every criterion of the intent is carried by an issue here and proven by its test.",
+          "evidence_required": [
+            "pr_metadata_projected",
+            "work_in_review_is_not_next",
+            "milestone_gate_is_explained",
+            "references_resolve_on_master",
+            "one_allocator",
+            "issues_come_from_the_projection",
+            "every_commit_names_its_issue",
+            "one_version_everywhere",
+            "merged_result_is_judged",
+            "conventions_declared_once"
+          ],
+          "order": 514,
+          "outcome": "Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once.",
+          "priority": "p0",
+          "scope": [
+            "scripts/github-sync",
+            "scripts/ci/github-check",
+            "scripts/ci/collision-gate",
+            "scripts/case-numbers",
+            "lib/adr.sh",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/commit",
+            "apps/majordomus-cli/src/convergence",
+            "docs/INTEGRATION.md",
+            "CONTRIBUTING.md"
+          ],
+          "slug": "merging-and-referencing-are-enforced",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate"
           ]
         }
       },
@@ -78532,12 +80027,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "id": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "kind": "rule",
-        "label": "project.homepage-tells-a-declared-story@1",
+        "label": "project.homepage-tells-a-declared-story@2",
         "summary": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
-        "route": "/cockpit/objects/rule/project-homepage-tells-a-declared-story-1",
-        "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "route": "/cockpit/objects/rule/project-homepage-tells-a-declared-story-2",
+        "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -89089,6 +90584,55 @@
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+        "kind": "test",
+        "label": "test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+        "route": "/cockpit/objects/test/test-cases-3932-the-coverage-export-is-its-one-measurement-sh",
+        "source": "test/cases/3932_the_coverage_export_is_its_one_measurement.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+        "kind": "test",
+        "label": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+        "route": "/cockpit/objects/test/test-cases-3933-the-trends-are-read-from-the-runs-themselves-sh",
+        "source": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
+        "kind": "test",
+        "label": "test/cases/3939_the_executable_is_built_once_per_run.sh",
+        "route": "/cockpit/objects/test/test-cases-3939-the-executable-is-built-once-per-run-sh",
+        "source": "test/cases/3939_the_executable_is_built_once_per_run.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+        "kind": "test",
+        "label": "test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+        "route": "/cockpit/objects/test/test-cases-3940-every-ui-visit-is-driven-by-exactly-one-shard-sh",
+        "source": "test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3943_a_second_gate_list_is_found.sh",
+        "kind": "test",
+        "label": "test/cases/3943_a_second_gate_list_is_found.sh",
+        "route": "/cockpit/objects/test/test-cases-3943-a-second-gate-list-is-found-sh",
+        "source": "test/cases/3943_a_second_gate_list_is_found.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "kind": "test",
+        "label": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "route": "/cockpit/objects/test/test-cases-3963-a-merge-of-master-derives-in-one-go-sh",
+        "source": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "kind": "test",
+        "label": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "route": "/cockpit/objects/test/test-cases-3995-a-task-started-before-the-first-commit-finishes-sh",
+        "source": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -93726,6 +95270,16 @@
       {
         "source": "capability:delivery.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.trends",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:delivery.trends",
+        "target": "projection:http",
         "kind": "projects"
       },
       {
@@ -100085,7 +101639,7 @@
       },
       {
         "source": "majordomus://adr/adr-0104",
-        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "kind": "put_in_force"
       },
       {
@@ -101200,7 +102754,7 @@
       },
       {
         "source": "majordomus://adr/adr-0152",
-        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "kind": "put_in_force"
       },
       {
@@ -103665,7 +105219,7 @@
       },
       {
         "source": "majordomus://adr/adr-0210",
-        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "kind": "put_in_force"
       },
       {
@@ -110234,6 +111788,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/merging-and-referencing-are-enforced",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "target": "kind:critique",
         "kind": "is_a"
@@ -112630,6 +114189,11 @@
       },
       {
         "source": "majordomus://intent/landing-survives-any-session",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/merging-and-referencing-are-enforced",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -126434,6 +127998,376 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3920",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3920",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3930",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3930",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3931",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3931",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3932",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3932",
+        "target": "majordomus://issue/I3919",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3932",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3933",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3933",
+        "target": "majordomus://issue/I3932",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3933",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3934",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3934",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3935",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3935",
+        "target": "majordomus://issue/I3934",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3935",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3936",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3936",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3937",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3937",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3938",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3938",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3939",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3939",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3940",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3940",
+        "target": "majordomus://issue/I3931",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3940",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3941",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3941",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3942",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3942",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3943",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3943",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3944",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3944",
+        "target": "majordomus://issue/I3937",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3944",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3945",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3945",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3962",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3962",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3963",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3963",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3970",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3970",
+        "target": "majordomus://issue/I3979",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3970",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3971",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3971",
+        "target": "majordomus://issue/I3754",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3971",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3972",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3972",
+        "target": "majordomus://issue/I3757",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3972",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3973",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3973",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3974",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3974",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3975",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3975",
+        "target": "majordomus://issue/I3970",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3975",
+        "target": "majordomus://issue/I3979",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3975",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3976",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3976",
+        "target": "majordomus://issue/I3915",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3976",
+        "target": "majordomus://issue/I3973",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3976",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3977",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3977",
+        "target": "majordomus://issue/I3449",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3977",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3978",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3978",
+        "target": "majordomus://issue/I3915",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3978",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3979",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3979",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3995",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3995",
+        "target": "majordomus://milestone/a-stranger-adopts-it-unaided",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -127170,6 +129104,16 @@
       },
       {
         "source": "majordomus://milestone/mcp-transports-are-reliable",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/measurements-are-tracked-over-time",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/merging-and-referencing-are-enforced",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -129239,17 +131183,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "source": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "target": "majordomus://rule/project.navigation-is-declared-once@1",
         "kind": "depends_on"
       },
@@ -132645,6 +134589,41 @@
       },
       {
         "source": "majordomus://test/test/cases/391_skills_are_proven_capabilities.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3943_a_second_gate_list_is_found.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -136839,6 +138818,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:delivery",
+        "target": "capability:delivery.trends",
+        "kind": "composes"
+      },
+      {
         "source": "module:deploy",
         "target": "capability:deploy.check",
         "kind": "composes"
@@ -137775,8 +139759,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3849,
-      "edges": 8904,
+      "nodes": 3891,
+      "edges": 8992,
       "acyclic": false,
       "truncated": false
     }

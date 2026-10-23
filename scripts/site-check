@@ -652,10 +652,15 @@ if [ -f "$PD" ]; then
     [ "$want" = "$got" ] || { bad product "/features/$id/ links $got of the $want claim(s) the model gives it"; prod_bad=1; }
   done
   # the telemetry the homepage prints is the dataset's, never a number in a template
-  for k in capabilities mcp_tools http_routes objects; do
+  for k in capabilities builtin declarative mcp_tools http_routes objects; do
     n="$(jq -r --arg k "$k" '.telemetry[$k]' "$PD")"
     grep -qF ">$n</dd>" "$PUB/index.html" || { bad product "the homepage does not print the derived $k ($n)"; prod_bad=1; }
   done
+  # the total is its two parts: builtin capabilities plus one generated resource per object
+  [ "$(jq -r '.telemetry.capabilities - .telemetry.builtin - .telemetry.declarative' "$PD")" = 0 ] \
+    || { bad product "telemetry: capabilities is not builtin plus declarative"; prod_bad=1; }
+  [ "$(jq -r '.telemetry.declarative - .telemetry.objects' "$PD")" = 0 ] \
+    || { bad product "telemetry: the generated resources are not one per object"; prod_bad=1; }
   # nothing enumerates the product by hand. A feature's route typed into a template, the
   # generator, its jq programs or the navigation would be the second inventory this whole
   # surface exists to remove; the section route itself is a section things legitimately link to.

@@ -2006,7 +2006,11 @@ HASH="$(mj_site_inputs_hash)"
 # tree. The commit a page was built from is a fact of the build, not of the derivation:
 # scripts/site-build writes it into site/data/build.json (for the templates) and
 # site/static/build.json (served at /build.json), neither of them committed.
-jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --arg inputs "$INPUTS" \
+# The input list travels in a file, not on argv: it grows with every input the generator
+# reads, and at 101495 bytes on train 4 it was within a quarter of Linux's 131072-byte cap on
+# one argument (I3945, found by case 10's measurement). --rawfile reads the bytes --arg passed.
+printf '%s' "$INPUTS" > "$STAGE/source-inputs.txt"
+jq -n --arg v "$VERSION" --arg h "$HASH" --argjson g "$GEN_VERSION" --rawfile inputs "$STAGE/source-inputs.txt" \
   '{schema:1, source_version:$v, source_hash:$h, generator_version:$g, input_files: ($inputs | split("\n"))}' > "$OUT/source.json"
 
 mj_phase_end "gen:source.json" "$GEN_T0"

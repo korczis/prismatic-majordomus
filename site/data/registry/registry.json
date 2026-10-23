@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.7"
+    "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "c23ba2ecbf10a1d01882528e96010fba56fad14330e9b1f6a96e67b2f9ce276d",
+    "fingerprint": "0d75c65b833c98a4f83e1355aef5e8fe649e97ee61e4e5ad6f7c07dd9e59bde4",
     "summary": {
-      "total": 3389,
-      "builtin": 212,
-      "declarative": 3177,
+      "total": 3431,
+      "builtin": 213,
+      "declarative": 3218,
       "by_kind": {
         "command": 33,
-        "query": 179,
-        "resource": 3177
+        "query": 180,
+        "resource": 3218
       },
       "by_stability": {
         "behaviorally_verified": 145,
-        "experimental": 57,
-        "implemented": 3187
+        "experimental": 58,
+        "implemented": 3228
       },
       "mcp_tools": 201,
-      "mcp_resources": 3232,
-      "http_routes": 206,
+      "mcp_resources": 3273,
+      "http_routes": 207,
       "cli_commands": 116,
       "modules": 94,
-      "benchmark_required": 178,
+      "benchmark_required": 179,
       "benchmark_waived": 34,
       "cached": 54
     },
@@ -11743,6 +11743,314 @@
         "benchmark": {
           "policy": "waived",
           "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs"
+      },
+      {
+        "id": "delivery.trends",
+        "module": "delivery",
+        "kind": "query",
+        "title": "How CI runs trend",
+        "description": "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "TrendsReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "recorded": {
+                "type": "boolean",
+                "description": "Whether the checkout holds a series of this schema."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why it does not, when it does not."
+              },
+              "generated_from": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The ids of the runs the series was written from, as the file gives them."
+              },
+              "runs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/TrendRun"
+                },
+                "description": "The runs, oldest first."
+              },
+              "job_medians": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/JobMedian"
+                },
+                "description": "The medians of the jobs, the slowest first."
+              }
+            },
+            "required": [
+              "recorded",
+              "generated_from",
+              "runs",
+              "job_medians"
+            ],
+            "description": "The series, or why this checkout holds none.",
+            "title": "TrendsReport",
+            "$defs": {
+              "TrendRun": {
+                "type": "object",
+                "properties": {
+                  "run_id": {
+                    "type": "string",
+                    "description": "The forge's id of the run, as text."
+                  },
+                  "head_sha": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The commit the run judged."
+                  },
+                  "started_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the run started, as the file wrote it."
+                  },
+                  "conclusion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How the run ended."
+                  },
+                  "wall_seconds": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "Seconds from the run's start to its end."
+                  },
+                  "queued_seconds_total": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "Seconds its jobs waited for a runner, summed."
+                  },
+                  "jobs": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/TrendJob"
+                    },
+                    "description": "Its jobs."
+                  },
+                  "coverage": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TrendCoverage"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The coverage it measured, or `None` when it measured none."
+                  }
+                },
+                "required": [
+                  "run_id",
+                  "jobs"
+                ],
+                "description": "One run of the series."
+              },
+              "TrendJob": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The job's name."
+                  },
+                  "queued_seconds": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "Seconds it waited for a runner, when the file gives them."
+                  },
+                  "run_seconds": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "Seconds it ran, when the file gives them."
+                  },
+                  "conclusion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "How it ended, when the file says."
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "description": "One job of a run."
+              },
+              "TrendCoverage": {
+                "type": "object",
+                "properties": {
+                  "lines": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TrendRatio"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Source lines."
+                  },
+                  "functions": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TrendRatio"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Functions."
+                  },
+                  "regions": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/TrendRatio"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Regions."
+                  }
+                },
+                "description": "The coverage a run measured; each kind is `None` when the file does not give it."
+              },
+              "TrendRatio": {
+                "type": "object",
+                "properties": {
+                  "covered": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "What the run covered: lines, functions or regions."
+                  },
+                  "total": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "What there was to cover."
+                  },
+                  "percent": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "`covered` over `total` in percent, or `None` when there was nothing to cover."
+                  }
+                },
+                "required": [
+                  "covered",
+                  "total"
+                ],
+                "description": "One covered-over-total figure of a run, with the percentage the two give."
+              },
+              "JobMedian": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The job's name."
+                  },
+                  "runs": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many runs the median is over."
+                  },
+                  "median_run_seconds": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "The median of its run time, in seconds."
+                  },
+                  "median_queued_seconds": {
+                    "type": [
+                      "number",
+                      "null"
+                    ],
+                    "format": "double",
+                    "description": "The median of its queue time, in seconds."
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "description": "The median of one job over the series."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::delivery"
+        },
+        "exposure": {
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/delivery/trends"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "delivery",
+          "ci",
+          "trends"
+        ],
+        "benchmark": {
+          "policy": "required"
         },
         "cache": {
           "policy": "disabled"
@@ -33194,6 +33502,14 @@
                     "description": "Gates this one cannot run without.",
                     "default": []
                   },
+                  "subsumed-by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```",
+                    "default": null
+                  },
                   "inputs": {
                     "type": "array",
                     "items": {
@@ -34651,7 +34967,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "On `merge_succeeded`: the merge commit, once it is read."
+                    "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
                   }
                 },
                 "required": [
@@ -36901,7 +37217,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+                    "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
                   },
                   "merge_settings_unread": {
                     "type": "boolean",
@@ -38476,7 +38792,7 @@
                       "string",
                       "null"
                     ],
-                    "description": "On `merge_succeeded`: the merge commit, once it is read."
+                    "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
                   }
                 },
                 "required": [
@@ -87614,7 +87930,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 32,
+        "capabilities": 33,
         "capability_ids": []
       },
       {
@@ -87640,10 +87956,11 @@
         "description": "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
           "delivery.feature",
-          "delivery.report"
+          "delivery.report",
+          "delivery.trends"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs"
       },
@@ -88016,7 +88333,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 37,
+        "capabilities": 38,
         "capability_ids": []
       },
       {
@@ -88065,7 +88382,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 943,
+        "capabilities": 973,
         "capability_ids": []
       },
       {
@@ -88199,7 +88516,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 104,
+        "capabilities": 106,
         "capability_ids": []
       },
       {
@@ -88658,7 +88975,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 619,
+        "capabilities": 626,
         "capability_ids": []
       },
       {
@@ -88750,7 +89067,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6576bdeb34eba836a4910c45699bde964a74c93498d5d0466cf80dede60221b1",
+    "fingerprint": "937f773a7df6eb3de78c23e3c8d72e010b1c4e5a8696f261a6add7aff0a412ec",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -88780,7 +89097,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 32,
+      "critique": 33,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -88789,11 +89106,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 37,
-      "issue": 943,
+      "intent": 38,
+      "issue": 973,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 104,
+      "milestone": 106,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -88804,7 +89121,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 619,
+      "test": 626,
       "use-case": 49,
       "workspace": 1
     },
@@ -90676,7 +90993,7 @@
         "path": ".ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 6226,
+        "bytes": 7625,
         "tags": [
           "sessions",
           "attribution",
@@ -95191,6 +95508,17 @@
         "bytes": 8343
       },
       {
+        "uri": "majordomus://critique/merging-and-referencing-are-enforced",
+        "kind": "critique",
+        "identity": "merging-and-referencing-are-enforced",
+        "title": "merging-and-referencing-are-enforced",
+        "description": "355a0cee79a",
+        "path": ".ai/repo/project/critiques/merging-and-referencing-are-enforced.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 12168
+      },
+      {
         "uri": "majordomus://critique/nothing-in-the-mesh-waits-on-something-dead",
         "kind": "critique",
         "identity": "nothing-in-the-mesh-waits-on-something-dead",
@@ -95575,7 +95903,7 @@
         "title": "Contributing",
         "path": "CONTRIBUTING.md",
         "source_class": "readme",
-        "bytes": 12153
+        "bytes": 12251
       },
       {
         "uri": "majordomus://document/GEMINI.md",
@@ -95593,7 +95921,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 40295
+        "bytes": 40625
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -95683,7 +96011,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 42226
+        "bytes": 43229
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -95692,7 +96020,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 141412
+        "bytes": 142594
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -95764,7 +96092,7 @@
         "title": "Coverage: one measurement, two questions",
         "path": "docs/COVERAGE.md",
         "source_class": "document",
-        "bytes": 8015
+        "bytes": 9863
       },
       {
         "uri": "majordomus://document/docs/DELIVERY.md",
@@ -95890,7 +96218,7 @@
         "title": "The repository environment — one snapshot, every surface a rendering",
         "path": "docs/ENVIRONMENT.md",
         "source_class": "document",
-        "bytes": 7378
+        "bytes": 9136
       },
       {
         "uri": "majordomus://document/docs/EVIDENCE.md",
@@ -95980,7 +96308,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 72667
+        "bytes": 75048
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -96016,7 +96344,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 42780
+        "bytes": 43439
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -96034,7 +96362,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 75908
+        "bytes": 76340
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -96106,7 +96434,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 834548
+        "bytes": 902255
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -98230,7 +98558,7 @@
         "title": "A task is started with a declared file scope and a profile, and only one task is active per checkout",
         "path": "docs/claims/scoped-task.md",
         "source_class": "claim_page",
-        "bytes": 1912
+        "bytes": 1922
       },
       {
         "uri": "majordomus://document/docs/claims/semantic-retrieval.md",
@@ -99212,7 +99540,7 @@
         "identity": "lib/check.sh",
         "path": "lib/check.sh",
         "source_class": "library",
-        "bytes": 20647
+        "bytes": 20811
       },
       {
         "uri": "majordomus://implementation/lib/checkpoint.sh",
@@ -99220,7 +99548,7 @@
         "identity": "lib/checkpoint.sh",
         "path": "lib/checkpoint.sh",
         "source_class": "library",
-        "bytes": 5254
+        "bytes": 5406
       },
       {
         "uri": "majordomus://implementation/lib/commands.sh",
@@ -99236,7 +99564,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 111114
+        "bytes": 114215
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -99260,7 +99588,7 @@
         "identity": "lib/decision.sh",
         "path": "lib/decision.sh",
         "source_class": "library",
-        "bytes": 8659
+        "bytes": 8747
       },
       {
         "uri": "majordomus://implementation/lib/deployment.sh",
@@ -99276,7 +99604,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 33350
+        "bytes": 34007
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -99324,7 +99652,7 @@
         "identity": "lib/handover.sh",
         "path": "lib/handover.sh",
         "source_class": "library",
-        "bytes": 10454
+        "bytes": 10676
       },
       {
         "uri": "majordomus://implementation/lib/history.sh",
@@ -99380,7 +99708,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 119951
+        "bytes": 120110
       },
       {
         "uri": "majordomus://implementation/lib/machine_lock.sh",
@@ -99452,7 +99780,7 @@
         "identity": "lib/question.sh",
         "path": "lib/question.sh",
         "source_class": "library",
-        "bytes": 8183
+        "bytes": 8285
       },
       {
         "uri": "majordomus://implementation/lib/recover.sh",
@@ -99524,7 +99852,7 @@
         "identity": "lib/start.sh",
         "path": "lib/start.sh",
         "source_class": "library",
-        "bytes": 13370
+        "bytes": 13380
       },
       {
         "uri": "majordomus://implementation/lib/update.sh",
@@ -99540,7 +99868,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 74214
+        "bytes": 75068
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -99791,6 +100119,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 4072
+      },
+      {
+        "uri": "majordomus://intent/merging-and-referencing-are-enforced",
+        "kind": "intent",
+        "identity": "merging-and-referencing-are-enforced",
+        "title": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once",
+        "description": "On 2026-10-22 the owner asked for better doctrines and tooling for merging and for referencing, learned from prismatic-platform: every pull request carries its metadata, kept current automatically and offloaded to GitHub. Today a pull request carries only what its author typed; work sitting in an open pull request is offered again as the next issue; a milestone dependency holds issues that need nothing from it, and nothing says which; a record can be named before it reaches master; issue ids have no allocator while ADR and case numbers have two separate ones; a GitHub issue can be created by hand and adopted by its title; a commit need not name the issue it serves; and the landing duties of a train member are prose. Each of these becomes a projection from the records, a typed command or a gate.",
+        "path": ".ai/repo/project/intents/merging-and-referencing-are-enforced.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 6444
       },
       {
         "uri": "majordomus://intent/mission-global-skill-availability-and-autonomous-lifecycle",
@@ -103134,7 +103473,7 @@
         "path": ".ai/repo/project/issues/I2132.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3630
+        "bytes": 4385
       },
       {
         "uri": "majordomus://issue/I2133",
@@ -109998,7 +110337,7 @@
         "path": ".ai/repo/project/issues/I3824.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3827
+        "bytes": 4794
       },
       {
         "uri": "majordomus://issue/I3825",
@@ -110064,7 +110403,7 @@
         "path": ".ai/repo/project/issues/I3831.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1997
+        "bytes": 2649
       },
       {
         "uri": "majordomus://issue/I3832",
@@ -110097,7 +110436,7 @@
         "path": ".ai/repo/project/issues/I3834.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2135
+        "bytes": 2762
       },
       {
         "uri": "majordomus://issue/I3835",
@@ -110152,7 +110491,7 @@
         "path": ".ai/repo/project/issues/I3839.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2645
+        "bytes": 3320
       },
       {
         "uri": "majordomus://issue/I3841",
@@ -110295,7 +110634,7 @@
         "path": ".ai/repo/project/issues/I3916.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3041
+        "bytes": 3277
       },
       {
         "uri": "majordomus://issue/I3917",
@@ -110306,7 +110645,7 @@
         "path": ".ai/repo/project/issues/I3917.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1898
+        "bytes": 2048
       },
       {
         "uri": "majordomus://issue/I3918",
@@ -110329,6 +110668,336 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1924
+      },
+      {
+        "uri": "majordomus://issue/I3920",
+        "kind": "issue",
+        "identity": "I3920",
+        "title": "The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing",
+        "description": "scripts/github-sync lists the repository issues with gh issue list (GraphQL, paged to the end) instead of gh api --paginate over the REST issues endpoint, and refuses as unreadable (exit 12, nothing changed) any listing shorter than the repository issues.totalCount, so a truncated read can never be taken for absent issues. The scripted forges of the cases that drive the adapter answer the new reads.",
+        "path": ".ai/repo/project/issues/I3920.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2664
+      },
+      {
+        "uri": "majordomus://issue/I3930",
+        "kind": "issue",
+        "identity": "I3930",
+        "title": "The suite is dealt from the seconds it costs now, and the record that deals it says when it falls behind",
+        "description": "Deal the four suite shards from measured case seconds: an unrecorded case weighs the record's median, the record is refreshed from a measured run, and every run names the cases the record lacks or under-weighs and writes the record it measured.",
+        "path": ".ai/repo/project/issues/I3930.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2967
+      },
+      {
+        "uri": "majordomus://issue/I3931",
+        "kind": "issue",
+        "identity": "I3931",
+        "title": "A stale UI bar is told in a minute, before the browser audit, and a branch does not spend the audit to learn it",
+        "description": "Run `scripts/ui navbar` as its own bounded step of the ui job before `scripts/ui audit`, so that a stale apps/majordomus-cli/src/ui/navbar.html fails a branch's ui job about a minute after the site is built instead of at the end of the audit.",
+        "path": ".ai/repo/project/issues/I3931.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2267
+      },
+      {
+        "uri": "majordomus://issue/I3932",
+        "kind": "issue",
+        "identity": "I3932",
+        "title": "Coverage is exported as LCOV and Cobertura from its one measurement, and uploaded to Coveralls and Codecov when their secrets exist",
+        "description": "scripts/rust-coverage writes LCOV and Cobertura from the same post-processed measurement its gates read, the coverage job keeps both beside coverage.json and uploads LCOV to Coveralls and Codecov only when COVERALLS_REPO_TOKEN and CODECOV_TOKEN exist.",
+        "path": ".ai/repo/project/issues/I3932.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2378
+      },
+      {
+        "uri": "majordomus://issue/I3933",
+        "kind": "issue",
+        "identity": "I3933",
+        "title": "Every master run's coverage and CI cost join a derived series that the site and the Cockpit draw",
+        "description": "Keep one row per master run of the coverage totals (lines, functions, regions per crate) and the CI cost (each job's queued and run minutes, each gate's verdict) as a derived series published with the site's data, and draw it as trend graphs on the site and in the Cockpit.",
+        "path": ".ai/repo/project/issues/I3933.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2973
+      },
+      {
+        "uri": "majordomus://issue/I3934",
+        "kind": "issue",
+        "identity": "I3934",
+        "title": "A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is",
+        "description": "When the repository configures an OTLP endpoint, every completed validate workflow run is exported as one OpenTelemetry trace, a span per job and per step with queued time, run time and conclusion. With no endpoint configured nothing is sent and nothing fails.",
+        "path": ".ai/repo/project/issues/I3934.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1399
+      },
+      {
+        "uri": "majordomus://issue/I3935",
+        "kind": "issue",
+        "identity": "I3935",
+        "title": "An agent session's telemetry reaches the same OpenTelemetry endpoint, configured once and projected to every provider",
+        "description": "Declare the OpenTelemetry endpoint once in the repository's environment model and project the variables each provider reads (for Claude Code CLAUDE_CODE_ENABLE_TELEMETRY, OTEL_METRICS_EXPORTER, OTEL_LOGS_EXPORTER, OTEL_EXPORTER_OTLP_ENDPOINT and its headers from the person's local environment), so that sessions' cost, tokens and tool time sit beside CI's traces.",
+        "path": ".ai/repo/project/issues/I3935.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1805
+      },
+      {
+        "uri": "majordomus://issue/I3936",
+        "kind": "issue",
+        "identity": "I3936",
+        "title": "The pages gate judges master's deploy after the run's heavy jobs, not on a clock that expires while the deploy queues behind them",
+        "description": "Order validate's pages job behind the evidence job, so that the 1200 s wait for the deploy of the same push starts once this run's own jobs have released the runners the deploy queues for.",
+        "path": ".ai/repo/project/issues/I3936.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2163
+      },
+      {
+        "uri": "majordomus://issue/I3937",
+        "kind": "issue",
+        "identity": "I3937",
+        "title": "A gate whose cases the planned suite runs is not planned beside it",
+        "description": "Declare in the CI model that release-record-cases and plan-record-cases are subsumed by shell-suite, and make scripts/ci-plan leave a gate out of every plan that also plans the gate which subsumes it, saying why, so the full plan stops running the same cases on the rust job's third lane that the suite runs on its shards.",
+        "path": ".ai/repo/project/issues/I3937.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3261
+      },
+      {
+        "uri": "majordomus://issue/I3938",
+        "kind": "issue",
+        "identity": "I3938",
+        "title": "The rustdoc composition case proves its composition on a small site, not on the whole one",
+        "description": "Make test/cases/486_rustdoc_composition.sh prove the same relations (the topology composes the reference, the producer's absence is refused naming it, a second surface only the clone's topology declares is composed with no script changed, one path has one owner, and scripts/site-check refuses a build that lost the composition from sections 13m, 13d and 6) on a clone whose site is built in the source language alone, so that no build derives the whole second-language copy of the site.",
+        "path": ".ai/repo/project/issues/I3938.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3887
+      },
+      {
+        "uri": "majordomus://issue/I3939",
+        "kind": "issue",
+        "identity": "I3939",
+        "title": "The executable and the rustdoc surface are built once per run and downloaded by the jobs that drive them",
+        "description": "Build the debug executable in one `build` job and the rustdoc surface in one `rustdoc-surface` job, both right after plan, and have the suite shards, evidence, ui and mesh-lab download them through one composite action that falls back to building when the artifact is missing or its provenance is not HEAD.",
+        "path": ".ai/repo/project/issues/I3939.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3567
+      },
+      {
+        "uri": "majordomus://issue/I3940",
+        "kind": "issue",
+        "identity": "I3940",
+        "title": "The UI audit runs as four shards side by side, and the long pole of a full run is a quarter as long",
+        "description": "Run `scripts/ui audit` as four shards (MJ_UI_SHARD=<k>/4) in four jobs side by side, each driving a stride of the plan's visits, and join their results documents in one job that proves every visit was driven by exactly one shard and gives the verdict the single job gave: any finding fails.",
+        "path": ".ai/repo/project/issues/I3940.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4163
+      },
+      {
+        "uri": "majordomus://issue/I3941",
+        "kind": "issue",
+        "identity": "I3941",
+        "title": "The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs",
+        "description": "The UI served by the executable has a Trends screen at /ui/trends. It reads site/data/trends.json (schema trends/v1, written only by the pages publication) from the checkout when the screen is asked, through the capability delivery.trends, and draws coverage as percentage lines for lines, functions and regions, wall and queued minutes per run, and the slowest job medians, as inline SVG with the figures beside them as text.",
+        "path": ".ai/repo/project/issues/I3941.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2744
+      },
+      {
+        "uri": "majordomus://issue/I3942",
+        "kind": "issue",
+        "identity": "I3942",
+        "title": "Linux's per-argument cap is measured on every host, so an oversized jq argument fails where it is written",
+        "description": "Case 10 runs scripts/generate-site-data over every one of its real inputs with a jq on PATH that measures each argument: one over Linux's 131072-byte MAX_ARG_STRLEN is refused with exit 126 as Linux refuses it, and one over three quarters of the cap is named as NEAR, on macOS as on CI.",
+        "path": ".ai/repo/project/issues/I3942.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2464
+      },
+      {
+        "uri": "majordomus://issue/I3943",
+        "kind": "issue",
+        "identity": "I3943",
+        "title": "A second list of gates outside the model is found when it is put back",
+        "description": "Slice S1 of I2350: add scripts/ci-plan --inventory, which reads the gate ids and commands from the model as ci-plan already parses it and reports every tracked file outside the model that runs the commands of two or more gates near each other or enumerates three or more gate ids on a line; hold what remains in a ratchet baseline that can only shrink; run the check in CI; and make the one recipe that listed gates by hand run the dispatcher instead.",
+        "path": ".ai/repo/project/issues/I3943.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3631
+      },
+      {
+        "uri": "majordomus://issue/I3944",
+        "kind": "issue",
+        "identity": "I3944",
+        "title": "The two readers of the CI model give every gate, and the plan, the same reason in the same words",
+        "description": "Make the executable's reader of .ai/repo/ci/gates.yaml (apps/majordomus-cli/src/gates/model.rs) give each gate and the plan scripts/ci-plan's reason word for word, and extend test/cases/131_completion_gates.sh so it compares, for every gate of every change set it already plans, the reason both readers give, plus the plan's mode and top-level reason, not only the selected set. Slice S3 of I2350: a failing gate's output names why it was selected, and that reason must not depend on which reader printed it.",
+        "path": ".ai/repo/project/issues/I3944.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4366
+      },
+      {
+        "uri": "majordomus://issue/I3945",
+        "kind": "issue",
+        "identity": "I3945",
+        "title": "The site generator's input list reaches jq through a file, not as one command-line argument",
+        "description": "scripts/generate-site-data writes source.json's input list to a stage file and hands it to jq with --rawfile, so the list can grow with the repository without approaching Linux's 131072-byte cap on one argument.",
+        "path": ".ai/repo/project/issues/I3945.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1856
+      },
+      {
+        "uri": "majordomus://issue/I3962",
+        "kind": "issue",
+        "identity": "I3962",
+        "title": "The codex advisor's final message is held to the answer schema and read from its file alone",
+        "description": "Pass the answer's JSON Schema to codex exec with --output-schema, built in contract.mjs from the stances and confidences normalise accepts, and treat an exit 0 that wrote no -o file as empty instead of parsing stdout.",
+        "path": ".ai/repo/project/issues/I3962.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2427
+      },
+      {
+        "uri": "majordomus://issue/I3963",
+        "kind": "issue",
+        "identity": "I3963",
+        "title": "A merge of master derives in one go: scripts/derive derives the staged merge with both parents as history",
+        "description": "Let scripts/derive accept a merge in progress: refuse unresolved or unstaged paths, otherwise write the staged merge as a scratch commit with both parents, derive it in a detached scratch worktree under the lock already held (MJ_DERIVE_OBSERVE naming HEAD, the executable built from the merged tree), and stage what changed back in the checkout, so the merge commits through the pages gate in one go.",
+        "path": ".ai/repo/project/issues/I3963.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2968
+      },
+      {
+        "uri": "majordomus://issue/I3970",
+        "kind": "issue",
+        "identity": "I3970",
+        "title": "Every pull request carries its metadata, projected from the trunk's records: labels, milestone, assignee and Refs links, never a closing keyword",
+        "description": "A pull request's metadata is a projection of the trunk's records, applied by scripts/github-sync --prs locally and by a separate workflow file (not github.yml) on pull_request_target opened, edited, synchronize and labeled, which checks out the base branch only, never the head, and holds pull-requests: write and issues: read with GITHUB_TOKEN, in a concurrency group per pull request. The rule the-projection-is-applied-at-landing moves to version 2 and .ai/repo/ci/github.yaml's forbidden list is amended: the issue projection still never runs for a pull request, while the pull request projection writes only the pull request's own labels, milestone, assignee and managed region, read from the trunk; case 1097 holds the new workflow to its model. The issues a pull request serves are the ones its title and head branch name, resolved by the executable through delivery's named_by (plan/delivery.rs:428-450, wrapping issues_named in ui/prs.rs:174) exposed as a typed subcommand github-sync calls, never a second shell pattern. It projects: a type label from the conventional type of its title, from the commit types I3979 declares (feat, fix, perf, refactor, docs, test, chore, ci, style, build); an area label from the commit scope only when the scope is declared there; the highest priority label of the served issues; train for an integration/train-* head; records when every changed path is under .ai/repo/project; hold and collision:accepted stay a person's. The milestone is the GitHub milestone github-sync already projects for the served issue's milestone; the author is assignee when none is set; a managed region between majordomus:begin and majordomus:end markers lists Refs #<n> for each served issue that has a GitHub issue, and the record id in plain text, with no priority or milestone, for one whose record exists only in the head. GitHub issue numbers come from a record-to-number map the trunk run of github.yml publishes, so a pull request event makes a bounded number of API calls and never lists every issue. No projected text carries a closing keyword (close, fix or resolve followed by an issue number). A second run changes nothing; a region whose hash no longer matches what was written is left alone and reported; a pull request whose token cannot write is reported and passes. Starts after train 4 lands its github-sync listing rewrite (the I3920 record, on chore/landing-survives-any-session), which then becomes a dependency.",
+        "path": ".ai/repo/project/issues/I3970.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6716
+      },
+      {
+        "uri": "majordomus://issue/I3971",
+        "kind": "issue",
+        "identity": "I3971",
+        "title": "Work in an open pull request or under a live branch claim is reported taken and is never the next issue",
+        "description": "The one next-issue function I3754 builds (plan.rs ranking, then delivery at the trunk) gains a second, observed pass: a READY candidate whose delivery stage is pr_open (plan/delivery.rs, from the recorded forge observation) or branch with a live claim on the mesh board (read from mesh/state.rs) is passed over as taken and listed with the pull request or claim that put it there and the time of that observation. Taken is a readiness refinement inside READY (devtask/readiness.rs TaskReadiness::Taken), neither a seventh canonical status nor TaskReadiness::Review, which already means VERIFY (readiness.rs:25-27): ISSUE_STATUSES and lib/project.awk stay byte-equal, and readiness.rs's note that no record field can distinguish such a word is amended to say that delivery, an observation, now does. plan next, plan ready and plan.status's next_ready answer the same. The shell's plan next (mj_pj_next_ready, lib/plan.sh:230, 262, 337) cannot read the forge cache or the board, so it asks the executable for the observed pass, and when the executable is absent answers the stamps-only pick labelled as such. plan next --at <rev> keeps I3754's answer that depends on the commit alone.",
+        "path": ".ai/repo/project/issues/I3971.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4105
+      },
+      {
+        "uri": "majordomus://issue/I3972",
+        "kind": "issue",
+        "identity": "I3972",
+        "title": "plan validate names every issue held only by its milestone gate, and an issue may declare it needs nothing from the milestone's dependencies",
+        "description": "The milestone gate (plan.rs:1110-1130) holds every issue of a milestone whose depends_on is not DONE, whatever the issue itself needs. Make it explainable and narrowable: plan validate emits a warning held_only_by_milestone naming every BLOCKED issue whose own depends_on are all DONE and whose blocked_by holds only milestone:<id> entries, with the milestone that holds it; and an issue may declare milestone_gate: own (schema issue.v1, default all), which keeps it out of the gate so it is held only by its own depends_on. The opt-out reaches every consequence of the gate in both engines: the issue-level premature_execution check (plan.rs:1118-1135, project.awk:311) skips an opted-out issue, and the milestone-level milestone_premature check (plan.rs:1080-1086, project.awk:287) does not fail a blocked milestone whose only ACTIVE, VERIFY or DONE issues are opted out; such a milestone keeps the derived status BLOCKED, with the opted-out work reported beside it. Both engines, plan.rs and lib/project.awk, derive the same, held equal by case 99_plan_capabilities. A milestone keeps ordering the roadmap exactly as now. I3757 rewrites the same gate code to name what holds a milestone and lands first.",
+        "path": ".ai/repo/project/issues/I3972.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3763
+      },
+      {
+        "uri": "majordomus://issue/I3973",
+        "kind": "issue",
+        "identity": "I3973",
+        "title": "A record is referenced only once it is on master: a pull request naming an unlanded id is refused, and convergence reports stranded records",
+        "description": "A gate in the structure job (wired in .github/workflows/validate.yml and declared in .ai/repo/ci/gates.yaml) reads the record ids that a pull request ADDS, in the added lines of its diff hunks over records, documents and its commit messages, and refuses one that resolves neither on the base branch nor in the pull request's own tree, naming the file, line and id and the unmerged branch that holds it if any. The id grammars it judges are issue ids (I followed by four or more digits), ADR numbers written as ADR followed by four digits, and rule ids written as project. followed by a rule name; a line the pull request did not add is never judged, so the 62 ids master's records and docs already name without a record at 355a0cee79a stay where they are and are reported once as a baseline count that may not grow. The commit-msg judge already refuses an id the working tree's layer lacks (commit/verdict.rs UnresolvedReference, policy reference_unresolved: error), but the working tree may hold records another branch brought in. convergence (apps/majordomus-cli/src/convergence) adds a holding kind: a record id named on master that resolves only on an unmerged branch is reported as stranded, with that branch.",
+        "path": ".ai/repo/project/issues/I3973.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4152
+      },
+      {
+        "uri": "majordomus://issue/I3974",
+        "kind": "issue",
+        "identity": "I3974",
+        "title": "One allocator surveys every number (issue ids, ADR numbers, case numbers), and two branches adding one number under different names are refused",
+        "description": "The survey lib/adr.sh (mj_adr_claims) and scripts/case-numbers each implement for one identifier (this tree, the sibling worktrees, every ref, the peer board) is shared by both and extended to a third kind, issue ids, inside the existing units rather than a new one: majordomus adr next keeps its output, scripts/case-numbers next keeps its output, and a kind argument (issue, adr, case) makes either answer for any kind from the one survey. The board source is defined with its producer and its parser in the same unit: next --reserve announces a named claim id:<kind>:<number> on the peer board, and the survey reads exactly those claim names; no free-text announcement is parsed. The collision gate (scripts/ci/collision-gate) gains the number check: a pull request adding an issue id, ADR number or case number that another unmerged branch adds under a different file name is refused (exit 11) naming that branch; the same path with different content is already refused by path. The first step diagnoses why adr check, which doctor runs in pre-commit and case 271 holds, did not stop ADR 0168 being taken twice, and records the cause in this issue before the code changes.",
+        "path": ".ai/repo/project/issues/I3974.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4221
+      },
+      {
+        "uri": "majordomus://issue/I3975",
+        "kind": "issue",
+        "identity": "I3975",
+        "title": "GitHub issues are created only by github-sync: an agent's raw create is refused, an issue nobody projected is reported on GitHub, and an unmarked issue is never adopted",
+        "description": "Three guards around the one writer of GitHub issues. First, on the agent side: the provider hooks the repository projects (.claude/settings.json and .claude/hooks for Claude Code, and the matching hook of every provider template under .ai/repo/providers that supports one) refuse a shell command that creates a GitHub issue by hand (gh issue create, or gh api with a POST to an issues endpoint), naming scripts/github-sync as the way; a person in a terminal is not judged. Second, on GitHub, since a client hook covers only the clients that have one: a workflow on issues opened labels and reports, never closes or deletes, any issue that carries no record marker and was not opened by github-actions[bot], so an issue nobody projected is visible within one run whoever opened it. Third, github-sync stops adopting an unmarked issue by its title prefix (remote_issue_line, github-sync:374-380): the first step measures how many unmarked issues github-sync --check still adopts; if none, the title fallback is deleted, otherwise the cutoff is the last adopted issue number, recorded in the adapter, and an unmarked issue above it is reported as a stranger and never adopted. The short-listing refusal is the I3920 record's (train 4) and is not repeated here; this issue starts after train 4 lands and I3970 has changed github-sync.",
+        "path": ".ai/repo/project/issues/I3975.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4512
+      },
+      {
+        "uri": "majordomus://issue/I3976",
+        "kind": "issue",
+        "identity": "I3976",
+        "title": "Every commit names the issue it serves, outside narrow machine-verifiable exemptions, with the earlier history as a baseline",
+        "description": "commit.validate gains two rules with policy levels in .ai/repo/policy.yaml's commit block. issue_required (error): a commit whose subject or trailers name no issue record id (I followed by digits, resolved as UnresolvedReference already resolves ids) is refused by the commit-msg hook and by scripts/ci/commit-policy. closing_keyword (error): a message carrying a closing keyword (close, fix or resolve, in any inflection, followed by an issue number) is refused, because it closes the GitHub issue ahead of its record. The rule applies to commits after a recorded boundary commit (the commit that turns it on, kept in .ai/repo/commit-policy-baseline.txt beside today's count), so the 4494 earlier subjects of origin/master that name no issue are outside it and the existing count baseline is unchanged; every commit a branch adds after the boundary must pass outright. The exemptions are decided from the commit and the repository, never from a word a person types, and are checked against every commit shape this repository makes: a git-generated subject (Merge, fixup!, squash!, amend!), a revert of a merge, the root commit, and a commit with two or more parents (the train merges written as merge: train ...). Commits the tools write (the train composer of I3915 and I3978 writing fix(top) and chore(top) subjects, the release record step writing chore(release)) are changed to name the issues they carry or the release issue, so they need no exemption. The hook falls back to the installed release when the executable is not built (I3831), so the rule refuses at commit time once a release carries it and in CI from the commit that turns it on.",
+        "path": ".ai/repo/project/issues/I3976.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4811
+      },
+      {
+        "uri": "majordomus://issue/I3977",
+        "kind": "issue",
+        "identity": "I3977",
+        "title": "Every page a deployment serves names only versions of the release model, checked after the deploy",
+        "description": "I3449 makes every built surface read one release model and gates the built site and the snapshots. This issue carries the same judgement to what is served: after a deploy, the served-surface check (apps/majordomus-cli/src/served.rs, the capability majordomus served) fetches every page the deployment declares, extracts each version string with its role label, and compares them with the release model of the commit the deployment says it serves; a page naming another version, or a version without its role, is reported with the URL and the string, and the deploy check fails. The extractor is one Rust function: when I3449 lands its gate as shell in scripts/site-check, this issue moves the extraction into a library function in served.rs that the site gate calls through the executable, with a library test holding both on one fixture. It sits under this milestone because the owner listed it in this order: a version on a page is a reference to a release, and it must resolve to the model as a record id must resolve on master.",
+        "path": ".ai/repo/project/issues/I3977.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3221
+      },
+      {
+        "uri": "majordomus://issue/I3978",
+        "kind": "issue",
+        "identity": "I3978",
+        "title": "Each train member is judged on its merged tree, and a fix member joins only with a test and its changed-code coverage",
+        "description": "The landing duties docs/INTEGRATION.md states as a table (merge master into the branch, commit, derive, then run the whole structure job, the library tests and the cases the change touches on that merged tree, naming the commit each ran on; search the tests for what reads the change) become a typed check the train composer of I3915 (commands/prs.rs) runs per member before the member joins a train: it merges the member onto the train head, runs the structure job, the library tests and the cases the change touches, and records each verdict with the merged commit. The cases a change touches are chosen by a selector this issue adds to the executable: every case whose covers header names a capability or command the change touches, and every case that names a changed path or the identifier of a changed record, the rule docs/INTEGRATION.md states as prose. A member whose head is a fix (conventional type fix) joins only when its diff carries a test and scripts/rust-coverage --changed <train head> reports its changed lines covered. A member that fails is left out of the train and reported with the failing step; nothing is forced in.",
+        "path": ".ai/repo/project/issues/I3978.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3494
+      },
+      {
+        "uri": "majordomus://issue/I3979",
+        "kind": "issue",
+        "identity": "I3979",
+        "title": "Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked",
+        "description": "One tracked declaration under .ai/repo/ci (beside github.yaml) names every label with its colour, description and actor (projected from records, set by the pull request projection, or set by a person: hold, collision:accepted, ci:yielded), the area labels allowed from commit scopes, and the branch prefixes (feature, fix, docs, chore, refactor, integration/train). It does not become a second source of what already has one: the commit types stay declared in release/model.rs:23-43 and the hold label names in integration/classify.rs LABEL_POLICY (classify.rs:110-118), and a library test holds the declaration equal to both, so a type or hold label added in one place and not the other fails. github-sync creates and updates every declared label (today it creates only labels labels_of emits and never updates one); CONTRIBUTING.md gains a section generated from the declaration and from those two sources between majordomus markers; and a check refuses a label named by code, a workflow or a projection that is not declared, and reports a declared label missing on GitHub.",
+        "path": ".ai/repo/project/issues/I3979.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3950
+      },
+      {
+        "uri": "majordomus://issue/I3995",
+        "kind": "issue",
+        "identity": "I3995",
+        "title": "A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
+        "description": "mj_git_label (lib/common.sh) labels a recorded head of NONE, which mj_git_head writes when start runs on an unborn branch, as advanced once the branch has commits, so the state doctrine passes and check and a completed finish are no longer refused for a history that was never rewritten. start's refusal of a second task names the commands that release the first: finish, or handover --close.",
+        "path": ".ai/repo/project/issues/I3995.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3073
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -111619,7 +112288,7 @@
         "path": ".ai/repo/project/milestones/ci-critical-path.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 2748
+        "bytes": 3811
       },
       {
         "uri": "majordomus://milestone/command-and-deployment-criteria-are-judged",
@@ -111928,6 +112597,28 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4834
+      },
+      {
+        "uri": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "milestone",
+        "identity": "measurements-are-tracked-over-time",
+        "title": "Coverage and CI cost are kept, exported and drawn over time, from the one measurement each has",
+        "description": "Every master run's coverage and CI cost is kept as a derived series, exported in LCOV and Cobertura from the one measurement docs/COVERAGE.md requires, uploaded to Coveralls and Codecov when their secrets exist, drawn on the site and in the Cockpit, and emitted as OpenTelemetry when an endpoint is configured; no number differs between the gate, the export and the graph.",
+        "path": ".ai/repo/project/milestones/measurements-are-tracked-over-time.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 2418
+      },
+      {
+        "uri": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "milestone",
+        "identity": "merging-and-referencing-are-enforced",
+        "title": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once",
+        "description": "Merging and referencing are projections, typed commands and gates: every pull request carries its metadata from the records, every reference resolves on master, every number is taken once.",
+        "path": ".ai/repo/project/milestones/merging-and-referencing-are-enforced.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3736
       },
       {
         "uri": "majordomus://milestone/mesh-connectivity",
@@ -115291,15 +115982,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "uri": "majordomus://rule/project.homepage-tells-a-declared-story@2",
         "kind": "rule",
-        "identity": "project.homepage-tells-a-declared-story@1",
+        "identity": "project.homepage-tells-a-declared-story@2",
         "title": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
         "description": "site/data/homepage.toml declares the homepage's sections as an ordered list of ids; the rendered homepage carries exactly those sections, in that order, each with a link or a derived figure, links no feature the product model does not call stable, and carries every command the distribution model gives a newcomer. site/data/nav.toml declares which sections are receipts under [indexing]; the pages below them are noindex and out of the sitemap, and every other page is indexable and in it.",
-        "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+        "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 6846,
+        "bytes": 7493,
         "tags": [
           "web",
           "homepage",
@@ -117930,7 +118621,7 @@
         "identity": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
         "path": "test/cases/1036_the_executor_reopens_a_record_pull_request.sh",
         "source_class": "case",
-        "bytes": 8295
+        "bytes": 8996
       },
       {
         "uri": "majordomus://test/test/cases/1037_the_closing_question_is_measured.sh",
@@ -117970,7 +118661,7 @@
         "identity": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
         "path": "test/cases/1040_a_stacked_head_lands_on_the_verdict_it_has.sh",
         "source_class": "case",
-        "bytes": 11989
+        "bytes": 12355
       },
       {
         "uri": "majordomus://test/test/cases/1041_a_release_publishes_its_metadata.sh",
@@ -118322,7 +119013,7 @@
         "identity": "test/cases/10_site_data.sh",
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
-        "bytes": 7119
+        "bytes": 9159
       },
       {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -118338,7 +119029,7 @@
         "identity": "test/cases/111_session_per_provider.sh",
         "path": "test/cases/111_session_per_provider.sh",
         "source_class": "case",
-        "bytes": 9254
+        "bytes": 9997
       },
       {
         "uri": "majordomus://test/test/cases/112_version_matches_surface.sh",
@@ -118538,7 +119229,7 @@
         "identity": "test/cases/131_completion_gates.sh",
         "path": "test/cases/131_completion_gates.sh",
         "source_class": "case",
-        "bytes": 13150
+        "bytes": 15103
       },
       {
         "uri": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
@@ -118826,7 +119517,7 @@
         "identity": "test/cases/21_decision_question.sh",
         "path": "test/cases/21_decision_question.sh",
         "source_class": "case",
-        "bytes": 7398
+        "bytes": 7649
       },
       {
         "uri": "majordomus://test/test/cases/220_exactly_once_close.sh",
@@ -119434,7 +120125,7 @@
         "identity": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
         "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
         "source_class": "case",
-        "bytes": 3635
+        "bytes": 9902
       },
       {
         "uri": "majordomus://test/test/cases/304_a_provider_is_declared_once.sh",
@@ -119570,7 +120261,7 @@
         "identity": "test/cases/3084_a_case_near_its_budget_is_named.sh",
         "path": "test/cases/3084_a_case_near_its_budget_is_named.sh",
         "source_class": "case",
-        "bytes": 6031
+        "bytes": 7545
       },
       {
         "uri": "majordomus://test/test/cases/30_command_registry.sh",
@@ -119626,7 +120317,7 @@
         "identity": "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
         "path": "test/cases/3105_the_homepage_states_no_present_it_does_not_read.sh",
         "source_class": "case",
-        "bytes": 7642
+        "bytes": 8884
       },
       {
         "uri": "majordomus://test/test/cases/3106_every_published_tree_draws_its_diagrams.sh",
@@ -119946,7 +120637,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 37468
+        "bytes": 38942
       },
       {
         "uri": "majordomus://test/test/cases/3340_a_fresh_init_leaves_doctor_clean.sh",
@@ -120322,7 +121013,7 @@
         "identity": "test/cases/357_ci_records_evidence.sh",
         "path": "test/cases/357_ci_records_evidence.sh",
         "source_class": "case",
-        "bytes": 36107
+        "bytes": 36577
       },
       {
         "uri": "majordomus://test/test/cases/358_entry_reports_only_evidence.sh",
@@ -120626,7 +121317,7 @@
         "identity": "test/cases/3837_a_derive_does_not_run_mid_merge.sh",
         "path": "test/cases/3837_a_derive_does_not_run_mid_merge.sh",
         "source_class": "case",
-        "bytes": 3302
+        "bytes": 3734
       },
       {
         "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
@@ -120739,6 +121430,62 @@
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
         "bytes": 9513
+      },
+      {
+        "uri": "majordomus://test/test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+        "kind": "test",
+        "identity": "test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+        "path": "test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
+        "source_class": "case",
+        "bytes": 7926
+      },
+      {
+        "uri": "majordomus://test/test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+        "kind": "test",
+        "identity": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+        "path": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+        "source_class": "case",
+        "bytes": 10783
+      },
+      {
+        "uri": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
+        "kind": "test",
+        "identity": "test/cases/3939_the_executable_is_built_once_per_run.sh",
+        "path": "test/cases/3939_the_executable_is_built_once_per_run.sh",
+        "source_class": "case",
+        "bytes": 9960
+      },
+      {
+        "uri": "majordomus://test/test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+        "kind": "test",
+        "identity": "test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+        "path": "test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh",
+        "source_class": "case",
+        "bytes": 11542
+      },
+      {
+        "uri": "majordomus://test/test/cases/3943_a_second_gate_list_is_found.sh",
+        "kind": "test",
+        "identity": "test/cases/3943_a_second_gate_list_is_found.sh",
+        "path": "test/cases/3943_a_second_gate_list_is_found.sh",
+        "source_class": "case",
+        "bytes": 9093
+      },
+      {
+        "uri": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "kind": "test",
+        "identity": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "path": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
+        "source_class": "case",
+        "bytes": 6513
+      },
+      {
+        "uri": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "kind": "test",
+        "identity": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "source_class": "case",
+        "bytes": 1641
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -120930,7 +121677,7 @@
         "identity": "test/cases/486_rustdoc_composition.sh",
         "path": "test/cases/486_rustdoc_composition.sh",
         "source_class": "case",
-        "bytes": 12039
+        "bytes": 13763
       },
       {
         "uri": "majordomus://test/test/cases/487_rustdoc_staleness.sh",
@@ -121042,7 +121789,7 @@
         "identity": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
         "path": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
         "source_class": "case",
-        "bytes": 19214
+        "bytes": 22733
       },
       {
         "uri": "majordomus://test/test/cases/503_every_use_case_has_a_feature.sh",
@@ -121194,7 +121941,7 @@
         "identity": "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
         "path": "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
         "source_class": "case",
-        "bytes": 5455
+        "bytes": 11456
       },
       {
         "uri": "majordomus://test/test/cases/545_every_answer_says_when_it_was_observed.sh",
@@ -121610,7 +122357,7 @@
         "identity": "test/cases/720_integration_follows_the_current_master.sh",
         "path": "test/cases/720_integration_follows_the_current_master.sh",
         "source_class": "case",
-        "bytes": 14226
+        "bytes": 14901
       },
       {
         "uri": "majordomus://test/test/cases/721_the_suite_shards_are_the_whole_suite.sh",
@@ -121618,7 +122365,7 @@
         "identity": "test/cases/721_the_suite_shards_are_the_whole_suite.sh",
         "path": "test/cases/721_the_suite_shards_are_the_whole_suite.sh",
         "source_class": "case",
-        "bytes": 5658
+        "bytes": 6609
       },
       {
         "uri": "majordomus://test/test/cases/72_rust_mcp.sh",
@@ -121698,7 +122445,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 12062
+        "bytes": 12708
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -121706,7 +122453,7 @@
         "identity": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "source_class": "case",
-        "bytes": 8399
+        "bytes": 9072
       },
       {
         "uri": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
@@ -121714,7 +122461,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 7048
+        "bytes": 7086
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
@@ -121778,7 +122525,7 @@
         "identity": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
         "path": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
         "source_class": "case",
-        "bytes": 6688
+        "bytes": 8104
       },
       {
         "uri": "majordomus://test/test/cases/77_rust_evidence.sh",
@@ -121978,7 +122725,7 @@
         "identity": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "source_class": "case",
-        "bytes": 16327
+        "bytes": 17020
       },
       {
         "uri": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
@@ -121994,7 +122741,7 @@
         "identity": "test/cases/855_racing_executors_merge_once.sh",
         "path": "test/cases/855_racing_executors_merge_once.sh",
         "source_class": "case",
-        "bytes": 6694
+        "bytes": 7424
       },
       {
         "uri": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
@@ -122002,7 +122749,7 @@
         "identity": "test/cases/856_racing_worktrees_share_one_lease.sh",
         "path": "test/cases/856_racing_worktrees_share_one_lease.sh",
         "source_class": "case",
-        "bytes": 6979
+        "bytes": 7640
       },
       {
         "uri": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
@@ -122250,7 +122997,7 @@
         "identity": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
         "path": "test/cases/925_a_bound_check_is_only_its_apps_run.sh",
         "source_class": "case",
-        "bytes": 14224
+        "bytes": 14978
       },
       {
         "uri": "majordomus://test/test/cases/926_an_unread_writer_is_never_a_pass.sh",
@@ -122362,7 +123109,7 @@
         "identity": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
         "path": "test/cases/938_a_truncated_cross_reference_read_holds.sh",
         "source_class": "case",
-        "bytes": 20663
+        "bytes": 21476
       },
       {
         "uri": "majordomus://test/test/cases/939_a_batch_landed_successor_supersedes.sh",
@@ -122426,7 +123173,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 43016
+        "bytes": 47095
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -123322,7 +124069,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 32
+      "objects": 33
     },
     {
       "name": "deployment",
@@ -123405,7 +124152,7 @@
       "identity": [
         "id"
       ],
-      "objects": 37
+      "objects": 38
     },
     {
       "name": "issue",
@@ -123415,7 +124162,7 @@
       "identity": [
         "id"
       ],
-      "objects": 943
+      "objects": 973
     },
     {
       "name": "knowledge",
@@ -123445,7 +124192,7 @@
       "identity": [
         "id"
       ],
-      "objects": 104
+      "objects": 106
     },
     {
       "name": "moment",
@@ -123577,7 +124324,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 619
+      "objects": 626
     },
     {
       "name": "use-case",
@@ -161050,6 +161797,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/delivery/trends",
+        "id": "delivery.trends",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/deployments/check",
         "id": "deploy.check",
         "kind": "query"
@@ -163000,6 +163753,25 @@
         "case": "default",
         "cached": false,
         "route": "GET /api/v1/dashboard/overview"
+      },
+      {
+        "key": "delivery.trends|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "delivery.trends",
+        "module": "delivery",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "delivery.trends|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "delivery.trends",
+        "module": "delivery",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/delivery/trends"
       },
       {
         "key": "deploy.check|direct|default",
@@ -169747,6 +170519,14 @@
         "route": "GET /ui/deployments"
       },
       {
+        "key": "system.http.ui.trends",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/trends"
+      },
+      {
         "key": "system.http.ui.evidence",
         "kind": "page",
         "transport": "http",
@@ -169889,6 +170669,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/deployments"
+      },
+      {
+        "key": "system.http.live.ui.trends",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/trends"
       },
       {
         "key": "system.http.live.ui.evidence",
@@ -170508,6 +171296,20 @@
           "state": "waived",
           "cases": 0,
           "reason": "external_dependency"
+        },
+        {
+          "subject": "delivery.trends",
+          "module": "delivery",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "delivery.trends",
+          "module": "delivery",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
         },
         {
           "subject": "deploy.check",
@@ -174489,15 +175291,15 @@
       ],
       "tallies": {
         "direct": {
-          "required": 212,
-          "covered": 178,
+          "required": 213,
+          "covered": 179,
           "missing": 0,
           "waived": 34,
           "inapplicable": 0
         },
         "http": {
-          "required": 206,
-          "covered": 178,
+          "required": 207,
+          "covered": 179,
           "missing": 0,
           "waived": 28,
           "inapplicable": 0
@@ -174517,8 +175319,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 633,
-          "covered": 544,
+          "required": 635,
+          "covered": 546,
           "missing": 0,
           "waived": 89,
           "inapplicable": 0

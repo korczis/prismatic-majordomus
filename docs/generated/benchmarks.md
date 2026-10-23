@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.7 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 212 | 178 | 0 | 34 |
-| http | 206 | 178 | 0 | 28 |
+| direct | 213 | 179 | 0 | 34 |
+| http | 207 | 179 | 0 | 28 |
 | mcp | 201 | 174 | 0 | 27 |
 | system | 14 | 14 | 0 | 0 |
-| total | 633 | 544 | 0 | 89 |
+| total | 635 | 546 | 0 | 89 |
 
 ## Capabilities
 
@@ -44,6 +44,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |
 | `delivery.report` | delivery | query | — | waived | waived | waived | — |
+| `delivery.trends` | delivery | query | — | covered | — | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
@@ -270,6 +271,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.peers` | `/ui/peers` | pinned | — |
 | `system.http.ui.delivery` | `/ui/delivery` | pinned | — |
 | `system.http.ui.deployments` | `/ui/deployments` | pinned | — |
+| `system.http.ui.trends` | `/ui/trends` | pinned | — |
 | `system.http.ui.evidence` | `/ui/evidence` | pinned | — |
 | `system.http.ui.knowledge` | `/ui/knowledge` | pinned | — |
 | `system.http.ui.docs` | `/ui/docs` | pinned | — |
@@ -288,6 +290,7 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.live.ui.peers` | `/ui/peers` | live | — |
 | `system.http.live.ui.delivery` | `/ui/delivery` | live | — |
 | `system.http.live.ui.deployments` | `/ui/deployments` | live | — |
+| `system.http.live.ui.trends` | `/ui/trends` | live | — |
 | `system.http.live.ui.evidence` | `/ui/evidence` | live | — |
 | `system.http.live.ui.knowledge` | `/ui/knowledge` | live | — |
 | `system.http.live.ui.docs` | `/ui/docs` | live | — |

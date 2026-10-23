@@ -576,6 +576,19 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # scenario's commands: their timing report lands in the recorded output, and the committed
   # evidence then differs from a run without it (seen on 2026-10-21, I0832).
   unset MJ_TIMING MJ_TIMING_FILE
+  # Nor may it carry the recorder's episode identity. A writer names the caller's own episode
+  # or none (ADR 0164), and the caller is read from MJ_SESSION_KEY, MAJORDOMUS_PROVIDER_SESSION
+  # or the provider adapter's session variable; a recorder running inside an agent session
+  # handed the scenario that agent's id, its writers looked for an episode the scenario's
+  # repository never opened, and keep-what-an-episode-learned failed on every workstation
+  # session while CI, which has no provider variable, passed (seen on 2026-10-23, I0703).
+  unset MJ_SESSION_KEY MAJORDOMUS_PROVIDER_SESSION
+  if [ -n "${MJ_LIB_DIR:-}" ] && [ -f "$MJ_LIB_DIR/capture.sh" ]; then
+    # shellcheck source=capture.sh
+    [ -n "${MJ_LIB_capture:-}" ] || . "$MJ_LIB_DIR/capture.sh"
+    local pv
+    for pv in $(mj_lifecycle_session_vars); do unset "$pv"; done
+  fi
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
