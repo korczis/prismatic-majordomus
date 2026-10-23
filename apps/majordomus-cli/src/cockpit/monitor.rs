@@ -1,9 +1,11 @@
 //! The monitor page: everything that happens around this repository, as one live list
 //! (ADR 0133). The first page is rendered here from `monitor.stream`, the same answer every
-//! other surface renders; `monitor.js` then asks for the page after its cursor while the
-//! page is visible and adds what is new on top, so nothing is fetched twice and nothing is
-//! shown that the capability did not say. Without JavaScript the page is complete, and a
-//! refresh shows the newest signals.
+//! other surface renders; `monitor.js` then follows the live channel from its cursor
+//! (`/events?follow=blackboard&frames=signals`, ADR 0176) and adds what the server pushes on
+//! top, so nothing is fetched twice and nothing is shown that the capability did not say. A
+//! page whose channel cannot be opened asks for the page after its cursor every few seconds
+//! instead, and says that it polls. Without JavaScript the page is complete, and a refresh
+//! shows the newest signals.
 
 use serde_json::json;
 
@@ -18,6 +20,10 @@ use super::view::{card, card_with, pre, table, word_badge};
 
 /// How many signals the first page shows.
 const FIRST_PAGE: u64 = 100;
+
+/// The sources the first page reads, by `monitor.stream`'s default, named for the live
+/// channel so that it continues the same cursor.
+const SOURCES: &str = "mesh,executor,github";
 
 /// `/cockpit/monitor[?for=<names>]`.
 pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
@@ -79,14 +85,24 @@ pub fn page(ctx: &Context, query: &[(String, String)]) -> Page {
     let live = el("p")
         .class("mj-muted")
         .attr("data-mj-monitor-note", "")
-        .text("While this page is visible it asks for what happened since and adds it on top.");
+        .text("While this page is open the server pushes what happens and it is added on top.");
     let mut source_url = "/api/v1/monitor?limit=200".to_string();
+    let mut live_url = format!("/events?follow=blackboard&frames=signals&sources={SOURCES}");
+    // the page's cursor always, an empty one too: it is the start of the stream, so a page
+    // rendered before anything happened resumes from there and misses nothing since
+    live_url.push_str(&format!(
+        "&after={}&epoch={}",
+        percent_encode(&page.cursor),
+        percent_encode(&crate::http::follow::epoch(ctx))
+    ));
     if let Some(reader) = &reader {
         source_url.push_str(&format!("&for={}", percent_encode(reader)));
+        live_url.push_str(&format!("&for={}", percent_encode(reader)));
     }
     let frame = el("div")
         .attr("data-mj-monitor", source_url)
         .attr("data-mj-monitor-cursor", &page.cursor)
+        .attr("data-mj-monitor-live", live_url)
         .child(live)
         .child(stream);
 
@@ -198,6 +214,19 @@ mod tests {
             html.contains("/api/v1/monitor?limit=200&amp;for=1b"),
             "{html}"
         );
+        // the live channel continues the page's own cursor, for the same reader
+        let live = html
+            .split("data-mj-monitor-live=\"")
+            .nth(1)
+            .and_then(|rest| rest.split('"').next())
+            .expect("the page names its live channel");
+        assert!(
+            live.starts_with("/events?follow=blackboard&amp;frames=signals"),
+            "{live}"
+        );
+        assert!(live.contains("&amp;after="), "{live}");
+        assert!(live.contains("&amp;epoch="), "{live}");
+        assert!(live.ends_with("&amp;for=1b"), "{live}");
         assert!(html.contains("<strong>mesh</strong>"), "{html}");
         assert!(
             !html.contains("Nothing happened in the last six hours"),

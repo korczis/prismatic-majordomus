@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "written-once-derived-everywhere/"
 source_digest = "b85d9b164fd3ba86d1c1ee856de9fcde101c4d5a660b232d0218de2f1e8c9649"
-related = ["dokumentace-kterou-lze-odmitnout/", "plan-se-napadne-driv-nez-se-postavi/", "teze/", "zabrano-driv-nez-se-stavi/", "jedna-vetev-jedno-misto/"]
+related = ["dokumentace-kterou-lze-odmitnout/", "plan-se-napadne-driv-nez-se-postavi/", "teze/", "zabrano-driv-nez-se-stavi/", "jedna-vetev-jedno-misto/", "automatizace-je-schopnost/"]
 [extra.translations]
 en = "written-once-derived-everywhere/"
 +++
