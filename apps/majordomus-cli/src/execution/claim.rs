@@ -37,6 +37,7 @@ use std::sync::Arc;
 use crate::capability::Context;
 use crate::mesh::cooperation::{Cooperation, CooperationError};
 use crate::mesh::journal::{ClaimMode, SessionInfo};
+use crate::mesh::state::{admission_conflicts, ClaimView};
 
 use super::model::{ClaimStanding, ExecutionId, ExecutionState, IssueClaim};
 
@@ -177,22 +178,7 @@ fn take_with(
             armed: true,
         }),
         Err(CooperationError::Conflict(holders)) => {
-            let named = holders
-                .iter()
-                .map(|h| {
-                    format!(
-                        "session {} holds {} on {}{}",
-                        h.session,
-                        h.key,
-                        h.scope.join(", "),
-                        h.issue
-                            .as_deref()
-                            .map(|i| format!(" for {i}"))
-                            .unwrap_or_default()
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join("; ");
+            let named = name_holders(holders.iter());
             let message =
                 format!("claim_conflict: {issue} is claimed on the mesh: {named}; nothing ran");
             Taken::Refused {
@@ -219,6 +205,89 @@ fn take_with(
                 conflict: false,
                 message,
             }
+        }
+    }
+}
+
+/// The claims that keep a scope out, one sentence: which session holds which claim on what,
+/// and for which issue. What a refusal names, whether it came from taking the claim or from
+/// asking whether it could be taken.
+fn name_holders<'a>(holders: impl Iterator<Item = &'a ClaimView>) -> String {
+    holders
+        .map(|h| {
+            format!(
+                "session {} holds {} on {}{}",
+                h.session,
+                h.key,
+                h.scope.join(", "),
+                h.issue
+                    .as_deref()
+                    .map(|i| format!(" for {i}"))
+                    .unwrap_or_default()
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+/// Whether an exclusive claim of an issue would be admitted now, asked without taking it
+/// (I4003).
+///
+/// `devtask.implement` creates a worktree before the execution that holds the claim is
+/// started, and an overlap must refuse it before anything exists. It asks the question the
+/// claim itself will ask — [`admission_conflicts`] over the same state, the same scope and
+/// the exclusive mode — so the two cannot disagree except by a claim taken between them, which
+/// the execution's own claim then refuses, with the holder named, before its handler runs.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Admission {
+    /// Nothing live and exclusive meets the scope: the execution may take it.
+    Free {
+        /// The scope the claim would cover.
+        scope: Vec<String>,
+    },
+    /// No mesh cooperation runs in this process: nothing on the mesh can be asked, and the
+    /// execution runs unclaimed, as I4004 says it does.
+    Unmeshed {
+        /// The scope the claim would have covered.
+        scope: Vec<String>,
+        /// Why there is no mesh to ask.
+        reason: String,
+    },
+    /// Another session holds the scope: the refusal, starting `claim_conflict:`.
+    Conflict {
+        /// The sentence for the refusal, naming every holder.
+        message: String,
+    },
+}
+
+/// Ask whether the exclusive claim of `issue` would be admitted now; nothing is written.
+pub(crate) fn admission(ctx: &Context, issue: &str) -> Admission {
+    let scope = scope_of(ctx, issue);
+    match ctx.mesh.cooperation() {
+        Some(cooperation) => admission_with(&cooperation, issue, scope),
+        None => Admission::Unmeshed {
+            scope,
+            reason: ctx
+                .mesh
+                .cooperation_status()
+                .reason
+                .unwrap_or_else(|| "mesh cooperation is not running in this process".into()),
+        },
+    }
+}
+
+fn admission_with(cooperation: &Cooperation, issue: &str, scope: Vec<String>) -> Admission {
+    let state = cooperation.state();
+    // no session of ours holds anything yet, so no claim is passed over as our own
+    let conflicts = admission_conflicts(&state, "", &scope, ClaimMode::Exclusive);
+    if conflicts.is_empty() {
+        Admission::Free { scope }
+    } else {
+        Admission::Conflict {
+            message: format!(
+                "claim_conflict: {issue} is claimed on the mesh: {}; nothing was created",
+                name_holders(conflicts.into_iter())
+            ),
         }
     }
 }
@@ -420,6 +489,64 @@ mod tests {
         let key = held.claim().key.clone().unwrap();
         assert_eq!(held.settle(None).standing, ClaimStanding::Released);
         assert!(!live(&c, &key));
+    }
+
+    #[test]
+    fn admission_is_asked_without_taking_and_names_the_holder_of_an_overlap() {
+        let c = crate::mesh::testing::cooperation();
+        let scope = vec!["issue/I4003".to_string()];
+        assert_eq!(
+            admission_with(&c, "I4003", scope.clone()),
+            Admission::Free {
+                scope: scope.clone()
+            }
+        );
+        assert!(
+            c.state().claims.is_empty() && c.state().sessions.is_empty(),
+            "asking wrote nothing"
+        );
+        let holder = ExecutionId::fresh();
+        let Taken::Held(held) = take_with(Arc::clone(&c), &holder, "x", "I4003", scope.clone())
+        else {
+            panic!("not held");
+        };
+        let key = held.claim().key.clone().unwrap();
+        match admission_with(&c, "I4003", scope.clone()) {
+            Admission::Conflict { message } => {
+                assert!(message.starts_with("claim_conflict: I4003"), "{message}");
+                assert!(message.contains(&key), "{message}");
+                assert!(message.contains(&session_of(&holder)), "{message}");
+                assert!(message.ends_with("nothing was created"), "{message}");
+            }
+            other => panic!("an overlap was admitted: {other:?}"),
+        }
+        // an advisory claim informs and never excludes
+        drop(held.settle(Some(ExecutionState::Succeeded)));
+        c.claim(
+            &SessionInfo::named("advisor", "cli"),
+            scope.clone(),
+            None,
+            ClaimMode::Advisory,
+            Some("I4003".into()),
+        )
+        .unwrap();
+        assert_eq!(
+            admission_with(&c, "I4003", scope.clone()),
+            Admission::Free { scope }
+        );
+    }
+
+    #[test]
+    fn without_a_mesh_admission_says_so_and_names_the_scope() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        match admission(&ctx, "I4003") {
+            Admission::Unmeshed { scope, reason } => {
+                assert_eq!(scope, ["issue/I4003"]);
+                assert!(!reason.is_empty());
+            }
+            other => panic!("{other:?}"),
+        }
     }
 
     #[test]

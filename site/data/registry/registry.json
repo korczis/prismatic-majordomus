@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "a05aedc4f89f6c667ba2829543a329c864e08d026be27b947f4f6cc155117c27",
+    "fingerprint": "a2731c955b76f658a0397ade121294f7e458eedab6821e80b7a120ad91db309a",
     "summary": {
-      "total": 3318,
-      "builtin": 209,
-      "declarative": 3109,
+      "total": 3321,
+      "builtin": 211,
+      "declarative": 3110,
       "by_kind": {
-        "command": 33,
+        "command": 35,
         "query": 176,
-        "resource": 3109
+        "resource": 3110
       },
       "by_stability": {
         "behaviorally_verified": 144,
-        "experimental": 55,
-        "implemented": 3119
+        "experimental": 57,
+        "implemented": 3120
       },
-      "mcp_tools": 198,
-      "mcp_resources": 3164,
-      "http_routes": 203,
+      "mcp_tools": 199,
+      "mcp_resources": 3165,
+      "http_routes": 204,
       "cli_commands": 113,
       "modules": 92,
       "benchmark_required": 176,
-      "benchmark_waived": 33,
+      "benchmark_waived": 35,
       "cached": 54
     },
     "builtin": [
@@ -15502,6 +15502,807 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/devcontext.rs"
       },
       {
+        "id": "devtask.implement",
+        "module": "devtask",
+        "kind": "command",
+        "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+        "description": "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links.",
+        "input": {
+          "name": "ImplementInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue to implement, as the canonical model spells it (`I4003`)."
+              },
+              "idempotency_key": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "What makes a repeated request one execution (I4000): sent again, it is answered the\nexecution it started, as that execution stands now, and nothing new is created.\nDefault: `implement-<issue>`, so that a double click is one implementation; send a\nnew key to start the issue again after its execution ended.",
+                "minLength": 1,
+                "maxLength": 128,
+                "pattern": "^[A-Za-z0-9._:-]+$"
+              },
+              "deadline_minutes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How many minutes the worker's run may last before it fails on its deadline; 60 when\nabsent, a day at most."
+              }
+            },
+            "required": [
+              "issue"
+            ],
+            "description": "Which issue to implement, and how a repeated request is recognised.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I4003\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.idempotency_key), (\"I4003\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived from the issue, never given\");\n```",
+            "title": "ImplementInput"
+          }
+        },
+        "output": {
+          "name": "ImplementAnswer",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue."
+              },
+              "standing": {
+                "$ref": "#/$defs/ImplementStanding",
+                "description": "`started`, `deduplicated` or `pending`. A refusal is not an answer: it is an error\nnaming its cause (`not_ready`, `invalid_intent`, `claim_conflict`)."
+              },
+              "idempotency_key": {
+                "type": "string",
+                "description": "The key the execution is held under."
+              },
+              "branch": {
+                "type": "string",
+                "description": "The branch the work is on: `feature/<id>-<slug>`."
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ImplementStep"
+                },
+                "description": "The steps, in the order they ran."
+              },
+              "pending": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the request is pending; absent otherwise."
+              },
+              "worker": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The worker the run was handed to: the attached peer that asked."
+              },
+              "worktree": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The worktree the run works in."
+              },
+              "execution": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/StartedExecution"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The execution: the worker's run, holding the issue's mesh claim."
+              }
+            },
+            "required": [
+              "issue",
+              "standing",
+              "idempotency_key",
+              "branch",
+              "steps"
+            ],
+            "description": "The answer of `devtask.implement`: where the request stands, every step it took, and —\nwhen it started or found one — the execution with the links to follow it.\n\n```\nuse majordomus_cli::capability::builtin::devtask::{ImplementAnswer, ImplementStanding};\nlet pending = ImplementAnswer {\n    issue: \"I4003\".into(), standing: ImplementStanding::Pending,\n    idempotency_key: \"implement-I4003\".into(), branch: \"feature/I4003-x\".into(),\n    steps: vec![], pending: Some(\"no worker is attached\".into()),\n    worker: None, worktree: None, execution: None,\n};\nlet json = serde_json::to_value(&pending).unwrap();\nassert_eq!(json[\"standing\"], \"pending\");\nassert!(json.get(\"execution\").is_none(), \"nothing was started, and nothing says so\");\n```",
+            "title": "ImplementAnswer",
+            "$defs": {
+              "ImplementStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "started",
+                    "description": "This request created the worktree when it was missing and started the execution."
+                  },
+                  {
+                    "type": "string",
+                    "const": "deduplicated",
+                    "description": "The key had already started an execution for this issue; that execution is the\nanswer, as it stands now, and nothing was created."
+                  },
+                  {
+                    "type": "string",
+                    "const": "pending",
+                    "description": "Everything that could be judged was judged and passed, but no worker is attached to\ntake the run: nothing was created, and the request may be sent again by a worker."
+                  }
+                ],
+                "description": "Where a request to implement an issue stands once it is answered.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStanding;\nlet words: Vec<String> = [ImplementStanding::Started, ImplementStanding::Deduplicated,\n    ImplementStanding::Pending].iter()\n    .map(|s| serde_json::to_value(s).unwrap().as_str().unwrap().to_string()).collect();\nassert_eq!(words, [\"started\", \"deduplicated\", \"pending\"]);\n```"
+              },
+              "ImplementStep": {
+                "type": "object",
+                "properties": {
+                  "step": {
+                    "type": "string",
+                    "description": "`readiness`, `preflight`, `claim`, `worker`, `worktree` or `execution`, in that\norder; a step that was not reached is absent."
+                  },
+                  "ok": {
+                    "type": "boolean",
+                    "description": "Whether it passed."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What it found, in words."
+                  }
+                },
+                "required": [
+                  "step",
+                  "ok",
+                  "detail"
+                ],
+                "description": "One step of the sequence and how it came out.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStep;\nlet step = ImplementStep { step: \"worker\".into(), ok: false, detail: \"nobody asked\".into() };\nassert_eq!(serde_json::to_value(&step).unwrap()[\"step\"], \"worker\");\n```"
+              },
+              "StartedExecution": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "$ref": "#/$defs/ExecutionId",
+                    "description": "The identity."
+                  },
+                  "capability": {
+                    "type": "string",
+                    "description": "The capability that ran, by its canonical id."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "That capability's title, so a list needs no second lookup."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ExecutionState",
+                    "description": "Where it is."
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "description": "When it was accepted, RFC 3339 in UTC."
+                  },
+                  "started_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the handler was entered."
+                  },
+                  "finished_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it reached a final state."
+                  },
+                  "duration_ms": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long it ran, in milliseconds, once it has finished."
+                  },
+                  "input": {
+                    "description": "The input it was given, with every value the input schema marks sensitive replaced."
+                  },
+                  "output": {
+                    "description": "What the handler returned, for a succeeded execution and never before."
+                  },
+                  "error": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ExecutionError"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
+                  },
+                  "progress": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ProgressView"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last progress the handler reported."
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/StepView"
+                    },
+                    "description": "The steps it entered, in order."
+                  },
+                  "diagnostics": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ExecutionDiagnostic"
+                    },
+                    "description": "The findings it reported."
+                  },
+                  "last_sequence": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The sequence number of the last event: the cursor a client subscribes from."
+                  },
+                  "event_count": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How many events it has produced, including the ones no longer retained."
+                  },
+                  "events_truncated": {
+                    "type": "boolean",
+                    "description": "Whether the retained event history has lost its oldest entries to the bound."
+                  },
+                  "cancellable": {
+                    "type": "boolean",
+                    "description": "Whether asking to cancel this execution will do anything: the capability's policy."
+                  },
+                  "actor": {
+                    "$ref": "#/$defs/Actor",
+                    "description": "Who asked for it."
+                  },
+                  "repository": {
+                    "$ref": "#/$defs/RepositoryRef",
+                    "description": "Which repository it ran against."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+                  },
+                  "idempotency_key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+                  },
+                  "issue_claim": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/IssueClaim"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
+                  },
+                  "links": {
+                    "$ref": "#/$defs/ExecutionLinks",
+                    "description": "Where to read more."
+                  },
+                  "deduplicated": {
+                    "type": "boolean",
+                    "description": "`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began."
+                  }
+                },
+                "required": [
+                  "id",
+                  "capability",
+                  "title",
+                  "state",
+                  "created_at",
+                  "input",
+                  "last_sequence",
+                  "event_count",
+                  "events_truncated",
+                  "cancellable",
+                  "actor",
+                  "repository",
+                  "correlation_id",
+                  "links",
+                  "deduplicated"
+                ],
+                "description": "The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \"capability\": \"executions.demonstrate\",\n    \"input\": { \"steps\": 1, \"delay_ms\": 0 },\n    \"idempotency_key\": \"click-1\",\n});\nlet start = || -> StartedExecution {\n    serde_json::from_value(ctx.execute(\"executions.start\", input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated && again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```"
+              },
+              "ExecutionId": {
+                "type": "string",
+                "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+              },
+              "ExecutionState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "queued",
+                    "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "running",
+                    "description": "The handler is running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelling",
+                    "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
+                  },
+                  {
+                    "type": "string",
+                    "const": "succeeded",
+                    "description": "The handler returned an output."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The handler returned an error, or the worker could not run it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
+                  }
+                ],
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
+              },
+              "ExecutionError": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What went wrong, for a person."
+                  },
+                  "suggestion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What to do about it, when there is something."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The execution this failure belongs to, so a log line and a UI agree."
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "correlation_id"
+                ],
+                "description": "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it."
+              },
+              "ProgressView": {
+                "type": "object",
+                "properties": {
+                  "current": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Units done."
+                  },
+                  "total": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Units in total, when the handler knows how many."
+                  },
+                  "message": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What is being done, for a reader."
+                  }
+                },
+                "required": [
+                  "current"
+                ],
+                "description": "How far along an execution is."
+              },
+              "StepView": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "A stable name, unique within the execution."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line for a reader."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/StepState",
+                    "description": "Where it stands."
+                  },
+                  "started_at": {
+                    "type": "string",
+                    "description": "When it was entered, RFC 3339 in UTC."
+                  },
+                  "finished_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it finished, when it has."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What it said when it finished, when it said anything."
+                  }
+                },
+                "required": [
+                  "name",
+                  "title",
+                  "state",
+                  "started_at"
+                ],
+                "description": "One named phase of an execution, as the handler reported it."
+              },
+              "StepState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "running",
+                    "description": "Entered and not finished."
+                  },
+                  {
+                    "type": "string",
+                    "const": "completed",
+                    "description": "Finished, and what it was asked to do happened."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "Finished, and it did not."
+                  }
+                ],
+                "description": "Where a step of an execution stands."
+              },
+              "ExecutionDiagnostic": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "How bad."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "A stable machine-readable code."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line, for a person."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The rest, when there is more."
+                  },
+                  "suggestion": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What to do about it, when there is something."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "summary"
+                ],
+                "description": "A structured finding an execution reported on its way, distinct from its outcome."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+              },
+              "Actor": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "$ref": "#/$defs/ActorKind",
+                    "description": "Where the request came from."
+                  },
+                  "peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The peer id, for a call that arrived through an MCP session."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that ran it, for an execution another process ran and reported to this\none: the work happened there, and this process holds what it was told about it."
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "description": "Who asked, and which peer they are when this process knows."
+              },
+              "ActorKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "http",
+                    "description": "An HTTP client, which includes the Cockpit."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mcp",
+                    "description": "An MCP client attached to this process."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cli",
+                    "description": "A command line: this process's own, or `majordomus run` in another process of the\nsame checkout that reported its execution to this server, with its pid."
+                  },
+                  {
+                    "type": "string",
+                    "const": "internal",
+                    "description": "This executable's own tests and benchmarks."
+                  }
+                ],
+                "description": "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI."
+              },
+              "RepositoryRef": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The repository's name: the last component of its root."
+                  },
+                  "id": {
+                    "type": "string",
+                    "description": "The stable identity two processes over one checkout both compute."
+                  },
+                  "branch": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The branch checked out, when git can say."
+                  }
+                },
+                "required": [
+                  "name",
+                  "id"
+                ],
+                "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+              },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
+              },
+              "ExecutionLinks": {
+                "type": "object",
+                "properties": {
+                  "self": {
+                    "type": "string",
+                    "description": "The snapshot: `GET /api/v1/executions/get?id=…`."
+                  },
+                  "events": {
+                    "type": "string",
+                    "description": "The retained history: `GET /api/v1/executions/events?id=…`."
+                  },
+                  "cancel": {
+                    "type": "string",
+                    "description": "Where to ask it to stop: `POST /api/v1/executions/cancel`."
+                  },
+                  "websocket": {
+                    "type": "string",
+                    "description": "The live channel, from the beginning: `GET /events?execution=…`."
+                  },
+                  "cockpit": {
+                    "type": "string",
+                    "description": "The page a person opens."
+                  }
+                },
+                "required": [
+                  "self",
+                  "events",
+                  "cancel",
+                  "websocket",
+                  "cockpit"
+                ],
+                "description": "Where to read more about one execution, in this server's own terms.\n\nEvery value is derived from the registry's declared routes and from the live channel's\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::devtask"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_devtask_implement"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/devtask/implement"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "devtask",
+          "issue",
+          "executions",
+          "worktree",
+          "mesh",
+          "intent"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "repository_mutation",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs"
+      },
+      {
         "id": "devtask.issue",
         "module": "devtask",
         "kind": "query",
@@ -16938,6 +17739,124 @@
           "effect": "read",
           "cancellable": false,
           "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs"
+      },
+      {
+        "id": "devtask.run",
+        "module": "devtask",
+        "kind": "command",
+        "title": "A worker's run on an issue's worktree",
+        "description": "The execution `devtask.implement` starts, and nothing else: the run handed to the attached peer that asked, in the issue's worktree, under the issue's mesh claim. It lasts while that peer stays attached — the same position id, attached at the same instant — and ends `succeeded` when it detaches, `cancelled` when asked to stop, and `failed` on its deadline; refused when the worker is not attached when it starts. What the worker did is in the worktree and is verified by what verifies a branch, never by this. Reachable only through `executions.start`: it declares no route, tool or command of its own.",
+        "input": {
+          "name": "RunInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue."
+              },
+              "branch": {
+                "type": "string",
+                "description": "The branch the work is on."
+              },
+              "worktree": {
+                "type": "string",
+                "description": "The worktree the worker works in."
+              },
+              "worker": {
+                "type": "string",
+                "description": "The worker: the board's id of the attached peer the run was handed to (`p3`)."
+              },
+              "worker_attached_at": {
+                "type": "string",
+                "description": "When that peer attached, RFC 3339: with the id, which peer it is, since a position id\nis reused by the next client to connect after it."
+              },
+              "deadline_minutes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The run's deadline, in minutes."
+              }
+            },
+            "required": [
+              "issue",
+              "branch",
+              "worktree",
+              "worker",
+              "worker_attached_at",
+              "deadline_minutes"
+            ],
+            "description": "The input of `devtask.run`, which only `devtask.implement` composes: everything about the\nrun is already decided when it starts.\n\n```\nuse majordomus_cli::capability::builtin::devtask::RunInput;\nlet input: RunInput = serde_json::from_value(serde_json::json!({\n    \"issue\": \"I4003\", \"branch\": \"feature/I4003-x\", \"worktree\": \"/wt\", \"worker\": \"p3\",\n    \"worker_attached_at\": \"2026-10-23T08:00:00Z\", \"deadline_minutes\": 60,\n})).unwrap();\nassert_eq!(input.worker, \"p3\");\n```",
+            "title": "RunInput"
+          }
+        },
+        "output": {
+          "name": "RunReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue."
+              },
+              "worker": {
+                "type": "string",
+                "description": "The worker."
+              },
+              "worktree": {
+                "type": "string",
+                "description": "The worktree it worked in."
+              },
+              "ended": {
+                "type": "string",
+                "description": "How the run ended, in words. A run ends when its worker detaches; what it did is in\nthe worktree, and is verified by what verifies a branch, never by this."
+              },
+              "elapsed_ms": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How long it lasted, in milliseconds."
+              }
+            },
+            "required": [
+              "issue",
+              "worker",
+              "worktree",
+              "ended",
+              "elapsed_ms"
+            ],
+            "description": "How a worker's run ended: the issue, the worker and the worktree it was handed, why it\nended and how long it lasted — the output of a `devtask.run` execution that succeeded.\n\n```\nuse majordomus_cli::capability::builtin::devtask::RunReport;\nlet r = RunReport { issue: \"I1\".into(), worker: \"p1\".into(), worktree: \"/wt\".into(),\n    ended: \"p1 detached\".into(), elapsed_ms: 5 };\nassert_eq!(serde_json::to_value(&r).unwrap()[\"ended\"], \"p1 detached\");\n```",
+            "title": "RunReport"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::devtask"
+        },
+        "exposure": {},
+        "availability": "runtime",
+        "visibility": "internal",
+        "stability": "experimental",
+        "tags": [
+          "devtask",
+          "issue",
+          "executions",
+          "worker"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": true,
+          "concurrency": "serial"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs"
       },
@@ -87665,13 +88584,15 @@
       {
         "id": "devtask",
         "title": "Executable development scopes",
-        "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+        "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 4,
         "capability_ids": [
+          "devtask.implement",
           "devtask.issue",
-          "devtask.milestone"
+          "devtask.milestone",
+          "devtask.run"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
         "rustdoc": {
@@ -88593,7 +89514,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 606,
+        "capabilities": 607,
         "capability_ids": []
       },
       {
@@ -88686,7 +89607,7 @@
     ]
   },
   "index": {
-    "fingerprint": "801d07ea35f305141dc0275543af2b6e6413665dd715c343e3c756531f4a8188",
+    "fingerprint": "f4341db2e3343dcc767c351fffaeafcfaf3f558f5fe0ff760a429a9d68958682",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -88740,7 +89661,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 606,
+      "test": 607,
       "use-case": 49,
       "workspace": 1
     },
@@ -95780,7 +96701,7 @@
         "title": "Executions — watching a capability call happen",
         "path": "docs/EXECUTIONS.md",
         "source_class": "document",
-        "bytes": 33132
+        "bytes": 36447
       },
       {
         "uri": "majordomus://document/docs/EXTRACTION_REPORT.md",
@@ -119952,6 +120873,14 @@
         "bytes": 8651
       },
       {
+        "uri": "majordomus://test/test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+        "kind": "test",
+        "identity": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+        "path": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+        "source_class": "case",
+        "bytes": 10853
+      },
+      {
         "uri": "majordomus://test/test/cases/4004_an_execution_holds_its_issue_claim.sh",
         "kind": "test",
         "identity": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
@@ -122796,7 +123725,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 606
+      "objects": 607
     },
     {
       "name": "use-case",
@@ -156274,6 +157203,23 @@
         "output": "CompilerPolicy"
       },
       {
+        "name": "majordomus_devtask_implement",
+        "id": "devtask.implement",
+        "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+        "description": "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "repository_mutation",
+        "hints": {
+          "read_only": false,
+          "destructive": true,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "ImplementInput",
+        "output": "ImplementAnswer"
+      },
+      {
         "name": "majordomus_devtask",
         "id": "devtask.issue",
         "title": "One issue as an executable development task",
@@ -159645,6 +160591,12 @@
         "path": "/api/v1/devcontext/policy",
         "id": "devcontext.policy",
         "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/devtask/implement",
+        "id": "devtask.implement",
+        "kind": "command"
       },
       {
         "method": "GET",
@@ -169116,6 +170068,30 @@
           "cases": 1
         },
         {
+          "subject": "devtask.implement",
+          "module": "devtask",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "devtask.implement",
+          "module": "devtask",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
+          "subject": "devtask.implement",
+          "module": "devtask",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
           "subject": "devtask.issue",
           "module": "devtask",
           "transport": "direct",
@@ -169156,6 +170132,14 @@
           "transport": "http",
           "state": "covered",
           "cases": 1
+        },
+        {
+          "subject": "devtask.run",
+          "module": "devtask",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
         },
         {
           "subject": "directories.list",
@@ -172811,24 +173795,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 209,
+          "required": 211,
           "covered": 176,
           "missing": 0,
-          "waived": 33,
+          "waived": 35,
           "inapplicable": 0
         },
         "http": {
-          "required": 203,
+          "required": 204,
           "covered": 176,
           "missing": 0,
-          "waived": 27,
+          "waived": 28,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 198,
+          "required": 199,
           "covered": 172,
           "missing": 0,
-          "waived": 26,
+          "waived": 27,
           "inapplicable": 0
         },
         "system": {
@@ -172839,10 +173823,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 624,
+          "required": 628,
           "covered": 538,
           "missing": 0,
-          "waived": 86,
+          "waived": 90,
           "inapplicable": 0
         }
       }

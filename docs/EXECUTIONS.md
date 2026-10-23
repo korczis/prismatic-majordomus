@@ -201,6 +201,43 @@ execution runs without a claim and says so, never failing for it. Each step is t
 an idempotency key is matched against. `majordomus run` takes no issue: it runs in its own
 process, where no mesh runs.
 
+### Implementing an issue: `devtask.implement`
+
+Taking an issue was a sequence a session ran by hand — is it ready, does it serve an intent,
+is anybody on it, make the worktree, start — and two sessions could run it at once (I4003,
+Mission Control B4). `devtask.implement` (`POST /api/v1/devtask/implement`, the MCP tool
+`majordomus_devtask_implement`) is that sequence as one request. Every step is a capability
+that already exists, called in-process through the registry, and each runs only when every
+step before it passed:
+
+| step | what it asks | when it does not pass |
+|---|---|---|
+| key | did this `idempotency_key` (default `implement-<issue>`) already start a run of this issue? | answered that execution, `deduplicated`, and nothing else runs; a key that started one for another issue is refused `409 conflict` |
+| readiness | `devtask.issue`'s verdict | refused `not_ready: <issue>: <reason>; blocked by …` |
+| preflight | `intents.preflight` for the issue | refused `invalid_intent: <issue>: <the preflight's refusal>` |
+| claim | would the issue's exclusive mesh claim be admitted now? asked through the same admission `Cooperation::claim` applies, and not taken | refused `claim_conflict: <issue> is claimed on the mesh: session … holds …` |
+| worker | the attached MCP peer whose call this is | **`pending`**, with the reason: nothing is created and nothing failed |
+| worktree | `worktree.create` on `feature/<id>-<slug>` | its own refusal |
+| execution | `executions.start` of `devtask.run` for the issue, under the key | its own refusal |
+
+A refusal at any of the first four steps creates nothing: no worktree, no execution, no
+claim. The answer carries the standing (`started`, `deduplicated` or `pending`), every step
+with what it found, the branch, the worktree, the worker and the execution with its links.
+The claim itself is taken by the execution, as [above](#an-execution-for-an-issue-holds-its-claim),
+before `devtask.run` enters its handler; a claim taken by somebody else between the question
+and the start refuses the execution there, with the holder named.
+
+`devtask.run` is the worker's run, and it is reachable only through `executions.start`: it
+declares no route, tool or command of its own. It is handed to the attached peer that asked
+— work is never pushed to a peer that did not ask for it, which is why a request over plain
+HTTP or `majordomus run` answers `pending` — and lasts while that peer stays attached: the
+same position id, attached at the same instant, because a position id is reused by the next
+client to connect. It ends `succeeded` when the worker detaches (`DELETE /mcp`, a closed
+session), `cancelled` when asked to stop, and `failed` on its deadline (`deadline_minutes`,
+60 by default, a day at most); started for a worker that is no longer attached it is refused
+`no_worker`. What the worker did is in the worktree, and is verified by what verifies a
+branch, never by the run.
+
 ## One plane per checkout: `majordomus run` and the server
 
 `majordomus run` executes in its own process — the cost and the failure modes of a run are
@@ -484,6 +521,7 @@ answers the ones this process is running with.
 | the state machine, its transitions and the refusal of an invalid one | behaviourally verified, every pair of states (`execution::model`, `execution::store`) |
 | the transition table through the public surface: listed by `executions.protocol` and the OpenAPI document, a legal and an illegal move reported, a stop of an unknown outcome, a reconciliation, a newer schema refused | behaviourally verified (`test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh`) |
 | a worker that authorises, claims or verifies an execution | not implemented here; the states and events exist for it |
+| `devtask.implement`: pending with nobody attached, `invalid_intent` and `claim_conflict` creating nothing, one run holding the issue's claim in a new worktree, the same request answered the same run, the run ending with its worker | behaviourally verified (`devtask`, `execution::claim`, `test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh`) |
 | the store's bounds and the behaviour at each: eviction, truncation, lag, a gone subscriber | behaviourally verified (`execution::store`) |
 | redaction from the schema, through references, arrays and maps | behaviourally verified (`execution::redact`) |
 | the handshake, the framing and SHA-1 against the published vectors | behaviourally verified (`http::ws`) |

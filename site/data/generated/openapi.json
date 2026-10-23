@@ -35,6 +35,7 @@
     "op-devcontext-compile": "docs/api/devcontext/",
     "op-devcontext-explain": "docs/api/devcontext/",
     "op-devcontext-policy": "docs/api/devcontext/",
+    "op-devtask-implement": "docs/api/devtask/",
     "op-devtask-issue": "docs/api/devtask/",
     "op-devtask-milestone": "docs/api/devtask/",
     "op-directories-list": "docs/api/directories/",
@@ -204,8 +205,8 @@
     "op-worktree-trunk": "docs/api/worktree/",
     "op-worktree-uncommitted": "docs/api/worktree/",
     "schema-ActiveTask": "docs/api/shared/",
-    "schema-Actor": "docs/api/executions/",
-    "schema-ActorKind": "docs/api/executions/",
+    "schema-Actor": "docs/api/shared/",
+    "schema-ActorKind": "docs/api/shared/",
     "schema-AdmitCommand": "docs/api/mesh/",
     "schema-AdrRef": "docs/api/product/",
     "schema-AdvisorCapacity": "docs/api/reasoning/",
@@ -300,7 +301,7 @@
     "schema-ClaimMode": "docs/api/mesh/",
     "schema-ClaimOverlap": "docs/api/mesh/",
     "schema-ClaimRef": "docs/api/product/",
-    "schema-ClaimStanding": "docs/api/executions/",
+    "schema-ClaimStanding": "docs/api/shared/",
     "schema-ClaimState": "docs/api/mesh/",
     "schema-ClaimView": "docs/api/mesh/",
     "schema-ClaimedArtifact": "docs/api/entity/",
@@ -547,16 +548,16 @@
     "schema-ExclusionReason": "docs/api/devcontext/",
     "schema-ExecutableIdentity": "docs/api/server/",
     "schema-ExecutionConcurrency": "docs/api/capabilities/",
-    "schema-ExecutionDiagnostic": "docs/api/executions/",
+    "schema-ExecutionDiagnostic": "docs/api/shared/",
     "schema-ExecutionEffect": "docs/api/shared/",
-    "schema-ExecutionError": "docs/api/executions/",
+    "schema-ExecutionError": "docs/api/shared/",
     "schema-ExecutionEvent": "docs/api/executions/",
     "schema-ExecutionHints": "docs/api/mcp/",
-    "schema-ExecutionId": "docs/api/executions/",
-    "schema-ExecutionLinks": "docs/api/executions/",
+    "schema-ExecutionId": "docs/api/shared/",
+    "schema-ExecutionLinks": "docs/api/shared/",
     "schema-ExecutionList": "docs/api/executions/",
     "schema-ExecutionPolicy": "docs/api/capabilities/",
-    "schema-ExecutionState": "docs/api/executions/",
+    "schema-ExecutionState": "docs/api/shared/",
     "schema-ExecutionStateView": "docs/api/executions/",
     "schema-ExecutionView": "docs/api/executions/",
     "schema-ExecutorWait": "docs/api/integration/",
@@ -627,6 +628,10 @@
     "schema-IdentityFacet": "docs/api/session-domain/",
     "schema-IdentityRead": "docs/api/delivery/",
     "schema-IdentityReport": "docs/api/session-domain/",
+    "schema-ImplementAnswer": "docs/api/devtask/",
+    "schema-ImplementInput": "docs/api/devtask/",
+    "schema-ImplementStanding": "docs/api/devtask/",
+    "schema-ImplementStep": "docs/api/devtask/",
     "schema-Implementation": "docs/api/delivery/",
     "schema-ImpliedObligation": "docs/api/gates/",
     "schema-InFlight": "docs/api/plan/",
@@ -687,7 +692,7 @@
     "schema-IntentWorkRef": "docs/api/intent-realization/",
     "schema-IntentWorkUnit": "docs/api/intent-realization/",
     "schema-Interface": "docs/api/deploy/",
-    "schema-IssueClaim": "docs/api/executions/",
+    "schema-IssueClaim": "docs/api/shared/",
     "schema-IssueDelivery": "docs/api/plan/",
     "schema-IssueDeliveryReport": "docs/api/plan/",
     "schema-IssueOrigin": "docs/api/intents/",
@@ -886,7 +891,7 @@
     "schema-ProductFinding": "docs/api/product/",
     "schema-ProductProvider": "docs/api/product/",
     "schema-ProductValidationReport": "docs/api/product/",
-    "schema-ProgressView": "docs/api/executions/",
+    "schema-ProgressView": "docs/api/shared/",
     "schema-ProjectIdentity": "docs/api/environment/",
     "schema-ProjectionState": "docs/api/environment/",
     "schema-ProjectionView": "docs/api/design/",
@@ -1002,7 +1007,7 @@
     "schema-RepositoryIdentity": "docs/api/environment/",
     "schema-RepositoryInfo": "docs/api/repository/",
     "schema-RepositoryObservations": "docs/api/repository/",
-    "schema-RepositoryRef": "docs/api/executions/",
+    "schema-RepositoryRef": "docs/api/shared/",
     "schema-RepositoryReport": "docs/api/repository/",
     "schema-RepositoryTopology": "docs/api/worktree/",
     "schema-RepositoryView": "docs/api/worktree/",
@@ -1121,14 +1126,14 @@
     "schema-Standing": "docs/api/worktree/",
     "schema-StartInput": "docs/api/executions/",
     "schema-StartPoint": "docs/api/worktree/",
-    "schema-StartedExecution": "docs/api/executions/",
+    "schema-StartedExecution": "docs/api/shared/",
     "schema-State": "docs/api/repository/",
     "schema-StateView": "docs/api/session-domain/",
     "schema-Status": "docs/api/continuity/",
     "schema-StatusReport": "docs/api/worktree/",
     "schema-StepOutcome": "docs/api/worktree/",
-    "schema-StepState": "docs/api/executions/",
-    "schema-StepView": "docs/api/executions/",
+    "schema-StepState": "docs/api/shared/",
+    "schema-StepView": "docs/api/shared/",
     "schema-StoreView": "docs/api/continuity/",
     "schema-StoredConclusion": "docs/api/reasoning/",
     "schema-StoredPlan": "docs/api/reasoning/",
@@ -1285,8 +1290,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 203,
-    "schemas": 1021,
+    "operations": 204,
+    "schemas": 1025,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1418,6 +1423,7 @@
     "devcontext.compile": "devcontext",
     "devcontext.explain": "devcontext",
     "devcontext.policy": "devcontext",
+    "devtask.implement": "devtask",
     "devtask.issue": "devtask",
     "devtask.milestone": "devtask",
     "directories.list": "directories",
@@ -1591,8 +1597,8 @@
   "schema": 1,
   "schema_homes": {
     "ActiveTask": "shared",
-    "Actor": "executions",
-    "ActorKind": "executions",
+    "Actor": "shared",
+    "ActorKind": "shared",
     "AdmitCommand": "mesh",
     "AdrRef": "product",
     "AdvisorCapacity": "reasoning",
@@ -1687,7 +1693,7 @@
     "ClaimMode": "mesh",
     "ClaimOverlap": "mesh",
     "ClaimRef": "product",
-    "ClaimStanding": "executions",
+    "ClaimStanding": "shared",
     "ClaimState": "mesh",
     "ClaimView": "mesh",
     "ClaimedArtifact": "entity",
@@ -1934,16 +1940,16 @@
     "ExclusionReason": "devcontext",
     "ExecutableIdentity": "server",
     "ExecutionConcurrency": "capabilities",
-    "ExecutionDiagnostic": "executions",
+    "ExecutionDiagnostic": "shared",
     "ExecutionEffect": "shared",
-    "ExecutionError": "executions",
+    "ExecutionError": "shared",
     "ExecutionEvent": "executions",
     "ExecutionHints": "mcp",
-    "ExecutionId": "executions",
-    "ExecutionLinks": "executions",
+    "ExecutionId": "shared",
+    "ExecutionLinks": "shared",
     "ExecutionList": "executions",
     "ExecutionPolicy": "capabilities",
-    "ExecutionState": "executions",
+    "ExecutionState": "shared",
     "ExecutionStateView": "executions",
     "ExecutionView": "executions",
     "ExecutorWait": "integration",
@@ -2014,6 +2020,10 @@
     "IdentityFacet": "session-domain",
     "IdentityRead": "delivery",
     "IdentityReport": "session-domain",
+    "ImplementAnswer": "devtask",
+    "ImplementInput": "devtask",
+    "ImplementStanding": "devtask",
+    "ImplementStep": "devtask",
     "Implementation": "delivery",
     "ImpliedObligation": "gates",
     "InFlight": "plan",
@@ -2074,7 +2084,7 @@
     "IntentWorkRef": "intent-realization",
     "IntentWorkUnit": "intent-realization",
     "Interface": "deploy",
-    "IssueClaim": "executions",
+    "IssueClaim": "shared",
     "IssueDelivery": "plan",
     "IssueDeliveryReport": "plan",
     "IssueOrigin": "intents",
@@ -2273,7 +2283,7 @@
     "ProductFinding": "product",
     "ProductProvider": "product",
     "ProductValidationReport": "product",
-    "ProgressView": "executions",
+    "ProgressView": "shared",
     "ProjectIdentity": "environment",
     "ProjectionState": "environment",
     "ProjectionView": "design",
@@ -2389,7 +2399,7 @@
     "RepositoryIdentity": "environment",
     "RepositoryInfo": "repository",
     "RepositoryObservations": "repository",
-    "RepositoryRef": "executions",
+    "RepositoryRef": "shared",
     "RepositoryReport": "repository",
     "RepositoryTopology": "worktree",
     "RepositoryView": "worktree",
@@ -2508,14 +2518,14 @@
     "Standing": "worktree",
     "StartInput": "executions",
     "StartPoint": "worktree",
-    "StartedExecution": "executions",
+    "StartedExecution": "shared",
     "State": "repository",
     "StateView": "session-domain",
     "Status": "continuity",
     "StatusReport": "worktree",
     "StepOutcome": "worktree",
-    "StepState": "executions",
-    "StepView": "executions",
+    "StepState": "shared",
+    "StepView": "shared",
     "StoreView": "continuity",
     "StoredConclusion": "reasoning",
     "StoredPlan": "reasoning",
@@ -2737,7 +2747,7 @@
     },
     {
       "description": "Who asked, and which peer they are when this process knows.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "Actor",
       "properties": [
@@ -2776,7 +2786,7 @@
     },
     {
       "description": "Who asked for the execution. Not an authorisation decision — this server authenticates\nnobody — but a fact worth carrying into the audit line and the UI.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": true,
       "name": "ActorKind",
       "properties": [],
@@ -7592,7 +7602,7 @@
     },
     {
       "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```",
-      "home": "executions",
+      "home": "shared",
       "is_enum": true,
       "name": "ClaimStanding",
       "properties": [],
@@ -20249,6 +20259,7 @@
         "devcontext.compile",
         "devcontext.explain",
         "devcontext.policy",
+        "devtask.implement",
         "devtask.issue",
         "devtask.milestone",
         "directories.list",
@@ -21746,7 +21757,7 @@
     },
     {
       "description": "A structured finding an execution reported on its way, distinct from its outcome.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "ExecutionDiagnostic",
       "properties": [
@@ -21832,7 +21843,7 @@
     },
     {
       "description": "Why an execution ended badly, in the repository's diagnostic vocabulary rather than in\nRust's: a code a program branches on, a sentence a person reads, and where to look.\n\nA panic message and a backtrace are never in here. The engine catches a panicking\nhandler and reports `internal` with the execution's correlation id; the panic itself is\non the process's own error stream, where the operator running the server can read it.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "ExecutionError",
       "properties": [
@@ -22327,7 +22338,7 @@
     },
     {
       "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "ExecutionId",
       "properties": [],
@@ -22343,7 +22354,7 @@
     },
     {
       "description": "Where to read more about one execution, in this server's own terms.\n\nEvery value is derived from the registry's declared routes and from the live channel's\nown constant, so a route that moves moves here too and no client holds a path this\nserver does not serve.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "ExecutionLinks",
       "properties": [
@@ -22507,7 +22518,7 @@
     },
     {
       "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": true,
       "name": "ExecutionState",
       "properties": [],
@@ -26469,6 +26480,189 @@
       "variants": []
     },
     {
+      "description": "The answer of `devtask.implement`: where the request stands, every step it took, and —\nwhen it started or found one — the execution with the links to follow it.\n\n```\nuse majordomus_cli::capability::builtin::devtask::{ImplementAnswer, ImplementStanding};\nlet pending = ImplementAnswer {\n    issue: \"I4003\".into(), standing: ImplementStanding::Pending,\n    idempotency_key: \"implement-I4003\".into(), branch: \"feature/I4003-x\".into(),\n    steps: vec![], pending: Some(\"no worker is attached\".into()),\n    worker: None, worktree: None, execution: None,\n};\nlet json = serde_json::to_value(&pending).unwrap();\nassert_eq!(json[\"standing\"], \"pending\");\nassert!(json.get(\"execution\").is_none(), \"nothing was started, and nothing says so\");\n```",
+      "home": "devtask",
+      "is_enum": false,
+      "name": "ImplementAnswer",
+      "properties": [
+        {
+          "description": "The issue.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`started`, `deduplicated` or `pending`. A refusal is not an answer: it is an error\nnaming its cause (`not_ready`, `invalid_intent`, `claim_conflict`).",
+          "name": "standing",
+          "refs": [
+            "ImplementStanding"
+          ],
+          "required": true,
+          "type": "ImplementStanding"
+        },
+        {
+          "description": "The key the execution is held under.",
+          "name": "idempotency_key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch the work is on: `feature/<id>-<slug>`.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The steps, in the order they ran.",
+          "name": "steps",
+          "refs": [
+            "ImplementStep"
+          ],
+          "required": true,
+          "type": "array of ImplementStep"
+        },
+        {
+          "description": "Why the request is pending; absent otherwise.",
+          "name": "pending",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The worker the run was handed to: the attached peer that asked.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The worktree the run works in.",
+          "name": "worktree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The execution: the worker's run, holding the issue's mesh claim.",
+          "name": "execution",
+          "refs": [
+            "StartedExecution"
+          ],
+          "required": false,
+          "type": "StartedExecution | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "devtask.implement"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which issue to implement, and how a repeated request is recognised.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I4003\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.idempotency_key), (\"I4003\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived from the issue, never given\");\n```",
+      "home": "devtask",
+      "is_enum": false,
+      "name": "ImplementInput",
+      "properties": [
+        {
+          "description": "The issue to implement, as the canonical model spells it (`I4003`).",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What makes a repeated request one execution (I4000): sent again, it is answered the\nexecution it started, as that execution stands now, and nothing new is created.\nDefault: `implement-<issue>`, so that a double click is one implementation; send a\nnew key to start the issue again after its execution ended.",
+          "name": "idempotency_key",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many minutes the worker's run may last before it fails on its deadline; 60 when\nabsent, a day at most.",
+          "name": "deadline_minutes",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "devtask.implement"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a request to implement an issue stands once it is answered.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStanding;\nlet words: Vec<String> = [ImplementStanding::Started, ImplementStanding::Deduplicated,\n    ImplementStanding::Pending].iter()\n    .map(|s| serde_json::to_value(s).unwrap().as_str().unwrap().to_string()).collect();\nassert_eq!(words, [\"started\", \"deduplicated\", \"pending\"]);\n```",
+      "home": "devtask",
+      "is_enum": true,
+      "name": "ImplementStanding",
+      "properties": [],
+      "type": "\"started\" | \"deduplicated\" | \"pending\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ImplementAnswer"
+      ],
+      "values": [
+        {
+          "description": "This request created the worktree when it was missing and started the execution.",
+          "value": "started"
+        },
+        {
+          "description": "The key had already started an execution for this issue; that execution is the\nanswer, as it stands now, and nothing was created.",
+          "value": "deduplicated"
+        },
+        {
+          "description": "Everything that could be judged was judged and passed, but no worker is attached to\ntake the run: nothing was created, and the request may be sent again by a worker.",
+          "value": "pending"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One step of the sequence and how it came out.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStep;\nlet step = ImplementStep { step: \"worker\".into(), ok: false, detail: \"nobody asked\".into() };\nassert_eq!(serde_json::to_value(&step).unwrap()[\"step\"], \"worker\");\n```",
+      "home": "devtask",
+      "is_enum": false,
+      "name": "ImplementStep",
+      "properties": [
+        {
+          "description": "`readiness`, `preflight`, `claim`, `worker`, `worktree` or `execution`, in that\norder; a step that was not reached is absent.",
+          "name": "step",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it passed.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What it found, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ImplementAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The paths a feature is implemented by and the revisions that last touched them.",
       "home": "delivery",
       "is_enum": false,
@@ -29752,7 +29946,7 @@
     },
     {
       "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "IssueClaim",
       "properties": [
@@ -40669,7 +40863,7 @@
     },
     {
       "description": "How far along an execution is.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "ProgressView",
       "properties": [
@@ -47913,7 +48107,7 @@
     },
     {
       "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "RepositoryRef",
       "properties": [
@@ -54452,7 +54646,7 @@
     },
     {
       "description": "The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \"capability\": \"executions.demonstrate\",\n    \"input\": { \"steps\": 1, \"delay_ms\": 0 },\n    \"idempotency_key\": \"click-1\",\n});\nlet start = || -> StartedExecution {\n    serde_json::from_value(ctx.execute(\"executions.start\", input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated && again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "StartedExecution",
       "properties": [
@@ -54656,7 +54850,9 @@
       "used_by": [
         "executions.start"
       ],
-      "used_by_schemas": [],
+      "used_by_schemas": [
+        "ImplementAnswer"
+      ],
       "values": [],
       "variants": []
     },
@@ -54952,7 +55148,7 @@
     },
     {
       "description": "Where a step of an execution stands.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": true,
       "name": "StepState",
       "properties": [],
@@ -54979,7 +55175,7 @@
     },
     {
       "description": "One named phase of an execution, as the handler reported it.",
-      "home": "executions",
+      "home": "shared",
       "is_enum": false,
       "name": "StepView",
       "properties": [
@@ -62689,9 +62885,78 @@
       "slug": "devcontext"
     },
     {
-      "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+      "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
       "name": "devtask",
       "operations": [
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "an-issue",
+              "json": "{\"issue\":\"I0001\"}"
+            }
+          ],
+          "body_schema": "ImplementInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/devtask/implement\" -H \"content-type: application/json\" -d '{\"issue\":\"I0001\"}'",
+          "description": "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links.",
+          "home": "devtask",
+          "id": "devtask.implement",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_devtask_implement",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/devtask/implement",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::devtask",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Implement an issue: readiness, preflight, claim, worktree and one run: the result.",
+              "schema": "ImplementAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+              "schema": "ErrorBody",
+              "status": "409"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ImplementAnswer",
+          "stability": "experimental",
+          "summary": "Implement an issue: readiness, preflight, claim, worktree and one run"
+        },
         {
           "benchmark": "required",
           "benchmark_reason": "",

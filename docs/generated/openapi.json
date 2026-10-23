@@ -76,7 +76,7 @@
     },
     {
       "name": "devtask",
-      "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it."
+      "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts."
     },
     {
       "name": "directories",
@@ -3925,6 +3925,124 @@
           }
         },
         "x-majordomus-cli": "devcontext policy"
+      }
+    },
+    "/api/v1/devtask/implement": {
+      "post": {
+        "operationId": "devtask.implement",
+        "summary": "Implement an issue: readiness, preflight, claim, worktree and one run",
+        "description": "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links.",
+        "tags": [
+          "devtask"
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "The input of `devtask.implement`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImplementInput"
+              },
+              "examples": {
+                "an-issue": {
+                  "value": {
+                    "issue": "I0001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Implement an issue: readiness, preflight, claim, worktree and one run: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImplementAnswer"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "devtask.implement",
+        "x-majordomus-kind": "command",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::devtask"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "repository_mutation",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_devtask_implement"
+        }
       }
     },
     "/api/v1/devtask/issue": {
@@ -39245,6 +39363,150 @@
           "findings"
         ],
         "description": "The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec<&str> = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\"repository\", \"checkout\", \"episode\", \"provider_session\"]);\n```"
+      },
+      "ImplementAnswer": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string",
+            "description": "The issue."
+          },
+          "standing": {
+            "$ref": "#/components/schemas/ImplementStanding",
+            "description": "`started`, `deduplicated` or `pending`. A refusal is not an answer: it is an error\nnaming its cause (`not_ready`, `invalid_intent`, `claim_conflict`)."
+          },
+          "idempotency_key": {
+            "type": "string",
+            "description": "The key the execution is held under."
+          },
+          "branch": {
+            "type": "string",
+            "description": "The branch the work is on: `feature/<id>-<slug>`."
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImplementStep"
+            },
+            "description": "The steps, in the order they ran."
+          },
+          "pending": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the request is pending; absent otherwise."
+          },
+          "worker": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The worker the run was handed to: the attached peer that asked."
+          },
+          "worktree": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The worktree the run works in."
+          },
+          "execution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StartedExecution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The execution: the worker's run, holding the issue's mesh claim."
+          }
+        },
+        "required": [
+          "issue",
+          "standing",
+          "idempotency_key",
+          "branch",
+          "steps"
+        ],
+        "description": "The answer of `devtask.implement`: where the request stands, every step it took, and —\nwhen it started or found one — the execution with the links to follow it.\n\n```\nuse majordomus_cli::capability::builtin::devtask::{ImplementAnswer, ImplementStanding};\nlet pending = ImplementAnswer {\n    issue: \"I4003\".into(), standing: ImplementStanding::Pending,\n    idempotency_key: \"implement-I4003\".into(), branch: \"feature/I4003-x\".into(),\n    steps: vec![], pending: Some(\"no worker is attached\".into()),\n    worker: None, worktree: None, execution: None,\n};\nlet json = serde_json::to_value(&pending).unwrap();\nassert_eq!(json[\"standing\"], \"pending\");\nassert!(json.get(\"execution\").is_none(), \"nothing was started, and nothing says so\");\n```"
+      },
+      "ImplementInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "issue": {
+            "type": "string",
+            "description": "The issue to implement, as the canonical model spells it (`I4003`)."
+          },
+          "idempotency_key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What makes a repeated request one execution (I4000): sent again, it is answered the\nexecution it started, as that execution stands now, and nothing new is created.\nDefault: `implement-<issue>`, so that a double click is one implementation; send a\nnew key to start the issue again after its execution ended.",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": "^[A-Za-z0-9._:-]+$"
+          },
+          "deadline_minutes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How many minutes the worker's run may last before it fails on its deadline; 60 when\nabsent, a day at most."
+          }
+        },
+        "required": [
+          "issue"
+        ],
+        "description": "Which issue to implement, and how a repeated request is recognised.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I4003\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.idempotency_key), (\"I4003\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived from the issue, never given\");\n```"
+      },
+      "ImplementStanding": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "started",
+            "description": "This request created the worktree when it was missing and started the execution."
+          },
+          {
+            "type": "string",
+            "const": "deduplicated",
+            "description": "The key had already started an execution for this issue; that execution is the\nanswer, as it stands now, and nothing was created."
+          },
+          {
+            "type": "string",
+            "const": "pending",
+            "description": "Everything that could be judged was judged and passed, but no worker is attached to\ntake the run: nothing was created, and the request may be sent again by a worker."
+          }
+        ],
+        "description": "Where a request to implement an issue stands once it is answered.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStanding;\nlet words: Vec<String> = [ImplementStanding::Started, ImplementStanding::Deduplicated,\n    ImplementStanding::Pending].iter()\n    .map(|s| serde_json::to_value(s).unwrap().as_str().unwrap().to_string()).collect();\nassert_eq!(words, [\"started\", \"deduplicated\", \"pending\"]);\n```"
+      },
+      "ImplementStep": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string",
+            "description": "`readiness`, `preflight`, `claim`, `worker`, `worktree` or `execution`, in that\norder; a step that was not reached is absent."
+          },
+          "ok": {
+            "type": "boolean",
+            "description": "Whether it passed."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What it found, in words."
+          }
+        },
+        "required": [
+          "step",
+          "ok",
+          "detail"
+        ],
+        "description": "One step of the sequence and how it came out.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStep;\nlet step = ImplementStep { step: \"worker\".into(), ok: false, detail: \"nobody asked\".into() };\nassert_eq!(serde_json::to_value(&step).unwrap()[\"step\"], \"worker\");\n```"
       },
       "Implementation": {
         "type": "object",

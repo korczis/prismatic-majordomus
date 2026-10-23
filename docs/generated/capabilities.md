@@ -21,7 +21,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `deploy` | Deployment | behaviorally_verified | 5 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
 | `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
-| `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
+| `devtask` | Executable development scopes | behaviorally_verified | 4 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
@@ -108,8 +108,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `devcontext.compile` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext` | — | `GET /api/v1/devcontext` | `majordomus devcontext compile` | process, 16 entries | required |
 | `devcontext.explain` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext_explain` | — | `GET /api/v1/devcontext/explain` | `majordomus devcontext explain` | process, 8 entries | required |
 | `devcontext.policy` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext_policy` | `majordomus://devcontext/policy` | `GET /api/v1/devcontext/policy` | `majordomus devcontext policy` | — | required |
+| `devtask.implement` | `devtask` | command | experimental | `majordomus_devtask_implement` | — | `POST /api/v1/devtask/implement` | — | — | waived (transient_state) |
 | `devtask.issue` | `devtask` | query | behaviorally_verified | `majordomus_devtask` | — | `GET /api/v1/devtask/issue` | `majordomus devtask issue` | — | required |
 | `devtask.milestone` | `devtask` | query | behaviorally_verified | `majordomus_devtask_milestone` | — | `GET /api/v1/devtask/milestone` | `majordomus devtask milestone` | — | required |
+| `devtask.run` | `devtask` | command | experimental | — | — | — | — | — | waived (transient_state) |
 | `directories.list` | `directories` | query | behaviorally_verified | `majordomus_directories` | `majordomus://directories` | `GET /api/v1/directories` | — | process, 8 entries, 5s | required |
 | `distribution.artifact` | `distribution` | query | behaviorally_verified | `majordomus_artifact` | — | `GET /api/v1/distribution/artifact` | `majordomus distribution artifact` | — | required |
 | `distribution.build` | `distribution` | query | behaviorally_verified | `majordomus_build` | — | `GET /api/v1/distribution/build` | `majordomus distribution build` | — | required |

@@ -613,6 +613,23 @@
       "tool": "majordomus_devcontext_policy"
     },
     {
+      "api_anchor": "/docs/api/devtask/#op-devtask-implement",
+      "claims": [],
+      "cli": null,
+      "id": "devtask.implement",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-implement/",
+      "slug": "devtask-implement",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+      "tool": "majordomus_devtask_implement"
+    },
+    {
       "api_anchor": "/docs/api/devtask/#op-devtask-issue",
       "claims": [],
       "cli": "majordomus devtask issue",
@@ -645,6 +662,23 @@
       "tests": [],
       "title": "One milestone as an executable dependency graph",
       "tool": "majordomus_devtask_milestone"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": null,
+      "id": "devtask.run",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-run/",
+      "slug": "devtask-run",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "A worker's run on an issue's worktree",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/directories/#op-directories-list",
@@ -4360,7 +4394,7 @@
     ]
   },
   "counts": {
-    "capabilities": 209,
+    "capabilities": 211,
     "claims": 93,
     "modules": 58
   },
@@ -4681,6 +4715,11 @@
     {
       "capabilities": [
         {
+          "id": "devtask.implement",
+          "route": "/registry/capabilities/devtask-implement/",
+          "slug": "devtask-implement"
+        },
+        {
           "id": "devtask.issue",
           "route": "/registry/capabilities/devtask-issue/",
           "slug": "devtask-issue"
@@ -4689,6 +4728,11 @@
           "id": "devtask.milestone",
           "route": "/registry/capabilities/devtask-milestone/",
           "slug": "devtask-milestone"
+        },
+        {
+          "id": "devtask.run",
+          "route": "/registry/capabilities/devtask-run/",
+          "slug": "devtask-run"
         }
       ],
       "claims": [],

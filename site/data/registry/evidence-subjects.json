@@ -224,6 +224,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:devtask.implement",
+      "path": "/evidence/capabilities/devtask-implement/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:devtask.issue",
       "path": "/evidence/capabilities/devtask-issue/"
     },
@@ -231,6 +236,11 @@
       "kind": "capability",
       "subject": "capability:devtask.milestone",
       "path": "/evidence/capabilities/devtask-milestone/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:devtask.run",
+      "path": "/evidence/capabilities/devtask-run/"
     },
     {
       "kind": "capability",
@@ -4337,6 +4347,23 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:devtask.implement": {
+      "kind": "capability",
+      "id": "devtask.implement",
+      "page": "/evidence/capabilities/devtask-implement/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4003_devtask_implement_claims_creates_and_starts_once",
+          "path": "test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:devtask.issue": {
       "kind": "capability",
       "id": "devtask.issue",
@@ -4357,6 +4384,16 @@
       "members": [
         "command:devtask milestone"
       ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:devtask.run": {
+      "kind": "capability",
+      "id": "devtask.run",
+      "page": "/evidence/capabilities/devtask-run/",
+      "programs": [],
+      "members": [],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -20160,6 +20197,18 @@
       "programs": [],
       "members": [
         "capability:devtask.issue"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_devtask_implement": {
+      "kind": "mcp",
+      "id": "majordomus_devtask_implement",
+      "alias_of": "capability:devtask.implement",
+      "programs": [],
+      "members": [
+        "capability:devtask.implement"
       ],
       "routes": [],
       "mechanisms": [],

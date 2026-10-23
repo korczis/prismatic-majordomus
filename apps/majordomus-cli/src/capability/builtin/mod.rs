@@ -330,6 +330,9 @@ mod tests {
                 "continuity.publish",
                 "continuity.resume",
                 "continuity.sync",
+                // creates an issue's worktree and starts its run, through worktree.create and
+                // executions.start (I4003)
+                "devtask.implement",
                 // runs any executable capability, writers included (ADR 0126)
                 "executions.start",
                 // writes one new intent record, never a stage (ADR 0144)

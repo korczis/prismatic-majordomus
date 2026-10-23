@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.6"
   },
-  "fingerprint": "37678bf43c8e737f7547cad8e5aef9a761d6496c18fe75cca4436dd082af11c2",
+  "fingerprint": "8b4764ae8c58cc22244915104d2da5296acfd467f33ffcbc8957324f91fe5903",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 80,
         "moments": 17
       },
       "evidence": {
@@ -13137,10 +13137,18 @@
         {
           "id": "devtask",
           "title": "Executable development scopes",
-          "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.",
+          "description": "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
           "capabilities": [
+            {
+              "id": "devtask.implement",
+              "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_devtask_implement",
+              "route": "POST /api/v1/devtask/implement"
+            },
             {
               "id": "devtask.issue",
               "title": "One issue as an executable development task",
@@ -13158,6 +13166,12 @@
               "tool": "majordomus_devtask_milestone",
               "route": "GET /api/v1/devtask/milestone",
               "cli": "majordomus devtask milestone"
+            },
+            {
+              "id": "devtask.run",
+              "title": "A worker's run on an issue's worktree",
+              "kind": "command",
+              "stability": "experimental"
             }
           ]
         },
@@ -13485,10 +13499,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 26,
-        "mcp_tools": 26,
+        "capabilities": 28,
+        "mcp_tools": 27,
         "mcp_resources": 1073,
-        "http_routes": 26,
+        "http_routes": 27,
         "cli_paths": 13,
         "commands": 1,
         "objects": 1070,
@@ -18442,17 +18456,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3318,
-    "builtin": 209,
-    "declarative": 3109,
+    "capabilities": 3321,
+    "builtin": 211,
+    "declarative": 3110,
     "modules": 58,
-    "mcp_tools": 198,
-    "mcp_resources": 3164,
-    "http_routes": 203,
+    "mcp_tools": 199,
+    "mcp_resources": 3165,
+    "http_routes": 204,
     "cli_commands": 210,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3109,
+    "objects": 3110,
     "by_kind": {
       "adr": 160,
       "application": 5,
@@ -18485,7 +18499,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 606,
+      "test": 607,
       "use-case": 49,
       "workspace": 1
     },
