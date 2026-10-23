@@ -64138,18 +64138,19 @@
           "priority": "p0",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/integration/exclusive.rs",
             "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
             "apps/majordomus-cli/src/integration/repair.rs",
-            "apps/majordomus-cli/src/lease.rs",
-            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/integration/tests.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
             "docs/INTEGRATION.md",
             ".ai/repo/project/issues/I3991.yaml"
           ],
           "slug": "the-integration-lease-lives-by-queue-progress",
           "updated_at": "2026-10-23",
           "validation": [
-            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: lease::",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration:: commands::prs",
             "bin/majordomus plan validate"
           ]
         }
@@ -86870,6 +86871,13 @@
         "label": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "route": "/cockpit/objects/test/test-cases-3990-a-claim-lapses-when-its-session-stops-progressing-sh",
         "source": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "kind": "test",
+        "label": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "route": "/cockpit/objects/test/test-cases-3991-the-integration-lease-lives-by-queue-progress-sh",
+        "source": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -129577,6 +129585,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134688,8 +134701,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3775,
-      "edges": 8732,
+      "nodes": 3776,
+      "edges": 8733,
       "acyclic": false,
       "truncated": false
     }

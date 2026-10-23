@@ -23957,6 +23957,9 @@ capabilities:
               - type: string
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+              - type: string
+                const: lease_lost
+                description: "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           IntegrationEvidence:
             type: object
@@ -24939,6 +24942,9 @@ capabilities:
               - type: string
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+              - type: string
+                const: lease_lost
+                description: "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           RankFactors:
             type: object
@@ -26204,6 +26210,9 @@ capabilities:
               - type: string
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+              - type: string
+                const: lease_lost
+                description: "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           RankFactors:
             type: object
@@ -26343,6 +26352,20 @@ capabilities:
                   - string
                   - "null"
                 description: "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
+              progressed_at:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote."
+              progress_ttl_seconds:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`)."
             required:
               - pid
               - host
