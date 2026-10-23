@@ -4,16 +4,16 @@ description = "A deployment is described once, and every artifact built from it 
 weight = 17
 [extra]
 kind = "rule"
-slug = "majordomus-deployment-contract-1"
-identity = "majordomus.deployment-contract@1"
+slug = "majordomus-deployment-contract-2"
+identity = "majordomus.deployment-contract@2"
 status = "active"
-source = ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
+source = ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v2.md"
 +++
 {% raw %}
 
 ## Rationale
 
-A `Dockerfile` and its ignore file written by hand restate what the repository
+A `Dockerfile`, its ignore file and a provider's Procfile written by hand restate what the repository
 already knows — the port the server binds, the routes it registers, the binary the
 workspace names, the paths a build reads — and every one of those pairs drifts the first
 time one half changes. The failure is silent and it is discovered in production: an image
@@ -37,15 +37,24 @@ A deployment is a `*.yaml` object under the layer's deployments section, valid a
 `share/schemas/majordomus/deployment/deployment.v1.schema.json` (`deployment/v1`). It states the application, the
 package and binary shipped, the port and the interface the process listens on, the
 liveness and readiness routes, the resources, the machine count, the region and the build
-inputs — each exactly once. It names no hosting provider: none is a target, and a
-`provider` key is refused like any other key the contract does not have.
+inputs — each exactly once.
+
+A deployment names no hosting provider unless it names one the contract knows (ADR 0219).
+Today that is `gigalixir`; another name is refused like any other value outside the
+contract. A named provider states its application, its stack and the URL the deployment
+answers on, and that URL is `https://`. A hosted process binds every interface, so a
+provider beside `listen.interface: loopback` is refused. The credential that authorises a
+push to the provider is never a field: the contract has no key for one, and a token
+smuggled into a field that does exist is refused below.
 
 Keys are closed by `share/allow/deployment.txt`, generated from the schema: an unknown key
 is an error, never carried. Two objects may not claim one identity. `min_running` may not
 exceed `count`. A health route is a path, not a URL. The port is unprivileged, because the
 deployed process does not run as root.
 
-Every artifact built from it — the container image definition and its ignore file — is
+Every artifact built from it — the container image definition, its ignore file and every
+file the named provider reads, under `deploy/<provider>/` (for Gigalixir the Procfile and
+the inline buildpack's `bin/detect`, `bin/compile` and `bin/release`) — is
 written by `majordomus generate` from this object, carries a provenance
 header naming its source and its regeneration command, and is compared by
 `generate --check`. A contributor who edits a generated artifact is told which file to
@@ -60,9 +69,14 @@ key, the value found and the correction; the command that found it exits 10, and
 ## Verification
 
 `mj_validate_deployments` decides it, dispatched from `doctor, watch`. The behavioural
-case `test/cases/84_deployment_contract.sh` proves it by mutation: an unknown key, a
-`provider` block, an unknown schema version, a missing required field, a privileged port,
-a `min_running` above `count`, a health route that is not a path, a duplicate identity and
-a credential in a field that exists — each refused by name; and a valid object reaching
-the index and the object listing with nothing registered anywhere.
+case `test/cases/84_deployment_contract.sh` proves it by mutation: an unknown key, an
+unknown provider name, a provider URL that is not https, a provider beside a loopback
+interface, an unknown schema version, a missing required field, a privileged port, a
+`min_running` above `count`, a health route that is not a path, a duplicate identity and
+a credential in a field that exists — each refused by name; and a valid object, with and
+without a known provider, accepted. `test/cases/86_deployment_projections.sh` holds the
+generated files of the Majordomus repository's own object, the provider's among them, to their
+header, their port and `generate --check`, and
+`test/cases/3820_a_deployment_renders_its_providers_files.sh` renders a provider's files
+from a fixture object.
 {% endraw %}

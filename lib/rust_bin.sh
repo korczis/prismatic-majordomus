@@ -1075,6 +1075,10 @@ mj_rust_largest_build_dirs() {
 # behind a lock is already longer than the work.
 MJ_BUILD_LOCK_WAIT_DEFAULT=60
 
+# How long a build behind the lock keeps waiting when the disk is too low to go private, in
+# seconds, before it refuses (I3839).
+MJ_BUILD_LOCK_WAIT_LOW_DISK_DEFAULT=1800
+
 # mj_cargo_private_dir <tree-root>
 #
 # The build directory that is this tree's alone, under cargo's home like the shared one, so
@@ -1103,12 +1107,19 @@ mj_cargo_private_dir() {
 #   - while the last thing cargo said is that it is blocked, it counts; at the bound it says
 #     who else is building, stops that cargo, and runs the same build in this tree's own
 #     build directory (mj_cargo_private_dir), after the disk floor has been asked;
+#   - but not below the high-water mark (MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB, by default the
+#     reclaim mark MJ_RECLAIM_BELOW_MB_DEFAULT): a cold private build compiles every
+#     dependency once (5.3 GB, measured 2026-10-21 while 32-35 GiB were free), and with
+#     several builds waiting every one of them goes private at once, which multiplies the
+#     disk use exactly when the disk is lowest (I3839). There it waits on the shared lock
+#     again, up to MAJORDOMUS_BUILD_LOCK_WAIT_LOW_DISK seconds in all, and then refuses with
+#     exit 75, naming the free space, the mark and the other cargo processes;
 #   - a build that is already in a directory of its own (CARGO_BUILD_BUILD_DIR set by the
 #     caller) and is still blocked at the bound has no second place to go: it stops with
 #     exit 75 and says what holds it, rather than wait for ever.
 #
 # Exit status: cargo's own; 12 when the disk floor refuses the private build; 75 when the
-# bound was reached with nowhere left to build.
+# bound was reached with nowhere left to build, or below the high-water mark.
 mj_cargo_bounded() {
   mj_cb_root="$1"; shift
   mj_cb_wait="${MAJORDOMUS_BUILD_LOCK_WAIT:-$MJ_BUILD_LOCK_WAIT_DEFAULT}"
@@ -1125,6 +1136,11 @@ mj_cargo_bounded() {
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
   [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1
+  mj_cb_mark="${MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB:-$MJ_RECLAIM_BELOW_MB_DEFAULT}"
+  case "$mj_cb_mark" in ''|*[!0-9]*) mj_cb_mark="$MJ_RECLAIM_BELOW_MB_DEFAULT" ;; esac
+  mj_cb_low_wait="${MAJORDOMUS_BUILD_LOCK_WAIT_LOW_DISK:-$MJ_BUILD_LOCK_WAIT_LOW_DISK_DEFAULT}"
+  case "$mj_cb_low_wait" in ''|*[!0-9]*) mj_cb_low_wait="$MJ_BUILD_LOCK_WAIT_LOW_DISK_DEFAULT" ;; esac
+  mj_cb_low_waited=0
   while :; do
     : > "$mj_cb_log"
     command cargo "$@" 2>"$mj_cb_log" &
@@ -1170,6 +1186,24 @@ mj_cargo_bounded() {
         "${CARGO_BUILD_BUILD_DIR:-unset}" >&2
       rm -f "$mj_cb_log"
       return 75
+    fi
+    # below the high-water mark a private build would deepen the shortage it meets: wait on
+    # the shared lock again, bounded, and refuse rather than go private (I3839)
+    if [ "$mj_cb_mark" -gt 0 ]; then
+      mj_cb_target="$(mj_cargo_target_dir "$mj_cb_root/apps/majordomus-cli")"
+      mj_cb_free="$(mj_free_mb "$mj_cb_target" || true)"
+      if [ -n "$mj_cb_free" ] && [ "$mj_cb_free" -lt "$mj_cb_mark" ]; then
+        mj_cb_low_waited=$((mj_cb_low_waited + mj_cb_blocked))
+        if [ "$mj_cb_low_waited" -lt "$mj_cb_low_wait" ]; then
+          printf 'majordomus: %sMB free is under %sMB, where a cold private build would deepen the shortage; waiting on the shared lock again (%ss of %ss)\n' \
+            "$mj_cb_free" "$mj_cb_mark" "$mj_cb_low_waited" "$mj_cb_low_wait" >&2
+          continue
+        fi
+        printf 'majordomus: refusing a private build: %sMB free is under %sMB, and the shared build directory stayed locked for %ss; other cargo processes: %s. Wait for them, free space, or set MAJORDOMUS_PRIVATE_BUILD_ABOVE_MB=0 to build privately anyway\n' \
+          "$mj_cb_free" "$mj_cb_mark" "$mj_cb_low_waited" "${mj_cb_others:-none found}" >&2
+        rm -f "$mj_cb_log"
+        return 75
+      fi
     fi
     mj_rust_space_check "$mj_cb_root" "a build in this tree's own build directory" || { rm -f "$mj_cb_log"; return 12; }
     CARGO_BUILD_BUILD_DIR="$(mj_cargo_private_dir "$mj_cb_root")"

@@ -110,6 +110,10 @@ pub struct MeshStatus {
     /// This node, when the mesh has an identity.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub identity: Option<PublicIdentity>,
+    /// The endpoints this node advertises: what a peer dials to reach it. The bound
+    /// interface's addresses, or the one public URL a hosted hub is started with (ADR 0220).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub advertised: Vec<String>,
     /// The trust policy in force.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trust_policy: Option<String>,
@@ -570,6 +574,7 @@ impl MeshRuntime {
                     active: true,
                     reason: None,
                     identity: Some(active.beacon.identity().public.clone()),
+                    advertised: active.beacon.endpoints().to_vec(),
                     trust_policy: Some(active.trust.policy.as_str().into()),
                     providers,
                     tallies: Tallies::default(),
@@ -581,6 +586,7 @@ impl MeshRuntime {
                 active: false,
                 reason: Some(self.reason.lock().expect("mesh reason").clone()),
                 identity: None,
+                advertised: Vec::new(),
                 trust_policy: None,
                 providers: Vec::new(),
                 tallies: Tallies::default(),
@@ -620,6 +626,7 @@ impl MeshRuntime {
         drop(state);
 
         let bytes = serde_json::to_vec(envelope).unwrap_or_default();
+        let mut caller_trusted = false;
         let refusal = match ingest(
             &self.registry,
             &self.refusals,
@@ -631,17 +638,24 @@ impl MeshRuntime {
                 bytes,
             },
         ) {
-            Ingest::Accepted => None,
+            Ingest::Accepted { trusted } => {
+                caller_trusted = trusted;
+                None
+            }
             Ingest::Own => Some("that is this node's own envelope".into()),
             Ingest::Replay => Some("replayed".into()),
             Ingest::Refused(r) => Some(r.to_string()),
         };
         // A refused caller is answered with the refusal alone: it learns nothing of this
-        // node's peers. An admitted one learns this node and the trusted nodes of its own
-        // repositories (I2133).
+        // node's peers. An admitted one learns this node; only a caller the trust policy
+        // trusts also learns the trusted nodes of its own repositories (I2133). A stranger
+        // with a valid signature is recorded and told who this hub is, never who trusts it
+        // (ADR 0220 decision 5): a hub reachable from anywhere must not hand out the map.
         let mut candidates = Vec::with_capacity(MAX_CANDIDATES + 1);
         if refusal.is_none() {
             candidates.extend(serde_json::to_value(&own_envelope).ok());
+        }
+        if refusal.is_none() && caller_trusted {
             let repos: Vec<String> = envelope
                 .get("repos")
                 .and_then(|r| r.as_array())
@@ -666,7 +680,10 @@ impl MeshRuntime {
 }
 
 enum Ingest {
-    Accepted,
+    /// Recorded; `trusted` is whether the trust policy trusts the sender's key.
+    Accepted {
+        trusted: bool,
+    },
     Own,
     Replay,
     Refused(Refusal),
@@ -708,6 +725,7 @@ fn ingest(
         known_key.as_deref(),
         previous.as_ref(),
     );
+    let trusted = verdict.is_trusted();
     let raw = serde_json::to_value(&envelope).unwrap_or(serde_json::Value::Null);
     if registry.observe(
         &envelope.adv,
@@ -717,7 +735,7 @@ fn ingest(
         &observation.path,
         raw,
     ) {
-        Ingest::Accepted
+        Ingest::Accepted { trusted }
     } else {
         Ingest::Replay
     }
@@ -942,6 +960,55 @@ mod tests {
             "the answering node's own envelope leads the candidates"
         );
         assert_eq!(runtime.nodes().len(), 1);
+        runtime.stop();
+    }
+
+    #[test]
+    fn a_stranger_learns_this_hub_and_never_who_trusts_it() {
+        // ADR 0220 decision 5: a hub reachable from anywhere records a validly signed
+        // stranger and tells it who the hub is; only a trusted caller learns the trusted
+        // nodes of its repositories.
+        let dir = tempfile::tempdir().unwrap();
+        let runtime = MeshRuntime::new();
+        let own = identity_in(&dir, "self.json");
+        let own_node = own.public.node_id.clone();
+        let friend = identity_in(&dir, "friend.json");
+        let colleague = identity_in(&dir, "colleague.json");
+        let stranger = identity_in(&dir, "stranger.json");
+        let mut config = listed(&own);
+        config.trust.allow.push(friend.public.public_key.clone());
+        config.trust.allow.push(colleague.public.public_key.clone());
+        runtime
+            .activate(&config, own, vec![], vec![], "0.5.0")
+            .unwrap();
+        let repos = vec!["repo-1".to_string()];
+        let friend_env = advertise(&friend, 1, &["127.0.0.1:3".into()], &[], &repos, "0.5.0");
+        let first = runtime.register(&serde_json::to_value(&friend_env).unwrap(), "test");
+        assert!(first.accepted, "{:?}", first.refusal);
+
+        let stranger_env = advertise(&stranger, 1, &["127.0.0.1:4".into()], &[], &repos, "0.5.0");
+        let told = runtime.register(&serde_json::to_value(&stranger_env).unwrap(), "test");
+        assert!(
+            told.accepted,
+            "a valid stranger is recorded: {:?}",
+            told.refusal
+        );
+        let nodes: Vec<_> = told.candidates.iter().map(|c| c.adv.node_id()).collect();
+        assert_eq!(
+            nodes,
+            vec![Some(own_node.clone())],
+            "a stranger learns the hub alone"
+        );
+
+        let colleague_env = advertise(&colleague, 1, &["127.0.0.1:5".into()], &[], &repos, "0.5.0");
+        let shared = runtime.register(&serde_json::to_value(&colleague_env).unwrap(), "test");
+        let nodes: Vec<_> = shared.candidates.iter().map(|c| c.adv.node_id()).collect();
+        assert_eq!(nodes.first(), Some(&Some(own_node)));
+        assert!(
+            nodes.contains(&Some(friend.public.node_id.clone())),
+            "a trusted caller learns the trusted nodes of its repositories: {nodes:?}"
+        );
+        assert!(!nodes.contains(&Some(stranger.public.node_id.clone())));
         runtime.stop();
     }
 

@@ -1,0 +1,30 @@
+id: I3076
+milestone: a-version-follows-the-work
+title: "release.currency dates a landing by the forge's record of it, read from the observation prs refresh keeps"
+slug: a-landing-is-dated-by-the-forge
+priority: p2
+profile: implementation
+parallel_safe: false
+serves:
+  - a-version-follows-every-session#measured
+objective: "prs refresh also records, in the ForgeObservation it writes under .ai/local/state/integration/, the pull requests merged recently: number, mergedAt, head and merge commit. release.currency dates the oldest landing by the mergedAt of the earliest recorded merged pull request whose head or merge commit contains it, and names the observation's age. It reads only that record and never reaches the network, as SECURITY.md declares. Only where no recorded merge contains the landing does it fall back to the reflog and then the commit time of I3070. Case 3470 gains a forge step with a recorded observation, and a step over a recorded release whose commit carries a committed registry, as case 743's fixture does, asserting that next equals what release.version answers there."
+why: "The plan critique of a-version-follows-every-session (2026-10-19) found the landing clock wrong. The release seat (9c) asked for the forge's landing time first, then the reflog, then the commit time. The live read was withdrawn because SECURITY.md lets only prs refresh, drain, cleanup and repair --apply reach gh. The I3070 fix carries the reflog and the commit-time bound; this carries the forge, which changes forge.rs's refresh and its observation schema. The critique's finding no-case-shows-a-version-decided is planned here too."
+current_state: "release.currency dates the oldest landing by this clone's reflog of the remote-tracking trunk, else by its commit time as an upper bound that never makes the stance overdue. No recorded observation carries merged pull requests, and no case shows a version decided."
+desired_state: "A landing a recorded merge contains is dated by that merge's mergedAt, named with the observation's age. The reflog and the commit time are the fallbacks they are now, and case 3470 proves both the forge's date and a decided version."
+scope:
+  - ".ai/repo/project/issues/I3076.yaml"
+  - "apps/majordomus-cli/src/integration/forge.rs"
+  - "apps/majordomus-cli/src/release/currency.rs"
+  - "docs/RELEASE.md"
+  - "docs/INTEGRATION.md"
+depends_on:
+  - "I3070"
+acceptance_criteria:
+  - "A landing that a recorded merged pull request contains is dated by its mergedAt, the answer names the source and the observation's age, and release.currency runs no gh"
+  - "Case 3470 shows a version decided over a committed registry at the trunk, equal to release.version's"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "case_the_release_follows_the_work"
+created_at: 2026-10-19
+updated_at: 2026-10-19
