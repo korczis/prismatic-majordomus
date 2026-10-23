@@ -2684,4 +2684,136 @@ mod tests {
             "{signalled}"
         );
     }
+
+    /// The repository this crate is built in, as the command line would name it.
+    fn this_repository(format: OutputFormat) -> MeshQueryArgs {
+        MeshQueryArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")),
+                ..Default::default()
+            },
+            format,
+        }
+    }
+
+    #[test]
+    fn an_ensure_outside_a_repository_or_refused_by_the_capability_is_an_error() {
+        let elsewhere = tempfile::tempdir().unwrap();
+        let outside = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: vec!["true".into()],
+            query: MeshQueryArgs {
+                repo: crate::cli::RepoArgs {
+                    repo: Some(elsewhere.path().to_path_buf()),
+                    ..Default::default()
+                },
+                format: OutputFormat::Text,
+            },
+        });
+        assert!(
+            outside.is_err(),
+            "no layer to load was answered: {outside:?}"
+        );
+        // npm needs its install command: the capability refuses before anything runs
+        let refused = build_cache_ensure(MeshBuildCacheEnsureArgs {
+            kind: crate::mesh::build_cache::key::Kind::NpmModules,
+            dir: None,
+            command: Vec::new(),
+            query: this_repository(OutputFormat::Text),
+        });
+        let why = refused.expect_err("an npm ensure without a command was answered");
+        assert!(
+            why.to_string()
+                .contains("npm-modules needs the install command after `--`"),
+            "{why}"
+        );
+    }
+
+    #[test]
+    fn the_env_answer_is_printed_as_json_and_asks_sccache_by_name_when_none_is_given() {
+        let d = tempfile::tempdir().unwrap();
+        // the node file is absent, so no store is asked whatever sccache is installed
+        let code = build_cache_env(MeshBuildCacheEnvArgs {
+            sccache: None,
+            node_file: Some(d.path().join("absent.json")),
+            credentials: None,
+            format: OutputFormat::Json,
+        })
+        .unwrap();
+        assert_eq!(code, 0, "the answer is a fact, never a failure");
+    }
+
+    #[test]
+    fn a_key_answer_lists_each_kind_with_its_key_or_why_it_has_none() {
+        let v = json!({
+            "platform": "aarch64-apple-darwin",
+            "kinds": [
+                { "kind": "npm-modules", "dir": "site", "key": "v1/npm/k",
+                  "location": "store/v1/npm/k" },
+                { "kind": "mix-deps", "dir": ".", "unavailable": "elixir is not installed",
+                  "location": "" },
+                { "kind": "cargo-build-dir" },
+            ],
+        });
+        let text = render_build_cache_key(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "platform   aarch64-apple-darwin",
+                "npm-modules      site         v1/npm/k",
+                "                              -> store/v1/npm/k",
+                "mix-deps         .            no key: elixir is not installed",
+                "                              -> ",
+                "cargo-build-dir               no key: unknown",
+                "                              -> ",
+            ]
+        );
+        let none = render_build_cache_key(&json!({ "platform": "p", "kinds": [] }));
+        assert!(none.contains("nothing here is cacheable"), "{none}");
+    }
+
+    #[test]
+    fn a_provision_answer_reads_its_edits_and_what_the_apply_did() {
+        let v = json!({
+            "mode": "apply", "root": "/srv/node", "ok": false,
+            "plan": {
+                "files": [{ "state": "owed", "mode": "0600", "path": "env", "source": "derived" }],
+                "edits": [{ "owed": true, "path": "a.conf" }, { "owed": false, "path": "b.conf" }],
+                "steps": [{ "when": "after", "line": "systemctl restart x" }],
+                "changes": 2, "unobservable": 1,
+            },
+            "apply": {
+                "refused": "the disk is below its floor",
+                "written": ["env"],
+                "ran": [{ "ok": true, "line": "true" }, { "ok": false, "line": "false" }],
+                "skipped": ["systemctl restart x"],
+            },
+        });
+        let text = render_provision(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "mode        apply",
+                "root        /srv/node",
+                "owed          0600 env (derived)",
+                "edit          a.conf",
+                "current       b.conf",
+                "step (after)  systemctl restart x",
+                "plan        2 change(s) owed, 1 not observable here",
+                "refused     the disk is below its floor",
+                "written     env",
+                "ok    true",
+                "FAIL  false",
+                "skipped     systemctl restart x",
+                "verdict     not provisioned (see above)",
+            ]
+        );
+        let planned = render_provision(&json!({ "mode": "plan", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 }, "apply": null }));
+        assert!(planned.ends_with("verdict     ok"), "{planned}");
+        assert!(!planned.contains("refused"), "{planned}");
+    }
 }

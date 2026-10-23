@@ -618,8 +618,13 @@ fn write_file(path: &Path, bytes: &[u8], mode: u32) -> std::io::Result<()> {
 }
 
 fn secret_hex() -> Result<String, String> {
+    secret_from(|b| getrandom::getrandom(b).map_err(|e| e.to_string()))
+}
+
+/// 24 bytes from `fill` as 48 hex digits; a refusal to fill is "no entropy".
+fn secret_from(fill: impl FnOnce(&mut [u8]) -> Result<(), String>) -> Result<String, String> {
     let mut b = [0u8; 24];
-    getrandom::getrandom(&mut b).map_err(|e| format!("no entropy: {e}"))?;
+    fill(&mut b).map_err(|e| format!("no entropy: {e}"))?;
     Ok(b.iter().map(|x| format!("{x:02x}")).collect())
 }
 
@@ -661,6 +666,37 @@ fn run_command(argv: &[String]) -> (bool, String) {
 
 fn apply_with(policy: &Policy, root: &Path, root_user: bool, run: Runner<'_>) -> ApplyReport {
     let system = root == Path::new("/");
+    if system && !root_user {
+        return refused_without_root(root);
+    }
+    apply_in(policy, root, system, run, &secret_hex)
+}
+
+fn refused_without_root(root: &Path) -> ApplyReport {
+    ApplyReport {
+        ok: false,
+        refused: Some(
+            "provisioning this host needs root: run `sudo majordomus mesh build-cache provision --apply` (or give --root a staging directory)"
+                .into(),
+        ),
+        root: root.display().to_string(),
+        written: Vec::new(),
+        generated: Vec::new(),
+        ran: Vec::new(),
+        skipped: Vec::new(),
+        after: None,
+    }
+}
+
+/// Carry the policy out under `root`; `system` says the files are the host's own, so
+/// ownership is installed and the commands run, and `secret` makes a new credential's secret.
+fn apply_in(
+    policy: &Policy,
+    root: &Path,
+    system: bool,
+    run: Runner<'_>,
+    secret: &dyn Fn() -> Result<String, String>,
+) -> ApplyReport {
     let mut report = ApplyReport {
         ok: true,
         refused: None,
@@ -671,14 +707,6 @@ fn apply_with(policy: &Policy, root: &Path, root_user: bool, run: Runner<'_>) ->
         skipped: Vec::new(),
         after: None,
     };
-    if system && !root_user {
-        report.ok = false;
-        report.refused = Some(
-            "provisioning this host needs root: run `sudo majordomus mesh build-cache provision --apply` (or give --root a staging directory)"
-                .into(),
-        );
-        return report;
-    }
     let before = observe(policy, root);
     let mut groups: Vec<&str> = Vec::new();
     for w in wants(policy) {
@@ -689,7 +717,7 @@ fn apply_with(policy: &Policy, root: &Path, root_user: bool, run: Runner<'_>) ->
         let p = physical(root, &w.path);
         let result = match &w.content {
             Content::Text(t) => write_file(&p, t.as_bytes(), w.mode),
-            Content::Generated => match (state, secret_hex()) {
+            Content::Generated => match (state, secret()) {
                 (FileState::Mode, _) => set_mode(&p, w.mode),
                 (_, Ok(secret)) => {
                     let body = format!(
@@ -1253,5 +1281,173 @@ mod tests {
         assert!(!run_command(&[]).0);
         assert!(!run_command(&["/no/such/program".into()]).0);
         assert!(run_command(&["true".into()]).0);
+    }
+
+    #[test]
+    fn a_secret_is_hex_of_what_the_source_gave_or_no_entropy() {
+        assert_eq!(
+            secret_from(|b| {
+                b.fill(0xab);
+                Ok(())
+            })
+            .unwrap(),
+            "ab".repeat(24)
+        );
+        assert_eq!(
+            secret_from(|_| Err("device gone".into())),
+            Err("no entropy: device gone".into())
+        );
+    }
+
+    #[test]
+    fn a_home_copy_whose_provider_copy_cannot_be_read_is_unknown_and_not_written() {
+        let (root, p) = staged("nosource");
+        let key = format!("{}/.config/mesh-build-cache/credentials", p.home);
+        let provider = physical(&root, &format!("{NODE_DIR}/{}/credentials", p.local_node));
+        std::fs::remove_file(&provider).unwrap();
+        std::fs::create_dir(&provider).unwrap();
+        let seen = observe(&p, &root);
+        assert_eq!(
+            seen[&key].same_as_source, None,
+            "unreadable source: no verdict"
+        );
+        let r = apply(&p, &root);
+        assert!(!r.ok, "{r:?}");
+        assert!(
+            r.skipped.iter().any(|s| s.starts_with(&format!("{key}: "))),
+            "the copy that could not be made is named: {r:?}"
+        );
+        assert!(!r.written.contains(&key));
+    }
+
+    #[test]
+    fn write_file_reports_a_parent_that_is_a_file_and_a_temp_name_that_is_taken() {
+        let root = scratch("writefail");
+        let file = root.join("plain");
+        std::fs::write(&file, "x").unwrap();
+        assert!(
+            write_file(&file.join("child"), b"x", 0o600).is_err(),
+            "a file cannot be a parent directory"
+        );
+        let target = root.join("target.txt");
+        let tmp = target.with_extension(format!("mj-tmp-{}", std::process::id()));
+        std::fs::create_dir(&tmp).unwrap();
+        assert!(
+            write_file(&target, b"x", 0o600).is_err(),
+            "a directory sits where the temporary file goes"
+        );
+        assert!(
+            !target.exists(),
+            "nothing is renamed into place after a failure"
+        );
+    }
+
+    #[test]
+    fn a_file_that_cannot_be_written_fails_the_report_and_is_named() {
+        let root = scratch("applyfail");
+        let p = Policy::declared();
+        // /etc is a file, so nothing under it can be created
+        std::fs::write(root.join("etc"), "x").unwrap();
+        let r = apply(&p, &root);
+        assert!(!r.ok, "{r:?}");
+        assert!(r
+            .skipped
+            .iter()
+            .any(|s| s.starts_with("/etc/docker/daemon.json: ")));
+        assert!(!r.written.contains(&"/etc/docker/daemon.json".to_string()));
+    }
+
+    #[test]
+    fn no_entropy_for_a_new_credential_skips_it_and_fails_the_report() {
+        let root = scratch("noentropy");
+        let p = Policy::declared();
+        let run = |_: &[String]| (true, String::new());
+        let r = apply_in(&p, &root, false, &run, &|| Err("no entropy: test".into()));
+        assert!(!r.ok, "{r:?}");
+        assert!(r.generated.is_empty());
+        assert!(r
+            .skipped
+            .iter()
+            .any(|s| s.contains("/credentials: no entropy: test")));
+    }
+
+    #[test]
+    fn the_host_itself_gets_ownership_and_commands_and_a_staging_root_does_not() {
+        let root = scratch("system");
+        let p = Policy::declared();
+        let lines = RefCell::new(Vec::<String>::new());
+        let run = |argv: &[String]| {
+            lines.borrow_mut().push(argv.join(" "));
+            (true, String::new())
+        };
+        let r = apply_in(&p, &root, true, &run, &secret_hex);
+        let owner = format!("chown {u}:{u} ", u = p.user);
+        let owned: Vec<&Ran> = r
+            .ran
+            .iter()
+            .filter(|x| x.line.starts_with(&owner))
+            .collect();
+        assert!(!owned.is_empty(), "files with an owner are chowned: {r:?}");
+        assert!(owned.iter().all(|x| x.ok));
+        assert!(
+            lines.borrow().iter().any(|l| l.contains("admin user add")),
+            "the steps run on the host"
+        );
+        assert!(!r
+            .skipped
+            .iter()
+            .any(|s| s.starts_with("commands: the root is")));
+        let staged_run = apply(&p, &scratch("system-staged"));
+        assert!(staged_run
+            .skipped
+            .iter()
+            .any(|s| s.starts_with("commands: the root is")));
+        assert!(staged_run.ran.is_empty());
+    }
+
+    #[test]
+    fn a_failed_chown_fails_the_report() {
+        let root = scratch("chownfail");
+        let p = Policy::declared();
+        let run = |argv: &[String]| (argv[0] != "chown", "no such user".to_string());
+        let r = apply_in(&p, &root, true, &run, &secret_hex);
+        assert!(!r.ok);
+        assert!(r.ran.iter().any(|x| x.line.starts_with("chown ") && !x.ok));
+    }
+
+    #[test]
+    fn a_cargo_config_that_cannot_be_rewritten_is_reported() {
+        let (root, p) = staged("cargofail");
+        let cfg = physical(&root, &p.cargo_config());
+        std::fs::create_dir_all(cfg.parent().unwrap()).unwrap();
+        std::fs::write(&cfg, format!("[build]\n{}\n", p.old_wrapper())).unwrap();
+        // the backup goes next to the config; a directory with that name makes the copy fail
+        let stamp_dir_blocker = cfg.parent().unwrap();
+        std::fs::set_permissions(stamp_dir_blocker, std::fs::Permissions::from_mode(0o555))
+            .unwrap();
+        let blocked = std::fs::File::create(stamp_dir_blocker.join("probe")).is_ok();
+        let mut report = ApplyReport {
+            ok: true,
+            refused: None,
+            root: root.display().to_string(),
+            written: Vec::new(),
+            generated: Vec::new(),
+            ran: Vec::new(),
+            skipped: Vec::new(),
+            after: None,
+        };
+        edit_cargo(&p, &root, &mut report);
+        std::fs::set_permissions(stamp_dir_blocker, std::fs::Permissions::from_mode(0o755))
+            .unwrap();
+        if blocked {
+            // running as a user the mode does not bind: the edit simply succeeds
+            return;
+        }
+        assert!(!report.ok);
+        assert!(report
+            .skipped
+            .iter()
+            .any(|s| s.starts_with(&p.cargo_config())));
+        assert!(report.written.is_empty());
     }
 }

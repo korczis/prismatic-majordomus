@@ -5169,4 +5169,27 @@ mod tests {
             proptest::prop_assert_eq!(r.accepted, 0);
         }
     }
+
+    #[test]
+    fn the_build_cache_bodies_name_their_kind_and_the_kind_is_known() {
+        let offered = EventBody::BuildCacheOffered {
+            offer: BuildCacheOffer {
+                protocol: "s3".into(),
+                provider: "minio".into(),
+                scope: super::super::build_cache::Scope::Lan,
+                endpoint: "http://192.0.2.10:9000".into(),
+                bucket: "majordomus-build-cache".into(),
+                priority: 0,
+                headroom_gib: None,
+                lifetime_seconds: 30,
+            },
+        };
+        let withdrawn = EventBody::BuildCacheWithdrawn {
+            reason: "probe failed".into(),
+        };
+        assert_eq!(offered.kind(), "build_cache_offered");
+        assert_eq!(withdrawn.kind(), "build_cache_withdrawn");
+        assert!(KNOWN_KINDS.contains(&offered.kind()));
+        assert!(KNOWN_KINDS.contains(&withdrawn.kind()));
+    }
 }

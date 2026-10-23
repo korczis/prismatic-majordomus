@@ -3206,6 +3206,16 @@ impl Cooperation {
             super::build_cache::PROBE_BUDGET,
         );
         let body = offer::next_event(publisher.published.as_ref(), now)?;
+        self.write_build_cache_record(&mut publisher, body)
+    }
+
+    /// Append the build-cache record `body`; the offer is remembered as published only when
+    /// the journal took it, so a refused record is tried again at the next heartbeat.
+    fn write_build_cache_record(
+        &self,
+        publisher: &mut BuildCachePublisher,
+        body: EventBody,
+    ) -> Option<MeshEvent> {
         let offered = match &body {
             EventBody::BuildCacheOffered { offer } => Some(offer.clone()),
             _ => None,
@@ -5793,5 +5803,57 @@ mod tests {
                 proptest::prop_assert_eq!(present_chosen, present.min(cap));
             }
         }
+    }
+
+    #[test]
+    fn a_build_cache_record_the_journal_refuses_is_not_remembered_as_published() {
+        use crate::mesh::build_cache::Scope;
+        use crate::mesh::journal::BuildCacheOffer;
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let offer = BuildCacheOffer {
+            protocol: "s3".into(),
+            provider: "minio".into(),
+            scope: Scope::Lan,
+            endpoint: "http://192.0.2.10:9000".into(),
+            bucket: "majordomus-build-cache".into(),
+            priority: 0,
+            headroom_gib: None,
+            lifetime_seconds: 30,
+        };
+        let mut publisher = BuildCachePublisher::default();
+        // user information is where a key would ride: the journal refuses it
+        let smuggled = BuildCacheOffer {
+            endpoint: "http://k:s@192.0.2.10:9000".into(),
+            ..offer.clone()
+        };
+        let refused = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::BuildCacheOffered { offer: smuggled },
+        );
+        assert!(refused.is_none());
+        assert!(
+            publisher.published.is_none(),
+            "so the next heartbeat tries again"
+        );
+        let written = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::BuildCacheOffered {
+                offer: offer.clone(),
+            },
+        );
+        assert_eq!(written.unwrap().body["kind"], "build_cache_offered");
+        assert_eq!(publisher.published, Some(offer));
+        let withdrawn = a.write_build_cache_record(
+            &mut publisher,
+            EventBody::BuildCacheWithdrawn {
+                reason: "its own probe says unhealthy".into(),
+            },
+        );
+        assert!(withdrawn.is_some());
+        assert!(
+            publisher.published.is_none(),
+            "a withdrawal forgets the offer"
+        );
     }
 }

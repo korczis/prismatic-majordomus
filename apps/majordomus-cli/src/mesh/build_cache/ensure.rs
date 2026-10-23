@@ -171,7 +171,12 @@ pub(crate) fn cache_dir(home: Option<&Path>, xdg_cache: Option<&str>) -> PathBuf
 impl Machine {
     /// This machine, as the environment describes it, with the policy's bound.
     pub(crate) fn from_env(local_max_gib: Option<u64>) -> Machine {
-        let var = |n: &str| std::env::var(n).ok();
+        Machine::from_env_with(local_max_gib, |n| std::env::var(n).ok())
+    }
+
+    /// [`Machine::from_env`] over any lookup of environment values, so that the reading is
+    /// testable without touching the process's environment.
+    fn from_env_with(local_max_gib: Option<u64>, var: impl Fn(&str) -> Option<String>) -> Machine {
         let home = var("HOME").filter(|h| !h.is_empty()).map(PathBuf::from);
         let config = home
             .clone()
@@ -1409,5 +1414,372 @@ mod tests {
         assert!(select_store(&f.m)
             .unwrap_err()
             .contains("no store credential"));
+    }
+
+    fn is_root() -> bool {
+        // SAFETY: geteuid has no preconditions and reads the process's own credentials.
+        unsafe { libc::geteuid() == 0 }
+    }
+
+    fn mode(path: &Path, bits: u32) {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(bits)).unwrap();
+    }
+
+    /// A stub store answering by `(method, path suffix)` with the first matching rule, 404
+    /// otherwise, and 200 on its readiness route. A body sent to it is read and dropped.
+    fn scripted_store(rules: Vec<(&'static str, &'static str, u16, Vec<u8>)>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            for stream in listener.incoming().flatten() {
+                let mut reader = BufReader::new(stream.try_clone().unwrap());
+                let mut line = String::new();
+                if reader.read_line(&mut line).is_err() {
+                    continue;
+                }
+                let mut parts = line.split_whitespace();
+                let (method, path) = (
+                    parts.next().unwrap_or("").to_string(),
+                    parts.next().unwrap_or("").to_string(),
+                );
+                let mut length = 0usize;
+                loop {
+                    let mut h = String::new();
+                    if reader.read_line(&mut h).unwrap_or(0) == 0 || h == "\r\n" {
+                        break;
+                    }
+                    if let Some(v) = h.to_ascii_lowercase().strip_prefix("content-length:") {
+                        length = v.trim().parse().unwrap_or(0);
+                    }
+                }
+                let mut sink = vec![0u8; length];
+                let _ = reader.read_exact(&mut sink);
+                let (status, body) = if path.starts_with("/minio/health") {
+                    (200, Vec::new())
+                } else {
+                    rules
+                        .iter()
+                        .find(|(m, suffix, _, _)| *m == method && path.ends_with(suffix))
+                        .map(|(_, _, status, body)| (*status, body.clone()))
+                        .unwrap_or((404, Vec::new()))
+                };
+                let mut out = stream;
+                let _ = out.write_all(
+                    format!(
+                        "HTTP/1.1 {status} X\r\nContent-Length: {}\r\n\r\n",
+                        body.len()
+                    )
+                    .as_bytes(),
+                );
+                let _ = out.write_all(&body);
+            }
+        });
+        url
+    }
+
+    /// The store a machine declared at `url`, as the run selects it.
+    fn store_at(f: &Fixture, url: &str) -> Store {
+        declare_store(&f.m, url);
+        select_store(&f.m).unwrap()
+    }
+
+    fn cell() -> StoreCell {
+        StoreCell {
+            asked: false,
+            store: None,
+        }
+    }
+
+    /// A real archive of a one-file tree and the digest line that goes with it.
+    fn good_archive(f: &Fixture) -> (Vec<u8>, Vec<u8>) {
+        let src = f.root.join("good");
+        fs::create_dir_all(&src).unwrap();
+        fs::write(src.join("f"), "f").unwrap();
+        let a = f.root.join("good.tar.gz");
+        archive::create(&src, &a, &[]).unwrap();
+        let sum = format!("{}\n", archive::sha256_file(&a).unwrap());
+        (fs::read(&a).unwrap(), sum.into_bytes())
+    }
+
+    #[test]
+    fn the_machine_reads_its_floor_its_switch_and_a_missing_home_from_the_environment() {
+        let env = |pairs: &'static [(&'static str, &'static str)]| {
+            move |n: &str| {
+                pairs
+                    .iter()
+                    .find(|(k, _)| *k == n)
+                    .map(|(_, v)| v.to_string())
+            }
+        };
+        let m = Machine::from_env_with(
+            None,
+            env(&[
+                ("HOME", ""),
+                ("MAJORDOMUS_MIN_FREE_MB", " 7 "),
+                (SWITCH, " OFF "),
+            ]),
+        );
+        assert_eq!(m.home, None);
+        assert_eq!(m.min_free_mb, 7);
+        assert!(m.bypass);
+        assert_eq!(
+            m.node_file,
+            PathBuf::from("./.config/majordomus/build-cache.json")
+        );
+        let unparsed = Machine::from_env_with(
+            None,
+            env(&[("MAJORDOMUS_MIN_FREE_MB", "lots"), (SWITCH, "on")]),
+        );
+        assert_eq!(
+            unparsed.min_free_mb, DEFAULT_MIN_FREE_MB,
+            "text is no floor"
+        );
+        assert!(!unparsed.bypass, "only `off` bypasses");
+    }
+
+    #[test]
+    fn a_marker_that_cannot_be_written_is_said_not_fatal() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut notes = Vec::new();
+        write_marker(&dir.path().join("absent"), "k", &mut notes);
+        assert!(
+            notes[0].starts_with("the key could not be marked in place"),
+            "{notes:?}"
+        );
+    }
+
+    #[test]
+    fn free_space_is_unknown_for_a_path_nothing_exists_of_and_is_then_not_refused() {
+        assert_eq!(free_bytes(Path::new("")), None);
+        assert_eq!(free_bytes(Path::new("a\0b")), None);
+        assert_eq!(below_floor(Path::new(""), 5), None);
+    }
+
+    #[test]
+    fn a_digest_for_an_archive_that_is_gone_says_it_cannot_be_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let sum = dir.path().join("a.sha256");
+        fs::write(&sum, "a".repeat(64)).unwrap();
+        let err = verify(&dir.path().join("a.tar.gz"), &sum).unwrap_err();
+        assert!(err.starts_with("it cannot be read"), "{err}");
+    }
+
+    #[test]
+    fn a_declared_store_without_a_scheme_is_probed_but_not_spoken_to() {
+        let f = fixture();
+        let (url, _) = stub_store();
+        declare_store(&f.m, url.trim_start_matches("http://"));
+        let err = select_store(&f.m).unwrap_err();
+        assert!(err.contains("only http://"), "{err}");
+    }
+
+    #[test]
+    fn an_archive_that_cannot_be_touched_is_still_restored() {
+        if is_root() {
+            return;
+        }
+        let f = fixture();
+        let k = kk(Kind::NpmModules, "site", Some("v1/npm-modules/p/t/ro"));
+        ensure(&f.root, &k, &sh(INSTALL), &f.m);
+        let (a, _) = f.m.entry("v1/npm-modules/p/t/ro");
+        mode(&a, 0o444);
+        fs::remove_dir_all(f.root.join("site/node_modules")).unwrap();
+        let r = ensure(&f.root, &k, &sh(INSTALL), &f.m);
+        assert_eq!(r.source, Source::Local, "{r:?}");
+        assert_eq!(ran(&f), 1);
+        mode(&a, 0o644);
+    }
+
+    #[test]
+    fn an_archive_the_store_serves_that_is_unsafe_is_discarded_and_the_command_runs() {
+        let (url, objects) = stub_store();
+        let f = fixture();
+        declare_store(&f.m, &url);
+        let key = "v1/npm-modules/p/t/evil2";
+        let src = f.root.join("evil");
+        fs::create_dir_all(&src).unwrap();
+        std::os::unix::fs::symlink("/etc", src.join("x")).unwrap();
+        let a = f.root.join("evil.tar.gz");
+        archive::create(&src, &a, &[]).unwrap();
+        {
+            let mut map = objects.lock().unwrap();
+            map.insert(format!("/b/{key}.tar.gz"), fs::read(&a).unwrap());
+            map.insert(
+                format!("/b/{key}.sha256"),
+                format!("{}\n", archive::sha256_file(&a).unwrap()).into_bytes(),
+            );
+        }
+        let r = ensure(
+            &f.root,
+            &kk(Kind::NpmModules, "site", Some(key)),
+            &sh(INSTALL),
+            &f.m,
+        );
+        assert_eq!(r.source, Source::Command, "{r:?}");
+        assert!(
+            r.notes
+                .iter()
+                .any(|n| n.starts_with("store: the archive was discarded")
+                    && n.contains("outside its target")),
+            "{:?}",
+            r.notes
+        );
+        assert!(!f.m.entry(key).0.is_file() || r.saved.contains(&Level::Local));
+        assert!(!f.root.join("site/node_modules/x").exists());
+    }
+
+    #[test]
+    fn a_fetch_says_where_it_failed() {
+        let f = fixture();
+        let key = "v1/k/x";
+        let (archive_bytes, sum_bytes) = good_archive(&f);
+        let both = |sum_status: u16, archive_status: u16| {
+            scripted_store(vec![
+                ("GET", ".sha256", sum_status, sum_bytes.clone()),
+                ("GET", ".tar.gz", archive_status, archive_bytes.clone()),
+            ])
+        };
+        let (a, s) = (
+            f.root.join("lvl/v1/k/x.tar.gz"),
+            f.root.join("lvl/v1/k/x.sha256"),
+        );
+
+        // the local level's directory cannot be made
+        let store = store_at(&f, &both(200, 200));
+        let file = f.root.join("file");
+        fs::write(&file, "x").unwrap();
+        assert!(fetch(&store, key, &file.join("d/x.tar.gz"), &s).is_err());
+
+        // ... or cannot be written in
+        if !is_root() {
+            let locked = f.root.join("locked");
+            fs::create_dir(&locked).unwrap();
+            mode(&locked, 0o500);
+            let r = fetch(&store, key, &locked.join("x.tar.gz"), &s);
+            mode(&locked, 0o700);
+            assert!(r.is_err());
+        }
+
+        // the store errs on the digest, then on the archive
+        let broken = store_at(&f, &scripted_store(vec![("GET", "", 500, vec![])]));
+        let err = fetch(&broken, key, &a, &s).unwrap_err();
+        assert!(err.contains("500"), "{err}");
+        let half = store_at(
+            &f,
+            &scripted_store(vec![
+                ("GET", ".sha256", 200, sum_bytes.clone()),
+                ("GET", ".tar.gz", 500, vec![]),
+            ]),
+        );
+        assert!(fetch(&half, key, &a, &s).unwrap_err().contains("500"));
+
+        // a digest without its archive is a miss
+        let lone = store_at(&f, &both(200, 404));
+        assert_eq!(fetch(&lone, key, &a, &s), Ok(false));
+
+        // both present, and a local entry that is in the way of either rename
+        let full = store_at(&f, &both(200, 200));
+        fs::create_dir_all(&a).unwrap();
+        assert!(
+            fetch(&full, key, &a, &s).is_err(),
+            "the archive's place is a directory"
+        );
+        fs::remove_dir(&a).unwrap();
+        fs::create_dir_all(&s).unwrap();
+        assert!(
+            fetch(&full, key, &a, &s).is_err(),
+            "the digest's place is a directory"
+        );
+        fs::remove_dir(&s).unwrap();
+        fs::remove_file(&a).unwrap();
+        assert_eq!(fetch(&full, key, &a, &s), Ok(true));
+        assert!(a.is_file() && s.is_file());
+    }
+
+    #[test]
+    fn a_save_that_goes_wrong_says_so_and_saves_nothing() {
+        let f = fixture();
+        let key = "v1/npm-modules/p/t/s";
+        let target = f.root.join("site/node_modules");
+        fs::create_dir_all(&target).unwrap();
+        fs::write(target.join("f"), "f").unwrap();
+        let attempt = |m: &Machine, target: &Path| {
+            let mut notes = Vec::new();
+            let r = save(key, target, m, Mode::Replace, &mut cell(), &mut notes);
+            (r, notes)
+        };
+
+        // the local level cannot be made
+        let file = f.root.join("file");
+        fs::write(&file, "x").unwrap();
+        let under_file = Machine {
+            cache_dir: file.join("c"),
+            ..f.m.clone()
+        };
+        let ((saved, pruned), notes) = attempt(&under_file, &target);
+        assert!((saved.is_empty(), pruned) == (true, 0));
+        assert!(notes[0].starts_with("not saved"), "{notes:?}");
+
+        // ... or cannot be written in
+        if !is_root() {
+            let (a, _) = f.m.entry(key);
+            let dir = a.parent().unwrap();
+            fs::create_dir_all(dir).unwrap();
+            mode(dir, 0o500);
+            let ((saved, _), notes) = attempt(&f.m, &target);
+            mode(dir, 0o700);
+            assert!(saved.is_empty());
+            assert!(notes[0].starts_with("not saved"), "{notes:?}");
+        }
+
+        // a target that is not there cannot be archived
+        let ((saved, _), notes) = attempt(&f.m, &f.root.join("absent"));
+        assert!(saved.is_empty());
+        assert!(notes[0].contains("tar failed"), "{notes:?}");
+
+        // an archive's place that is a directory cannot be filled
+        let (a, _) = f.m.entry(key);
+        fs::create_dir_all(&a).unwrap();
+        let ((saved, _), notes) = attempt(&f.m, &target);
+        assert!(saved.is_empty());
+        assert!(notes[0].starts_with("not saved"), "{notes:?}");
+        fs::remove_dir(&a).unwrap();
+    }
+
+    #[test]
+    fn a_store_that_refuses_the_put_is_said_and_the_local_copy_stays() {
+        let f = fixture();
+        let url = scripted_store(vec![("PUT", "", 500, vec![])]);
+        declare_store(&f.m, &url);
+        let r = ensure(
+            &f.root,
+            &kk(Kind::NpmModules, "site", Some("v1/npm-modules/p/t/put")),
+            &sh(INSTALL),
+            &f.m,
+        );
+        assert_eq!(r.saved, vec![Level::Local]);
+        assert!(
+            r.notes.iter().any(|n| n.starts_with("store: not saved")),
+            "{:?}",
+            r.notes
+        );
+    }
+
+    #[test]
+    fn a_local_level_that_is_not_there_has_nothing_to_prune() {
+        let f = fixture();
+        assert_eq!(prune(&f.m, "v1/k/none"), 0);
+        assert!(entries(&f.m.cache_dir).is_empty());
+    }
+
+    #[test]
+    fn an_install_without_a_command_makes_nothing_and_says_nothing_ran() {
+        let f = fixture();
+        let k = kk(Kind::NpmModules, "site", Some("v1/npm-modules/p/t/none"));
+        let r = ensure(&f.root, &k, &[], &f.m);
+        assert_eq!(r.source, Source::Nothing);
+        assert_eq!(r.command, None);
+        assert!(r.saved.is_empty());
     }
 }

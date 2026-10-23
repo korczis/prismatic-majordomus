@@ -847,4 +847,59 @@ mod tests {
         // the provider's own reading is its own offer
         assert_eq!(a.build_cache_offers().offers.len(), 1);
     }
+
+    /// `event` with its body replaced and signed again by its own writer: a record this
+    /// executable's journal would never have written, but one whose signature verifies.
+    fn resigned(identity: &NodeIdentity, event: &MeshEvent, body: serde_json::Value) -> MeshEvent {
+        let mut forged = event.clone();
+        forged.body = body;
+        forged.sig = identity.sign(&forged.signing_bytes());
+        forged
+    }
+
+    #[test]
+    fn a_signed_record_that_is_no_offer_or_is_out_of_bounds_is_ignored_with_the_reason() {
+        let identity = key();
+        let a = journal(&identity, "0000000000000001");
+        let event = a
+            .append_own(EventBody::BuildCacheOffered { offer: record() })
+            .unwrap();
+        let reasons = |body: serde_json::Value| {
+            let forged = resigned(&identity, &event, body);
+            let reading = read(&[forged], &|_| true, &beating, BOUND);
+            assert!(reading.offers.is_empty());
+            reading.ignored[0].why.clone()
+        };
+        // an offer kind whose body this executable cannot read
+        let unreadable = reasons(serde_json::json!({ "kind": "build_cache_offered" }));
+        assert!(
+            unreadable.ends_with("not a build-cache record this executable reads"),
+            "{unreadable}"
+        );
+        // an offer that is well formed but names a store no offer may name
+        let mut body = event.body.clone();
+        body["offer"]["endpoint"] = "ftp://192.0.2.10:21".into();
+        let bounds = reasons(body);
+        assert!(bounds.contains("out of bounds"), "{bounds}");
+    }
+
+    #[test]
+    fn two_offers_without_a_headroom_are_the_same_offer() {
+        let mut offer = record();
+        offer.headroom_gib = None;
+        assert_eq!(next_event(Some(&offer), Ok(offer.clone())), None);
+        let mut moved = offer.clone();
+        moved.bucket = "another-bucket".into();
+        assert!(next_event(Some(&offer), Ok(moved)).is_some());
+    }
+
+    #[test]
+    fn an_endpoint_declared_with_its_scheme_is_offered_as_declared() {
+        let dir = tempfile::tempdir().unwrap();
+        let (endpoint, _served) = store(&[READY]);
+        let declared = format!("http://{endpoint}");
+        let file = write_node_file(dir.path(), &declared, "majordomus-build-cache");
+        let offer = current(Some(&file), "n", Duration::from_secs(30), PROBE_BUDGET).unwrap();
+        assert_eq!(offer.endpoint, declared);
+    }
 }
