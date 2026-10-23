@@ -64026,6 +64026,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4012",
+        "kind": "issue",
+        "label": "I4012",
+        "summary": "A remote node's loopback runtimes are not dialed, so its hub is",
+        "route": "/cockpit/objects/issue/i4012",
+        "source": ".ai/repo/project/issues/I4012.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record of another node advertising loopback alone is never a dial target",
+            "A record of this node advertising loopback is still a dial target",
+            "A remote hub is dialed although the node has more loopback runtimes than the cap"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "dial_targets (apps/majordomus-cli/src/mesh/cooperation.rs) admits every trusted record of the repository with an endpoint, whatever node it is on and whether its endpoints are reachable from here.",
+          "depends_on": [],
+          "desired_state": "Another node's loopback-only records are not dial targets; this node's own loopback siblings still are, and the other node's hub is dialed.",
+          "evidence_required": [
+            "another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is"
+          ],
+          "milestone": "mesh-connectivity",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            ".ai/repo/project/issues/I4012.yaml"
+          ],
+          "serves": [],
+          "slug": "a-remote-loopback-runtime-is-not-dialed",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --lib mesh::cooperation",
+            "bash test/run.sh 368_mesh_handover_resolves 924_one_executor_across_machines 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -123072,6 +123109,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4012",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4012",
+        "target": "majordomus://milestone/mesh-connectivity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -134293,8 +134340,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3768,
+      "edges": 8712,
       "acyclic": false,
       "truncated": false
     }
