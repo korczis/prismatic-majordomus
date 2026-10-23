@@ -2,8 +2,8 @@
 //! 0219, decisions 3 and 4).
 //!
 //! What is pushed to a provider is never the repository: not its history, not the
-//! checkout-local half, not a file the object does not name. It is built from three things
-//! only, all read at one commit:
+//! checkout-local half, not a file the object does not name. It is built from three things,
+//! all read at one commit, and a fourth when the object declares one (ADR 0223):
 //!
 //! - the object's `build.inputs`, except the package directory the executable is compiled
 //!   from (`render::runtime_inputs`), read from git rather than from the working tree, so a
@@ -12,7 +12,11 @@
 //!   the provider reads them, each held to what the object renders at that commit and the
 //!   hooks made executable;
 //! - the executable built at that same commit, installed at [`render::slug_executable`], and
-//!   the provider's buildpack line ([`render::buildpack`]).
+//!   the provider's buildpack line ([`render::buildpack`]);
+//! - when the object declares `build.site`, the site the canonical pipeline built at that same
+//!   commit (`scripts/site-build --serve`), carried at the declared path. Its `surface.json`
+//!   says which commit it was built from, and a site built from any other commit is refused:
+//!   a slug stays a function of one commit.
 //!
 //! Beside them the slug carries one record, [`SOURCE_FILE`], naming the deployment, the
 //! commit, the executable's digest and the provider, so a person reading the slug can tell
@@ -95,7 +99,14 @@ pub(crate) struct Request<'a> {
     pub executable: &'a Path,
     /// The directory the slug is written into: outside the checkout, absent or empty.
     pub out: &'a Path,
+    /// The site built at that commit, when the object declares `build.site`: a directory
+    /// holding the built pages and the `surface.json` its producer wrote beside them.
+    pub site: Option<&'a Path>,
 }
+
+/// The file a built site's producer writes beside its pages, naming the commit it was built
+/// from (`built_from`) and the mount it is served at.
+pub const SITE_SURFACE_FILE: &str = "surface.json";
 
 /// The record a slug carries at [`SOURCE_FILE`].
 ///
@@ -122,6 +133,13 @@ pub struct Source {
     pub executable_sha256: String,
     /// The provider the slug is for.
     pub provider: ProviderName,
+    /// How many files of the built site the slug carries, when it carries one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site_files: Option<usize>,
+    /// The hex SHA-256 over the site's files, each `<path> <sha256>` on its own line in path
+    /// order: equal digests, equal sites.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site_sha256: Option<String>,
 }
 
 /// What was assembled: where, from what, and the provider facts a publisher needs to push
@@ -164,6 +182,15 @@ pub struct Slug {
     pub liveness: String,
     /// The provider block of the object, as read at the commit.
     pub provider: Provider,
+    /// Where the built site sits in the slug, when the object declares one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site: Option<String>,
+    /// How many of its files the slug carries.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site_files: Option<usize>,
+    /// The digest over them, as [`Source::site_sha256`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site_sha256: Option<String>,
 }
 
 /// How a file lands in the slug.
@@ -374,6 +401,25 @@ pub(crate) fn assemble(req: &Request<'_>) -> Result<Slug, SlugError> {
         plan.add(rel, Content::Bytes(bytes), mode, &artifact.path)?;
     }
 
+    // --- the site built at the same commit, when the object declares one
+    let site = match (&d.build.site, req.site) {
+        (None, None) => None,
+        (None, Some(dir)) => {
+            return Err(SlugError::Refused(format!(
+                "a site was given ({}), and the deployment `{}` declares no `build.site` at                  {short}; the object is what says a slug carries one",
+                dir.display(),
+                d.id
+            )))
+        }
+        (Some(at), None) => {
+            return Err(SlugError::Missing(format!(
+                "the deployment `{}` declares `build.site: {at}` at {short}, and no built site                  was given; build it at that commit (scripts/site-build --serve) and pass --site",
+                d.id
+            )))
+        }
+        (Some(at), Some(dir)) => Some(plan_site(&mut plan, at, dir, &commit)?),
+    };
+
     // --- the buildpack line, the executable and the record
     let buildpack = render::buildpack(provider.name).to_string();
     plan.add(
@@ -395,6 +441,8 @@ pub(crate) fn assemble(req: &Request<'_>) -> Result<Slug, SlugError> {
         commit: commit.clone(),
         executable_sha256: executable_sha256.clone(),
         provider: provider.name,
+        site_files: site.as_ref().map(|s| s.files),
+        site_sha256: site.as_ref().map(|s| s.sha256.clone()),
     };
     // strings and a unit variant: a record that cannot fail to serialize
     let record = serde_json::to_string_pretty(&source).expect("the slug's record serializes");
@@ -419,7 +467,126 @@ pub(crate) fn assemble(req: &Request<'_>) -> Result<Slug, SlugError> {
         buildpack,
         liveness: d.health.liveness.as_str().to_string(),
         provider,
+        site: d.build.site.clone(),
+        site_files: site.as_ref().map(|s| s.files),
+        site_sha256: site.map(|s| s.sha256),
     })
+}
+
+/// What [`plan_site`] put into the plan.
+struct PlannedSite {
+    files: usize,
+    sha256: String,
+}
+
+/// Plan every file of a built site under the path the object declares.
+///
+/// Refused when the directory is not one, holds no [`SITE_SURFACE_FILE`], names no commit or
+/// another commit than the slug's (a site is carried only from the commit the rest of the slug
+/// is read at), or holds anything but files and directories: a link could carry a file from
+/// anywhere on the machine that builds the slug.
+fn plan_site(
+    plan: &mut Plan,
+    at: &str,
+    dir: &Path,
+    commit: &str,
+) -> Result<PlannedSite, SlugError> {
+    let short = &commit[..12];
+    let meta = std::fs::symlink_metadata(dir).map_err(|e| {
+        SlugError::Missing(format!(
+            "the built site {} cannot be read: {e}",
+            dir.display()
+        ))
+    })?;
+    if !meta.is_dir() {
+        return Err(SlugError::Refused(format!(
+            "the built site {} is not a directory",
+            dir.display()
+        )));
+    }
+    let surface = dir.join(SITE_SURFACE_FILE);
+    let declared: serde_json::Value = std::fs::read(&surface)
+        .map_err(|e| {
+            SlugError::Missing(format!(
+                "the built site has no {SITE_SURFACE_FILE} ({e}); scripts/site-build --serve                  writes it beside the pages"
+            ))
+        })
+        .and_then(|b| {
+            serde_json::from_slice(&b).map_err(|e| {
+                SlugError::Refused(format!("{} is not JSON: {e}", surface.display()))
+            })
+        })?;
+    let built_from = declared
+        .get("built_from")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default();
+    if built_from.len() < 7 || !commit.starts_with(built_from) {
+        return Err(SlugError::Refused(format!(
+            "the built site says it was built from `{}`, and the slug is read at {short}; build              the site at the slug's own commit",
+            if built_from.is_empty() { "no commit" } else { built_from }
+        )));
+    }
+    // keyed by the relative path, so the digest and the plan read the files in one order
+    // whatever order the filesystem lists them in
+    let mut files: BTreeMap<String, PathBuf> = BTreeMap::new();
+    collect_site(dir, dir, &mut files)?;
+    let mut digest_lines = String::new();
+    for (rel, abs) in &files {
+        let bytes = std::fs::read(abs)
+            .map_err(|e| SlugError::Failed(format!("{} cannot be read: {e}", abs.display())))?;
+        digest_lines.push_str(&format!(
+            "{rel} {}
+",
+            crate::policy::sha256_bytes_hex(&bytes)
+        ));
+        let path = format!("{}/{rel}", at.trim_end_matches('/'));
+        plan.add(
+            &path,
+            Content::Bytes(bytes),
+            Mode::File,
+            &format!("the built site `{rel}`"),
+        )?;
+    }
+    Ok(PlannedSite {
+        files: files.len(),
+        sha256: crate::policy::sha256_hex(&digest_lines),
+    })
+}
+
+/// Every regular file under `dir`, relative to `base`; a link or anything else is refused.
+fn collect_site(
+    base: &Path,
+    dir: &Path,
+    out: &mut BTreeMap<String, PathBuf>,
+) -> Result<(), SlugError> {
+    let entries = std::fs::read_dir(dir)
+        .map_err(|e| SlugError::Failed(format!("{} cannot be listed: {e}", dir.display())))?;
+    for entry in entries {
+        let entry = entry.map_err(|e| SlugError::Failed(format!("{}: {e}", dir.display())))?;
+        let path = entry.path();
+        let kind = entry
+            .file_type()
+            .map_err(|e| SlugError::Failed(format!("{}: {e}", path.display())))?;
+        let rel = path
+            .strip_prefix(base)
+            .map_err(|_| SlugError::Failed(format!("{} left the site", path.display())))?
+            .to_string_lossy()
+            .replace('\\', "/");
+        if kind.is_symlink() {
+            return Err(SlugError::Refused(format!(
+                "the built site holds a link, `{rel}`; a slug carries the site's files, never                  what a link points at"
+            )));
+        } else if kind.is_dir() {
+            collect_site(base, &path, out)?;
+        } else if kind.is_file() {
+            out.insert(rel, path);
+        } else {
+            return Err(SlugError::Refused(format!(
+                "the built site holds `{rel}`, which is neither a file nor a directory"
+            )));
+        }
+    }
+    Ok(())
 }
 
 /// Is `path` the input itself or a file under it?
@@ -865,7 +1032,12 @@ mod tests {
 
         /// The object and the provider files it renders, committed.
         fn object(&self, inputs: &[&str], provider: bool) {
-            let text = yaml(inputs, provider);
+            self.object_text(&yaml(inputs, provider));
+        }
+
+        /// The object as given, and the provider files it renders, committed.
+        fn object_text(&self, text: &str) {
+            let text = text.to_string();
             self.write(OBJECT, &text);
             let map = crate::metadata::yaml::parse_mapping(&text).unwrap();
             let d = Deployment::from_metadata(OBJECT, serde_json::Value::Object(map)).unwrap();
@@ -915,6 +1087,7 @@ mod tests {
                 commit: "HEAD",
                 executable: exe,
                 out,
+                site: None,
             }
         }
     }
@@ -1637,5 +1810,142 @@ mod tests {
             matches!(&e, SlugError::Failed(m) if m.contains("a-directory cannot be written")),
             "{e}"
         );
+    }
+
+    /// The object declares a site; a directory built "at" a commit, with its surface record.
+    fn site_fixture(f: &Fixture, built_from: Option<&str>) -> std::path::PathBuf {
+        let text = yaml(&["share", ".ai", "README.md", "bin"], true)
+            .replace("  inputs:\n", "  site: target/web/docs\n  inputs:\n");
+        f.object_text(&text);
+        let site = f.elsewhere.path().join("built-site");
+        std::fs::create_dir_all(site.join("guide")).unwrap();
+        std::fs::write(site.join("index.html"), "<h1>Majordomus</h1>\n").unwrap();
+        std::fs::write(
+            site.join("guide/index.html"),
+            "<a href=\"/docs/\">home</a>\n",
+        )
+        .unwrap();
+        let mut surface =
+            serde_json::json!({"schema": "web-surface/v1", "id": "docs", "mount": "/docs"});
+        if let Some(b) = built_from {
+            surface["built_from"] = serde_json::json!(b);
+        }
+        std::fs::write(site.join(SITE_SURFACE_FILE), surface.to_string()).unwrap();
+        site
+    }
+
+    /// A deployment that declares `build.site` carries the site built at its commit, under
+    /// the declared path, and its record names how many files and their digest.
+    #[test]
+    fn a_slug_carries_the_site_built_at_its_own_commit() {
+        let f = Fixture::new();
+        let head = resolve(f.repo.path(), "HEAD").unwrap();
+        // the object commit moves HEAD; the site is built after it
+        let site = site_fixture(&f, None);
+        let head = {
+            let _ = head;
+            resolve(f.repo.path(), "HEAD").unwrap()
+        };
+        let surface =
+            serde_json::json!({"id": "docs", "mount": "/docs", "built_from": &head[..11]});
+        std::fs::write(site.join(SITE_SURFACE_FILE), surface.to_string()).unwrap();
+        let out = f.elsewhere.path().join("slug");
+        let exe = f.elsewhere.path().join("exe");
+        let slug = assemble(&Request {
+            site: Some(&site),
+            ..f.request(&out, &exe)
+        })
+        .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(out.join("target/web/docs/index.html")).unwrap(),
+            "<h1>Majordomus</h1>\n"
+        );
+        assert!(out.join("target/web/docs/guide/index.html").exists());
+        assert!(
+            out.join("target/web/docs/surface.json").exists(),
+            "discovery reads it"
+        );
+        assert_eq!(slug.site.as_deref(), Some("target/web/docs"));
+        assert_eq!(slug.site_files, Some(3));
+        let source: Source =
+            serde_json::from_slice(&std::fs::read(out.join(SOURCE_FILE)).unwrap()).unwrap();
+        assert_eq!(source.site_files, Some(3));
+        assert_eq!(source.site_sha256, slug.site_sha256);
+        assert_eq!(source.site_sha256.as_deref().map(str::len), Some(64));
+        assert!(slug.entries.contains(&"target".to_string()));
+
+        // the same bytes give the same digest, whatever order they were listed in
+        let again = f.elsewhere.path().join("slug2");
+        let slug2 = assemble(&Request {
+            site: Some(&site),
+            ..f.request(&again, &exe)
+        })
+        .unwrap();
+        assert_eq!(slug2.site_sha256, slug.site_sha256);
+    }
+
+    /// The object is what says a slug carries a site, and the site must come from the slug's
+    /// own commit: every other combination is refused with nothing written.
+    #[test]
+    fn a_site_from_another_commit_or_without_a_declaration_is_refused() {
+        // declared, not given
+        let f = Fixture::new();
+        let site = site_fixture(&f, Some("0000000000"));
+        let exe = f.elsewhere.path().join("exe");
+        let out = f.elsewhere.path().join("a");
+        assert!(matches!(
+            assemble(&f.request(&out, &exe)),
+            Err(SlugError::Missing(m)) if m.contains("build.site")
+        ));
+        assert!(!out.exists(), "nothing written");
+
+        // given, built from another commit
+        let out = f.elsewhere.path().join("b");
+        let err = assemble(&Request {
+            site: Some(&site),
+            ..f.request(&out, &exe)
+        })
+        .unwrap_err();
+        assert!(
+            matches!(&err, SlugError::Refused(m) if m.contains("0000000000")),
+            "{err:?}"
+        );
+        assert!(!out.exists());
+
+        // given, naming no commit at all
+        std::fs::write(site.join(SITE_SURFACE_FILE), r#"{"id":"docs"}"#).unwrap();
+        let out = f.elsewhere.path().join("c");
+        assert!(matches!(
+            assemble(&Request { site: Some(&site), ..f.request(&out, &exe) }),
+            Err(SlugError::Refused(m)) if m.contains("no commit")
+        ));
+
+        // a link inside the site, even with the right commit
+        let head = resolve(f.repo.path(), "HEAD").unwrap();
+        std::fs::write(
+            site.join(SITE_SURFACE_FILE),
+            serde_json::json!({"built_from": &head[..12]}).to_string(),
+        )
+        .unwrap();
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink("/etc/hosts", site.join("hosts")).unwrap();
+            let out = f.elsewhere.path().join("d");
+            assert!(matches!(
+                assemble(&Request { site: Some(&site), ..f.request(&out, &exe) }),
+                Err(SlugError::Refused(m)) if m.contains("link")
+            ));
+            assert!(!out.exists());
+            std::fs::remove_file(site.join("hosts")).unwrap();
+        }
+
+        // given, with no declaration in the object
+        let g = Fixture::new();
+        let out = g.elsewhere.path().join("e");
+        let exe = g.elsewhere.path().join("exe");
+        assert!(matches!(
+            assemble(&Request { site: Some(&site), ..g.request(&out, &exe) }),
+            Err(SlugError::Refused(m)) if m.contains("declares no `build.site`")
+        ));
     }
 }

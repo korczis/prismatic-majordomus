@@ -2973,6 +2973,9 @@ pub enum DeployCommand {
         /// The directory the slug is written into: outside the checkout, absent or empty
         #[arg(long)]
         out: String,
+        /// The site built at that commit, required when the deployment declares build.site
+        #[arg(long)]
+        site: Option<String>,
     },
 }
 

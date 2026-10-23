@@ -2736,6 +2736,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/deploy/slug.rs",
+        "kind": "file",
+        "label": "slug.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/deploy/slug.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/design/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -9271,6 +9279,29 @@
             "mesh-runtime",
             "deployment",
             "security"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0223",
+        "kind": "adr",
+        "label": "adr-0223",
+        "summary": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+        "route": "/cockpit/objects/adr/adr-0223",
+        "source": ".ai/repo/adrs/0223-a-deployment-carries-the-site-built-at-its-own-commit.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-23",
+          "related": [
+            "file:.ai/repo/adrs/0219-a-deployment-names-its-provider-and-every-provider-file-is-derived.md",
+            "file:.ai/repo/deployments/majordomus.yaml",
+            "file:.ai/repo/project/issues/I0912.yaml",
+            "file:apps/majordomus-cli/src/deploy/slug.rs",
+            "file:scripts/site-build"
+          ],
+          "tags": [
+            "deployment",
+            "site"
           ]
         }
       },
@@ -101799,6 +101830,36 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0223",
+        "target": "file:apps/majordomus-cli/src/deploy/slug.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0223",
+        "target": "file:scripts/site-build",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0223",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0223",
+        "target": "majordomus://adr/adr-0219",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0223",
+        "target": "majordomus://deployment/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0223",
+        "target": "majordomus://issue/I0912",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -134330,8 +134391,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3768,
-      "edges": 8711,
+      "nodes": 3770,
+      "edges": 8717,
       "acyclic": false,
       "truncated": false
     }

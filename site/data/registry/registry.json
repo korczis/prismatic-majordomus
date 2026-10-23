@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "192d43271727fc5e4d52160c5ee1e516f4332ad17286125ec64558a2b6a885e7",
+    "fingerprint": "f8cb63d4c203368fb91fcd311e2fb7888f441b9aa2aa7619b75fd482eee087d5",
     "summary": {
-      "total": 3314,
+      "total": 3315,
       "builtin": 208,
-      "declarative": 3106,
+      "declarative": 3107,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3106
+        "resource": 3107
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3116
+        "implemented": 3117
       },
       "mcp_tools": 197,
-      "mcp_resources": 3161,
+      "mcp_resources": 3162,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -12341,6 +12341,13 @@
               "out": {
                 "type": "string",
                 "description": "The directory the slug is written into: outside the checkout, absent or empty."
+              },
+              "site": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The site built at that commit (`scripts/site-build --serve`), required exactly when the\ndeployment declares `build.site`: the object says the slug carries one, this says where\nthe build left it."
               }
             },
             "required": [
@@ -12406,6 +12413,29 @@
               "provider": {
                 "$ref": "#/$defs/Provider",
                 "description": "The provider block of the object, as read at the commit."
+              },
+              "site": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Where the built site sits in the slug, when the object declares one."
+              },
+              "site_files": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many of its files the slug carries."
+              },
+              "site_sha256": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The digest over them, as `Source::site_sha256`."
               }
             },
             "required": [
@@ -85598,7 +85628,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 160,
+        "capabilities": 161,
         "capability_ids": []
       },
       {
@@ -86889,7 +86919,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9f1a261184ea6b1b45421fbdad4386d682be485dcaeb2b1fd3f684e6c2fbafd0",
+    "fingerprint": "0cd6254ca36b2f43969a693bc0e1354d49b9485887892af135fc06a81410806f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86912,7 +86942,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 160,
+      "adr": 161,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -89541,6 +89571,21 @@
           "mesh-runtime",
           "deployment",
           "security"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0223",
+        "kind": "adr",
+        "identity": "adr-0223",
+        "title": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+        "description": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+        "path": ".ai/repo/adrs/0223-a-deployment-carries-the-site-built-at-its-own-commit.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 4432,
+        "tags": [
+          "deployment",
+          "site"
         ]
       },
       {
@@ -120652,7 +120697,7 @@
       "identity": [
         "id"
       ],
-      "objects": 160
+      "objects": 161
     },
     {
       "name": "application",
@@ -146749,6 +146794,18 @@
                 "value_name": "OUT",
                 "takes_value": true,
                 "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "site",
+                "long": "site",
+                "positional": false,
+                "help": "The site built at that commit, required when the deployment declares build.site",
+                "value_name": "SITE",
+                "takes_value": true,
+                "required": false,
                 "global": false,
                 "possible_values": [],
                 "defaults": []

@@ -12779,6 +12779,13 @@
             "out": {
               "type": "string",
               "description": "The directory the slug is written into: outside the checkout, absent or empty."
+            },
+            "site": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The site built at that commit (`scripts/site-build --serve`), required exactly when the\ndeployment declares `build.site`: the object says the slug carries one, this says where\nthe build left it."
             }
           },
           "required": [
@@ -12844,6 +12851,29 @@
             "provider": {
               "$ref": "#/$defs/Provider",
               "description": "The provider block of the object, as read at the commit."
+            },
+            "site": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Where the built site sits in the slug, when the object declares one."
+            },
+            "site_files": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many of its files the slug carries."
+            },
+            "site_sha256": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The digest over them, as `Source::site_sha256`."
             }
           },
           "required": [

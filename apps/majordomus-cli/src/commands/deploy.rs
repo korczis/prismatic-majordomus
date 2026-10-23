@@ -28,8 +28,12 @@ fn run_to(args: DeployArgs, w: &mut dyn Write) -> Result<u8> {
         commit,
         executable,
         out,
+        site,
     } = args.command;
     let mut input = json!({ "executable": executable, "out": out });
+    if let Some(s) = site {
+        input["site"] = json!(s);
+    }
     if let Some(d) = deployment {
         input["deployment"] = json!(d);
     }
@@ -148,6 +152,7 @@ mod tests {
                 commit: deployment.map(|_| "HEAD".to_string()),
                 executable: executable.display().to_string(),
                 out: out.display().to_string(),
+                site: None,
             },
             format,
         }

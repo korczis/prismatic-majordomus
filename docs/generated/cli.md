@@ -5684,6 +5684,7 @@ majordomus deploy slug [OPTIONS]
 | `--commit` | `<COMMIT>` | — | The commit every file is read at (default HEAD) |
 | `--executable` | `<EXECUTABLE>` | required | The executable built at that commit |
 | `--out` | `<OUT>` | required | The directory the slug is written into: outside the checkout, absent or empty |
+| `--site` | `<SITE>` | — | The site built at that commit, required when the deployment declares build.site |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
