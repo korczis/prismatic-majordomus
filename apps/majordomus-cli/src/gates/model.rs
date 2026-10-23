@@ -1297,6 +1297,37 @@ classes:
         );
     }
 
+    #[test]
+    fn loading_names_a_model_that_does_not_read_or_does_not_type() {
+        let dir = tempfile::tempdir().unwrap();
+        let ci = dir.path().join(".ai/repo/ci");
+        std::fs::create_dir_all(&ci).unwrap();
+        let does_not_parse = format!("{MODEL_PATH} does not parse: ");
+        // a list where the model's mapping belongs: the reader's refusal, in the model's words
+        std::fs::write(ci.join("gates.yaml"), "- a list\n- not a model\n").unwrap();
+        let err = GateModel::load(dir.path()).unwrap_err();
+        assert!(err.starts_with(&does_not_parse), "{err}");
+        // a mapping whose version is a word: it reads, its lanes are fine, and it does not type
+        let worded = MODEL.replacen("version: 1", "version: one", 1);
+        assert_ne!(worded, MODEL, "the fixture names its version");
+        std::fs::write(ci.join("gates.yaml"), worded).unwrap();
+        let err = GateModel::load(dir.path()).unwrap_err();
+        assert!(err.starts_with(&does_not_parse), "{err}");
+    }
+
+    #[test]
+    fn a_map_where_a_lane_belongs_is_named_as_one() {
+        let mapped = laned().replacen(
+            "    lane: feedback\n",
+            "    lane:\n      name: feedback\n",
+            1,
+        );
+        assert_eq!(
+            lane_problems_of(&mapped),
+            vec!["gate lint: lane is feedback, proof or release, not a map".to_string()]
+        );
+    }
+
     /// The laned fixture with these gates in the feedback lane and every other gate in proof.
     fn tiered(feedback: &[&str]) -> GateModel {
         let mut m: GateModel = yaml::parse_into(&laned()).expect("the laned fixture parses");

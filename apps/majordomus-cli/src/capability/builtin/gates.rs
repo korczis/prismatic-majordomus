@@ -706,4 +706,27 @@ mod tests {
         );
         assert_eq!(stale(&unreadable), crate::gates::GateStatus::Unknown);
     }
+
+    /// A tier the model cannot plan is the caller's mistake, refused before anything is read,
+    /// never answered as a plan of every lane. The synthetic repository declares no CI model,
+    /// so it declares no tiers either, and any tier asked of it is refused in ci-plan's words.
+    #[test]
+    fn a_tier_the_model_cannot_plan_is_refused_not_answered() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let err = ctx
+            .execute(
+                "gates.completion",
+                serde_json::json!({ "changed": [], "tier": "pull-request" }),
+            )
+            .expect_err("a tier the model does not declare is refused");
+        let said = format!("{err:?}");
+        assert!(said.contains("tier pull-request"), "{said}");
+    }
 }
