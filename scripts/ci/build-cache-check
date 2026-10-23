@@ -49,8 +49,8 @@ while IFS= read -r f; do
     first="${line#"${line%%[![:space:]]*}"}"
     case "$first" in '#'*) continue ;; esac
     if [ "$n" -gt 1 ] && sed -n "$((n - 1))p" "$f" | grep -qE '^[[:space:]]*#[[:space:]]*build-cache:[[:space:]]*[^[:space:]]'; then continue; fi
-    if [ "$chokes" = 1 ] && printf '%s\n' "$line" | grep -qE "${CMD}cargo[[:space:]]" \
-       && ! printf '%s\n' "$line" | grep -qE 'npm|mix'; then continue; fi
+    if [ "$chokes" = 1 ] && grep -qE "${CMD}cargo[[:space:]]" <<<"$line" \
+       && ! grep -qE 'npm|mix' <<<"$line"; then continue; fi
     printf 'BYPASS %s:%s: %s\n' "$f" "$n" "$first"
     found=$((found + 1))
   done < <(grep -nE "$BYPASS" "$f" 2>/dev/null || true)
