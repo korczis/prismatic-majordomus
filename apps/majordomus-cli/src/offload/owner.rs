@@ -24,6 +24,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
+use schemars::JsonSchema;
 use serde::Serialize;
 
 use crate::peers::{Peer, PeerAddress};
@@ -51,7 +52,7 @@ pub fn owner_value(v: &str) -> Option<String> {
 }
 
 /// Who a run belongs to: what a person needs to reach the worker that started it.
-#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct RunOwner {
     /// The session's id on the mesh (`claude-code-<id>`), or the one this process inherited.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -158,7 +159,7 @@ pub fn peer_on_board(peers: &[Peer], address: &PeerAddress) -> Option<String> {
 /// no lease, no address, no answer or no board — the owner is then simply unnamed by a peer.
 /// One request, bounded by the declared probe timeout, through the route the registry
 /// declares for `peers.list` (never a path typed here).
-fn board_of_checkout(worktree: &Path) -> Vec<Peer> {
+pub(crate) fn board_of_checkout(worktree: &Path) -> Vec<Peer> {
     let half = crate::capability::builtin::server::local_half(worktree);
     let lease = crate::lease::LeaseFile::read(&crate::lease::lease_file(worktree, &half));
     let Some(url) = lease.document().and_then(|d| d.url.clone()) else {
@@ -186,7 +187,7 @@ fn board_of_checkout(worktree: &Path) -> Vec<Peer> {
 }
 
 /// A run record as the host keeps it while the run lives.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 pub struct RunRecord {
     /// The offload tag: the first ten characters of the commit that travelled.
     pub tag: String,

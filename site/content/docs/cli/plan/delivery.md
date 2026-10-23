@@ -1,7 +1,7 @@
 +++
 title = "majordomus plan delivery"
 description = "Every issue's furthest delivery stage, with the object that proved it and its declared status beside it"
-weight = 206
+weight = 207
 [extra]
 route = "/docs/cli/plan/delivery/"
 command = "majordomus plan delivery"

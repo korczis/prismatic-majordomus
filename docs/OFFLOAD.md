@@ -179,6 +179,21 @@ and a deleted worktree as its working directory: nothing stopped the group (I395
   run was stopped, and the waiting `offload derive` exits 14. A record whose group is
   already empty is reported gone and removed. Stopping a run is done this way and no other:
   never by ssh to the host and `kill` by hand, and never another session's run.
+- **`majordomus mesh who <subject>`** names the owner (capability `mesh.who`, also the MCP
+  tool `majordomus_mesh_who` and `GET /api/v1/mesh/who`). The subject is a pid, `host:pid`
+  on a declared host, a run tag or `host:tag`, an issue, or a path. A pid is read where it
+  runs: its parent chain, process group, start, command and working directory, and the
+  owner variables of its environment. The provider's process in that chain is the one with
+  a socket under `/tmp/cc-socks`, or the one whose entry in `~/.claude/sessions/<pid>.json`
+  records its own start, which also gives the session's id and name. An entry left by an
+  earlier process with that pid is reported and not used. The answer is joined with the
+  host's run records (by the run's tag, then its group, then its shell), the board (whose
+  rows carry each worker's address) and the mesh claims. A declared host is read through
+  its ssh address, exactly as `offload` reaches it, and an undeclared one is refused before
+  anything is reached. A process whose parent is init and whose directory is gone is
+  marked `leftover` and named by its run record. When nothing names an owner, the answer
+  is `known: false`, lists every fact it lacked under `missing`, and exits 10. A command
+  line is reported but never used to decide whose a process is.
 
 ## The board and the mesh
 

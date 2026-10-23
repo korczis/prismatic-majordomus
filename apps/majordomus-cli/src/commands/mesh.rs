@@ -75,6 +75,15 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 not_ok,
             ),
         },
+        // A process is a fact of the machine it runs on, the board is gathered from every
+        // checkout's server: answered in this process, like the identity.
+        MeshCommand::Who(a) => in_process(
+            a.query,
+            &["mesh", "who"],
+            json!({ "subject": a.subject }),
+            render_who,
+            |v| v["known"] != json!(true),
+        ),
         MeshCommand::Peers(v) => {
             let target = viewed("/api/v1/mesh/peers", &v);
             ask(&v.query, "GET", &target, None, render_peers, never)
@@ -635,6 +644,69 @@ fn render_build_cache_key(v: &Value) -> String {
             "",
             k["location"].as_str().unwrap_or("")
         ));
+    }
+    out
+}
+
+fn render_who(v: &Value) -> String {
+    let text = |v: &Value| v.as_str().unwrap_or("").to_string();
+    let mut out = format!(
+        "{} {} on {}: {}{}\n",
+        text(&v["kind"]),
+        text(&v["subject"]),
+        text(&v["host"]),
+        if v["known"] == json!(true) {
+            "known"
+        } else {
+            "unknown"
+        },
+        if v["leftover"] == json!(true) {
+            ", a leftover"
+        } else {
+            ""
+        }
+    );
+    for o in v["owners"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "owner      {}  peer {}  issue {}{}\n",
+            o["session"].as_str().unwrap_or("-"),
+            o["peer"].as_str().unwrap_or("-"),
+            o["issue"].as_str().unwrap_or("-"),
+            o["name"]
+                .as_str()
+                .map(|n| format!("  name {n}"))
+                .unwrap_or_default()
+        ));
+        if let Ok(a) = serde_json::from_value::<crate::peers::PeerAddress>(o["address"].clone()) {
+            out.push_str(&format!("address    {}\n", a.line()));
+        }
+        for b in o["basis"].as_array().into_iter().flatten() {
+            out.push_str(&format!("  because  {}\n", text(b)));
+        }
+    }
+    for p in v["chain"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "process    {} <- {}  group {}  {}\n",
+            p["pid"],
+            p["ppid"],
+            p["pgid"],
+            p["command"].as_str().unwrap_or("")
+        ));
+    }
+    for e in v["evidence"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{} {:<12} {}\n",
+            if e["used"] == json!(true) {
+                "used    "
+            } else {
+                "consulted"
+            },
+            text(&e["source"]),
+            text(&e["detail"])
+        ));
+    }
+    for m in v["missing"].as_array().into_iter().flatten() {
+        out.push_str(&format!("missing    {}\n", text(m)));
     }
     out
 }

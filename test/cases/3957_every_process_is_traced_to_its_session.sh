@@ -1,4 +1,4 @@
-# majordomus-covers: capability:peers.list
+# majordomus-covers: capability:peers.list capability:mesh.who
 # Every worker, and every process it starts, is traced to its session (I3956).
 #
 # On 2026-10-22 a 33-minute remote `cargo test --doc` could be traced to its Claude Code
@@ -28,6 +28,21 @@
 #   offload stop                      refused to another session, nothing signalled; the
 #                                     owner's stop ends the whole group, a grandchild that
 #                                     would have outlived its parent included
+#
+# Slice 3, `majordomus mesh who` names the session behind a subject from the facts alone —
+# a process table, a provider's session registry, the run records — through stand-ins for
+# ps, lsof and ssh (nothing is signalled, nothing leaves this machine):
+#
+#   a worker's process                the session from its environment, its name, socket and
+#                                     pid from the provider's registry entry whose start
+#                                     matches; an entry from an earlier process is not used
+#   a leftover                        init as its parent, its directory gone: marked, and
+#                                     named with its owner by the run record of its group
+#   host:pid, host:tag                a declared host read through the offload ssh path only;
+#                                     an undeclared one is refused and nothing is reached
+#   an issue, a path                  the run records that name it or work in it
+#   unknown                           no owner evidence: exit 10, every missing fact listed
+#   MCP                               the same answer as a tools/call
 #
 # Real processes over real MCP, an ephemeral port, the server ended with its last client.
 . "$ROOT/test/lib.sh"
@@ -258,3 +273,139 @@ while kill -0 "$gc" 2>/dev/null; do
 done
 [ ! -f "$O/queue.runs/$btag.run" ] || { echo "    the stopped run left its record"; exit 1; }
 echo "    the owner's stop ends the whole group, grandchild included, and the record goes with it"
+
+# ---------------------------------------------------------------- 6. who runs this
+W="$S/who"
+mkdir -p "$W/bin" "$W/sessions" "$W/socks" "$W/kept" .ai/repo/offload
+# the repository declares the cluster's host, as an offloading checkout does
+sed 's/^id: case3957$/id: derive/' "$O/derive.yaml" > .ai/repo/offload/derive.yaml
+git add .ai/repo/offload/derive.yaml
+# the process table both machines answer from: pid|ppid|pgid|start|command|cwd|environment
+cat > "$W/procs" <<PROCS
+4957010|4957009|4957010|Thu Oct 22 15:21:51 2026|cargo test --doc|$W/kept|CLAUDE_CODE_SESSION_ID=sess-w CLAUDE_CODE_MESSAGING_TOKEN=$TOKEN
+4957009|1|4957009|Thu Oct 22 15:00:00 2026|claude|$W/kept|
+4957003|1|4957003|Thu Oct 22 16:00:00 2026|rustc --crate-name majordomus_cli|$W/removed-worktree|
+4957020|4957019|4957019|Thu Oct 22 17:00:00 2026|rustc --edition 2021|$W/kept|MAJORDOMUS_OWNER_SESSION=claude-code-sess-r MAJORDOMUS_OWNER_ISSUE=I3956 MAJORDOMUS_OWNER_RUN=b3957f0000
+4957019|1|4957019|Thu Oct 22 17:00:00 2026|sh -c derive|$W/kept|
+4957030|4957031|4957030|Thu Oct 22 18:00:00 2026|make|$W/kept|
+4957031|1|4957031|Thu Oct 22 18:00:00 2026|sh|$W/kept|
+PROCS
+# the stand-in ps: `-o pid= -o ppid= -o pgid=`, `-o lstart=`, `-o command=` (with `-E`, the
+# environment after it), each for the one pid `-p` names
+cat > "$W/bin/ps" <<'PS'
+#!/bin/sh
+fields=""; env=""; pid=""
+while [ $# -gt 0 ]; do
+  case $1 in -o) fields="$fields ${2%=}"; shift 2 ;; -p) pid=$2; shift 2 ;; -E) env=1; shift ;; *) shift ;; esac
+done
+awk -F'|' -v p="$pid" -v f="$fields" -v e="$env" '$1 == p {
+  n = split(f, w, " "); out = ""
+  for (i = 1; i <= n; i++) {
+    v = (w[i] == "pid") ? $1 : (w[i] == "ppid") ? $2 : (w[i] == "pgid") ? $3 : (w[i] == "lstart") ? $4 : $5
+    if (w[i] == "command" && e == 1 && $7 != "") v = v " " $7
+    out = (out == "") ? v : out " " v
+  }
+  print out
+}' "$CASE_WHO/procs"
+PS
+cat > "$W/bin/lsof" <<'LSOF'
+#!/bin/sh
+while [ $# -gt 0 ]; do case $1 in -p) pid=$2; shift 2 ;; *) shift ;; esac; done
+awk -F'|' -v p="$pid" '$1 == p { print "p" $1; print "n" $6 }' "$CASE_WHO/procs"
+LSOF
+chmod +x "$W/bin/ps" "$W/bin/lsof"
+# the provider's registry entry for its process, whose start matches; and a stale one, left
+# by an earlier process with the leftover's pid
+printf '{"pid":4957009,"sessionId":"sess-w","name":"case-3957-w","messagingSocketPath":"%s","procStart":"Thu Oct 22 15:00:00 2026"}\n' \
+  "$W/socks/4957009.sock" > "$W/sessions/4957009.json"
+printf '{"pid":4957003,"sessionId":"sess-stale","name":"stale","procStart":"Mon Oct 19 09:00:00 2026"}\n' \
+  > "$W/sessions/4957003.json"
+# the host's run records: the leftover's group, and a run on h0 the remote process carries
+started="$(date +%s)"
+printf 'majordomus-offload-run/v1\ntag a3957f0000\npid 4957002\npgid 4957003\nstarted_at %s\nhost h0\ncwd %s/removed-worktree\nowner_session claude-code-sess-r\nowner_peer p7\nowner_issue I3956\nowner_host case-mac\nowner_pid 4545\n' \
+  "$started" "$W" > "$O/queue.runs/a3957f0000.run"
+printf 'majordomus-offload-run/v1\ntag b3957f0000\npid 4957019\npgid 4957019\nstarted_at %s\nhost h0\ncwd %s/kept\nowner_session claude-code-sess-r\nowner_issue I3956\nowner_host case-mac\nowner_pid 4545\n' \
+  "$started" "$W" > "$O/queue.runs/b3957f0000.run"
+CASE_WHO="$W"; export CASE_WHO
+# who <subject>: as a session would ask, with the stand-ins first on the path
+who() {
+  bare env PATH="$W/bin:$PATH" MAJORDOMUS_OFFLOAD_SSH="$O/bin/ssh" MAJORDOMUS_WHO_SOCKET_DIR="$W/socks" \
+    MAJORDOMUS_WHO_SESSION_DIR="$W/sessions" "$RB" mesh who "$@"
+}
+: > "$O/ssh.log"
+rc=0; who 4957010 --format json > "$W/w.json" 2> "$W/w.err" || rc=$?
+[ "$rc" = 0 ] || { echo "    a worker's process exited $rc"; cat "$W/w.err" "$W/w.json"; exit 1; }
+jq -e --arg sock "$W/socks/4957009.sock" '.known and (.leftover | not)
+  and .owners[0].session == "claude-code-sess-w" and .owners[0].name == "case-3957-w"
+  and .owners[0].address.pid == 4957009 and .owners[0].address.socket == $sock
+  and (.chain | length) == 2' "$W/w.json" >/dev/null \
+  || { echo "    a worker's process is not named by its environment and its registry entry:"; jq -c . "$W/w.json"; exit 1; }
+grep -qF "$TOKEN" "$W/w.json" && { echo "    the messaging token reached the answer"; exit 1; }
+echo "    a worker's process: its session from its environment, its name and socket from the registry"
+
+rc=0; who 4957003 --format json > "$W/l.json" 2> "$W/l.err" || rc=$?
+[ "$rc" = 0 ] || { echo "    the leftover exited $rc"; cat "$W/l.err" "$W/l.json"; exit 1; }
+jq -e '.known and .leftover and .owners[0].session == "claude-code-sess-r"
+  and .owners[0].issue == "I3956" and .owners[0].peer == "p7" and .run.tag == "a3957f0000"
+  and .owners[0].address.host == "case-mac" and .owners[0].address.pid == 4545
+  and ([.owners[0].basis[] | select(test("earlier process"))] | length) == 1
+  and .chain[0].cwd_gone' "$W/l.json" >/dev/null \
+  || { echo "    the leftover is not named by its group's run record:"; jq -c . "$W/l.json"; exit 1; }
+echo "    a leftover is marked and named by its group's run record; a stale registry entry is not used"
+
+[ ! -s "$O/ssh.log" ] || { echo "    a local question went through ssh:"; cat "$O/ssh.log"; exit 1; }
+rc=0; who h0:4957020 --format json > "$W/r.json" 2> "$W/r.err" || rc=$?
+[ "$rc" = 0 ] || { echo "    the remote process exited $rc"; cat "$W/r.err" "$W/r.json"; exit 1; }
+jq -e '.known and .host == "h0" and .owners[0].session == "claude-code-sess-r"
+  and .owners[0].issue == "I3956" and .run.tag == "b3957f0000"' "$W/r.json" >/dev/null \
+  || { echo "    the remote process is not named:"; jq -c . "$W/r.json"; exit 1; }
+[ -s "$O/ssh.log" ] || { echo "    host:pid did not go through the offload ssh path"; exit 1; }
+rc=0; who h0:b3957f0000 --format json > "$W/t.json" 2> "$W/t.err" || rc=$?
+[ "$rc" = 0 ] && jq -e '.known and .kind == "tag" and .owners[0].session == "claude-code-sess-r"' "$W/t.json" >/dev/null \
+  || { echo "    the run tag is not named ($rc):"; cat "$W/t.err"; jq -c . "$W/t.json"; exit 1; }
+echo "    host:pid and host:tag are read through the offload ssh path"
+
+: > "$O/ssh.log"
+rc=0; who nowhere:4957020 --format json > "$W/n.json" 2> "$W/n.err" || rc=$?
+[ "$rc" = 10 ] && jq -e '(.known | not) and ([.missing[] | select(test("not a declared offload host"))] | length) == 1' "$W/n.json" >/dev/null \
+  || { echo "    an undeclared host is not refused ($rc):"; jq -c . "$W/n.json"; exit 1; }
+[ ! -s "$O/ssh.log" ] || { echo "    an undeclared host was reached:"; cat "$O/ssh.log"; exit 1; }
+echo "    an undeclared host is refused, and nothing is reached"
+
+rc=0; who I3956 --format json > "$W/i.json" 2> "$W/i.err" || rc=$?
+[ "$rc" = 0 ] && jq -e '.known and .kind == "issue" and .owners[0].session == "claude-code-sess-r"
+  and ([.owners[0].basis[] | select(test("run record"))] | length) == 2' "$W/i.json" >/dev/null \
+  || { echo "    the issue is not answered by its run records ($rc):"; jq -c . "$W/i.json"; exit 1; }
+echo "    an issue is answered by the run records that name it"
+
+rc=0; who "$W/kept/src" --format json > "$W/p.json" 2> "$W/p.err" || rc=$?
+[ "$rc" = 0 ] && jq -e '.known and .kind == "path" and (.owners | length) == 1
+  and .owners[0].session == "claude-code-sess-r"' "$W/p.json" >/dev/null \
+  || { echo "    a run's worktree path is not answered ($rc):"; jq -c . "$W/p.json"; exit 1; }
+echo "    a worktree path is answered by the run that works in it"
+
+for subject in 4957030 4957099; do
+  rc=0; who "$subject" --format json > "$W/u.json" 2> "$W/u.err" || rc=$?
+  [ "$rc" = 10 ] && jq -e '(.known | not) and (.owners | length) == 0 and (.missing | length) > 0' "$W/u.json" >/dev/null \
+    || { echo "    $subject is not unknown with what is missing ($rc):"; jq -c . "$W/u.json"; exit 1; }
+done
+jq -e '.missing[0] | test("no such process")' "$W/u.json" >/dev/null \
+  || { echo "    a pid that is not running is not said to be missing:"; jq -c . "$W/u.json"; exit 1; }
+rc=0; who 4957030 > "$W/u.txt" 2>/dev/null || rc=$?
+[ "$rc" = 10 ] && grep -q '^missing    session:' "$W/u.txt" && grep -q 'unknown' "$W/u.txt" \
+  || { echo "    the unknown answer does not read as one ($rc):"; cat "$W/u.txt"; exit 1; }
+echo "    without owner evidence the answer is unknown, exit 10, every missing fact listed"
+
+{
+  req 1 initialize "$(init case3957-who)"
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  req 2 tools/call '{"name":"majordomus_mesh_who","arguments":{"subject":"4957003"}}'
+} > "$W/mcp.in"
+rc=0
+bare env PATH="$W/bin:$PATH" MAJORDOMUS_WHO_SOCKET_DIR="$W/socks" MAJORDOMUS_WHO_SESSION_DIR="$W/sessions" \
+  "$RB" mcp < "$W/mcp.in" > "$W/mcp.out" 2> "$W/mcp.err" || rc=$?
+[ "$rc" = 0 ] || { echo "    the MCP client exited $rc"; cat "$W/mcp.err"; exit 1; }
+sed -n 2p "$W/mcp.out" | jq -e '.result.structuredContent | .known and .leftover
+  and .owners[0].session == "claude-code-sess-r"' >/dev/null \
+  || { echo "    majordomus_mesh_who over MCP does not answer the leftover:"; cat "$W/mcp.out"; exit 1; }
+echo "    majordomus_mesh_who answers the same over MCP"

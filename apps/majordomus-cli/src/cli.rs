@@ -752,6 +752,34 @@ pub enum MeshCommand {
     Review(MeshReviewArgs),
     /// The mesh build cache: what each dependency install and build directory is cached under
     BuildCache(MeshBuildCacheArgs),
+    /// Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one
+    Who(MeshWhoArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh who`: the session behind a subject. The subject is positional and required: a pid,
+/// `host:pid` on a declared offload host, a run tag, `host:tag`, an issue (`I<digits>`) or a
+/// path, because "who runs this" without a "this" is `mesh peers`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshWhoArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "who", "lundra:24025"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Who(who) = mesh.command else { panic!("expected `who`") };
+/// let who: MeshWhoArgs = who;
+/// assert_eq!(who.subject, "lundra:24025");
+///
+/// // the subject is the whole question
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "who"]).is_err());
+/// ```
+pub struct MeshWhoArgs {
+    /// A pid, host:pid, run tag, host:tag, issue (I3956) or path
+    pub subject: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -7458,6 +7486,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
             setup: &[],
             expect: Expect::StdoutContains(&["platform"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh who",
+        examples: &[ExampleDoc {
+            id: "mesh-who-issue",
+            title: "Who works on an issue, and what says so",
+            description: "Every live mesh claim, board announcement and run record that names the issue, each owner with its board peer, issue and address and the facts that named it. A pid is read where it runs — its parent chain up to the provider's process and socket, its directory and the owner variables of its environment — and `host:pid` reads a declared offload host through its ssh path. Here nobody names the issue, so the answer is unknown, lists the evidence it lacked, and exits 10.",
+            argv: &["mesh", "who", "I1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

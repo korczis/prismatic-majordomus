@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "bcd4382ad38f228f3e4ddd1f4448861734e011cc6dbf3be91d92071853903131",
+    "fingerprint": "bb1483c0c0f5943bca57ed2136d4984c572e961e66302db0a6332d606508f69a",
     "summary": {
-      "total": 3330,
-      "builtin": 209,
+      "total": 3331,
+      "builtin": 210,
       "declarative": 3121,
       "by_kind": {
         "command": 32,
-        "query": 177,
+        "query": 178,
         "resource": 3121
       },
       "by_stability": {
         "behaviorally_verified": 143,
-        "experimental": 56,
+        "experimental": 57,
         "implemented": 3131
       },
-      "mcp_tools": 198,
+      "mcp_tools": 199,
       "mcp_resources": 3176,
-      "http_routes": 203,
-      "cli_commands": 113,
+      "http_routes": 204,
+      "cli_commands": 114,
       "modules": 92,
       "benchmark_required": 175,
-      "benchmark_waived": 34,
+      "benchmark_waived": 35,
       "cached": 54
     },
     "builtin": [
@@ -53774,6 +53774,498 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
       {
+        "id": "mesh.who",
+        "module": "mesh",
+        "kind": "query",
+        "title": "Who runs this",
+        "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
+        "input": {
+          "name": "WhoInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "subject": {
+                "type": "string",
+                "description": "A pid, `host:pid`, a run tag, `host:tag`, an issue (`I<digits>`) or a path."
+              }
+            },
+            "required": [
+              "subject"
+            ],
+            "description": "The input of `mesh.who`.",
+            "title": "WhoInput"
+          }
+        },
+        "output": {
+          "name": "WhoReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "subject": {
+                "type": "string",
+                "description": "The subject as asked."
+              },
+              "kind": {
+                "type": "string",
+                "description": "`pid`, `tag`, `issue` or `path`."
+              },
+              "host": {
+                "type": "string",
+                "description": "The machine the subject was read on."
+              },
+              "known": {
+                "type": "boolean",
+                "description": "Whether an owner was named; `false` is \"unknown\", with `missing` saying why."
+              },
+              "leftover": {
+                "type": "boolean",
+                "description": "Whether the process is a leftover: init is its parent and its directory is gone."
+              },
+              "owners": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WhoOwner"
+                },
+                "description": "Every worker the evidence names."
+              },
+              "chain": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProcessFact"
+                },
+                "description": "The process and its parents, for a pid."
+              },
+              "run": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RunRecord"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The run record the subject belongs to."
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WhoEvidence"
+                },
+                "description": "Every source consulted."
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be named, and the evidence that would have named it."
+              }
+            },
+            "required": [
+              "subject",
+              "kind",
+              "host",
+              "known",
+              "leftover",
+              "owners",
+              "chain",
+              "evidence",
+              "missing"
+            ],
+            "description": "The answer of `mesh.who`.",
+            "title": "WhoReport",
+            "$defs": {
+              "WhoOwner": {
+                "type": "object",
+                "properties": {
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's id on the mesh (`claude-code-<id>`)."
+                  },
+                  "peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The board peer, when a board row is this worker's."
+                  },
+                  "checkout": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The checkout that board row is attached to."
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's name, as its provider shows it in its session list."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue the work is for."
+                  },
+                  "address": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PeerAddress"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Where the worker is reached: its machine, process, provider session and socket."
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What named each of these, one line per fact used."
+                  }
+                },
+                "required": [
+                  "basis"
+                ],
+                "description": "One worker the answer names."
+              },
+              "PeerAddress": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider whose session this is (`claude-code`), when its environment says so."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The machine the worker runs on."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's own process: the provider's pid, not the MCP bridge it started."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's id for the session, the one its lifecycle hooks are given."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions on the same machine message this one through."
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
+              },
+              "ProcessFact": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process."
+                  },
+                  "ppid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its parent; 1 is init, which a process whose parent died is handed to."
+                  },
+                  "pgid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its process group."
+                  },
+                  "started": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it started, as the host's `ps` says it."
+                  },
+                  "command": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its command line: reported, never used to decide whose it is."
+                  },
+                  "cwd": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its working directory."
+                  },
+                  "cwd_gone": {
+                    "type": "boolean",
+                    "description": "Whether that directory no longer exists (a removed worktree)."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's messaging socket for this pid, when one exists."
+                  },
+                  "env": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The owner variables of its environment (never a token)."
+                  },
+                  "provider_session": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ProviderSession"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The provider's session registry entry for this pid, when there is one."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "ppid",
+                  "pgid",
+                  "cwd_gone",
+                  "env"
+                ],
+                "description": "One process of a parent chain, as its host reports it."
+              },
+              "ProviderSession": {
+                "type": "object",
+                "properties": {
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's id for the session."
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's name, as the provider shows it in its session list."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions message it on."
+                  },
+                  "started": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the registry says its process started."
+                  },
+                  "verified": {
+                    "type": "boolean",
+                    "description": "Whether that start is this process's: a pid the host handed on since is not the\nsession's, and its entry is then not used."
+                  }
+                },
+                "required": [
+                  "verified"
+                ],
+                "description": "What a provider's session registry says about one of its processes."
+              },
+              "RunRecord": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "The offload tag: the first ten characters of the commit that travelled."
+                  },
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The run's shell on the host."
+                  },
+                  "pgid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The run's process group; absent where the host could not start one."
+                  },
+                  "started_at": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When it started, seconds since the epoch."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The host it runs on."
+                  },
+                  "cwd": {
+                    "type": "string",
+                    "description": "The worktree it runs in."
+                  },
+                  "owner": {
+                    "$ref": "#/$defs/RunOwner",
+                    "description": "Who it belongs to."
+                  }
+                },
+                "required": [
+                  "tag",
+                  "pid",
+                  "started_at",
+                  "host",
+                  "cwd",
+                  "owner"
+                ],
+                "description": "A run record as the host keeps it while the run lives."
+              },
+              "RunOwner": {
+                "type": "object",
+                "properties": {
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's id on the mesh (`claude-code-<id>`), or the one this process inherited."
+                  },
+                  "peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The board peer whose address is this worker's, or the one this process inherited."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue the work is for: the active task's, or the one this process inherited."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The machine the run was started from."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's process on that machine."
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "description": "Who a run belongs to: what a person needs to reach the worker that started it."
+              },
+              "WhoEvidence": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`process`, `run_records`, `board` or `mesh_claims`."
+                  },
+                  "used": {
+                    "type": "boolean",
+                    "description": "Whether the answer used it."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What it said, or why it said nothing."
+                  }
+                },
+                "required": [
+                  "source",
+                  "used",
+                  "detail"
+                ],
+                "description": "One source of evidence, and what it gave."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_who"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/who"
+          },
+          "cli": {
+            "path": [
+              "mesh",
+              "who"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "diagnostics"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted",
+          "local_only": true
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
         "id": "models.list",
         "module": "models",
         "kind": "query",
@@ -86605,7 +87097,7 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": [
           "mesh.build_cache.key",
           "mesh.claim",
@@ -86631,7 +87123,8 @@
           "mesh.session.open",
           "mesh.state",
           "mesh.status",
-          "mesh.verify"
+          "mesh.verify",
+          "mesh.who"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -87199,7 +87692,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d870cb6814187b50df8b5cbb13d833e7d47a1c7640880ea16cab186004c5ca1d",
+    "fingerprint": "9c851915ab2c7273f174f49f5d8bda6a46dafca806e13413fa6f33e7a01fdd2f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -94484,7 +94977,7 @@
         "title": "The derive offload",
         "path": "docs/OFFLOAD.md",
         "source_class": "document",
-        "bytes": 16615
+        "bytes": 17933
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -118613,7 +119106,7 @@
         "identity": "test/cases/3957_every_process_is_traced_to_its_session.sh",
         "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
         "source_class": "case",
-        "bytes": 13950
+        "bytes": 24124
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -144430,6 +144923,130 @@
                 "subcommands": []
               }
             ]
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "who"
+            ],
+            "route": "/docs/cli/mesh/who/",
+            "executable": true,
+            "usage": "majordomus mesh who [OPTIONS] <SUBJECT>",
+            "about": "Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one",
+            "args": [
+              {
+                "name": "subject",
+                "positional": true,
+                "help": "A pid, host:pid, run tag, host:tag, issue (I3956) or path",
+                "value_name": "SUBJECT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-who-issue",
+                "title": "Who works on an issue, and what says so",
+                "description": "Every live mesh claim, board announcement and run record that names the issue, each owner with its board peer, issue and address and the facts that named it. A pid is read where it runs — its parent chain up to the provider's process and socket, its directory and the owner variables of its environment — and `host:pid` reads a declared offload host through its ssh path. Here nobody names the issue, so the answer is unknown, lists the evidence it lacked, and exits 10.",
+                "argv": [
+                  "mesh",
+                  "who",
+                  "I1"
+                ],
+                "command": "majordomus mesh who I1",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -156678,6 +157295,23 @@
         "output": "MeshVerifyReport"
       },
       {
+        "name": "majordomus_mesh_who",
+        "id": "mesh.who",
+        "title": "Who runs this",
+        "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "WhoInput",
+        "output": "WhoReport"
+      },
+      {
         "name": "majordomus_models",
         "id": "models.list",
         "title": "The model catalogue",
@@ -159155,6 +159789,12 @@
         "path": "/api/v1/mesh/verify",
         "id": "mesh.verify",
         "kind": "command"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/who",
+        "id": "mesh.who",
+        "kind": "query"
       },
       {
         "method": "GET",
@@ -169974,6 +170614,30 @@
           "reason": "external_dependency"
         },
         {
+          "subject": "mesh.who",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "mesh.who",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "mesh.who",
+          "module": "mesh",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "models.list",
           "module": "models",
           "transport": "direct",
@@ -171761,24 +172425,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 209,
+          "required": 210,
           "covered": 175,
           "missing": 0,
-          "waived": 34,
+          "waived": 35,
           "inapplicable": 0
         },
         "http": {
-          "required": 203,
+          "required": 204,
           "covered": 175,
           "missing": 0,
-          "waived": 28,
+          "waived": 29,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 198,
+          "required": 199,
           "covered": 171,
           "missing": 0,
-          "waived": 27,
+          "waived": 28,
           "inapplicable": 0
         },
         "system": {
@@ -171789,10 +172453,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 624,
+          "required": 627,
           "covered": 535,
           "missing": 0,
-          "waived": 89,
+          "waived": 92,
           "inapplicable": 0
         }
       }

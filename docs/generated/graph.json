@@ -1222,6 +1222,15 @@
         "status": "command"
       },
       {
+        "id": "capability:mesh.who",
+        "kind": "capability",
+        "label": "mesh.who",
+        "summary": "Who runs this",
+        "route": "/cockpit/capabilities/mesh.who",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:models.list",
         "kind": "capability",
         "label": "models.list",
@@ -93503,6 +93512,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.who",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:models.list",
         "target": "projection:cli",
         "kind": "projects"
@@ -134668,6 +134697,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:mesh",
+        "target": "capability:mesh.who",
+        "kind": "composes"
+      },
+      {
         "source": "module:models",
         "target": "capability:models.list",
         "kind": "composes"
@@ -135074,8 +135108,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3784,
-      "edges": 8754,
+      "nodes": 3785,
+      "edges": 8759,
       "acyclic": false,
       "truncated": false
     }
