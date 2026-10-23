@@ -92,6 +92,7 @@ impl BenchmarkCases for ImplementInput {
 /// let report = ImplementReport {
 ///     issue: "I0001".into(), branch: "feature/I0001-x".into(), worktree: "/wt".into(),
 ///     lease: None, adapter: "claude-code".into(), outcome: "the worker succeeded".into(),
+///     verified: Vec::new(), state: "done".into(),
 /// };
 /// let json = serde_json::to_value(&report).unwrap();
 /// assert!(json.get("lease").is_none(), "no mesh in the process: no lease is claimed");
@@ -110,6 +111,30 @@ pub struct ImplementReport {
     /// The adapter that ran the worker.
     pub adapter: String,
     /// How the worker ended, in words.
+    pub outcome: String,
+    /// Every validation command the issue declares, run in the worktree after the worker,
+    /// each with how it ended: the execution's own evidence (I3986).
+    #[serde(default)]
+    pub verified: Vec<Verified>,
+    /// `done`: the worker succeeded and every validation passed. Never `delivered`, which
+    /// is another execution's word (ADR 0225).
+    pub state: String,
+}
+
+/// One validation command the issue declares, and how it ended in the worktree.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::implement::Verified;
+/// let v = Verified { command: "true".into(), ok: true, outcome: "the worker succeeded".into() };
+/// assert!(v.ok);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Verified {
+    /// The command, as the issue's `validation` declares it.
+    pub command: String,
+    /// Whether it exited 0.
+    pub ok: bool,
+    /// How it ended, in words.
     pub outcome: String,
 }
 
@@ -289,17 +314,81 @@ pub fn implement(
     })?;
     p.step_done("dispatch", outcome.ok(), Some(outcome.to_string()));
     match outcome {
-        Outcome::Succeeded => Ok(ImplementReport {
-            issue: id.to_string(),
-            branch,
-            worktree: report.path,
-            lease: lease.map(|(_, key)| key),
-            adapter: adapter.id().to_string(),
-            outcome: outcome.to_string(),
-        }),
-        Outcome::Cancelled => Err(p.cancellation()),
-        other => Err(CapabilityError::Internal(format!("worker_failed: {other}"))),
+        Outcome::Succeeded => {}
+        Outcome::Cancelled => return Err(p.cancellation()),
+        other => return Err(CapabilityError::Internal(format!("worker_failed: {other}"))),
     }
+
+    // verify: the issue's own validation, in the same worktree, as the same execution
+    p.step("verify", "Run the issue's validation in the worktree");
+    let commands = validation_of(ctx, id);
+    if commands.is_empty() {
+        p.step_done(
+            "verify",
+            false,
+            Some("the issue declares no validation".into()),
+        );
+        return Err(CapabilityError::Refused(format!(
+            "no_validation: {id} declares no validation, so its work cannot be verified"
+        )));
+    }
+    let mut verified = Vec::new();
+    for command in commands {
+        let shell =
+            crate::worker::Program::new("validation", "sh", &["-c", &command, "validation"]);
+        let run = Assignment::new(execution.as_str(), &report.path, "").within(deadline);
+        // the prompt is the empty last argument `sh -c` ignores after `$0`
+        let ended = crate::worker::run(&shell, &run, p).map_err(|e| {
+            p.step_done("verify", false, Some(e.clone()));
+            CapabilityError::Internal(e)
+        })?;
+        if ended == Outcome::Cancelled {
+            p.step_done("verify", false, Some("cancelled".into()));
+            return Err(p.cancellation());
+        }
+        let ok = ended.ok();
+        verified.push(Verified {
+            command: command.clone(),
+            ok,
+            outcome: ended.to_string(),
+        });
+        if !ok {
+            p.step_done("verify", false, Some(format!("`{command}`: {ended}")));
+            return Err(CapabilityError::Internal(format!(
+                "verification_failed: `{command}`: {ended}"
+            )));
+        }
+    }
+    p.step_done(
+        "verify",
+        true,
+        Some(format!("{} validation command(s) passed", verified.len())),
+    );
+    Ok(ImplementReport {
+        issue: id.to_string(),
+        branch,
+        worktree: report.path,
+        lease: lease.map(|(_, key)| key),
+        adapter: adapter.id().to_string(),
+        outcome: outcome.to_string(),
+        verified,
+        state: "done".into(),
+    })
+}
+
+/// The validation commands the issue's record declares, in order.
+fn validation_of(ctx: &Context, id: &str) -> Vec<String> {
+    record(&ctx.index, ISSUE, id)
+        .and_then(|(_, metadata)| metadata.get("validation"))
+        .and_then(serde_json::Value::as_array)
+        .map(|items| {
+            items
+                .iter()
+                .filter_map(serde_json::Value::as_str)
+                .map(str::to_string)
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 /// What the worker is asked: the issue's own words, never a prompt written here.

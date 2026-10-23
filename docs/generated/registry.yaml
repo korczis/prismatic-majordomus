@@ -23629,14 +23629,42 @@ capabilities:
           outcome:
             type: string
             description: "How the worker ended, in words."
+          verified:
+            type: array
+            items:
+              "$ref": "#/$defs/Verified"
+            description: "Every validation command the issue declares, run in the worktree after the worker,\neach with how it ended: the execution's own evidence (I3986)."
+            default: []
+          state:
+            type: string
+            description: "`done`: the worker succeeded and every validation passed. Never `delivered`, which\nis another execution's word (ADR 0225)."
         required:
           - issue
           - branch
           - worktree
           - adapter
           - outcome
-        description: "What an implementation ended with: where it ran, under which lease, by which worker,\nand how the worker ended. Done here means the worker ended successfully, never verified\nand never delivered.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementReport;\nlet report = ImplementReport {\n    issue: \"I0001\".into(), branch: \"feature/I0001-x\".into(), worktree: \"/wt\".into(),\n    lease: None, adapter: \"claude-code\".into(), outcome: \"the worker succeeded\".into(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert!(json.get(\"lease\").is_none(), \"no mesh in the process: no lease is claimed\");\n```"
+          - state
+        description: "What an implementation ended with: where it ran, under which lease, by which worker,\nand how the worker ended. Done here means the worker ended successfully, never verified\nand never delivered.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementReport;\nlet report = ImplementReport {\n    issue: \"I0001\".into(), branch: \"feature/I0001-x\".into(), worktree: \"/wt\".into(),\n    lease: None, adapter: \"claude-code\".into(), outcome: \"the worker succeeded\".into(),\n    verified: Vec::new(), state: \"done\".into(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert!(json.get(\"lease\").is_none(), \"no mesh in the process: no lease is claimed\");\n```"
         title: ImplementReport
+        "$defs":
+          Verified:
+            type: object
+            properties:
+              command:
+                type: string
+                description: "The command, as the issue's `validation` declares it."
+              ok:
+                type: boolean
+                description: Whether it exited 0.
+              outcome:
+                type: string
+                description: "How it ended, in words."
+            required:
+              - command
+              - ok
+              - outcome
+            description: "One validation command the issue declares, and how it ended in the worktree.\n\n```\nuse majordomus_cli::capability::builtin::implement::Verified;\nlet v = Verified { command: \"true\".into(), ok: true, outcome: \"the worker succeeded\".into() };\nassert!(v.ok);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::implement
