@@ -56,6 +56,11 @@ local and certain to fail the same way, chosen from what CI measured.
   control keeps it, so a case that read stdin waited for ever on an open pipe: case 54, for
   39 minutes, on the same day.
 
+- **Deletions.** A push whose every ref has an all-zero local sha carries no commit, so the hook
+  exits 0 before `finish --check` and the plan, as it does for `refs/majordomus/*` (I4008: 16
+  deletions waited 2400 s on the build lock, 2026-10-22); one ref that carries a commit and the
+  whole hook applies.
+
 ## Failure behaviour
 
 The push is refused with the names of what failed and the sentence "CI would refuse this push
@@ -73,6 +78,8 @@ durations it writes. It proves:
   push;
 - the hook calls the step, the policy declares the enforcement, and the plan carries the
   model's network flag;
+- (`test/cases/4008_a_push_that_only_deletes_plans_nothing.sh`) a deletion-only push runs no
+  `finish`, `case-numbers` or `run-plan`, and a mixed push still runs all three;
 - a case that reads stdin under a pipe that never closes no longer hangs the runner.
 
 The first run of the step on its own branch refused that branch for an unpinned `sort`
