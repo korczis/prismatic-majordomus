@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 160,
+      "count": 161,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 160
+      "count": 161
     },
     {
       "kind": "application",
@@ -14120,6 +14120,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0220/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0223",
+          "kind": "adr",
+          "route": "/adrs/adr-0223/",
+          "external": false
         }
       ]
     },
@@ -14227,6 +14234,58 @@
           "label": "test/cases/491_the_mesh_is_on_here.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0223",
+      "identity": "adr-0223",
+      "slug": "adr-0223",
+      "cockpit": "/cockpit/objects/adr/adr-0223",
+      "title": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+      "status": "accepted",
+      "tags": [
+        "deployment",
+        "site"
+      ],
+      "source": ".ai/repo/adrs/0223-a-deployment-carries-the-site-built-at-its-own-commit.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/deploy/slug.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-build",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0219",
+          "kind": "adr",
+          "route": "/adrs/adr-0219/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "deployment",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "I0912",
+          "kind": "issue",
+          "route": "/plan/",
           "external": false
         }
       ],
