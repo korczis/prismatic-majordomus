@@ -564,6 +564,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.build_cache.provision",
+      "path": "/evidence/capabilities/mesh-build-cache-provision/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.claim",
       "path": "/evidence/capabilities/mesh-claim/"
     },
@@ -2884,6 +2889,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh build-cache provision",
+      "path": "/evidence/commands/mesh-build-cache-provision/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh claim",
       "path": "/evidence/commands/mesh-claim/"
     },
@@ -5153,6 +5163,25 @@
           "via": "behaviour",
           "test": "suite:3950_a_cache_key_is_a_derived_triplet",
           "path": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.build_cache.provision": {
+      "kind": "capability",
+      "id": "mesh.build_cache.provision",
+      "page": "/evidence/capabilities/mesh-build-cache-provision/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache provision"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3956_a_node_is_provisioned_as_a_cache_provider",
+          "path": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
           "category": "e2e"
         }
       ],
@@ -15607,6 +15636,25 @@
       "kind": "command",
       "id": "mesh build-cache key",
       "page": "/evidence/commands/mesh-build-cache-key/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh build-cache provision": {
+      "kind": "command",
+      "id": "mesh build-cache provision",
+      "page": "/evidence/commands/mesh-build-cache-provision/",
       "programs": [
         "native"
       ],

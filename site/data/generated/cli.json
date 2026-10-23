@@ -26362,6 +26362,12 @@
           "command": "majordomus mesh build-cache key",
           "name": "key",
           "route": "/docs/cli/mesh/build-cache/key/"
+        },
+        {
+          "about": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
+          "command": "majordomus mesh build-cache provision",
+          "name": "provision",
+          "route": "/docs/cli/mesh/build-cache/provision/"
         }
       ],
       "command": "majordomus mesh build-cache",
@@ -26541,6 +26547,183 @@
       ],
       "route": "/docs/cli/mesh/build-cache/key/",
       "usage": "majordomus mesh build-cache key [OPTIONS]"
+    },
+    {
+      "about": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh build-cache",
+          "name": "build-cache",
+          "route": "/docs/cli/mesh/build-cache/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only plan (the default)",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Carry the plan out; needs root on the real root",
+          "long": "apply",
+          "name": "apply",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "APPLY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Read and write the host's paths under this directory instead of `/`",
+          "long": "root",
+          "name": "root",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ROOT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh build-cache provision",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "build-cache",
+            "provision",
+            "--dry-run"
+          ],
+          "command": "majordomus mesh build-cache provision --dry-run",
+          "description": "The plan of the provider's host layer against what this machine holds: the disk guard and its timer, the always-restart service drop-ins, the bounded journal and container log, the identity and credential of every node and the rustc wrapper, each file marked missing, different, wrong mode or current, and the commands an apply would run. It plans only and names no secret; `--apply` as root brings the host to it, and a second apply changes nothing.",
+          "expectation": "exits 0; prints disk-guard, plan",
+          "id": "mesh-build-cache-provision",
+          "setup": [],
+          "title": "What this host still owes as a mesh build cache provider"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "provision",
+      "parent_route": "/docs/cli/mesh/build-cache/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "build-cache",
+        "provision"
+      ],
+      "route": "/docs/cli/mesh/build-cache/provision/",
+      "usage": "majordomus mesh build-cache provision [OPTIONS]"
     },
     {
       "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
@@ -38363,10 +38546,10 @@
     }
   ],
   "counts": {
-    "arguments": 1660,
-    "commands": 242,
-    "examples": 244,
-    "runnable": 211
+    "arguments": 1668,
+    "commands": 243,
+    "examples": 245,
+    "runnable": 212
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.6",

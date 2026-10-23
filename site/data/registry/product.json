@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.6"
   },
-  "fingerprint": "7e03fc63f55fbc94eadebe45967d3846019a03ce47321cbe3904926542602280",
+  "fingerprint": "b3376d21b3261d489820c67a98047191df8e03b3b71c047055e093c23113541b",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 79,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 140,
+        "capabilities": 141,
         "moments": 38
       },
       "evidence": {
@@ -5583,6 +5583,13 @@
               "cli": "majordomus mesh build-cache key"
             },
             {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -5894,11 +5901,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 25,
+        "capabilities": 26,
         "mcp_tools": 22,
         "mcp_resources": 2,
         "http_routes": 24,
-        "cli_paths": 5,
+        "cli_paths": 6,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -9579,6 +9586,13 @@
               "cli": "majordomus mesh build-cache key"
             },
             {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -10314,11 +10328,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 63,
+        "capabilities": 64,
         "mcp_tools": 56,
         "mcp_resources": 9,
         "http_routes": 60,
-        "cli_paths": 20,
+        "cli_paths": 21,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10786,6 +10800,13 @@
               "tool": "majordomus_mesh_build_cache_key",
               "route": "GET /api/v1/mesh/build-cache/key",
               "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
             },
             {
               "id": "mesh.claim",
@@ -11729,11 +11750,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 103,
+        "capabilities": 104,
         "mcp_tools": 94,
         "mcp_resources": 16,
         "http_routes": 99,
-        "cli_paths": 45,
+        "cli_paths": 46,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -18451,17 +18472,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3328,
-    "builtin": 209,
-    "declarative": 3119,
+    "capabilities": 3330,
+    "builtin": 210,
+    "declarative": 3120,
     "modules": 58,
     "mcp_tools": 198,
-    "mcp_resources": 3174,
+    "mcp_resources": 3175,
     "http_routes": 203,
-    "cli_commands": 211,
+    "cli_commands": 212,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3119,
+    "objects": 3120,
     "by_kind": {
       "adr": 161,
       "application": 5,
@@ -18494,7 +18515,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 603,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },

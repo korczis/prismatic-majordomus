@@ -5,7 +5,7 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 25.
+Stability: experimental. Capabilities: 26.
 
 ## `mesh.build_cache.key` — What every dependency install and build directory is cached under
 
@@ -28,6 +28,29 @@ Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json
 | `kind` | object | no | Only this kind; every kind the repository has when absent. |
 
 Output: `BuildCacheKeyReport`.
+
+## `mesh.build_cache.provision` — Provision this node as a mesh build cache provider
+
+The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh build-cache provision` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build-cache, provisioning |
+
+| input | type | required | description |
+|---|---|---|---|
+| `apply` | boolean | no | Carry the plan out. Absent, the capability only plans and changes nothing. Under the
+default root `/` it needs root and refuses without it. |
+| `root` | string or null | no | The directory the host's paths are read from and written under; default `/`. Any other
+root is a staging directory: files only, no privilege, no command. |
+
+Output: `ProvisionReport`.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
