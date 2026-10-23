@@ -5075,7 +5075,7 @@
       "priority": "p0",
       "title": "One click on a ready issue starts a durable execution that works it, followed live across a browser close and a server restart",
       "problem": "The owner's P0 of 2026-10-23 (One-Click Mission Control). Verified on master 355a0cee79a: a move on an issue starts an execution and its WebSocket replays from a cursor. But the execution store is memory only and nothing is recovered on start (execution/mod.rs: 'no execution that outlives the process'). executions.start takes no idempotency key. No execution runs an AI worker; the only harness spawner is economics/runner.rs. Worktrees and mesh claims exist but are not tied to an execution. /ui/idd offers only plan.transition. Test 3220 neither restarts the server nor uses a worker.",
-      "outcome": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0222 and the intent an-issue-is-implemented-from-one-click.",
+      "outcome": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0225 and the intent an-issue-is-implemented-from-one-click.",
       "current_state": "serve, /ui/idd, executions.start, the event cursor and test 3220 exist; durability, idempotency, issue.implement, a worker adapter, the lease and a restart-surviving browser case do not.",
       "desired_state": "The owner's P0 Definition of Done holds: serve, open the UI, pick a real issue, click Implement, an authorised worker starts, close the browser, restart the server, come back to the same execution continuing or correctly recovered, and end with a testable result and its evidence.",
       "scope": [
@@ -58647,7 +58647,7 @@
         "Replicating executions over the mesh (P1)"
       ],
       "objective": "Append every execution record and event to a journal under .ai/local/state/executions/ before it is acknowledged, fold it back when the server starts, and recover an execution this server was running when it stopped as Failed with the error code interrupted naming its last sequence (the vocabulary abandon_silent already uses), and one another process reports as reported so that its next report continues it under the same id and cursor; never re-run. The WebSocket cursor (http/events.rs) replays from the journal across the restart.",
-      "why": "Owner's P0 of 2026-10-23 (ADR 0222 decisions 1 and 2): an execution's state must survive a browser refresh, a lost node and a restart. execution/mod.rs states the opposite today and store.rs is memory only.",
+      "why": "Owner's P0 of 2026-10-23 (ADR 0225 decisions 1 and 2): an execution's state must survive a browser refresh, a lost node and a restart. execution/mod.rs states the opposite today and store.rs is memory only.",
       "current_state": "ExecutionStore is in memory (execution/store.rs Limits: 200 executions, 2000 events, 4 running); nothing is recovered on start; adopt/report/abandon_silent exist for majordomus run.",
       "desired_state": "A server restarted mid-execution answers executions.get and the event cursor for that execution exactly as before, failed with code interrupted or continuing; the module documentation states the journal.",
       "acceptance_criteria": [
@@ -58701,7 +58701,7 @@
         "Idempotency of capabilities called directly, outside an execution"
       ],
       "objective": "Add an optional idempotency_key to the input of executions.start (declared in the capability, so every projection carries it after majordomus generate); keep the key on the journaled record (I3980); a repeated start answers the existing execution's view, a conflicting one is refused naming it; share/cockpit/executions.js and moves.js send a key per click.",
-      "why": "ADR 0222 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39).",
+      "why": "ADR 0225 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39).",
       "current_state": "executions.start (capability/builtin/executions.rs:700) has no key; a double submit from two tabs starts two executions.",
       "desired_state": "Two starts with one key from two tabs yield one execution; the UI's start path always sends a key.",
       "acceptance_criteria": [
@@ -58754,7 +58754,7 @@
         "Token budgeting policy beyond reporting the cost the adapter reads"
       ],
       "objective": "Declare a worker adapter per provider in share/providers.yaml (Claude Code headless first, reusing the stream-json driving of economics/runner.rs; Codex and Gemini declared, optional) and a fixture adapter for tests; an adapter is given the execution id, the worktree, the compiled context (devcontext) and the issue's objective, and its output is folded into ExecutionEvent progress and log events through the report path store.rs already has for majordomus run; an execution with no available adapter stays Queued with the reason as an event.",
-      "why": "ADR 0222 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today.",
+      "why": "ADR 0225 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today.",
       "current_state": "Only economics/runner.rs spawns a harness (benchmarks); no adapter declaration; ExecutionStore::report serves majordomus run only.",
       "desired_state": "An adapter is chosen from declarations, its process's progress is the execution's event stream, its exit is the step's outcome, and the absence of any adapter is a visible queued reason.",
       "acceptance_criteria": [
@@ -58812,7 +58812,7 @@
         "Picking the issue: the owner picks it in the UI"
       ],
       "objective": "Declare the capability issue.implement (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution.",
-      "why": "ADR 0222 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease.",
+      "why": "ADR 0225 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease.",
       "current_state": "devtask.issue reports readiness read-only; plan.transition is the only move an issue offers; no capability starts work on an issue.",
       "desired_state": "One capability, one execution, four recorded steps; every refusal is typed and shown verbatim.",
       "acceptance_criteria": [
@@ -58867,7 +58867,7 @@
         "Delivery itself (P2)"
       ],
       "objective": "Replace the primary button of /ui/idd (ui/idd.rs:519-600, today Start/Verify/Mark done through plan.transition) with the one move the issue's derived state admits: READY starts issue.implement as an execution through the existing move start path (share/cockpit/moves.js, with I3981's key); ACTIVE links its live execution; VERIFY starts the verification; DONE offers Deliver (an execution of the delivery policy, a stub refusing until P2 says otherwise); BLOCKED lists the blockers. The executor's refusal is shown verbatim; the snapshot shows state and a link to the live server, never the control.",
-      "why": "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0222 consequences.",
+      "why": "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0225 consequences.",
       "current_state": "The issue view's only move is plan.transition; no Implement.",
       "desired_state": "One primary move per state; the click is an execution; the issue row links the execution that works it.",
       "acceptance_criteria": [
@@ -58966,7 +58966,7 @@
         "Pushing, opening a PR, CI, merge or release (P2)"
       ],
       "objective": "Add a final step verify to issue.implement: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered.",
-      "why": "Owner's P0 DoD ends with 'a testable result with evidence'; ADR 0222 decision 6 separates done from delivered.",
+      "why": "Owner's P0 DoD ends with 'a testable result with evidence'; ADR 0225 decision 6 separates done from delivered.",
       "current_state": "Evidence is recorded by hand or by CI; no execution records it.",
       "desired_state": "The execution that implemented an issue is the one that proves it, in the same worktree, with the evidence linked from its view.",
       "acceptance_criteria": [

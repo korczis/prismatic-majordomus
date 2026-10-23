@@ -110,7 +110,7 @@ impl ExecutionEngine {
     }
 
     /// An engine whose executions are written to `journal` and recovered from it: a
-    /// server's (ADR 0222). Its store answers every execution the journal held before the
+    /// server's (ADR 0225). Its store answers every execution the journal held before the
     /// engine accepts a new one, so nothing a reconnecting client asks about is missing.
     ///
     /// ```

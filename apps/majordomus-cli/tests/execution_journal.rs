@@ -1,4 +1,4 @@
-//! An execution outlives the server that accepted it (I3980, ADR 0222).
+//! An execution outlives the server that accepted it (I3980, ADR 0225).
 //!
 //! Each case builds a journaled store, lets it go as a stopped server would, and builds a
 //! second one over the same directory: what the second answers is what a browser that
