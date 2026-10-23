@@ -10674,6 +10674,139 @@ cli:
               setup: []
               expectation: exits 12
           subcommands: []
+        - path:
+            - majordomus
+            - offload
+            - stop
+          route: /docs/cli/offload/stop/
+          executable: true
+          usage: "majordomus offload stop [OPTIONS] <TAG>"
+          about: "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session"
+          args:
+            - name: tag
+              positional: true
+              help: "The run's tag, as `offload derive` printed it"
+              value_name: TAG
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: host
+              long: host
+              positional: false
+              help: "A declared host, by id or address; the declaration's only host when absent"
+              value_name: HOST
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: force
+              long: force
+              positional: false
+              help: "Stop it although its record names another session, or none"
+              value_name: FORCE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: grace
+              long: grace
+              positional: false
+              help: Seconds between TERM and KILL
+              value_name: SECONDS
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "10"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: declaration
+              long: declaration
+              positional: false
+              help: "Read this derive-offload declaration file instead of the repository's"
+              value_name: FILE
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: offload-stop-undeclared
+              title: A stop with no declared host signals nothing
+              description: "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything."
+              argv:
+                - offload
+                - stop
+                - "0123456789"
+              command: majordomus offload stop 0123456789
+              setup: []
+              expectation: exits 12
+          subcommands: []
     - path:
         - majordomus
         - convergence

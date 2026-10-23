@@ -116,6 +116,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus offload hosts`](#majordomus-offload-hosts) | `/docs/cli/offload/hosts/` | The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0 |
 | [`majordomus offload probe`](#majordomus-offload-probe) | `/docs/cli/offload/probe/` | Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one |
 | [`majordomus offload derive`](#majordomus-offload-derive) | `/docs/cli/offload/derive/` | Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out |
+| [`majordomus offload stop`](#majordomus-offload-stop) | `/docs/cli/offload/stop/` | Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session |
 | [`majordomus convergence`](#majordomus-convergence) | `/docs/cli/convergence/` | Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them |
 | [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
 | [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
@@ -3214,7 +3215,7 @@ Examples:
 
 A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed
 
-Subcommands: [`majordomus offload hosts`](#majordomus-offload-hosts), [`majordomus offload probe`](#majordomus-offload-probe), [`majordomus offload derive`](#majordomus-offload-derive).
+Subcommands: [`majordomus offload hosts`](#majordomus-offload-hosts), [`majordomus offload probe`](#majordomus-offload-probe), [`majordomus offload derive`](#majordomus-offload-derive), [`majordomus offload stop`](#majordomus-offload-stop).
 
 ```text
 majordomus offload [OPTIONS] <COMMAND>
@@ -3312,6 +3313,38 @@ Examples:
 
   ```console
   $ majordomus offload derive .
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-offload-stop"></a>
+## `majordomus offload stop`
+
+Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session
+
+```text
+majordomus offload stop [OPTIONS] <TAG>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<TAG>` | `<TAG>` | required | The run's tag, as `offload derive` printed it |
+| `--host` | `<HOST>` | — | A declared host, by id or address; the declaration's only host when absent |
+| `--force` | flag | — | Stop it although its record names another session, or none |
+| `--grace` | `<SECONDS>` | `10` | Seconds between TERM and KILL |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--declaration` | `<FILE>` | — | Read this derive-offload declaration file instead of the repository's (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A stop with no declared host signals nothing** — Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything.
+
+  ```console
+  $ majordomus offload stop 0123456789
   ```
 
   Verified: exits 12.

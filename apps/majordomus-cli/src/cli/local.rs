@@ -294,6 +294,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "measures the declared hosts over the invoking user's ssh keys and network, which a networked caller does not share.",
     },
     LocalCommand {
+        command: "offload stop",
+        reason: LocalReason::SessionLocal,
+        note: "signals a run's process group on a declared host over the invoking user's ssh keys, and only for the session whose own provider environment its run record names, which a networked caller does not carry.",
+    },
+    LocalCommand {
         command: "worktree root",
         reason: LocalReason::SessionLocal,
         note: "answers where the repository containing the current directory begins, which a networked caller does not share.",

@@ -3019,6 +3019,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:offload stop",
+      "path": "/evidence/commands/offload-stop/"
+    },
+    {
+      "kind": "command",
       "subject": "command:pack build",
       "path": "/evidence/commands/pack-build/"
     },
@@ -16133,6 +16138,25 @@
       "kind": "command",
       "id": "offload probe",
       "page": "/evidence/commands/offload-probe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload stop": {
+      "kind": "command",
+      "id": "offload stop",
+      "page": "/evidence/commands/offload-stop/",
       "programs": [
         "native"
       ],

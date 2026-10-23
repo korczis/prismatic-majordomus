@@ -16378,6 +16378,12 @@
           "command": "majordomus offload derive",
           "name": "derive",
           "route": "/docs/cli/offload/derive/"
+        },
+        {
+          "about": "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session",
+          "command": "majordomus offload stop",
+          "name": "stop",
+          "route": "/docs/cli/offload/stop/"
         }
       ],
       "command": "majordomus offload",
@@ -16858,6 +16864,199 @@
       ],
       "route": "/docs/cli/offload/derive/",
       "usage": "majordomus offload derive [OPTIONS] [WORKTREE]"
+    },
+    {
+      "about": "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus offload",
+          "name": "offload",
+          "route": "/docs/cli/offload/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The run's tag, as `offload derive` printed it",
+          "name": "tag",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "TAG"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A declared host, by id or address; the declaration's only host when absent",
+          "long": "host",
+          "name": "host",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "HOST"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Stop it although its record names another session, or none",
+          "long": "force",
+          "name": "force",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FORCE"
+        },
+        {
+          "defaults": [
+            "10"
+          ],
+          "global": false,
+          "help": "Seconds between TERM and KILL",
+          "long": "grace",
+          "name": "grace",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SECONDS"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Read this derive-offload declaration file instead of the repository's",
+          "long": "declaration",
+          "name": "declaration",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus offload stop",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "offload",
+            "stop",
+            "0123456789"
+          ],
+          "command": "majordomus offload stop 0123456789",
+          "description": "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything.",
+          "expectation": "exits 12",
+          "id": "offload-stop-undeclared",
+          "setup": [],
+          "title": "A stop with no declared host signals nothing"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "stop",
+      "parent_route": "/docs/cli/offload/",
+      "path": [
+        "majordomus",
+        "offload",
+        "stop"
+      ],
+      "route": "/docs/cli/offload/stop/",
+      "usage": "majordomus offload stop [OPTIONS] <TAG>"
     },
     {
       "about": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them",
@@ -38363,10 +38562,10 @@
     }
   ],
   "counts": {
-    "arguments": 1660,
-    "commands": 242,
-    "examples": 244,
-    "runnable": 211
+    "arguments": 1670,
+    "commands": 243,
+    "examples": 245,
+    "runnable": 212
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.6",
