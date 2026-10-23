@@ -19,6 +19,7 @@ use std::path::Path;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
 
 use crate::discovery::glob::Glob;
 use crate::metadata::yaml;
@@ -30,6 +31,50 @@ pub const MODEL_PATH: &str = ".ai/repo/ci/gates.yaml";
 const FULL: &str = "full";
 
 // ---------------------------------------------------------------- the declaration
+
+/// ```
+/// use majordomus_cli::gates::Lane;
+///
+/// // the three lanes of ADR 0186, spelled as the model spells them
+/// let lane: Lane = serde_json::from_value(serde_json::json!("feedback")).unwrap();
+/// assert_eq!(lane, Lane::Feedback);
+/// assert_eq!(Lane::Proof.as_str(), "proof");
+/// // a word that is none of the three is no lane
+/// assert!(serde_json::from_value::<Lane>(serde_json::json!("fast")).is_err());
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+/// The time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for
+/// each moment a plan is asked at, the lanes it runs.
+pub enum Lane {
+    /// Cheap, fast and decisive: a pull request's required verdict needs it green.
+    Feedback,
+    /// The heavy half, which judges the combined top before it lands.
+    Proof,
+    /// A gate only a release asks.
+    Release,
+}
+
+impl Lane {
+    /// Every lane, in the order the model's header names them.
+    const ALL: [Lane; 3] = [Lane::Feedback, Lane::Proof, Lane::Release];
+
+    /// The word the model spells the lane with.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Lane::Feedback => "feedback",
+            Lane::Proof => "proof",
+            Lane::Release => "release",
+        }
+    }
+
+    /// The lane a word names, if it names one.
+    fn parse(word: &str) -> Option<Lane> {
+        Lane::ALL.into_iter().find(|l| l.as_str() == word)
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
@@ -112,6 +157,24 @@ pub struct GateDecl {
     /// assert_eq!(decl.subsumed_by.as_deref(), Some("shell-suite"));
     /// ```
     pub subsumed_by: Option<String>,
+    #[serde(default)]
+    /// The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares
+    /// no `tiers`, which is read exactly as before; required of every gate once it does. A
+    /// plan asked at a tier leaves out every gate whose lane the tier does not run (I3947).
+    ///
+    /// ```
+    /// use majordomus_cli::gates::{GateDecl, Lane};
+    ///
+    /// let decl: GateDecl = serde_json::from_value(serde_json::json!({
+    ///     "id": "shell-suite",
+    ///     "job": "suite",
+    ///     "runs": "bash test/run.sh",
+    ///     "lane": "proof"
+    /// }))
+    /// .unwrap();
+    /// assert_eq!(decl.lane, Some(Lane::Proof));
+    /// ```
+    pub lane: Option<Lane>,
 }
 
 /// ```
@@ -187,6 +250,10 @@ pub struct GateModel {
     pub gates: Vec<GateDecl>,
     /// Every path class, in declaration order.
     pub classes: Vec<GateClass>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// For each tier a plan is asked at (`local`, `pull-request`, `integration`, `release`),
+    /// the lanes it runs (ADR 0186). Absent in a model that declares no lanes.
+    pub tiers: Option<BTreeMap<String, Vec<Lane>>>,
 }
 
 impl GateModel {
@@ -199,8 +266,15 @@ impl GateModel {
         let path = root.join(MODEL_PATH);
         let text = std::fs::read_to_string(&path)
             .map_err(|e| format!("{MODEL_PATH} could not be read: {e}"))?;
-        let model: GateModel =
-            yaml::parse_into(&text).map_err(|e| format!("{MODEL_PATH} does not parse: {e}"))?;
+        let raw =
+            yaml::parse_mapping(&text).map_err(|e| format!("{MODEL_PATH} does not parse: {e}"))?;
+        // the lanes are judged on the document as written, before it is typed: a lane that is
+        // none of the three would otherwise be a parse error in serde's words, not ci-plan's
+        if let Some(problem) = GateModel::lane_problems(&raw).into_iter().next() {
+            return Err(format!("{MODEL_PATH}: {problem}"));
+        }
+        let model: GateModel = serde_json::from_value(Value::Object(raw))
+            .map_err(|e| format!("{MODEL_PATH} does not parse: {e}"))?;
         if model.version != 1 {
             return Err(format!(
                 "{MODEL_PATH}: version must be 1, not {}",
@@ -246,6 +320,91 @@ impl GateModel {
         out
     }
 
+    /// What is wrong with the model's lanes and tiers, one line each, in `scripts/ci-plan
+    /// --check`'s words and order: the gates in declaration order, then the tiers as written.
+    /// A lane is feedback, proof or release whether or not tiers are declared; once they are,
+    /// every gate declares one, `tiers` maps each tier to a list, and every lane a tier names
+    /// is one of the three. A model with neither has nothing to answer here. A list or a map
+    /// where a lane belongs is named as such, as ci-plan names it.
+    pub(crate) fn lane_problems(raw: &Map<String, Value>) -> Vec<String> {
+        fn named(v: &Value) -> String {
+            match v {
+                Value::Array(_) => "a list".to_string(),
+                Value::Object(_) => "a map".to_string(),
+                v => yaml::scalar_string(v).unwrap_or_default(),
+            }
+        }
+        let mut out = Vec::new();
+        let tiers = raw.get("tiers");
+        let gates = raw.get("gates").and_then(Value::as_array);
+        for gate in gates.into_iter().flatten() {
+            let id = gate
+                .get("id")
+                .and_then(yaml::scalar_string)
+                .unwrap_or_default();
+            match gate.get("lane").map(named) {
+                None if tiers.is_some() => out.push(format!(
+                    "gate {id} declares no lane, and with tiers declared every gate is in one of \
+                     feedback, proof and release"
+                )),
+                Some(word) if Lane::parse(&word).is_none() => out.push(format!(
+                    "gate {id}: lane is feedback, proof or release, not {word}"
+                )),
+                _ => {}
+            }
+        }
+        let Some(tiers) = tiers else {
+            return out;
+        };
+        let numbered = |m: &Map<String, Value>| {
+            m.keys()
+                .any(|k| !k.is_empty() && k.bytes().all(|b| b.is_ascii_digit()))
+        };
+        let map = match tiers {
+            Value::Object(m) if !numbered(m) => m,
+            _ => {
+                out.push("tiers maps each tier to a list of the lanes it runs".to_string());
+                return out;
+            }
+        };
+        for (tier, lanes) in map {
+            let Value::Array(lanes) = lanes else {
+                out.push(format!("tier {tier} names its lanes as a list"));
+                continue;
+            };
+            for word in lanes.iter().map(named) {
+                if Lane::parse(&word).is_none() {
+                    out.push(format!(
+                        "tier {tier} names a lane that does not exist: {word}"
+                    ));
+                }
+            }
+        }
+        out
+    }
+
+    /// The tier a plan is asked at, resolved against the model's `tiers` (ADR 0186, I3947),
+    /// or the usage error that refuses it, in `scripts/ci-plan --tier`'s words: a model that
+    /// declares no tiers cannot plan one, and a tier it does not declare is named beside the
+    /// ones it does, in byte order as ci-plan's `LC_ALL=C sort` lists them.
+    pub(crate) fn tier<'a>(&'a self, name: &str) -> Result<Tier<'a>, String> {
+        let Some(tiers) = &self.tiers else {
+            return Err(format!(
+                "tier {name}: the model declares no tiers, so it cannot plan one"
+            ));
+        };
+        match tiers.get_key_value(name) {
+            Some((name, lanes)) => Ok(Tier { name, lanes }),
+            None => {
+                let declared: Vec<&str> = tiers.keys().map(String::as_str).collect();
+                Err(format!(
+                    "tier {name}: the model declares no such tier; it declares {}",
+                    declared.join(", ")
+                ))
+            }
+        }
+    }
+
     /// One gate by id.
     pub(crate) fn gate(&self, id: &str) -> Option<&GateDecl> {
         self.gates.iter().find(|g| g.id == id)
@@ -273,6 +432,27 @@ impl GateModel {
 }
 
 // ---------------------------------------------------------------- the plan
+
+/// A tier of the model, resolved by [`GateModel::tier`]: its name and the lanes it runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct Tier<'a> {
+    name: &'a str,
+    lanes: &'a [Lane],
+}
+
+impl Tier<'_> {
+    /// Why this tier leaves a gate out, in `scripts/ci-plan`'s words, or `None` when it runs
+    /// the gate's lane. A gate that declares no lane is not left out: a model whose tiers are
+    /// declared does not load with one (see [`GateModel::lane_problems`]).
+    fn excludes(&self, gate: &GateDecl) -> Option<String> {
+        let lane = gate.lane.filter(|l| !self.lanes.contains(l))?;
+        Some(format!(
+            "lane {}: not in the {} tier",
+            lane.as_str(),
+            self.name
+        ))
+    }
+}
 
 /// ```
 /// use majordomus_cli::gates::GatePlanMode;
@@ -378,6 +558,12 @@ impl GatePlan {
 /// and, last of all, a gate whose `subsumed-by` gate is selected is dropped, because the
 /// selected gate runs every case it runs.
 ///
+/// A plan asked at a `tier` (ADR 0186, I3947) first leaves out every gate whose lane the tier
+/// does not run, before anything else is decided about it: the on-demand rule, `implies` and
+/// `requires` (neither brings it back), and `subsumed-by` (a subsuming gate the tier left out
+/// is not in the plan, so it subsumes nothing and the gate it would have replaced still
+/// runs). With no tier every lane is planned, exactly as before lanes existed.
+///
 /// Every reason, the plan's and each gate's, is `scripts/ci-plan`'s word for word, because a
 /// reader of a CI log and a reader of `gates done` are told one thing: a class names its
 /// classes (`class a b`), an escalation names the first three paths that escalated, in the
@@ -386,7 +572,12 @@ impl GatePlan {
 /// The worked example is `this_repositorys_own_model_plans_by_its_own_rules` below: it reads
 /// this repository's `.ai/repo/ci/gates.yaml` when there is one, which a doctest cannot do
 /// now that the model is the crate's own.
-pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> GatePlan {
+pub(crate) fn plan(
+    model: &GateModel,
+    changed: &[String],
+    on_demand: bool,
+    tier: Option<&Tier<'_>>,
+) -> GatePlan {
     let mut sorted: Vec<String> = changed
         .iter()
         .filter(|p| !p.trim().is_empty())
@@ -491,6 +682,10 @@ pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> Ga
     // said to be implied or required by
     let mut order: Vec<String> = Vec::new();
     for gate in &model.gates {
+        if let Some(why) = tier.and_then(|t| t.excludes(gate)) {
+            excluded.insert(gate.id.clone(), why);
+            continue;
+        }
         if gate.on_demand && !on_demand {
             excluded.insert(
                 gate.id.clone(),
@@ -536,6 +731,10 @@ pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> Ga
                     continue;
                 };
                 if decl.on_demand && !on_demand {
+                    continue;
+                }
+                // nothing implies or requires its way past the tier asked for
+                if tier.is_some_and(|t| t.excludes(decl).is_some()) {
                     continue;
                 }
                 excluded.remove(other);
@@ -606,14 +805,14 @@ mod tests {
             // a checkout with no CI model has nothing to assert about one
             return;
         };
-        let p = plan(&model, &["docs/README.md".to_string()], false);
+        let p = plan(&model, &["docs/README.md".to_string()], false, None);
         assert_eq!(p.mode, GatePlanMode::Affected);
         assert!(
             !p.selects("rust-check"),
             "a document does not rebuild the crate"
         );
 
-        let p = plan(&model, &["nowhere/at/all.txt".to_string()], false);
+        let p = plan(&model, &["nowhere/at/all.txt".to_string()], false, None);
         assert_eq!(p.mode, GatePlanMode::Full, "an unclassified path escalates");
     }
 
@@ -679,7 +878,7 @@ classes:
             except: vec![],
             gates: Some(GateClassSelects::Named(vec!["build".into()])),
         });
-        let p = plan(&m, &[".ai/repo/ci/durations.tsv".into()], false);
+        let p = plan(&m, &[".ai/repo/ci/durations.tsv".into()], false, None);
         assert_eq!(
             p.mode,
             GatePlanMode::Affected,
@@ -689,9 +888,9 @@ classes:
         assert!(!p.selects("site"), "and nothing else");
 
         // the directory stays escalating around the one path it names
-        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false);
+        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false, None);
         assert_eq!(p.mode, GatePlanMode::Full);
-        let p = plan(&m, &[".ai/repo/ci/added-tomorrow.tsv".into()], false);
+        let p = plan(&m, &[".ai/repo/ci/added-tomorrow.tsv".into()], false, None);
         assert_eq!(
             p.mode,
             GatePlanMode::Full,
@@ -702,7 +901,7 @@ classes:
     #[test]
     fn an_always_gate_is_in_every_plan_and_a_class_gate_only_in_its_own() {
         let m = model();
-        let p = plan(&m, &["apps/majordomus-cli/src/lib.rs".into()], false);
+        let p = plan(&m, &["apps/majordomus-cli/src/lib.rs".into()], false, None);
         assert_eq!(p.mode, GatePlanMode::Affected);
         assert!(p.selects("lint"), "always");
         assert!(p.selects("build"), "the rust class names it");
@@ -713,7 +912,7 @@ classes:
     #[test]
     fn a_required_gate_is_planned_with_the_gate_that_needs_it() {
         let m = model();
-        let p = plan(&m, &["site/content/index.md".into()], false);
+        let p = plan(&m, &["site/content/index.md".into()], false, None);
         assert!(p.selects("probe"));
         assert!(p.selects("site"), "probe cannot run without it");
         assert_eq!(p.selected["site"], "class web");
@@ -722,11 +921,11 @@ classes:
     #[test]
     fn an_escalating_class_and_an_unclassified_path_both_widen_the_plan() {
         let m = model();
-        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false);
+        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false, None);
         assert_eq!(p.mode, GatePlanMode::Full);
         assert!(p.selects("build") && p.selects("site"));
 
-        let p = plan(&m, &["something/nobody/declared".into()], false);
+        let p = plan(&m, &["something/nobody/declared".into()], false, None);
         assert_eq!(p.mode, GatePlanMode::Full);
         assert_eq!(
             p.unclassified,
@@ -737,11 +936,11 @@ classes:
     #[test]
     fn an_on_demand_gate_is_left_out_of_the_full_plan_and_says_why() {
         let m = model();
-        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false);
+        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false, None);
         assert!(!p.selects("mac"));
         assert!(p.excluded["mac"].contains("on demand"));
         // and it is in the plan that asked for it
-        assert!(plan(&m, &[".ai/repo/ci/gates.yaml".into()], true).selects("mac"));
+        assert!(plan(&m, &[".ai/repo/ci/gates.yaml".into()], true, None).selects("mac"));
     }
 
     // The reasons below are `scripts/ci-plan`'s, word for word; case 131 compares the two
@@ -756,7 +955,7 @@ classes:
             except: vec![],
             gates: Some(GateClassSelects::Named(vec!["site".into()])),
         });
-        let p = plan(&m, &["site/content/index.md".into()], false);
+        let p = plan(&m, &["site/content/index.md".into()], false, None);
         assert_eq!(p.selected["site"], "class site-sources web");
         assert_eq!(p.selected["probe"], "class web");
         assert_eq!(p.selected["lint"], "always");
@@ -771,7 +970,7 @@ classes:
             except: vec![],
             gates: Some(GateClassSelects::Named(vec!["probe".into()])),
         });
-        let p = plan(&m, &["probes/x.sh".into(), "apps/x.rs".into()], false);
+        let p = plan(&m, &["probes/x.sh".into(), "apps/x.rs".into()], false, None);
         assert_eq!(p.selected["probe"], "class probes");
         assert_eq!(p.selected["site"], "required by probe");
         assert_eq!(p.selected["registry"], "implied by build");
@@ -784,7 +983,7 @@ classes:
             .iter()
             .map(|n| format!(".ai/repo/ci/{n}"))
             .collect();
-        let p = plan(&m, &given, false);
+        let p = plan(&m, &given, false, None);
         assert_eq!(
             p.reason,
             "a changed path is in a class that escalates: .ai/repo/ci/d .ai/repo/ci/b \
@@ -794,7 +993,7 @@ classes:
         assert_eq!(p.selected["build"], "full");
         assert_eq!(p.selected["lint"], "full");
         // a plan that asked for the on-demand gates has no note to add, and no trailing space
-        let p = plan(&m, &given[..1], true);
+        let p = plan(&m, &given[..1], true, None);
         assert_eq!(
             p.reason,
             "a changed path is in a class that escalates: .ai/repo/ci/d"
@@ -808,7 +1007,7 @@ classes:
             .iter()
             .map(|p| p.to_string())
             .collect();
-        let p = plan(&m, &given, false);
+        let p = plan(&m, &given, false, None);
         assert_eq!(
             p.reason,
             "a changed path is in no class of the model: z/1 y/2 x/3 (without the on-demand \
@@ -820,7 +1019,7 @@ classes:
     #[test]
     fn a_gate_left_out_says_why_in_the_planners_words() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         assert_eq!(
             p.excluded["site"],
             "no changed path in a class that needs it"
@@ -840,7 +1039,7 @@ classes:
     #[test]
     fn a_class_that_names_no_gate_plans_only_what_always_runs() {
         let m = model();
-        let p = plan(&m, &[".gitignore".into()], false);
+        let p = plan(&m, &[".gitignore".into()], false, None);
         assert_eq!(p.mode, GatePlanMode::Affected, "the class covers the path");
         assert!(p.selects("lint"));
         assert!(!p.selects("build") && !p.selects("site"));
@@ -861,7 +1060,7 @@ classes:
     fn a_gate_is_not_planned_beside_the_selected_gate_that_subsumes_it() {
         let m = subsuming();
         // the full plan selects both; the subsumed one is dropped and says why
-        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false);
+        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false, None);
         assert!(p.selects("site") && !p.selects("build"));
         assert_eq!(
             p.excluded["build"],
@@ -873,6 +1072,7 @@ classes:
             &m,
             &["site/content/index.md".into(), "apps/x.rs".into()],
             false,
+            None,
         );
         assert_eq!(p.selected["site"], "class web");
         assert!(!p.selects("build"));
@@ -883,7 +1083,7 @@ classes:
     #[test]
     fn a_subsuming_gate_the_plan_does_not_select_subsumes_nothing() {
         let m = subsuming();
-        let p = plan(&m, &["apps/majordomus-cli/src/lib.rs".into()], false);
+        let p = plan(&m, &["apps/majordomus-cli/src/lib.rs".into()], false, None);
         assert!(!p.selects("site"), "the plan does not select the subsumer");
         assert!(
             p.selects("build"),
@@ -952,6 +1152,265 @@ classes:
         assert!(!build.contains(&"site/**".to_string()));
     }
 
+    /// The fixture model with every gate in a lane and the tiers of ADR 0186 declared.
+    fn laned() -> String {
+        let mut text = String::new();
+        for line in MODEL.lines() {
+            text.push_str(line);
+            text.push('\n');
+            if let Some(job) = line.strip_prefix("    job: ") {
+                let lane = if job == "structure" {
+                    "feedback"
+                } else {
+                    "proof"
+                };
+                text.push_str(&format!("    lane: {lane}\n"));
+            }
+            if line == "version: 1" {
+                text.push_str(
+                    "tiers:\n  local: [feedback]\n  pull-request: [feedback]\n  \
+                     integration: [feedback, proof]\n  release: [feedback, proof, release]\n",
+                );
+            }
+        }
+        text
+    }
+
+    fn lane_problems_of(text: &str) -> Vec<String> {
+        GateModel::lane_problems(&yaml::parse_mapping(text).expect("the fixture parses"))
+    }
+
+    #[test]
+    fn a_laned_model_parses_its_lanes_and_tiers() {
+        let text = laned();
+        assert_eq!(lane_problems_of(&text), Vec::<String>::new());
+        let m: GateModel = yaml::parse_into(&text).expect("the laned fixture parses");
+        assert_eq!(m.gate("lint").and_then(|g| g.lane), Some(Lane::Feedback));
+        assert_eq!(m.gate("mac").and_then(|g| g.lane), Some(Lane::Proof));
+        let tiers = m.tiers.as_ref().expect("the tiers are read");
+        assert_eq!(tiers["pull-request"], [Lane::Feedback]);
+        assert_eq!(tiers["integration"], [Lane::Feedback, Lane::Proof]);
+        assert_eq!(
+            tiers["release"],
+            [Lane::Feedback, Lane::Proof, Lane::Release]
+        );
+        assert_eq!(Lane::Release.as_str(), "release");
+        // with no tier asked for, the lanes select nothing: every plan is the plan without them
+        for changed in [
+            ".ai/repo/ci/gates.yaml",
+            "apps/x.rs",
+            "site/a.html",
+            ".gitignore",
+        ] {
+            let with = plan(&m, &[changed.to_string()], false, None);
+            let without = plan(&model(), &[changed.to_string()], false, None);
+            assert_eq!(with.selected, without.selected, "{changed}");
+            assert_eq!(with.excluded, without.excluded, "{changed}");
+            assert_eq!(with.reason, without.reason, "{changed}");
+        }
+    }
+
+    #[test]
+    fn a_model_without_tiers_needs_no_lane() {
+        assert_eq!(lane_problems_of(MODEL), Vec::<String>::new());
+        let m = model();
+        assert!(m.tiers.is_none() && m.gates.iter().all(|g| g.lane.is_none()));
+    }
+
+    #[test]
+    fn a_gate_without_a_lane_is_refused_once_tiers_are_declared() {
+        let text = laned().replacen("    lane: proof\n", "", 1);
+        assert_eq!(
+            lane_problems_of(&text),
+            vec![
+                "gate build declares no lane, and with tiers declared every gate is in one of \
+                 feedback, proof and release"
+                    .to_string()
+            ]
+        );
+    }
+
+    #[test]
+    fn a_lane_that_is_none_of_the_three_is_refused_with_or_without_tiers() {
+        let text = laned().replacen("    lane: feedback\n", "    lane: fast\n", 1);
+        let want = vec!["gate lint: lane is feedback, proof or release, not fast".to_string()];
+        assert_eq!(lane_problems_of(&text), want);
+        let untiered = MODEL.replacen(
+            "    job: structure\n",
+            "    job: structure\n    lane: fast\n",
+            1,
+        );
+        assert_eq!(lane_problems_of(&untiered), want);
+        // a list where a lane belongs is named as one, as ci-plan names it
+        let listed = laned().replacen("    lane: feedback\n", "    lane: [feedback]\n", 1);
+        assert_eq!(
+            lane_problems_of(&listed),
+            vec!["gate lint: lane is feedback, proof or release, not a list".to_string()]
+        );
+    }
+
+    #[test]
+    fn a_tier_naming_a_lane_that_does_not_exist_is_refused() {
+        let text = laned().replace(
+            "  integration: [feedback, proof]",
+            "  integration: [feedback, lane-x]",
+        );
+        assert_eq!(
+            lane_problems_of(&text),
+            vec!["tier integration names a lane that does not exist: lane-x".to_string()]
+        );
+        let scalar = laned().replace("  local: [feedback]", "  local: feedback");
+        assert_eq!(
+            lane_problems_of(&scalar),
+            vec!["tier local names its lanes as a list".to_string()]
+        );
+        let listed = MODEL.replacen("gates:\n", "tiers: [feedback]\ngates:\n", 1);
+        let problems = lane_problems_of(&listed);
+        assert_eq!(
+            problems.last().map(String::as_str),
+            Some("tiers maps each tier to a list of the lanes it runs")
+        );
+    }
+
+    #[test]
+    fn loading_refuses_a_lane_problem_in_ci_plans_words() {
+        let dir = tempfile::tempdir().unwrap();
+        let ci = dir.path().join(".ai/repo/ci");
+        std::fs::create_dir_all(&ci).unwrap();
+        std::fs::write(ci.join("gates.yaml"), laned()).unwrap();
+        let m = GateModel::load(dir.path()).expect("the laned model loads");
+        assert!(m.gates.iter().all(|g| g.lane.is_some()));
+        let bad = laned().replacen("    lane: feedback\n", "    lane: fast\n", 1);
+        std::fs::write(ci.join("gates.yaml"), bad).unwrap();
+        assert_eq!(
+            GateModel::load(dir.path()).unwrap_err(),
+            format!("{MODEL_PATH}: gate lint: lane is feedback, proof or release, not fast")
+        );
+    }
+
+    /// The laned fixture with these gates in the feedback lane and every other gate in proof.
+    fn tiered(feedback: &[&str]) -> GateModel {
+        let mut m: GateModel = yaml::parse_into(&laned()).expect("the laned fixture parses");
+        for g in &mut m.gates {
+            g.lane = Some(if feedback.contains(&g.id.as_str()) {
+                Lane::Feedback
+            } else {
+                Lane::Proof
+            });
+        }
+        m
+    }
+
+    #[test]
+    fn a_tier_is_resolved_or_refused_in_ci_plans_words() {
+        let m = tiered(&["lint"]);
+        let t = m.tier("integration").expect("a declared tier resolves");
+        assert_eq!(t.name, "integration");
+        assert_eq!(t.lanes, [Lane::Feedback, Lane::Proof]);
+        assert_eq!(
+            m.tier("nightly").unwrap_err(),
+            "tier nightly: the model declares no such tier; it declares integration, local, \
+             pull-request, release"
+        );
+        // a model with no tiers cannot plan one, whatever its name
+        assert_eq!(
+            model().tier("local").unwrap_err(),
+            "tier local: the model declares no tiers, so it cannot plan one"
+        );
+    }
+
+    #[test]
+    fn a_tier_leaves_out_the_gates_of_a_lane_it_does_not_run_and_says_why() {
+        let m = tiered(&["lint"]);
+        let pr = m.tier("pull-request").unwrap();
+        let p = plan(&m, &["apps/x.rs".into()], false, Some(&pr));
+        assert!(
+            p.selects("lint"),
+            "a feedback gate runs in the pull-request tier"
+        );
+        assert_eq!(
+            p.excluded["build"],
+            "lane proof: not in the pull-request tier"
+        );
+        // the tier is decided before the on-demand rule, so it is the reason a gate gives
+        assert_eq!(
+            p.excluded["mac"],
+            "lane proof: not in the pull-request tier"
+        );
+        // a tier that runs the lane plans it exactly as no tier does
+        let integration = m.tier("integration").unwrap();
+        for changed in [".ai/repo/ci/gates.yaml", "apps/x.rs", "site/a.html"] {
+            let with = plan(&m, &[changed.to_string()], false, Some(&integration));
+            let without = plan(&m, &[changed.to_string()], false, None);
+            assert_eq!(with.selected, without.selected, "{changed}");
+            assert_eq!(with.excluded, without.excluded, "{changed}");
+        }
+        // and --on-demand cannot bring back a gate the tier leaves out
+        assert!(!plan(&m, &[".ai/repo/ci/gates.yaml".into()], true, Some(&pr)).selects("mac"));
+    }
+
+    #[test]
+    fn neither_implies_nor_requires_brings_back_a_gate_the_tier_left_out() {
+        // build (feedback) implies registry (proof); probe (feedback) requires site (proof)
+        let m = tiered(&["lint", "build", "probe"]);
+        let pr = m.tier("pull-request").unwrap();
+        let p = plan(
+            &m,
+            &["apps/x.rs".into(), "site/a.html".into()],
+            false,
+            Some(&pr),
+        );
+        assert!(p.selects("build") && p.selects("probe"));
+        assert!(
+            !p.selects("registry"),
+            "an implication does not pass the tier"
+        );
+        assert!(!p.selects("site"), "a requirement does not pass the tier");
+        // each says the tier left it out, which is decided before anything else about it
+        assert_eq!(
+            p.excluded["site"],
+            "lane proof: not in the pull-request tier"
+        );
+        assert_eq!(
+            p.excluded["registry"],
+            "lane proof: not in the pull-request tier"
+        );
+        // without the tier both are brought in, by the gate that names them
+        let p = plan(&m, &["apps/x.rs".into(), "site/a.html".into()], false, None);
+        assert_eq!(p.selected["registry"], "implied by build");
+        assert_eq!(p.selected["site"], "class web");
+    }
+
+    #[test]
+    fn a_subsuming_gate_the_tier_leaves_out_subsumes_nothing() {
+        // build (feedback) is subsumed by site (proof)
+        let mut m = tiered(&["lint", "build"]);
+        m.gates
+            .iter_mut()
+            .find(|g| g.id == "build")
+            .unwrap()
+            .subsumed_by = Some("site".into());
+        let changed = ["site/a.html".to_string(), "apps/x.rs".to_string()];
+        assert!(!plan(&m, &changed, false, None).selects("build"));
+        let pr = m.tier("pull-request").unwrap();
+        let p = plan(&m, &changed, false, Some(&pr));
+        assert_eq!(
+            p.selected["build"], "class rust",
+            "nothing runs its cases otherwise"
+        );
+        assert!(!p.selects("site"));
+    }
+
+    #[test]
+    fn a_gate_without_a_lane_is_not_left_out_by_a_tier() {
+        // a model built in code, past the loader that refuses this
+        let mut m = tiered(&["lint"]);
+        m.gates.iter_mut().find(|g| g.id == "build").unwrap().lane = None;
+        let pr = m.tier("pull-request").unwrap();
+        let p = plan(&m, &["apps/x.rs".into()], false, Some(&pr));
+        assert_eq!(p.selected["build"], "class rust");
+    }
+
     #[test]
     fn the_repositorys_own_model_reads_and_every_reference_resolves() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
@@ -965,6 +1424,16 @@ classes:
             assert!(!gate.job.is_empty() && !gate.runs.is_empty());
         }
         assert_eq!(m.subsumption_problems(), Vec::<String>::new());
+        // ADR 0186: the model declares its tiers, so every gate is in a lane
+        if m.tiers.is_some() {
+            let unlaned: Vec<&str> = m
+                .gates
+                .iter()
+                .filter(|g| g.lane.is_none())
+                .map(|g| g.id.as_str())
+                .collect();
+            assert!(unlaned.is_empty(), "gates without a lane: {unlaned:?}");
+        }
         for class in &m.classes {
             assert!(!class.paths.is_empty(), "class {} names no path", class.id);
             for gate in class.named() {

@@ -244,4 +244,35 @@ for paths in 'apps/majordomus-cli/src/lib.rs' 'docs/CLI.md' 'site/templates/inde
     exit 1
   }
 done
+# ... and the same lane for every gate (ADR 0186, I3946): a field one reader ignores is the
+# disagreement this section exists to catch, so the executable's gates.model and ci-plan's
+# plan are compared gate by gate
+(cd "$ROOT" && scripts/ci-plan --full --on-demand) | jq -r '.gates[] | "\(.id) \(.lane)"' | LC_ALL=C sort > "$S/sh.lanes"
+"$BIN" run gates.model --input '{}' --quiet --format json --repo "$ROOT" 2>/dev/null \
+  | jq -r '.output.gates[] | "\(.id) \(.lane)"' | LC_ALL=C sort > "$S/rs.lanes"
+[ -s "$S/rs.lanes" ] && cmp -s "$S/sh.lanes" "$S/rs.lanes" || {
+  echo "    the two readers of gates.yaml give different lanes:"
+  diff "$S/sh.lanes" "$S/rs.lanes" | head -10
+  exit 1
+}
+# ... and the same plan at every tier the model declares (ADR 0186, I3947): ci-plan --tier and
+# gates.completion's tier select the same set and give every gate the same reason, over a
+# change that plans everything and one of a single class
+tiers="$(awk '/^tiers:$/ { t = 1; next } t && /^  [a-z-]+: \[/ { sub(/^  /, ""); sub(/:.*/, ""); print; next } { t = 0 }' "$ROOT/.ai/repo/ci/gates.yaml")"
+[ -n "$tiers" ] || { echo "    the model declares no tiers to compare the readers at"; exit 1; }
+for tier in $tiers; do
+  for paths in '.ai/repo/ci/gates.yaml' 'apps/majordomus-cli/src/lib.rs'; do
+    printf '%s\n' $paths | (cd "$ROOT" && scripts/ci-plan --files - --tier "$tier") \
+      | jq -r '.gates[] | "\(.id)\t\(if .selected then "run" else "skip" end)\t\(.reason)"' | LC_ALL=C sort > "$S/sh.tier"
+    input="$(printf '%s\n' $paths | jq -R . | jq -sc --arg t "$tier" '{changed: ., tier: $t}')"
+    "$BIN" run gates.completion --input "$input" --quiet --format json --repo "$ROOT" 2>/dev/null \
+      | jq -r '.output.plan | ((.selected | to_entries[] | "\(.key)\trun\t\(.value)"), (.excluded | to_entries[] | "\(.key)\tskip\t\(.value)"))' \
+      | LC_ALL=C sort > "$S/rs.tier"
+    [ -s "$S/rs.tier" ] && cmp -s "$S/sh.tier" "$S/rs.tier" || {
+      echo "    the two readers of gates.yaml plan the $tier tier differently for: $paths"
+      diff "$S/sh.tier" "$S/rs.tier" | head -10
+      exit 1
+    }
+  done
+done
 exit 0

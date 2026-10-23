@@ -4,35 +4,68 @@
 # finish contract asks whether the task's work may be published, which is not this
 # question, and asking it would refuse a handover for exactly the task it hands over.
 # Any other ref in the same push and the contract applies to the whole push, as before.
-only_layer=1 any=0 heads=""
+# Nor does a push that only deletes refs: every pushed ref's local sha is all zeros, so no
+# commit travels and there is nothing to plan or to ask the finish contract about. On
+# 2026-10-22 a push of 16 deletions and nothing else ran finish --check, the case-number
+# check and run-plan (27 gates, 122 cases), and timed out twice, at 900 s and 2400 s, on the
+# shared cargo build lock; nothing was deleted until it rode along with a larger push.
+# `finish --check` is skipped too, as for refs/majordomus/*: the contract asks whether work
+# may be published, and a deletion publishes none. One ref that carries a commit and the
+# whole hook applies to the whole push, as before.
+any=0 carries=0 heads=""
 while read -r _local_ref local_sha remote_ref _remote_sha; do
   any=1
-  case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0; heads="$heads $local_sha" ;; esac
+  case "$remote_ref" in refs/majordomus/*) continue ;; esac
+  case "$local_sha" in *[!0]*) carries=1; heads="$heads $local_sha" ;; esac
 done
-[ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
+[ "$any" = 1 ] && [ "$carries" = 0 ] && exit 0
 # A hook never starts a build of the executable (I3831, ADR 0224): when it is missing or stale,
 # bin/majordomus-cli answers through the installed release of this tree's generation, or
-# refuses with exit 12 naming `just build`, and so does this hook. Every check below runs and
-# refuses as before.
+# refuses with exit 12 naming `just build`, and so does this hook.
 # majordomus-on-stale-executable: fallback, else refuse
 MAJORDOMUS_HOOK=1; export MAJORDOMUS_HOOK
+# A local gate reports and CI decides (I3830, rule project.a-push-runs-what-ci-would-find-first
+# v2): a check CI runs again prints its finding and lets the push through, because CI holds
+# the verdict and a loaded machine must not refuse a push for the load. On 2026-10-20 a push
+# of a rescue ref spent 3490 s in run-plan at load 70-90. The integrity checks, which take
+# seconds and say what CI cannot or says only after a merge, still refuse with `|| exit $?`.
+report() {
+  mj_what="$1"; shift
+  "$@" && return 0
+  mj_rc=$?
+  printf 'pre-push: %s failed (exit %s); reported, not refused: CI holds the verdict\n' \
+    "$mj_what" "$mj_rc" >&2
+}
+# Refused: the task's scope and its contract are this machine's, and CI never sees them.
 bin/majordomus finish --check || exit $?
 # No two cases share a number. Each branch is clean alone and the pair exists only once both
 # are merged, so the trunk is where it was found (2026-10-12, two cases numbered 1096): the
-# check reads file names, takes under a second, and is asked of every push.
+# check reads file names, takes under a second, and is asked of every push. Refused.
 scripts/case-numbers check >/dev/null || { scripts/case-numbers check >&2; exit 1; }
-# The crate's API reference builds with warnings denied, or the push is refused. Clippy, the
-# tests and the doctests all pass over a doc comment that links a private item; only rustdoc
-# refuses it, and CI's rustdoc job is where the Pages deploy starts. On 2026-10-12 a head that
-# had passed every one of the others landed and nothing was published until it was fixed.
-# Asked only of a push that changes the crate against the trunk, where it costs about a
-# minute on a warm build; a deleted ref and a push with no trunk to compare with are let by.
+# The crate's API reference builds with warnings denied. Clippy, the tests and the doctests
+# all pass over a doc comment that links a private item; only rustdoc refuses it, and CI's
+# rustdoc job is where the Pages deploy starts. On 2026-10-12 a head that had passed every
+# one of the others landed and nothing was published until it was fixed. Asked only of a
+# push that changes the crate against the trunk, where it costs about a minute on a warm
+# build; a deleted ref and a push with no trunk to compare with are let by. Reported: CI's
+# rustdoc job refuses the same head.
 for head in $heads; do
   case "$head" in *[!0]*) ;; *) continue ;; esac
   base="$(git merge-base "$head" origin/master 2>/dev/null)" || continue
   git diff --quiet "$base" "$head" -- apps/majordomus-cli/src apps/majordomus-cli/Cargo.toml && continue
-  scripts/rust-check --doc || { echo "pre-push: the crate's rustdoc does not build with warnings denied (scripts/rust-check --doc); a push that changes the crate is refused until it does" >&2; exit 1; }
+  report "the crate's rustdoc, warnings denied (scripts/rust-check --doc)" \
+    scripts/rust-check --doc
   break
 done
-# what CI would find first, within a bound (project.a-push-runs-what-ci-would-find-first)
-scripts/ci/run-plan --before-push || exit $?
+# What CI would find first, within a bound. Exit 1 is a gate or case that failed, named in
+# run-plan's last line: reported, since CI runs it again. Any other failure, 12 above all (the
+# plan or its durations cannot be computed), refuses: what cannot be measured is not passed.
+scripts/ci/run-plan --before-push
+mj_rc=$?
+case "$mj_rc" in
+  0) ;;
+  1) printf 'pre-push: %s; reported, not refused: CI holds the verdict\n' \
+       'run-plan --before-push failed (exit 1) on what its last line names' >&2 ;;
+  *) exit "$mj_rc" ;;
+esac
+exit 0

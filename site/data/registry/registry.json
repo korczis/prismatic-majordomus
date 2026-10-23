@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "f049695bd1fe20a32f0f169d2f4a3113f5268b40e409903a28f41c80cc480261",
+    "fingerprint": "683b743727c4d8fdef0b764e33f114bea132f83e4088bd8862bec283cc130477",
     "summary": {
-      "total": 3461,
+      "total": 3468,
       "builtin": 217,
-      "declarative": 3244,
+      "declarative": 3251,
       "by_kind": {
         "command": 35,
         "query": 182,
-        "resource": 3244
+        "resource": 3251
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 62,
-        "implemented": 3254
+        "implemented": 3261
       },
       "mcp_tools": 203,
-      "mcp_resources": 3299,
+      "mcp_resources": 3306,
       "http_routes": 209,
       "cli_commands": 120,
       "modules": 94,
@@ -32835,6 +32835,13 @@
                   "null"
                 ],
                 "description": "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives."
+              },
+              "tier": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
               }
             },
             "description": "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over.",
@@ -33526,6 +33533,18 @@
                     "description": "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```",
                     "default": null
                   },
+                  "lane": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Lane"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```",
+                    "default": null
+                  },
                   "inputs": {
                     "type": "array",
                     "items": {
@@ -33541,6 +33560,26 @@
                   "inputs"
                 ],
                 "description": "```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"site-check\",\n    \"job\": \"site\",\n    \"runs\": \"scripts/site-check\",\n    \"summary\": \"the site is whole\"\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\"site/**\".into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \"site-check\");\nassert_eq!(entry.inputs, [\"site/**\"]);\n```\nOne gate of the model, with what the model implies about it."
+              },
+              "Lane": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "feedback",
+                    "description": "Cheap, fast and decisive: a pull request's required verdict needs it green."
+                  },
+                  {
+                    "type": "string",
+                    "const": "proof",
+                    "description": "The heavy half, which judges the combined top before it lands."
+                  },
+                  {
+                    "type": "string",
+                    "const": "release",
+                    "description": "A gate only a release asks."
+                  }
+                ],
+                "description": "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs."
               },
               "GateClass": {
                 "type": "object",
@@ -89937,7 +89976,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 982,
+        "capabilities": 985,
         "capability_ids": []
       },
       {
@@ -90534,7 +90573,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 635,
+        "capabilities": 639,
         "capability_ids": []
       },
       {
@@ -90626,7 +90665,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fd9b2ac92902da0b60420c3ec6034eadcfae6076db4869d68a61b6dbbe2cf3d5",
+    "fingerprint": "c4a1a87ee561330caff47615278c801acbada18c679d2f6cb7218bf9f5c9498d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90666,7 +90705,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 40,
-      "issue": 982,
+      "issue": 985,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 108,
@@ -90680,7 +90719,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 635,
+      "test": 639,
       "use-case": 49,
       "workspace": 1
     },
@@ -97626,7 +97665,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 143165
+        "bytes": 143171
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -98040,7 +98079,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 908866
+        "bytes": 876417
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -105013,7 +105052,7 @@
         "path": ".ai/repo/project/issues/I2115.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2749
+        "bytes": 2998
       },
       {
         "uri": "majordomus://issue/I2123",
@@ -105376,7 +105415,7 @@
         "path": ".ai/repo/project/issues/I2350.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4056
+        "bytes": 4826
       },
       {
         "uri": "majordomus://issue/I2396",
@@ -106652,7 +106691,7 @@
         "path": ".ai/repo/project/issues/I2743.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2495
+        "bytes": 2739
       },
       {
         "uri": "majordomus://issue/I2744",
@@ -106663,7 +106702,7 @@
         "path": ".ai/repo/project/issues/I2744.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2354
+        "bytes": 2598
       },
       {
         "uri": "majordomus://issue/I2745",
@@ -106916,7 +106955,7 @@
         "path": ".ai/repo/project/issues/I2841.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2774
+        "bytes": 3373
       },
       {
         "uri": "majordomus://issue/I2842",
@@ -107015,7 +107054,7 @@
         "path": ".ai/repo/project/issues/I2851.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2890
+        "bytes": 3607
       },
       {
         "uri": "majordomus://issue/I2852",
@@ -107686,7 +107725,7 @@
         "path": ".ai/repo/project/issues/I3009.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1900
+        "bytes": 2154
       },
       {
         "uri": "majordomus://issue/I3010",
@@ -107708,7 +107747,7 @@
         "path": ".ai/repo/project/issues/I3013.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2982
+        "bytes": 3743
       },
       {
         "uri": "majordomus://issue/I3014",
@@ -107840,7 +107879,7 @@
         "path": ".ai/repo/project/issues/I3060.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3229
+        "bytes": 3936
       },
       {
         "uri": "majordomus://issue/I3070",
@@ -108126,7 +108165,7 @@
         "path": ".ai/repo/project/issues/I3097.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2579
+        "bytes": 3746
       },
       {
         "uri": "majordomus://issue/I3098",
@@ -108148,7 +108187,7 @@
         "path": ".ai/repo/project/issues/I3099.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2262
+        "bytes": 2865
       },
       {
         "uri": "majordomus://issue/I3100",
@@ -111954,7 +111993,7 @@
         "path": ".ai/repo/project/issues/I3823.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2590
+        "bytes": 3799
       },
       {
         "uri": "majordomus://issue/I3824",
@@ -112016,11 +112055,11 @@
         "kind": "issue",
         "identity": "I3830",
         "title": "A local gate reports and CI decides: pre-commit and pre-push refuse only on integrity",
-        "description": "Make doctor, the worktree guard, rustdoc and scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict.",
+        "description": "Make doctor, rustdoc and a failed gate or case of scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the worktree guard, the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict. The worktree guard keeps refusing because CI checks out a fresh clone and never sees which worktree a commit came from, and rule project.worktree-topology v1 clause 6 makes the hook's refusal the enforcement.",
         "path": ".ai/repo/project/issues/I3830.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2581
+        "bytes": 3423
       },
       {
         "uri": "majordomus://issue/I3831",
@@ -112483,6 +112522,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 1856
+      },
+      {
+        "uri": "majordomus://issue/I3946",
+        "kind": "issue",
+        "identity": "I3946",
+        "title": "Every gate of the CI model declares its lane, and both readers refuse a lane they cannot read",
+        "description": "Give every gate of .ai/repo/ci/gates.yaml a lane (feedback, proof or release) and the model a top-level tiers map (local and pull-request run feedback, integration adds proof, release runs all three), as ADR 0186 decides, and make both readers of the model, scripts/ci-plan --check and the executable's GateModel (apps/majordomus-cli/src/gates/model.rs), refuse in the same words a gate without a lane once tiers are declared, a lane that is none of the three, and a tier naming a lane that does not exist. ci-plan's plan carries gates[].lane; the executable gains GateDecl.lane and GateModel.tiers. Slice S2 of I2350: lanes are declared and validated, and select nothing.",
+        "path": ".ai/repo/project/issues/I3946.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4224
+      },
+      {
+        "uri": "majordomus://issue/I3947",
+        "kind": "issue",
+        "identity": "I3947",
+        "title": "A plan asked at a tier selects only the lanes that tier runs, and both readers of the CI model agree on it",
+        "description": "Give scripts/ci-plan a --tier T option and the executable's model::plan a tier argument, fed from gates.completion's new tier input the way on_demand is. A plan asked at tier T leaves out every gate whose lane is not in T's entry of the model's tiers map, with the reason `lane L: not in the T tier` in both readers, and neither implies nor requires brings such a gate back. Without a tier every lane is planned as before; a model without tiers, or a tier the model does not declare, is refused as a usage error in the same words by both readers. Slice S4 of I2350.",
+        "path": ".ai/repo/project/issues/I3947.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4670
+      },
+      {
+        "uri": "majordomus://issue/I3949",
+        "kind": "issue",
+        "identity": "I3949",
+        "title": "A printf piped into grep -q under pipefail is refused, and a here-string replaces it",
+        "description": "scripts/ci/pipefail-check refuses, by file and line, a printf or echo piped into `grep -q` in any script that sets pipefail, and the five scripts that carried that spelling give grep the text as a here-string.",
+        "path": ".ai/repo/project/issues/I3949.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2597
       },
       {
         "uri": "majordomus://issue/I3950",
@@ -115450,7 +115522,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 25839
+        "bytes": 25936
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -117050,15 +117122,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "uri": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
         "kind": "rule",
-        "identity": "project.a-push-runs-what-ci-would-find-first@1",
-        "title": "A push runs what CI would find first",
-        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds never costs a CI round trip.",
-        "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "identity": "project.a-push-runs-what-ci-would-find-first@2",
+        "title": "A push runs what CI would find first, and CI decides",
+        "description": "Before a push, the pre-push hook runs the plan's structure gates that CI recorded as cheap and that reach no network, and the suite's fast cases, within a stated bound, so a failure a local run finds in seconds is seen before a CI round trip; a gate CI runs again reports and lets the push through, and only the integrity checks refuse.",
+        "path": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5020,
+        "bytes": 9559,
         "tags": [
           "ci",
           "process"
@@ -120323,7 +120395,7 @@
         "identity": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "path": "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
         "source_class": "case",
-        "bytes": 7294
+        "bytes": 10156
       },
       {
         "uri": "majordomus://test/test/cases/1022_worktrees_share_build_intermediates.sh",
@@ -120979,7 +121051,7 @@
         "identity": "test/cases/131_completion_gates.sh",
         "path": "test/cases/131_completion_gates.sh",
         "source_class": "case",
-        "bytes": 15103
+        "bytes": 17212
       },
       {
         "uri": "majordomus://test/test/cases/131_freshness_has_an_age.sh",
@@ -121379,7 +121451,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 23390
+        "bytes": 23485
       },
       {
         "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
@@ -121643,7 +121715,7 @@
         "identity": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "path": "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
         "source_class": "case",
-        "bytes": 8042
+        "bytes": 10037
       },
       {
         "uri": "majordomus://test/test/cases/3011_the_observatory_draws_nothing_it_did_not_read.sh",
@@ -121755,7 +121827,7 @@
         "identity": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
         "path": "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
         "source_class": "case",
-        "bytes": 12568
+        "bytes": 12574
       },
       {
         "uri": "majordomus://test/test/cases/3027_the_release_path_goes_first.sh",
@@ -123222,6 +123294,30 @@
         "bytes": 9093
       },
       {
+        "uri": "majordomus://test/test/cases/3946_every_gate_declares_its_lane.sh",
+        "kind": "test",
+        "identity": "test/cases/3946_every_gate_declares_its_lane.sh",
+        "path": "test/cases/3946_every_gate_declares_its_lane.sh",
+        "source_class": "case",
+        "bytes": 7344
+      },
+      {
+        "uri": "majordomus://test/test/cases/3947_a_tier_selects_its_lanes.sh",
+        "kind": "test",
+        "identity": "test/cases/3947_a_tier_selects_its_lanes.sh",
+        "path": "test/cases/3947_a_tier_selects_its_lanes.sh",
+        "source_class": "case",
+        "bytes": 8719
+      },
+      {
+        "uri": "majordomus://test/test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+        "kind": "test",
+        "identity": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+        "path": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+        "source_class": "case",
+        "bytes": 6576
+      },
+      {
         "uri": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
         "kind": "test",
         "identity": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
@@ -123308,6 +123404,14 @@
         "path": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
         "source_class": "case",
         "bytes": 1641
+      },
+      {
+        "uri": "majordomus://test/test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+        "path": "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+        "source_class": "case",
+        "bytes": 2031
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -124995,7 +125099,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 47253
+        "bytes": 49551
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -125011,7 +125115,7 @@
         "identity": "test/cases/95_executable_reference.sh",
         "path": "test/cases/95_executable_reference.sh",
         "source_class": "case",
-        "bytes": 8485
+        "bytes": 8641
       },
       {
         "uri": "majordomus://test/test/cases/95_skills.sh",
@@ -125984,7 +126088,7 @@
       "identity": [
         "id"
       ],
-      "objects": 982
+      "objects": 985
     },
     {
       "name": "knowledge",
@@ -126146,7 +126250,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 635
+      "objects": 639
     },
     {
       "name": "use-case",

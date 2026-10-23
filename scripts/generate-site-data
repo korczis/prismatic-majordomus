@@ -69,6 +69,32 @@ trap 'rm -rf "$STAGE" "${RULES_TMP:-}" "${LINK_TRACKED:-}" "${LINK_DOCS:-}"; mj_
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
 
+# ---------------------------------------------------------------- the manifest, checked before anything is derived
+# The executable's manifest (docs/generated/registry.json) is refused here, before the first
+# read through the tool, rather than where its routes are projected near the end: a manifest
+# of another schema, one naming a source file the tree does not have, or one whose capability
+# names a module it does not hold is a finding about the repository whatever the rest of the
+# data says, and a generation that will be refused has nothing to gain from deriving the other
+# 30-odd files first. Checked at the projection, each refusal cost 94% of a full generation
+# (243 of 259 s, measured 2026-10-20), and test/cases/95_executable_reference.sh pays three.
+REG="$ROOT/docs/generated/registry.json"
+[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
+[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
+# every source path the manifest names is a file of this tree; the rule that turns a Rust
+# module path into a file lives in the executable, and this is where it is held to the tree
+jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
+  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
+done
+# the modules are read once and asked about together; the first one, in byte order, that is
+# not a builtin module of the manifest is the one named, as it was when each was asked alone
+jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u > "$STAGE/capability-modules.txt"
+REG_MISSING="$(jq -r --rawfile ms "$STAGE/capability-modules.txt" '
+  [.modules[] | select(.source == "builtin") | .id] as $builtin
+  | first($ms | split("\n") | .[:-1][] | sub("^[ \t]+"; "") | sub("[ \t]+$"; "")
+          | select(. as $m | $builtin | index([$m]) | not) | "missing " + .) // empty' "$REG")" \
+  || { echo "generate-site-data: reading the modules of docs/generated/registry.json failed" >&2; exit 13; }
+[ -z "$REG_MISSING" ] || { echo "generate-site-data: docs/generated/registry.json: capability module ${REG_MISSING#missing } is not a builtin module of the manifest" >&2; exit 10; }
+
 # ---------------------------------------------------------------- reading the repository through the tool
 # Every JSON the generator asks the tool for is a part of its subject, and the subject is
 # this whole repository. A read that fails leaves part of that subject unreachable, and a
@@ -768,7 +794,7 @@ done
 # exits the generator instead of a subshell of it
 while IFS= read -r t; do
   [ -n "$t" ] || continue
-  printf '%s\n' "$RESP_KEYS" | grep -qxF "$t" \
+  grep -qxF -e "$t" <<<"$RESP_KEYS" \
     || { echo "generate-site-data: README row '$t' has no entry in docs/RESPONSIBILITIES.yaml" >&2; exit 10; }
 done <<EOF
 $README_TITLES
@@ -2315,23 +2341,6 @@ GEN_T0="$(mj_phase_begin "gen:executable_routes")"
 # the source on GitHub, and the claims that speak about each surface, attached by the path of
 # their implementation (scripts/lib/executable-site.jq). A capability added to the registry gets
 # its page, its index entries and its links from this pass alone; nothing here names one.
-REG="$ROOT/docs/generated/registry.json"
-[ "$(jq -r '.schema' "$REG")" = "majordomus/capability-registry/v1" ] || { echo "generate-site-data: docs/generated/registry.json is not a majordomus/capability-registry/v1 manifest (regenerate: apps/majordomus-cli/target/debug/majordomus generate)" >&2; exit 10; }
-[ "$(jq '.capabilities | length' "$REG")" -gt 0 ] || { echo "generate-site-data: docs/generated/registry.json lists no capability" >&2; exit 10; }
-# every source path the manifest names is a file of this tree; the rule that turns a Rust
-# module path into a file lives in the executable, and this is where it is held to the tree
-jq -r '[.capabilities[].source_path] | unique[]' "$REG" | while read -r sp; do
-  [ -f "$ROOT/$sp" ] || { echo "generate-site-data: docs/generated/registry.json names $sp as a capability's source and no such file exists (Provenance::source_path and the crate's layout disagree)" >&2; exit 10; }
-done
-# the modules are read once and asked about together; the first one, in byte order, that is
-# not a builtin module of the manifest is the one named, as it was when each was asked alone
-jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u > "$STAGE/capability-modules.txt"
-REG_MISSING="$(jq -r --rawfile ms "$STAGE/capability-modules.txt" '
-  [.modules[] | select(.source == "builtin") | .id] as $builtin
-  | first($ms | split("\n") | .[:-1][] | sub("^[ \t]+"; "") | sub("[ \t]+$"; "")
-          | select(. as $m | $builtin | index([$m]) | not) | "missing " + .) // empty' "$REG")" \
-  || { echo "generate-site-data: reading the modules of docs/generated/registry.json failed" >&2; exit 13; }
-[ -z "$REG_MISSING" ] || { echo "generate-site-data: docs/generated/registry.json: capability module ${REG_MISSING#missing } is not a builtin module of the manifest" >&2; exit 10; }
 # The claims matrix is slurped from its file, never passed on argv: Linux caps a single
 # argument at MAX_ARG_STRLEN (32 pages, 131072 bytes) whatever ARG_MAX says, and the array
 # crossed it — 129593 bytes on master, 131363 with two claims more. macOS has no such

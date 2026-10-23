@@ -406,6 +406,33 @@ sed 's/^    subsumed-by: shell-suite$/    subsumed-by: plan-record-cases/' "$MOD
 expect_exit 10 "$PLAN" --model sub-chain.yaml --check
 expect_grep 'which is itself subsumed'
 
+# --- every gate declares its lane (ADR 0186, I3946): the plan carries it beside the job, and
+#     a lane selects nothing yet, so the full plan above is the full plan of a model without
+#     lanes. Both readers' refusals are case 3946's.
+[ "$(printf '%s' "$full" | jq -r '[.gates[] | select(.lane != "feedback" and .lane != "proof" and .lane != "release")] | length')" = 0 ] \
+  || { echo "    a gate of the plan carries no lane of the three"; exit 1; }
+grep -v -E '^tiers:$|^  (local|pull-request|integration|release): \[|^    lane: ' "$MODEL" > unlaned.yaml
+[ "$("$PLAN" --model unlaned.yaml --full | jq -c '[.selected, [.gates[].reason]]')" = "$(printf '%s' "$full" | jq -c '[.selected, [.gates[].reason]]')" ] \
+  || { echo "    the lanes changed the full plan"; exit 1; }
+
+# --- a tier selects its lanes (ADR 0186, I3947): a proof-lane gate is left out of the
+#     pull-request tier, says why, and is planned again at integration; a tier the model does
+#     not declare, and any tier of a model without tiers, is a usage error. Case 3947 holds
+#     the rest, and the agreement of both readers is case 131's.
+proof_gate="$(awk '/^  - id: /{id=$3} /^    lane: proof$/{print id; exit}' "$MODEL")"
+[ -n "$proof_gate" ] || { echo "    the model has no proof-lane gate to ask about"; exit 1; }
+[ "$(printf '%s' "$full" | jq -r --arg g "$proof_gate" '.gates[] | select(.id == $g) | .selected')" = true ] \
+  || { echo "    $proof_gate is not in the full plan without a tier"; exit 1; }
+pr="$("$PLAN" --full --tier pull-request)"
+[ "$(printf '%s' "$pr" | jq -r --arg g "$proof_gate" '.gates[] | select(.id == $g) | "\(.selected) \(.reason)"')" \
+  = "false lane proof: not in the pull-request tier" ] || { echo "    the pull-request tier planned the proof gate $proof_gate"; exit 1; }
+[ "$("$PLAN" --full --tier integration | jq -r --arg g "$proof_gate" '.gates[] | select(.id == $g) | .selected')" = true ] \
+  || { echo "    the integration tier left out the proof gate $proof_gate"; exit 1; }
+expect_exit 2 "$PLAN" --full --tier nightly
+expect_grep 'tier nightly: the model declares no such tier; it declares integration, local, pull-request, release'
+expect_exit 2 "$PLAN" --model unlaned.yaml --full --tier local
+expect_grep 'tier local: the model declares no tiers, so it cannot plan one'
+
 # --- the verdict: green only when every selected gate's job succeeded; red on a failure, a
 #     cancellation, a selected gate whose job was skipped, a failed plan, or an empty selection
 plan docs/DESIGN.md > plan.json

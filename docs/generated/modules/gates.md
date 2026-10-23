@@ -30,6 +30,10 @@ everything between the commit the task started at and the working tree. |
 | `base` | string or null | no | The commit to compare with, when the task's own starting commit is not wanted. |
 | `on_demand` | boolean or null | no | Also plan the gates the model marks on-demand. Off by default, because a plan that
 selects a gate whose runner is unavailable is a plan whose verdict never arrives. |
+| `tier` | string or null | no | Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does
+not run is left out, and nothing implies or requires it back. Absent plans every lane.
+A model that declares no tiers, or a tier it does not declare, is refused as invalid
+input, in the words `scripts/ci-plan --tier` refuses it with. |
 
 Output: `Completion`.
 
