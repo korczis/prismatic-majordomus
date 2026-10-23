@@ -242,6 +242,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus proceed`](#majordomus-proceed) | `/docs/cli/proceed/` | What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177) |
 | [`majordomus proceed plan`](#majordomus-proceed-plan) | `/docs/cli/proceed/plan/` | The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read |
 | [`majordomus proceed take`](#majordomus-proceed-take) | `/docs/cli/proceed/take/` | Take the decision once: claim the selection exclusively on the primary checkout's server, ensure the issue's canonical worktree, record the take there and start the task bound to the issue in it. The same session taking again, from either checkout, after a restart or after finish, gets that work back (re-claiming an expired claim, releasing a finished one) and creates nothing. Exit 10 when nothing can be selected, 11 when the decision is provisional or no server answers for the primary checkout, 15 when the take is refused; start's own exit is passed through |
+| [`majordomus proceed step`](#majordomus-proceed-step) | `/docs/cli/proceed/step/` | One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
 | [`majordomus skills status`](#majordomus-skills-status) | `/docs/cli/skills/status/` | Every skill with its derived standing: tested, documented, enforced, used |
 | [`majordomus skills explain`](#majordomus-skills-explain) | `/docs/cli/skills/explain/` | One skill in full: each naming test and its evidence, its page, its gates, every invocation |
@@ -6854,7 +6855,7 @@ Examples:
 
 What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)
 
-Subcommands: [`majordomus proceed plan`](#majordomus-proceed-plan), [`majordomus proceed take`](#majordomus-proceed-take).
+Subcommands: [`majordomus proceed plan`](#majordomus-proceed-plan), [`majordomus proceed take`](#majordomus-proceed-take), [`majordomus proceed step`](#majordomus-proceed-step).
 
 ```text
 majordomus proceed [OPTIONS] <COMMAND>
@@ -6925,6 +6926,37 @@ Examples:
   ```
 
   Verified: exits 11.
+
+<a id="majordomus-proceed-step"></a>
+## `majordomus proceed step`
+
+One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits
+
+```text
+majordomus proceed step [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--intent` | `<ID>` | — | The intent the session realises: only issues serving its unmet criteria are ordered, and the order is done when it is met. The whole plan when absent |
+| `--milestone` | `<ID>` | — | The milestone whose READY issues come first; the active one when absent |
+| `--session` | `<ID>` | — | The mesh session the step is for, whose own claims are not held against it |
+| `--at` | `<TIME>` | — | The moment the step is taken at, RFC 3339 in UTC to the second; the clock when absent |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **One step as one work order, when nothing is left to do** — The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run.
+
+  ```console
+  $ majordomus proceed step --at 2026-10-23T10:00:00Z --format json
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-skills"></a>
 ## `majordomus skills`

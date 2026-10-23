@@ -1,6 +1,6 @@
 ---
 name: mj-proceed
-description: "Majordomus proceed: What to proceed with, and why."
+description: "Majordomus proceed: What to proceed with, and why; Proceed: the next step, as one work order."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -16,6 +16,7 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `proceed.plan` | What to proceed with, and why | `majordomus_proceed_plan` | `majordomus proceed plan` | reads |
+| `proceed.step` | Proceed: the next step, as one work order | `majordomus_proceed_step` | `majordomus proceed step` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

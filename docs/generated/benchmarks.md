@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 213 | 177 | 0 | 36 |
-| http | 206 | 177 | 0 | 29 |
-| mcp | 201 | 173 | 0 | 28 |
+| direct | 214 | 178 | 0 | 36 |
+| http | 207 | 178 | 0 | 29 |
+| mcp | 202 | 174 | 0 | 28 |
 | system | 14 | 14 | 0 | 0 |
-| total | 634 | 541 | 0 | 93 |
+| total | 637 | 544 | 0 | 93 |
 
 ## Capabilities
 
@@ -179,6 +179,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
 | `proceed.plan` | proceed | query | — | covered | covered | covered | `default`, `milestone_and_session` |
+| `proceed.step` | proceed | query | — | covered | covered | covered | `whole_plan`, `one_intent` |
 | `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
 | `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |

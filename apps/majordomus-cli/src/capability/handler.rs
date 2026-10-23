@@ -535,7 +535,40 @@ impl Executable {
         self.capability.skill = Some(crate::capability::SkillExposure {
             alias: alias.into(),
             argument: argument.into(),
+            follow: None,
         });
+        self
+    }
+
+    /// Declare what the agent does with the answer of the skill declared by
+    /// [`Self::skill`], when that is more than reporting it. One sentence, written into every
+    /// projected skill; it does nothing on a capability that declares no skill.
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{BenchmarkCases, CapabilityKind, CaseContext, Context, CapabilityError, Exposure, NamedCase, Stability};
+    /// #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    /// struct In { text: String }
+    /// impl BenchmarkCases for In {
+    ///     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> { vec![] }
+    /// }
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Out {}
+    /// fn order(_: &Context, _: In) -> Result<Out, CapabilityError> { Ok(Out {}) }
+    /// let declared = || capability! {
+    ///     id: "demo.order", kind: CapabilityKind::Query, title: "Order", description: "Orders.",
+    ///     input: In, output: Out, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: order,
+    /// };
+    /// let e = declared().skill("order", "text").follow("Carry the order out.");
+    /// assert_eq!(e.capability.skill.unwrap().follow.as_deref(), Some("Carry the order out."));
+    /// // without a skill there is nothing to follow
+    /// assert!(declared().follow("Carry it out.").capability.skill.is_none());
+    /// ```
+    pub fn follow(mut self, instruction: &str) -> Self {
+        if let Some(skill) = self.capability.skill.as_mut() {
+            skill.follow = Some(instruction.into());
+        }
         self
     }
 

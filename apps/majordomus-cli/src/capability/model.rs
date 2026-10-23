@@ -1048,12 +1048,12 @@ pub struct CliExposure {
 ///
 /// ```
 /// use majordomus_cli::capability::SkillExposure;
-/// let s = SkillExposure { alias: "intent".into(), argument: "statement".into() };
+/// let s = SkillExposure { alias: "intent".into(), argument: "statement".into(), follow: None };
 /// assert!(s.validate().is_ok());
 /// // a name an agent product already owns is refused, and so is one that is not a name
-/// let taken = SkillExposure { alias: "review".into(), argument: "x".into() };
+/// let taken = SkillExposure { alias: "review".into(), argument: "x".into(), follow: None };
 /// assert!(taken.validate().unwrap_err().contains("reserved"));
-/// let shouted = SkillExposure { alias: "Intent".into(), argument: "x".into() };
+/// let shouted = SkillExposure { alias: "Intent".into(), argument: "x".into(), follow: None };
 /// assert!(shouted.validate().is_err());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -1062,6 +1062,12 @@ pub struct SkillExposure {
     pub alias: String,
     /// The input field the text typed after the name fills, verbatim.
     pub argument: String,
+    /// What the agent does with the answer, when that is more than reporting it: a
+    /// capability that answers a work order says here that the order is carried out. One
+    /// sentence of the declaration's own, written into every projected skill; absent, the
+    /// skill only reports the answer.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub follow: Option<String>,
 }
 
 /// Names a skill may not take: commands and bundled skills of the agent products that read
@@ -1114,6 +1120,7 @@ impl SkillExposure {
     /// let skill = |alias: &str, argument: &str| SkillExposure {
     ///     alias: alias.into(),
     ///     argument: argument.into(),
+    ///     follow: None,
     /// };
     /// assert!(skill("propose-intent", "statement").validate().is_ok());
     /// assert!(skill("-intent", "statement").validate().is_err());
@@ -1122,6 +1129,11 @@ impl SkillExposure {
     /// for reserved in RESERVED_SKILL_NAMES {
     ///     assert!(skill(reserved, "x").validate().unwrap_err().contains("reserved"));
     /// }
+    /// // what the agent does with the answer is a sentence, or nothing at all
+    /// let blank = SkillExposure { follow: Some(" ".into()), ..skill("step", "x") };
+    /// assert!(blank.validate().unwrap_err().contains("follow"));
+    /// let said = SkillExposure { follow: Some("Carry it out.".into()), ..skill("step", "x") };
+    /// assert!(said.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), String> {
         let a = self.alias.as_str();
@@ -1144,6 +1156,9 @@ impl SkillExposure {
         }
         if self.argument.is_empty() {
             return Err("names no input field for the typed text".into());
+        }
+        if self.follow.as_deref().is_some_and(|f| f.trim().is_empty()) {
+            return Err("declares a follow that says nothing; leave it out instead".into());
         }
         Ok(())
     }

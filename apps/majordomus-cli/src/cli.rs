@@ -357,6 +357,13 @@ pub struct ProceedArgs {
 /// let cli = Cli::try_parse_from(["majordomus", "proceed", "take", "--session", "s1"]).unwrap();
 /// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
 /// assert!(matches!(args.command, ProceedCommand::Take { ref session, .. } if session == "s1"));
+///
+/// // a step takes the intent it serves and the moment it is taken at, both optional
+/// let cli = Cli::try_parse_from(["majordomus", "proceed", "step", "--intent", "i",
+///     "--at", "2026-10-23T10:00:00Z"]).unwrap();
+/// let Command::Proceed(args) = cli.command else { panic!("not the proceed command") };
+/// assert!(matches!(args.command,
+///     ProceedCommand::Step { intent: Some(ref i), at: Some(_), .. } if i == "i"));
 /// ```
 pub enum ProceedCommand {
     /// The decision, read only: the selected issue and why, the READY issues passed over with what refused each, what the selection unblocks and the commands that take it; asked of the server holding this checkout's lease. Exit 10 when nothing can be selected, 11 when the selection is provisional because the board or a declared mesh could not be read
@@ -376,6 +383,21 @@ pub enum ProceedCommand {
         /// The milestone whose READY issues come first; the active one when absent
         #[arg(long, value_name = "ID")]
         milestone: Option<String>,
+    },
+    /// One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits
+    Step {
+        /// The intent the session realises: only issues serving its unmet criteria are ordered, and the order is done when it is met. The whole plan when absent
+        #[arg(long, value_name = "ID")]
+        intent: Option<String>,
+        /// The milestone whose READY issues come first; the active one when absent
+        #[arg(long, value_name = "ID")]
+        milestone: Option<String>,
+        /// The mesh session the step is for, whose own claims are not held against it
+        #[arg(long, value_name = "ID")]
+        session: Option<String>,
+        /// The moment the step is taken at, RFC 3339 in UTC to the second; the clock when absent
+        #[arg(long, value_name = "TIME")]
+        at: Option<String>,
     },
 }
 
@@ -5638,6 +5660,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["proceed", "take", "--session", "s1"],
             setup: &[],
             expect: Expect::ExitCode(11),
+        }],
+    },
+    CommandExamples {
+        command: "proceed step",
+        examples: &[ExampleDoc {
+            id: "proceed-step-json",
+            title: "One step as one work order, when nothing is left to do",
+            description: "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run.",
+            argv: &["proceed", "step", "--at", "2026-10-23T10:00:00Z", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
         }],
     },
     CommandExamples {

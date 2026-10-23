@@ -42,7 +42,23 @@ pub fn skill_path(alias: &str) -> String {
 /// (`disable-model-invocation: true`): the model does not decide on its own to write the
 /// repository because a conversation resembled the description.
 pub fn command_artifact(command: &CommandRef, version: &str) -> Artifact {
-    let path = skill_path(&command.alias);
+    command_artifact_in(SKILLS_DIR, command, version)
+}
+
+/// The same skill under another directory a product discovers skills in: `.agents/skills/`,
+/// which Antigravity and Zed read. One declaration, one text; what differs is only what the
+/// products differ in. Claude Code's own front-matter keys (`argument-hint`,
+/// `disable-model-invocation`) and its `$ARGUMENTS` placeholder are written for it alone: the
+/// open format the others read carries `name` and `description`, so there the typed text is
+/// named in words, and a capability that changes something says in words that only a person
+/// asks for it.
+///
+/// What the agent does with the answer is the declaration's `follow` when it has one, and
+/// otherwise to report it; a typed text the input does not require is left out when none was
+/// given, where a required one is asked for.
+pub fn command_artifact_in(dir: &str, command: &CommandRef, version: &str) -> Artifact {
+    let claude = dir == SKILLS_DIR;
+    let path = format!("{dir}/{}/SKILL.md", command.alias);
     let summary = format!(
         "{}. Runs the Majordomus capability {} with the text you type as its `{}`.",
         command.title.trim_end_matches('.'),
@@ -54,15 +70,41 @@ pub fn command_artifact(command: &CommandRef, version: &str) -> Artifact {
     let hint =
         serde_json::to_string(&format!("<{}>", command.argument)).unwrap_or_else(|_| "\"\"".into());
     let [a, b, c] = banner_lines(&command.source, version);
-    let mut front = format!(
-        "---\nname: {}\ndescription: {quoted}\nargument-hint: {hint}\n",
-        command.alias
-    );
-    if command.changes_something {
-        front.push_str("disable-model-invocation: true\n");
+    let mut front = format!("---\nname: {}\ndescription: {quoted}\n", command.alias);
+    if claude {
+        front.push_str(&format!("argument-hint: {hint}\n"));
+        if command.changes_something {
+            front.push_str("disable-model-invocation: true\n");
+        }
     }
     front.push_str("---\n");
 
+    let typed = if claude {
+        format!(
+            "Its `{}` is the text below, whole and verbatim — do not rephrase, shorten, \
+             translate or complete it:\n\n$ARGUMENTS\n\n",
+            command.argument
+        )
+    } else {
+        format!(
+            "Its `{}` is the text the person gave with `/{}`, whole and verbatim — do not \
+             rephrase, shorten, translate or complete it.\n\n",
+            command.argument, command.alias
+        )
+    };
+    let missing = if command.optional {
+        format!(
+            "If no text was given, call it without `{}`; do not invent one.\n\n",
+            command.argument
+        )
+    } else {
+        "If no text was given, ask for it and stop; do not invent one.\n\n".to_string()
+    };
+    let asked = if command.changes_something && !claude {
+        "Run it only when the person asked for it by name: it changes the repository.\n\n"
+    } else {
+        ""
+    };
     let mut ways = String::new();
     if let Some(tool) = &command.tool {
         ways.push_str(&format!(
@@ -82,22 +124,24 @@ pub fn command_artifact(command: &CommandRef, version: &str) -> Artifact {
     } else {
         "Call it once and report what it answers.\n"
     };
+    let then = match command.follow.as_deref().map(str::trim) {
+        Some(follow) if !follow.is_empty() => follow.to_string(),
+        _ => "Then report what the capability answered, as it answered.".to_string(),
+    };
     let content = format!(
         "{front}<!-- {a}\n     {b}\n     {c} -->\n\n\
          # {title}\n\n\
-         Invoke the Majordomus capability `{id}`. Its `{arg}` is the text below, whole and \
-         verbatim — do not rephrase, shorten, translate or complete it:\n\n\
-         $ARGUMENTS\n\n\
-         If no text was given, ask for it and stop; do not invent one.\n\n\
+         Invoke the Majordomus capability `{id}`. {typed}\
+         {missing}\
+         {asked}\
          {ways}\n\
          {once}\n\
-         Then report what the capability answered, as it answered.\n\n\
+         {then}\n\n\
          What `{id}` does, what it accepts and what it answers are defined once, in its \
          declaration: `majordomus capabilities describe {id}`, or the MCP tool's own description. \
          This file only makes it reachable by name and says nothing the declaration does not.\n",
         title = command.title,
         id = command.capability,
-        arg = command.argument,
     );
     Artifact::verbatim(
         path,
@@ -313,9 +357,66 @@ mod tests {
             tool: Some("majordomus_intent_propose".into()),
             cli: Some("intent propose".into()),
             changes_something: changes,
+            optional: false,
+            follow: None,
             source: "apps/majordomus-cli/src/capability/builtin/intents.rs".into(),
             sha256: "0".repeat(64),
         }
+    }
+
+    /// Under `.agents/skills/` the same declaration is the same skill without what only
+    /// Claude Code reads: no argument hint, no invocation flag, no placeholder; the typed text
+    /// and a writer's being a person's to ask for are said in words.
+    #[test]
+    fn a_command_under_agents_says_in_words_what_only_claude_code_reads_as_keys() {
+        let a = command_artifact_in(super::super::SKILLS_DIR, &command(true), "1.2.3");
+        assert_eq!(a.path, ".agents/skills/intent/SKILL.md");
+        let c = &a.content;
+        assert!(c.starts_with("---\nname: intent\ndescription: \""), "{c}");
+        let front = &c[..c[4..].find("---").unwrap() + 4];
+        assert!(
+            !front.contains("argument-hint") && !front.contains("disable-model-invocation"),
+            "{front}"
+        );
+        assert!(!c.contains("$ARGUMENTS"));
+        for said in [
+            "the text the person gave with `/intent`",
+            "Run it only when the person asked for it by name",
+            "call the tool `majordomus_intent_propose`",
+            "do not try again by another way",
+        ] {
+            assert!(c.contains(said), "{said:?} is missing from:\n{c}");
+        }
+        // a read has nothing to ask a person for
+        let read = command_artifact_in(super::super::SKILLS_DIR, &command(false), "1").content;
+        assert!(!read.contains("asked for it by name"));
+    }
+
+    /// An argument the input does not require is left out when nothing was typed, and a
+    /// declared `follow` replaces the closing report.
+    #[test]
+    fn an_optional_argument_is_left_out_and_a_follow_is_what_the_agent_does_next() {
+        let mut step = command(false);
+        step.optional = true;
+        step.follow = Some("Carry the order out, then step again when it says.".into());
+        let c = command_artifact(&step, "1").content;
+        assert!(
+            c.contains("If no text was given, call it without `statement`; do not invent one."),
+            "{c}"
+        );
+        assert!(!c.contains("ask for it and stop"));
+        assert!(
+            c.contains("\n\nCarry the order out, then step again when it says.\n\n"),
+            "{c}"
+        );
+        assert!(!c.contains("Then report what the capability answered"));
+        // a follow of nothing is no follow
+        step.follow = Some("  ".into());
+        let c = command_artifact(&step, "1").content;
+        assert!(c.contains("Then report what the capability answered, as it answered."));
+        // and a required one is asked for
+        let c = command_artifact(&command(true), "1").content;
+        assert!(c.contains("If no text was given, ask for it and stop; do not invent one."));
     }
 
     /// The file Claude Code reads: front matter first, the banner after it, the typed text

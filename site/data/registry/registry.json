@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "f5fd30ebd9abb2c1d315e76b74477aade9b274054661adc528f0fd1e81190950",
+    "fingerprint": "f6a64ea583cbf4679894e70a25a5b6ff7c77b9cdbcf89c51433b77aa0ac2322c",
     "summary": {
-      "total": 3355,
-      "builtin": 213,
+      "total": 3356,
+      "builtin": 214,
       "declarative": 3142,
       "by_kind": {
         "command": 36,
-        "query": 177,
+        "query": 178,
         "resource": 3142
       },
       "by_stability": {
-        "behaviorally_verified": 146,
+        "behaviorally_verified": 147,
         "experimental": 57,
         "implemented": 3152
       },
-      "mcp_tools": 201,
+      "mcp_tools": 202,
       "mcp_resources": 3197,
-      "http_routes": 206,
-      "cli_commands": 114,
+      "http_routes": 207,
+      "cli_commands": 115,
       "modules": 93,
-      "benchmark_required": 177,
+      "benchmark_required": 178,
       "benchmark_waived": 36,
       "cached": 54
     },
@@ -1695,13 +1695,20 @@
                   "argument": {
                     "type": "string",
                     "description": "The input field the text typed after the name fills, verbatim."
+                  },
+                  "follow": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What the agent does with the answer, when that is more than reporting it: a\ncapability that answers a work order says here that the order is carried out. One\nsentence of the declaration's own, written into every projected skill; absent, the\nskill only reports the answer."
                   }
                 },
                 "required": [
                   "alias",
                   "argument"
                 ],
-                "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into() };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into() };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into() };\nassert!(shouted.validate().is_err());\n```"
+                "description": "A capability as a skill a person invokes by a short name from an agent's prompt:\n`/intent <sentence>` in Claude Code. The name and the one input field the typed text\nfills are declared here, once; the file an agent product reads is generated from them\n(the `editors` module) and carries no description of what the capability does beyond\nthe capability's own.\n\n```\nuse majordomus_cli::capability::SkillExposure;\nlet s = SkillExposure { alias: \"intent\".into(), argument: \"statement\".into(), follow: None };\nassert!(s.validate().is_ok());\n// a name an agent product already owns is refused, and so is one that is not a name\nlet taken = SkillExposure { alias: \"review\".into(), argument: \"x\".into(), follow: None };\nassert!(taken.validate().unwrap_err().contains(\"reserved\"));\nlet shouted = SkillExposure { alias: \"Intent\".into(), argument: \"x\".into(), follow: None };\nassert!(shouted.validate().is_err());\n```"
               }
             }
           }
@@ -64539,6 +64546,432 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs"
       },
       {
+        "id": "proceed.step",
+        "module": "proceed",
+        "kind": "query",
+        "title": "Proceed: the next step, as one work order",
+        "description": "One step of a session that proceeds, as a work order a loop acts on: `do`, the capability to run next and its input — `devtask.implement` for the issue `proceed.plan` selects, under the idempotency key `devtask.implement` defaults to, so that a repeated order is one execution; `fan_out`, the other free READY issues declared parallel safe that share no path with it, at most four; `report`, what to announce on the board, as `peers.announce` takes it; and `next_due_at`, the next five-minute boundary after `at`, when to step again. Given an `intent`, only the issues serving its unmet criteria (`intent_realization.work`) are ordered, and an intent whose every criterion has current evidence, or that is satisfied, cancelled or superseded, answers `done` with nothing to run and nothing scheduled; without one, the whole plan is stepped and is done when no unfinished issue is left. Each item names the model `models.route` selects for a worker and the effort of the issue's profile. A provisional decision orders nothing. The same state answers the same order: `key` is the digest of everything but the moment, so a step repeated over unchanged state carries the same key at any later time. Writes nothing.",
+        "input": {
+          "name": "ProceedStepInput",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "intent": {
+                "type": "string",
+                "description": "The intent the session realises, by id. The step is `done` when its realisation is met, and only issues serving its unmet criteria are ordered. Empty: the whole plan, done when no unfinished issue is left.",
+                "default": ""
+              },
+              "milestone": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The milestone whose READY issues come first, as for `proceed.plan`; the active one when absent."
+              },
+              "session": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh session the step is for, whose own claims are not held against it, as for `proceed.plan`."
+              },
+              "at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The moment the step is taken at, RFC 3339 in UTC to the second (`2026-10-23T10:00:00Z`); the clock when absent. Only `next_due_at` depends on it."
+              },
+              "local": {
+                "type": "boolean",
+                "description": "Compose in the process that answers and never ask the checkout's leaseholder, as for `proceed.plan`.",
+                "default": false
+              }
+            },
+            "description": "What to ask of `proceed.step`.",
+            "title": "ProceedStepInput"
+          }
+        },
+        "output": {
+          "name": "WorkOrder",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "The order's identity: the digest of every field but `next_due_at`, `at` and `sources`. The same state answers the same key at any moment."
+              },
+              "outcome": {
+                "$ref": "#/$defs/OrderOutcome",
+                "description": "What the step decided."
+              },
+              "done": {
+                "type": "boolean",
+                "description": "Whether there is nothing left to do: the intent's realisation is met (or it was cancelled or superseded), or, for the whole plan, no unfinished issue is left. A done order runs and schedules nothing."
+              },
+              "reason": {
+                "type": "string",
+                "description": "One sentence a reader can check against the decision and the intent."
+              },
+              "do": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/WorkItem"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The capability to run next and its input; absent when the step waits or is done."
+              },
+              "fan_out": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WorkItem"
+                },
+                "description": "Independent items that may run in parallel with `do`, each a worker of its own; empty when nothing may."
+              },
+              "report": {
+                "$ref": "#/$defs/StepReport",
+                "description": "What to announce on the board, as `peers.announce` takes it."
+              },
+              "next_due_at": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When to step again, RFC 3339 in UTC: the next boundary of the cadence after `at`. Absent when the order is done."
+              },
+              "intent": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/StepIntent"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The intent the step was taken for, as its realisation stands; absent for the whole plan."
+              },
+              "at": {
+                "type": "string",
+                "description": "The moment the step was taken at."
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProceedSource"
+                },
+                "description": "What the decision was read from, as `proceed.plan` says it."
+              }
+            },
+            "required": [
+              "key",
+              "outcome",
+              "done",
+              "reason",
+              "fan_out",
+              "report",
+              "at",
+              "sources"
+            ],
+            "description": "One step of a session that proceeds: what to run now, what may run beside it, what to tell the board and when to step again.",
+            "title": "WorkOrder",
+            "$defs": {
+              "OrderOutcome": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "implement",
+                    "description": "An issue is ordered: run `do`, and `fan_out` beside it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "wait",
+                    "description": "Nothing may be taken now — every candidate is held, waits on something, or the decision is provisional — so step again at `next_due_at`."
+                  },
+                  {
+                    "type": "string",
+                    "const": "done",
+                    "description": "Nothing is left to do; schedule nothing."
+                  }
+                ],
+                "description": "What one step decided."
+              },
+              "WorkItem": {
+                "type": "object",
+                "properties": {
+                  "capability": {
+                    "type": "string",
+                    "description": "The capability to run: `devtask.implement`."
+                  },
+                  "input": {
+                    "description": "Its input, exactly as the capability takes it: the issue, and the idempotency key that makes a repeated order one execution."
+                  },
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue it realises."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The issue's title."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths it touches."
+                  },
+                  "profile": {
+                    "type": "string",
+                    "description": "The execution profile the issue declares."
+                  },
+                  "effort": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The effort that profile declares, when it declares one."
+                  },
+                  "model": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The model `models.route` selects for a worker, when one qualifies."
+                  }
+                },
+                "required": [
+                  "capability",
+                  "input",
+                  "issue",
+                  "title",
+                  "scope",
+                  "profile"
+                ],
+                "description": "One unit of ordered work: a capability, its input, and what a worker needs to run it."
+              },
+              "StepReport": {
+                "type": "object",
+                "properties": {
+                  "claim": {
+                    "type": "string",
+                    "description": "The claim the announcement stands under."
+                  },
+                  "intent": {
+                    "type": "string",
+                    "description": "One line: what is ordered or why nothing is."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The paths of every ordered item."
+                  }
+                },
+                "required": [
+                  "claim",
+                  "intent",
+                  "scope"
+                ],
+                "description": "What a step tells the board: the input of `peers.announce`."
+              },
+              "StepIntent": {
+                "type": "object",
+                "properties": {
+                  "intent": {
+                    "type": "string",
+                    "description": "The intent's id."
+                  },
+                  "stage": {
+                    "$ref": "#/$defs/IntentStage",
+                    "description": "Its derived stage."
+                  },
+                  "criteria": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many criteria it declares."
+                  },
+                  "met": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many have current evidence."
+                  },
+                  "unmet": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The criteria without current evidence, by id."
+                  },
+                  "serving": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The issues declaring they serve an unmet criterion, in plan order: the only ones the step orders."
+                  }
+                },
+                "required": [
+                  "intent",
+                  "stage",
+                  "criteria",
+                  "met",
+                  "unmet",
+                  "serving"
+                ],
+                "description": "The intent a step serves, as `intent_realization.work` answers it."
+              },
+              "IntentStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "A named milestone does not resolve, or none is named."
+                  },
+                  {
+                    "type": "string",
+                    "const": "planned",
+                    "description": "Every milestone resolves and none has started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "executing",
+                    "description": "A milestone is under way."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verifying",
+                    "description": "Every milestone that counts is DONE; satisfaction is not yet evidenced."
+                  },
+                  {
+                    "type": "string",
+                    "const": "satisfied",
+                    "description": "Verifying, and every criterion has current evidence."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "The record says it was abandoned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "superseded",
+                    "description": "The record names the intent that replaced it."
+                  }
+                ],
+                "description": "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+              },
+              "ProceedSource": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`board` (every checkout's peers) or `mesh` (every linked machine's live claims)."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ProceedSourceState",
+                    "description": "Whether it was read whole, in part, or not at all."
+                  },
+                  "holds": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many holds of others it contributed."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "What was read, or why not."
+                  }
+                },
+                "required": [
+                  "source",
+                  "state",
+                  "holds",
+                  "summary"
+                ],
+                "description": "One source of holds and whether it could be read."
+              },
+              "ProceedSourceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "read",
+                    "description": "Read whole."
+                  },
+                  {
+                    "type": "string",
+                    "const": "partial",
+                    "description": "Read, with parts that could not be (a board that did not answer)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unread",
+                    "description": "Not read: the decision holds nothing of it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undeclared",
+                    "description": "Nothing to read: the repository declares no enabled mesh."
+                  }
+                ],
+                "description": "How much of a source a decision could read."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::proceed"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_proceed_step"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/proceed/step"
+          },
+          "cli": {
+            "path": [
+              "proceed",
+              "step"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "proceed",
+          "plan",
+          "coordination",
+          "session",
+          "loop"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "skill": {
+          "alias": "proceed",
+          "argument": "intent",
+          "follow": "Then carry the order out, once: when `done` is true, report the reason and stop. Otherwise announce `report` on the board with `peers.announce`; run `do` with its `input` exactly as given (an order repeated over the same state names the same idempotency key, so it is one execution); start each `fan_out` item in a worker of its own, on the model and effort the item names; and step again at `next_due_at`, with the same intent, until the order is done."
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs"
+      },
+      {
         "id": "product.domains",
         "module": "product",
         "kind": "query",
@@ -89836,9 +90269,10 @@
         "description": "The decision a session starts from (ADR 0177): the issue to take, every READY issue it passed over with the constraint that issue failed and the hold that failed it, and the terms of the order, composed from the plan, every checkout's board and every linked machine's live claims. Writes nothing.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 1,
+        "capabilities": 2,
         "capability_ids": [
-          "proceed.plan"
+          "proceed.plan",
+          "proceed.step"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/proceed.rs"
       },
@@ -90094,7 +90528,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 9,
+        "capabilities": 8,
         "capability_ids": []
       },
       {
@@ -90129,7 +90563,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 612,
+        "capabilities": 613,
         "capability_ids": []
       },
       {
@@ -90222,7 +90656,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a66f9cc4a840dcf1b7766fa362091a2f1bae04fd59ef437138500c0a42ef2b78",
+    "fingerprint": "4da559374942e21d202544b68b698703f429bacdd4b9e325331b7540a59be5b2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90274,9 +90708,9 @@
       "rule": 189,
       "scope": 1,
       "session": 91,
-      "skill": 9,
+      "skill": 8,
       "taxonomy": 10,
-      "test": 612,
+      "test": 613,
       "use-case": 49,
       "workspace": 1
     },
@@ -96897,16 +97331,6 @@
         "bytes": 408
       },
       {
-        "uri": "majordomus://document/.ai/repo/skills/proceed/examples/a-fresh-session.md",
-        "kind": "document",
-        "identity": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
-        "title": "A fresh session is told only to proceed",
-        "path": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
-        "section": "skills",
-        "source_class": "skill_example",
-        "bytes": 828
-      },
-      {
         "uri": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "kind": "document",
         "identity": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -96994,7 +97418,7 @@
         "path": ".ai/repo/workflows/task-lifecycle.md",
         "section": "workflows",
         "source_class": "workflow",
-        "bytes": 7987
+        "bytes": 8171
       },
       {
         "uri": "majordomus://document/.ai/repo/workflows/use-cases.md",
@@ -97565,6 +97989,15 @@
         "bytes": 12809
       },
       {
+        "uri": "majordomus://document/docs/PROCEED.md",
+        "kind": "document",
+        "identity": "docs/PROCEED.md",
+        "title": "Proceeding — one step, one work order",
+        "path": "docs/PROCEED.md",
+        "source_class": "document",
+        "bytes": 5167
+      },
+      {
         "uri": "majordomus://document/docs/PRODUCT.md",
         "kind": "document",
         "identity": "docs/PRODUCT.md",
@@ -97589,7 +98022,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 25645
+        "bytes": 25990
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -118749,23 +119182,6 @@
         ]
       },
       {
-        "uri": "majordomus://skill/proceed",
-        "kind": "skill",
-        "identity": "proceed",
-        "title": "Proceed with the next admissible work",
-        "description": "Ask the repository what this session proceeds with, take that one piece of work exactly once, carry it to a verified finish and hand it on, without choosing it by hand or duplicating anyone's.",
-        "path": ".ai/repo/skills/proceed/SKILL.md",
-        "section": "skills",
-        "source_class": "skill",
-        "bytes": 3357,
-        "tags": [
-          "planning",
-          "mesh",
-          "coordination",
-          "delivery"
-        ]
-      },
-      {
         "uri": "majordomus://skill/repo-review",
         "kind": "skill",
         "identity": "repo-review",
@@ -121210,7 +121626,7 @@
         "identity": "test/cases/3369_the_proceed_skill_names_only_the_command.sh",
         "path": "test/cases/3369_the_proceed_skill_names_only_the_command.sh",
         "source_class": "case",
-        "bytes": 5104
+        "bytes": 5248
       },
       {
         "uri": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
@@ -121810,7 +122226,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 9521
+        "bytes": 9513
       },
       {
         "uri": "majordomus://test/test/cases/4000_a_repeated_start_is_one_execution.sh",
@@ -121851,6 +122267,14 @@
         "path": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
         "source_class": "case",
         "bytes": 8690
+      },
+      {
+        "uri": "majordomus://test/test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
+        "kind": "test",
+        "identity": "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
+        "path": "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
+        "source_class": "case",
+        "bytes": 12079
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -124662,7 +125086,7 @@
       "identity": [
         "id"
       ],
-      "objects": 9
+      "objects": 8
     },
     {
       "name": "taxonomy",
@@ -124689,7 +125113,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 612
+      "objects": 613
     },
     {
       "name": "use-case",
@@ -156207,6 +156631,170 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "proceed",
+              "step"
+            ],
+            "route": "/docs/cli/proceed/step/",
+            "executable": true,
+            "usage": "majordomus proceed step [OPTIONS]",
+            "about": "One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits",
+            "args": [
+              {
+                "name": "intent",
+                "long": "intent",
+                "positional": false,
+                "help": "The intent the session realises: only issues serving its unmet criteria are ordered, and the order is done when it is met. The whole plan when absent",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "milestone",
+                "long": "milestone",
+                "positional": false,
+                "help": "The milestone whose READY issues come first; the active one when absent",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "session",
+                "long": "session",
+                "positional": false,
+                "help": "The mesh session the step is for, whose own claims are not held against it",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "at",
+                "long": "at",
+                "positional": false,
+                "help": "The moment the step is taken at, RFC 3339 in UTC to the second; the clock when absent",
+                "value_name": "TIME",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "proceed-step-json",
+                "title": "One step as one work order, when nothing is left to do",
+                "description": "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run.",
+                "argv": [
+                  "proceed",
+                  "step",
+                  "--at",
+                  "2026-10-23T10:00:00Z",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus proceed step --at 2026-10-23T10:00:00Z --format json",
+                "setup": [],
+                "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -160660,6 +161248,23 @@
         "output": "ProceedDecision"
       },
       {
+        "name": "majordomus_proceed_step",
+        "id": "proceed.step",
+        "title": "Proceed: the next step, as one work order",
+        "description": "One step of a session that proceeds, as a work order a loop acts on: `do`, the capability to run next and its input — `devtask.implement` for the issue `proceed.plan` selects, under the idempotency key `devtask.implement` defaults to, so that a repeated order is one execution; `fan_out`, the other free READY issues declared parallel safe that share no path with it, at most four; `report`, what to announce on the board, as `peers.announce` takes it; and `next_due_at`, the next five-minute boundary after `at`, when to step again. Given an `intent`, only the issues serving its unmet criteria (`intent_realization.work`) are ordered, and an intent whose every criterion has current evidence, or that is satisfied, cancelled or superseded, answers `done` with nothing to run and nothing scheduled; without one, the whole plan is stepped and is done when no unfinished issue is left. Each item names the model `models.route` selects for a worker and the effort of the issue's profile. A provisional decision orders nothing. The same state answers the same order: `key` is the digest of everything but the moment, so a step repeated over unchanged state carries the same key at any later time. Writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "ProceedStepInput",
+        "output": "WorkOrder"
+      },
+      {
         "name": "majordomus_product_domains",
         "id": "product.domains",
         "title": "The domains",
@@ -162846,6 +163451,12 @@
         "method": "GET",
         "path": "/api/v1/proceed/plan",
         "id": "proceed.plan",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/proceed/step",
+        "id": "proceed.step",
         "kind": "query"
       },
       {
@@ -168504,6 +169115,64 @@
         "case": "milestone_and_session",
         "cached": false,
         "route": "GET /api/v1/proceed/plan"
+      },
+      {
+        "key": "proceed.step|direct|whole_plan",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "proceed.step",
+        "module": "proceed",
+        "case": "whole_plan",
+        "cached": false
+      },
+      {
+        "key": "proceed.step|direct|one_intent",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "proceed.step",
+        "module": "proceed",
+        "case": "one_intent",
+        "cached": false
+      },
+      {
+        "key": "proceed.step|mcp|whole_plan",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "proceed.step",
+        "module": "proceed",
+        "case": "whole_plan",
+        "cached": false,
+        "tool": "majordomus_proceed_step"
+      },
+      {
+        "key": "proceed.step|mcp|one_intent",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "proceed.step",
+        "module": "proceed",
+        "case": "one_intent",
+        "cached": false,
+        "tool": "majordomus_proceed_step"
+      },
+      {
+        "key": "proceed.step|http|whole_plan",
+        "kind": "capability",
+        "transport": "http",
+        "id": "proceed.step",
+        "module": "proceed",
+        "case": "whole_plan",
+        "cached": false,
+        "route": "GET /api/v1/proceed/step"
+      },
+      {
+        "key": "proceed.step|http|one_intent",
+        "kind": "capability",
+        "transport": "http",
+        "id": "proceed.step",
+        "module": "proceed",
+        "case": "one_intent",
+        "cached": false,
+        "route": "GET /api/v1/proceed/step"
       },
       {
         "key": "product.domains|direct|stable",
@@ -174247,6 +174916,27 @@
           "cases": 2
         },
         {
+          "subject": "proceed.step",
+          "module": "proceed",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "proceed.step",
+          "module": "proceed",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "proceed.step",
+          "module": "proceed",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "product.domains",
           "module": "product",
           "transport": "direct",
@@ -175446,22 +176136,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 213,
-          "covered": 177,
+          "required": 214,
+          "covered": 178,
           "missing": 0,
           "waived": 36,
           "inapplicable": 0
         },
         "http": {
-          "required": 206,
-          "covered": 177,
+          "required": 207,
+          "covered": 178,
           "missing": 0,
           "waived": 29,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 201,
-          "covered": 173,
+          "required": 202,
+          "covered": 174,
           "missing": 0,
           "waived": 28,
           "inapplicable": 0
@@ -175474,8 +176164,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 634,
-          "covered": 541,
+          "required": 637,
+          "covered": 544,
           "missing": 0,
           "waived": 93,
           "inapplicable": 0

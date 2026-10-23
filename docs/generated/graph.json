@@ -1510,6 +1510,15 @@
         "status": "query"
       },
       {
+        "id": "capability:proceed.step",
+        "kind": "capability",
+        "label": "proceed.step",
+        "summary": "Proceed: the next step, as one work order",
+        "route": "/cockpit/capabilities/proceed.step",
+        "source": "apps/majordomus-cli/src/capability/builtin/proceed.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:product.domains",
         "kind": "capability",
         "label": "product.domains",
@@ -16454,14 +16463,6 @@
         "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
       },
       {
-        "id": "majordomus://document/.ai/repo/skills/proceed/examples/a-fresh-session.md",
-        "kind": "document",
-        "label": ".ai/repo/skills/proceed/examples/a-fresh-session.md",
-        "summary": "A fresh session is told only to proceed",
-        "route": "/cockpit/objects/document/ai-repo-skills-proceed-examples-a-fresh-session-md",
-        "source": ".ai/repo/skills/proceed/examples/a-fresh-session.md"
-      },
-      {
         "id": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "kind": "document",
         "label": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -17036,6 +17037,14 @@
         "summary": "The preflight — what is in force here, and what proves it",
         "route": "/cockpit/objects/document/docs-preflight-md",
         "source": "docs/PREFLIGHT.md"
+      },
+      {
+        "id": "majordomus://document/docs/PROCEED.md",
+        "kind": "document",
+        "label": "docs/PROCEED.md",
+        "summary": "Proceeding — one step, one work order",
+        "route": "/cockpit/objects/document/docs-proceed-md",
+        "source": "docs/PROCEED.md"
       },
       {
         "id": "majordomus://document/docs/PRODUCT.md",
@@ -84959,37 +84968,6 @@
         }
       },
       {
-        "id": "majordomus://skill/proceed",
-        "kind": "skill",
-        "label": "proceed",
-        "summary": "Proceed with the next admissible work",
-        "route": "/cockpit/objects/skill/proceed",
-        "source": ".ai/repo/skills/proceed/SKILL.md",
-        "status": "active",
-        "facts": {
-          "inputs": [
-            "a checkout of a repository whose plan the tool reads, anywhere in its tree",
-            "the shared server of the primary checkout, which holds the board and the mesh every take is made on"
-          ],
-          "outputs": [
-            "the decision as the tool explained it, or the reason nothing was taken",
-            "one claim, one worktree and one task bound to the selected issue, created once and found again on every later call",
-            "a finished task whose head is handed to the landing seat, reported by verification state"
-          ],
-          "related": [
-            "implement",
-            "report-verification-state",
-            "evolve"
-          ],
-          "tags": [
-            "planning",
-            "mesh",
-            "coordination",
-            "delivery"
-          ]
-        }
-      },
-      {
         "id": "majordomus://skill/repo-review",
         "kind": "skill",
         "label": "repo-review",
@@ -87738,6 +87716,13 @@
         "label": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
         "route": "/cockpit/objects/test/test-cases-4004-an-execution-holds-its-issue-claim-sh",
         "source": "test/cases/4004_an_execution_holds_its_issue_claim.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
+        "kind": "test",
+        "label": "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
+        "route": "/cockpit/objects/test/test-cases-4005-proceed-step-is-one-idempotent-work-order-sh",
+        "source": "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -94596,6 +94581,26 @@
       },
       {
         "source": "capability:proceed.plan",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.step",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.step",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.step",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:proceed.step",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -108985,11 +108990,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/.ai/repo/skills/proceed/examples/a-fresh-session.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -109346,6 +109346,11 @@
       },
       {
         "source": "majordomus://document/docs/PREFLIGHT.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/PROCEED.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -128920,26 +128925,6 @@
         "kind": "related_to"
       },
       {
-        "source": "majordomus://skill/proceed",
-        "target": "kind:skill",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://skill/proceed",
-        "target": "majordomus://skill/evolve",
-        "kind": "related_to"
-      },
-      {
-        "source": "majordomus://skill/proceed",
-        "target": "majordomus://skill/implement",
-        "kind": "related_to"
-      },
-      {
-        "source": "majordomus://skill/proceed",
-        "target": "majordomus://skill/report-verification-state",
-        "kind": "related_to"
-      },
-      {
         "source": "majordomus://skill/repo-review",
         "target": "kind:skill",
         "kind": "is_a"
@@ -130846,6 +130831,11 @@
       },
       {
         "source": "majordomus://test/test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -135715,6 +135705,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:proceed",
+        "target": "capability:proceed.step",
+        "kind": "composes"
+      },
+      {
         "source": "module:product",
         "target": "capability:product.domains",
         "kind": "composes"
@@ -135981,8 +135976,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3811,
-      "edges": 8816,
+      "nodes": 3812,
+      "edges": 8818,
       "acyclic": false,
       "truncated": false
     }

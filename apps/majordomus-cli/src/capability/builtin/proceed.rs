@@ -46,6 +46,16 @@
 //! this checkout's lease, so the command line asks that server for the decision (`local:
 //! true`, so it never asks back) and composes it itself only when none answers — saying so in
 //! `sources`, because a decision taken over a mesh it could not read is not the same decision.
+//!
+//! # One step, as one work order
+//!
+//! `proceed.step` (I4005, [`step`]) turns the decision into what a loop acts on: the one
+//! capability to run next (`devtask.implement` for the selected issue, under its own
+//! idempotency key), the issues that may run beside it, what to announce and when to step
+//! again; and, for an intent, `done` once its realisation is met. It decides nothing this
+//! module does not: the order is `proceed.plan`'s, read again, and `/proceed` is its skill.
+
+mod step;
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -754,6 +764,25 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: proceed_plan,
             },
+            capability! {
+                id: "proceed.step",
+                title: "Proceed: the next step, as one work order",
+                description: "One step of a session that proceeds, as a work order a loop acts on: `do`, the capability to run next and its input — `devtask.implement` for the issue `proceed.plan` selects, under the idempotency key `devtask.implement` defaults to, so that a repeated order is one execution; `fan_out`, the other free READY issues declared parallel safe that share no path with it, at most four; `report`, what to announce on the board, as `peers.announce` takes it; and `next_due_at`, the next five-minute boundary after `at`, when to step again. Given an `intent`, only the issues serving its unmet criteria (`intent_realization.work`) are ordered, and an intent whose every criterion has current evidence, or that is satisfied, cancelled or superseded, answers `done` with nothing to run and nothing scheduled; without one, the whole plan is stepped and is done when no unfinished issue is left. Each item names the model `models.route` selects for a worker and the effort of the issue's profile. A provisional decision orders nothing. The same state answers the same order: `key` is the digest of everything but the moment, so a step repeated over unchanged state carries the same key at any later time. Writes nothing.",
+                input: step::ProceedStepInput,
+                output: step::WorkOrder,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_proceed_step"),
+                    http: get("/api/v1/proceed/step"),
+                    cli: Some(CliExposure { path: vec!["proceed".into(), "step".into()] }),
+                },
+                tags: ["proceed", "plan", "coordination", "session", "loop"],
+                // the board, the mesh and the clock are live
+                cache: CachePolicy::Disabled,
+                handler: step::proceed_step,
+            }
+            .skill("proceed", "intent")
+            .follow("Then carry the order out, once: when `done` is true, report the reason and stop. Otherwise announce `report` on the board with `peers.announce`; run `do` with its `input` exactly as given (an order repeated over the same state names the same idempotency key, so it is one execution); start each `fan_out` item in a worker of its own, on the model and effort the item names; and step again at `next_due_at`, with the same intent, until the order is done."),
         ],
     }
 }

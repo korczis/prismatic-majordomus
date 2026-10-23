@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.6
 coverage:
   - scope: direct
-    required: 213
-    covered: 177
+    required: 214
+    covered: 178
     missing: 0
     waived: 36
     inapplicable: 0
   - scope: http
-    required: 206
-    covered: 177
+    required: 207
+    covered: 178
     missing: 0
     waived: 29
     inapplicable: 0
   - scope: mcp
-    required: 201
-    covered: 173
+    required: 202
+    covered: 174
     missing: 0
     waived: 28
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 634
-    covered: 541
+    required: 637
+    covered: 544
     missing: 0
     waived: 93
     inapplicable: 0
@@ -1500,6 +1500,16 @@ capabilities:
     cases:
       - default
       - milestone_and_session
+  - id: proceed.step
+    module: proceed
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - whole_plan
+      - one_intent
   - id: product.domains
     module: product
     kind: query

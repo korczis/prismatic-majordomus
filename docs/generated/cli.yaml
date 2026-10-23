@@ -23406,6 +23406,131 @@ cli:
               setup: []
               expectation: exits 11
           subcommands: []
+        - path:
+            - majordomus
+            - proceed
+            - step
+          route: /docs/cli/proceed/step/
+          executable: true
+          usage: "majordomus proceed step [OPTIONS]"
+          about: "One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits"
+          args:
+            - name: intent
+              long: intent
+              positional: false
+              help: "The intent the session realises: only issues serving its unmet criteria are ordered, and the order is done when it is met. The whole plan when absent"
+              value_name: ID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: milestone
+              long: milestone
+              positional: false
+              help: The milestone whose READY issues come first; the active one when absent
+              value_name: ID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: session
+              long: session
+              positional: false
+              help: "The mesh session the step is for, whose own claims are not held against it"
+              value_name: ID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: at
+              long: at
+              positional: false
+              help: "The moment the step is taken at, RFC 3339 in UTC to the second; the clock when absent"
+              value_name: TIME
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: proceed-step-json
+              title: "One step as one work order, when nothing is left to do"
+              description: "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run."
+              argv:
+                - proceed
+                - step
+                - "--at"
+                - "2026-10-23T10:00:00Z"
+                - "--format"
+                - json
+              command: majordomus proceed step --at 2026-10-23T10:00:00Z --format json
+              setup: []
+              expectation: exits 0
+          subcommands: []
     - path:
         - majordomus
         - skills

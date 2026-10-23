@@ -36241,6 +36241,12 @@
           "command": "majordomus proceed take",
           "name": "take",
           "route": "/docs/cli/proceed/take/"
+        },
+        {
+          "about": "One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits",
+          "command": "majordomus proceed step",
+          "name": "step",
+          "route": "/docs/cli/proceed/step/"
         }
       ],
       "command": "majordomus proceed",
@@ -36566,6 +36572,187 @@
       ],
       "route": "/docs/cli/proceed/take/",
       "usage": "majordomus proceed take [OPTIONS]"
+    },
+    {
+      "about": "One step, as one work order, read only: `do` (the capability to run next and its input), `fan_out` (what may run beside it), `report` (what to announce) and `next_due_at` (when to step again); for an intent, `done` once its realisation is met. The same state answers the same order and key. Exit 0 when work is ordered or the order is done, 10 when the step waits",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus proceed",
+          "name": "proceed",
+          "route": "/docs/cli/proceed/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The intent the session realises: only issues serving its unmet criteria are ordered, and the order is done when it is met. The whole plan when absent",
+          "long": "intent",
+          "name": "intent",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The milestone whose READY issues come first; the active one when absent",
+          "long": "milestone",
+          "name": "milestone",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The mesh session the step is for, whose own claims are not held against it",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The moment the step is taken at, RFC 3339 in UTC to the second; the clock when absent",
+          "long": "at",
+          "name": "at",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TIME"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus proceed step",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "proceed",
+            "step",
+            "--at",
+            "2026-10-23T10:00:00Z",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus proceed step --at 2026-10-23T10:00:00Z --format json",
+          "description": "The same answer `GET /api/v1/proceed/step` and the MCP tool `majordomus_proceed_step` return, and what `/proceed` runs: `do`, the capability to run next and its input; `fan_out`, what may run beside it; `report`, what to announce; `next_due_at`, when to step again; and a `key` that the same state answers again. This fixture declares no plan, so nothing is unfinished: the order is `done`, runs nothing, schedules nothing, and the command exits 0. The moment is given, so the answer is the same on every run.",
+          "expectation": "exits 0",
+          "id": "proceed-step-json",
+          "setup": [],
+          "title": "One step as one work order, when nothing is left to do"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "step",
+      "parent_route": "/docs/cli/proceed/",
+      "path": [
+        "majordomus",
+        "proceed",
+        "step"
+      ],
+      "route": "/docs/cli/proceed/step/",
+      "usage": "majordomus proceed step [OPTIONS]"
     },
     {
       "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
@@ -38793,10 +38980,10 @@
     }
   ],
   "counts": {
-    "arguments": 1682,
-    "commands": 244,
-    "examples": 246,
-    "runnable": 213
+    "arguments": 1691,
+    "commands": 245,
+    "examples": 247,
+    "runnable": 214
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.6",

@@ -1,13 +1,22 @@
 ---
 name: proceed
-description: "Ask the repository what this session proceeds with, take that one piece of work exactly once, carry it to a verified finish and hand it on, without choosing it by hand or duplicating anyone's."
+description: "Proceed: the next step, as one work order. Runs the Majordomus capability proceed.step with the text you type as its `intent`."
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
-     Source: .ai/repo/skills/proceed/SKILL.md; regenerate with `majordomus generate`
+     Source: apps/majordomus-cli/src/capability/builtin/proceed.rs; regenerate with `majordomus generate`
      Generator: majordomus-cli 1.0.0-alpha.6 -->
 
-# Proceed with the next admissible work
+# Proceed: the next step, as one work order
 
-This skill is defined once, in [`.ai/repo/skills/proceed/SKILL.md`](../../../.ai/repo/skills/proceed/SKILL.md). Read that file and follow it: it is the procedure, its inputs and what it must produce. This file only makes the skill discoverable to agents that load `.agents/skills/`, and says nothing the definition does not.
+Invoke the Majordomus capability `proceed.step`. Its `intent` is the text the person gave with `/proceed`, whole and verbatim — do not rephrase, shorten, translate or complete it.
 
-The same definition is served as `majordomus skills explain proceed` and as the MCP resource `majordomus://skill/proceed`.
+If no text was given, call it without `intent`; do not invent one.
+
+- With the Majordomus MCP server attached, call the tool `majordomus_proceed_step` with that text as `intent`.
+- Otherwise run `majordomus proceed step` from the repository root, giving that text as its `intent` (`majordomus proceed step --help` shows how).
+
+Call it once and report what it answers.
+
+Then carry the order out, once: when `done` is true, report the reason and stop. Otherwise announce `report` on the board with `peers.announce`; run `do` with its `input` exactly as given (an order repeated over the same state names the same idempotency key, so it is one execution); start each `fan_out` item in a worker of its own, on the model and effort the item names; and step again at `next_due_at`, with the same intent, until the order is done.
+
+What `proceed.step` does, what it accepts and what it answers are defined once, in its declaration: `majordomus capabilities describe proceed.step`, or the MCP tool's own description. This file only makes it reachable by name and says nothing the declaration does not.
