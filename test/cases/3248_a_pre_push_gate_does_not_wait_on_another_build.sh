@@ -23,6 +23,10 @@
 #   6  no MAJORDOMUS_BIN at all: the tree's own executable when it is current, a refusal when
 #      it is missing — and cargo is never called, in any of the six
 . "$ROOT/test/lib.sh"
+# The fixture names every executable and commit itself. One inherited from the session running
+# the suite (a commit hook's MAJORDOMUS_BIN_COMMIT) would describe the cache path of step 2
+# too, and name a commit the fixture repository cannot hold.
+unset MAJORDOMUS_BIN MAJORDOMUS_BIN_COMMIT
 
 fail() { printf '    %s\n' "$*"; exit 1; }
 mkdir -p repo/scripts/ci repo/bin repo/lib repo/apps/majordomus-cli/src stand-in
