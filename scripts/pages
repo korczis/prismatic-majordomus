@@ -21,7 +21,10 @@
 #                                         10 when the controlled path is over budget.
 #                                         --advisory reports a breach as a ::warning and
 #                                         exits 0: for the caller that measures a deployment
-#                                         which has already happened.
+#                                         which has already happened. A row that spent more
+#                                         than budget.bound.near_percent of its step's bound
+#                                         in the workflow is named NEAR, and never changes
+#                                         the exit status.
 #   scripts/pages built [--branch B] [--commit SHA] [--wait N] [--porcelain]
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
@@ -31,13 +34,16 @@
 #                                         only when its build errored and nothing is building:
 #                                         0 requested or none needed, 12 the state unreadable,
 #                                         a build in flight, or the request refused
-#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE] [--ledger-out FILE]
+#   scripts/pages evidence [--commit SHA] [--from DIR]... [--out FILE] [--ledger-out FILE]
 #   scripts/pages published-evidence --bin EXE [--baseline FILE]
 #                                         refuse to publish a UI whose evidence report holds more
 #                                         `not run` claims than the declared baseline (I2786):
 #                                         0 within it, 10 over it, 12 when it cannot be read
 #                                         site/data/evidence.json: the CI evidence of that commit
 #                                         or its nearest ancestor (the `evidence` artifact, or DIR),
+#                                         the nearest run that reported from every runner; a run
+#                                         with an absent report (one cancelled midway) stands in
+#                                         only when no complete one is among the nearest (I2845),
 #                                         current, stale with the distance, or unavailable with
 #                                         the reason; 0 in all three, 12 when it cannot write
 #   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
@@ -48,8 +54,9 @@
 #                                         --timeout 0 is a single probe. 0 it serves it,
 #                                         10 it serves something else, 12 it never answered.
 #                                         --smoke then fetches every deploy.smoke route of the
-#                                         model and exits 10 naming each one whose marker is
-#                                         missing or which does not answer
+#                                         model and every hero choice the published homepage
+#                                         offers (data-hero-scenarios), and exits 10 naming each
+#                                         one whose marker is missing or which does not answer
 #   scripts/pages publication --commit SHA --published OUTCOME --served OUTCOME [--url URL]
 #                       [--timings FILE]
 #                                         state a deployment that has already happened: the summary
@@ -416,6 +423,29 @@ mj_pages_platform() {
   printf -- '-%s' "$(uname -m)"
 }
 
+# ---------------------------------------------------------------- a row's step bound
+# The `timeout-minutes` of what runs a row in the workflow, in minutes: the step named after
+# the row, or else the job named after it (the rustdoc row is a job of its own). Nothing when
+# neither exists, so a row without a bound of its own is never called near one. The workflow
+# is read rather than the bound being written here a second time; scripts/ci/step-bound-check
+# holds that bound to the row's budget, and this says when a run is closing in on it.
+PAGES_WORKFLOW="${MJ_PAGES_WORKFLOW:-$ROOT/.github/workflows/pages.yml}"
+step_bound_of() {   # <row>
+  [ -f "$PAGES_WORKFLOW" ] || return 0
+  awk -v r="$1" '
+    function close_step() { if (instep && nm == r && sto != "") stepmin = sto; instep = 0; nm = ""; sto = "" }
+    /^jobs:[ \t]*$/ { injobs = 1; next }
+    /^[^ \t#]/ { close_step(); injobs = 0 }
+    !injobs { next }
+    /^  [a-zA-Z0-9_-]+:[ \t]*$/ { close_step(); job = $1; sub(/:$/, "", job); next }
+    job == r && /^    timeout-minutes: [0-9]+[ \t]*$/ { jobmin = $2 }
+    /^      - / { close_step(); instep = 1 }
+    instep && /^(      - |        )name: / { nm = $0; sub(/^ *(- )?name: /, "", nm); sub(/[ \t]+$/, "", nm); gsub(/^["\047]|["\047]$/, "", nm) }
+    instep && /^        timeout-minutes: [0-9]+[ \t]*$/ { sto = $2 }
+    END { close_step(); if (stepmin != "") print stepmin; else if (jobmin != "") print jobmin }
+  ' "$PAGES_WORKFLOW"
+}
+
 # ---------------------------------------------------------------- the run's verdict
 # The timing rows of one deployment against the budgets, as the fragment the workflow appends
 # to its job summary. Controlled latency is what can fail; external latency is reported beside
@@ -465,6 +495,24 @@ cmd_report() {
     :
   done)"
   blame="${blame%; }"
+  # which rows are closing in on the bound that would kill them. A budget breach is a warning
+  # and the run stays green; a step that reaches its `timeout-minutes` is killed and the publish
+  # behind it is skipped. On 2026-10-20 `check` took 169 s against a bound of 180 for days
+  # before the Czech copy pushed it over (run 39392245576), and nothing said so. NEAR is that
+  # warning, a run early: never an exit status.
+  local near="" near_pct mins
+  near_pct="$(m budget.bound.near_percent || true)"
+  case "$near_pct" in ''|*[!0-9]*) near_pct="" ;; esac
+  if [ -n "$near_pct" ]; then
+    near="$(awk -F'\t' '{ print $2 "\t" $3 }' "$timings" | while IFS="$(printf '\t')" read -r step secs; do
+      case "$secs" in ''|*[!0-9]*) continue ;; esac
+      mins="$(step_bound_of "$step")"
+      case "$mins" in ''|*[!0-9]*) continue ;; esac
+      [ $(( secs * 100 )) -gt $(( mins * 60 * near_pct )) ] && printf '%s %ss/%ss; ' "$step" "$secs" "$(( mins * 60 ))"
+      :
+    done)"
+    near="${near%; }"
+  fi
   out="${GITHUB_STEP_SUMMARY:-/dev/stdout}"
   {
     printf '### Pages fast path\n\n'
@@ -480,6 +528,7 @@ cmd_report() {
     [ -n "$e2e" ] && printf ', push to public %s s / %s s' "$e2e" "$(m budget.end_to_end)"
     printf '\n'
     [ -n "$blame" ] && printf '\nOver its own budget: %s\n' "$blame"
+    [ -n "$near" ] && printf '\nNEAR its step bound (more than %s%% of the timeout-minutes that would kill it): %s\n' "$near_pct" "$near"
     if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
       printf '\nThis is the latency of the publication path, not whether the site published:\nthe run states that separately, and a breach here is a warning rather than this\nrun'"'"'s verdict. `scripts/pages report` without `--advisory` still exits 10.\n'
     fi
@@ -490,14 +539,18 @@ cmd_report() {
   # One line for a reader that is not a person, always, and on the log rather than in the job
   # summary: the Markdown above is invisible to `gh run view --log`, which is where the four
   # red runs of 2026-09-12 were read from.
-  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s\n' \
-    "$verdict" "$controlled" "$budget" "${blame:-none}"
+  printf 'pages-slo verdict=%s controlled=%s budget=%s over=%s near=%s\n' \
+    "$verdict" "$controlled" "$budget" "${blame:-none}" "${near:-none}"
   if [ -n "${GITHUB_OUTPUT:-}" ]; then
     { printf 'verdict=%s\n' "$verdict"
       printf 'controlled=%s\n' "$controlled"
       printf 'budget=%s\n' "$budget"
       printf 'over=%s\n' "$blame"
+      printf 'near=%s\n' "$near"
     } >> "$GITHUB_OUTPUT"
+  fi
+  if [ -n "$near" ]; then
+    printf '::warning title=Pages step near its bound::%s. A step that reaches its timeout-minutes is killed and the publish behind it is skipped: re-derive the row in .ai/repo/ci/pages.yaml from this run and raise the bound with it.\n' "$near"
   fi
   if [ "$rc" != 0 ] && [ "$advisory" = 1 ]; then
     printf '::warning title=Pages controlled path over budget::controlled path %s s against a budget of %s s (%s). This is the latency of the publication path, not whether the site published — see the publication state annotation for that.\n' \
@@ -583,8 +636,29 @@ cmd_verify() {
         i=$((i + 1))
       done
       [ "$asked" -gt 0 ] || { echo "pages verify: --smoke, and ${MODEL#"$ROOT"/} declares no deploy.smoke route; nothing was asked" >&2; return 10; }
+      # The hero's choices (I3324): the published homepage says which recorded scenarios it
+      # offers, inside data-hero-scenarios, so they are read from it and each is asked, with no
+      # route list kept here. A homepage that offers none, or a choice whose page does not
+      # answer, is a miss, named.
+      local home choices href target n_choices=0
+      home="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}/?t=$(now)" 2>/dev/null || true)"
+      choices="$(printf '%s' "$home" | tr '\n' ' ' | sed -n 's/.*<div data-hero-scenarios[^>]*>\(.*\)/\1/p' \
+        | sed 's#</div>.*##' | grep -o 'href="[^"]*" data-scenario="[^"]*"' | sed 's/^href="\([^"]*\)".*/\1/' || true)"
+      if [ -z "$choices" ]; then
+        printf 'pages verify: smoke %s offers no hero choice (no data-hero-scenarios link)\n' "${url%/}/" >&2
+        missing=$((missing + 1))
+      fi
+      while read -r href; do
+        [ -n "$href" ] || continue
+        case "$href" in http://*|https://*) target="$href" ;; *) target="${url%/}$href" ;; esac
+        n_choices=$((n_choices + 1))
+        curl -fsS -o /dev/null --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "$target" 2>/dev/null || {
+          printf 'pages verify: smoke hero choice %s did not answer\n' "$target" >&2; missing=$((missing + 1)); }
+      done <<EOF_CHOICES
+$choices
+EOF_CHOICES
       [ "$missing" = 0 ] || return 10
-      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers\n' "$asked"
+      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers, and %s hero choice(s)\n' "$asked" "$n_choices"
       return 0
     fi
     [ $(( $(now) - t0 )) -lt "$timeout" ] || {
@@ -779,11 +853,12 @@ cmd_built() {
 # report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
 # ADR 0087 amends it; the reasons withhold `current` and never change the report.
 cmd_evidence() {
-  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" best=""
-  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
+  local commit="" from="" out="$ROOT/site/data/evidence.json" ledger_out="" slug="" tmp="" aid="" sha="" n=0
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons d skipped=""
+  local -a froms=()
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
-    --from) from="$2"; shift 2 ;;
+    --from) froms+=("$2"); shift 2 ;;
     --out) out="$2"; shift 2 ;;
     --ledger-out) ledger_out="$2"; shift 2 ;;
     *) echo "pages evidence: unknown option $1" >&2; exit 2 ;;
@@ -796,7 +871,14 @@ cmd_evidence() {
       || { echo "pages evidence: could not write $out" >&2; exit 12; }
     echo "pages evidence: unavailable: $1"
   }
-  if [ -z "$from" ]; then
+  # A run cancelled midway uploads its evidence all the same, without the report of a runner it
+  # never reached (`absent`): its ledger holds no execution of that runner's tests, and every
+  # claim they prove would publish as `not run`. On 2026-10-20 the cancelled master validate of
+  # 82ac259d0ae left such a run nearest, and two deploys refused 215 claims (39438897759,
+  # 39451372815). The nearest complete run is the evidence; an incomplete one stands in only
+  # when none of the nearest is complete, and is then reported for what it lacks (I2845).
+  complete_run() { jq -e '.schema == 1 and (.commit | type == "string") and ((.absent // []) | length == 0)' "$1/manifest.json" >/dev/null 2>&1; }
+  if [ "${#froms[@]}" -eq 0 ]; then
     command -v gh >/dev/null 2>&1 || { evidence_unavailable "gh is not installed, so no CI evidence was fetched"; return 0; }
     slug="${GITHUB_REPOSITORY:-}"
     [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
@@ -812,12 +894,29 @@ cmd_evidence() {
       git -C "$ROOT" merge-base --is-ancestor "$sha" "$commit" 2>/dev/null || continue
       printf '%s\t%s\n' "$(git -C "$ROOT" rev-list --count "$sha")" "$aid"
     done < "$tmp/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$tmp/candidates"
-    best="$(head -1 "$tmp/candidates" | cut -f2)"
-    [ -n "$best" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
-    gh api "repos/$slug/actions/artifacts/$best/zip" > "$tmp/evidence.zip" 2>/dev/null \
-      && mkdir -p "$tmp/evidence" && unzip -qo "$tmp/evidence.zip" -d "$tmp/evidence" >/dev/null 2>&1 \
-      || { evidence_unavailable "the evidence artifact $best could not be downloaded"; return 0; }
-    from="$tmp/evidence"
+    [ -s "$tmp/candidates" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
+    # The five nearest at most, nearest first, stopping at the first complete run.
+    while IFS=$'\t' read -r _ aid; do
+      n=$((n + 1)); d="$tmp/evidence-$n"
+      if gh api "repos/$slug/actions/artifacts/$aid/zip" > "$d.zip" 2>/dev/null \
+        && mkdir -p "$d" && unzip -qo "$d.zip" -d "$d" >/dev/null 2>&1; then
+        froms+=("$d")
+        complete_run "$d" && break
+      elif [ "$n" -eq 1 ]; then
+        evidence_unavailable "the evidence artifact $aid could not be downloaded"; return 0
+      fi
+    done < <(head -5 "$tmp/candidates")
+  fi
+  from=""
+  for d in "${froms[@]}"; do
+    if complete_run "$d"; then from="$d"; break; fi
+    [ -f "$d/manifest.json" ] && skipped="${skipped:+$skipped; }$(jq -r '"the run of \(.commit[0:12]) has no report from \((.absent // []) | join(", "))"' "$d/manifest.json" 2>/dev/null)"
+  done
+  if [ -z "$from" ]; then
+    from="${froms[0]}"
+    [ -z "$skipped" ] || echo "pages evidence: no complete run among the ${#froms[@]} nearest; the nearest stands in: $skipped"
+  elif [ -n "$skipped" ]; then
+    echo "pages evidence: passed over nearer incomplete evidence ($skipped), reading the nearest complete run"
   fi
   m="$from/manifest.json"
   jq -e '.schema == 1 and (.commit | type == "string")' "$m" >/dev/null 2>&1 \

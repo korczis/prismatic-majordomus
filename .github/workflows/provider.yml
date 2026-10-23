@@ -1,0 +1,238 @@
+# The provider deployment: after master's `validate` run concludes success, the executable is
+# built at that commit, the tree the provider receives is assembled from the deployment object
+# at that same commit (`majordomus deploy slug`, ADR 0219), it is pushed to the provider, and the
+# deployment is asked what it serves until it answers that commit. The model is
+# .ai/repo/ci/provider.yaml; this file is an adapter over it.
+#
+# Nothing else pushes to the provider. The repository is never pushed: what is pushed is a
+# fresh repository made in the runner's temporary directory from the assembled slug, whose
+# history is the provider's own — each deployment is one commit on top of whatever the
+# provider holds, so the push is always a fast-forward and never forced. The credential is a
+# workflow secret, handed to git through a netrc file written with umask 077 under a home of
+# its own, masked, removed when the step ends, and never on a command line or in a URL.
+#
+# Publication follows verification. A dispatch names a commit and is held to the same proof:
+# a successful validate run on a master push of that commit, or nothing is published.
+name: provider
+
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: A master commit whose validate run on the push concluded success
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  # One provider, one deployment at a time. A deployment in progress is never cancelled: a
+  # half-pushed slug is a provider in an unknown state, and the newest pending run follows it.
+  group: provider-deploy
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    # A validate run on master's push that succeeded, or a dispatch (proved below). A pull
+    # request's own validate run never qualifies: its event is pull_request, not push.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'master' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: the commit, and whether it may be published
+        id: subject
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.sha }}
+        run: |
+          set -eu
+          case "$EVENT" in
+            workflow_run) sha="$RUN_SHA" ;;
+            workflow_dispatch)
+              sha="$DISPATCH_SHA"
+              ok="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/validate.yml/runs?head_sha=$sha&event=push&branch=master&status=success" --jq '.total_count')"
+              [ "${ok:-0}" -gt 0 ] || { echo "::error::$sha has no successful validate run on a master push; nothing is published unverified"; exit 1; }
+              ;;
+            *) echo "::error::unexpected event $EVENT"; exit 1 ;;
+          esac
+          case "$sha" in *[!0-9a-f]*|'') echo "::error::not a commit: '$sha'"; exit 1 ;; esac
+          [ "${#sha}" = 40 ] || { echo "::error::not a full commit: '$sha'"; exit 1; }
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      # Until the owner sets the provider's credentials, a green master is not turned red by a
+      # deployment nobody can authorise: the run says so in a notice and does nothing else. Once
+      # both secrets are set, every step below runs, and a failed push or wait fails the job.
+      - name: whether the provider's credentials are set
+        id: credentials
+        timeout-minutes: 1
+        env:
+          GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
+          GIGALIXIR_API_KEY: ${{ secrets.GIGALIXIR_API_KEY }}
+        run: |
+          set -eu
+          if [ -n "$GIGALIXIR_EMAIL" ] && [ -n "$GIGALIXIR_API_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::provider push skipped: secrets not set (GIGALIXIR_EMAIL, GIGALIXIR_API_KEY)"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.credentials.outputs.present == 'true'
+        timeout-minutes: 3
+        with:
+          ref: ${{ steps.subject.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The target and the packages it needs are the distribution model's, as release.yml
+      # builds the same target; nothing here names a second list.
+      - name: the musl target, from the distribution model
+        if: steps.credentials.outputs.present == 'true'
+        id: target
+        timeout-minutes: 5
+        run: |
+          set -eu
+          target=x86_64-unknown-linux-musl
+          packages="$(jq -r --arg t "$target" '.include[] | select(.target == $t) | .packages' docs/generated/distribution-matrix.json)"
+          [ -n "$packages" ] || { echo "::error::the distribution model names no $target"; exit 1; }
+          if [ "$packages" != null ]; then
+            sudo apt-get update -qq
+            # shellcheck disable=SC2086
+            sudo apt-get install -y --no-install-recommends $packages
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/setup-rust
+        if: steps.credentials.outputs.present == 'true'
+        timeout-minutes: 5
+
+      - name: the target this executable is for
+        if: steps.credentials.outputs.present == 'true'
+        timeout-minutes: 2
+        run: rustup target add "${{ steps.target.outputs.target }}"
+
+      # Built at the commit the slug is read from, so /api/v1/live answers the commit the
+      # deployment serves (ADR 0219 decision 4).
+      - name: the executable, built at that commit
+        if: steps.credentials.outputs.present == 'true'
+        id: build
+        timeout-minutes: 40
+        env:
+          MAJORDOMUS_BUILD_COMMIT: ${{ steps.subject.outputs.sha }}
+          MAJORDOMUS_BUILD_DIRTY: "false"
+          TARGET: ${{ steps.target.outputs.target }}
+        run: |
+          set -eu
+          RUSTFLAGS='' cargo build --release --locked --target "$TARGET" --manifest-path apps/majordomus-cli/Cargo.toml
+          bin="${CARGO_TARGET_DIR:-$GITHUB_WORKSPACE/apps/majordomus-cli/target}/$TARGET/release/majordomus"
+          "$bin" --version
+          echo "bin=$bin" >> "$GITHUB_OUTPUT"
+
+      - name: the slug, assembled from the deployment object
+        if: steps.credentials.outputs.present == 'true'
+        id: slug
+        timeout-minutes: 5
+        env:
+          BIN: ${{ steps.build.outputs.bin }}
+          SHA: ${{ steps.subject.outputs.sha }}
+          MAJORDOMUS_SHARE: ${{ github.workspace }}/share
+        run: |
+          set -eu
+          "$BIN" deploy slug --repo "$GITHUB_WORKSPACE" --deployment majordomus --commit "$SHA" \
+            --executable "$BIN" --out "$RUNNER_TEMP/slug" --format json > "$RUNNER_TEMP/slug.json"
+          jq -c '{deployment, commit, entries, files, bytes, executable_sha256, provider, liveness}' "$RUNNER_TEMP/slug.json"
+          [ "$(jq -r .commit "$RUNNER_TEMP/slug.json")" = "$SHA" ] || { echo "::error::the slug was not read at $SHA"; exit 1; }
+          name="$(jq -r .provider.name "$RUNNER_TEMP/slug.json")"
+          app="$(jq -r .provider.app "$RUNNER_TEMP/slug.json")"
+          url="$(jq -r .provider.url "$RUNNER_TEMP/slug.json")"
+          live="$(jq -r .liveness "$RUNNER_TEMP/slug.json")"
+          [ "$name" = gigalixir ] || { echo "::error::this workflow publishes to gigalixir; the object names '$name'"; exit 1; }
+          case "$app" in ''|*[!a-z0-9-]*) echo "::error::not an application name: '$app'"; exit 1 ;; esac
+          case "$url" in https://*) ;; *) echo "::error::the provider URL is not https: '$url'"; exit 1 ;; esac
+          {
+            echo "app=$app"
+            echo "url=${url%/}"
+            echo "live=$live"
+          } >> "$GITHUB_OUTPUT"
+
+      # One commit on top of whatever the provider holds: the push is a fast-forward, never
+      # forced. A push the provider rejects fails the job; nothing retries with --force.
+      - name: the slug, pushed to the provider
+        if: steps.credentials.outputs.present == 'true'
+        timeout-minutes: 20
+        env:
+          GIGALIXIR_EMAIL: ${{ secrets.GIGALIXIR_EMAIL }}
+          GIGALIXIR_API_KEY: ${{ secrets.GIGALIXIR_API_KEY }}
+          APP: ${{ steps.slug.outputs.app }}
+          SHA: ${{ steps.subject.outputs.sha }}
+        run: |
+          set -eu
+          if [ -z "$GIGALIXIR_EMAIL" ] || [ -z "$GIGALIXIR_API_KEY" ]; then
+            echo "::error::the secrets GIGALIXIR_EMAIL and GIGALIXIR_API_KEY are not both set"
+            exit 1
+          fi
+          echo "::add-mask::$GIGALIXIR_API_KEY"
+          echo "::add-mask::$GIGALIXIR_EMAIL"
+          home="$RUNNER_TEMP/provider-home"
+          mkdir -p "$home"
+          trap 'rm -f "$home/.netrc"' EXIT
+          ( umask 077 && printf 'machine git.gigalixir.com\nlogin %s\npassword %s\n' "$GIGALIXIR_EMAIL" "$GIGALIXIR_API_KEY" > "$home/.netrc" )
+          unset GIGALIXIR_EMAIL GIGALIXIR_API_KEY
+          export HOME="$home" GIT_TERMINAL_PROMPT=0
+          remote="https://git.gigalixir.com/$APP.git"
+          cd "$RUNNER_TEMP/slug"
+          git init -q -b main
+          git config user.name "majordomus provider workflow"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          tree="$(git write-tree)"
+          message="deploy: majordomus at $SHA"
+          heads="$(git ls-remote "$remote" refs/heads/main)"
+          if [ -n "$heads" ]; then
+            git fetch -q --depth 1 "$remote" refs/heads/main
+            commit="$(git commit-tree "$tree" -p FETCH_HEAD -m "$message")"
+          else
+            commit="$(git commit-tree "$tree" -m "$message")"
+          fi
+          git push "$remote" "$commit:refs/heads/main"
+
+      - name: the deployment answers master's commit
+        if: steps.credentials.outputs.present == 'true'
+        timeout-minutes: 11
+        env:
+          ENDPOINT: ${{ steps.slug.outputs.url }}${{ steps.slug.outputs.live }}
+          SHA: ${{ steps.subject.outputs.sha }}
+        run: |
+          set -eu
+          deadline=$(( $(date +%s) + 600 ))
+          while :; do
+            got=""
+            if body="$(curl -fsS --max-time 10 "$ENDPOINT" 2>/dev/null)"; then
+              got="$(printf '%s' "$body" | jq -r '.commit // empty' 2>/dev/null)" || got=""
+            fi
+            if [ "$got" = "$SHA" ]; then
+              echo "$ENDPOINT answers $SHA"
+              exit 0
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::$ENDPOINT answered '${got:-nothing}' for ten minutes, not $SHA"
+              exit 1
+            fi
+            sleep 15
+          done

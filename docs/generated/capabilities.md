@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -18,10 +18,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 2 | [`modules/delivery.md`](modules/delivery.md) |
-| `deploy` | Deployment | behaviorally_verified | 4 | [`modules/deploy.md`](modules/deploy.md) |
+| `deploy` | Deployment | behaviorally_verified | 5 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
 | `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
-| `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
+| `devtask` | Executable development scopes | behaviorally_verified | 4 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
@@ -56,7 +56,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
 | `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
 | `recover` | Recovery of the record stores | behaviorally_verified | 1 | [`modules/recover.md`](modules/recover.md) |
-| `release` | Release | implemented | 4 | [`modules/release.md`](modules/release.md) |
+| `release` | Release | implemented | 5 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `served` | Served deployments | behaviorally_verified | 3 | [`modules/served.md`](modules/served.md) |
@@ -67,7 +67,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `trace` | Traceability | behaviorally_verified | 3 | [`modules/trace.md`](modules/trace.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
-| `worktree` | Worktree topology | behaviorally_verified | 6 | [`modules/worktree.md`](modules/worktree.md) |
+| `worktree` | Worktree topology | behaviorally_verified | 7 | [`modules/worktree.md`](modules/worktree.md) |
 
 ## Executable capabilities
 
@@ -101,6 +101,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |
 | `deploy.list` | `deploy` | query | behaviorally_verified | `majordomus_deployments` | `majordomus://deployments` | `GET /api/v1/deployments` | — | — | required |
 | `deploy.observed` | `deploy` | query | behaviorally_verified | `majordomus_deployments_observed` | — | `GET /api/v1/deployments/observed` | — | — | required |
+| `deploy.slug` | `deploy` | command | behaviorally_verified | — | — | — | `majordomus deploy slug` | — | waived (destructive) |
 | `design.contrast` | `design` | query | behaviorally_verified | `majordomus_design_contrast` | — | `GET /api/v1/design/contrast` | — | — | required |
 | `design.explain` | `design` | query | behaviorally_verified | `majordomus_design_explain` | — | `GET /api/v1/design/explain` | — | — | required |
 | `design.system` | `design` | query | behaviorally_verified | `majordomus_design` | `majordomus://design` | `GET /api/v1/design` | — | — | required |
@@ -108,8 +109,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `devcontext.compile` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext` | — | `GET /api/v1/devcontext` | `majordomus devcontext compile` | process, 16 entries | required |
 | `devcontext.explain` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext_explain` | — | `GET /api/v1/devcontext/explain` | `majordomus devcontext explain` | process, 8 entries | required |
 | `devcontext.policy` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext_policy` | `majordomus://devcontext/policy` | `GET /api/v1/devcontext/policy` | `majordomus devcontext policy` | — | required |
+| `devtask.implement` | `devtask` | command | experimental | `majordomus_devtask_implement` | — | `POST /api/v1/devtask/implement` | — | — | waived (transient_state) |
 | `devtask.issue` | `devtask` | query | behaviorally_verified | `majordomus_devtask` | — | `GET /api/v1/devtask/issue` | `majordomus devtask issue` | — | required |
 | `devtask.milestone` | `devtask` | query | behaviorally_verified | `majordomus_devtask_milestone` | — | `GET /api/v1/devtask/milestone` | `majordomus devtask milestone` | — | required |
+| `devtask.run` | `devtask` | command | experimental | — | — | — | — | — | waived (transient_state) |
 | `directories.list` | `directories` | query | behaviorally_verified | `majordomus_directories` | `majordomus://directories` | `GET /api/v1/directories` | — | process, 8 entries, 5s | required |
 | `distribution.artifact` | `distribution` | query | behaviorally_verified | `majordomus_artifact` | — | `GET /api/v1/distribution/artifact` | `majordomus distribution artifact` | — | required |
 | `distribution.build` | `distribution` | query | behaviorally_verified | `majordomus_build` | — | `GET /api/v1/distribution/build` | `majordomus distribution build` | — | required |
@@ -247,6 +250,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `recover.orphans` | `recover` | command | behaviorally_verified | `majordomus_recover_orphans` | — | `POST /api/v1/recover/orphans` | — | — | required |
 | `release.analysis` | `release` | query | implemented | `majordomus_release_analysis` | — | `GET /api/v1/release/analysis` | — | — | waived (published_history) |
 | `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
+| `release.currency` | `release` | query | implemented | `majordomus_release_currency` | — | `GET /api/v1/release/currency` | — | — | waived (published_history) |
 | `release.next` | `release` | query | implemented | `majordomus_release_next` | — | `GET /api/v1/release/next` | — | — | waived (published_history) |
 | `release.version` | `release` | query | implemented | `majordomus_release_version` | — | `GET /api/v1/release/version` | — | process, 2 entries, per checkout state | required |
 | `repository.info` | `repository` | query | behaviorally_verified | `majordomus_repository` | `majordomus://repository` | `GET /api/v1/repository` | — | process, 1 entries, per generation | required |
@@ -275,6 +279,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `why.list` | `why` | query | behaviorally_verified | `majordomus_why` | `majordomus://why` | `GET /api/v1/why` | `majordomus why list` | process, 32 entries | required |
 | `why.moment` | `why` | query | behaviorally_verified | `majordomus_why_moment` | — | `GET /api/v1/why/moment` | `majordomus why show` | process, 64 entries | required |
 | `why.validate` | `why` | query | behaviorally_verified | `majordomus_why_validate` | — | `GET /api/v1/why/validate` | `majordomus why validate` | process, 2 entries | required |
+| `worktree.create` | `worktree` | command | behaviorally_verified | `majordomus_worktree_create` | — | `POST /api/v1/worktrees/create` | `majordomus worktree ensure` | — | required |
 | `worktree.inspect` | `worktree` | query | behaviorally_verified | `majordomus_worktree_inspect` | — | `GET /api/v1/worktrees/inspect` | `majordomus worktree inspect` | — | required |
 | `worktree.migration_plan` | `worktree` | query | behaviorally_verified | `majordomus_worktree_migration_plan` | — | `GET /api/v1/worktrees/migration` | `majordomus worktree migrate` | — | required |
 | `worktree.status` | `worktree` | query | behaviorally_verified | `majordomus_worktree_status` | — | `GET /api/v1/worktrees/status` | `majordomus worktree status` | — | required |

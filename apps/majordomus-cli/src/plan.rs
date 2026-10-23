@@ -147,6 +147,11 @@ fn clean(s: &str) -> String {
 /// without one was written by something else. `SEALED_FROM` in `lib/project.awk`.
 pub const SEALED_FROM: &str = "2026-10-01T00:00:00Z";
 
+/// The longest milestone title GitHub accepts, in characters; a longer one is refused with
+/// HTTP 422. A milestone is projected as `"<id> — <title>"` (scripts/github-sync `title_of`),
+/// so that whole string is what must fit (I2844). `MTITLE_MAX` in `lib/project.awk`.
+pub const MILESTONE_TITLE_MAX: usize = 255;
+
 /// The seal of one transition: the proof, tracked in the record beside the stamp, that the
 /// stamp was written by the transition that appends its event.
 ///
@@ -1277,6 +1282,21 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             );
         }
     }
+    // A milestone GitHub would refuse to hold: its projected title is over the limit.
+    for m in &mraw {
+        let projected = m.id.chars().count() + 3 + m.title.chars().count();
+        if projected > MILESTONE_TITLE_MAX {
+            v.fail(
+                "milestone_title_too_long",
+                &m.id,
+                format!(
+                    "projects to GitHub as a {projected}-character title (\"{} — <title>\"); \
+                     GitHub's limit is {MILESTONE_TITLE_MAX}",
+                    m.id
+                ),
+            );
+        }
+    }
 
     // ---------------------------------------------------------------- assemble
     edges.sort();
@@ -1778,6 +1798,30 @@ mod tests {
         assert_eq!(f.level, "WARN");
         assert_eq!(f.subject, "I0001");
         assert!(f.message.contains("I0002"));
+    }
+
+    /// A milestone whose projected GitHub title ("<id> — <title>") is over the limit is
+    /// refused, counted in characters, not bytes; one exactly at the limit is not (I2844).
+    #[test]
+    fn a_milestone_title_github_would_refuse_is_refused() {
+        let mut long = milestone("M001", &[]);
+        // 252 characters, one of them multi-byte: "M001 — " (7) + 252 = 259 > 255
+        long.title = format!("é{}", "x".repeat(251));
+        let mut fits = milestone("M002", &[]);
+        // exactly at the limit: 7 + 248 = 255
+        fits.title = format!("é{}", "x".repeat(247));
+        let p = derive(header(), vec![long, fits], vec![]);
+        let f: Vec<_> = p
+            .findings
+            .iter()
+            .filter(|f| f.code == "milestone_title_too_long")
+            .collect();
+        assert_eq!(f.len(), 1, "{:?}", p.findings);
+        assert_eq!(f[0].level, "FAIL");
+        assert_eq!(f[0].subject, "M001");
+        assert!(f[0]
+            .message
+            .starts_with("projects to GitHub as a 259-character title"));
     }
 
     /// A record naming a dependency that does not exist is refused by name, and the

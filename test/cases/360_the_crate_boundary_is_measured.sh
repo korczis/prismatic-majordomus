@@ -7,6 +7,11 @@
 # majordomus-cli's dependency list did not grow, or the boundary is a sentence rather than
 # a constraint". `scripts/ci/crate-boundary` is that gate and this is what holds it.
 #
+# ADR 0220 moved one line of it: the mesh client speaks TLS to an `https://` hub, through
+# rustls over ring with webpki-roots compiled in. Those three are argued for; every other TLS
+# stack, the async adaptors over rustls, and aws-lc (rustls's default provider, which the musl
+# release builds cannot carry) are still refused, and step 2 holds that.
+#
 # Every assertion below runs against a fixture tree, never against this checkout's own
 # manifest: the gate takes MJ_ROOT, so a case can plant a forbidden dependency without
 # editing a file the rest of the suite is reading at the same time.
@@ -40,7 +45,7 @@ fixture() { # -> prints a fresh tree's root
 
 # ------------------------------------------------------------------ 1. the tree passes
 expect_exit 0 env MJ_ROOT="$ROOT" "$GATE"
-expect_grep 'links no async runtime, HTTP client, TLS stack or CDP client'
+expect_grep 'links no async runtime, HTTP client, CDP client or TLS stack but rustls over ring'
 
 # ------------------------------------------------------------------ 2. the lock is read
 # `jsonschema` is taken with `default-features = false` because "nothing may resolve over
@@ -58,9 +63,16 @@ expect_exit 10 env MJ_ROOT="$d" "$GATE"
 expect_grep 'tokio is an async runtime'
 
 d="$(fixture lock3)"
-printf '\n[[package]]\nname = "rustls"\nversion = "0.23.0"\n' >> "$d/apps/majordomus-cli/Cargo.lock"
+printf '\n[[package]]\nname = "openssl"\nversion = "0.10.0"\n' >> "$d/apps/majordomus-cli/Cargo.lock"
 expect_exit 10 env MJ_ROOT="$d" "$GATE"
-expect_grep 'rustls is a TLS stack'
+expect_grep 'openssl is a TLS stack'
+
+# rustls with its default features takes aws-lc as its provider: the feature path again, and
+# a C build the musl release targets do not carry. Only ring is argued for.
+d="$(fixture lock3b)"
+printf '\n[[package]]\nname = "aws-lc-sys"\nversion = "0.30.0"\n' >> "$d/apps/majordomus-cli/Cargo.lock"
+expect_exit 10 env MJ_ROOT="$d" "$GATE"
+expect_grep 'aws-lc-sys is a TLS stack'
 
 d="$(fixture lock4)"
 printf '\n[[package]]\nname = "chromiumoxide"\nversion = "0.5.0"\n' >> "$d/apps/majordomus-cli/Cargo.lock"
@@ -126,4 +138,7 @@ expect_grep 'cannot measure'
 # refusing the tree it was written to protect.
 expect_grep '^tiny_http = ' "$CRATE/Cargo.toml"
 expect_grep '^ed25519-dalek = ' "$CRATE/Cargo.toml"
+# and the TLS ADR 0220 argued for is rustls over ring alone, its default provider off
+expect_grep '^rustls = { version = "0.23", default-features = false, features = \["ring", ' "$CRATE/Cargo.toml"
+expect_grep '^webpki-roots = ' "$CRATE/Cargo.toml"
 expect_exit 0 env MJ_ROOT="$ROOT" "$GATE"

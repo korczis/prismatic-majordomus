@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 208 | 176 | 0 | 32 |
-| http | 203 | 176 | 0 | 27 |
-| mcp | 198 | 172 | 0 | 26 |
+| direct | 213 | 177 | 0 | 36 |
+| http | 206 | 177 | 0 | 29 |
+| mcp | 201 | 173 | 0 | 28 |
 | system | 14 | 14 | 0 | 0 |
-| total | 623 | 538 | 0 | 85 |
+| total | 634 | 541 | 0 | 93 |
 
 ## Capabilities
 
@@ -47,6 +47,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |
 | `deploy.observed` | deploy | query | — | covered | covered | covered | `default` |
+| `deploy.slug` | deploy | command | — | waived | — | — | — |
 | `design.contrast` | design | query | — | covered | covered | covered | `default` |
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
@@ -54,8 +55,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent` |
 | `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
 | `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
+| `devtask.implement` | devtask | command | — | waived | waived | waived | — |
 | `devtask.issue` | devtask | query | — | covered | covered | covered | `records-only`, `with-git` |
 | `devtask.milestone` | devtask | query | — | covered | covered | covered | `first-milestone` |
+| `devtask.run` | devtask | command | — | waived | — | — | — |
 | `directories.list` | directories | query | process, 8 entries, 5s | covered | covered | covered | `whole-tree`, `one-directory`, `effective-everywhere`, `owed` |
 | `distribution.artifact` | distribution | query | — | covered | covered | covered | `first-published-target` |
 | `distribution.build` | distribution | query | — | covered | covered | covered | `default` |
@@ -193,6 +196,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
+| `release.currency` | release | query | — | waived | waived | waived | — |
 | `release.next` | release | query | — | waived | waived | waived | — |
 | `release.version` | release | query | process, 2 entries, per checkout state | covered | covered | covered | `default` |
 | `repository.info` | repository | query | process, 1 entries, per generation | covered | covered | covered | `default` |
@@ -221,6 +225,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `why.list` | why | query | process, 32 entries | covered | covered | covered | `all`, `by-audience`, `search` |
 | `why.moment` | why | query | process, 64 entries | covered | covered | covered | `first-moment` |
 | `why.validate` | why | query | process, 2 entries | covered | covered | covered | `default` |
+| `worktree.create` | worktree | command | — | covered | covered | covered | `refused-name` |
 | `worktree.inspect` | worktree | query | — | covered | covered | covered | `feature-branch` |
 | `worktree.migration_plan` | worktree | query | — | covered | covered | covered | `default` |
 | `worktree.status` | worktree | query | — | covered | covered | covered | `default`, `primary-checkout` |

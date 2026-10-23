@@ -477,6 +477,23 @@
       "tool": "majordomus_deployments_observed"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus deploy slug",
+      "id": "deploy.slug",
+      "kind": "command",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-slug/",
+      "slug": "deploy-slug",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "Assemble the tree a provider receives",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/design/#op-design-contrast",
       "claims": [],
       "cli": null,
@@ -596,6 +613,23 @@
       "tool": "majordomus_devcontext_policy"
     },
     {
+      "api_anchor": "/docs/api/devtask/#op-devtask-implement",
+      "claims": [],
+      "cli": null,
+      "id": "devtask.implement",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-implement/",
+      "slug": "devtask-implement",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "Implement an issue: readiness, preflight, claim, worktree and one run",
+      "tool": "majordomus_devtask_implement"
+    },
+    {
       "api_anchor": "/docs/api/devtask/#op-devtask-issue",
       "claims": [],
       "cli": "majordomus devtask issue",
@@ -628,6 +662,23 @@
       "tests": [],
       "title": "One milestone as an executable dependency graph",
       "tool": "majordomus_devtask_milestone"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": null,
+      "id": "devtask.run",
+      "kind": "command",
+      "module": "devtask",
+      "module_route": "/registry/modules/devtask/",
+      "resource": null,
+      "route": "/registry/capabilities/devtask-run/",
+      "slug": "devtask-run",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/devtask.rs",
+      "tests": [],
+      "title": "A worker's run on an issue's worktree",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/directories/#op-directories-list",
@@ -3129,6 +3180,23 @@
       "tool": "majordomus_changelog"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-currency",
+      "claims": [],
+      "cli": null,
+      "id": "release.currency",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-currency/",
+      "slug": "release-currency",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether the trunk's landed work is released",
+      "tool": "majordomus_release_currency"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-next",
       "claims": [],
       "cli": null,
@@ -3603,6 +3671,23 @@
       "tests": [],
       "title": "Validate the catalogue",
       "tool": "majordomus_why_validate"
+    },
+    {
+      "api_anchor": "/docs/api/worktree/#op-worktree-create",
+      "claims": [],
+      "cli": "majordomus worktree ensure",
+      "id": "worktree.create",
+      "kind": "command",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-create/",
+      "slug": "worktree-create",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "The canonical worktree of a branch, made or found",
+      "tool": "majordomus_worktree_create"
     },
     {
       "api_anchor": "/docs/api/worktree/#op-worktree-inspect",
@@ -4343,11 +4428,11 @@
     ]
   },
   "counts": {
-    "capabilities": 208,
+    "capabilities": 213,
     "claims": 93,
     "modules": 59
   },
-  "generator": "majordomus-cli 0.30.2",
+  "generator": "majordomus-cli 1.0.0-alpha.6",
   "modules": [
     {
       "capabilities": [
@@ -4589,6 +4674,11 @@
           "id": "deploy.observed",
           "route": "/registry/capabilities/deploy-observed/",
           "slug": "deploy-observed"
+        },
+        {
+          "id": "deploy.slug",
+          "route": "/registry/capabilities/deploy-slug/",
+          "slug": "deploy-slug"
         }
       ],
       "claims": [],
@@ -4659,6 +4749,11 @@
     {
       "capabilities": [
         {
+          "id": "devtask.implement",
+          "route": "/registry/capabilities/devtask-implement/",
+          "slug": "devtask-implement"
+        },
+        {
           "id": "devtask.issue",
           "route": "/registry/capabilities/devtask-issue/",
           "slug": "devtask-issue"
@@ -4667,6 +4762,11 @@
           "id": "devtask.milestone",
           "route": "/registry/capabilities/devtask-milestone/",
           "slug": "devtask-milestone"
+        },
+        {
+          "id": "devtask.run",
+          "route": "/registry/capabilities/devtask-run/",
+          "slug": "devtask-run"
         }
       ],
       "claims": [],
@@ -5771,6 +5871,11 @@
           "slug": "release-changelog"
         },
         {
+          "id": "release.currency",
+          "route": "/registry/capabilities/release-currency/",
+          "slug": "release-currency"
+        },
+        {
           "id": "release.next",
           "route": "/registry/capabilities/release-next/",
           "slug": "release-next"
@@ -6031,6 +6136,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "worktree.create",
+          "route": "/registry/capabilities/worktree-create/",
+          "slug": "worktree-create"
+        },
         {
           "id": "worktree.inspect",
           "route": "/registry/capabilities/worktree-inspect/",

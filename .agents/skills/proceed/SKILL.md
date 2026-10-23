@@ -4,7 +4,7 @@ description: "Ask the repository what this session proceeds with, take that one 
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/proceed/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 
 # Proceed with the next admissible work
 

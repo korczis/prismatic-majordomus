@@ -1,0 +1,36 @@
+id: I3399
+milestone: a-newcomer-reaches-a-first-verified-intent
+title: "Newcomer trials are run as the protocol declares, recorded as they happened, and the T6 verdict is published with every trial"
+slug: newcomer-trials-are-published
+priority: p1
+profile: docs
+objective: "With each newcomer's consent, observe the registered number of trials without helping, record each as the newcomer reports and the observer measures under .ai/repo/benchmarks/trials/t6-first-intent/, cite each friction in an issue or a cancellation as I3365 does for T1, regenerate the economics projections and let the T6 row compute its status."
+why: "T6 of the owner's report of 2026-10-19 asks that a new user complete a first verified intent unaided; only real people's trials settle it."
+current_state: "No newcomer trial exists."
+desired_state: "T6 reads a computed status with every trial listed."
+scope:
+  - ".ai/repo/benchmarks"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Recording a newcomer's name, employer or repository contents"
+  - "Editing a trial after it is recorded"
+depends_on:
+  - "I3398"
+serves:
+  - "the-product-proves-it-pays#newcomers-reach-a-first-verified-intent"
+acceptance_criteria:
+  - "Each record passes the loader with the T6 digest"
+  - "Each record carries every declared field"
+  - "Every friction is cited by an issue or a cancellation"
+  - "A trial that did not reach the verdict is committed and published"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "majordomus economics proof"
+  - "majordomus generate --check"
+evidence_required:
+  - "t6_trials_committed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

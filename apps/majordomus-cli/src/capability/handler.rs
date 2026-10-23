@@ -90,6 +90,10 @@ pub enum CapabilityError {
     /// The caller may not run this from where it is: a request from another host for a
     /// capability that changes something and does not authenticate its input (ADR 0126).
     Forbidden(String),
+    #[error("conflict: {0}")]
+    /// The request contradicts what the server already holds: an idempotency key sent again
+    /// with a different input, the message naming what the key already started (I4000).
+    Conflict(String),
 }
 
 impl CapabilityError {
@@ -105,6 +109,7 @@ impl CapabilityError {
     /// assert_eq!(CapabilityError::Refused("x".into()).code(), "refused");
     /// assert_eq!(CapabilityError::Internal("x".into()).code(), "internal");
     /// assert_eq!(CapabilityError::Forbidden("x".into()).code(), "forbidden");
+    /// assert_eq!(CapabilityError::Conflict("x".into()).code(), "conflict");
     /// ```
     pub fn code(&self) -> &'static str {
         match self {
@@ -113,6 +118,7 @@ impl CapabilityError {
             CapabilityError::Refused(_) => "refused",
             CapabilityError::Internal(_) => "internal",
             CapabilityError::Forbidden(_) => "forbidden",
+            CapabilityError::Conflict(_) => "conflict",
         }
     }
 
@@ -558,6 +564,31 @@ impl Executable {
     /// ```
     pub fn authenticates_its_input(mut self) -> Self {
         self.capability.execution = self.capability.execution.authenticates_its_input();
+        self
+    }
+
+    /// The declaration, answering only a caller on this machine: a read that shows the
+    /// mesh's working state (ADR 0220 decision 4). See
+    /// [`crate::capability::ExecutionPolicy::reads_only_locally`].
+    ///
+    /// ```
+    /// use majordomus_cli::capability;
+    /// use majordomus_cli::capability::{CapabilityKind, Context, CapabilityError, Effect, Exposure, Stability};
+    /// use majordomus_cli::capability::builtin::Empty;
+    /// #[derive(serde::Serialize, schemars::JsonSchema)]
+    /// struct Board { peers: usize }
+    /// fn board(_: &Context, _: Empty) -> Result<Board, CapabilityError> { Ok(Board { peers: 0 }) }
+    /// let e = capability! {
+    ///     id: "demo.board", kind: CapabilityKind::Query, title: "Board", description: "Who works here.",
+    ///     input: Empty, output: Board, stability: Stability::Experimental,
+    ///     exposure: Exposure::default(), tags: [], handler: board,
+    /// }.reads_only_locally();
+    /// let policy = e.capability.execution;
+    /// assert!(policy.local_only && !policy.admits_remote(), "a caller beyond loopback is refused");
+    /// assert_eq!(policy.effect, Effect::Read, "it is still a read");
+    /// ```
+    pub fn reads_only_locally(mut self) -> Self {
+        self.capability.execution = self.capability.execution.reads_only_locally();
         self
     }
 }

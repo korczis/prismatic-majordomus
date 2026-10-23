@@ -1,0 +1,43 @@
+id: I3370
+milestone: the-corpus-is-registered-before-it-runs
+title: "The corpus suite is registered and committed before its first run, and the T2 protocol names its registration digest"
+slug: the-corpus-suite-is-registered
+priority: p1
+profile: implementation
+objective: "Complete .ai/repo/benchmarks/economics/suites/corpus.yaml as a live registered suite: the 20 tasks by stratum, the control baseline and the treatment arm the owner chooses, the model, harness and per-session budget, the pinned release, repetitions meeting the methodology's minimum, acceptance under I3133's pairing as primary outcome with wall time and spend secondary, the exact test and the MDE, the run-order seed and the stopping rule with the budget ceiling the owner consented to. Register the T2 paired protocol in .ai/repo/benchmarks/proof-plan.yaml with the registration digest."
+why: "T2 of the owner's report of 2026-10-19 requires the split to be fixed in advance; a registration committed before any run of its suite, carried by every run's digest, is the evidence. It depends on I3133 because the acceptance pairing is methodology version 2's."
+current_state: "git ls-files .ai/repo/benchmarks/economics/suites lists context.yaml and pilot.yaml; economics summary reports suite pilot with 0 runs and no registered suite."
+desired_state: "economics summary lists suite corpus with every pair missing; economics proof shows T2 as not_run with reason no counted record."
+scope:
+  - ".ai/repo/benchmarks/economics/suites"
+  - ".ai/repo/benchmarks"
+  - "docs/generated/economics.json"
+  - "docs/generated/economics.md"
+  - "docs/generated/economics.yaml"
+  - "site/data/generated/economics.json"
+non_scope:
+  - "Running the suite (I3372)"
+  - "Changing the methodology or a task"
+depends_on:
+  - "I3352"
+  - "I3368"
+  - "I3369"
+  - "I3375"
+  - "I3133"
+serves:
+  - "the-product-proves-it-pays#the-corpus-is-registered-before-any-run"
+acceptance_criteria:
+  - "The registration lists 7 small, 7 medium and 6 large tasks and loads"
+  - "The T2 protocol validates with the registration digest"
+  - "The budget ceiling cites a recorded owner decision"
+  - "majordomus generate --check passes"
+validation:
+  - "majordomus economics summary"
+  - "majordomus economics proof"
+  - "majordomus economics references --work-dir \"$(mktemp -d)\""
+  - "majordomus generate --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+evidence_required:
+  - "registration_committed_before_first_run"
+created_at: 2026-10-19
+updated_at: 2026-10-19

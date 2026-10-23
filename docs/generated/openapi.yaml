@@ -1,13 +1,13 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.30.2
+# Generator: majordomus-cli 1.0.0-alpha.6
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.30.2"
+  version: 1.0.0-alpha.6
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
-  description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
+  description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 403 `forbidden` (a caller beyond loopback asking for anything but a read or a signed mesh message), 404 `not_found`, 409 `conflict` and 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
     name: MIT
     identifier: MIT
@@ -40,13 +40,13 @@ tags:
   - name: delivery
     description: "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery."
   - name: deploy
-    description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
+    description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
   - name: design
     description: "The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with."
   - name: devcontext
     description: "The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself."
   - name: devtask
-    description: "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it."
+    description: "An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`'s, the branches and commits are `trace`'s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`'s. The two readers write nothing, which is what makes a user-authored GitHub value safe from them; `devtask.implement` writes only through the capabilities it composes (`worktree.create`, `executions.start`), and `devtask.run` is the run it starts."
   - name: directories
     description: "The layer's directories as a hierarchy: the contract each one declares, what it owes and which contract said so, and the chain that applies to it once inheritance is resolved."
   - name: distribution
@@ -1098,6 +1098,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -1229,6 +1235,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -1354,6 +1366,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -1472,6 +1490,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -2500,6 +2524,81 @@ paths:
           uri: majordomus://devcontext/policy
           name: devcontext-policy
       x-majordomus-cli: devcontext policy
+  "/api/v1/devtask/implement":
+    post:
+      operationId: devtask.implement
+      summary: "Implement an issue: readiness, preflight, claim, worktree and one run"
+      description: "Take one issue as one request (I4003): a key that already started an execution for it answers that execution (`deduplicated`) and creates nothing; otherwise the issue's readiness as `devtask.issue` derives it (refused `not_ready` with the reason and the blockers), `intents.preflight` (refused `invalid_intent` with its refusal), whether the issue's exclusive mesh claim would be admitted now (refused `claim_conflict` naming each holder), the worker — the attached MCP peer that asked; with none the answer is `pending` and nothing is created — then `worktree.create` on `feature/<id>-<slug>` and `executions.start` of `devtask.run` for the issue under the key (default `implement-<issue>`), whose execution takes the issue's claim before it runs (I4004). A refusal creates nothing. The answer is the standing, every step with what it found, the branch, the worktree, the worker and the execution with its links."
+      tags:
+        - devtask
+      requestBody:
+        required: true
+        description: "The input of `devtask.implement`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ImplementInput"
+            examples:
+              an-issue:
+                value:
+                  issue: I0001
+      responses:
+        "200":
+          description: "Implement an issue: readiness, preflight, claim, worktree and one run: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ImplementAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: devtask.implement
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::devtask
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_devtask_implement
   "/api/v1/devtask/issue":
     get:
       operationId: devtask.issue
@@ -3762,6 +3861,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -3825,6 +3930,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -4193,6 +4304,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -4450,7 +4567,7 @@ paths:
     get:
       operationId: executions.protocol
       summary: "The live channel's contract"
-      description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives."
+      description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives."
       tags:
         - executions
       parameters: []
@@ -4506,7 +4623,7 @@ paths:
     post:
       operationId: executions.report
       summary: Report an execution another process runs
-      description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only."
+      description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only."
       tags:
         - executions
       requestBody:
@@ -4531,6 +4648,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -4569,7 +4692,7 @@ paths:
     post:
       operationId: executions.start
       summary: Start a capability as an execution
-      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
+      description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server."
       tags:
         - executions
       requestBody:
@@ -4592,7 +4715,7 @@ paths:
           content:
             "application/json":
               schema:
-                "$ref": "#/components/schemas/ExecutionView"
+                "$ref": "#/components/schemas/StartedExecution"
         "400":
           description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
           content:
@@ -4601,6 +4724,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -5258,7 +5387,7 @@ paths:
           description: "The intent's id."
           examples:
             first-intent:
-              value: a-session-leaves-what-it-observed
+              value: a-brief-is-reconciled-into-the-plan
       responses:
         "200":
           description: "Why an intent stands where it stands: the result."
@@ -5413,6 +5542,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -5462,7 +5597,7 @@ paths:
           description: "An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out."
           examples:
             first-intent:
-              value: a-session-leaves-what-it-observed
+              value: a-brief-is-reconciled-into-the-plan
       responses:
         "200":
           description: "Which work realises which intent, and what each still lacks: the result."
@@ -5524,7 +5659,7 @@ paths:
           description: "The intent's id, which is also its file name under `.ai/repo/project/intents/`."
           examples:
             first-intent:
-              value: a-session-leaves-what-it-observed
+              value: a-brief-is-reconciled-into-the-plan
       responses:
         "200":
           description: "One intent, with everything derived about it: the result."
@@ -5695,7 +5830,7 @@ paths:
           description: "The record id, as the file name and `majordomus://knowledge/<id>` carry it."
           examples:
             first-record:
-              value: a-commit-stood-behind-a-build-lock
+              value: a-brief-is-reconciled-not-transcribed
       responses:
         "200":
           description: "One knowledge record: the result."
@@ -6284,6 +6419,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -6349,6 +6490,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -6666,6 +6813,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -6733,6 +6886,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -6860,6 +7019,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -6923,6 +7088,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7226,6 +7397,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -7292,6 +7469,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7367,6 +7550,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -7434,6 +7623,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7508,6 +7703,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -7573,6 +7774,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -7760,6 +7967,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -8793,6 +9006,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -8966,6 +9185,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -9569,6 +9794,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -11174,6 +11405,12 @@ paths:
             "application/json":
               schema:
                 "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
         "422":
           description: "`refused`: The command was understood and turned down for the reason the message gives."
           content:
@@ -11244,6 +11481,12 @@ paths:
                 "$ref": "#/components/schemas/ErrorBody"
         "404":
           description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
           content:
             "application/json":
               schema:
@@ -11338,6 +11581,65 @@ paths:
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_release_analysis
+  "/api/v1/release/currency":
+    get:
+      operationId: release.currency
+      summary: "Whether the trunk's landed work is released"
+      description: "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data."
+      tags:
+        - release
+      parameters:
+        - name: next
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: "Whether to decide the version the public contract requires for the landed work, which\nreads the last release's registry: yes when absent. The brief and doctor say no."
+      responses:
+        "200":
+          description: "Whether the trunk's landed work is released: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReleaseCurrency"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: release.currency
+      x-majordomus-kind: query
+      x-majordomus-stability: implemented
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::release
+      x-majordomus-benchmark:
+        policy: waived
+        reason: published_history
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_release_currency
   "/api/v1/release/next":
     get:
       operationId: release.next
@@ -13140,6 +13442,81 @@ paths:
           uri: majordomus://worktrees
           name: worktrees
       x-majordomus-cli: worktree topology
+  "/api/v1/worktrees/create":
+    post:
+      operationId: worktree.create
+      summary: "The canonical worktree of a branch, made or found"
+      description: "Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command."
+      tags:
+        - worktree
+      requestBody:
+        required: true
+        description: "The input of `worktree.create`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CreateInput"
+            examples:
+              refused-name:
+                value:
+                  branch: feature/../escape
+      responses:
+        "200":
+          description: "The canonical worktree of a branch, made or found: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/CreateReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "409":
+          description: "`conflict`: The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: worktree.create
+      x-majordomus-kind: command
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::worktree
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_worktree_create
+      x-majordomus-cli: worktree ensure
   "/api/v1/worktrees/inspect":
     get:
       operationId: worktree.inspect
@@ -15154,6 +15531,30 @@ components:
         - named
         - summary
       description: "The workers of this repository, from every board the brief could read."
+    BriefReleaseSection:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/BriefSectionState"
+          description: "`read` when it was measured, `unread` when it could not be, with the summary saying why."
+        stance:
+          anyOf:
+            - "$ref": "#/components/schemas/ReleaseCurrencyStance"
+            - type: "null"
+          description: "Current, owed, overdue or unknown, when the capability answered."
+        landed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Landed commits past the last release.
+          default: 0
+        summary:
+          type: string
+          description: The section in words.
+      required:
+        - state
+        - summary
+      description: "Whether the trunk's landed work is released, as `release.currency` says it (I3070)."
     BriefSectionState:
       oneOf:
         - type: string
@@ -15215,6 +15616,15 @@ components:
         - head
         - summary
       description: The session the brief is about.
+    BrowserSource:
+      oneOf:
+        - type: string
+          const: bridge
+          description: "The client drives a browser through a vendor extension whose tools arrive in the same\nsession as this repository's MCP server."
+        - type: string
+          const: none
+          description: "It does not, or not in a session that holds this repository's server."
+      description: "Whether one provider's client drives a browser in the same session as this repository's\nMCP server.\n\nA bridge is the one way a single session both works on a page and reads and changes the\nlive mesh (`docs/MCP.md`, \"Claude in the browser\"). It is a vendor capability like the two\nabove, so it is declared with its citation; whether *this machine* has the bridge is a\ndifferent fact, which preflight reads from the machine and never from here. A browser\nagent of the vendor's own — a side panel that reaches only the vendor's cloud — is not a\nbridge: nothing it does arrives in a session that holds this repository's server.\n\n```\nuse majordomus_cli::share::BrowserSource;\nassert_eq!(serde_json::from_str::<BrowserSource>(\"\\\"bridge\\\"\").unwrap(), BrowserSource::Bridge);\nassert!(serde_json::from_str::<BrowserSource>(\"\\\"extension\\\"\").is_err(), \"one word for it\");\nassert_eq!(BrowserSource::default(), BrowserSource::None, \"undeclared reads as none\");\nassert_eq!(BrowserSource::Bridge.as_str(), \"bridge\");\n```"
     Budget:
       type: object
       properties:
@@ -15461,7 +15871,7 @@ components:
       properties:
         outcome:
           type: string
-          description: "What asking achieved: `requested`, `already_requested` or `already_finished`."
+          description: "What asking achieved: `requested`, `already_requested`, `already_finished`, or\n`outcome_unknown` for an execution whose outcome waits for a reconciliation, which a\nstop cannot change."
         cancellable:
           type: boolean
           description: "Whether the capability declares that it looks at its cancellation flag. When it\ndoes not, the request is recorded and the execution runs to completion."
@@ -16161,6 +16571,27 @@ components:
         - claim
         - status
       description: "One claim the feature names, with the status the matrix gives it."
+    ClaimStanding:
+      oneOf:
+        - type: string
+          const: wanted
+          description: Started for an issue; the claim is taken when a worker picks it up.
+        - type: string
+          const: held
+          description: "The exclusive claim is held, and the handler runs under it."
+        - type: string
+          const: released
+          description: The claim was given back when the execution reached its final state.
+        - type: string
+          const: kept
+          description: "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+        - type: string
+          const: unclaimed
+          description: "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+        - type: string
+          const: refused
+          description: "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+      description: "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
     ClaimState:
       oneOf:
         - type: object
@@ -18624,6 +19055,84 @@ components:
           const: performance
           description: A dedicated one.
       description: "What a machine's CPU is."
+    CreateInput:
+      type: object
+      additionalProperties: false
+      properties:
+        branch:
+          type: string
+          description: "The branch, full name (`feature/improve-cli`). Checked out when it exists here,\ntaken up from the remote when the remote has it, otherwise created at `base`."
+        base:
+          type:
+            - string
+            - "null"
+          description: "The commit or ref a new branch starts from, as given and never fetched. Default: the\nremote's trunk, fetched now within a deadline, then the local trunk, said in `start`.\nIgnored when the branch exists."
+      required:
+        - branch
+      description: The branch whose canonical worktree is wanted.
+    CreateReport:
+      type: object
+      properties:
+        path:
+          type: string
+          description: Where the worktree is.
+        branch:
+          type: string
+          description: The branch checked out in it.
+        branch_created:
+          type: boolean
+          description: Whether that branch was created by this command.
+        base:
+          type:
+            - string
+            - "null"
+          description: "The ref a new branch started from (`origin/master`)."
+        start:
+          anyOf:
+            - "$ref": "#/components/schemas/StartPoint"
+            - type: "null"
+          description: "Where a branch this command created started, and why there."
+        start_commit:
+          type:
+            - string
+            - "null"
+          description: "The exact commit a branch this command created starts at, read back from the\nworktree rather than assumed."
+        container:
+          type: string
+          description: The container it went into.
+        container_created:
+          type: boolean
+          description: Whether the container was created by this command.
+        existed:
+          type: boolean
+          description: "The worktree already existed at its canonical path and nothing was created: the\n`existing` answer of an idempotent create, where `false` is `created`."
+        head:
+          type:
+            - string
+            - "null"
+          description: "The commit the worktree's HEAD names now, read back from it after the create or the\nfind, whichever this was; `None` when git cannot say (an unborn branch)."
+        envrc:
+          "$ref": "#/components/schemas/EnvrcApproval"
+          description: "What became of its `.envrc` under direnv: the primary checkout's approval carried to\nthis path, or why it was not. A worktree that starts blocked is the recurring\n\"direnv does not work again\"; this says so before the first `cd` does."
+        envrc_local:
+          "$ref": "#/components/schemas/LocalOverrides"
+          description: "What became of the primary checkout's machine-local `.envrc.local` here."
+          default:
+            outcome: none_primary
+        hooks:
+          "$ref": "#/components/schemas/HooksPath"
+          description: "Which hooks it runs: its own tree's, bound per worktree when the shared\n`core.hooksPath` would have sent it to the primary checkout's (I2718)."
+          default:
+            outcome: not_configured
+      required:
+        - path
+        - branch
+        - branch_created
+        - container
+        - container_created
+        - existed
+        - envrc
+      description: What a create did.
     CriterionCoverage:
       type: object
       properties:
@@ -19394,6 +19903,12 @@ components:
             resident_memory_mb: null
             blocking_check_ms: null
             request_p99_ms: null
+        provider:
+          anyOf:
+            - "$ref": "#/components/schemas/Provider"
+            - type: "null"
+          description: "The hosting provider that runs it, when one does; absent, nobody hosts it."
+          default: null
         created_at:
           type:
             - string
@@ -23764,7 +24279,7 @@ components:
       properties:
         code:
           type: string
-          description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `internal`, `cancelled`, `unavailable`."
+          description: "`invalid_input`, `not_found`, `refused`, `forbidden`, `conflict`, `internal`, `cancelled`,\n`unavailable`."
         message:
           type: string
           description: "What went wrong, for a person."
@@ -23786,7 +24301,7 @@ components:
       properties:
         schema_version:
           type: string
-          description: "The protocol version, `PROTOCOL_VERSION`."
+          description: "The protocol version, `PROTOCOL_VERSION`. A reader refuses a newer one by name."
         event_id:
           type: string
           description: "The identity of this event: the execution's id and the sequence, so a client that\ndeduplicates needs no composite key of its own."
@@ -23801,6 +24316,10 @@ components:
         timestamp:
           type: string
           description: "When the event was produced, RFC 3339 in UTC."
+        correlation_id:
+          type: string
+          description: "The id this execution's log lines and tracing spans carry: the execution id, under\nthe name a reader of a log expects, as the snapshot's own `correlation_id` is. Absent\nfrom an event an older writer produced, and read as empty there."
+          default: ""
       required:
         - schema_version
         - event_id
@@ -23836,6 +24355,14 @@ components:
           properties:
             type:
               type: string
+              const: execution.authorizing
+          required:
+            - type
+          description: A policy decision on whether it may run is being taken.
+        - type: object
+          properties:
+            type:
+              type: string
               const: execution.queued
             data:
               type: object
@@ -23855,10 +24382,46 @@ components:
           properties:
             type:
               type: string
+              const: execution.claimed
+            data:
+              type: object
+              properties:
+                holder:
+                  description: "Who holds it, in the holder's own words: a worker, a node, a session."
+                  type: string
+              required:
+                - holder
+          required:
+            - type
+            - data
+          description: A worker holds it and has not entered the handler yet.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.issue_claim
+            data:
+              "$ref": "#/components/schemas/IssueClaim"
+          required:
+            - type
+            - data
+          description: "Where the mesh claim of an execution started for an issue stands (I4004): wanted at\nthe start, then held, unclaimed or refused when a worker takes it up, and released\nor kept as it ends. Moves no state: the `claimed`, `refused` and final events that\nfollow it do."
+        - type: object
+          properties:
+            type:
+              type: string
               const: execution.started
           required:
             - type
           description: A worker picked it up and is about to enter the handler.
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.verifying
+          required:
+            - type
+          description: "The handler returned, and what it produced is being checked."
         - type: object
           properties:
             type:
@@ -24007,6 +24570,45 @@ components:
             - type
             - data
           description: "It finished, and it did not."
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.refused
+            data:
+              type: object
+              properties:
+                error:
+                  description: "Why, with the code `refused` or `forbidden`."
+                  "$ref": "#/components/schemas/ExecutionError"
+                policy:
+                  description: "The policy that decided, when one can be named."
+                  type:
+                    - string
+                    - "null"
+              required:
+                - error
+          required:
+            - type
+            - data
+          description: "A policy refused it before it ran: at the request, or when a worker claimed it."
+        - type: object
+          properties:
+            type:
+              type: string
+              const: execution.unknown_outcome
+            data:
+              type: object
+              properties:
+                error:
+                  description: What is known about why the outcome is not.
+                  "$ref": "#/components/schemas/ExecutionError"
+              required:
+                - error
+          required:
+            - type
+            - data
+          description: "Whether the work happened is not known: the worker went silent, or its answer could\nnot be read. Not the last event: a reconciliation that reads evidence follows it."
       description: "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
     ExecutionHints:
       type: object
@@ -24113,6 +24715,9 @@ components:
         signed_input:
           type: boolean
           description: "Whether the input authenticates its caller.\n\nA handler whose input is a signed message, and which verifies the signature against\nthe trust policy before anything changes, admits its caller by that signature and not\nby the address the request came from. Only such a handler changes state for a caller\non another host; see `ExecutionPolicy::admits_remote`."
+        local_only:
+          type: boolean
+          description: "Whether only a caller on this machine may read it.\n\nA read that shows the mesh — its sessions, claims, handovers, nodes and journal — is\nnot the repository's to publish: a server reachable from another host would hand every\ntrusted node's working state to anyone who asked (ADR 0220 decision 4). Such a read\nanswers a loopback caller only; a node reads the mesh through its own server, which the\njournal already brings up to date. See `ExecutionPolicy::admits_remote`."
       required:
         - effect
         - cancellable
@@ -24121,14 +24726,26 @@ components:
     ExecutionState:
       oneOf:
         - type: string
+          const: authorizing
+          description: "Accepted, and a policy decision on whether it may run has not been taken yet."
+        - type: string
           const: queued
           description: "Accepted, and no worker has picked it up."
+        - type: string
+          const: claimed
+          description: A worker holds it and has not entered the handler yet.
         - type: string
           const: running
           description: The handler is running.
         - type: string
+          const: verifying
+          description: "The handler returned, and what it produced is being checked."
+        - type: string
           const: cancelling
           description: Cancellation was asked for and the handler has not stopped yet.
+        - type: string
+          const: unknown_outcome
+          description: "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
         - type: string
           const: succeeded
           description: The handler returned an output.
@@ -24138,7 +24755,29 @@ components:
         - type: string
           const: cancelled
           description: It stopped because it was asked to.
-      description: "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+        - type: string
+          const: refused
+          description: "A policy refused it before it ran, at the request or when a worker claimed it."
+      description: "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
+    ExecutionStateView:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/ExecutionState"
+          description: "The state, as the snapshot and the list filter spell it."
+        final:
+          type: boolean
+          description: Whether nothing more will be said about an execution in it.
+        may_move_to:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionState"
+          description: The states it may move to; every other move is refused.
+      required:
+        - state
+        - final
+        - may_move_to
+      description: "One state of an execution, with the moves it allows."
     ExecutionView:
       type: object
       properties:
@@ -24182,7 +24821,7 @@ components:
           anyOf:
             - "$ref": "#/components/schemas/ExecutionError"
             - type: "null"
-          description: "Why it failed, for a failed execution and never before."
+          description: "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
         progress:
           anyOf:
             - "$ref": "#/components/schemas/ProgressView"
@@ -24223,6 +24862,16 @@ components:
         correlation_id:
           type: string
           description: "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+        issue_claim:
+          anyOf:
+            - "$ref": "#/components/schemas/IssueClaim"
+            - type: "null"
+          description: "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
         links:
           "$ref": "#/components/schemas/ExecutionLinks"
           description: Where to read more.
@@ -26338,6 +26987,107 @@ components:
         - facets
         - findings
       description: "The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec<&str> = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\"repository\", \"checkout\", \"episode\", \"provider_session\"]);\n```"
+    ImplementAnswer:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: The issue.
+        standing:
+          "$ref": "#/components/schemas/ImplementStanding"
+          description: "`started`, `deduplicated` or `pending`. A refusal is not an answer: it is an error\nnaming its cause (`not_ready`, `invalid_intent`, `claim_conflict`)."
+        idempotency_key:
+          type: string
+          description: The key the execution is held under.
+        branch:
+          type: string
+          description: "The branch the work is on: `feature/<id>-<slug>`."
+        steps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ImplementStep"
+          description: "The steps, in the order they ran."
+        pending:
+          type:
+            - string
+            - "null"
+          description: Why the request is pending; absent otherwise.
+        worker:
+          type:
+            - string
+            - "null"
+          description: "The worker the run was handed to: the attached peer that asked."
+        worktree:
+          type:
+            - string
+            - "null"
+          description: The worktree the run works in.
+        execution:
+          anyOf:
+            - "$ref": "#/components/schemas/StartedExecution"
+            - type: "null"
+          description: "The execution: the worker's run, holding the issue's mesh claim."
+      required:
+        - issue
+        - standing
+        - idempotency_key
+        - branch
+        - steps
+      description: "The answer of `devtask.implement`: where the request stands, every step it took, and —\nwhen it started or found one — the execution with the links to follow it.\n\n```\nuse majordomus_cli::capability::builtin::devtask::{ImplementAnswer, ImplementStanding};\nlet pending = ImplementAnswer {\n    issue: \"I4003\".into(), standing: ImplementStanding::Pending,\n    idempotency_key: \"implement-I4003\".into(), branch: \"feature/I4003-x\".into(),\n    steps: vec![], pending: Some(\"no worker is attached\".into()),\n    worker: None, worktree: None, execution: None,\n};\nlet json = serde_json::to_value(&pending).unwrap();\nassert_eq!(json[\"standing\"], \"pending\");\nassert!(json.get(\"execution\").is_none(), \"nothing was started, and nothing says so\");\n```"
+    ImplementInput:
+      type: object
+      additionalProperties: false
+      properties:
+        issue:
+          type: string
+          description: "The issue to implement, as the canonical model spells it (`I4003`)."
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "What makes a repeated request one execution (I4000): sent again, it is answered the\nexecution it started, as that execution stands now, and nothing new is created.\nDefault: `implement-<issue>`, so that a double click is one implementation; send a\nnew key to start the issue again after its execution ended."
+          minLength: 1
+          maxLength: 128
+          pattern: "^[A-Za-z0-9._:-]+$"
+        deadline_minutes:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How many minutes the worker's run may last before it fails on its deadline; 60 when\nabsent, a day at most."
+      required:
+        - issue
+      description: "Which issue to implement, and how a repeated request is recognised.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I4003\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.idempotency_key), (\"I4003\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived from the issue, never given\");\n```"
+    ImplementStanding:
+      oneOf:
+        - type: string
+          const: started
+          description: This request created the worktree when it was missing and started the execution.
+        - type: string
+          const: deduplicated
+          description: "The key had already started an execution for this issue; that execution is the\nanswer, as it stands now, and nothing was created."
+        - type: string
+          const: pending
+          description: "Everything that could be judged was judged and passed, but no worker is attached to\ntake the run: nothing was created, and the request may be sent again by a worker."
+      description: "Where a request to implement an issue stands once it is answered.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStanding;\nlet words: Vec<String> = [ImplementStanding::Started, ImplementStanding::Deduplicated,\n    ImplementStanding::Pending].iter()\n    .map(|s| serde_json::to_value(s).unwrap().as_str().unwrap().to_string()).collect();\nassert_eq!(words, [\"started\", \"deduplicated\", \"pending\"]);\n```"
+    ImplementStep:
+      type: object
+      properties:
+        step:
+          type: string
+          description: "`readiness`, `preflight`, `claim`, `worker`, `worktree` or `execution`, in that\norder; a step that was not reached is absent."
+        ok:
+          type: boolean
+          description: Whether it passed.
+        detail:
+          type: string
+          description: "What it found, in words."
+      required:
+        - step
+        - ok
+        - detail
+      description: "One step of the sequence and how it came out.\n\n```\nuse majordomus_cli::capability::builtin::devtask::ImplementStep;\nlet step = ImplementStep { step: \"worker\".into(), ok: false, detail: \"nobody asked\".into() };\nassert_eq!(serde_json::to_value(&step).unwrap()[\"step\"], \"worker\");\n```"
     Implementation:
       type: object
       properties:
@@ -28166,6 +28916,39 @@ components:
           const: all
           description: "Every interface. A hosted process needs it and a local one never does; stating it\nis the intent that replaces suppressing the bind warning."
       description: Which interface a process listens on.
+    IssueClaim:
+      type: object
+      properties:
+        issue:
+          type: string
+          description: "The issue, as the start named it."
+        standing:
+          "$ref": "#/components/schemas/ClaimStanding"
+          description: Where the claim stands.
+        scope:
+          type: array
+          items:
+            type: string
+          description: "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+        key:
+          type:
+            - string
+            - "null"
+          description: "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+        session:
+          type:
+            - string
+            - "null"
+          description: "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+        detail:
+          type:
+            - string
+            - "null"
+          description: "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+      required:
+        - issue
+        - standing
+      description: "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
     IssueDelivery:
       type: object
       properties:
@@ -29333,6 +30116,53 @@ components:
         - version
         - commit
       description: "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
+    LocalOverrides:
+      oneOf:
+        - type: object
+          properties:
+            outcome:
+              type: string
+              const: linked
+          required:
+            - outcome
+          description: "Linked: the worktree's `.envrc.local` is a symlink to the primary checkout's, so the\nperson's machine-local exports (keychain-backed secrets among them) load here too."
+        - type: object
+          properties:
+            outcome:
+              type: string
+              const: own_kept
+          required:
+            - outcome
+          description: "The worktree already has its own `.envrc.local`; it is left alone."
+        - type: object
+          properties:
+            outcome:
+              type: string
+              const: none_primary
+          required:
+            - outcome
+          description: The primary checkout has none; there is nothing to share.
+        - type: object
+          properties:
+            outcome:
+              type: string
+              const: not_ignored
+          required:
+            - outcome
+          description: "Not linked, because git in the worktree does not ignore `.envrc.local` — a link a\ncommit could pick up is the one way this could leak."
+        - type: object
+          properties:
+            message:
+              type: string
+              description: Why.
+            outcome:
+              type: string
+              const: failed
+          required:
+            - outcome
+            - message
+          description: The link could not be made; the error.
+      description: "What became of the primary checkout's machine-local `.envrc.local` for a worktree."
     LogStream:
       oneOf:
         - type: string
@@ -30254,6 +31084,11 @@ components:
             - "$ref": "#/components/schemas/PublicIdentity"
             - type: "null"
           description: "This node, when the mesh has an identity."
+        advertised:
+          type: array
+          items:
+            type: string
+          description: "The endpoints this node advertises: what a peer dials to reach it. The bound\ninterface's addresses, or the one public URL a hosted hub is started with (ADR 0220)."
         trust_policy:
           type:
             - string
@@ -34328,6 +35163,8 @@ components:
             episode_evidence: ""
             prompts: none
             prompts_evidence: ""
+            browser: none
+            browser_evidence: ""
       required:
         - id
         - title
@@ -34581,6 +35418,11 @@ components:
           items:
             type: string
           description: "The event types a client may receive, from the one enum that defines them."
+        states:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionStateView"
+          description: "Every state an execution may be in and the states it may move to: the transition\ntable the store holds every event to, so a client never has to restate it."
         stream_types:
           type: array
           items:
@@ -34601,6 +35443,7 @@ components:
         - max_connections
         - max_replay
         - event_types
+        - states
         - stream_types
         - event_schema
         - stream_schema
@@ -34661,6 +35504,28 @@ components:
             - source
           description: "The model's documented default for a value nobody stated."
       description: "Where a resolved value came from.\n\nKept for every field a consumer can be surprised by, so that `web explain` can answer\n\"why is this mounted here?\" without anybody reading the discovery code."
+    Provider:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          "$ref": "#/components/schemas/ProviderName"
+          description: Which provider.
+        app:
+          type: string
+          description: "The application's name at the provider."
+        stack:
+          type: string
+          description: "The provider's stack the application runs on (`gigalixir-24`)."
+        url:
+          type: string
+          description: "The public URL the deployment answers on; always `https://`."
+      required:
+        - name
+        - app
+        - stack
+        - url
+      description: "The hosting provider that runs the deployment, and the facts that are the provider's\nalone. Every file the provider reads is rendered from this block and the generic keys\n(see `render`); its credential is never one of these fields.\n\n```\nuse majordomus_cli::deploy::{Provider, ProviderName};\n\nlet p: Provider = serde_json::from_value(serde_json::json!({\n    \"name\": \"gigalixir\",\n    \"app\": \"prismatic-majordomus\",\n    \"stack\": \"gigalixir-24\",\n    \"url\": \"https://prismatic-majordomus.gigalixirapp.com\",\n}))\n.unwrap();\nassert_eq!(p.name, ProviderName::Gigalixir);\nassert_eq!(p.app, \"prismatic-majordomus\");\n\n// a key the provider block does not have is refused, a token above all\nassert!(serde_json::from_value::<Provider>(serde_json::json!({\n    \"name\": \"gigalixir\", \"app\": \"a-b-c\", \"stack\": \"gigalixir-24\",\n    \"url\": \"https://a-b-c.gigalixirapp.com\", \"api_key\": \"x\",\n}))\n.is_err());\n```"
     ProviderBootstrap:
       type: object
       properties:
@@ -34751,6 +35616,12 @@ components:
         - count
         - providers
       description: Every provider.
+    ProviderName:
+      oneOf:
+        - type: string
+          const: gigalixir
+          description: "Gigalixir: a Heroku-compatible platform that runs a Procfile over a buildpack."
+      description: "A hosting provider the contract knows. A name outside this list is refused at parse time:\na provider whose files nothing renders would be a block nothing reads.\n\n```\nuse majordomus_cli::deploy::ProviderName;\n\nlet name: ProviderName = serde_json::from_value(serde_json::json!(\"gigalixir\")).unwrap();\nassert_eq!(name, ProviderName::Gigalixir);\nassert_eq!(name.as_str(), \"gigalixir\");\nassert!(serde_json::from_value::<ProviderName>(serde_json::json!(\"fly\")).is_err());\n```"
     ProviderOffers:
       type: object
       properties:
@@ -34766,6 +35637,24 @@ components:
         prompts_evidence:
           type: string
           description: "Where `prompts` was verified, on the same terms as `episode_evidence`."
+        browser:
+          "$ref": "#/components/schemas/BrowserSource"
+          description: "Whether the client drives a browser beside this repository's server. Absent in a\nvalue written before the axis existed, and read as `none` there."
+          default: none
+        browser_evidence:
+          type: string
+          description: "Where `browser` was verified, on the same terms as `episode_evidence`."
+          default: ""
+        browser_host:
+          type:
+            - string
+            - "null"
+          description: "The native messaging host a bridge registers with the browser, which is how a\nmachine is seen to have it. Declared for a `bridge` only."
+        browser_setup:
+          type:
+            - string
+            - "null"
+          description: "What a person does, once, to install the bridge on a machine, in the vendor's terms.\nDeclared for a `bridge` only."
       required:
         - episode
         - episode_evidence
@@ -37479,6 +38368,124 @@ components:
         - commits
         - implied
       description: "What the commit subjects since the baseline said about themselves.\n\nEvidence, never authority. It is here so that a person can see the human account and the\nmeasured one side by side, and so that `VersionPlan::understated` can say when the two\ndisagree — which is the case this whole subsystem exists to catch.\n\n```\nuse majordomus_cli::release::compat::{CommitEvidence, Impact};\nlet commits = CommitEvidence {\n    commits: 24,\n    implied: Impact::Patch,\n    breaking: Vec::new(),\n};\n// The contract moved by a minor and the subjects claim a patch: the plan reports that\n// disagreement rather than deferring to the words.\nassert!(commits.implied < Impact::Minor);\n```"
+    ReleaseCurrency:
+      type: object
+      properties:
+        stance:
+          "$ref": "#/components/schemas/ReleaseCurrencyStance"
+          description: Whether the landed work is released.
+        summary:
+          type: string
+          description: "The answer in one sentence: the brief's and doctor's line."
+        trunk:
+          type:
+            - string
+            - "null"
+          description: "The remote-tracking ref of the trunk it was measured on (`origin/master`)."
+        release:
+          anyOf:
+            - "$ref": "#/components/schemas/ReleaseCurrencyRelease"
+            - type: "null"
+          description: The last release.
+        landed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Landed commits past the last release, merges and release commits left out."
+        landings:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "The landings of the trunk's first-parent history that brought them."
+        oldest_landing:
+          type:
+            - string
+            - "null"
+          description: "When the oldest of those landings landed, RFC 3339, dated as `landed_at`\nsays."
+        landed_at:
+          anyOf:
+            - "$ref": "#/components/schemas/ReleaseCurrencyLandedAt"
+            - type: "null"
+          description: "How `oldest_landing` was dated: when this clone saw it arrive\non the trunk, or its commit time as an upper bound on the wait."
+        waited_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long the work has waited since then, in seconds."
+        overdue_after_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "How long it may wait before it is overdue (`OVERDUE_AFTER`)."
+        next:
+          type:
+            - string
+            - "null"
+          description: "The version the public contract requires for the landed work (ADR 0051), when it was\ndecided."
+        next_unmeasured:
+          type:
+            - string
+            - "null"
+          description: "Why that version was not decided, when it was asked for and could not be."
+        changes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReleaseChange"
+          description: "The landed changes, newest first, at most `LISTED`."
+      required:
+        - stance
+        - summary
+        - landed
+        - landings
+        - overdue_after_seconds
+      description: "The answer of `release.currency`: whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{measure, Currency, Stance};\nlet nowhere = tempfile::tempdir().unwrap();\nlet answer: Currency = measure(nowhere.path(), &[], std::time::SystemTime::now());\n// a directory with no trunk is not measured, and says why\nassert_eq!(answer.stance, Stance::Unknown);\nassert!(answer.summary.contains(\"trunk\"), \"{}\", answer.summary);\n```"
+    ReleaseCurrencyLandedAt:
+      oneOf:
+        - type: string
+          const: reflog
+          description: "When this clone's remote-tracking trunk first held it, from that ref's reflog. A landing\nis seen no earlier than it lands, so the wait counted from here is a lower bound, and it\nis the one date that can make the stance overdue."
+        - type: string
+          const: commit
+          description: "Its commit time, where the reflog does not show it arrive: a commit lands no earlier than\nit is made, so the wait counted from here is an upper bound, and it never makes the\nstance overdue by itself."
+      description: "How the oldest landing was dated, and so which way its wait may be wrong (the plan\ncritique of 2026-10-19: a top lands by a fast-forward push hours after its commits).\n\n```\nuse majordomus_cli::release::currency::LandedAt;\nassert_eq!(serde_json::to_value(LandedAt::Reflog).unwrap(), \"reflog\");\nassert_eq!(serde_json::to_value(LandedAt::Commit).unwrap(), \"commit\");\n```"
+    ReleaseCurrencyRelease:
+      type: object
+      properties:
+        version:
+          type: string
+          description: "`0.30.1`."
+        reference:
+          type: string
+          description: "`v0.30.1`: the release as a reader recognises it."
+        at:
+          type: string
+          description: "What the trunk is measured from: the commit its record names, else its tag."
+        recorded:
+          type: boolean
+          description: Whether the layer holds a record for it yet.
+      required:
+        - version
+        - reference
+        - at
+        - recorded
+      description: "The release the trunk is measured from.\n\n```\nuse majordomus_cli::release::currency::Released;\nlet tagged = Released {\n    version: \"0.30.1\".into(),\n    reference: \"v0.30.1\".into(),\n    at: \"v0.30.1\".into(),\n    recorded: false,\n};\n// a tag pushed before its record landed is read at the tag itself\nassert_eq!(tagged.at, tagged.reference);\n```"
+    ReleaseCurrencyStance:
+      oneOf:
+        - type: string
+          const: current
+          description: Nothing has landed past the last release.
+        - type: string
+          const: owed
+          description: "Work has landed past it, and has waited less than `OVERDUE_AFTER`."
+        - type: string
+          const: overdue
+          description: "Work has landed past it, and has waited at least `OVERDUE_AFTER`."
+        - type: string
+          const: unknown
+          description: "It could not be measured: no trunk, no release, or a release this clone cannot read."
+      description: "Whether the trunk's landed work is released.\n\n```\nuse majordomus_cli::release::currency::{Stance, OVERDUE_AFTER};\nuse std::time::Duration;\nassert_eq!(Stance::of(0, OVERDUE_AFTER), Stance::Current, \"nothing landed, nothing owed\");\nassert_eq!(Stance::of(2, Duration::from_secs(60)), Stance::Owed);\nassert_eq!(Stance::of(2, OVERDUE_AFTER), Stance::Overdue);\nassert_eq!(Stance::Overdue.as_str(), \"overdue\");\n```"
     ReleaseDecision:
       type: object
       properties:
@@ -40673,6 +41680,13 @@ components:
         integration:
           "$ref": "#/components/schemas/BriefIntegrationSection"
           description: The integration queue.
+        release:
+          "$ref": "#/components/schemas/BriefReleaseSection"
+          description: "Whether the trunk's landed work is released. Absent from the answer of a server older\nthan this section, which leaves it unread rather than failing the whole brief."
+          default:
+            state: unread
+            landed: 0
+            summary: the server that composed this brief does not measure the release
         derive:
           "$ref": "#/components/schemas/BriefDeriveSection"
           description: The derive queue.
@@ -41692,9 +42706,230 @@ components:
         input:
           description: "Its input, as its own input schema describes it; an empty object when it takes none."
           default: null
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "A key that makes a repeated start one execution (I4000): sent again with the same\ncapability and input, it is answered the execution it started, `deduplicated`, and\nnothing new runs; sent again with another input, it is refused 409 `conflict`,\nnaming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this\nrepository and the capability, and held for as long as the server holds the\nexecution it started. Without one, every start starts an execution."
+          minLength: 1
+          maxLength: 128
+          pattern: "^[A-Za-z0-9._:-]+$"
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is\nentered the execution takes the issue's exclusive mesh claim — the issue record's\n`scope`, or `issue/<id>` when it declares none — as the mesh session\n`execution-<id>`, and moves `queued -> claimed -> running`; a claim another session\nholds refuses it (`refused`, the holder named) and nothing runs. The claim is given\nback at the final state and kept for an outcome that is not known. With no mesh in\nthe serving process it runs unclaimed and its `execution.issue_claim` event says so."
+          minLength: 1
+          maxLength: 64
+          pattern: "^[A-Za-z0-9#._-]+$"
       required:
         - capability
       description: "The input of `executions.start`: which capability to run, and with what."
+    StartPoint:
+      oneOf:
+        - type: object
+          properties:
+            reference:
+              type: string
+              description: The ref.
+            from:
+              type: string
+              const: given
+          required:
+            - from
+            - reference
+          description: "The ref `--base` named, as given; never fetched."
+        - type: object
+          properties:
+            remote:
+              type: string
+              description: The remote.
+            branch:
+              type: string
+              description: The trunk branch.
+            from:
+              type: string
+              const: remote_trunk
+          required:
+            - from
+            - remote
+            - branch
+          description: "The trunk on its remote, fetched by this command."
+        - type: object
+          properties:
+            remote:
+              type: string
+              description: The remote.
+            branch:
+              type: string
+              description: "The branch, the same name on both sides."
+            fetched:
+              type: boolean
+              description: "Whether it was fetched now; `false` is the remote-tracking ref as last fetched,\nbecause the remote could not be read."
+            from:
+              type: string
+              const: remote_branch
+          required:
+            - from
+            - remote
+            - branch
+            - fetched
+          description: "The branch already on the remote: the local branch is created at it and tracks it."
+        - type: object
+          properties:
+            branch:
+              type: string
+              description: The trunk branch.
+            unreachable:
+              type:
+                - string
+                - "null"
+              description: "The remote that could not be read; `None` when the trunk has no remote."
+            reason:
+              type:
+                - string
+                - "null"
+              description: Why it could not be read.
+            behind:
+              type:
+                - integer
+                - "null"
+              format: uint64
+              minimum: 0
+              description: "How many commits the remote's trunk, as last fetched, has that the local trunk\nlacks; `None` when it was never fetched."
+            from:
+              type: string
+              const: local_trunk
+          required:
+            - from
+            - branch
+          description: "The local trunk: the trunk has no remote, or its remote could not be read."
+        - type: object
+          properties:
+            from:
+              type: string
+              const: head
+          required:
+            - from
+          description: "HEAD, because no trunk is known."
+      description: "Where a new branch started, and why there.\n\nThe local trunk of a long-lived checkout is routinely hundreds of commits behind its\nremote, because nothing advances it; a branch cut from it carries none of that work and\nevery worker had to reset it by hand. So the default is the remote's trunk, fetched at\nthe moment of creation, and the local trunk only when the remote cannot be read — said,\nnever silent.\n\n```\nuse majordomus_cli::worktree::StartPoint;\nlet p = StartPoint::RemoteTrunk { remote: \"origin\".into(), branch: \"master\".into() };\nassert_eq!(p.reference(), \"origin/master\");\nassert!(p.fallback().is_none());\nlet fell = StartPoint::LocalTrunk {\n    branch: \"master\".into(),\n    unreachable: Some(\"origin\".into()),\n    reason: Some(\"no answer within 60s\".into()),\n    behind: Some(779),\n};\nassert_eq!(fell.reference(), \"master\");\nassert!(fell.fallback().unwrap().contains(\"779 commits behind origin/master\"));\n```"
+    StartedExecution:
+      type: object
+      properties:
+        id:
+          "$ref": "#/components/schemas/ExecutionId"
+          description: The identity.
+        capability:
+          type: string
+          description: "The capability that ran, by its canonical id."
+        title:
+          type: string
+          description: "That capability's title, so a list needs no second lookup."
+        state:
+          "$ref": "#/components/schemas/ExecutionState"
+          description: Where it is.
+        created_at:
+          type: string
+          description: "When it was accepted, RFC 3339 in UTC."
+        started_at:
+          type:
+            - string
+            - "null"
+          description: When the handler was entered.
+        finished_at:
+          type:
+            - string
+            - "null"
+          description: When it reached a final state.
+        duration_ms:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long it ran, in milliseconds, once it has finished."
+        input:
+          description: "The input it was given, with every value the input schema marks sensitive replaced."
+        output:
+          description: "What the handler returned, for a succeeded execution and never before."
+        error:
+          anyOf:
+            - "$ref": "#/components/schemas/ExecutionError"
+            - type: "null"
+          description: "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
+        progress:
+          anyOf:
+            - "$ref": "#/components/schemas/ProgressView"
+            - type: "null"
+          description: The last progress the handler reported.
+        steps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/StepView"
+          description: "The steps it entered, in order."
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExecutionDiagnostic"
+          description: The findings it reported.
+        last_sequence:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The sequence number of the last event: the cursor a client subscribes from."
+        event_count:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "How many events it has produced, including the ones no longer retained."
+        events_truncated:
+          type: boolean
+          description: Whether the retained event history has lost its oldest entries to the bound.
+        cancellable:
+          type: boolean
+          description: "Whether asking to cancel this execution will do anything: the capability's policy."
+        actor:
+          "$ref": "#/components/schemas/Actor"
+          description: Who asked for it.
+        repository:
+          "$ref": "#/components/schemas/RepositoryRef"
+          description: Which repository it ran against.
+        correlation_id:
+          type: string
+          description: "The id used in this process's logs and tracing spans for this execution; the\nexecution id itself, carried under the name a reader of a log expects."
+        idempotency_key:
+          type:
+            - string
+            - "null"
+          description: "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+        issue_claim:
+          anyOf:
+            - "$ref": "#/components/schemas/IssueClaim"
+            - type: "null"
+          description: "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
+        links:
+          "$ref": "#/components/schemas/ExecutionLinks"
+          description: Where to read more.
+        deduplicated:
+          type: boolean
+          description: "`true` when this start began nothing: its idempotency key had already started this\nexecution with the same input, and the answer is that execution as it stands now.\n`false` for an execution this start began."
+      required:
+        - id
+        - capability
+        - title
+        - state
+        - created_at
+        - input
+        - last_sequence
+        - event_count
+        - events_truncated
+        - cancellable
+        - actor
+        - repository
+        - correlation_id
+        - links
+        - deduplicated
+      description: "The answer of `executions.start`: the execution, flattened as every other execution\nanswer is, and whether this start began it or was answered one its idempotency key had\nalready started.\n\n```\nuse majordomus_cli::capability::builtin::StartedExecution;\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet input = serde_json::json!({\n    \"capability\": \"executions.demonstrate\",\n    \"input\": { \"steps\": 1, \"delay_ms\": 0 },\n    \"idempotency_key\": \"click-1\",\n});\nlet start = || -> StartedExecution {\n    serde_json::from_value(ctx.execute(\"executions.start\", input.clone()).unwrap()).unwrap()\n};\nlet (first, again) = (start(), start());\nassert!(!first.deduplicated && again.deduplicated);\nassert_eq!(first.view.execution.id, again.view.execution.id);\n```"
     State:
       oneOf:
         - type: string
@@ -44798,7 +46033,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.30.2
+  generator: majordomus-cli 1.0.0-alpha.6
   infrastructure:
     - id: home
       path: /
@@ -44840,6 +46075,9 @@ x-majordomus:
     - status: "404"
       code: not_found
       reason: The input names something the repository does not hold.
+    - status: "409"
+      code: conflict
+      reason: "The command contradicts what the server already holds, such as an idempotency key sent again with a different input; the message names what the key already started."
     - status: "422"
       code: refused
       reason: The command was understood and turned down for the reason the message gives.
@@ -44847,4 +46085,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.30.2
+x-majordomus-generator: majordomus-cli 1.0.0-alpha.6

@@ -326,14 +326,21 @@ async function wireMoves() {
 
 // A screen that follows the executions this server runs (`data-follows-executions`) holds one
 // channel to the stream the page names (`data-events`), through the Cockpit's one WebSocket
-// client (`data-socket-lib`). When an execution ends — completed, failed or cancelled — the
-// screen is read again, once for a burst of them and at most every READ_AGAIN_MS, so a move
-// made anywhere on this server shows here without waiting for the minute's refresh. A channel
+// client (`data-socket-lib`). When an execution ends — completed, failed, cancelled or
+// refused — or its outcome becomes unknown, the screen is read again, once for a burst of
+// them and at most every READ_AGAIN_MS, so a move made anywhere on this server shows here
+// without waiting for the minute's refresh. A channel
 // that reconnected, or saw a gap, may have missed an end, so that reads the screen again too.
 // The line beside the read time says what the channel is doing, from the socket's own state
 // and nothing more. Only executions of this server travel on it: a move another process makes
 // still waits for the minute. Never in a snapshot, which no server stands behind.
-const ENDED = new Set(['execution.completed', 'execution.failed', 'execution.cancelled']);
+const ENDED = new Set([
+  'execution.completed',
+  'execution.failed',
+  'execution.cancelled',
+  'execution.refused',
+  'execution.unknown_outcome',
+]);
 const READ_AGAIN_MS = 2000;
 let following = null;
 let readAgainTimer = null;

@@ -1,0 +1,157 @@
+intent: the-product-proves-it-pays
+reviewed_at: 2026-10-19
+reviewed_by: "claude-code subagent (read-only, fresh context, same model family as the author) dispatched by session 82f2734c over the drafted plan of the owner's 2026-10-19 competitive report, checked against the repository; resolved by a second fresh subagent acting as the plan author. Read only: nothing was run. Disposition: revised: every blocking and non-blocking finding is answered in the plan (planned). Two depend on owner decisions that I3373, I3360, I3370, I3388, I3391 and I3398 record before they act; those are raised as owner questions. The plan was re-read at the import's head: every cited issue id exists under .ai/repo/project/issues, and the board read through majordomus_peers (complete true) shows only the coordinator's proof-program-ids announcement (I3350-I3399, ten milestone orders), which fits this plan's 50 issues and 10 milestones."
+findings:
+  - id: t4-t5-t6-not-planned
+    class: missed_requirement
+    subject: "plan coverage of T4, T5 and T6"
+    finding: "The plan I was given has four milestones: the-proof-scorecard-is-published, a-foreign-repository-is-adopted-and-measured (T1), a-registered-corpus-judges-majordomus (T2) and every-task-states-its-delivery-economics (T3). It is cut off inside I3380, and the criteria name I3381 and I3382, which are not shown. No milestone, criterion or issue covers T4 (mesh speed-up against a single agent at controlled quality), T5 (kill a worker, cut a connection, cause a conflict, then prove recovery without loss or duplicate completion) or T6 (a newcomer completes a first verified intent without internal doctrine). The intent statement promises 'recovery from injected faults' and 'a newcomer reaches a first verified intent unaided', but no criterion settles either. For T4, I3352 names I3298 as the instrument. I3298 only declares arms as data: its acceptance is 'economics summary lists every arm and hypothesis with status untested'. The economics runner runs one headless session per job, so no issue builds a multi-agent or mesh arm. For T6, the reused intent a-stranger-adopts-it-unaided measures 'first refusal in ten minutes', not a first verified intent, and nothing makes 'without knowing internal doctrines' measurable (for example, the count of commands or documents used beyond the published quickstart). For T5, nothing-in-the-mesh-waits-on-something-dead is not reused, and no fault injector or duplicate-completion counter is planned."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3386
+      because: "Three milestones are added. T4 (the-mesh-is-measured-against-one-agent): the coordinated-workers runner arm (I3386), batch tasks (I3387), a non-inferiority guard (I3385), the registered suite (I3388) and the run (I3389). T5 (recovery-from-injected-faults-is-proven): the conservation reading (I3390), the protocol (I3391), mesh lab work faults (I3392), agent-session trials (I3393) and the verdict (I3394). T6 (a-newcomer-reaches-a-first-verified-intent): the verify: criterion (I3395), because intent.rs:1092-1135 makes a foreign repository's checks unusable as evidence; the criterion writer and the getting-started step (I3396); the scripted stage with zero undocumented commands and a doctrine-line count (I3397); the protocol (I3398) and newcomer trials (I3399). The intent gains criteria for each, and I3381 and I3382 are written out in full."
+  - id: two-preregistrations-two-verdict-engines
+    class: regression_risk
+    subject: "I3351/I3353 vs I3366/I3367/I3370/I3371"
+    finding: "The plan builds pre-registration and verdicts twice. The scorecard registers a protocol in .ai/repo/benchmarks/proof-plan.yaml (arms, strata, min_sample, decision, registered_digest). I3353 then decides passed/failed/inconclusive with stats::bootstrap_median_clustered against a threshold. The T2 milestone registers the same things in a registration block inside suites/corpus.yaml (I3367, I3370). I3366 and I3371 then decide favourable/unfavourable/inconclusive with a new clustered mean-difference bootstrap. I3366's own why says the median interval does not suit a binary acceptance outcome, so I3353's statistic is wrong for T2's primary outcome. The scorecard notes say 'every experiment milestone ... should depend on this milestone and register its own protocol in proof-plan.yaml', yet a-registered-corpus-judges-majordomus has depends_on [] and never touches proof-plan.yaml. T1 has the same split: the scorecard notes point T1 and T6 at a-stranger-adopts-it-unaided's outside-run records, while the T1 milestone invents a separate runs/adoption suite kind. The fix is one registration (the suite registration, referenced by digest from proof-plan.yaml), one verdict enum and one effect statistic per decision kind, with the T2 and T1 milestones depending on I3351 and I3353."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3351
+      because: "There is now one pre-registration. A paired protocol in proof-plan.yaml only references its suite's registration block by digest (I3351, I3367, I3370, I3388), and trials and window protocols live in the plan. There is one verdict enum and one statistic per decision kind in stats.rs (I3366), and the scorecard calls those functions (I3354 depends on I3366). T1, T3, T5 and T6 share one typed trial record (I3353), so no separate runs/adoption suite kind exists. I3367 depends on I3351."
+  - id: proof-plan-in-freshness-stales-all-runs
+    class: regression_risk
+    subject: "I3351 freshness binding"
+    finding: "I3351 refuses any paired protocol whose suite does not list .ai/repo/benchmarks/proof-plan.yaml in its freshness_inputs. Each experiment milestone registers its own protocol in that one file 'before its first run'. So when T4's or T5's protocol is registered after the T2 corpus has run, every recorded corpus run becomes stale under the freshness digest, and the T2 verdict is lost. The milestone's risk note says re-stamping 'costs the runs', but it does not see that any unrelated registration costs them too. The freeze has to be per protocol: a digest over that test's protocol alone, recorded in the run, or one file per test."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3351
+      because: "Each protocol now carries a digest of its own canonical form. A record counts only when it carries its own test's digest and postdates registered_at, and the plan file is a freshness input of no suite. I3351's acceptance includes a fixture showing that registering a second test leaves the first test's counted records unchanged."
+  - id: value-word-scan-refuses-existing-prose
+    class: regression_risk
+    subject: "I3356 and the milestone current_state grep"
+    finding: "I3356 would refuse every sentence that contains a declared value word anywhere in claims.rs PROSE (README.md, docs/**/*.md, site/content-src/**, site/data/*.toml, site/templates/**, .ai/repo/**/*.md). Over the non-generated files in those globs I count 45 'faster', 10 'cheaper', 6 'speed-up' and 1 'pays for itself'. Examples: site/content-src/proof-carrying-documentation.md:52 'The registry is the part that pays for itself', site/templates/method.html:97 'saying so is cheaper than pretending', and .ai/repo/why/moments/two-agents-one-bug.md:69 'two better duplicate fixes, faster'. More hits are in ADRs 0012..0185, rules/project/performance-evidence.v1.md and knowledge/curated. Most of them deny value or concern something else, and word matching cannot tell. This contradicts I3356's acceptance 'majordomus economics check passes on master's tree' and its desired_state that master is clean 'because no prose uses a declared word (I3350's grep)'. The milestone current_state says the grep 'finds no match' in site/content-src and site/templates, which is false. Either restrict I3356 to the homepage copy and CLAIMS.yaml sentences that state a product property, or add a typed exemption with the existing sentences inventoried in scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3358
+      because: "I3358 no longer scans general prose. It binds docs/CLAIMS.yaml: a guaranteed claim settled by a test needs a passed test, and a claim sentence with a declared value word must be settled by some test. Homepage copy stays held by homepage-check's existing promises rule (I3350). The milestone current_state now says that other prose uses these words in other senses (proof-carrying-documentation.md:52), which corrects the false grep claim."
+  - id: treatment-churn-stales-corpus-runs
+    class: unproven_assumption
+    subject: "I3370/I3372 freshness and the tool under test"
+    finding: "suites/pilot.yaml freshness_inputs include bin/majordomus, lib and share, and I3367 and I3370 copy that pattern. The mesh lands into lib and share many times a day (I counted 5 attached workers on the board). A corpus of 20 tasks x 3 repetitions x 2 arms, limited by account capacity, will span days. Each landing makes all earlier runs stale, so the 'every declared pair attempted' acceptance of I3372 may never be met by current runs. Neither I3370 nor I3372 pins the treatment to one released version (a tagged installer build) recorded in the registration. Without that pin the experiment cannot complete with valid runs."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3375
+      because: "A registered suite pins its treatment to one released version, installed through the published installer with the version pinned. Its freshness reads that archive's digest instead of bin, lib and share, so landings on master leave its runs current. I3370 and I3388 name the release, and I3386 runs the coordinated arm on it."
+  - id: critical-paths-blocked-beyond-30-days
+    class: insufficient_work
+    subject: "T2 and T3 dependencies"
+    finding: "The derived plan (site/data/generated/plan.json) shows T2 blocked: I3370 and I3371 depend on I3133, which is BLOCKED; I3133 depends on I0401, which is BLOCKED; I0401's milestone cost-per-accepted-outcome is BLOCKED behind execution-telemetry (BLOCKED). For T3: I3379 needs I3202 (BLOCKED, milestone delivery-flow-is-measured BLOCKED), I3380 needs I3293 (BLOCKED via I3288, which depends on I0301 and I3287), and acceptance needs I0401. The owner's report asks for the proof within 30 days, before any other large vertical. The plan leaves the unblocking as an 'open question' and has no issue that cuts or re-scopes the chain. One example is a decision to drop I3133's dependency on I0401, because hidden-test acceptance stands on its own. As written, T2's verdict and three of T3's five fields cannot exist inside the window."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3373
+      because: "I3373 is in wave 0. It puts five cuts to the owner and records each with majordomus decision: I3133 drops I0401, I0401 leaves the telemetry-bound milestone, delivery-flow-is-measured drops development-runtime (or I3202 moves out of it), I3288 drops I0301, and I3299 is raised to p1. Each accepted cut is applied. Each refused cut names the criteria it leaves outside the window. I3384 still measures the window, and a field that is not observed then fails its coverage bound in public instead of delaying the measurement. Whether the cuts are accepted is an owner question."
+  - id: t3-has-instrument-no-measurement
+    class: missed_requirement
+    subject: "every-task-states-its-delivery-economics"
+    finding: "Every acceptance criterion of the T3 milestone is about the economics.tasks reader. No issue, among those I could see, measures delivery over a window declared in advance (which tasks, which period, what accepted means) or publishes the aggregate. Its non_scope also forbids publishing any delivery-economics figure until ADR 0082's rule is met. T3 asks for the real figures (time, interventions, CI reruns, spend, accepted results), so at least one issue must run the reading over a pre-declared window and publish the counts and denominators beside the claim, losses included. The task.started fold also misses removed worktrees (the milestone's own risk), so the denominator is biased toward surviving checkouts. That has to be stated in the published result, or fixed by reading the tracked session records."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3384
+      because: "A new milestone, delivery-economics-are-measured-over-declared-windows, holds the measurement. I3383 registers a window before it opens, with its period, admitted work, accepted definition, a not-observed bound per field, checkout snapshots at open and close, and a cross-check against the tracked session records. I3384 measures the window at close and publishes counts, medians, denominators, the tasks that were not accepted and the unread checkouts, which bounds the bias from removed worktrees."
+  - id: foreign-repository-data-leak
+    class: regression_risk
+    subject: "I3359-19-04/05/06 records"
+    finding: "The adoption records are committed under .ai/repo/benchmarks/economics/runs and published through docs/generated/economics.* and site/data/generated/economics.json. They carry adopted_commit, the footprint 'path by path' (I3359-19-06) and free-text friction observations. The publication basis governs only whether the repository is named, but a commit sha plus a path list identifies a repository even when its name is withheld. The owner's existing adopters include a repository of the owner's employer: the unmerged docs/ADOPTION_SECOND_RUN.md on origin/chore/the-second-adopter-findings-are-planned names a local checkout of the owner's and a GitHub repository. The milestone prose already writes one private repository's facts (first commit 2025-09-16, 6498 commits, manifest added 2026-09-14) into a tracked record. Records of a repository without a publication basis need a hashed commit, path classes instead of paths, and observations held to declared enums. The loader should refuse raw shas and paths when the basis is not 'licence' or 'consent'."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3353
+      because: "The trial-record loader enforces redaction. Under basis none it refuses a repository name, a raw commit id (a salted digest is required), paths (only path classes are allowed) and free text (only declared friction codes are allowed). An intent criterion is added for this. The T1 milestone prose no longer carries any private repository's commit counts, dates or names, and I3364 compares the footprint by path class."
+  - id: statistical-design-gaps
+    class: unproven_assumption
+    subject: "I3366/I3367/I3371/I3372 analysis"
+    finding: "The analysis has five gaps. (1) No minimum detectable difference or power statement is registered (it is open question 4). With 20 task clusters and a binary acceptance outcome where most differences are 0, a percentile bootstrap undercovers and can exclude zero by chance, so the registration should fix an exact task-level test (sign test or permutation) or require the MDE before a run. (2) The order of jobs and of arms within a pair is not randomised: wall time depends on time of day and API latency, and the suite budget ceiling of I3367 then truncates whichever stratum runs last (likely 'large'), biasing the missing pairs. Register a seeded interleaved order. (3) Peeking: majordomus generate republishes economics.json on every derive, so interim verdicts are visible during the runs while 'no interim analysis' is only declared. The verdict should stay 'running' until the registered sample is reached, as the scorecard's status rule does. (4) Three outcomes times three strata produce nine verdicts with no multiplicity statement; only the primary outcome should carry a verdict word. (5) The publication rule counts repetition pairs (min_valid_pairs 30), while the effective sample is 20 tasks, and the rule should say so."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3367
+      because: "The five gaps are each assigned. (1) I3366 adds an exact task-level permutation test for the binary primary outcome and its MDE, and I3370 registers the MDE. (2) I3367 registers a seeded interleaved run order and reports pairs missing per stratum when the budget ceiling truncates a run. (3) I3354 and I3371 keep the status at running, with no verdict word, until the registered sample is complete. (4) Only the primary outcome carries a verdict, and secondary outcomes and strata show differences and intervals without one (I3367, I3371). (5) I3371 states the effective sample in tasks."
+  - id: corpus-independence-and-difficulty
+    class: unproven_assumption
+    subject: "I3368/I3369 task authoring"
+    finding: "All 20 tasks are written by the treatment's own builders on the in-house ledgerlite fixture. Difficulty is the author-declared complexity field, with patch size (11-92 lines) only a cross-check. T2 asks for comparable tasks split by difficulty in advance. A split the author declares after designing the tasks with the treatment in mind is open to bias, and the intent's phrase 'repositories not built around it' does not hold for this corpus. Register a measured difficulty proxy (reference patch lines, files and modules touched, sessions) with stratum cut-offs before the tasks are written. Have the prompts reviewed by a party that is not the treatment's author, or draw part of the corpus from the T1 repository in a later registration, and say in the published result that the corpus comes from one synthetic fixture."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3374
+      because: "I3374 measures a difficulty proxy from each reference (lines, files, modules, sessions) and commits the stratum cut-offs before any new task file, checked against git. I3368 and I3369 require an answered mesh review from a reviewer who did not write the task. I3372 publishes the statement that the corpus is one synthetic fixture written by the treatment's builders. Drawing tasks from the T1 repository is left to a later registration, as the T2 milestone's non_scope says."
+  - id: draft-state-inaccuracies
+    class: unproven_assumption
+    subject: "current_state claims"
+    finding: "Some current_state claims are wrong. (a) The T1 milestone says a-second-adopter-is-served is VERIFY, but plan.json derives it as ACTIVE. (b) The scorecard notes say I2965 is 'already merged', but plan.json shows I2965 READY (the proven/proves words are on master in homepage.toml:54-55, so the effect is present but the issue is not closed). (c) docs/the-platform-adopters-findings-are-issues is a local branch only: git ls-remote finds no such head on origin, so the T1 non_scope relies on work no other worker can reach. (d) The peer board (complete, 5 peers) shows p1 claiming scripts/ci/install-check and test/cases/1024_an_installed_release_serves_a_foreign_repository.sh now, which I3359-19-03 must wait for."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3361
+      because: "The prose is corrected. a-second-adopter-is-served is described as ACTIVE. I2965 is described as READY, with its words already present at homepage.toml:54-55. The local-only 0.29.0 findings branch is described as held by no remote, and nothing depends on it. The board read in this pass shows no peer claim on install-check or case 1024, and I3361 tells its worker to read the board at start."
+  - id: overhead-suite-cannot-target-foreign-repo
+    class: unproven_assumption
+    subject: "I3359-19-06 reuse of I3299"
+    finding: "I3299 is READY at p3. Its scope is the Rust bench (apps/majordomus-cli/src/bench/*, .ai/repo/benchmarks/rust/policy.yaml), and its suite runs on this repository's fixtures against .ai/repo/benchmarks/baseline.json (lib/bench.sh:17,39). Nothing shows it can run 'in the adopted foreign repository at its adopted commit', and I3359-19-06 validates with 'majordomus bench --check', which compares this repository's baseline. Either I3299 gains a target-repository input in its acceptance, or I3359-19-06 owns that change. I3299 must also be raised from p3, or the T1 criterion overhead-is-measured-in-the-foreign-repository cannot close. I3299's scope also includes .ai/repo/benchmarks/README.md, which I3352 edits."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3364
+      because: "I3364 owns a --repository input for majordomus bench, so I3299's suite runs in a named repository against its declared budgets rather than this repository's baseline. Its scope is apps/majordomus-cli/src/bench/runner.rs, commands/bench.rs and tests/bench.rs, and it depends on I3299. I3373 raises I3299 to p1. The overlap on .ai/repo/benchmarks/README.md with I3352 is listed as a risk."
+  - id: economics-file-collisions
+    class: regression_risk
+    subject: "parallel edits to src/economics"
+    finding: "I3351, I3353, I3354, I3356, I3359-19-02, I3366, I3367 and I3371 all edit apps/majordomus-cli/src/economics/{mod,model,report,claims}.rs, tests/economics.rs and the economics summary schema. Of these, I3351, I3359-19-02, I3366 and I3367 are in wave 0 or 1 in parallel. I3354 and I3371 both add a section to economics.json, economics-summary.schema.json and site/templates/economics.html. I3133 and I3298 scope the whole apps/majordomus-cli/src/economics directory (8 tracked files). The waves do not serialise these edits, so the landing seat will see repeated conflicts in generated economics.* files. Declare an edit order on the shared files, or add the depends_on edges."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3355
+      because: "Edges now order the hand-written shared regions. proof.rs runs I3351, then I3353, then I3354. model.rs runs I3367, then I3374, then I3375, then I3386. The economics summary, schema and template run I3356 before I3371. The capability region of builtin/economics.rs runs I3376 before I3355. I3366 keeps its verdict enum in stats.rs so it stays out of model.rs. I3376 fixes the whole tasks.rs record shape so that I3377 to I3381 change no response type. The derived merge driver re-derives generated files."
+  - id: permission-hook-changes-treatment
+    class: regression_risk
+    subject: "I3378"
+    finding: "I3378 adds a permission hook to .claude/settings.json and to the adoption footprint (case 3113). That changes what the treatment installs and runs in the T1 adoption and in the T2 arm, and lib and share are in the corpus freshness inputs, so it lands as a treatment change mid-program. It also adds a shell hop to every permission request (the hook-latency memory applies). It should land before the corpus registration and the T1 run, or be excluded from the registered treatment, and its latency should be measured against I3299's budgets."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3378
+      because: "I3375's pinned release keeps the hook out of a registered treatment unless a registration names a release that carries it. I3378's receipt records the hook's own elapsed milliseconds, so its latency is measured. The T1 record names the tool version it adopted."
+  - id: t1-t3-surfaces-missing
+    class: surface_missing
+    subject: "adoption records and economics.tasks"
+    finding: "T1 says adoption records are 'published', but its scope has no site/templates/economics.html, no /ui panel and no CLI or MCP read of adoption records. They would appear only as raw JSON in docs/generated/economics.json. economics.tasks (T3) has CLI, HTTP and MCP parity but no /ui or site rendering. The scorecard is the only surface planned for all channels. Either the scorecard rows link these records, or each milestone owns its renderer."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3356
+      because: "Each scorecard row on the site (I3356) and on /ui/evidence (I3357) links its counted and uncounted records, including T1 trial records, corpus and mesh runs and the T3 window record. The adoption and delivery readings are therefore reachable from every scorecard surface, not only as raw JSON."
+  - id: self-assigned-friction-denominator
+    class: unproven_assumption
+    subject: "criterion foreign-friction-becomes-a-case"
+    finding: "'Zero uncited friction ids' is measured against friction ids that the person running the adoption chooses to record, so recording few frictions satisfies the criterion trivially. Tie the denominator to observed events: every manual intervention, every undocumented command and every refused step in the record must carry a friction id or an explicit 'not a friction' reason. Also, the selection floors (tracked files, commits) are left as open question 3 and are set by the I3359-19-01 worker, who already knows the candidate repositories. Record the floors as an owner decision before candidates are measured."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3365
+      because: "I3365's test fails when a manual intervention, an undocumented command or a refused step lacks a friction id or a declared not-a-friction reason, so the denominator is observed events. I3359 and I3360 take the selection floors from an owner decision recorded before any candidate is measured."
+  - id: pay-04-oversized
+    class: insufficient_work
+    subject: "I3353 size"
+    finding: "I3353 combines a new calculator with two decision kinds, loss accounting for three reasons of uncounted runs, trial-record digest matching, a new capability on CLI, HTTP and MCP, and 29 scoped files, about 20 of them generated projections. That is more than one reviewable pull request. Split it into the pure scorecard function with its tests, and the capability declaration plus generated projections."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3354
+      because: "The work is split. I3354 is the pure scorecard function with fixture tests, and I3355 is the capability declaration with its generated projections."

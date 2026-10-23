@@ -61,21 +61,73 @@ serving the checkout, so the history a surface shows is the history a person mad
 
 <pre class="mermaid">
 stateDiagram-v2
+  authorizing --&gt; queued
+  authorizing --&gt; refused
+  authorizing --&gt; failed
+  authorizing --&gt; cancelled
   queued --&gt; running
+  queued --&gt; claimed
+  queued --&gt; refused
+  queued --&gt; failed
   queued --&gt; cancelled
+  claimed --&gt; running
+  claimed --&gt; queued: released before anything ran
+  claimed --&gt; refused: authorised again on claim
+  claimed --&gt; failed
+  claimed --&gt; cancelling
+  claimed --&gt; unknown_outcome
+  running --&gt; verifying
   running --&gt; succeeded
   running --&gt; failed
   running --&gt; cancelling
+  running --&gt; unknown_outcome
+  verifying --&gt; succeeded
+  verifying --&gt; failed
+  verifying --&gt; cancelling
+  verifying --&gt; unknown_outcome
   cancelling --&gt; cancelled
   cancelling --&gt; succeeded: it finished before it noticed
   cancelling --&gt; failed
+  cancelling --&gt; unknown_outcome
+  unknown_outcome --&gt; verifying: reconciled
+  unknown_outcome --&gt; succeeded: reconciled
+  unknown_outcome --&gt; failed: reconciled
+  unknown_outcome --&gt; cancelled: reconciled
 </pre>
 
 
-`ExecutionState::may_move_to` is the whole contract and the store refuses anything else, so
-a client that reads a final state never sees it move again. There is no `starting`: an
-in-process engine claims an execution and enters its handler in the same instant, and a
-state nothing can reach is a state every client would have to handle and never see.
+<div class="overflow-x-auto" tabindex="0">
+
+| state | means | final |
+|---|---|---|
+| `authorizing` | accepted; a policy decision on whether it may run is not taken yet | no |
+| `queued` | waiting for a worker | no |
+| `claimed` | a worker holds it and has not entered the handler | no |
+| `running` | the handler is running | no |
+| `verifying` | the handler returned, and what it produced is being checked | no |
+| `cancelling` | a stop was asked for and the handler has not stopped | no |
+| `unknown_outcome` | whether the work happened is not known; only a reconciliation moves it | no |
+| `succeeded` | the handler returned an output | yes |
+| `failed` | the handler returned an error, or the worker could not run it | yes |
+| `cancelled` | it stopped because it was asked to | yes |
+| `refused` | a policy refused it before it ran | yes |
+
+</div>
+
+
+`ExecutionState::EDGES` is the whole contract, `ExecutionState::may_move_to` reads it, and
+the store refuses every other move, so a client that reads a final state never sees it move
+again. `executions.protocol` answers the same table under `states`, so a client never
+restates it. The in-process engine moves `queued` straight to `running`: it claims an
+execution and enters its handler in the same instant, and nothing of it would be visible
+in `claimed` — except for an execution started for an issue, which passes through
+`claimed` while it holds the issue's mesh claim ([below](#an-execution-for-an-issue-holds-its-claim)). `authorizing`, `claimed`, `verifying` and `refused` are entered by a worker
+that decides, holds or checks an execution in its own time (Mission Control B3); the store
+offers `create_authorizing` for an execution that waits for a policy decision, and the
+events below for every move after it. `unknown_outcome` is the state of a run whose outcome
+cannot be read. It never moves back to `running` by itself: a reconciliation reads the
+evidence first and moves it to `verifying` or straight to the outcome it found, and a stop
+asked of it answers `outcome_unknown` and changes nothing.
 
 ### What is not here
 
@@ -128,6 +180,89 @@ it is what a run sends to a server, not something an agent or a person asks for.
 handler. The state in that first answer is `queued`, which is what it is: this server
 answers `200` with the truth rather than `202` with a promise.
 
+A start may carry an `idempotency_key` (I4000; `majordomus run --idempotency-key`): 1 to 128
+characters of `A-Z a-z 0-9 . _ : -`, scoped to this repository and the capability started.
+Sent again with the same input — a double click, a retry after an answer that never
+arrived — it is answered `200` with the execution it already started, as that execution
+stands now, and `"deduplicated": true`; nothing new is queued. Sent again with a different
+input it is refused `409` `conflict`, and the message names the execution the key started.
+Every answer of `start` carries `deduplicated`, `false` for an execution the start began.
+The key is looked up and the execution recorded under one hold of the store's lock, so two
+starts sent at the same instant with one key are one execution. A key is held exactly as
+long as the store holds the execution it started — the bound below forgets the oldest
+finished one, and the server's memory ends with the server — and since `majordomus run`
+executes in its own process, a key given to it is held there. The input is matched by the
+digest of its canonical JSON, so the order a client wrote the keys in does not matter; the
+digest never leaves the store. Without a key every start starts an execution, as before.
+
+### An execution for an issue holds its claim
+
+A start may name the `issue` it works for (I4004; `I4004`, `#184`: 1 to 64 characters of
+`A-Z a-z 0-9 # . _ -`). Two workers that start one issue at once must not both run it, and
+the mesh already decides that question for sessions, so the execution asks it the same way:
+the worker that picks it up takes an **exclusive** mesh claim through `Cooperation::claim`,
+the function `mesh.claim` calls, as the mesh session `execution-<id>`, for the issue record's
+`scope` — or the pseudo-path `issue/<id>` when the record declares none or is not in this
+checkout — before the handler is entered. Held, the execution moves
+`queued → claimed → running`, with the session as the `holder`. A live exclusive claim of
+another session on that scope, on this runtime or any it has heard, refuses it: `refused`,
+policy `mesh.claim`, a message that starts `claim_conflict:` and names the holding session
+(`execution-<id>` for another execution) and its claim key, and nothing runs. The claim is
+given back — released and its session closed — before the final event is published, for
+every final state, and by the worker's guard when the worker unwinds instead. An
+`unknown_outcome` keeps it: whether the work happened is still to be read, and the scope is
+not free until it has been. A kept claim, or the claim of a process that died, ends when its
+runtime stops beating, as every mesh claim does; fencing a holder that returns after its
+claim expired is I3174's, not this. With no mesh cooperation in the serving process the
+execution runs without a claim and says so, never failing for it. Each step is the event
+`execution.issue_claim`, carrying `issue`, `standing` (`wanted` at the start, then `held`,
+`unclaimed` or `refused`, then `released` or `kept`), `scope`, `key`, `session` and a
+`detail`, and the snapshot's `issue_claim` is the latest of them. The issue is part of what
+an idempotency key is matched against. `majordomus run` takes no issue: it runs in its own
+process, where no mesh runs.
+
+### Implementing an issue: `devtask.implement`
+
+Taking an issue was a sequence a session ran by hand — is it ready, does it serve an intent,
+is anybody on it, make the worktree, start — and two sessions could run it at once (I4003,
+Mission Control B4). `devtask.implement` (`POST /api/v1/devtask/implement`, the MCP tool
+`majordomus_devtask_implement`) is that sequence as one request. Every step is a capability
+that already exists, called in-process through the registry, and each runs only when every
+step before it passed:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| step | what it asks | when it does not pass |
+|---|---|---|
+| key | did this `idempotency_key` (default `implement-<issue>`) already start a run of this issue? | answered that execution, `deduplicated`, and nothing else runs; a key that started one for another issue is refused `409 conflict` |
+| readiness | `devtask.issue`'s verdict | refused `not_ready: <issue>: <reason>; blocked by …` |
+| preflight | `intents.preflight` for the issue | refused `invalid_intent: <issue>: <the preflight's refusal>` |
+| claim | would the issue's exclusive mesh claim be admitted now? asked through the same admission `Cooperation::claim` applies, and not taken | refused `claim_conflict: <issue> is claimed on the mesh: session … holds …` |
+| worker | the attached MCP peer whose call this is | **`pending`**, with the reason: nothing is created and nothing failed |
+| worktree | `worktree.create` on `feature/<id>-<slug>` | its own refusal |
+| execution | `executions.start` of `devtask.run` for the issue, under the key | its own refusal |
+
+</div>
+
+
+A refusal at any of the first four steps creates nothing: no worktree, no execution, no
+claim. The answer carries the standing (`started`, `deduplicated` or `pending`), every step
+with what it found, the branch, the worktree, the worker and the execution with its links.
+The claim itself is taken by the execution, as [above](#an-execution-for-an-issue-holds-its-claim),
+before `devtask.run` enters its handler; a claim taken by somebody else between the question
+and the start refuses the execution there, with the holder named.
+
+`devtask.run` is the worker's run, and it is reachable only through `executions.start`: it
+declares no route, tool or command of its own. It is handed to the attached peer that asked
+— work is never pushed to a peer that did not ask for it, which is why a request over plain
+HTTP or `majordomus run` answers `pending` — and lasts while that peer stays attached: the
+same position id, attached at the same instant, because a position id is reused by the next
+client to connect. It ends `succeeded` when the worker detaches (`DELETE /mcp`, a closed
+session), `cancelled` when asked to stop, and `failed` on its deadline (`deadline_minutes`,
+60 by default, a day at most); started for a worker that is no longer attached it is refused
+`no_worker`. What the worker did is in the worktree, and is verified by what verifies a
+branch, never by the run.
+
 ## One plane per checkout: `majordomus run` and the server
 
 `majordomus run` executes in its own process — the cost and the failure modes of a run are
@@ -151,9 +286,11 @@ serve this checkout (its lease names a URL, and the server there answers for thi
   is started for it: a run never starts a server.
 - **The server stops answering mid-run.** The first failed report, or three in a row after
   one succeeded, make the run say on stderr that it is visible to this process only from
-  then on, and it carries on. The server, hearing nothing for 30 seconds, fails the
-  execution with `unavailable` and a message naming the process, rather than showing it
-  running for ever; a run that was killed is therefore never a phantom in the list.
+  then on, and it carries on. The server, hearing nothing for 30 seconds, moves the
+  execution to `unknown_outcome` with `unavailable` and a message naming the process,
+  rather than showing it running for ever or claiming it failed: a run that was killed is
+  never a phantom in the list, and never reported as completed. A run that comes back
+  reconciles it with the outcome it reports; a `started` from it is passed over.
 
 What this does not change: the work runs where the run is, never in the server, and the
 history is still the server's memory — it ends with that server.
@@ -170,6 +307,7 @@ members that vary, so a client switches on one string.
   "execution_id": "x-20260908T010203Z-0a1b2c3d",
   "sequence": 17,
   "timestamp": "2026-09-08T01:02:07Z",
+  "correlation_id": "x-20260908T010203Z-0a1b2c3d",
   "type": "execution.progress",
   "data": { "current": 17, "total": 42, "message": "137 file(s) read" }
 }
@@ -180,8 +318,12 @@ members that vary, so a client switches on one string.
 | type | when |
 |---|---|
 | `execution.created` | it exists; carries the capability and the input as it was stored |
+| `execution.authorizing` | a policy decision on whether it may run is being taken |
 | `execution.queued` | it is waiting for a worker, and how many are ahead of it |
+| `execution.claimed` | a worker holds it, named in `holder`, and has not entered the handler |
+| `execution.issue_claim` | where the mesh claim of an execution started for an issue stands: wanted, held, unclaimed, refused, released, kept |
 | `execution.started` | the handler was entered |
+| `execution.verifying` | the handler returned, and what it produced is being checked |
 | `execution.progress` | how far along, with a total when the handler knows one |
 | `execution.step.started`, `execution.step.completed` | a named phase was entered, and how it went |
 | `execution.log` | a line of output, from the handler or from a process it ran |
@@ -189,6 +331,8 @@ members that vary, so a client switches on one string.
 | `execution.cancelling`, `execution.cancelled` | it was asked to stop; it stopped |
 | `execution.completed` | it finished, with what the handler returned |
 | `execution.failed` | it finished, with a typed error and a correlation id |
+| `execution.refused` | a policy refused it before it ran, with a typed error and, when one can be named, the `policy` |
+| `execution.unknown_outcome` | whether the work happened is not known, with what is known about why; a reconciliation follows |
 
 </div>
 
@@ -204,7 +348,12 @@ and output schemas are, and is served — with the whole contract — by
 
 **A client must ignore a `type` it does not know.** That is what lets a variant be added
 without a version change; `schema_version` moves only for a change a version-1 client could
-not ignore safely.
+not ignore safely. The five states of Mission Control B3 and their events, and the envelope's
+`correlation_id` (the execution id, under the name a log reader expects), were added that
+way: version 1 still. A reader of this executable refuses an event of a newer version by
+name — `an execution event of schema version 2 is newer than version 1, the newest this
+executable reads` — rather than misreading it, whatever transport brought it; an event an
+older writer produced without `correlation_id` is still read.
 
 ## The live channel
 
@@ -374,7 +523,7 @@ origin. The Cockpit's content-security policy allows connections to this origin 
 | one frame of the live channel | 256 KiB | an output or input over it is written as a reference to the snapshot |
 | a serial capability (a command) | one at a time | a second execution of it waits for the first |
 | events in one report from a run | 500, and three quarters of the 1 MiB body bound | refused above 500; the run sends the rest in the next report |
-| silence of a reported execution | 30 s (the run's heartbeat is 2 s) | the server fails it `unavailable`; the run itself is not touched |
+| silence of a reported execution | 30 s (the run's heartbeat is 2 s) | the server moves it to `unknown_outcome` (`unavailable`); the run itself is not touched |
 
 </div>
 
@@ -391,10 +540,12 @@ answers the ones this process is running with.
 | `no capability 'x'; the executable ones are listed by capabilities.list` | the id is not in the registry | check `majordomus capabilities list` |
 | `not executable: 'x' is a resource: it is read, never executed` | a declarative object was named | read it with `objects.get` |
 | `invalid input: /steps: "many" is not of type "integer"` | the input does not satisfy the capability's own schema | the schema is in the OpenAPI document and on the capability's Cockpit page |
+| `409 conflict: the idempotency key 'k' already started x-… of … with a different input` | a start reused a key with another input | send the same input to be answered that execution, or a new key to start another |
 | `no execution x-… in this process` | it never ran here, or it has been forgotten | an execution lives in the server that holds it; `executions.list` says what is remembered |
 | `majordomus run: no server is serving this repository, so this execution is visible to this process only…` | `run` found no server answering for this checkout | start `majordomus serve` before the run to see it there; a run never starts one |
 | `majordomus run: the server at … did not take this run's report (…)` | the server refused or did not answer; an older server has no `executions.report` | the run carries on; the reason in parentheses is the server's |
-| `unavailable: process N, which ran this execution and reported it here, has not reported for … s` | the run was killed, or lost its way to the server, for 30 s | the terminal that ran it has the outcome |
+| `unavailable: process N, which ran this execution and reported it here, has not reported for … s` | the run was killed, or lost its way to the server, for 30 s; the execution is `unknown_outcome` | the terminal that ran it has the outcome; a run that reports again reconciles it |
+| `an execution event of schema version N is newer than version 1, the newest this executable reads` | a newer writer reported to an older server | upgrade the server |
 | `426 … /events is a WebSocket` | it was opened with a plain `GET` | open it with a WebSocket client, or read `executions.events` |
 | `403 … a WebSocket from origin '…' is refused` | a page on another origin tried to follow this server | open the Cockpit from this server's own address |
 | `stream.lagged` | this client could not keep up | read the snapshot and the history again from the last sequence seen |
@@ -409,7 +560,10 @@ answers the ones this process is running with.
 
 | | status |
 |---|---|
-| the state machine, its transitions and the refusal of an invalid one | behaviourally verified (`execution::model`, `execution::store`) |
+| the state machine, its transitions and the refusal of an invalid one | behaviourally verified, every pair of states (`execution::model`, `execution::store`) |
+| the transition table through the public surface: listed by `executions.protocol` and the OpenAPI document, a legal and an illegal move reported, a stop of an unknown outcome, a reconciliation, a newer schema refused | behaviourally verified (`test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh`) |
+| a worker that authorises, claims or verifies an execution | not implemented here; the states and events exist for it |
+| `devtask.implement`: pending with nobody attached, `invalid_intent` and `claim_conflict` creating nothing, one run holding the issue's claim in a new worktree, the same request answered the same run, the run ending with its worker | behaviourally verified (`devtask`, `execution::claim`, `test/cases/4003_devtask_implement_claims_creates_and_starts_once.sh`) |
 | the store's bounds and the behaviour at each: eviction, truncation, lag, a gone subscriber | behaviourally verified (`execution::store`) |
 | redaction from the schema, through references, arrays and maps | behaviourally verified (`execution::redact`) |
 | the handshake, the framing and SHA-1 against the published vectors | behaviourally verified (`http::ws`) |
@@ -417,7 +571,7 @@ answers the ones this process is running with.
 | an existing capability observable with no second implementation | behaviourally verified (`tests/executions.rs`) |
 | an execution never answered from the cache | behaviourally verified (`tests/executions.rs`) |
 | the whole path from outside the executable | behaviourally verified (`test/cases/100_execution_plane.sh`) |
-| a run reported to the server: applied once and in order, resumed after a gap, a stop handed back, a silent reporter failed | behaviourally verified (`execution::store`) |
+| a run reported to the server: applied once and in order, resumed after a gap, a stop handed back, a silent reporter's outcome unknown and reconciled by its return | behaviourally verified (`execution::store`) |
 | a run listed by the server while in flight, the same outcome after it, a stop asked of the server reaching the run, the plain line with no server | behaviourally verified, by polling the server (`test/cases/3024_a_run_is_seen_by_the_server.sh`) |
 | durability, retry, scheduling, an execution outliving its process | not implemented, and `Limits` is where a durable store would be substituted |
 | a capability backed by a process, with its output as `stdout`/`stderr` log events | not implemented; the event model carries the streams for it |

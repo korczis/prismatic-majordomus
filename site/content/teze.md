@@ -4,6 +4,9 @@ description = "Proč Majordomus není další AI agent: modely se stanou zaměni
 template = "page.html"
 [extra]
 lang = "cs"
+related = ["dokumentace-kterou-lze-odmitnout/", "vlozene-zadani-se-stava-planem/", "vsechno-v-jednom-proudu/", "kresla-ne-jmena/", "napsano-jednou-odvozeno-vsude/", "session-skonci-prace-ne/"]
+[extra.translations]
+en = "the-bet-on-a-layer/"
 +++
 {% raw %}
 
@@ -13,7 +16,7 @@ Modely budou zaměnitelné. Nevím, který bude za rok nejlepší, a stavět pro
 
 Rád se to přirovnává k herním enginům. Každé studio si kdysi psalo vlastní infrastrukturu, pak vznikl trh hotových enginů a dnes si vlastní engine píše málokdo. To je pravda, jenže neúplná. Enginy, které vyhrály, nevznikly jako infrastruktura hledající zákazníka. Oddělily se od konkrétní hry, která je napřed prověřila.
 
-Moje hra je tenhle repozitář. Majordomus vznikl destilací z prostředí, kde agenti pracovali ve velkém a selhávali z nudných důvodů. Čísla jsou v README: instrukční soubory dvou nástrojů bez společného obsahu, kontroly vedené jako blokující, které nic nespouští, desítky worktrees s duplikovanými patchi, z nichž se skoro nic nezmergovalo. Od té doby řídí sám sebe. Změny tady procházejí stejným `finish`, jaký nabízím ostatním.
+Moje hra je tenhle repozitář. Majordomus vznikl destilací z prostředí, kde agenti pracovali ve velkém a selhávali z nudných důvodů. Čísla jsou v README: instrukční soubory dvou nástrojů téměř bez společného obsahu, kontroly vedené jako blokující, které nic nespouští, desítky worktrees s duplikovanými patchi, z nichž se zmergovalo jen málo. Od té doby řídí sám sebe. Změny tady procházejí stejným `finish`, jaký nabízím ostatním.
 
 ## Koordinace se ubránit nedá
 

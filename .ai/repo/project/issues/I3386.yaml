@@ -1,0 +1,36 @@
+id: I3386
+milestone: the-mesh-is-measured-against-one-agent
+title: "The economics runner runs one job as several concurrent workers in worktrees of one workspace sharing the treatment's server, and records the job's wall time to an integrated, accepted tree"
+slug: the-runner-runs-coordinated-workers
+priority: p1
+profile: implementation
+objective: "Add a coordinated topology to the runner, declared by the arm I3298 adds: one workspace with the pinned release installed, a shared server started with serve ensure, a registered number of headless sessions each in its own worktree created with majordomus worktree create, each given the batch task's members as issues to claim, and an integrating step that merges the workers' branches into the workspace trunk in a fixed order. Record each session's span, every claim refusal from the ledger, every merge conflict, and the job's wall time from first start to the hidden tests passing on the integrated tree. Prove the pipeline with the replaying harness."
+why: "T4 of the owner's report of 2026-10-19 needs a mesh arm, and the critique found no issue built one: I3298 only declares arms as data and the runner runs one job's sessions in sequence. Building the arm in the one runner keeps every arm under the same provenance and freshness rules."
+current_state: "apps/majordomus-cli/src/economics/runner.rs:1-26 runs a job's sessions in one workspace in sequence; runner.rs:103 RunOptions has no concurrency; I3298 is READY at p3."
+desired_state: "economics run --dry-run lists coordinated jobs; a replayed coordinated job writes one record with per-session spans and integration results."
+scope:
+  - "apps/majordomus-cli/src/economics/runner.rs"
+  - "apps/majordomus-cli/src/economics/model.rs"
+  - "apps/majordomus-cli/tests/economics.rs"
+  - "docs/ECONOMICS.md"
+non_scope:
+  - "Running live (I3389)"
+  - "Machines other than the runner's host"
+  - "Lease-based assignment (I3198)"
+depends_on:
+  - "I3375"
+  - "I3298"
+serves:
+  - "the-product-proves-it-pays#a-mesh-arm-runs-coordinated-workers"
+acceptance_criteria:
+  - "A replayed job with three workers writes one record with three session spans, the integration order and the job wall time"
+  - "A replayed claim refusal and a replayed merge conflict are recorded"
+  - "Every worker's worktree is removed after the job, and nothing outside the work directory is written"
+  - "The single-agent arm is unchanged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
+  - "cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml --check"
+evidence_required:
+  - "test_coordinated_arm_replayed"
+created_at: 2026-10-19
+updated_at: 2026-10-19

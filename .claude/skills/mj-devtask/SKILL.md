@@ -1,11 +1,11 @@
 ---
 name: mj-devtask
-description: "Majordomus devtask: One issue as an executable development task; One milestone as an executable dependency graph."
+description: "Majordomus devtask: Implement an issue: readiness, preflight, claim, worktree and one run; One issue as an executable development task; One milestone as an executable dependency graph."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:devtask; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.30.2 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 
 # Majordomus `devtask`
 
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `devtask.implement` | Implement an issue: readiness, preflight, claim, worktree and one run | `majordomus_devtask_implement` | — | changes |
 | `devtask.issue` | One issue as an executable development task | `majordomus_devtask` | `majordomus devtask issue` | reads |
 | `devtask.milestone` | One milestone as an executable dependency graph | `majordomus_devtask_milestone` | `majordomus devtask milestone` | reads |
 

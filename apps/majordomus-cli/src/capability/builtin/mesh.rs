@@ -1331,7 +1331,9 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["mesh", "coordination", "discovery"],
                 handler: mesh_status,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.nodes",
                 title: "The discovered nodes",
@@ -1342,7 +1344,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_nodes"), http: get("/api/v1/mesh/nodes"), cli: None },
                 tags: ["mesh", "coordination", "discovery"],
                 handler: mesh_nodes,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.identity",
                 title: "This machine's node identity",
@@ -1372,7 +1376,9 @@ pub fn module() -> ModuleDescriptor {
                 },
                 tags: ["mesh", "diagnostics"],
                 handler: mesh_doctor,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.firewall",
                 title: "The host firewall, as the mesh needs it",
@@ -1389,7 +1395,9 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
                 handler: mesh_firewall,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.firewall.apply",
                 kind: CapabilityKind::Command,
@@ -1433,7 +1441,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_cooperation"), http: get("/api/v1/mesh/cooperation"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
                 handler: mesh_cooperation,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.peers",
                 title: "Who cooperates, machine by machine",
@@ -1444,7 +1454,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_peers"), http: get("/api/v1/mesh/peers"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
                 handler: mesh_peers,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.peer",
                 title: "One runtime",
@@ -1455,7 +1467,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_peer"), http: get("/api/v1/mesh/peer"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
                 handler: mesh_peer,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.state",
                 title: "The state every linked runtime converges on",
@@ -1466,7 +1480,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_state"), http: get("/api/v1/mesh/state"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
                 handler: mesh_state,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.events",
                 title: "The cooperation journal",
@@ -1477,7 +1493,9 @@ pub fn module() -> ModuleDescriptor {
                 exposure: Exposure { mcp: mcp("majordomus_mesh_events"), http: get("/api/v1/mesh/events"), cli: None },
                 tags: ["mesh", "coordination", "cooperation"],
                 handler: mesh_events,
-            },
+            }
+            // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
             capability! {
                 id: "mesh.verify",
                 kind: CapabilityKind::Command,

@@ -1,0 +1,130 @@
+intent: landing-survives-any-session
+reviewed_at: 2034d4a3f0b
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by landing seat session 49d5361b over the uncommitted records of branch chore/landing-survives-any-session; resolved by the author. Disposition: accept with required changes; 8 of 14 findings blocking, all 14 planned. The landing mode (finding merge-vs-ff-undecided-cas-false) was put to the owner, who chose the fast-forward."
+findings:
+  - id: merge-vs-ff-undecided-cas-false
+    class: regression_risk
+    subject: "I3910"
+    finding: "The plan called a landing a compare-and-swap at the forge, which holds only for a fast-forward: drain.rs:2236-2244 runs gh pr merge --merge --match-head-commit, which pins the head and not master, and protection is strict: false (ADR 0101:417), so two executors could each land a merge and the second a tree nobody judged; the records disagreed on the landing mode (rule v2:74 --admin --merge, rule v2:92 fast-forward, ADR 0167:135 merge parents)."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3910
+      because: "The owner decided on 2026-10-22, asked in session 49d5361b, that the autonomous lander fast-forwards master to the judged head. I3910 records the decision, lands by a non-forced fast-forward, and treats a refused fast-forward as a reason to decide again; the intent's invariant names the fast-forward, and I3911's criterion is now about the lease, not about the forge refusing a merge."
+  - id: admin-clause-left-standing
+    class: missed_requirement
+    subject: "I3910"
+    finding: "ADR 0167:110-111 and rule v2:74 allow --admin; the intent forbids it and no criterion removed it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3910
+      because: "I3910 moves the rule to version 3 and amends ADR 0167, and its last criterion requires that no document, rule or script names --admin or a queue file as a way to land."
+  - id: drain-silence-undiagnosed
+    class: unproven_assumption
+    subject: "I3910"
+    finding: "The plan did not say why prs drain has merged nothing since 2026-10-11."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3910
+      because: "Measured and recorded in I3910's current_state: prs drain --dry-run at 2026-10-22T14:00Z answers idle, 13 pull requests need master brought in first and #1840 waits for its checks; the executor was not run, it was not blocked by protection. Nothing in the plan needs --admin or a ref PATCH from a session."
+  - id: criteria-name-no-case
+    class: delivery_verification
+    subject: "landing-survives-any-session"
+    finding: "The criteria named issues, not test cases, and every issue validated only with plan validate, so no criterion could settle."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3910
+      because: "Each criterion now names its planned case and carrier (a_green_train_is_fast_forwarded_and_verified, an_expired_lease_holder_is_refused_before_it_lands, a_vacant_seat_is_reported_and_offered, a_halted_executor_is_not_restarted, a_missing_approval_is_reported_per_machine, a_train_manifest_composes_one_tree); each issue validates with cargo test over its module and test target, and flips its criterion to evidence: test when the case lands."
+  - id: sleeping-lease-holder-unfenced
+    class: regression_risk
+    subject: "I3911"
+    finding: "The lease is an 1800 s flock (drain.rs:54); a laptop that sleeps through its expiry wakes mid-step holding a decision after another clone took over."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3911
+      because: "I3911 renews the origin lease by a non-forced push immediately before every landing, so a holder whose lease was taken over is refused at its renewal and lands nothing; its case an_expired_lease_holder_is_refused_before_it_lands proves it."
+  - id: i3911-needs-not-i3910
+    class: unnecessary_work
+    subject: "I3911"
+    finding: "Moving the trail and the lease to origin does not depend on landing trains."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3911
+      because: "I3911 depends on nothing and can run beside I3910."
+  - id: seat-taker-has-no-actor
+    class: regression_risk
+    subject: "I3912"
+    finding: "A runtime that claims a seat cannot do its work, since the mesh executes nothing (I3198 non_scope), and reading expiry as death contradicts nothing-in-the-mesh-waits-on-something-dead, which I3182 classifies."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3912
+      because: "I3912 is narrowed to reporting a vacant seat with I3182's evidence and offering it by capability through I3198's fenced offer to live sessions; a runtime never takes a seat by itself. It depends on I3174, I3182 and I3198, no longer on I3911."
+  - id: service-restart-defeats-halt
+    class: regression_risk
+    subject: "I3913"
+    finding: "--continuous stops on a halt and after CONTINUOUS_TRANSIENT_LIMIT outages (drain.rs:1886); a KeepAlive unit restarting without limit undoes D7's halt."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3913
+      because: "I3913 restarts only after a crash or outage exit, never after a halt or a refusal (launchd SuccessfulExit, systemd RestartPreventExitStatus), proven without a service manager by case a_halted_executor_is_not_restarted."
+  - id: unit-writer-duplicated
+    class: unnecessary_work
+    subject: "I3913"
+    finding: "I2722 already owns the systemd and launchd user-unit writer."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3913
+      because: "I3913 writes its unit through I2722's writer and depends on I2722."
+  - id: apply-launders-self-modification
+    class: regression_risk
+    subject: "I3914"
+    finding: "A session running autonomy apply would write its own permissions through a binary, which the approval rule clause 4 and I2790's non_scope forbid; I3914 built on I2790's src/autonomy, which is not on master."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3914
+      because: "apply refuses inside an agent session (CLAUDECODE set, or no terminal) and without an interactive confirmation, and the one reconciled rule says the owner writes an approval. I2790 cannot be a dependency while it is not on master (plan validate refuses an unknown issue); I3914's objective says it must land first, and I3914 is sequenced after I3910, which also edits the cooperation rule."
+  - id: compose-tree-not-deterministic
+    class: unproven_assumption
+    subject: "I3915"
+    finding: "Two machines producing the same tree conflicts with ADR 0101:462, and mesh records are journal events, not tracked files."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3915
+      because: "Members are declared in a tracked train manifest under .ai/repo/integration/trains/, and the criterion is the same member list and the same pre-derive tree."
+  - id: i3910-facts-and-self-violating-ac
+    class: delivery_verification
+    subject: "I3910"
+    finding: "The hold label policy has existed since 2026-10-04 (classify.rs:114), and the records themselves named the queue file their own criterion forbids."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3910
+      because: "current_state now says the policy existed and the label did not; the criterion covers documents, rules and scripts, and the milestone no longer names the file."
+  - id: carried-pr-closure-widens-executor
+    class: regression_risk
+    subject: "I3910"
+    finding: "The drain never closes a pull request (drain.rs:16-17); closure belongs to cleanup --apply."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3910
+      because: "A pull request a landed train contains is classified Redundant and the forge marks it merged; the drain closes nothing."
+  - id: red-trunk-not-gated
+    class: missed_requirement
+    subject: "I3910"
+    finding: "An autonomous lander had no check for a red master; I2709 refuses landing to anyone but the red's carrier."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3910
+      because: "I3910 lands only the red's named carrier while master's required check is red (I2709)."

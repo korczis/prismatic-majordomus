@@ -109,7 +109,7 @@ pub enum ToolOutcome {
     /// The handler declined: the category as one word ([`CapabilityError::code`]) and the
     /// reason as the handler gave it.
     Refused {
-        /// `invalid_input`, `not_found`, `refused` or `forbidden`.
+        /// `invalid_input`, `not_found`, `refused`, `forbidden` or `conflict`.
         code: &'static str,
         /// The message, category included, as every transport shows it.
         reason: String,

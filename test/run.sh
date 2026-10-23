@@ -21,6 +21,9 @@
 #                                       weighs 300 s. Stale numbers unbalance shards, never
 #                                       drop a case
 #   MJ_TEST_LIST=1                      print the cases this invocation would run and run none
+#   MJ_TEST_KEEP=1                      keep each case's scratch dir and print where it is, to
+#                                       debug a case; without it the dir is removed when the
+#                                       case ends, fails, times out or the runner is interrupted
 #   bash test/run.sh --no-skips [...]   a case that declines fails the run, unless its header
 #                                       says where its subject is read instead:
 #                                       "# majordomus-skip-runs-in: <job>"; CI runs the suite so
@@ -131,16 +134,40 @@ case_skip_runs_in() {
        { exit }' "$1" 2>/dev/null | head -n 1
 }
 
+# The case running now, so that a runner interrupted or killed between a case's start and its
+# end leaves no fixture behind (I3834). Orphaned $TMPDIR/mj-test.* were the machine's steady
+# disk drain: 13 GiB of them on 2026-10-21, from runs a pre-push hook or a session had stopped.
+# The case's process group is stopped first, so nothing writes into the directory as it goes.
+MJ_CASE_DIR="" MJ_CASE_PID=""
+case_cleanup() {
+  [ -n "$MJ_CASE_PID" ] && kill -TERM "-$MJ_CASE_PID" 2>/dev/null
+  [ -n "$MJ_CASE_DIR" ] && drop_case_dir "$MJ_CASE_DIR"
+  MJ_CASE_DIR="" MJ_CASE_PID=""
+}
+trap case_cleanup EXIT
+trap 'case_cleanup; trap - EXIT; exit 130' INT
+trap 'case_cleanup; trap - EXIT; exit 143' TERM HUP
+
+# Removes a case's scratch dir and its skip mark, unless MJ_TEST_KEEP asks to keep them.
+drop_case_dir() {
+  if [ "${MJ_TEST_KEEP:-0}" = 1 ]; then
+    echo "    kept $1" >&2
+  else
+    rm -rf "$1" "$1.skip"
+  fi
+}
+
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired.
 run_case() {
   local case="$1" T rc=0 limit pid waited grace mark declined=0
   T="$(mktemp -d "${TMPDIR:-/tmp}/mj-test.XXXXXX")"
+  MJ_CASE_DIR="$T"
   # where `skip` says it was called: beside the fixture rather than in it, so a case that
   # empties its own directory cannot erase the declaration, and unique because $T is
   mark="$T.skip"
   ( cd "$T" && git init -q . && git config user.email t@example.com && git config user.name t \
-    && git commit -q --allow-empty -m init ) || { rm -rf "$T"; return 2; }
+    && git commit -q --allow-empty -m init ) || { case_cleanup; return 2; }
   limit="$(case_timeout "$case")"
   # a case that runs the runner itself (26 does, in a harness of its own) gets a fresh
   # serial runner, never this run's worker mode, log directory, pool or report
@@ -162,6 +189,7 @@ run_case() {
       MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
     && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" < /dev/null ) &
   pid=$!
+  MJ_CASE_PID="$pid"
   set +m
   if [ "$limit" = 0 ]; then
     wait "$pid" || rc=$?
@@ -177,7 +205,7 @@ run_case() {
         kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
         echo "    the case did not finish within ${limit}s and was terminated" >&2
-        rm -rf "$T" "$mark"
+        MJ_CASE_PID=""; case_cleanup
         return 3
       fi
       sleep 1; waited=$((waited+1))
@@ -185,7 +213,7 @@ run_case() {
     wait "$pid" || rc=$?
   fi
   [ -f "$mark" ] && declined=1
-  rm -rf "$T" "$mark"
+  MJ_CASE_PID=""; case_cleanup
   # Only two statuses mean anything to the caller besides 0: the skip the case declared, and
   # failure. A case's own exit 2 or 3 is a failure of that case and must not be read as this
   # function's "the fixture could not be set up" or "the bound fired", which are the
