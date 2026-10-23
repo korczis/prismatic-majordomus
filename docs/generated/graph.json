@@ -988,6 +988,33 @@
         "status": "query"
       },
       {
+        "id": "capability:machine.slot.acquire",
+        "kind": "capability",
+        "label": "machine.slot.acquire",
+        "summary": "Take a machine slot for heavy work",
+        "route": "/cockpit/capabilities/machine.slot.acquire",
+        "source": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:machine.slot.release",
+        "kind": "capability",
+        "label": "machine.slot.release",
+        "summary": "Give a machine slot back",
+        "route": "/cockpit/capabilities/machine.slot.release",
+        "source": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:machine.slot.status",
+        "kind": "capability",
+        "label": "machine.slot.status",
+        "summary": "Who holds the machine's slots, and who waits",
+        "route": "/cockpit/capabilities/machine.slot.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/machine.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:mcp.projection",
         "kind": "capability",
         "label": "mcp.projection",
@@ -86587,6 +86614,13 @@
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4006_heavy_work_shares_the_machine.sh",
+        "kind": "test",
+        "label": "test/cases/4006_heavy_work_shares_the_machine.sh",
+        "route": "/cockpit/objects/test/test-cases-4006-heavy-work-shares-the-machine-sh",
+        "source": "test/cases/4006_heavy_work_shares_the_machine.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -90525,6 +90559,11 @@
         "label": "lifecycle"
       },
       {
+        "id": "module:machine",
+        "kind": "module",
+        "label": "machine"
+      },
+      {
         "id": "module:mcp",
         "kind": "module",
         "label": "mcp"
@@ -92543,6 +92582,66 @@
       },
       {
         "source": "capability:lifecycle.runtime",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.acquire",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.acquire",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.acquire",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.acquire",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.release",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.release",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.release",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.release",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:machine.slot.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -129187,6 +129286,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4006_heavy_work_shares_the_machine.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -133762,6 +133866,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:machine",
+        "target": "capability:machine.slot.acquire",
+        "kind": "composes"
+      },
+      {
+        "source": "module:machine",
+        "target": "capability:machine.slot.release",
+        "kind": "composes"
+      },
+      {
+        "source": "module:machine",
+        "target": "capability:machine.slot.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:mcp",
         "target": "capability:mcp.projection",
         "kind": "composes"
@@ -134293,8 +134412,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3772,
+      "edges": 8726,
       "acyclic": false,
       "truncated": false
     }

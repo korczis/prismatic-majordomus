@@ -384,6 +384,21 @@ checkout:
     warn_behind: 100                     # about a day of this trunk's commits
     fail_behind: 400                     # several days: what it serves is not the trunk
 
+# ---------------------------------------------------------------- what one machine admits at once
+# Rule project.the-cooperation-model-is-the-owners-word clause 7, as numbers: at most `slots`
+# builders run at once on one machine, and none starts while less than `min_free_gib` is free on
+# the volume it writes to. On 2026-10-22 eleven cargo processes of eleven worktrees queued for
+# 47 min and more at 0% CPU on one build lock, and five cold private builds took the disk under
+# 35 GiB, while the rule said five and 35 and nothing held a build to either. `machine.slot`
+# (I4006, docs/OFFLOAD.md) is what holds them now: the build path of lib/rust_bin.sh takes a slot
+# before it runs cargo, waits in turn for at most `wait_seconds`, and is refused naming every
+# holder. Case 4006 holds these numbers to the rule's statement.
+machine:
+  heavy_work:
+    slots: 5
+    min_free_gib: 35
+    wait_seconds: 600
+
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four
 # numbers are what a contest between two processes is judged by, and until 2026-09-15 all

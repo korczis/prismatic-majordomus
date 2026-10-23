@@ -254,13 +254,18 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus continuity publish`](#majordomus-continuity-publish) | `/docs/cli/continuity/publish/` | Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path |
 | [`majordomus continuity sync`](#majordomus-continuity-sync) | `/docs/cli/continuity/sync/` | Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending |
 | [`majordomus continuity resume`](#majordomus-continuity-resume) | `/docs/cli/continuity/resume/` | Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line |
+| [`majordomus machine`](#majordomus-machine) | `/docs/cli/machine/` | What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits |
+| [`majordomus machine slot`](#majordomus-machine-slot) | `/docs/cli/machine/slot/` | The machine's counting slot for heavy work: acquire, release, status |
+| [`majordomus machine slot status`](#majordomus-machine-slot-status) | `/docs/cli/machine/slot/status/` | Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk |
+| [`majordomus machine slot acquire`](#majordomus-machine-slot-acquire) | `/docs/cli/machine/slot/acquire/` | Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor) |
+| [`majordomus machine slot release`](#majordomus-machine-slot-release) | `/docs/cli/machine/slot/release/` | Give back the slot a process holds, and withdraw it from the queue |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus deploy`](#majordomus-deploy), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus deploy`](#majordomus-deploy), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity), [`majordomus machine`](#majordomus-machine).
 
 ```text
 majordomus <COMMAND>
@@ -7238,4 +7243,130 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-machine"></a>
+## `majordomus machine`
+
+What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits
+
+Subcommands: [`majordomus machine slot`](#majordomus-machine-slot).
+
+```text
+majordomus machine [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-machine-slot"></a>
+## `majordomus machine slot`
+
+The machine's counting slot for heavy work: acquire, release, status
+
+Subcommands: [`majordomus machine slot status`](#majordomus-machine-slot-status), [`majordomus machine slot acquire`](#majordomus-machine-slot-acquire), [`majordomus machine slot release`](#majordomus-machine-slot-release).
+
+```text
+majordomus machine slot [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-machine-slot-status"></a>
+## `majordomus machine slot status`
+
+Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk
+
+```text
+majordomus machine slot status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--volume` | `<PATH>` | — | A path the work writes to, whose volume's free space is measured (default: the slot directory's) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Who holds the machine's slots, and who waits** — The limits and where they are declared, the free disk, every holder with its pid, age, liveness and purpose, and every waiter with what it waits on. This repository's policy declares no `machine.heavy_work`, so the answer says that no limit and no floor are declared rather than inventing one.
+
+  ```console
+  $ majordomus machine slot status
+  ```
+
+  Verified: exits 0; prints machine slots:, no limit declared, no floor declared.
+
+<a id="majordomus-machine-slot-acquire"></a>
+## `majordomus machine slot acquire`
+
+Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)
+
+```text
+majordomus machine slot acquire [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--purpose` | `<PURPOSE>` | required | What the holder is about to do; every waiter and every refusal names it |
+| `--pid` | `<PID>` | — | The process that holds the slot (default: this command's parent, the shell that runs it) |
+| `--wait` | `<SECONDS>` | — | Seconds to wait for a slot (default: the policy's machine.heavy_work.wait_seconds, else none) |
+| `--volume` | `<PATH>` | — | A path the work writes to, whose volume the disk floor is judged on (default: the slot directory's) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Take a slot for the shell that runs the build** — Without `--pid` the holder is this command's parent, the shell that is about to do the work, so the slot is freed when that shell ends even if nobody releases it. The first word is the verdict a shell caller reads: `admitted`, `already_held`, or `refused` with exit 75 and every holder named. With no limit declared the caller is admitted at once.
+
+  ```console
+  $ majordomus machine slot acquire --purpose 'cargo build' --wait 0
+  ```
+
+  Verified: exits 0; prints admitted: pid.
+
+<a id="majordomus-machine-slot-release"></a>
+## `majordomus machine slot release`
+
+Give back the slot a process holds, and withdraw it from the queue
+
+```text
+majordomus machine slot release [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--pid` | `<PID>` | — | The process whose slot is given back (default: this command's parent) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Give the slot back when the work is done** — The slot taken by the setup step for the same parent process is given back, and the next waiter is admitted on its next look. Releasing a slot nobody holds says `not held` and changes nothing.
+
+  ```console
+  $ majordomus machine slot acquire --purpose 'cargo build'
+  $ majordomus machine slot release
+  ```
+
+  Verified: exits 0; prints released: pid.
 

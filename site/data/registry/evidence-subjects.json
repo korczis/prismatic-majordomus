@@ -554,6 +554,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:machine.slot.acquire",
+      "path": "/evidence/capabilities/machine-slot-acquire/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:machine.slot.release",
+      "path": "/evidence/capabilities/machine-slot-release/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:machine.slot.status",
+      "path": "/evidence/capabilities/machine-slot-status/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mcp.projection",
       "path": "/evidence/capabilities/mcp-projection/"
     },
@@ -2869,6 +2884,21 @@
     },
     {
       "kind": "command",
+      "subject": "command:machine slot acquire",
+      "path": "/evidence/commands/machine-slot-acquire/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:machine slot release",
+      "path": "/evidence/commands/machine-slot-release/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:machine slot status",
+      "path": "/evidence/commands/machine-slot-status/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mcp",
       "path": "/evidence/commands/mcp/"
     },
@@ -5117,6 +5147,63 @@
         "claim:session-observability"
       ],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.slot.acquire": {
+      "kind": "capability",
+      "id": "machine.slot.acquire",
+      "page": "/evidence/capabilities/machine-slot-acquire/",
+      "programs": [],
+      "members": [
+        "command:machine slot acquire"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.slot.release": {
+      "kind": "capability",
+      "id": "machine.slot.release",
+      "page": "/evidence/capabilities/machine-slot-release/",
+      "programs": [],
+      "members": [
+        "command:machine slot release"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:machine.slot.status": {
+      "kind": "capability",
+      "id": "machine.slot.status",
+      "page": "/evidence/capabilities/machine-slot-status/",
+      "programs": [],
+      "members": [
+        "command:machine slot status"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -15555,6 +15642,63 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:machine slot acquire": {
+      "kind": "command",
+      "id": "machine slot acquire",
+      "page": "/evidence/commands/machine-slot-acquire/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:machine slot release": {
+      "kind": "command",
+      "id": "machine slot release",
+      "page": "/evidence/commands/machine-slot-release/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:machine slot status": {
+      "kind": "command",
+      "id": "machine slot status",
+      "page": "/evidence/commands/machine-slot-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mcp": {
       "kind": "command",
       "id": "mcp",
@@ -20723,6 +20867,42 @@
       "programs": [],
       "members": [
         "capability:objects.list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_slot_acquire": {
+      "kind": "mcp",
+      "id": "majordomus_machine_slot_acquire",
+      "alias_of": "capability:machine.slot.acquire",
+      "programs": [],
+      "members": [
+        "capability:machine.slot.acquire"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_slot_release": {
+      "kind": "mcp",
+      "id": "majordomus_machine_slot_release",
+      "alias_of": "capability:machine.slot.release",
+      "programs": [],
+      "members": [
+        "capability:machine.slot.release"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_machine_slot_status": {
+      "kind": "mcp",
+      "id": "majordomus_machine_slot_status",
+      "alias_of": "capability:machine.slot.status",
+      "programs": [],
+      "members": [
+        "capability:machine.slot.status"
       ],
       "routes": [],
       "mechanisms": [],
@@ -26465,6 +26645,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:4006_heavy_work_shares_the_machine",
+          "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/4006_heavy_work_shares_the_machine.sh",
             ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ]
         },

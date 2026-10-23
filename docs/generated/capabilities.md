@@ -40,6 +40,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `intents` | Intent | behaviorally_verified | 7 | [`modules/intents.md`](modules/intents.md) |
 | `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
+| `machine` | Machine | experimental | 3 | [`modules/machine.md`](modules/machine.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
 | `mesh` | Mesh | experimental | 24 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
@@ -174,6 +175,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `lifecycle.providers` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_providers` | — | `GET /api/v1/lifecycle/providers` | — | process, 2 entries | required |
 | `lifecycle.recovery` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_recovery` | `majordomus://lifecycle/recovery` | `GET /api/v1/lifecycle/recovery` | — | process, 2 entries, 2s | required |
 | `lifecycle.runtime` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_runtime` | — | `GET /api/v1/lifecycle/runtime` | — | process, 2 entries, 2s | required |
+| `machine.slot.acquire` | `machine` | command | experimental | `majordomus_machine_slot_acquire` | — | `POST /api/v1/machine/slot/acquire` | `majordomus machine slot acquire` | — | waived (destructive) |
+| `machine.slot.release` | `machine` | command | experimental | `majordomus_machine_slot_release` | — | `POST /api/v1/machine/slot/release` | `majordomus machine slot release` | — | waived (destructive) |
+| `machine.slot.status` | `machine` | query | experimental | `majordomus_machine_slot_status` | — | `GET /api/v1/machine/slot/status` | `majordomus machine slot status` | — | required |
 | `mcp.projection` | `mcp` | query | experimental | `majordomus_mcp` | `majordomus://mcp` | `GET /api/v1/mcp` | — | — | required |
 | `mesh.claim` | `mesh` | command | experimental | `majordomus_mesh_claim` | — | `POST /api/v1/mesh/claims` | — | — | waived (transient_state) |
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |

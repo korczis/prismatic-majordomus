@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 208 | 175 | 0 | 33 |
-| http | 202 | 175 | 0 | 27 |
-| mcp | 197 | 171 | 0 | 26 |
+| direct | 211 | 176 | 0 | 35 |
+| http | 205 | 176 | 0 | 29 |
+| mcp | 200 | 172 | 0 | 28 |
 | system | 14 | 14 | 0 | 0 |
-| total | 621 | 535 | 0 | 86 |
+| total | 630 | 538 | 0 | 92 |
 
 ## Capabilities
 
@@ -121,6 +121,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `machine.slot.acquire` | machine | command | — | waived | waived | waived | — |
+| `machine.slot.release` | machine | command | — | waived | waived | waived | — |
+| `machine.slot.status` | machine | query | — | covered | covered | covered | `the-machine`, `a-build-directory` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |

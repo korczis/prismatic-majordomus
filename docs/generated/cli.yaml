@@ -24381,3 +24381,466 @@ cli:
               setup: []
               expectation: exits 10
           subcommands: []
+    - path:
+        - majordomus
+        - machine
+      route: /docs/cli/machine/
+      executable: false
+      usage: "majordomus machine [OPTIONS] <COMMAND>"
+      about: "What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - machine
+            - slot
+          route: /docs/cli/machine/slot/
+          executable: false
+          usage: "majordomus machine slot [OPTIONS] <COMMAND>"
+          about: "The machine's counting slot for heavy work: acquire, release, status"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples: []
+          subcommands:
+            - path:
+                - majordomus
+                - machine
+                - slot
+                - status
+              route: /docs/cli/machine/slot/status/
+              executable: true
+              usage: "majordomus machine slot status [OPTIONS]"
+              about: "Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk"
+              args:
+                - name: volume
+                  long: volume
+                  positional: false
+                  help: "A path the work writes to, whose volume's free space is measured (default: the slot directory's)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+              examples:
+                - id: machine-slot-status
+                  title: "Who holds the machine's slots, and who waits"
+                  description: "The limits and where they are declared, the free disk, every holder with its pid, age, liveness and purpose, and every waiter with what it waits on. This repository's policy declares no `machine.heavy_work`, so the answer says that no limit and no floor are declared rather than inventing one."
+                  argv:
+                    - machine
+                    - slot
+                    - status
+                  command: majordomus machine slot status
+                  setup: []
+                  expectation: "exits 0; prints machine slots:, no limit declared, no floor declared"
+              subcommands: []
+            - path:
+                - majordomus
+                - machine
+                - slot
+                - acquire
+              route: /docs/cli/machine/slot/acquire/
+              executable: true
+              usage: "majordomus machine slot acquire [OPTIONS]"
+              about: "Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)"
+              args:
+                - name: purpose
+                  long: purpose
+                  positional: false
+                  help: What the holder is about to do; every waiter and every refusal names it
+                  value_name: PURPOSE
+                  takes_value: true
+                  required: true
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: pid
+                  long: pid
+                  positional: false
+                  help: "The process that holds the slot (default: this command's parent, the shell that runs it)"
+                  value_name: PID
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: wait
+                  long: wait
+                  positional: false
+                  help: "Seconds to wait for a slot (default: the policy's machine.heavy_work.wait_seconds, else none)"
+                  value_name: SECONDS
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: volume
+                  long: volume
+                  positional: false
+                  help: "A path the work writes to, whose volume the disk floor is judged on (default: the slot directory's)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+              examples:
+                - id: machine-slot-acquire
+                  title: Take a slot for the shell that runs the build
+                  description: "Without `--pid` the holder is this command's parent, the shell that is about to do the work, so the slot is freed when that shell ends even if nobody releases it. The first word is the verdict a shell caller reads: `admitted`, `already_held`, or `refused` with exit 75 and every holder named. With no limit declared the caller is admitted at once."
+                  argv:
+                    - machine
+                    - slot
+                    - acquire
+                    - "--purpose"
+                    - cargo build
+                    - "--wait"
+                    - "0"
+                  command: "majordomus machine slot acquire --purpose 'cargo build' --wait 0"
+                  setup: []
+                  expectation: "exits 0; prints admitted: pid"
+              subcommands: []
+            - path:
+                - majordomus
+                - machine
+                - slot
+                - release
+              route: /docs/cli/machine/slot/release/
+              executable: true
+              usage: "majordomus machine slot release [OPTIONS]"
+              about: "Give back the slot a process holds, and withdraw it from the queue"
+              args:
+                - name: pid
+                  long: pid
+                  positional: false
+                  help: "The process whose slot is given back (default: this command's parent)"
+                  value_name: PID
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: repo
+                  long: repo
+                  positional: false
+                  help: "Start the search for the repository root here (default: the current directory)"
+                  value_name: PATH
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: discovery
+                  long: discovery
+                  positional: false
+                  help: How declarative files are enumerated
+                  value_name: DISCOVERY
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: vcs
+                      help: "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                    - name: filesystem
+                      help: A walk of the work tree with the same glob semantics; untracked files included
+                  defaults:
+                    - vcs
+                - name: strict
+                  long: strict
+                  positional: false
+                  help: Refuse to proceed when any file of the layer carries an error diagnostic
+                  value_name: STRICT
+                  takes_value: false
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults:
+                    - "false"
+                - name: share
+                  long: share
+                  positional: false
+                  help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+                  value_name: DIR
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: Output shape
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: true
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+              examples:
+                - id: machine-slot-release
+                  title: Give the slot back when the work is done
+                  description: "The slot taken by the setup step for the same parent process is given back, and the next waiter is admitted on its next look. Releasing a slot nobody holds says `not held` and changes nothing."
+                  argv:
+                    - machine
+                    - slot
+                    - release
+                  command: majordomus machine slot release
+                  setup:
+                    - argv:
+                        - machine
+                        - slot
+                        - acquire
+                        - "--purpose"
+                        - cargo build
+                      command: "majordomus machine slot acquire --purpose 'cargo build'"
+                  expectation: "exits 0; prints released: pid"
+              subcommands: []

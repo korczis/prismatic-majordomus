@@ -766,8 +766,9 @@ fn derive_section(root: &Path) -> BriefDeriveSection {
     derive_from(declared, lock.as_deref(), priority.as_deref())
 }
 
-/// The directory holding the primary checkout, found from git's common directory.
-fn primary_home(root: &Path) -> Option<PathBuf> {
+/// The directory holding the primary checkout, found from git's common directory: where the
+/// derive lock and the machine slots (`crate::machine_slot`) are kept.
+pub(crate) fn primary_home(root: &Path) -> Option<PathBuf> {
     let out = std::process::Command::new("git")
         .arg("-C")
         .arg(root)

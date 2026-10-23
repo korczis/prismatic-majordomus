@@ -99,6 +99,9 @@
     "op-lifecycle-providers": "docs/api/lifecycle/",
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
+    "op-machine-slot-acquire": "docs/api/machine/",
+    "op-machine-slot-release": "docs/api/machine/",
+    "op-machine-slot-status": "docs/api/machine/",
     "op-mcp-projection": "docs/api/mcp/",
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
@@ -1103,6 +1106,18 @@
     "schema-SkillTested": "docs/api/skills/",
     "schema-SkillUsed": "docs/api/skills/",
     "schema-SkillVerification": "docs/api/skills/",
+    "schema-SlotAcquireInput": "docs/api/machine/",
+    "schema-SlotAnswer": "docs/api/machine/",
+    "schema-SlotHolder": "docs/api/machine/",
+    "schema-SlotLimits": "docs/api/machine/",
+    "schema-SlotLiveness": "docs/api/machine/",
+    "schema-SlotRefusal": "docs/api/machine/",
+    "schema-SlotRefusalReason": "docs/api/machine/",
+    "schema-SlotRelease": "docs/api/machine/",
+    "schema-SlotReleaseInput": "docs/api/machine/",
+    "schema-SlotStatus": "docs/api/machine/",
+    "schema-SlotVerdict": "docs/api/machine/",
+    "schema-SlotWaiter": "docs/api/machine/",
     "schema-Snapshot": "docs/api/integration/",
     "schema-SnapshotSection": "docs/api/integration/",
     "schema-Source": "docs/api/design/",
@@ -1246,6 +1261,7 @@
     "tag-intents": "docs/api/intents/",
     "tag-knowledge_base": "docs/api/knowledge-base/",
     "tag-lifecycle": "docs/api/lifecycle/",
+    "tag-machine": "docs/api/machine/",
     "tag-mcp": "docs/api/mcp/",
     "tag-mesh": "docs/api/mesh/",
     "tag-models": "docs/api/models/",
@@ -1276,9 +1292,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 202,
-    "schemas": 1013,
-    "tags": 58
+    "operations": 205,
+    "schemas": 1025,
+    "tags": 59
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1468,6 +1484,9 @@
     "lifecycle.providers": "lifecycle",
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
+    "machine.slot.acquire": "machine",
+    "machine.slot.release": "machine",
+    "machine.slot.status": "machine",
     "mcp.projection": "mcp",
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
@@ -2476,6 +2495,18 @@
     "SkillTested": "skills",
     "SkillUsed": "skills",
     "SkillVerification": "skills",
+    "SlotAcquireInput": "machine",
+    "SlotAnswer": "machine",
+    "SlotHolder": "machine",
+    "SlotLimits": "machine",
+    "SlotLiveness": "machine",
+    "SlotRefusal": "machine",
+    "SlotRefusalReason": "machine",
+    "SlotRelease": "machine",
+    "SlotReleaseInput": "machine",
+    "SlotStatus": "machine",
+    "SlotVerdict": "machine",
+    "SlotWaiter": "machine",
     "Snapshot": "integration",
     "SnapshotSection": "integration",
     "Source": "design",
@@ -20098,6 +20129,9 @@
         "lifecycle.recovery",
         "lifecycle.runtime",
         "health.live",
+        "machine.slot.acquire",
+        "machine.slot.release",
+        "machine.slot.status",
         "mcp.projection",
         "mesh.status",
         "mesh.claim",
@@ -53342,6 +53376,515 @@
       "variants": []
     },
     {
+      "description": "What to ask of `machine.slot.acquire`.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotAcquireInput",
+      "properties": [
+        {
+          "description": "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names.",
+          "name": "purpose",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too.",
+          "name": "wait_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent.",
+          "name": "volume",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.acquire"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer to an acquisition.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotAnswer",
+      "properties": [
+        {
+          "description": "Admitted, already held, or refused.",
+          "name": "verdict",
+          "refs": [
+            "SlotVerdict"
+          ],
+          "required": true,
+          "type": "SlotVerdict"
+        },
+        {
+          "description": "Present when refused.",
+          "name": "refusal",
+          "refs": [
+            "SlotRefusal"
+          ],
+          "required": false,
+          "type": "SlotRefusal | null"
+        },
+        {
+          "description": "Seconds the caller waited in the queue.",
+          "name": "waited_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Holders reclaimed on the way, because their process was proven gone.",
+          "name": "reclaimed",
+          "refs": [
+            "SlotHolder"
+          ],
+          "required": true,
+          "type": "array of SlotHolder"
+        },
+        {
+          "description": "The slot directory as it stood when the answer was given.",
+          "name": "status",
+          "refs": [
+            "SlotStatus"
+          ],
+          "required": true,
+          "type": "SlotStatus"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.acquire"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One holder of a slot, as a reader sees it.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotHolder",
+      "properties": [
+        {
+          "description": "The process that holds the slot.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "What it said it is doing.",
+          "name": "purpose",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was admitted (RFC 3339, UTC).",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds since then.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether that process still runs.",
+          "name": "liveness",
+          "refs": [
+            "SlotLiveness"
+          ],
+          "required": true,
+          "type": "SlotLiveness"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotAnswer",
+        "SlotRelease",
+        "SlotStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The limits an admission is judged by, and where they were read.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotLimits",
+      "properties": [
+        {
+          "description": "How many holders the machine admits at once; absent admits every caller.",
+          "name": "slots",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "GiB that must be free; absent refuses nobody for disk.",
+          "name": "min_free_gib",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How long a caller that names no bound waits, in seconds; absent waits not at all.",
+          "name": "wait_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The rule whose numbers these are.",
+          "name": "rule",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where they are declared: the policy file and the key.",
+          "name": "declared_in",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a holder's process is still the one that took the slot.",
+      "home": "machine",
+      "is_enum": true,
+      "name": "SlotLiveness",
+      "properties": [],
+      "type": "\"alive\" | \"unverified\" | \"dead\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotHolder"
+      ],
+      "values": [
+        {
+          "description": "The pid runs, with the start time the record names.",
+          "value": "alive"
+        },
+        {
+          "description": "The pid runs, and its start time could not be read: kept, never reclaimed.",
+          "value": "unverified"
+        },
+        {
+          "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable.",
+          "value": "dead"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A refusal, with what it measured and what to do.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotRefusal",
+      "properties": [
+        {
+          "description": "Which limit refused.",
+          "name": "reason",
+          "refs": [
+            "SlotRefusalReason"
+          ],
+          "required": true,
+          "type": "SlotRefusalReason"
+        },
+        {
+          "description": "The measured values and every holder, in a sentence.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the caller can do instead.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why an acquisition was refused.",
+      "home": "machine",
+      "is_enum": true,
+      "name": "SlotRefusalReason",
+      "properties": [],
+      "type": "\"slots_full\" | \"disk_floor\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotRefusal"
+      ],
+      "values": [
+        {
+          "description": "Every slot stayed held for the whole wait.",
+          "value": "slots_full"
+        },
+        {
+          "description": "Less than the floor is free on the volume the work writes to.",
+          "value": "disk_floor"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer to a release.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotRelease",
+      "properties": [
+        {
+          "description": "Whether the process held a slot that is now free.",
+          "name": "released",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The record that was removed.",
+          "name": "holder",
+          "refs": [
+            "SlotHolder"
+          ],
+          "required": false,
+          "type": "SlotHolder | null"
+        },
+        {
+          "description": "Whether a waiter record of the process was withdrawn as well.",
+          "name": "withdrew_waiter",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.release"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What to ask of `machine.slot.release`.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotReleaseInput",
+      "properties": [
+        {
+          "description": "The process whose slot is given back.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.release"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The slot directory as it stands.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotStatus",
+      "properties": [
+        {
+          "description": "The directory the slots are kept in.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The limits, and where they were read.",
+          "name": "limits",
+          "refs": [
+            "SlotLimits"
+          ],
+          "required": true,
+          "type": "SlotLimits"
+        },
+        {
+          "description": "MiB free on the volume measured; absent when it could not be measured.",
+          "name": "free_mib",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The volume measured: the work's own path, or the slot directory.",
+          "name": "volume",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many holders whose process is not proven gone.",
+          "name": "held",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every holder, oldest first.",
+          "name": "holders",
+          "refs": [
+            "SlotHolder"
+          ],
+          "required": true,
+          "type": "array of SlotHolder"
+        },
+        {
+          "description": "Every waiter, in the order they will be admitted.",
+          "name": "waiters",
+          "refs": [
+            "SlotWaiter"
+          ],
+          "required": true,
+          "type": "array of SlotWaiter"
+        },
+        {
+          "description": "One line: held of slots, free against the floor, the waiters.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.status"
+      ],
+      "used_by_schemas": [
+        "SlotAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What an acquisition came to.",
+      "home": "machine",
+      "is_enum": true,
+      "name": "SlotVerdict",
+      "properties": [],
+      "type": "\"admitted\" | \"already_held\" | \"refused\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotAnswer"
+      ],
+      "values": [
+        {
+          "description": "A slot was taken for the caller's process.",
+          "value": "admitted"
+        },
+        {
+          "description": "The caller's process already held one; nothing was taken.",
+          "value": "already_held"
+        },
+        {
+          "description": "Refused; the refusal says why and who holds the slots.",
+          "value": "refused"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One waiter for a slot, as a reader sees it: the progress a waiting session reports.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotWaiter",
+      "properties": [
+        {
+          "description": "The process that waits.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "What it will do once admitted.",
+          "name": "purpose",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it started waiting (RFC 3339, UTC).",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds it has waited.",
+          "name": "waiting_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`.",
+          "name": "waiting_on",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Everything the cycle could move, at one moment.",
       "home": "integration",
       "is_enum": false,
@@ -66089,6 +66632,208 @@
         }
       ],
       "slug": "lifecycle"
+    },
+    {
+      "description": "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work.",
+      "name": "machine",
+      "operations": [
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "a-build",
+              "json": "{\"pid\":48213,\"purpose\":\"cargo build in this worktree\",\"wait_seconds\":600}"
+            }
+          ],
+          "body_schema": "SlotAcquireInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "machine slot acquire",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/machine/slot/acquire\" -H \"content-type: application/json\" -d '{\"pid\":48213,\"purpose\":\"cargo build in this worktree\",\"wait_seconds\":600}'",
+          "description": "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two.",
+          "home": "machine",
+          "id": "machine.slot.acquire",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_machine_slot_acquire",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/machine/slot/acquire",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::machine",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Take a machine slot for heavy work: the result.",
+              "schema": "SlotAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SlotAnswer",
+          "stability": "experimental",
+          "summary": "Take a machine slot for heavy work"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "a-build",
+              "json": "{\"pid\":48213}"
+            }
+          ],
+          "body_schema": "SlotReleaseInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "machine slot release",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/machine/slot/release\" -H \"content-type: application/json\" -d '{\"pid\":48213}'",
+          "description": "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing.",
+          "home": "machine",
+          "id": "machine.slot.release",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_machine_slot_release",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/machine/slot/release",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::machine",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Give a machine slot back: the result.",
+              "schema": "SlotRelease",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SlotRelease",
+          "stability": "experimental",
+          "summary": "Give a machine slot back"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "machine slot status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/machine/slot/status?volume=apps%2Fmajordomus-cli%2Ftarget\"",
+          "description": "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition.",
+          "home": "machine",
+          "id": "machine.slot.status",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_machine_slot_status",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent.",
+              "examples": [
+                {
+                  "case": "a-build-directory",
+                  "value": "\"apps/majordomus-cli/target\""
+                }
+              ],
+              "name": "volume",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/machine/slot/status",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::machine",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Who holds the machine's slots, and who waits: the result.",
+              "schema": "SlotStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SlotStatus",
+          "stability": "experimental",
+          "summary": "Who holds the machine's slots, and who waits"
+        }
+      ],
+      "slug": "machine"
     },
     {
       "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers.",

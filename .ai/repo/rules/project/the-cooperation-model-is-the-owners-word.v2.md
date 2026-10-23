@@ -11,7 +11,7 @@ depends_on: [project.integration-follows-the-current-master@3, project.an-expedi
 tags: [process, integration, mesh, release, governance]
 
 x-majordomus:
-  tests: [test/cases/3150_the_cooperation_model_is_one_record.sh, test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh, test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh, test/cases/720_integration_follows_the_current_master.sh]
+  tests: [test/cases/3150_the_cooperation_model_is_one_record.sh, test/cases/3824_the_bootstrap_says_what_the_cooperation_rule_says.sh, test/cases/2999_delivery_is_expedited_only_where_the_rule_says.sh, test/cases/720_integration_follows_the_current_master.sh, test/cases/4006_heavy_work_shares_the_machine.sh]
 ---
 
 # Rationale
@@ -154,9 +154,14 @@ never expedited, and every decision leaves its evidence.
 Clauses 2, 3 and 6 are also acts of a session, and are decided by the record: the landing claim
 on the mesh, the members and the judged head named in the top's pull request, the queued pull
 request and the head the lander pinned, and the rescue refs left before a move. Clause 7's two
-limits are, today, the seats' operating numbers read from this record; the build guard in
-`lib/rust_bin.sh` still refuses only below its own 5 GiB default, and holding a build to 35 GiB
-and five builders in code is owed (I3825).
+limits are declared once as numbers, in the policy's `machine.heavy_work` (`slots`,
+`min_free_gib`, and the `wait_seconds` a build waits in turn), and held by the machine slot
+(`majordomus machine slot`, I4006): the cargo build path of `lib/rust_bin.sh` takes a slot
+before it runs cargo, waits for one visibly and for at most the declared bound, and is refused
+naming every holder, or at once below the disk floor. A CI runner is one job's machine and
+keeps its own floor. `test/cases/4006_heavy_work_shares_the_machine.sh` holds the policy's
+numbers to this rule's statement and proves the admission, the bounded wait, the reclaim of a
+dead holder, the disk floor and a refused build that starts no cargo.
 
 # Verification
 

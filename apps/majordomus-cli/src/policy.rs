@@ -178,6 +178,53 @@ pub struct Policy {
     /// number nobody wrote down.
     #[serde(default)]
     pub checkout: CheckoutPolicy,
+    /// `machine:` — what one machine admits at once: the slots and the disk floor of rule
+    /// `project.the-cooperation-model-is-the-owners-word` clause 7, held by `machine.slot`
+    /// (I4006). Absent declares no limit, and an admission says so.
+    #[serde(default)]
+    pub machine: MachinePolicy,
+}
+
+/// `machine.heavy_work:` of the policy — the two limits of rule
+/// `project.the-cooperation-model-is-the-owners-word` clause 7, and how long a caller that
+/// names no bound waits for a slot.
+///
+/// Absent is absent: a repository whose policy declares no block admits every caller and
+/// says that nothing was declared, rather than judging it by numbers nobody wrote down.
+///
+/// ```
+/// use majordomus_cli::policy::HeavyWorkPolicy;
+/// let p: HeavyWorkPolicy =
+///     serde_json::from_str(r#"{"slots": 5, "min_free_gib": 35, "wait_seconds": 600}"#).unwrap();
+/// assert_eq!((p.slots, p.min_free_gib, p.wait_seconds), (Some(5), Some(35), Some(600)));
+/// assert_eq!(HeavyWorkPolicy::default().slots, None, "absent is not a default");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct HeavyWorkPolicy {
+    /// How many holders the machine admits at once.
+    #[serde(default)]
+    pub slots: Option<u32>,
+    /// GiB that must be free on the volume the work writes to for it to be admitted.
+    #[serde(default)]
+    pub min_free_gib: Option<u64>,
+    /// How long a caller that names no bound waits for a slot, in seconds.
+    #[serde(default)]
+    pub wait_seconds: Option<u64>,
+}
+
+/// `machine:` of the policy: what one machine admits at once, read by the machine slot
+/// (`machine.slot.*`) on every acquisition.
+///
+/// ```
+/// use majordomus_cli::policy::MachinePolicy;
+/// let p: MachinePolicy = serde_json::from_str(r#"{"heavy_work": {"slots": 2}}"#).unwrap();
+/// assert_eq!(p.heavy_work.slots, Some(2));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct MachinePolicy {
+    /// `machine.heavy_work:`.
+    #[serde(default)]
+    pub heavy_work: HeavyWorkPolicy,
 }
 
 /// `checkout:` — how far a checkout may drift from the remote trunk before what it serves
