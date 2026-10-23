@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "e8abfb0675f500a1f176addbbc5a1a413ff1ec4c0d99da35ce822a26c739e23c",
+  "fingerprint": "dbc0ded7c57c830bd16082f37959d93041f5780a7ecccc6d5061f125f6ffa8ca",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 6,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 146,
+        "capabilities": 148,
         "moments": 38
       },
       "evidence": {
@@ -7510,7 +7510,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 163
+          "objects": 166
         },
         {
           "name": "knowledge",
@@ -7791,11 +7791,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 577,
+        "mcp_resources": 580,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 574,
+        "objects": 577,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -8030,7 +8030,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 189
+          "objects": 190
         }
       ],
       "rule_refs": [
@@ -8406,11 +8406,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 191,
+        "mcp_resources": 192,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 189,
+        "objects": 190,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8507,6 +8507,24 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         }
@@ -8544,10 +8562,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 2,
-        "mcp_tools": 2,
-        "mcp_resources": 2,
-        "http_routes": 2,
+        "capabilities": 4,
+        "mcp_tools": 4,
+        "mcp_resources": 4,
+        "http_routes": 4,
         "cli_paths": 0,
         "commands": 0,
         "objects": 0,
@@ -8676,6 +8694,24 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -9025,10 +9061,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 6,
+        "mcp_tools": 6,
+        "mcp_resources": 6,
+        "http_routes": 6,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -11273,6 +11309,24 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.policy",
+              "title": "The completion policy",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_completion_policy",
+              "resource": "majordomus://gates/policy",
+              "route": "GET /api/v1/gates/policy"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -11850,10 +11904,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 108,
-        "mcp_tools": 96,
-        "mcp_resources": 16,
-        "http_routes": 102,
+        "capabilities": 110,
+        "mcp_tools": 98,
+        "mcp_resources": 18,
+        "http_routes": 104,
         "cli_paths": 49,
         "commands": 0,
         "objects": 0,
@@ -13403,23 +13457,23 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 108
+          "objects": 111
         },
         {
           "name": "issue",
-          "objects": 985
+          "objects": 1021
         },
         {
           "name": "intent",
-          "objects": 40
+          "objects": 43
         },
         {
           "name": "gap",
-          "objects": 4
+          "objects": 5
         },
         {
           "name": "critique",
-          "objects": 35
+          "objects": 37
         }
       ],
       "rule_refs": [
@@ -13617,11 +13671,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1175,
+        "mcp_resources": 1220,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1172,
+        "objects": 1217,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17449,7 +17503,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (163)",
+        "title": "adr (166)",
         "features": [
           "knowledge"
         ]
@@ -17498,7 +17552,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (35)",
+        "title": "critique (37)",
         "features": [
           "planning"
         ]
@@ -17540,21 +17594,21 @@
       },
       {
         "id": "gap",
-        "title": "gap (4)",
+        "title": "gap (5)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "intent",
-        "title": "intent (40)",
+        "title": "intent (43)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (985)",
+        "title": "issue (1021)",
         "features": [
           "planning"
         ]
@@ -17575,7 +17629,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (108)",
+        "title": "milestone (111)",
         "features": [
           "planning"
         ]
@@ -17617,7 +17671,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (189)",
+        "title": "rule (190)",
         "features": [
           "doctrine"
         ]
@@ -17686,7 +17740,11 @@
         "prompts": "none",
         "prompts_evidence": "as above: a convention hands nothing to anything.",
         "browser": "none",
-        "browser_evidence": "as above: a convention drives nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether it drives a browser."
+        "browser_evidence": "as above: a convention drives nothing; the concrete tool reading AGENTS.md has its own row, and that row says whether it drives a browser.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "as above: a convention runs no model and reports no usage; the concrete tool reading AGENTS.md has its own row, and that row says how it reports usage."
       }
     },
     {
@@ -17709,7 +17767,11 @@
         "prompts": "none",
         "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's.",
         "browser": "none",
-        "browser_evidence": "bb itself ships no browser bridge (searched 2026-10-21: the same docs/ and plugins/ as above name none). The agent bb runs keeps its own: Claude Code under bb has its bridge when the person enabled it, and that is the agent's row, never bb's."
+        "browser_evidence": "bb itself ships no browser bridge (searched 2026-10-21: the same docs/ and plugins/ as above name none). The agent bb runs keeps its own: Claude Code under bb has its bridge when the person enabled it, and that is the agent's row, never bb's.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "bb runs Claude Code and Codex as child processes and publishes no usage stream of its own (searched 2026-10-22: getbb.app and the github.com/get-bb/bb docs/ and plugins/ named above document no usage, token or telemetry export). Each child reports through its own row's seam; the usage is the agent's, never bb's."
       }
     },
     {
@@ -17738,7 +17800,12 @@
         "browser": "bridge",
         "browser_evidence": "https://code.claude.com/docs/en/chrome — Claude Code connects to the Claude in Chrome extension with `claude --chrome` or `/chrome`, and the browser tools arrive in the same session as mcp__claude-in-chrome__* beside this repository's server from .mcp.json; `/chrome` → Enabled by default makes it the default, and a project cannot turn it on (CLAUDE_CODE_ENABLE_CFC in a project's settings is ignored). The first enable writes the native messaging host com.anthropic.claude_code_browser_extension. Verified 2026-10-21; docs/MCP.md, Claude in the browser.",
         "browser_host": "com.anthropic.claude_code_browser_extension",
-        "browser_setup": "in Claude Code: /chrome, choose Enabled by default, sign the extension in to the organization /status names, then restart Chrome"
+        "browser_setup": "in Claude Code: /chrome, choose Enabled by default, sign the extension in to the organization /status names, then restart Chrome",
+        "usage": [
+          "otel",
+          "stream-json"
+        ],
+        "usage_evidence": "https://code.claude.com/docs/en/monitoring-usage — opt-in with CLAUDE_CODE_ENABLE_TELEMETRY=1 and OTEL_LOGS_EXPORTER/OTEL_METRICS_EXPORTER; the event claude_code.api_request is 'Logged for each API request to Claude' with model, cost_usd ('Estimated cost in USD'), input_tokens ('excluding tokens read from or written to the prompt cache'), output_tokens, cache_read_tokens and cache_creation_tokens, and the metric claude_code.token.usage carries type input, output, cacheRead, cacheCreation. https://code.claude.com/docs/en/headless — with --output-format json or stream-json the run reports usage and total_cost_usd in its final result message, and the docs call both figures 'client-side estimates' that 'can differ from your actual bill'. Verified 2026-10-22. Cost is an estimate on both seams, never a bill."
       }
     },
     {
@@ -17754,7 +17821,11 @@
         "prompts": "hook",
         "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11.",
         "browser": "none",
-        "browser_evidence": "not verified either way, and declared none until it is: on 2026-10-21 OpenAI's ChatGPT for Chrome extension registered a native messaging host on the owner's machine (com.openai.codexextension), but no vendor page was read saying its tools arrive in a Codex CLI session beside a project MCP server. Searching learn.chatgpt.com for that is the open re-verification."
+        "browser_evidence": "not verified either way, and declared none until it is: on 2026-10-21 OpenAI's ChatGPT for Chrome extension registered a native messaging host on the owner's machine (com.openai.codexextension), but no vendor page was read saying its tools arrive in a Codex CLI session beside a project MCP server. Searching learn.chatgpt.com for that is the open re-verification.",
+        "usage": [
+          "app-server"
+        ],
+        "usage_evidence": "github.com/openai/codex at 9a8a85bc5393 (2026-10-22), codex-rs/app-server-protocol/schema/json/ServerNotification.json — the notification thread/tokenUsage/updated carries ThreadTokenUsage {total, last, modelContextWindow}, each a TokenUsageBreakdown of inputTokens, cachedInputTokens, cacheWriteInputTokens, outputTokens, reasoningOutputTokens and totalTokens: `total` is cumulative, so it is never summed with `last`. Verified 2026-10-22. Codex's own OpenTelemetry export is NOT declared and stays unadapted: https://learn.chatgpt.com/docs/config-file/config-advanced says it is 'Disabled by default; opt in via [otel]' and puts token counts only on codex.sse_event's response.completed, but says nothing on whether it covers interactive sessions the person starts or only codex exec, so no seam is claimed until that is read."
       }
     },
     {
@@ -17776,7 +17847,11 @@
         "prompts": "hook",
         "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11.",
         "browser": "none",
-        "browser_evidence": "not searched: no Gemini CLI browser bridge was looked for on 2026-10-21, when this axis was added for Claude Code. Declared none so that no surface implies one; the search is the open re-verification."
+        "browser_evidence": "not searched: no Gemini CLI browser bridge was looked for on 2026-10-21, when this axis was added for Claude Code. Declared none so that no surface implies one; the search is the open re-verification.",
+        "usage": [
+          "otel"
+        ],
+        "usage_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/telemetry.md — telemetry is enabled in .gemini/settings.json (or its environment variable); the log event gemini_cli.api_response carries input_token_count, output_token_count, cached_content_token_count, thoughts_token_count, tool_token_count and total_token_count, and the metric gemini_cli.token.usage the same by type. Verified 2026-10-22."
       }
     },
     {
@@ -17791,7 +17866,11 @@
         "prompts": "none",
         "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise.",
         "browser": "none",
-        "browser_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and an MCP server cannot drive the client's browser (modelcontextprotocol.io/specification: a server is handed tool calls, it makes none on the client's behalf). Declared none rather than left blank."
+        "browser_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and an MCP server cannot drive the client's browser (modelcontextprotocol.io/specification: a server is handed tool calls, it makes none on the client's behalf). Declared none rather than left blank.",
+        "usage": [
+          "none"
+        ],
+        "usage_evidence": "no vendor documentation is involved: a worker with no convention of its own is known only through the MCP connection, and MCP carries no usage report (modelcontextprotocol.io/specification: a server receives initialize, tool calls and notifications, never the client's token counts). Declared none rather than left blank, so its sessions read not observed with this reason."
       }
     }
   ],
@@ -18589,50 +18668,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3468,
-    "builtin": 217,
-    "declarative": 3251,
+    "capabilities": 3529,
+    "builtin": 219,
+    "declarative": 3310,
     "modules": 60,
-    "mcp_tools": 203,
-    "mcp_resources": 3306,
-    "http_routes": 209,
+    "mcp_tools": 205,
+    "mcp_resources": 3367,
+    "http_routes": 211,
     "cli_commands": 218,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3251,
+    "objects": 3310,
     "by_kind": {
-      "adr": 163,
+      "adr": 166,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 35,
+      "critique": 37,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
       "document": 353,
       "domain": 6,
       "feature": 29,
-      "gap": 4,
+      "gap": 5,
       "implementation": 52,
-      "intent": 40,
-      "issue": 985,
+      "intent": 43,
+      "issue": 1021,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 108,
+      "milestone": 111,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
       "release-record": 36,
-      "rule": 189,
+      "rule": 190,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 639,
+      "test": 649,
       "use-case": 49,
       "workspace": 1
     },

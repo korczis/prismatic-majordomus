@@ -749,9 +749,17 @@ fn superseded_by(
 ) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
     if recorded.path != mine.path {
-        return None;
-    }
-    if recorded.mtime == mine.mtime && recorded.size == mine.size {
+        // a server started from the build output this process runs a copy of (I2059)
+        let origin = crate::served_executable::copied_from(&mine.path)?;
+        let same = origin == recorded.path
+            || matches!(
+                (fs::canonicalize(&origin), fs::canonicalize(&recorded.path)),
+                (Ok(a), Ok(b)) if a == b
+            );
+        if !same || recorded.replaced().is_none() {
+            return None;
+        }
+    } else if recorded.mtime == mine.mtime && recorded.size == mine.size {
         return None;
     }
     if version_verdict(doc.version.as_deref(), my_version) == VersionVerdict::ServerNewer {
@@ -766,7 +774,7 @@ fn superseded_by(
     Some(format!(
         "superseded lease: the server was started from {} and that file has been replaced since \
          (it is serving code that is no longer on disk)",
-        mine.path.display()
+        recorded.path.display()
     ))
 }
 
@@ -1325,7 +1333,10 @@ enum Answer {
 /// Ask a published URL the probe's three questions within `timeout`, telling a server that
 /// said no apart from one that said nothing in time.
 fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
-    match bridge::request(url, "GET", "/", &[], None, timeout) {
+    // marked as a probe, so that asking whether a server is there does not keep it there
+    // (I4007): a server's idle timer counts a client reading its home page, not this
+    let probe = [(crate::idle::PROBE_HEADER, "1")];
+    match bridge::request(url, "GET", "/", &probe, None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves

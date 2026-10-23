@@ -129,6 +129,20 @@ keeps its socket, its peer board and the generation of the layer it loaded, and 
 serving the sessions it already had until they end. That is deliberate: a client mid-answer
 should not lose its server because somebody ran `cargo build`.
 
+Nor, since I2059, does a build take the lease. A process that may hold it — `majordomus mcp`,
+and `majordomus serve` without a subcommand — started from a cargo build output (the file
+under a directory carrying cargo's `CACHEDIR.TAG`) first replaces its own process image with a
+copy of that file, `<profile dir>/served/majordomus-<mtime>-<size>` — a second link to the
+build's own file where the filesystem allows one, the bytes otherwise — made once per build,
+never replaced, and shared by every server started from it (`served_executable`). The lease names the copy; a
+rebuild replaces `target/debug/majordomus` and never the copy, so the server stays `ready`
+on the address it had, and a launcher of the new build attaches to it, because a lease
+naming another path makes no rebuild claim. The new build serves once something restarts
+the server on purpose: `serve stop`, or its idle timeout. Copies older than a week are removed
+when a new one is made; a copy that cannot be made is said on stderr and the server runs in
+place, as before. An installed release is never copied: its path is already versioned.
+`test/cases/3061` holds it, and `test/cases/885` the server run from a file that is replaced.
+
 What it must not do is go on being *the* server. From the moment its own reader finds the
 lease no longer carries its token:
 
@@ -208,6 +222,24 @@ REST API keeps the server they are using (I2131) — which is what keeps ADR 000
 there is no process without a client — true in time rather than at every instant: an
 agent's entry is owed a server before its first attach, and a checkout nobody works in
 does not keep one.
+
+What keeps it is a client, not the machine (I4007). Every server on a machine hears the
+mesh's multicast and links to the others, a board gather reads every sibling checkout's
+board, and `serve status`, `serve ensure` and the gather probe every lease's server; when
+each of those requests counted as use, the servers of one Mac kept each other alive — fifteen
+of them, for up to eight hours, with no peer attached. So the idle timer, in
+`apps/majordomus-cli/src/idle.rs`, decides from what the server holds: no MCP session and no
+row on its peer board, no execution queued or running, no live `/events` channel, and no
+request from a client since its last look. The mesh transport (`/api/v1/mesh/link/hello`,
+`/api/v1/mesh/link/sync`, `/api/v1/mesh/register`), a probe of `/` (which this executable
+marks with `X-Majordomus-Probe`) and a sibling's `GET /api/v1/peers?checkouts=this` are
+not use. When the bound passes, the server logs the reason (`idle for N s (bound N s): no
+peer attached, no execution queued or running, ...; stopping`), runs the same ordered stop
+`serve stop` asks for — sessions and episodes closed, listeners closed, mesh drained, lease
+released — and exits 0. It leaves on its own; nothing signals it (ADR 0200). The bound is
+`server.idle_seconds` below; a server started without one — plain `serve`, a deployment,
+the server `majordomus mcp` hosts for its stdio client — never idle-exits.
+`test/cases/4007_an_idle_server_leaves_by_itself.sh` holds it.
 
 `serve stop` signals the server the lease names, when that server answers for this
 checkout, and waits for *that server's* lease to go — the document it read, by its token,
@@ -496,10 +528,11 @@ exposes none of it is still named by its machine and its process. The provider a
 id together spell the mesh session the edit guard judges the provider's claims under
 (`claude-code-<session id>`), which joins the board row to the mesh.
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository with the checkout it is on, the caller's own id, each peer's announcement, every pair of claims that meet, and which checkouts the answer covered |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | the calling peer's record, and the peers whose claimed scope it collides with |
+Two tools serve the board: `majordomus_peers` reads it (`peers.list`) and
+`majordomus_announce` writes to it (`peers.announce`). Their arguments and answers are the
+registry's, and this page does not repeat them: the generated reference
+([`generated/capabilities.md`](generated/capabilities.md), `/registry/mcp/` on the site) and
+`majordomus_capability` at runtime carry them.
 
 An announcement is one line of intent and the repository-relative paths the peer expects
 to touch. The board lives in the server's memory and is gone with the process;
@@ -589,11 +622,10 @@ provider hooks of its own the connection is the only thing that can draw its bou
 Until it, drawing the boundary below the model was wired for Claude Code alone, and the
 repository's claim to do so was a claim about one vendor.
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_session_attach` | `episodes.attach` | `external_id` | the episode this connection now holds, whether it was resumed, and the reattach grace |
-| `majordomus_session_detach` | `episodes.detach` | `external_id?` | the episode as it was closed, and what the repository's end event reported |
-| `majordomus_episodes` | `episodes.list` | none | every episode this server holds, open and detached, and the caller's own |
+A connection holds an episode with `majordomus_session_attach` (`episodes.attach`), closes it
+with `majordomus_session_detach` (`episodes.detach`) and reads them with
+`majordomus_episodes` (`episodes.list`); their arguments and answers are in the generated
+reference ([`generated/capabilities.md`](generated/capabilities.md), `/registry/mcp/`).
 
 ```mermaid
 stateDiagram-v2
@@ -703,32 +735,25 @@ manifest section it falls under, and its size.
 
 ## Tools
 
-| tool | capability | arguments | answers |
-|---|---|---|---|
-| `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
-| `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
-| `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
-| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page |
-| `majordomus_kinds` | `entity.kinds` | none | every kind the index holds with the route of its listing, how many objects are addressable, and every route collision there is |
-| `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
-| `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |
-| `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |
-| `majordomus_capabilities` | `capabilities.list` | `kind?`, `exposure?` | every capability with its projections |
-| `majordomus_capability` | `capabilities.describe` | `id` | one capability: schemas, provenance, every projection |
-| `majordomus_peers` | `peers.list` | `checkouts?` | every worker of the repository, gathered from the board of every checkout (above) |
-| `majordomus_announce` | `peers.announce` | `intent`, `scope?` | records what the calling peer is working on (above) |
-| `majordomus_mcp` | `mcp.projection` | `effect?` | the projection described (below): server, protocol versions, transports and attached sessions, methods served, every tool with its effect and hints, the writers, the resources, and where each declared client's configuration stands here |
-| `majordomus_perf` | `perf.counters` | none | this process's work counters and phase timings: what happened once at startup, what happens per call |
-| `majordomus_worktrees` | `worktree.topology` | none | the `majordomus://worktrees` document: the container, the trunk, every worktree with its standing and diagnostics, every branch, the tallies |
-| `majordomus_worktree_status` | `worktree.status` | `path?` | one worktree — the repository's own, or the one holding `path` — with its standing, canonical path, uncommitted work and whether it is where it belongs; a path in another repository is refused |
-| `majordomus_worktree_inspect` | `worktree.inspect` | `branch` | the canonical path of a branch, whether it exists, what occupies the path, the worktree holding it |
-| `majordomus_worktree_migration_plan` | `worktree.migration_plan` | none | every misplaced worktree with where it belongs, how it would move and what blocks it; the exceptions; changes nothing |
+Every tool is a projection of one capability of the registry, under the name that
+capability declares (`objects.list` is served as `majordomus_list`, `worktree.status` as
+`majordomus_worktree_status`). The list grows whenever a module is composed, so this page
+keeps no copy of it: a hand-written table of tools is the second definition ADR 0004 calls
+a design defect, and the copy that stood here had already fallen behind the registry it
+repeated. The total reference, with every tool's capability, arguments and answers, is
+derived:
 
-The table above is the core set and not the whole of it: the tool list is a projection of
-the capability registry, it grows whenever a module is composed, and a list in prose that
-claimed to be complete would be wrong the next time one is. `majordomus_capabilities` and
-`docs/generated/capabilities.md` are the derived, total reference; what is written here is
-what a reader needs before opening it.
+- [`generated/capabilities.md`](generated/capabilities.md) — every capability with its MCP
+  tool, HTTP route and command (`majordomus generate`);
+- `/registry/mcp/` on the site — one row per tool the registry projects, each linking its
+  capability's page (case 532 holds it to the registry, no more and no fewer);
+- `majordomus_capabilities` and `majordomus_capability` at runtime — the registry of the
+  executable that is answering.
+
+Where the sections above and below name a tool, they say why it exists and how it behaves;
+what it takes and returns is the registry's. Case
+`3062_the_mcp_reference_repeats_no_registry_entry` refuses a hand-written tool row in any
+document under `docs/` outside `docs/generated/`.
 
 ### Sessions and continuity
 
@@ -737,14 +762,12 @@ and they are the reason the server binds to the loopback interface. They are ser
 never published: no generator writes them into `docs/generated/` and no site page carries
 one.
 
-| tool | capability | answers |
-|---|---|---|
-| `majordomus_continuity` | `continuity.state` | what a worker resuming *here* would be handed: the episode the pointer resolves to, the active task, the handover and checkpoint that resolve for this worktree and branch with their labels, the blockers |
-| `majordomus_lifecycle_episodes` | `lifecycle.episodes` | every open episode of the store — not only the one the pointer follows — with its provider session, its standing (`current`, `open`, `foreign`, `stranded`) and the last ledger line stamped with it |
-| `majordomus_lifecycle_recovery` | `lifecycle.recovery` | episodes that can no longer close themselves and the command that clears each, temporary files a killed close left in the tracked sessions section, the pointer's layout, and the started-against-closed arithmetic |
-| `majordomus_lifecycle_runtime` | `lifecycle.runtime` | the commit this process's index was built at, against the commit the repository is on right now, and whether they agree |
-| `majordomus_lifecycle_providers` | `lifecycle.providers` | per provider: the lifecycle events its adapter declares, whether it can archive prompts, and the enforcement entries this repository wires to its hook |
-| `majordomus_lifecycle_closed` | `lifecycle.closed` | the tracked records a clone receives: how many, how many on this branch, and the newest twenty |
+They are `majordomus_continuity` (`continuity.state`) — what a worker resuming *here* would
+be handed — and the operator's five: `majordomus_lifecycle_episodes`,
+`majordomus_lifecycle_recovery`, `majordomus_lifecycle_runtime`,
+`majordomus_lifecycle_providers` and `majordomus_lifecycle_closed` (`lifecycle.*`). Because
+no generated page carries them, their arguments and answers are read where they are served:
+`majordomus_capability` with the id, or `majordomus capabilities describe <id>`.
 
 The first answers the worker's question and the rest answer the operator's, which is a
 different question and not a superset: `continuity.state` follows

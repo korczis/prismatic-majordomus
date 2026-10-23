@@ -1,0 +1,27 @@
+id: I4012
+milestone: mesh-connectivity
+title: "A remote node's loopback runtimes are not dialed, so its hub is"
+slug: a-remote-loopback-runtime-is-not-dialed
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "dial_targets leaves out a record of another node whose endpoints are all loopback: such a runtime cannot be reached from this machine, and counted against MAX_TARGETS_PER_NODE it crowds out the node's hub, the one runtime of that machine bound beyond loopback."
+why: "On 2026-10-23 the owner's two MacBooks had shared no session, claim, handover or review for over five hours while both hubs were up and discovery saw every runtime present. Each MacBook ran a dozen loopback worktree servers; their records sorted before the hub's and filled the eight-per-node cap, so no runtime of either machine ever dialed the other's hub (57 373 dial failures on one server)."
+current_state: "dial_targets (apps/majordomus-cli/src/mesh/cooperation.rs) admits every trusted record of the repository with an endpoint, whatever node it is on and whether its endpoints are reachable from here."
+desired_state: "Another node's loopback-only records are not dial targets; this node's own loopback siblings still are, and the other node's hub is dialed."
+scope:
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - ".ai/repo/project/issues/I4012.yaml"
+acceptance_criteria:
+  - "A record of another node advertising loopback alone is never a dial target"
+  - "A record of this node advertising loopback is still a dial target"
+  - "A remote hub is dialed although the node has more loopback runtimes than the cap"
+validation:
+  - "cargo test --lib mesh::cooperation"
+  - "bash test/run.sh 368_mesh_handover_resolves 924_one_executor_across_machines 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
+evidence_required:
+  - "another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is"
+depends_on: []
+serves: []
+created_at: 2026-10-23
+updated_at: 2026-10-23

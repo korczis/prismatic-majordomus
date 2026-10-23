@@ -1,18 +1,32 @@
 ---
 id: project.a-provider-capability-cites-its-evidence
-version: 2
+version: 3
 kind: rule
 title: A provider capability is declared once, with the citation it was verified from
-description: Every provider this distribution declares says what it can do about the session lifecycle, about prompt capture and about driving a browser beside this repository's server, in one declaration every surface projects; every cell of it carries the evidence it was verified from; and no surface states a capability the declaration does not carry or withholds a provider the declaration names.
-statement: Every declared provider carries an episode capability, a prompt capability and a browser capability with a non-empty citation for each, and a provider that declares a browser bridge names the native messaging host it registers and the step a person takes to install it; every surface that reports provider capability is a projection of that one declaration; and a provider the declaration names is reported by every such surface, never omitted.
+description: Every provider this distribution declares says what it can do about the session lifecycle, about prompt capture, about driving a browser beside this repository's server and about how it reports what a session consumed, in one declaration every surface projects; every cell of it carries the evidence it was verified from; and no surface states a capability the declaration does not carry or withholds a provider the declaration names.
+statement: Every declared provider carries an episode capability, a prompt capability, a browser capability and its usage seams (otel, app-server, stream-json, or none alone) with a non-empty citation for each, and a provider that declares a browser bridge names the native messaging host it registers and the step a person takes to install it; every surface that reports provider capability is a projection of that one declaration; and a provider the declaration names is reported by every such surface, never omitted.
 status: active
 class: blocking
 depends_on: [project.interfaces-are-projections@1, project.empty-is-not-failure@1]
 tags: [providers, session, capability, evidence]
 
 x-majordomus:
-  tests: [test/cases/200_generic_mcp_episode.sh, test/cases/3829_a_provider_declares_its_browser_bridge.sh, scripts/provider-evidence-check]
+  tests: [test/cases/200_generic_mcp_episode.sh, test/cases/3829_a_provider_declares_its_browser_bridge.sh, test/cases/3287_a_provider_declares_its_usage_seam.sh, scripts/provider-evidence-check]
 ---
+
+# What changed in version 3, and why
+
+Version 2 declared three capabilities. ADR 0213 observes what every session consumed through
+each provider's own official seam, and the intent every-sessions-usage-is-observed needs to
+know, per provider, which seam there is before anything can receive from it (I3287). Which
+seam a vendor offers is a claim about the vendor's product like the three before it, so it is
+declared in the same block and cited the same way: `offers.usage` lists `otel`, `app-server`
+or `stream-json`, or says `none` alone, and `offers.usage_evidence` says where that was read
+and when. A seam that exists but whose coverage nobody verified is left out and named in the
+citation rather than claimed: Codex's own OpenTelemetry export is the first such case.
+`scripts/provider-evidence-check` and `majordomus product validate` refuse an uncited or
+malformed list, `lifecycle providers` and `docs/generated/providers.md` show it, and
+`test/cases/3287_a_provider_declares_its_usage_seam.sh` holds the gate to its negatives.
 
 # What changed in version 2, and why
 

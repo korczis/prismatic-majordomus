@@ -226,6 +226,44 @@ test('api adapter: absent credential, 401, 429 and an unreachable host are typed
   assert.equal(limited.retry_after_seconds, 30);
 });
 
+const anthropic = { id: 'claude-api', adapter: 'anthropic-messages', model: 'm-2', credential: 'TEST_KEY', capabilities: ['independent_reasoning'] };
+
+test('anthropic api adapter: request normalisation, credential, usage', async () => {
+  const { exchange } = await loadAdapter('anthropic-messages');
+  const fetch = fakeFetch([['/v1/messages', () => response(200, {
+    stop_reason: 'end_turn',
+    content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: ANSWER }],
+    usage: { input_tokens: 21, output_tokens: 9, cache_read_input_tokens: 0 },
+  })]]);
+  const r = await consultOne({ exchange }, anthropic, 'question', { fetch, env: { TEST_KEY: 'k' } });
+  assert.equal(r.status, 'completed');
+  assert.deepEqual(r.usage, { input_tokens: 21, output_tokens: 9 });
+  const { init } = fetch.calls[0];
+  const sent = JSON.parse(init.body);
+  assert.equal(sent.model, 'm-2', 'the model comes from the catalogue');
+  assert.deepEqual(sent.messages, [{ role: 'user', content: 'question' }]);
+  assert.equal(init.headers['x-api-key'], 'k');
+  assert.equal(init.headers['anthropic-version'], '2023-06-01');
+  assert.equal(JSON.stringify(r).includes('"k"'), false, 'the credential reaches no result');
+});
+
+test('anthropic api adapter: absent credential, refusal, 401, 429 and an empty answer are typed', async () => {
+  const { exchange } = await loadAdapter('anthropic-messages');
+  const cases = [
+    [{}, fakeFetch([]), 'unavailable'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'refusal', stop_details: { category: 'cyber' }, content: [] })]]), 'error'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(401, {})]]), 'auth_failed'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(429, {}, { 'retry-after': '12' })]]), 'rate_limited'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'end_turn' })]]), 'malformed'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '' }] })]]), 'empty'],
+    [{ TEST_KEY: 'k' }, fakeFetch([]), 'unavailable'],
+  ];
+  for (const [env, fetch, want] of cases) {
+    const r = await consultOne({ exchange }, anthropic, 'q', { fetch, env });
+    assert.equal(r.status, want, JSON.stringify(r));
+  }
+});
+
 test('local runtime adapters discover the served model and report usage', async () => {
   const ollama = await loadAdapter('ollama-chat');
   const f1 = fakeFetch([

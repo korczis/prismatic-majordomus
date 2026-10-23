@@ -675,6 +675,45 @@ pub struct ResolvedDomain {
 
 // ---------------------------------------------------------------- providers
 
+/// Why one declared provider's usage seam cannot stand (I3287), or nothing when it can: no
+/// seam declared, `none` beside a seam, or seams with no citation. How a provider reports
+/// what a session consumed is a claim about somebody else's product, and the citation is
+/// what lets a person re-verify it.
+///
+/// ```
+/// use majordomus_cli::product::usage_finding;
+/// use majordomus_cli::share::{ProviderOffers, UsageSource};
+/// let mut offers: ProviderOffers = serde_json::from_str(
+///     r#"{"episode":"none","episode_evidence":"x","prompts":"none","prompts_evidence":"x"}"#,
+/// ).unwrap();
+/// assert!(usage_finding("p", &offers).unwrap().contains("declares no offers.usage"));
+/// offers.usage = vec![UsageSource::Otel];
+/// assert!(usage_finding("p", &offers).unwrap().contains("no citation"));
+/// offers.usage_evidence = "https://vendor.example/telemetry, verified 2026-10-22".into();
+/// assert_eq!(usage_finding("p", &offers), None);
+/// offers.usage.push(UsageSource::None);
+/// assert!(usage_finding("p", &offers).unwrap().contains("none beside"));
+/// ```
+pub fn usage_finding(id: &str, offers: &crate::share::ProviderOffers) -> Option<String> {
+    use crate::share::UsageSource;
+    if offers.usage.is_empty() {
+        return Some(format!(
+            "provider '{id}' declares no offers.usage; how it reports what a session consumed is a claim nobody wrote down"
+        ));
+    }
+    if offers.usage.contains(&UsageSource::None) && offers.usage.len() > 1 {
+        return Some(format!(
+            "provider '{id}' declares none beside a usage seam; none is the answer only when nothing else is"
+        ));
+    }
+    if offers.usage_evidence.trim().is_empty() {
+        return Some(format!(
+            "provider '{id}' declares offers.usage with no citation in offers.usage_evidence; a capability nobody can re-verify is refused"
+        ));
+    }
+    None
+}
+
 /// A provider is presented by its id — the directory its bootstrap is written under and the
 /// name every other projection of the product matrix refers to it by.
 impl crate::order::Ordered for ProductProvider {
@@ -1071,6 +1110,19 @@ impl ProductModel {
                     ),
                     did_you_mean: None,
                 });
+            }
+            if decl.declared {
+                if let Some(message) = usage_finding(&decl.id, &decl.offers) {
+                    m.findings.push(ProductFinding {
+                        severity: Severity::Error,
+                        code: "provider_usage_uncited".into(),
+                        path: "share/providers.yaml".into(),
+                        id: Some(decl.id.clone()),
+                        field: Some("offers.usage".into()),
+                        message,
+                        did_you_mean: None,
+                    });
+                }
             }
         }
         m.coverage(registry, &lookups);

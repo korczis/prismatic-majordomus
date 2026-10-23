@@ -1255,11 +1255,27 @@ mod tests {
         let (_repo, ctx, c) = meshed();
         for (tag, frames) in [("both", "snapshot,signals"), ("alone", "signals")] {
             let sink = Sink::new();
-            let served = serve(&ctx, &[("frames", frames)], |f| f.pages = (1, 1), &sink);
-            sink.until(|f| !f.is_empty());
-            std::thread::sleep(Duration::from_millis(50));
-            for n in 0..3 {
-                session(&c, &format!("{tag}-{n}"), "3d", "one more");
+            let served = serve(
+                &ctx,
+                &[("frames", frames)],
+                |f| {
+                    f.pages = (1, 1);
+                    f.heartbeat = Duration::from_millis(50);
+                },
+                &sink,
+            );
+            // the connection's cursor is taken after its ready frame, and a heartbeat is only
+            // written by the loop that follows: once one came, the cursor stands before the
+            // backlog, however long the follower took to read where the signals stood
+            sink.until(|f| has(f, "stream.heartbeat", ""));
+            // every append is a change of its own, and every read of the signals waits on the
+            // shared page's lock: a backlog written under it is read whole by one round, never
+            // split one signal per wake-up
+            {
+                let _held = PAGE.lock().unwrap_or_else(PoisonError::into_inner);
+                for n in 0..3 {
+                    session(&c, &format!("{tag}-{n}"), "3d", "one more");
+                }
             }
             BLACKBOARD.advance();
             let after = |f: &[Value]| kinds(f).iter().position(|k| k == "stream.resync");

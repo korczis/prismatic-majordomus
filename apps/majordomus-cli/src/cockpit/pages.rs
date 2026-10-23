@@ -3410,6 +3410,7 @@ pub fn mesh(ctx: &Context) -> Page {
                 crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
                 crate::mesh::TrustState::Observed => "observed".to_string(),
                 crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
+                crate::mesh::TrustState::Retired(by) => format!("retired: succeeded by {by}"),
             };
             let presence = match n.presence {
                 crate::mesh::Presence::Present => "present",

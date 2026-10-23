@@ -261,6 +261,7 @@ pub(crate) const PANELS: &[&str] = &[
     deployments::DELIVERY_PANEL,
     prs::PANEL,
     idd::STANDING_PANEL,
+    idd::SHARED_SCOPE_PANEL,
 ];
 
 /// The UI over the repository as it is now.
@@ -498,6 +499,7 @@ impl Ui {
             deployments::DELIVERY_PANEL => deployments::delivery_panel(ctx),
             prs::PANEL => prs::panel_view(ctx, query),
             idd::STANDING_PANEL => idd::standing_panel(ctx, query),
+            idd::SHARED_SCOPE_PANEL => idd::shared_scope_panel(ctx, query),
             other => shell::not_found(other),
         }
     }

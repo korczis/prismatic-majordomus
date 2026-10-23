@@ -901,13 +901,28 @@ branch-breaking defects overnight because they looked identical
 (`project.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the twenty-two questions of the done invariant with the source that answered
-each — is one document, `gates.completion`, read the same way by the command line, the HTTP
-API, MCP and the Cockpit:
+implies, and the questions of the done invariant with the source that answered each — is
+one document, `gates.completion`, read the same way by the command line, the HTTP API, MCP
+and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+The questions are declared once, in `share/completion.yaml`, which the tool ships: the
+stages of the work in order (implementation, validation, documentation, commit, gates,
+version, integration, deployment, verification, closing, provenance), every question in the
+stage it belongs to, and the source its answer is taken from — an obligation, a gate, the
+change set, the repository's convergence or a closing reading. `gates.policy`
+(`majordomus_completion_policy`, `GET /api/v1/gates/policy`) serves the file with what it
+resolves to here: a token the vocabulary lacks is a `problem`, and a gate question this
+repository's CI model never answers is listed under `unanswered_gates`. The report asks
+exactly those questions in that order, and folds the answers into `stage` — the first stage
+blocked, else the first with a question still owed, else the last — which is derived on
+every reading and written down by nobody. `complete` is true only when a task is present
+and every question passes or is exempt; `finishable` and `complete` are two different
+words. A distribution whose policy cannot be read is asked one question, `policy`, answered
+`unknown`, and nothing is complete.
 
 ### The closing questions
 

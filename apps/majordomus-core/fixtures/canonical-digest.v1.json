@@ -1,0 +1,76 @@
+{
+  "schema": "majordomus.canonical-digest-fixture/v1",
+  "about": "Inputs as JSON text, the canonical bytes they must produce and the SHA-256 of those bytes. The digests are computed by Python's hashlib over the expected bytes, independently of the code under test; the native crate, the executable and the wasm32 module must each reproduce every row.",
+  "cases": [
+    {
+      "id": "nested-keys",
+      "input": "{\"b\":1,\"a\":[{\"d\":2,\"c\":3}]}",
+      "canonical": "{\"a\":[{\"c\":3,\"d\":2}],\"b\":1}",
+      "digest": "aa0fff90b247460fff3592ff491ac879c69b05ee5efa14393d3154bd9199273f"
+    },
+    {
+      "id": "whitespace",
+      "input": "{ \"a\": 2,\n \"b\": 1 }",
+      "canonical": "{\"a\":2,\"b\":1}",
+      "digest": "d3626ac30a87e6f7a6428233b3c68299976865fa5508e4267c5415c76af7a772"
+    },
+    {
+      "id": "floats",
+      "input": "[1.0, 2.5, 1e3, -0.0, 1e300, 0.1]",
+      "canonical": "[1.0,2.5,1000.0,-0.0,1e+300,0.1]",
+      "digest": "1072e896189987685bdfe3241d85fd0a484dfecccba78ee60b8a3aea824b1754"
+    },
+    {
+      "id": "integers",
+      "input": "[0, -1, 18446744073709551615, -9223372036854775808]",
+      "canonical": "[0,-1,18446744073709551615,-9223372036854775808]",
+      "digest": "b70f3ed6f5b5e28cc2401d5880792858142fc52728341a017a3e0e52c371724d"
+    },
+    {
+      "id": "beyond-u64",
+      "input": "[18446744073709551616]",
+      "canonical": "[1.8446744073709552e+19]",
+      "digest": "446845c611d91472f35d8e227120f7e69d9033a34750c26f694dc0b70306a753"
+    },
+    {
+      "id": "utf8-key-order",
+      "input": "{\"😀\":1,\"ｚ\":2,\"é\":3,\"a\":4,\"Z\":5}",
+      "canonical": "{\"Z\":5,\"a\":4,\"é\":3,\"ｚ\":2,\"😀\":1}",
+      "digest": "1ea77c15514c58d2f0acae1ef405fc23cbabb0f78c12306d6be0857620fa273c"
+    },
+    {
+      "id": "escapes",
+      "input": "{\"s\":\"line\\nbreak \\\"q\\\" \\\\ \\u00e9 \\u0001\"}",
+      "canonical": "{\"s\":\"line\\nbreak \\\"q\\\" \\\\ é \\u0001\"}",
+      "digest": "b37ca3d71e051f7e342b7abbfcc33ad10c091a93cacbdf4d4a2c7467acf4a72b"
+    },
+    {
+      "id": "scalars-and-empties",
+      "input": "{\"e\":false,\"d\":true,\"c\":null,\"b\":[],\"a\":{}}",
+      "canonical": "{\"a\":{},\"b\":[],\"c\":null,\"d\":true,\"e\":false}",
+      "digest": "2ca08989a203c01e257ff4679e3909b0e1f0034a5515dc9eed152b1ba6164766"
+    },
+    {
+      "id": "string",
+      "input": "\"just a string\"",
+      "canonical": "\"just a string\"",
+      "digest": "3fe01def54b1c6cd795b2ebfcbab64150f6a507bce043040c662c682eebfed1e"
+    },
+    {
+      "id": "duplicate-key",
+      "input": "{\"a\":1,\"a\":2}",
+      "canonical": "{\"a\":2}",
+      "digest": "7e8059f495589fcd981232cc11d00b00da3802c01d688fa1cf1f6bed6e5bb33c"
+    }
+  ],
+  "invalid": [
+    {
+      "id": "not-json",
+      "input": "{not json"
+    },
+    {
+      "id": "truncated",
+      "input": "[1, 2"
+    }
+  ]
+}

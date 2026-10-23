@@ -419,6 +419,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:gates.policy",
+      "path": "/evidence/capabilities/gates-policy/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:gates.state",
+      "path": "/evidence/capabilities/gates-state/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:graph.get",
       "path": "/evidence/capabilities/graph-get/"
     },
@@ -4886,6 +4896,26 @@
       "kind": "capability",
       "id": "gates.model",
       "page": "/evidence/capabilities/gates-model/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:gates.policy": {
+      "kind": "capability",
+      "id": "gates.policy",
+      "page": "/evidence/capabilities/gates-policy/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:gates.state": {
+      "kind": "capability",
+      "id": "gates.state",
+      "page": "/evidence/capabilities/gates-state/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -14769,6 +14799,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:3059_gate_state_is_answerable",
+          "path": "test/cases/3059_gate_state_is_answerable.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:103_obligations",
           "path": "test/cases/103_obligations.sh",
@@ -15054,6 +15090,12 @@
           "via": "behaviour",
           "test": "suite:2988_a_scope_admits_what_its_derive_wrote",
           "path": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3059_gate_state_is_answerable",
+          "path": "test/cases/3059_gate_state_is_answerable.sh",
           "category": "e2e"
         },
         {
@@ -20365,6 +20407,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_completion_policy": {
+      "kind": "mcp",
+      "id": "majordomus_completion_policy",
+      "alias_of": "capability:gates.policy",
+      "programs": [],
+      "members": [
+        "capability:gates.policy"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_continuity": {
       "kind": "mcp",
       "id": "majordomus_continuity",
@@ -20948,6 +21002,18 @@
       "programs": [],
       "members": [
         "capability:product.features"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_gate_state": {
+      "kind": "mcp",
+      "id": "majordomus_gate_state",
+      "alias_of": "capability:gates.state",
+      "programs": [],
+      "members": [
+        "capability:gates.state"
       ],
       "routes": [],
       "mechanisms": [],
@@ -24226,7 +24292,17 @@
           "category": "e2e",
           "inputs": [
             "test/cases/200_generic_mcp_episode.sh",
-            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md"
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3287_a_provider_declares_its_usage_seam",
+          "path": "test/cases/3287_a_provider_declares_its_usage_seam.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3287_a_provider_declares_its_usage_seam.sh",
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md"
           ]
         },
         {
@@ -24236,7 +24312,7 @@
           "category": "e2e",
           "inputs": [
             "test/cases/3829_a_provider_declares_its_browser_bridge.sh",
-            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md"
+            ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md"
           ]
         }
       ],
@@ -24283,6 +24359,16 @@
           ]
         }
       ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-session-joins-the-cluster-before-it-works": {
+      "kind": "rule",
+      "id": "project.a-session-joins-the-cluster-before-it-works",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [],
       "mechanisms": [],
       "findings": []
     },
@@ -29266,6 +29352,7 @@
     "crate:peer_claims",
     "crate:plan_delivery",
     "crate:plan_drift",
+    "crate:portable_core",
     "crate:properties",
     "crate:provider_browser",
     "crate:providers_projection",
@@ -29289,6 +29376,7 @@
     "crate:ui_idd_moves",
     "crate:ui_links",
     "crate:ui_roadmap",
+    "crate:ui_shared_scope",
     "crate:worktree",
     "suite:09_site_mobile_first",
     "suite:1023_a_branch_cannot_widen_the_mesh_trust",
@@ -29366,6 +29454,7 @@
     "suite:3028_the_pages_job_waits_for_its_deployment",
     "suite:3029_a_tag_in_flight_is_pending",
     "suite:302_the_topology_rule_has_one_source",
+    "suite:3030_a_kiosk_keeps_the_screen_awake",
     "suite:3032_the_quality_verdict_comes_first",
     "suite:3033_a_release_record_case_is_listed_by_a_structure_gate",
     "suite:3035_a_release_names_its_archive_from_the_matrix",
@@ -29376,13 +29465,18 @@
     "suite:3048_a_derivation_survives_an_unrelated_merge",
     "suite:3050_doctor_says_it_checks_governance_only",
     "suite:3051_an_unlisted_event_field_fails_the_mesh_check",
+    "suite:3052_a_lost_append_is_said_end_to_end",
     "suite:3053_a_repository_of_n_records_costs_n",
     "suite:3055_a_derivation_needs_no_history",
     "suite:3056_every_failure_class_names_its_proof",
+    "suite:3057_unlinked_work_is_classed_end_to_end",
     "suite:305_a_command_is_claimed_or_classified",
+    "suite:3061_a_rebuild_leaves_its_server_ready",
+    "suite:3062_the_mcp_reference_repeats_no_registry_entry",
     "suite:3066_a_session_joins_the_mesh_at_start",
     "suite:3069_an_edit_no_claim_covers_is_refused",
     "suite:3084_a_case_near_its_budget_is_named",
+    "suite:3090_a_flatten_is_cached_by_its_content",
     "suite:3103_the_roadmap_draws_every_milestone",
     "suite:3104_the_ui_roadmap_reads_delivery",
     "suite:3105_the_homepage_states_no_present_it_does_not_read",
@@ -29476,6 +29570,8 @@
     "suite:3947_a_tier_selects_its_lanes",
     "suite:3958_no_entry_path_or_gate_builds",
     "suite:3963_a_merge_of_master_derives_in_one_go",
+    "suite:3999_a_fixture_holds_the_skills_the_generator_reads",
+    "suite:4007_an_idle_server_leaves_by_itself",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",
     "suite:406_one_declaration_every_surface",
