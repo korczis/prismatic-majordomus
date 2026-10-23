@@ -2,7 +2,7 @@ id: an-issue-is-implemented-from-one-click
 title: "From /ui the owner clicks Implement on a ready issue, and a durable execution works it in its own worktree under a scope claim, followed live across a browser close and a server restart, until it ends with a testable result and its evidence"
 statement: "Running `majordomus serve` and opening /ui/idd, the owner picks a real issue and clicks its one primary move. For a ready issue that move is Implement. It starts a durable, idempotent execution of the shared executor. The execution claims the issue's scope, creates its worktree and hands the work to an available worker adapter. The owner can close the browser and restart the server. On return they see the same execution, either continuing or recovered as interrupted, never re-run blind. It ends with a testable result whose evidence is recorded."
 invariants:
-  - "A click starts an execution of the shared executor; the UI never decides whether work may run (ADR 0135, ADR 0222)"
+  - "A click starts an execution of the shared executor; the UI never decides whether work may run (ADR 0135, ADR 0225)"
   - "One execution model: no second scheduler, no parallel orchestrator, no ui_tasks.json"
   - "An unknown outcome of a mutation is never a reason to repeat it"
   - "A worker is an optional adapter; no provider is required"

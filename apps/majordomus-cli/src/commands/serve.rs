@@ -113,7 +113,7 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     // mistakes a slow start for an abandoned one
     lease.keep_alive();
     let mut app = App::load(&args.repo)?;
-    // The executions this server accepts outlive it (ADR 0222): written down as they
+    // The executions this server accepts outlive it (ADR 0225): written down as they
     // happen and folded back here, before anything can start a new one.
     match crate::execution::ExecutionJournal::at(repo.root().join(crate::execution::journal::DIR)) {
         Ok(journal) => {

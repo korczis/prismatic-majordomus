@@ -34,7 +34,7 @@
 //! hearing from it fails it rather than showing it running for ever. With no server, the
 //! run says on stderr that nothing else can see it. A run never starts a server.
 //!
-//! A server's executions outlive it (ADR 0222). `majordomus serve` builds its store over a
+//! A server's executions outlive it (ADR 0225). `majordomus serve` builds its store over a
 //! [`ExecutionJournal`] under `.ai/local/state/executions/`: every execution and every event is
 //! written down before anybody is shown it, and a server that starts folds the journal
 //! back, so a browser that reconnects after a restart reads the same execution at the same

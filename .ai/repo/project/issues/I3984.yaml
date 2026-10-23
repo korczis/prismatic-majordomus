@@ -5,7 +5,7 @@ slug: the-issue-offers-one-move
 priority: p0
 profile: implementation
 objective: "Replace the primary button of /ui/idd (ui/idd.rs:519-600, today Start/Verify/Mark done through plan.transition) with the one move the issue's derived state admits: READY starts issue.implement as an execution through the existing move start path (share/cockpit/moves.js, with I3981's key); ACTIVE links its live execution; VERIFY starts the verification; DONE offers Deliver (an execution of the delivery policy, a stub refusing until P2 says otherwise); BLOCKED lists the blockers. The executor's refusal is shown verbatim; the snapshot shows state and a link to the live server, never the control."
-why: "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0222 consequences."
+why: "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0225 consequences."
 current_state: "The issue view's only move is plan.transition; no Implement."
 desired_state: "One primary move per state; the click is an execution; the issue row links the execution that works it."
 scope:

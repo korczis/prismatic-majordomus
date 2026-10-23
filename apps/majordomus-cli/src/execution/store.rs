@@ -287,7 +287,7 @@ impl ExecutionStore {
     }
 
     /// A store that writes every execution to `journal` and has folded back what the
-    /// journal already held (ADR 0222): what a server uses, so that its executions outlive it.
+    /// journal already held (ADR 0225): what a server uses, so that its executions outlive it.
     ///
     /// An execution this process was running when it stopped is recovered failed with the
     /// code `interrupted`, at the sequence it had reached, and is never run again. One that

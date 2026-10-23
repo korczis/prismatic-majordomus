@@ -1,4 +1,4 @@
-//! Where the executions of a server are written down, so that they outlive it (ADR 0222).
+//! Where the executions of a server are written down, so that they outlive it (ADR 0225).
 //!
 //! One file per execution, `<dir>/<id>.jsonl`, appended and never rewritten:
 //!
@@ -156,7 +156,7 @@ impl crate::order::Ordered for Recorded {
 }
 
 /// The directory a server writes its executions to, one append-only file per execution, so
-/// that they outlive the process (ADR 0222). Writing never fails an execution: a line that
+/// that they outlive the process (ADR 0225). Writing never fails an execution: a line that
 /// cannot be written is logged, and only the restart that would have read it is poorer.
 ///
 /// ```

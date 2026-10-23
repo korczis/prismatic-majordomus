@@ -5,7 +5,7 @@ slug: an-execution-survives-a-restart
 priority: p0
 profile: implementation
 objective: "Append every execution record and event to a journal under .ai/local/state/executions/ before it is acknowledged, fold it back when the server starts, and recover an execution this server was running when it stopped as Failed with the error code interrupted naming its last sequence (the vocabulary abandon_silent already uses), and one another process reports as reported so that its next report continues it under the same id and cursor; never re-run. The WebSocket cursor (http/events.rs) replays from the journal across the restart."
-why: "Owner's P0 of 2026-10-23 (ADR 0222 decisions 1 and 2): an execution's state must survive a browser refresh, a lost node and a restart. execution/mod.rs states the opposite today and store.rs is memory only."
+why: "Owner's P0 of 2026-10-23 (ADR 0225 decisions 1 and 2): an execution's state must survive a browser refresh, a lost node and a restart. execution/mod.rs states the opposite today and store.rs is memory only."
 current_state: "ExecutionStore is in memory (execution/store.rs Limits: 200 executions, 2000 events, 4 running); nothing is recovered on start; adopt/report/abandon_silent exist for majordomus run."
 desired_state: "A server restarted mid-execution answers executions.get and the event cursor for that execution exactly as before, failed with code interrupted or continuing; the module documentation states the journal."
 scope:
