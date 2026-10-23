@@ -292,7 +292,7 @@ fn git(dir: &Path, args: &[&str]) -> Result<String, String> {
 /// handler: `killpg` each recorded group, restore the default disposition, and raise the
 /// signal again so that the exit status still says which signal it was.
 #[cfg(unix)]
-mod groups {
+pub(crate) mod groups {
     use std::sync::atomic::{AtomicI32, Ordering};
     use std::sync::Once;
 
@@ -352,7 +352,7 @@ mod groups {
 }
 
 #[cfg(not(unix))]
-mod groups {
+pub(crate) mod groups {
     pub struct Registered;
 
     pub fn register(_: u32) -> Registered {
@@ -361,7 +361,7 @@ mod groups {
 }
 
 /// Start `cmd` as the leader of a process group of its own, recorded for [`groups`].
-fn spawn_group(cmd: &mut Command) -> std::io::Result<(Child, groups::Registered)> {
+pub(crate) fn spawn_group(cmd: &mut Command) -> std::io::Result<(Child, groups::Registered)> {
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;

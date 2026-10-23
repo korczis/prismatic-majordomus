@@ -78,7 +78,7 @@ What the same study found missing:
 3. **A start is idempotent.** `executions.start` accepts an `idempotency_key`. A second start
    with the same key and the same input answers the first execution. The same key with a
    different input is refused, and the refusal names the conflicting execution.
-4. **An issue is implemented by one capability.** `issue.implement` judges the issue the way
+4. **An issue is implemented by one capability.** `implement.issue` judges the issue the way
    `devtask.issue` reports its readiness. It then does three things, each recorded as a step of
    the execution:
    - It takes the issue's scope as an exclusive mesh claim held by the execution's session.

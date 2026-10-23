@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "f0ff2fc1b3f7ac2f3f7de6b677ce2a10e11d24279285bafe0432cdbb378f3428",
+    "fingerprint": "a2f034aef4a6d0be918fbc5c0770f1507ec615c751231c1b5448beac3c9e2500",
     "summary": {
-      "total": 3323,
-      "builtin": 208,
+      "total": 3324,
+      "builtin": 209,
       "declarative": 3115,
       "by_kind": {
-        "command": 32,
+        "command": 33,
         "query": 176,
         "resource": 3115
       },
       "by_stability": {
         "behaviorally_verified": 143,
-        "experimental": 55,
+        "experimental": 56,
         "implemented": 3125
       },
       "mcp_tools": 197,
       "mcp_resources": 3170,
       "http_routes": 202,
       "cli_commands": 112,
-      "modules": 92,
+      "modules": 93,
       "benchmark_required": 175,
-      "benchmark_waived": 33,
+      "benchmark_waived": 34,
       "cached": 54
     },
     "builtin": [
@@ -32775,6 +32775,110 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+      },
+      {
+        "id": "implement.issue",
+        "module": "implement",
+        "kind": "command",
+        "title": "Implement an issue",
+        "description": "Judge the issue's readiness, claim its scope as the execution's lease, create its worktree and hand the work to the first available worker adapter, each a step of one execution (ADR 0225). Started only as an execution, through executions.start.",
+        "input": {
+          "name": "ImplementInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue to implement, as the canonical model spells it (`I3983`)."
+              },
+              "deadline_minutes": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How many minutes the worker may run before its whole process group is stopped."
+              }
+            },
+            "required": [
+              "issue"
+            ],
+            "description": "The input of `implement.issue`: which issue, and how long its worker may run. Nothing\nelse is the caller's to choose — the worktree, the branch, the lease and the adapter\nare derived — so an execution's input names only what a person picked.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I3983\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.deadline_minutes), (\"I3983\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived, never given\");\n```",
+            "title": "ImplementInput"
+          }
+        },
+        "output": {
+          "name": "ImplementReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "issue": {
+                "type": "string",
+                "description": "The issue."
+              },
+              "branch": {
+                "type": "string",
+                "description": "The branch the work is on."
+              },
+              "worktree": {
+                "type": "string",
+                "description": "The worktree it ran in."
+              },
+              "lease": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The mesh claim that was the lease, when the mesh runs in this process."
+              },
+              "adapter": {
+                "type": "string",
+                "description": "The adapter that ran the worker."
+              },
+              "outcome": {
+                "type": "string",
+                "description": "How the worker ended, in words."
+              }
+            },
+            "required": [
+              "issue",
+              "branch",
+              "worktree",
+              "adapter",
+              "outcome"
+            ],
+            "description": "What an implementation ended with: where it ran, under which lease, by which worker,\nand how the worker ended. Done here means the worker ended successfully, never verified\nand never delivered.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementReport;\nlet report = ImplementReport {\n    issue: \"I0001\".into(), branch: \"feature/I0001-x\".into(), worktree: \"/wt\".into(),\n    lease: None, adapter: \"claude-code\".into(), outcome: \"the worker succeeded\".into(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert!(json.get(\"lease\").is_none(), \"no mesh in the process: no lease is claimed\");\n```",
+            "title": "ImplementReport"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::implement"
+        },
+        "exposure": {},
+        "availability": "runtime",
+        "visibility": "internal",
+        "stability": "experimental",
+        "tags": [
+          "issue",
+          "executions",
+          "worker"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "transient_state"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": true,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/implement.rs"
       },
       {
         "id": "integration.cleanup",
@@ -86185,6 +86289,23 @@
         }
       },
       {
+        "id": "implement",
+        "title": "Implement",
+        "description": "One issue implemented by one execution: readiness, lease, worktree, worker.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "implement.issue"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/implement.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::implement",
+          "path": "majordomus_cli/capability/builtin/implement/index.html"
+        }
+      },
+      {
         "id": "implementation",
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
@@ -86931,7 +87052,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2261f92b5851ed704c424fffe030171761beca1bfe6532513bd43276fe5329cd",
+    "fingerprint": "5ff447c8d891c151d4c6bf0fb5bb6e04f25f8c835f6b8fb54022310f5dd7d170",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -107994,8 +108115,8 @@
         "uri": "majordomus://issue/I3983",
         "kind": "issue",
         "identity": "I3983",
-        "title": "issue.implement judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
-        "description": "Declare the capability issue.implement (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution.",
+        "title": "implement.issue judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
+        "description": "Declare the capability implement.issue (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution.",
         "path": ".ai/repo/project/issues/I3983.yaml",
         "section": "project",
         "source_class": "issue",
@@ -108006,7 +108127,7 @@
         "kind": "issue",
         "identity": "I3984",
         "title": "/ui/idd offers each issue the one primary move its state admits: Implement, Open execution, Verify, Deliver or View blockers",
-        "description": "Replace the primary button of /ui/idd (ui/idd.rs:519-600, today Start/Verify/Mark done through plan.transition) with the one move the issue's derived state admits: READY starts issue.implement as an execution through the existing move start path (share/cockpit/moves.js, with I3981's key); ACTIVE links its live execution; VERIFY starts the verification; DONE offers Deliver (an execution of the delivery policy, a stub refusing until P2 says otherwise); BLOCKED lists the blockers. The executor's refusal is shown verbatim; the snapshot shows state and a link to the live server, never the control.",
+        "description": "Replace the primary button of /ui/idd (ui/idd.rs:519-600, today Start/Verify/Mark done through plan.transition) with the one move the issue's derived state admits: READY starts implement.issue as an execution through the existing move start path (share/cockpit/moves.js, with I3981's key); ACTIVE links its live execution; VERIFY starts the verification; DONE offers Deliver (an execution of the delivery policy, a stub refusing until P2 says otherwise); BLOCKED lists the blockers. The executor's refusal is shown verbatim; the snapshot shows state and a link to the live server, never the control.",
         "path": ".ai/repo/project/issues/I3984.yaml",
         "section": "project",
         "source_class": "issue",
@@ -108028,7 +108149,7 @@
         "kind": "issue",
         "identity": "I3986",
         "title": "An implement execution ends by running the issue's validation in its worktree and recording the evidence, so done means verified and never delivered",
-        "description": "Add a final step verify to issue.implement: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered.",
+        "description": "Add a final step verify to implement.issue: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered.",
         "path": ".ai/repo/project/issues/I3986.yaml",
         "section": "project",
         "source_class": "issue",
@@ -168226,6 +168347,14 @@
           "cases": 1
         },
         {
+          "subject": "implement.issue",
+          "module": "implement",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "transient_state"
+        },
+        {
           "subject": "integration.cleanup",
           "module": "integration",
           "transport": "direct",
@@ -171054,10 +171183,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 208,
+          "required": 209,
           "covered": 175,
           "missing": 0,
-          "waived": 33,
+          "waived": 34,
           "inapplicable": 0
         },
         "http": {
@@ -171082,10 +171211,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 621,
+          "required": 622,
           "covered": 535,
           "missing": 0,
-          "waived": 86,
+          "waived": 87,
           "inapplicable": 0
         }
       }

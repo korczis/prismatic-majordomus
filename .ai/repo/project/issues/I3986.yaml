@@ -4,7 +4,7 @@ title: "An implement execution ends by running the issue's validation in its wor
 slug: an-implement-execution-ends-with-its-evidence
 priority: p0
 profile: implementation
-objective: "Add a final step verify to issue.implement: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered."
+objective: "Add a final step verify to implement.issue: after the worker exits successfully, run the issue's declared validation commands in the execution's worktree, record the result through majordomus evidence record against the issue's evidence_required, and end Succeeded only when every required piece of evidence is recorded and passing, otherwise Failed naming the missing or failing piece; the execution's view says done (verified) and never delivered."
 why: "Owner's P0 DoD ends with 'a testable result with evidence'; ADR 0225 decision 6 separates done from delivered."
 current_state: "Evidence is recorded by hand or by CI; no execution records it."
 desired_state: "The execution that implemented an issue is the one that proves it, in the same worktree, with the evidence linked from its view."
