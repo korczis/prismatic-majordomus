@@ -518,7 +518,9 @@ pub fn primary_move<'a>(next: &Answer, mine: &'a [Value]) -> Option<(&'static st
 /// The words of the primary action: the move and the issue it is made on.
 fn action_label(word: &str, id: &str) -> String {
     match word {
-        "start" => format!("Start {id}"),
+        // a ready issue's primary move is Implement (ADR 0225); its panel offers it, and the
+        // plain start stays one of the moves beside it
+        "start" => format!("Implement {id}"),
         "verify" => format!("Verify {id}"),
         _ => format!("Mark {id} done"),
     }
