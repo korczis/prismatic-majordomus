@@ -24,8 +24,8 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshCommand, MeshFirewallCommand, MeshHandoverCommand, MeshQueryArgs,
-    MeshReviewCommand, MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshBuildCacheCommand, MeshCommand, MeshFirewallCommand, MeshHandoverCommand,
+    MeshQueryArgs, MeshReviewCommand, MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -46,6 +46,17 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             in_process(q, &["mesh", "identity"], json!({}), render_identity, never)
         }
         MeshCommand::Doctor(q) => doctor(q),
+        // A key is a fact of this machine's toolchains and this checkout's lockfiles:
+        // answered in this process, like the identity.
+        MeshCommand::BuildCache(a) => match a.command {
+            MeshBuildCacheCommand::Key(k) => in_process(
+                k.query,
+                &["mesh", "build-cache", "key"],
+                json!({ "kind": k.kind }),
+                render_build_cache_key,
+                never,
+            ),
+        },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
         MeshCommand::Firewall(a) => match a.command {
@@ -600,6 +611,32 @@ fn render_nodes(v: &Value) -> String {
         ));
     }
     out.trim_end().to_string()
+}
+
+/// `mesh build-cache key`: one line per cached thing, its key or why it has none.
+fn render_build_cache_key(v: &Value) -> String {
+    let mut out = format!("platform   {}\n", v["platform"].as_str().unwrap_or(""));
+    let kinds = v["kinds"].as_array().cloned().unwrap_or_default();
+    if kinds.is_empty() {
+        out.push_str("no lockfile is tracked: nothing here is cacheable\n");
+    }
+    for k in kinds {
+        let kind = k["kind"].as_str().unwrap_or("");
+        let dir = k["dir"].as_str().unwrap_or("");
+        match k["key"].as_str() {
+            Some(key) => out.push_str(&format!("{kind:<16} {dir:<12} {key}\n")),
+            None => out.push_str(&format!(
+                "{kind:<16} {dir:<12} no key: {}\n",
+                k["unavailable"].as_str().unwrap_or("unknown")
+            )),
+        }
+        out.push_str(&format!(
+            "{:<29} -> {}\n",
+            "",
+            k["location"].as_str().unwrap_or("")
+        ));
+    }
+    out
 }
 
 fn render_identity(v: &Value) -> String {

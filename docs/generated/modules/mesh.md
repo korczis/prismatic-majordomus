@@ -5,7 +5,29 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 24.
+Stability: experimental. Capabilities: 25.
+
+## `mesh.build_cache.key` — What every dependency install and build directory is cached under
+
+Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_build_cache_key` |
+| HTTP | `GET /api/v1/mesh/build-cache/key` |
+| CLI | `majordomus mesh build-cache key` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | object | no | Only this kind; every kind the repository has when absent. |
+
+Output: `BuildCacheKeyReport`.
 
 ## `mesh.claim` — Claim a scope across the mesh
 

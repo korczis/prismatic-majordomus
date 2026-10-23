@@ -402,6 +402,15 @@
       "summary": "Finished work reaches a verified release at the pace it is finished"
     },
     {
+      "id": "ordinary-commands-never-build",
+      "kind": "milestone",
+      "label": "ordinary-commands-never-build",
+      "status": "PLANNED",
+      "route": "/plan/ordinary-commands-never-build/",
+      "external": false,
+      "summary": "No ordinary command builds: every entry path fails fast or answers through a release of the same generation"
+    },
+    {
       "id": "every-surface-follows-what-changed",
       "kind": "milestone",
       "label": "every-surface-follows-what-changed",
@@ -780,6 +789,15 @@
       "summary": "Whether a commit may be released, and whether its release arrived, is proved by one read and one case"
     },
     {
+      "id": "builds-reuse-the-mesh-cache",
+      "kind": "milestone",
+      "label": "builds-reuse-the-mesh-cache",
+      "status": "BLOCKED",
+      "route": "/plan/builds-reuse-the-mesh-cache/",
+      "external": false,
+      "summary": "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs"
+    },
+    {
       "id": "the-ui-works-on-a-phone",
       "kind": "milestone",
       "label": "the-ui-works-on-a-phone",
@@ -1008,6 +1026,11 @@
     {
       "source": "test-evidence",
       "target": "a-release-is-proven-end-to-end",
+      "kind": "unblocks"
+    },
+    {
+      "source": "development-runtime",
+      "target": "builds-reuse-the-mesh-cache",
       "kind": "unblocks"
     },
     {

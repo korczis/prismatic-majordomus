@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.6"
   },
-  "fingerprint": "b19fc18add8ac0f6a0224321f97fc00a37ec7db2aa999ea712f02bae0cefb905",
+  "fingerprint": "7e03fc63f55fbc94eadebe45967d3846019a03ce47321cbe3904926542602280",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 77,
+        "capabilities": 78,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 139,
+        "capabilities": 140,
         "moments": 38
       },
       "evidence": {
@@ -5574,6 +5574,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -5885,11 +5894,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 24,
-        "mcp_tools": 21,
+        "capabilities": 25,
+        "mcp_tools": 22,
         "mcp_resources": 2,
-        "http_routes": 23,
-        "cli_paths": 4,
+        "http_routes": 24,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7460,7 +7469,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 160
+          "objects": 161
         },
         {
           "name": "knowledge",
@@ -7741,11 +7750,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 571,
+        "mcp_resources": 572,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 568,
+        "objects": 569,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9561,6 +9570,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -10296,11 +10314,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 62,
-        "mcp_tools": 55,
+        "capabilities": 63,
+        "mcp_tools": 56,
         "mcp_resources": 9,
-        "http_routes": 59,
-        "cli_paths": 19,
+        "http_routes": 60,
+        "cli_paths": 20,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10760,6 +10778,15 @@
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
             {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
@@ -11702,11 +11729,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 102,
-        "mcp_tools": 93,
+        "capabilities": 103,
+        "mcp_tools": 94,
         "mcp_resources": 16,
-        "http_routes": 98,
-        "cli_paths": 44,
+        "http_routes": 99,
+        "cli_paths": 45,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -13255,15 +13282,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 102
+          "objects": 104
         },
         {
           "name": "issue",
-          "objects": 898
+          "objects": 904
         },
         {
           "name": "intent",
-          "objects": 35
+          "objects": 37
         },
         {
           "name": "gap",
@@ -13271,7 +13298,7 @@
         },
         {
           "name": "critique",
-          "objects": 31
+          "objects": 33
         }
       ],
       "rule_refs": [
@@ -13469,11 +13496,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1073,
+        "mcp_resources": 1085,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1070,
+        "objects": 1082,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17284,7 +17311,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (160)",
+        "title": "adr (161)",
         "features": [
           "knowledge"
         ]
@@ -17333,7 +17360,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (31)",
+        "title": "critique (33)",
         "features": [
           "planning"
         ]
@@ -17382,14 +17409,14 @@
       },
       {
         "id": "intent",
-        "title": "intent (35)",
+        "title": "intent (37)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (898)",
+        "title": "issue (904)",
         "features": [
           "planning"
         ]
@@ -17410,7 +17437,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (102)",
+        "title": "milestone (104)",
         "features": [
           "planning"
         ]
@@ -18424,26 +18451,26 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3313,
-    "builtin": 208,
-    "declarative": 3105,
+    "capabilities": 3328,
+    "builtin": 209,
+    "declarative": 3119,
     "modules": 58,
-    "mcp_tools": 197,
-    "mcp_resources": 3160,
-    "http_routes": 202,
-    "cli_commands": 210,
+    "mcp_tools": 198,
+    "mcp_resources": 3174,
+    "http_routes": 203,
+    "cli_commands": 211,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3105,
+    "objects": 3119,
     "by_kind": {
-      "adr": 160,
+      "adr": 161,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 31,
+      "critique": 33,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -18452,11 +18479,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 35,
-      "issue": 898,
+      "intent": 37,
+      "issue": 904,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 102,
+      "milestone": 104,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18467,7 +18494,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 602,
+      "test": 603,
       "use-case": 49,
       "workspace": 1
     },

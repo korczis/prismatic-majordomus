@@ -22602,6 +22602,162 @@
                 "subcommands": []
               }
             ]
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "build-cache"
+            ],
+            "route": "/docs/cli/mesh/build-cache/",
+            "executable": false,
+            "usage": "majordomus mesh build-cache <COMMAND>",
+            "about": "The mesh build cache: what each dependency install and build directory is cached under",
+            "args": [],
+            "examples": [],
+            "subcommands": [
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "build-cache",
+                  "key"
+                ],
+                "route": "/docs/cli/mesh/build-cache/key/",
+                "executable": true,
+                "usage": "majordomus mesh build-cache key [OPTIONS]",
+                "about": "Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest",
+                "args": [
+                  {
+                    "name": "kind",
+                    "long": "kind",
+                    "positional": false,
+                    "help": "Only this kind",
+                    "value_name": "KIND",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "cargo-build-dir",
+                        "help": "The cargo build directory of a workspace: the dependencies compiled on the way, without incremental state. Restored only into a directory that is cold"
+                      },
+                      {
+                        "name": "mix-deps",
+                        "help": "The `deps/` directory `mix deps.get` fills"
+                      },
+                      {
+                        "name": "npm-modules",
+                        "help": "The `node_modules/` directory `npm ci` fills"
+                      }
+                    ],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-build-cache-key",
+                    "title": "What each lockfile's install is cached under",
+                    "description": "Every lockfile the repository tracks becomes a cacheable thing with a key: a schema version, the platform, the toolchain as its executables state it, and the digest of its inputs. `--kind` narrows it to one kind; a repository with no lockfile of that kind says nothing here is cacheable, and a kind whose toolchain is absent says why it has no key.",
+                    "argv": [
+                      "mesh",
+                      "build-cache",
+                      "key",
+                      "--kind",
+                      "mix-deps"
+                    ],
+                    "command": "majordomus mesh build-cache key --kind mix-deps",
+                    "setup": [],
+                    "expectation": "exits 0; prints platform"
+                  }
+                ],
+                "subcommands": []
+              }
+            ]
           }
         ]
       },

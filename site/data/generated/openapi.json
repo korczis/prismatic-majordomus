@@ -100,6 +100,7 @@
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
     "op-mcp-projection": "docs/api/mcp/",
+    "op-mesh-build_cache-key": "docs/api/mesh/",
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
@@ -268,6 +269,8 @@
     "schema-Budget": "docs/api/devcontext/",
     "schema-Budgets": "docs/api/deploy/",
     "schema-Build": "docs/api/deploy/",
+    "schema-BuildCacheKeyReport": "docs/api/mesh/",
+    "schema-BuildCacheKindKey": "docs/api/mesh/",
     "schema-BuildIdentity": "docs/api/served/",
     "schema-BuildReport": "docs/api/distribution/",
     "schema-CachePolicy": "docs/api/capabilities/",
@@ -690,6 +693,7 @@
     "schema-JournalTallies": "docs/api/mesh/",
     "schema-JudgedCommit": "docs/api/commit/",
     "schema-Judgement": "docs/api/served/",
+    "schema-Kind": "docs/api/mesh/",
     "schema-KindCount": "docs/api/environment/",
     "schema-KindEntry": "docs/api/entity/",
     "schema-KindList": "docs/api/entity/",
@@ -1276,8 +1280,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 202,
-    "schemas": 1013,
+    "operations": 203,
+    "schemas": 1016,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1469,6 +1473,7 @@
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
     "mcp.projection": "mcp",
+    "mesh.build_cache.key": "mesh",
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
@@ -1641,6 +1646,8 @@
     "Budget": "devcontext",
     "Budgets": "deploy",
     "Build": "deploy",
+    "BuildCacheKeyReport": "mesh",
+    "BuildCacheKindKey": "mesh",
     "BuildIdentity": "served",
     "BuildReport": "distribution",
     "CachePolicy": "capabilities",
@@ -2063,6 +2070,7 @@
     "JournalTallies": "mesh",
     "JudgedCommit": "commit",
     "Judgement": "served",
+    "Kind": "mesh",
     "KindCount": "environment",
     "KindEntry": "entity",
     "KindList": "entity",
@@ -5998,6 +6006,117 @@
       "used_by": [],
       "used_by_schemas": [
         "DeploymentView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "BuildCacheKeyReport",
+      "properties": [
+        {
+          "description": "This machine's platform triple.",
+          "name": "platform",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One entry per lockfile the repository tracks, by kind then directory.",
+          "name": "kinds",
+          "refs": [
+            "BuildCacheKindKey"
+          ],
+          "required": true,
+          "type": "array of BuildCacheKindKey"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.build_cache.key"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "BuildCacheKindKey",
+      "properties": [
+        {
+          "description": "What is cached.",
+          "name": "kind",
+          "refs": [
+            "Kind"
+          ],
+          "required": true,
+          "type": "Kind"
+        },
+        {
+          "description": "The directory holding the lockfile, relative to the repository root (`.` for the root).",
+          "name": "dir",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the entry is restored to: relative to the repository, or `~/`-relative when it\nlies under the home directory (a shared cargo build directory).",
+          "name": "location",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The platform triple the entry is built for.",
+          "name": "platform",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The toolchain as its executables state it; absent when they could not be asked.",
+          "name": "toolchain",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The files hashed into the digest, relative to the repository root.",
+          "name": "inputs",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The first 32 hex digits of the SHA-256 over the inputs and the declared environment.",
+          "name": "digest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`v1/<kind>/<platform>/<toolchain>/<digest>`; absent when the toolchain is.",
+          "name": "key",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why there is no key, when there is none.",
+          "name": "unavailable",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BuildCacheKeyReport"
       ],
       "values": [],
       "variants": []
@@ -20100,6 +20219,7 @@
         "health.live",
         "mcp.projection",
         "mesh.status",
+        "mesh.build_cache.key",
         "mesh.claim",
         "mesh.release",
         "mesh.cooperation",
@@ -29860,6 +29980,35 @@
         "DeploymentStanding"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "Kind",
+      "properties": [],
+      "type": "\"cargo-build-dir\" | \"mix-deps\" | \"npm-modules\"",
+      "used_by": [
+        "mesh.build_cache.key"
+      ],
+      "used_by_schemas": [
+        "BuildCacheKindKey"
+      ],
+      "values": [
+        {
+          "description": "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold.",
+          "value": "cargo-build-dir"
+        },
+        {
+          "description": "The `deps/` directory `mix deps.get` fills.",
+          "value": "mix-deps"
+        },
+        {
+          "description": "The `node_modules/` directory `npm ci` fills.",
+          "value": "npm-modules"
+        }
+      ],
       "variants": []
     },
     {
@@ -66227,6 +66376,73 @@
           "result_schema": "MeshStatus",
           "stability": "experimental",
           "summary": "The mesh, at a glance"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh build-cache key",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/build-cache/key?kind=cargo-build-dir\"",
+          "description": "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+          "home": "mesh",
+          "id": "mesh.build_cache.key",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_build_cache_key",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only this kind; every kind the repository has when absent.",
+              "examples": [
+                {
+                  "case": "cargo",
+                  "value": "\"cargo-build-dir\""
+                }
+              ],
+              "name": "kind",
+              "required": false,
+              "type": "Kind | null"
+            }
+          ],
+          "path": "/api/v1/mesh/build-cache/key",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What every dependency install and build directory is cached under: the result.",
+              "schema": "BuildCacheKeyReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "BuildCacheKeyReport",
+          "stability": "experimental",
+          "summary": "What every dependency install and build directory is cached under"
         },
         {
           "benchmark": "waived",

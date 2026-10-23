@@ -1,0 +1,54 @@
+id: I3952
+milestone: builds-reuse-the-mesh-cache
+title: "A dependency install is restored before and saved after, verified by its digest, local level first and a trusted store second"
+slug: a-dependency-install-is-restored-before-and-saved-after
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "majordomus mesh build-cache ensure <kind> -- <install command> for npm node_modules, mix deps and the cargo build directory: an install whose key is already in place is skipped, a hit is restored from the local archive level or the selected store after its recorded SHA-256 matches, a miss runs the command and saves its result to both; MAJORDOMUS_BUILD_CACHE=off bypasses every level."
+why: "The owner, 2026-10-22, after lundra (the build and deploy host) reached zero free bytes: the shared cache must be part of Majordomus — used when MinIO is available, enforced, dynamic, derived — for compiled Rust, the shared cargo build directory, mix deps.get and npm install, keyed by a triplet for the most reuse. Decided the same day after critique: the store is trusted only through a signed offer (I2671), the build directory archive is measured before it is built (I3955), and the dependency cache is generic and wired first into prismatic-platform. See ADR 0157 and intent a-build-reuses-what-the-mesh-already-built."
+current_state: "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only."
+desired_state: "npm ci and mix deps.get are restored in seconds on a hit and run as before on a miss, in any supervised repository; the local level lives under ~/.cache/majordomus/build-cache, is bounded by policy and is reclaimed by scripts/reap-orphans; a restore passes the build's free-space floor."
+scope:
+  - "apps/majordomus-cli/src/mesh/build_cache.rs"
+  - "apps/majordomus-cli/src/mesh/build_cache/"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "docs/generated"
+  - "site/content/docs"
+  - "site/data"
+  - "scripts/reap-orphans"
+  - ".ai/repo/policy.yaml"
+  - "share/schemas/majordomus/policy"
+  - "share/skeleton/policy.yaml"
+  - ".ai/repo/rules/project/cache-is-invisible.v1.md"
+  - "docs/CLI.md"
+  - ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml"
+  - "test/cases/3952_a_dependency_install_is_restored_and_saved.sh"
+non_scope:
+  - "Caching a workspace's own incremental compilation"
+depends_on:
+  - I3950
+  - I3951
+  - I2671
+acceptance_criteria:
+  - "Cold, warm and bypassed runs leave the same file list and contents in the target directory (the equivalence case project.cache-is-invisible requires)"
+  - "An archive whose SHA-256 does not match the digest recorded when it was saved is discarded and the install runs"
+  - "An archive entry that is absolute, climbs with .., or is a link leaving the target is refused and the install runs"
+  - "Two nodes sharing one stub store: what the first saved, the second restores"
+  - "A cargo build directory is restored only when it is cold, under cargo's own lock, extracted beside it and renamed into place with cargo's CACHEDIR.TAG; an archive larger than one PUT is not saved, and says so"
+  - "The local archive level stays under its declared bound, and scripts/reap-orphans measures and reduces it"
+  - "The rule cache-is-invisible is amended for a cache outside .ai/local/, shared across a machine's checkouts"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3952_a_dependency_install_is_restored_and_saved"
+evidence_required:
+  - "restore_save_case"
+  - "equivalence_case"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#a-second-node-reuses"
+  - "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+  - "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+created_at: 2026-10-22
+updated_at: 2026-10-22
