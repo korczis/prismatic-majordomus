@@ -3,6 +3,8 @@
 # it hands the payload to `majordomus-cli guard hook --provider claude-code`, which judges
 # whether a claim covers the path — the active task's scope, or a live mesh claim of this
 # session — in the checkout the file belongs to (I2735, session.edits_require_claim).
+# For the shell tool (Bash) the same command judges the command instead: a build started
+# over ssh on a declared offload host outside `majordomus offload` is refused (I3956).
 #
 # The executable is asked directly, never built here: a hook is not the place to start a
 # compiler, and this one runs before every edit. Exactly one code is passed on — 2, the

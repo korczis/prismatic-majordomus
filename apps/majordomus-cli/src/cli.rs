@@ -683,7 +683,7 @@ pub struct GuardArgs {
 /// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
 /// ```
 pub enum GuardCommand {
-    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    /// Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise
     Hook(GuardHookArgs),
 }
 
@@ -7438,7 +7438,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "guard-hook",
             title: "Judge the edit a provider's pre-tool payload names",
-            description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+            description: "What a provider's pre-tool hook runs before an edit or a shell command: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, or when its command starts a build over ssh on a host the offload declaration names (the way is `majordomus offload derive`), 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
             argv: &["guard", "hook", "--provider", "claude-code"],
             setup: &[],
             expect: Expect::Success,

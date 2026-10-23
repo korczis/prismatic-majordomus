@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "bb1483c0c0f5943bca57ed2136d4984c572e961e66302db0a6332d606508f69a",
+    "fingerprint": "0e8c9f8c81a75c0451535fb8cb777230a4644834fa0cfeb246d7efa423610cf5",
     "summary": {
       "total": 3331,
       "builtin": 210,
@@ -87692,7 +87692,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9c851915ab2c7273f174f49f5d8bda6a46dafca806e13413fa6f33e7a01fdd2f",
+    "fingerprint": "4067f5f3252c854f34c79f42b34641f13374e817d7a704a02424992d14b6a22a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -94977,7 +94977,7 @@
         "title": "The derive offload",
         "path": "docs/OFFLOAD.md",
         "source_class": "document",
-        "bytes": 17933
+        "bytes": 20486
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -108815,7 +108815,7 @@
         "path": ".ai/repo/project/issues/I3956.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3648
+        "bytes": 3903
       },
       {
         "uri": "majordomus://issue/I3957",
@@ -112956,7 +112956,7 @@
         "path": ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3976,
+        "bytes": 4573,
         "tags": [
           "derived",
           "machine",
@@ -119106,7 +119106,7 @@
         "identity": "test/cases/3957_every_process_is_traced_to_its_session.sh",
         "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
         "source_class": "case",
-        "bytes": 24124
+        "bytes": 27974
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -141610,7 +141610,7 @@
             "route": "/docs/cli/guard/hook/",
             "executable": true,
             "usage": "majordomus guard hook [OPTIONS]",
-            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "about": "Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise",
             "args": [
               {
                 "name": "provider",
@@ -141643,7 +141643,7 @@
               {
                 "id": "guard-hook",
                 "title": "Judge the edit a provider's pre-tool payload names",
-                "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+                "description": "What a provider's pre-tool hook runs before an edit or a shell command: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, or when its command starts a build over ssh on a host the offload declaration names (the way is `majordomus offload derive`), 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
                 "argv": [
                   "guard",
                   "hook",
