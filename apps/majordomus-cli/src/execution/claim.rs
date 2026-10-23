@@ -15,7 +15,7 @@
 //! ```
 //!
 //! The claim is given back when the execution reaches a final state, by the worker that ran
-//! it, and — through [`HeldClaim`]'s `Drop` — when that worker unwinds instead. An outcome
+//! it, and — through `HeldClaim`'s `Drop` — when that worker unwinds instead. An outcome
 //! that is not known keeps the claim: whether the work happened is still to be read, and the
 //! scope is not free until it has been. A kept claim, or one whose process died, ends when
 //! its runtime stops beating, as every mesh claim does. Fencing a holder that comes back
@@ -100,39 +100,8 @@ pub fn disposition(state: ExecutionState) -> ClaimStanding {
 
 /// How the attempt to take an issue's claim came out: held, unclaimed because no mesh runs,
 /// or refused because another session holds the scope.
-///
-/// ```
-/// # use std::sync::Arc;
-/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
-/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
-/// # use majordomus_cli::mesh::identity::NodeIdentity;
-/// # use majordomus_cli::mesh::link::HttpTransport;
-/// # use majordomus_cli::mesh::registry::MeshRegistry;
-/// # use majordomus_cli::mesh::repository::of_root_commits;
-/// # let cooperation = Cooperation::new(CooperationSetup {
-/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
-/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
-/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
-/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
-/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
-/// # }).unwrap();
-/// # let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
-/// # let ctx = repo.context().unwrap();
-/// // a context whose mesh runs
-/// ctx.mesh.attach_cooperation(Arc::clone(&cooperation));
-/// use majordomus_cli::execution::claim::{take, Taken};
-/// use majordomus_cli::execution::ExecutionId;
-/// let first = take(&ctx, &ExecutionId::fresh(), "one", "I4004");
-/// assert!(matches!(first, Taken::Held(_)));
-/// match take(&ctx, &ExecutionId::fresh(), "two", "I4004") {
-///     Taken::Refused { conflict, message, .. } => {
-///         assert!(conflict && message.starts_with("claim_conflict: I4004"), "{message}");
-///     }
-///     other => panic!("{other:?}"),
-/// }
-/// ```
 #[derive(Debug)]
-pub enum Taken {
+pub(crate) enum Taken {
     /// The exclusive claim is held; it goes back when the guard is settled or dropped.
     Held(HeldClaim),
     /// No mesh cooperation runs in this process: the execution runs without a claim, and
@@ -150,24 +119,11 @@ pub enum Taken {
     },
 }
 
-/// Take the exclusive mesh claim of `issue` for the execution `id`, before it runs.
-///
-/// ```
-/// use majordomus_cli::execution::claim::{take, Taken};
-/// use majordomus_cli::execution::{ClaimStanding, ExecutionId};
-/// use majordomus_cli::synthetic::SyntheticRepository;
-/// let repo = SyntheticRepository::small().unwrap();
-/// let ctx = repo.context().unwrap();
-/// // no mesh cooperation runs in this context: it runs unclaimed, and says so
-/// match take(&ctx, &ExecutionId::fresh(), "Demonstrate", "I4004") {
-///     Taken::Unclaimed(claim) => {
-///         assert_eq!(claim.standing, ClaimStanding::Unclaimed);
-///         assert!(claim.detail.is_some());
-///     }
-///     other => panic!("{other:?}"),
-/// }
-/// ```
-pub fn take(ctx: &Context, id: &ExecutionId, intent: &str, issue: &str) -> Taken {
+/// Take the exclusive mesh claim of `issue` for the execution `id`, before it runs: held,
+/// refused with the holder named, or unclaimed with the reason when no mesh cooperation runs in
+/// this process. The tests below hold each branch; a doc example cannot, because a running
+/// mesh is only ever constructed inside `src/mesh/` (scripts/ci/mesh-check).
+pub(crate) fn take(ctx: &Context, id: &ExecutionId, intent: &str, issue: &str) -> Taken {
     let scope = scope_of(ctx, issue);
     let Some(cooperation) = ctx.mesh.cooperation() else {
         let reason = ctx
@@ -270,38 +226,7 @@ fn take_with(
 /// An exclusive mesh claim an execution holds. Settled when the execution ends; released by
 /// `Drop` when the worker unwinds without settling it, so a panic does not leave the scope
 /// claimed for as long as the runtime beats.
-///
-/// ```
-/// # use std::sync::Arc;
-/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
-/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
-/// # use majordomus_cli::mesh::identity::NodeIdentity;
-/// # use majordomus_cli::mesh::link::HttpTransport;
-/// # use majordomus_cli::mesh::registry::MeshRegistry;
-/// # use majordomus_cli::mesh::repository::of_root_commits;
-/// # let cooperation = Cooperation::new(CooperationSetup {
-/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
-/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
-/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
-/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
-/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
-/// # }).unwrap();
-/// # let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
-/// # let ctx = repo.context().unwrap();
-/// // a context whose mesh runs
-/// ctx.mesh.attach_cooperation(Arc::clone(&cooperation));
-/// use majordomus_cli::execution::claim::{take, HeldClaim, Taken};
-/// use majordomus_cli::execution::{ClaimStanding, ExecutionId, ExecutionState};
-/// let Taken::Held(held) = take(&ctx, &ExecutionId::fresh(), "x", "I4004") else { panic!() };
-/// let held: HeldClaim = held;
-/// assert_eq!(held.claim().standing, ClaimStanding::Held);
-/// assert!(held.claim().key.is_some());
-/// let released = held.settle(Some(ExecutionState::Succeeded));
-/// assert_eq!(released.standing, ClaimStanding::Released);
-/// // the scope is free again
-/// assert!(matches!(take(&ctx, &ExecutionId::fresh(), "y", "I4004"), Taken::Held(_)));
-/// ```
-pub struct HeldClaim {
+pub(crate) struct HeldClaim {
     cooperation: Arc<Cooperation>,
     claim: IssueClaim,
     armed: bool,
@@ -319,72 +244,14 @@ impl std::fmt::Debug for HeldClaim {
 impl HeldClaim {
     /// The claim as held: its key, its session and its scope, which the execution's
     /// `execution.issue_claim` event and the `claimed` holder are made from.
-    ///
-    /// ```
-    /// # use std::sync::Arc;
-    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
-    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
-    /// # use majordomus_cli::mesh::identity::NodeIdentity;
-    /// # use majordomus_cli::mesh::link::HttpTransport;
-    /// # use majordomus_cli::mesh::registry::MeshRegistry;
-    /// # use majordomus_cli::mesh::repository::of_root_commits;
-    /// # let cooperation = Cooperation::new(CooperationSetup {
-    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
-    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
-    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
-    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
-    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
-    /// # }).unwrap();
-    /// # let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
-    /// # let ctx = repo.context().unwrap();
-    /// // a context whose mesh runs
-    /// ctx.mesh.attach_cooperation(Arc::clone(&cooperation));
-    /// use majordomus_cli::execution::claim::{take, Taken};
-    /// use majordomus_cli::execution::{ClaimStanding, ExecutionId, ExecutionState};
-    /// let Taken::Held(held) = take(&ctx, &ExecutionId::fresh(), "x", "I4004") else { panic!() };
-    /// assert_eq!(held.claim().standing, ClaimStanding::Held);
-    /// assert!(held.claim().key.is_some());
-    /// let released = held.settle(Some(ExecutionState::Succeeded));
-    /// assert_eq!(released.standing, ClaimStanding::Released);
-    /// // the scope is free again
-    /// assert!(matches!(take(&ctx, &ExecutionId::fresh(), "y", "I4004"), Taken::Held(_)));
-    /// ```
-    pub fn claim(&self) -> &IssueClaim {
+    pub(crate) fn claim(&self) -> &IssueClaim {
         &self.claim
     }
 
     /// Settle the claim for an execution that reached `state` (`None`: the record is gone):
     /// released, with its session closed, or kept for an outcome that is not known. The
     /// answer is the claim as it now stands, for the execution's event.
-    ///
-    /// ```
-    /// # use std::sync::Arc;
-    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
-    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
-    /// # use majordomus_cli::mesh::identity::NodeIdentity;
-    /// # use majordomus_cli::mesh::link::HttpTransport;
-    /// # use majordomus_cli::mesh::registry::MeshRegistry;
-    /// # use majordomus_cli::mesh::repository::of_root_commits;
-    /// # let cooperation = Cooperation::new(CooperationSetup {
-    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
-    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
-    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
-    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
-    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
-    /// # }).unwrap();
-    /// # let repo = majordomus_cli::synthetic::SyntheticRepository::small().unwrap();
-    /// # let ctx = repo.context().unwrap();
-    /// // a context whose mesh runs
-    /// ctx.mesh.attach_cooperation(Arc::clone(&cooperation));
-    /// use majordomus_cli::execution::claim::{take, Taken};
-    /// use majordomus_cli::execution::{ClaimStanding, ExecutionId, ExecutionState};
-    /// let Taken::Held(held) = take(&ctx, &ExecutionId::fresh(), "x", "I1") else { panic!() };
-    /// let kept = held.settle(Some(ExecutionState::UnknownOutcome));
-    /// assert_eq!(kept.standing, ClaimStanding::Kept, "the outcome is not known");
-    /// // so a second start of the issue is still refused
-    /// assert!(matches!(take(&ctx, &ExecutionId::fresh(), "y", "I1"), Taken::Refused { .. }));
-    /// ```
-    pub fn settle(mut self, state: Option<ExecutionState>) -> IssueClaim {
+    pub(crate) fn settle(mut self, state: Option<ExecutionState>) -> IssueClaim {
         match state.map(disposition) {
             Some(ClaimStanding::Kept) => {
                 self.armed = false;
