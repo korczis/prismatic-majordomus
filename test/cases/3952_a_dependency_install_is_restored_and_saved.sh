@@ -199,7 +199,7 @@ echo "    an archive whose SHA-256 does not match is discarded and the install r
 # ---------------------------------------------------------------- 7. an escaping link
 mkdir -p "$S/evil" && ln -s /etc "$S/evil/escape"
 (cd "$S/evil" && COPYFILE_DISABLE=1 tar -czf "$A1" .)
-shasum -a 256 "$A1" | awk '{ print $1 }' > "$S/h1/.cache/majordomus/build-cache/$KEY.sha256"
+sha256_of_file "$A1" > "$S/h1/.cache/majordomus/build-cache/$KEY.sha256"
 rm -rf "$N1/site/node_modules"
 npm_ensure h1 "$N1"
 expect_source command "an escaping link"
