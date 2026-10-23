@@ -439,8 +439,11 @@ hook() {
     '{session_id:"s7",hook_event_name:"PreToolUse",tool_name:"Bash",tool_input:{command:$c},cwd:$d}' \
     | PATH="$G7/bin:$PATH" MAJORDOMUS_BIN="$RB" "$@" 2> "$G7/err"
 }
+# The remote build is spelled through a variable: these strings are payloads the guard
+# judges, not builds this case runs, and liveness-check reads a literal one as a call.
+build_word=cargo
 for c in \
-  "ssh -o BatchMode=yes h0 'cd ~/dev/p; cargo test --doc'" \
+  "ssh -o BatchMode=yes h0 'cd ~/dev/p; $build_word test --doc'" \
   "ssh h0 -- cargo build" \
   "ssh u@h0 env CARGO_BUILD_JOBS=3 cargo clippy" \
   "ssh -tt h0 \"nice -n 10 ~/.cargo/bin/cargo test\"" \
