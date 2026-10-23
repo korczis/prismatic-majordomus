@@ -185,7 +185,17 @@ pub fn record_standing_of(view: &serde_json::Value, head_sha: &str, now: i64) ->
 /// holder record written into the file says who holds it; it decides nothing.
 pub struct IntegrationLease {
     path: PathBuf,
-    token: String,
+    /// The holder record as written last: what says the file is still this lease's. Shared
+    /// with a keep-alive, and replaced under its lock each time the executor advances its
+    /// queue ([`IntegrationLease::progressed`]), so neither writes a record the other made
+    /// stale.
+    token: std::sync::Arc<std::sync::Mutex<String>>,
+    /// The record as it was taken; each progress rewrites it with a new `progressed_at`.
+    holder: LeaseHolder,
+    /// The heads and check verdicts of the last observation, one line per pull request: a
+    /// change between two observations is the queue advancing although the executor did
+    /// nothing (I3991, a slow CI run turning green).
+    verdicts: std::sync::Mutex<Option<String>>,
     /// The repository whose trail records the lease's release.
     root: PathBuf,
     /// The open lock file: closing it gives the `flock` back.
@@ -210,6 +220,36 @@ pub struct LeaseHolder {
     /// when the lease guards this clone alone ([`super::exclusive`]).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub mesh_claim: Option<String>,
+    /// When its executor last advanced its queue, seconds since the epoch: when it was taken,
+    /// then at every plan, act, outcome or new check verdict (I3991). Absent from a record an
+    /// older executor wrote.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progressed_at: Option<u64>,
+    /// How long its executor may advance nothing before its mesh claim is suspended: the
+    /// repository's `cooperation.session_ttl_seconds` ([`progress_ttl`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progress_ttl_seconds: Option<u64>,
+}
+
+/// The seconds an executor of `root` may advance nothing before its mesh claim is suspended:
+/// `cooperation.session_ttl_seconds` of the mesh declaration under `.ai/repo/mesh/`, read from
+/// the files as [`crate::guard::mesh_declared_enabled`] reads them, else the mesh's default.
+/// `None` when the declaration turns the rule off (0).
+pub(crate) fn progress_ttl(root: &Path) -> Option<u64> {
+    let declared = fs::read_dir(root.join(".ai/repo/mesh"))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|p| matches!(p.extension().and_then(|x| x.to_str()), Some("yaml" | "yml")))
+        .filter_map(|p| fs::read_to_string(p).ok())
+        .filter_map(|t| crate::metadata::yaml::parse_mapping(&t).ok())
+        .find_map(|m| {
+            m.get("cooperation")
+                .and_then(|c| c.get("session_ttl_seconds"))
+                .and_then(serde_json::Value::as_u64)
+        });
+    Some(declared.unwrap_or(crate::mesh::config::DEFAULT_SESSION_TTL)).filter(|t| *t > 0)
 }
 
 /// The common git directory of the repository at `root`: the one every worktree shares.
@@ -258,6 +298,12 @@ fn try_lock_exclusive(file: &fs::File) -> std::io::Result<bool> {
     (e.kind() == std::io::ErrorKind::WouldBlock)
         .then_some(false)
         .ok_or(e)
+}
+
+/// The value behind `m`, also after a thread holding it panicked: a record is a string, and no
+/// half-made one is ever stored in it.
+fn lock<T>(m: &std::sync::Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    m.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 /// Whether `path` still names the file `file` has open.
@@ -327,12 +373,15 @@ impl IntegrationLease {
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
         }
+        let since = now_secs();
         let holder = LeaseHolder {
             pid: std::process::id(),
             host: host(),
             base: base.to_string(),
-            since: now_secs(),
+            since,
             mesh_claim: mesh.as_ref().map(|m| m.key().to_string()),
+            progressed_at: Some(since),
+            progress_ttl_seconds: progress_ttl(root),
         };
         let token = serde_json::to_string(&holder).map_err(|e| e.to_string())?;
         // A holder that releases unlinks the file before it closes it, so an executor that
@@ -374,7 +423,9 @@ impl IntegrationLease {
                 }
                 return Ok(IntegrationLease {
                     path,
-                    token,
+                    token: std::sync::Arc::new(std::sync::Mutex::new(token)),
+                    holder,
+                    verdicts: std::sync::Mutex::new(None),
                     root: root.to_path_buf(),
                     file,
                     mesh,
@@ -395,15 +446,68 @@ impl IntegrationLease {
                 self.path.display()
             ));
         }
+        let token = lock(&self.token);
         let held = fs::read_to_string(&self.path).unwrap_or_default();
-        if held.trim() != self.token {
+        if held.trim() != *token {
             return Err(format!(
                 "the integration lease was lost: {} names another holder: {}",
                 self.path.display(),
                 held.trim()
             ));
         }
-        write_record(&self.file, &self.token).map_err(|e| format!("{}: {e}", self.path.display()))
+        write_record(&self.file, &token).map_err(|e| format!("{}: {e}", self.path.display()))
+    }
+
+    /// The executor advanced its queue, as `phase` says (I3991): the record is rewritten with
+    /// `progressed_at` now, and the mesh claim — when the lease holds one — is beaten with the
+    /// phase. Only while the record is still this lease's; a lease that was lost is said at
+    /// the next [`renew`](Self::renew), not here.
+    pub(crate) fn progressed(&self, phase: &str) {
+        {
+            let mut token = lock(&self.token);
+            let mine = names_file(&self.path, &self.file)
+                && fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == *token);
+            let next = LeaseHolder {
+                progressed_at: Some(now_secs()),
+                ..self.holder.clone()
+            };
+            if let Some(next) = serde_json::to_string(&next).ok().filter(|_| mine) {
+                if write_record(&self.file, &next).is_ok() {
+                    *token = next;
+                }
+            }
+        }
+        if let Some(claim) = &self.mesh {
+            claim.beat(phase);
+        }
+    }
+
+    /// Whether the lease still reaches as far as it was taken to, asked before `act` writes to
+    /// the forge: its mesh claim still holds ([`super::exclusive::MeshClaim::holds`]). A lease
+    /// that guards this clone alone is held for as long as its `flock` is.
+    pub(crate) fn holds(&self, act: &str) -> Result<(), String> {
+        self.mesh.as_ref().map_or(Ok(()), |claim| claim.holds(act))
+    }
+
+    /// Note the heads and check verdicts `queue` observed: a change since the last observation
+    /// is the queue advancing — a slow run turned green, an author pushed — and counts as
+    /// progress although the executor itself did nothing (I3991). The first observation only
+    /// sets the mark.
+    pub(crate) fn observed(&self, queue: &IntegrationQueue) {
+        let now: String = queue
+            .assessments
+            .iter()
+            .map(|a| {
+                format!(
+                    "#{} {} {:?}\n",
+                    a.number, a.evaluated_against.head_sha, a.required_checks
+                )
+            })
+            .collect();
+        let before = lock(&self.verdicts).replace(now.clone());
+        if before.is_some_and(|b| b != now) {
+            self.progressed("a head or a check verdict moved");
+        }
     }
 
     /// Keep the record fresh while one long act runs — a refresh's derive can outlast what an
@@ -431,8 +535,11 @@ impl IntegrationLease {
                             continue;
                         }
                         waited = Duration::ZERO;
+                        // under the lock: a progress rewriting the record meanwhile is never
+                        // overwritten with the record it replaced
+                        let token = lock(&token);
                         let mine = names_file(&path, &file)
-                            && fs::read_to_string(&path).is_ok_and(|c| c.trim() == token);
+                            && fs::read_to_string(&path).is_ok_and(|c| c.trim() == *token);
                         if !mine {
                             return;
                         }
@@ -486,12 +593,13 @@ impl Drop for IntegrationLease {
         // unlinked while the lock is held, closed after: see `acquire`. Only while the path
         // still names the file this lease locked: two holders' records can read the same
         // (one process, one second), so the record alone cannot say whose file it is.
+        let token = lock(&self.token).clone();
         if names_file(&self.path, &self.file)
-            && fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token)
+            && fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == token)
         {
             let _ = fs::remove_file(&self.path);
             let released = IntegrationEvent {
-                detail: self.token.clone(),
+                detail: token,
                 ..IntegrationEvent::of(IntegrationAction::LeaseReleased)
             };
             if let Err(e) = record(&self.root, released) {
@@ -581,6 +689,10 @@ pub enum IntegrationAction {
     /// A continuous drain's cycle could not observe the forge, and the outage was short
     /// enough to wait out ([`CONTINUOUS_TRANSIENT_LIMIT`]).
     ObserveFailed,
+    /// The executor no longer holds the lease where it reaches — its mesh claim was suspended,
+    /// released or overtaken while it advanced nothing (I3991) — so the act it was about to
+    /// take was not taken.
+    LeaseLost,
 }
 
 impl IntegrationAction {
@@ -618,7 +730,29 @@ impl IntegrationAction {
             IntegrationAction::RepairRefused => "repair_refused",
             IntegrationAction::Idle => "idle",
             IntegrationAction::ObserveFailed => "observe_failed",
+            IntegrationAction::LeaseLost => "lease_lost",
         }
+    }
+
+    /// Whether an executor that records this has advanced its queue (I3991): planned, acted
+    /// on, or learnt the outcome of something for a pull request, or seen one become or stop
+    /// being actionable. Taking and giving back the lease, starting and stopping, observing,
+    /// finding nothing to do and waiting out an outage are not progress: an executor that
+    /// does only those holds the lease for nothing.
+    pub fn advances_queue(self) -> bool {
+        use IntegrationAction as A;
+        !matches!(
+            self,
+            A::LeaseAcquired
+                | A::LeaseReleased
+                | A::ContinuousStarted
+                | A::ContinuousStopped
+                | A::Observed
+                | A::FailureAcknowledged
+                | A::Idle
+                | A::ObserveFailed
+                | A::LeaseLost
+        )
     }
 }
 
@@ -1019,6 +1153,15 @@ pub enum DrainStepOutcome {
         /// Why the trail refused it.
         reason: String,
     },
+    /// The act was not taken, because this executor no longer holds the lease where it
+    /// reaches: its mesh claim was suspended, released or overtaken while it advanced nothing
+    /// (I3991). The drain stops; another executor may hold the base now.
+    LeaseLost {
+        /// The pull request it was about to act on.
+        pr: u64,
+        /// Why the lease is not held.
+        reason: String,
+    },
 }
 
 /// What a verification proved.
@@ -1076,6 +1219,54 @@ pub trait Integrator {
     /// Close a record pull request with `comment` and reopen it at once, while it is open
     /// at `head_sha`. An error says whether the pull request was left closed.
     fn reopen(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
+    /// The executor advanced its queue, as `phase` says ([`IntegrationAction::advances_queue`]):
+    /// what keeps its lease alive across machines (I3991). Nothing by default.
+    fn progressed(&mut self, _phase: &str) {}
+    /// Whether the executor still holds its lease where it reaches, asked before `act`
+    /// writes to the forge or a branch; the reason when it does not. Held by default.
+    fn holds(&mut self, _act: &str) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+/// [`record`], and the integrator told when the event advances the queue: every line an
+/// executor writes about a pull request it planned, acted on or saw the outcome of passes
+/// here, so the lease lives by exactly that (I3991).
+pub(crate) fn recorded(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    e: IntegrationEvent,
+) -> Result<IntegrationEvent, String> {
+    let e = record(root, e)?;
+    if e.action.advances_queue() {
+        integrator.progressed(&format!(
+            "{}{}",
+            e.action,
+            e.pr.map(|n| format!(" #{n}")).unwrap_or_default()
+        ));
+    }
+    Ok(e)
+}
+
+/// Ask the integrator whether it still holds its lease before `act` on `pr`; when it does
+/// not, the loss is recorded and is the step's outcome, and nothing is done.
+pub(crate) fn unless_held(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    pr: &PullRequestAssessment,
+    act: &str,
+) -> Result<Option<DrainStepOutcome>, String> {
+    let Err(reason) = integrator.holds(&format!("{act} #{}", pr.number)) else {
+        return Ok(None);
+    };
+    record(
+        root,
+        event(IntegrationAction::LeaseLost, Some(pr), reason.clone()),
+    )?;
+    Ok(Some(DrainStepOutcome::LeaseLost {
+        pr: pr.number,
+        reason,
+    }))
 }
 
 /// One integration step: observe, decide, observe again, act only on an unchanged
@@ -1090,7 +1281,12 @@ pub fn step(
     if !dry_run {
         // what became or stopped being actionable since the trail's last word: the wait
         // of every pull request is folded from these, so a dry run leaves them out too
-        super::wait::record_transitions(root, &first)?;
+        let moved = super::wait::record_transitions(root, &first)?;
+        if moved > 0 {
+            integrator.progressed(&format!(
+                "{moved} pull request(s) became or stopped being actionable"
+            ));
+        }
     }
     let Some(candidate) = first.next_merge.and_then(|n| first.get(n).cloned()) else {
         // a record nothing can merge until its own run exists comes before any refresh: it
@@ -1136,7 +1332,7 @@ pub fn step(
         "the first ready pull request",
     );
     selected.passed_over = others(&first, PullRequestDisposition::Ready, candidate.number);
-    record(root, selected)?;
+    recorded(root, integrator, selected)?;
     // the decision is re-taken from a new observation; acting on the first one would be
     // acting on a picture of the repository that may already be wrong
     let second = integrator.observe()?;
@@ -1161,8 +1357,9 @@ pub fn step(
         Some(_) => None,
     };
     if let Some(what) = stale {
-        record(
+        recorded(
             root,
+            integrator,
             event(
                 IntegrationAction::StaleDecision,
                 Some(&candidate),
@@ -1177,8 +1374,9 @@ pub fn step(
     // no merge commit allowed holds every pull request, so a ready one has one; never another
     let Some(method) = second.policy.merge_method.clone() else {
         let what = "the repository allows no merge commit".to_string();
-        record(
+        recorded(
             root,
+            integrator,
             event(
                 IntegrationAction::StaleDecision,
                 Some(&candidate),
@@ -1190,6 +1388,11 @@ pub fn step(
             what,
         });
     };
+    // the claim may have been suspended and another executor admitted while this one was idle:
+    // asked again now, before anything reaches the forge
+    if let Some(lost) = unless_held(root, integrator, &candidate, "merging")? {
+        return Ok(lost);
+    }
     // on the trail before it reaches the forge: a merge the trail cannot name is not asked for
     let attempted = event(
         IntegrationAction::MergeAttempted,
@@ -1197,7 +1400,7 @@ pub fn step(
         format!("--{method}"),
     )
     .with_evidence(&candidate);
-    if let Err(reason) = record(root, attempted) {
+    if let Err(reason) = recorded(root, integrator, attempted) {
         return Ok(DrainStepOutcome::TrailUnwritable {
             pr: candidate.number,
             unrecorded: IntegrationAction::MergeAttempted,
@@ -1213,17 +1416,21 @@ pub fn step(
                 Ok(landed) => {
                     return merged(
                         root,
+                        integrator,
                         &candidate,
                         landed,
                         format!("merged, although the forge's answer was lost: {reason}"),
                     )
                 }
-                Err(NotLanded::Unproved(why)) => return unverified(root, &candidate, why),
+                Err(NotLanded::Unproved(why)) => {
+                    return unverified(root, integrator, &candidate, why)
+                }
                 Err(NotLanded::NotMerged(_)) => {}
             }
         }
-        record(
+        recorded(
             root,
+            integrator,
             event(
                 IntegrationAction::MergeFailed,
                 Some(&candidate),
@@ -1238,14 +1445,21 @@ pub fn step(
         });
     }
     match integrator.verify(candidate.number, &at, &method) {
-        Ok(landed) => merged(root, &candidate, landed, "merged and verified".into()),
-        Err(e) => unverified(root, &candidate, e.to_string()),
+        Ok(landed) => merged(
+            root,
+            integrator,
+            &candidate,
+            landed,
+            "merged and verified".into(),
+        ),
+        Err(e) => unverified(root, integrator, &candidate, e.to_string()),
     }
 }
 
 /// Record a verified merge.
 fn merged(
     root: &Path,
+    integrator: &mut dyn Integrator,
     candidate: &PullRequestAssessment,
     landed: Landed,
     detail: String,
@@ -1254,7 +1468,7 @@ fn merged(
         event(IntegrationAction::MergeSucceeded, Some(candidate), detail).with_evidence(candidate);
     e.master_after = Some(landed.master_after.clone());
     e.merge_commit = landed.merge_commit;
-    record(root, e)?;
+    recorded(root, integrator, e)?;
     Ok(DrainStepOutcome::Merged {
         pr: candidate.number,
         master_before: candidate.evaluated_against.master_sha.clone(),
@@ -1265,11 +1479,13 @@ fn merged(
 /// Record a merge that is not verified: the drain stops, and the next one waits for a person.
 fn unverified(
     root: &Path,
+    integrator: &mut dyn Integrator,
     candidate: &PullRequestAssessment,
     reason: String,
 ) -> Result<DrainStepOutcome, String> {
-    record(
+    recorded(
         root,
+        integrator,
         event(
             IntegrationAction::VerificationFailed,
             Some(candidate),
@@ -1343,7 +1559,7 @@ pub fn reconcile(
             );
             e.master_after = Some(landed.master_after.clone());
             e.merge_commit = landed.merge_commit;
-            record(root, e)?;
+            recorded(root, integrator, e)?;
             DrainStepOutcome::Merged {
                 pr,
                 master_before: at.master_sha.clone(),
@@ -1356,7 +1572,7 @@ pub fn reconcile(
             // nothing the forge refused: the change is decided afresh, never held back for it
             let mut e = of(IntegrationAction::MergeFailed, reason.clone());
             e.class = Some(FailureClass::Transient);
-            record(root, e)?;
+            recorded(root, integrator, e)?;
             DrainStepOutcome::MergeRefused {
                 pr,
                 reason,
@@ -1364,7 +1580,11 @@ pub fn reconcile(
             }
         }
         Err(NotLanded::Unproved(why)) => {
-            record(root, of(IntegrationAction::VerificationFailed, why.clone()))?;
+            recorded(
+                root,
+                integrator,
+                of(IntegrationAction::VerificationFailed, why.clone()),
+            )?;
             DrainStepOutcome::VerificationFailed { pr, reason: why }
         }
     }))
@@ -1492,6 +1712,9 @@ fn reopen_step(
             pr: candidate.number,
         }));
     }
+    if let Some(lost) = unless_held(root, integrator, &candidate, "reopening")? {
+        return Ok(Some(lost));
+    }
     // on the trail before the forge is asked: a closure the trail cannot name is not made
     let attempted = event(
         IntegrationAction::ReopenAttempted,
@@ -1501,7 +1724,7 @@ fn reopen_step(
             candidate.head_ref
         ),
     );
-    if let Err(reason) = record(root, attempted) {
+    if let Err(reason) = recorded(root, integrator, attempted) {
         return Ok(Some(DrainStepOutcome::TrailUnwritable {
             pr: candidate.number,
             unrecorded: IntegrationAction::ReopenAttempted,
@@ -1510,8 +1733,9 @@ fn reopen_step(
     }
     match integrator.reopen(candidate.number, &head, RECORD_REOPEN_COMMENT) {
         Ok(()) => {
-            record(
+            recorded(
                 root,
+                integrator,
                 event(
                     IntegrationAction::Reopened,
                     Some(&candidate),
@@ -1524,8 +1748,9 @@ fn reopen_step(
             }))
         }
         Err(reason) => {
-            record(
+            recorded(
                 root,
+                integrator,
                 event(
                     IntegrationAction::ReopenFailed,
                     Some(&candidate),
@@ -1615,7 +1840,7 @@ fn refresh_step(
         PullRequestDisposition::NeedsRefresh,
         candidate.number,
     );
-    record(root, selected)?;
+    recorded(root, integrator, selected)?;
     let second = integrator.observe()?;
     let fresh = second.get(candidate.number);
     let stale = match fresh {
@@ -1630,8 +1855,9 @@ fn refresh_step(
         Some(_) => None,
     };
     if let Some(what) = stale {
-        record(
+        recorded(
             root,
+            integrator,
             event(
                 IntegrationAction::StaleDecision,
                 Some(&candidate),
@@ -1643,13 +1869,16 @@ fn refresh_step(
             what,
         }));
     }
+    if let Some(lost) = unless_held(root, integrator, &candidate, "bringing master into")? {
+        return Ok(Some(lost));
+    }
     // on the trail before anything is pushed: a push the trail cannot name is not made
     let attempted = event(
         IntegrationAction::RefreshAttempted,
         Some(&candidate),
         format!("master {} into {}", second.master_sha, candidate.head_ref),
     );
-    if let Err(reason) = record(root, attempted) {
+    if let Err(reason) = recorded(root, integrator, attempted) {
         return Ok(Some(DrainStepOutcome::TrailUnwritable {
             pr: candidate.number,
             unrecorded: IntegrationAction::RefreshAttempted,
@@ -1665,7 +1894,7 @@ fn refresh_step(
             );
             e.master_after = Some(second.master_sha.clone());
             e.head_after = Some(head_after.clone());
-            record(root, e)?;
+            recorded(root, integrator, e)?;
             Ok(Some(DrainStepOutcome::Refreshed {
                 pr: candidate.number,
                 head_before: candidate.evaluated_against.head_sha.clone(),
@@ -1673,8 +1902,9 @@ fn refresh_step(
             }))
         }
         Err(reason) => {
-            record(
+            recorded(
                 root,
+                integrator,
                 event(
                     IntegrationAction::RefreshFailed,
                     Some(&candidate),
@@ -1840,6 +2070,9 @@ pub(crate) fn ends_drain(outcome: &DrainStepOutcome) -> Option<String> {
         )),
         // a halt comes from the start of a drain, before any step; said as it is
         DrainStepOutcome::Halted { reason, .. } => Some(reason.clone()),
+        DrainStepOutcome::LeaseLost { pr, reason } => Some(format!(
+            "the integration lease was lost before #{pr} was acted on ({reason}); nothing further is attempted"
+        )),
     }
 }
 
@@ -1998,6 +2231,15 @@ pub fn continuous(
         {
             out.stopped = report.stopped.clone();
             out.failure = Some(reason.clone());
+            break;
+        }
+        // another executor may hold the base now: this one acts on nothing more (I3991)
+        if report
+            .steps
+            .iter()
+            .any(|s| matches!(s, DrainStepOutcome::LeaseLost { .. }))
+        {
+            out.stopped = report.stopped.clone();
             break;
         }
         if opts.cycles.is_some_and(|n| out.cycles >= n) {
@@ -2224,7 +2466,21 @@ impl Integrator for ForgeIntegrator<'_> {
         }
         refresh(self.root)?;
         // the executor just observed: what it learnt is kept for the readers after it
-        super::queue_and_record(self.root)
+        let queue = super::queue_and_record(self.root)?;
+        if let Some(l) = self.lease {
+            l.observed(&queue);
+        }
+        Ok(queue)
+    }
+
+    fn progressed(&mut self, phase: &str) {
+        if let Some(l) = self.lease {
+            l.progressed(phase);
+        }
+    }
+
+    fn holds(&mut self, act: &str) -> Result<(), String> {
+        self.lease.map_or(Ok(()), |l| l.holds(act))
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
@@ -2707,8 +2963,9 @@ fn close_superseded(
         Some(_) => None,
     };
     if let Some(what) = stale {
-        record(
+        recorded(
             root,
+            integrator,
             event(IntegrationAction::StaleDecision, Some(a), what.clone()),
         )?;
         return Ok(format!("stale_decision: {what}"));
@@ -2735,10 +2992,19 @@ fn close_superseded(
             "Closed by `majordomus prs cleanup`: its work is already on `{base}`.\n\n{evidence}"
         ),
     };
+    if let Some(DrainStepOutcome::LeaseLost { reason, .. }) =
+        unless_held(root, integrator, a, "closing")?
+    {
+        return Err(format!(
+            "#{} was not closed: the integration lease was lost: {reason}",
+            a.number
+        ));
+    }
     // on the trail before the forge hears of it: a closure the trail cannot name is not made,
     // and nothing after it is attempted
-    record(
+    recorded(
         root,
+        integrator,
         event(IntegrationAction::CloseAttempted, Some(a), body.clone()),
     )
     .map_err(|e| {
@@ -2749,15 +3015,17 @@ fn close_superseded(
     })?;
     match integrator.close(a.number, &a.evaluated_against.head_sha, &body) {
         Ok(()) => {
-            record(
+            recorded(
                 root,
+                integrator,
                 event(closed(a.disposition), Some(a), body).with_evidence(a),
             )?;
             Ok("closed".to_string())
         }
         Err(e) => {
-            record(
+            recorded(
                 root,
+                integrator,
                 event(IntegrationAction::CloseFailed, Some(a), e.clone()),
             )?;
             Ok(format!("close_failed: {e}"))

@@ -192,6 +192,12 @@ struct World {
     /// Which pull request's merge made each master generation. A generation absent here was
     /// somebody else's merge.
     landed: BTreeMap<u32, u64>,
+    /// Every phase the executor said it advanced its queue with, in order (I3991).
+    progressed: Vec<String>,
+    /// Every act the executor asked whether it still holds its lease for.
+    holds_asked: Vec<String>,
+    /// The lease is no longer held, for this reason: another executor was admitted over it.
+    lease_lost: Option<String>,
 }
 
 impl Default for World {
@@ -230,6 +236,9 @@ impl Default for World {
             reopen_calls: 0,
             no_method_on: None,
             landed: BTreeMap::new(),
+            progressed: Vec::new(),
+            holds_asked: Vec::new(),
+            lease_lost: None,
         }
     }
 }
@@ -612,6 +621,15 @@ impl Integrator for World {
         }
         // open again at the same head: the run its reopening started has reported nothing yet
         Ok(())
+    }
+
+    fn progressed(&mut self, phase: &str) {
+        self.progressed.push(phase.to_string());
+    }
+
+    fn holds(&mut self, act: &str) -> Result<(), String> {
+        self.holds_asked.push(act.to_string());
+        self.lease_lost.clone().map_or(Ok(()), Err)
     }
 }
 
@@ -3248,7 +3266,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 31] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 32] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -3280,6 +3298,7 @@ const ALL_ACTIONS: [drain::IntegrationAction; 31] = [
     drain::IntegrationAction::Idle,
     drain::IntegrationAction::FailureAcknowledged,
     drain::IntegrationAction::ObserveFailed,
+    drain::IntegrationAction::LeaseLost,
 ];
 
 /// A new action must be added to [`ALL_ACTIONS`] before this compiles: no wildcard.
@@ -3317,7 +3336,8 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::RepairRefused
         | A::Idle
         | A::FailureAcknowledged
-        | A::ObserveFailed => (),
+        | A::ObserveFailed
+        | A::LeaseLost => (),
     }
 }
 
@@ -8633,4 +8653,277 @@ fn a_refresh_whose_allocation_cannot_be_decided_pushes_nothing() {
     let err = forge.refresh_branch(&assessed(&f), "master").unwrap_err();
     assert!(err.contains("could not be allocated"), "{err}");
     assert_eq!(git(&f.origin, &["rev-parse", "topic"]), f.head);
+}
+
+// ---------------------------------------------------------------- the lease lives by progress
+
+/// The executor tells its lease it advanced exactly when it records a step of the queue's
+/// own — a plan, an act, an outcome, a pull request becoming or stopping being actionable —
+/// and never for taking the lease, observing, or finding nothing to do (I3991).
+#[test]
+fn only_queue_advances_beat() {
+    use drain::IntegrationAction as A;
+    let idle: Vec<A> = ALL_ACTIONS
+        .into_iter()
+        .filter(|a| !a.advances_queue())
+        .collect();
+    assert_eq!(
+        idle,
+        [
+            A::LeaseAcquired,
+            A::LeaseReleased,
+            A::ContinuousStarted,
+            A::ContinuousStopped,
+            A::Observed,
+            A::Idle,
+            A::FailureAcknowledged,
+            A::ObserveFailed,
+            A::LeaseLost,
+        ]
+    );
+
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![1]);
+    assert_eq!(
+        w.progressed,
+        [
+            "1 pull request(s) became or stopped being actionable",
+            "selected #1",
+            "merge_attempted #1",
+            "merge_succeeded #1",
+        ]
+    );
+    assert_eq!(
+        w.holds_asked,
+        ["merging #1"],
+        "asked once, before the merge"
+    );
+
+    // an executor that finds nothing to do, again and again, advances nothing
+    for _ in 0..3 {
+        let r = drain::drain(&root, &mut w, 1, false, false).unwrap();
+        assert!(
+            matches!(r.steps[..], [DrainStepOutcome::Idle { .. }]),
+            "{r:?}"
+        );
+    }
+    assert_eq!(w.progressed.len(), 4, "{:?}", w.progressed);
+    // a pull request that becomes, and then stops being, actionable is the queue moving
+    w.open.push(sim(2));
+    drain::drain(&root, &mut w, 1, false, false).unwrap();
+    w.open[0].labels.push("hold".into());
+    drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(
+        w.progressed[4..],
+        [
+            "1 pull request(s) became or stopped being actionable",
+            "1 pull request(s) became or stopped being actionable",
+        ]
+    );
+    // nor does a dry run
+    let mut dry = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    drain::drain(&scratch(), &mut dry, 1, true, false).unwrap();
+    assert!(dry.progressed.is_empty() && dry.holds_asked.is_empty());
+}
+
+/// An executor whose claim another was admitted over while it advanced nothing acts on
+/// nothing: no merge, no refresh, no repair and no closure reaches the forge or a branch, and
+/// the trail says why.
+#[test]
+fn an_overtaken_executor_merges_nothing() {
+    let lost = || Some("the integration claim s1/c-1 is released on the mesh".to_string());
+
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        lease_lost: lost(),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    let [DrainStepOutcome::LeaseLost { pr: 1, reason }] = &report.steps[..] else {
+        panic!("{report:?}");
+    };
+    assert!(reason.contains("released"), "{reason}");
+    assert!(
+        report.stopped.contains("integration lease was lost"),
+        "{report:?}"
+    );
+    assert_eq!((w.merge_calls, w.merged.len()), (0, 0));
+    let trail = trail_actions(&root);
+    assert_eq!(
+        trail.last().map(String::as_str),
+        Some("lease_lost"),
+        "{trail:?}"
+    );
+    assert!(!trail.iter().any(|a| a == "merge_attempted"), "{trail:?}");
+
+    // a refresh is not pushed either
+    let root = scratch();
+    let mut w = one_behind();
+    w.lease_lost = lost();
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(
+        matches!(out, DrainStepOutcome::LeaseLost { pr: 1, .. }),
+        "{out:?}"
+    );
+    assert_eq!(w.refresh_calls, 0);
+    assert_eq!(w.holds_asked, ["bringing master into #1"]);
+    assert!(!trail_actions(&root)
+        .iter()
+        .any(|a| a == "refresh_attempted"));
+
+    // nor a person's repair, which is refused as unusable
+    let root = scratch();
+    let mut w = repair_world();
+    w.lease_lost = lost();
+    let e = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap_err();
+    assert!(
+        e.contains("was not repaired") && e.contains("released"),
+        "{e}"
+    );
+    assert_eq!(w.refresh_calls, 0);
+    assert_eq!(trail_actions(&root), ["repair_selected", "lease_lost"]);
+
+    // nor a closure
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        lease_lost: lost(),
+        ..Default::default()
+    };
+    w.open[0].redundant_after = Some(99);
+    w.merged = vec![99];
+    let e = drain::cleanup(&root, &mut w, true).unwrap_err();
+    assert!(e.contains("was not closed"), "{e}");
+    assert_eq!(w.close_calls, 0);
+    assert_eq!(trail_actions(&root), ["lease_lost"]);
+}
+
+/// A continuous drain whose claim was lost ends there: another executor holds the base now,
+/// and this one does not wait for its next cycle to find out again.
+#[test]
+fn a_continuous_drain_ends_when_its_claim_is_lost() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        lease_lost: Some("the integration claim s1/c-1 is suspended on the mesh".into()),
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let mut waits = 0usize;
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(None),
+        &stop,
+        &mut |_| waits += 1,
+        &mut |_, _| {},
+    );
+    assert_eq!(report.cycles, 1);
+    assert!(report.merged.is_empty());
+    assert!(report.failure.is_none(), "{report:?}");
+    assert!(
+        report.stopped.contains("integration lease was lost"),
+        "{report:?}"
+    );
+    assert_eq!(waits, 0, "no cycle is waited for after the loss");
+    assert_eq!(w.merge_calls, 0);
+    let trail = trail_actions(&root);
+    assert_eq!(trail.last().map(String::as_str), Some("continuous_stopped"));
+    assert!(trail.iter().any(|a| a == "lease_lost"), "{trail:?}");
+}
+
+/// Progress rewrites the lease's record with a newer `progressed_at`, and the record is still
+/// the lease's after it: renewed, kept alive, and removed when the lease is given back — the
+/// keep-alive never writes back the record a progress replaced.
+#[test]
+fn progress_rewrites_the_record_and_the_lease_is_still_its_holders() {
+    let root = scratch();
+    // the ttl is the repository's mesh declaration's, read from its files
+    let mesh = root.join(".ai/repo/mesh");
+    std::fs::create_dir_all(&mesh).unwrap();
+    std::fs::write(
+        mesh.join("m.yaml"),
+        "enabled: true\ncooperation:\n  session_ttl_seconds: 120\n",
+    )
+    .unwrap();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let holder = || {
+        drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .holder
+            .unwrap()
+    };
+    let taken = holder();
+    assert_eq!(taken.progressed_at, Some(taken.since));
+    assert_eq!(taken.progress_ttl_seconds, Some(120));
+
+    let _alive = lease.keep_alive_every(std::time::Duration::from_millis(20));
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    lease.progressed("selected #1");
+    let after = holder();
+    assert!(
+        after.progressed_at > taken.progressed_at,
+        "{after:?} after {taken:?}"
+    );
+    assert_eq!((after.since, after.pid), (taken.since, taken.pid));
+    // the keep-alive runs on with the new record, and the lease is still this executor's
+    std::thread::sleep(std::time::Duration::from_millis(200));
+    assert_eq!(holder().progressed_at, after.progressed_at);
+    lease.renew().expect("still held");
+    drop(_alive);
+
+    // a lease guarding this clone alone holds whatever it is asked
+    assert!(lease.holds("merging #1").is_ok());
+    // a changed verdict between two observations is progress; the first one only marks
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    w.open[0].ci_pending = true;
+    let pending = w.queue();
+    lease.observed(&pending);
+    lease.observed(&pending);
+    let before = holder().progressed_at;
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    w.open[0].ci_pending = false;
+    lease.observed(&w.queue());
+    assert!(
+        holder().progressed_at > before,
+        "a check that passed is progress"
+    );
+
+    drop(lease);
+    assert!(drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .is_none());
+    let released = drain::events(&root).pop().unwrap();
+    assert_eq!(released.action.as_str(), "lease_released");
+    assert!(
+        released.detail.contains("\"progressed_at\""),
+        "{}",
+        released.detail
+    );
+
+    // the rule off in the declaration: no ttl is carried
+    std::fs::write(
+        mesh.join("m.yaml"),
+        "cooperation:\n  session_ttl_seconds: 0\n",
+    )
+    .unwrap();
+    assert_eq!(drain::progress_ttl(&root), None);
+    std::fs::remove_dir_all(&mesh).unwrap();
+    assert_eq!(
+        drain::progress_ttl(&root),
+        Some(crate::mesh::config::DEFAULT_SESSION_TTL)
+    );
 }
