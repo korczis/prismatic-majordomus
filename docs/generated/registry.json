@@ -465,7 +465,7 @@
       "description": "Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 6
+      "capabilities": 7
     }
   ],
   "capabilities": [
@@ -82460,6 +82460,585 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/why.rs"
+    },
+    {
+      "id": "worktree.create",
+      "module": "worktree",
+      "kind": "command",
+      "title": "The canonical worktree of a branch, made or found",
+      "description": "Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.",
+      "input": {
+        "name": "CreateInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "branch": {
+              "type": "string",
+              "description": "The branch, full name (`feature/improve-cli`). Checked out when it exists here,\ntaken up from the remote when the remote has it, otherwise created at `base`."
+            },
+            "base": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The commit or ref a new branch starts from, as given and never fetched. Default: the\nremote's trunk, fetched now within a deadline, then the local trunk, said in `start`.\nIgnored when the branch exists."
+            }
+          },
+          "required": [
+            "branch"
+          ],
+          "description": "The branch whose canonical worktree is wanted.",
+          "title": "CreateInput"
+        }
+      },
+      "output": {
+        "name": "CreateReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Where the worktree is."
+            },
+            "branch": {
+              "type": "string",
+              "description": "The branch checked out in it."
+            },
+            "branch_created": {
+              "type": "boolean",
+              "description": "Whether that branch was created by this command."
+            },
+            "base": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The ref a new branch started from (`origin/master`)."
+            },
+            "start": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/StartPoint"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where a branch this command created started, and why there."
+            },
+            "start_commit": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The exact commit a branch this command created starts at, read back from the\nworktree rather than assumed."
+            },
+            "container": {
+              "type": "string",
+              "description": "The container it went into."
+            },
+            "container_created": {
+              "type": "boolean",
+              "description": "Whether the container was created by this command."
+            },
+            "existed": {
+              "type": "boolean",
+              "description": "The worktree already existed at its canonical path and nothing was created: the\n`existing` answer of an idempotent create, where `false` is `created`."
+            },
+            "head": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The commit the worktree's HEAD names now, read back from it after the create or the\nfind, whichever this was; `None` when git cannot say (an unborn branch)."
+            },
+            "envrc": {
+              "$ref": "#/$defs/EnvrcApproval",
+              "description": "What became of its `.envrc` under direnv: the primary checkout's approval carried to\nthis path, or why it was not. A worktree that starts blocked is the recurring\n\"direnv does not work again\"; this says so before the first `cd` does."
+            },
+            "envrc_local": {
+              "$ref": "#/$defs/LocalOverrides",
+              "description": "What became of the primary checkout's machine-local `.envrc.local` here.",
+              "default": {
+                "outcome": "none_primary"
+              }
+            },
+            "hooks": {
+              "$ref": "#/$defs/HooksPath",
+              "description": "Which hooks it runs: its own tree's, bound per worktree when the shared\n`core.hooksPath` would have sent it to the primary checkout's (I2718).",
+              "default": {
+                "outcome": "not_configured"
+              }
+            }
+          },
+          "required": [
+            "path",
+            "branch",
+            "branch_created",
+            "container",
+            "container_created",
+            "existed",
+            "envrc"
+          ],
+          "description": "What a create did.",
+          "title": "CreateReport",
+          "$defs": {
+            "StartPoint": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "reference": {
+                      "type": "string",
+                      "description": "The ref."
+                    },
+                    "from": {
+                      "type": "string",
+                      "const": "given"
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "reference"
+                  ],
+                  "description": "The ref `--base` named, as given; never fetched."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "remote": {
+                      "type": "string",
+                      "description": "The remote."
+                    },
+                    "branch": {
+                      "type": "string",
+                      "description": "The trunk branch."
+                    },
+                    "from": {
+                      "type": "string",
+                      "const": "remote_trunk"
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "remote",
+                    "branch"
+                  ],
+                  "description": "The trunk on its remote, fetched by this command."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "remote": {
+                      "type": "string",
+                      "description": "The remote."
+                    },
+                    "branch": {
+                      "type": "string",
+                      "description": "The branch, the same name on both sides."
+                    },
+                    "fetched": {
+                      "type": "boolean",
+                      "description": "Whether it was fetched now; `false` is the remote-tracking ref as last fetched,\nbecause the remote could not be read."
+                    },
+                    "from": {
+                      "type": "string",
+                      "const": "remote_branch"
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "remote",
+                    "branch",
+                    "fetched"
+                  ],
+                  "description": "The branch already on the remote: the local branch is created at it and tracks it."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "branch": {
+                      "type": "string",
+                      "description": "The trunk branch."
+                    },
+                    "unreachable": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The remote that could not be read; `None` when the trunk has no remote."
+                    },
+                    "reason": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "Why it could not be read."
+                    },
+                    "behind": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "How many commits the remote's trunk, as last fetched, has that the local trunk\nlacks; `None` when it was never fetched."
+                    },
+                    "from": {
+                      "type": "string",
+                      "const": "local_trunk"
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "branch"
+                  ],
+                  "description": "The local trunk: the trunk has no remote, or its remote could not be read."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "const": "head"
+                    }
+                  },
+                  "required": [
+                    "from"
+                  ],
+                  "description": "HEAD, because no trunk is known."
+                }
+              ],
+              "description": "Where a new branch started, and why there.\n\nThe local trunk of a long-lived checkout is routinely hundreds of commits behind its\nremote, because nothing advances it; a branch cut from it carries none of that work and\nevery worker had to reset it by hand. So the default is the remote's trunk, fetched at\nthe moment of creation, and the local trunk only when the remote cannot be read — said,\nnever silent.\n\n```\nuse majordomus_cli::worktree::StartPoint;\nlet p = StartPoint::RemoteTrunk { remote: \"origin\".into(), branch: \"master\".into() };\nassert_eq!(p.reference(), \"origin/master\");\nassert!(p.fallback().is_none());\nlet fell = StartPoint::LocalTrunk {\n    branch: \"master\".into(),\n    unreachable: Some(\"origin\".into()),\n    reason: Some(\"no answer within 60s\".into()),\n    behind: Some(779),\n};\nassert_eq!(fell.reference(), \"master\");\nassert!(fell.fallback().unwrap().contains(\"779 commits behind origin/master\"));\n```"
+            },
+            "EnvrcApproval": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "approved"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "direnv accepted it: the next `cd` loads the environment."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "no_envrc"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "The worktree has no `.envrc`; there is nothing to approve and nothing is blocked."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "direnv_absent"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "direnv is not on the PATH; nothing was done, and nothing is blocked either, because\nnothing would load the file."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "differs"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "The worktree's `.envrc` is not the primary checkout's, so the approval given there\ndoes not carry. `direnv allow` in the worktree, after reading it, is the person's."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "not_approved_in_primary"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "The primary checkout's `.envrc` is not approved, so there is no approval to carry."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "direnv's standard error, or the error running it."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "failed"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "message"
+                  ],
+                  "description": "direnv was asked and refused, or could not be run; the message is its own."
+                }
+              ],
+              "description": "What became of the `.envrc` of a worktree that was just created, found, or moved."
+            },
+            "LocalOverrides": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "linked"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "Linked: the worktree's `.envrc.local` is a symlink to the primary checkout's, so the\nperson's machine-local exports (keychain-backed secrets among them) load here too."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "own_kept"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "The worktree already has its own `.envrc.local`; it is left alone."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "none_primary"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "The primary checkout has none; there is nothing to share."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "not_ignored"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "Not linked, because git in the worktree does not ignore `.envrc.local` — a link a\ncommit could pick up is the one way this could leak."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Why."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "failed"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "message"
+                  ],
+                  "description": "The link could not be made; the error."
+                }
+              ],
+              "description": "What became of the primary checkout's machine-local `.envrc.local` for a worktree."
+            },
+            "HooksPath": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "outcome": {
+                      "type": "string",
+                      "const": "not_configured"
+                    }
+                  },
+                  "required": [
+                    "outcome"
+                  ],
+                  "description": "The repository's configuration sets no `core.hooksPath`: git's own hooks directory\nin the common directory (or a value of the user's) serves every worktree, and there\nis no tracked directory to follow."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "The directory git runs the hooks from."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "own"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "path"
+                  ],
+                  "description": "Git already resolves this worktree's hooks to its own directory; nothing was set."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "The directory it now runs the hooks from."
+                    },
+                    "enabled": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Repository settings switched on so that a per-worktree value is honoured, as\n`key=value`; empty when they were on already."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "set"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "path",
+                    "enabled"
+                  ],
+                  "description": "This worktree's `core.hooksPath` was set, per worktree, to its own directory."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "description": "The directory every worktree runs the hooks from."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "shared"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "path"
+                  ],
+                  "description": "The hooks directory is outside the primary checkout — one directory shared on\npurpose — and every worktree runs it; nothing was set."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "missing": {
+                      "type": "string",
+                      "description": "The directory that would be the worktree's own, and is not there."
+                    },
+                    "runs": {
+                      "type": "string",
+                      "description": "The directory the worktree runs the hooks from instead."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "untracked"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "missing",
+                    "runs"
+                  ],
+                  "description": "The primary checkout's hooks directory has no counterpart in this worktree's tree,\nso the worktree keeps running the primary's: pointing it at a directory that does\nnot exist would switch its hooks off."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "What went wrong."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "const": "failed"
+                    }
+                  },
+                  "required": [
+                    "outcome",
+                    "message"
+                  ],
+                  "description": "Git was asked and refused, or could not be run; the message is its own."
+                }
+              ],
+              "description": "What became of the hooks directory of a worktree that was just created, found or moved.\n\nIt travels in the JSON of `worktree create`, `ensure`, `migrate` and `repair`, tagged by\n`outcome`, so a reader branches on one word rather than parsing the line:\n\n```\nuse majordomus_cli::worktree::HooksPath;\n\nlet set = HooksPath::Set {\n    path: \"/r-wt/fix/x/.githooks\".into(),\n    enabled: vec![],\n};\nlet json = serde_json::to_value(&set).unwrap();\nassert_eq!(json[\"outcome\"], \"set\");\nassert_eq!(json[\"path\"], \"/r-wt/fix/x/.githooks\");\nlet back: HooksPath = serde_json::from_value(json).unwrap();\nassert_eq!(back, set);\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::worktree"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_worktree_create"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/worktrees/create"
+        },
+        "cli": {
+          "path": [
+            "worktree",
+            "ensure"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "worktree",
+        "git",
+        "topology",
+        "isolation"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs"
     },
     {
       "id": "worktree.inspect",
