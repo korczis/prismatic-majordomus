@@ -19,3 +19,23 @@ export async function api(path, options) {
   }
   return { ok: response.ok, status: response.status, body };
 }
+
+/**
+ * The idempotency key a click starts its execution under (ADR 0225). It is kept on the
+ * element until the server has answered, so a click repeated after a lost request is the same
+ * start and never a second one; once an answer came, `spendKey` makes the next click new.
+ */
+export function idempotencyKey(element) {
+  if (!element.dataset.mjKey) {
+    element.dataset.mjKey =
+      globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function'
+        ? globalThis.crypto.randomUUID()
+        : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+  }
+  return element.dataset.mjKey;
+}
+
+/** The server answered the start this element's key was for: the next click is a new start. */
+export function spendKey(element) {
+  delete element.dataset.mjKey;
+}

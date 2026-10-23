@@ -11,6 +11,7 @@
 // photograph.
 
 import { api } from './cockpit.js';
+import { idempotencyKey, spendKey } from './api.js';
 import { follow, LIVE, RECONNECTING, OFFLINE } from './socket.js';
 
 installStartButton();
@@ -39,11 +40,14 @@ function installStartButton() {
     button.disabled = true; // a double click must not start two
     const previous = button.textContent;
     button.textContent = 'Starting…';
+    // a lost request leaves the key on the button, so clicking again is the same start
+    const idempotency_key = idempotencyKey(button);
     const answer = await api(startRoute, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ capability, input: collect(form) }),
+      body: JSON.stringify({ capability, input: collect(form), idempotency_key }),
     });
+    spendKey(button);
     if (answer.ok && answer.body && answer.body.links) {
       window.location.href = answer.body.links.cockpit;
       return;

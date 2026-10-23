@@ -85,7 +85,7 @@ pub enum Line {
 ///     id: ExecutionId::fresh(), capability: "executions.demonstrate".into(), title: "Demo".into(),
 ///     input: serde_json::json!({}), cancellable: true, actor: Actor::of(ActorKind::Http),
 ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
-///     created_at: "2026-10-23T00:00:00Z".into(), reported_pid: None,
+///     created_at: "2026-10-23T00:00:00Z".into(), reported_pid: None, idempotency_key: None,
 /// };
 /// let text = serde_json::to_string(&seed).unwrap();
 /// assert!(!text.contains("reported_pid"), "run here: nothing to wait for at a restart");
@@ -112,6 +112,10 @@ pub struct SeedLine {
     /// The process that runs and reports it, when that is not this one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reported_pid: Option<u32>,
+    /// The key the client started it under, so a start repeated after a restart still
+    /// answers this execution.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub idempotency_key: Option<String>,
 }
 
 /// One execution as its file holds it: what a server folds back when it starts. The events
@@ -128,7 +132,7 @@ pub struct SeedLine {
 ///     id: id.clone(), capability: "executions.demonstrate".into(), title: "Demo".into(),
 ///     input: serde_json::json!({}), cancellable: true, actor: Actor::of(ActorKind::Http),
 ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
-///     created_at: "2026-10-23T00:00:00Z".into(), reported_pid: None,
+///     created_at: "2026-10-23T00:00:00Z".into(), reported_pid: None, idempotency_key: None,
 /// }));
 /// journal.append(&id, &Line::Event(ExecutionEvent::new(id.clone(), 1, EventPayload::Started)));
 /// let recorded: &Recorded = &journal.read()[0];
@@ -345,6 +349,7 @@ mod tests {
             },
             created_at: "2026-10-23T00:00:00Z".into(),
             reported_pid: None,
+            idempotency_key: None,
         }
     }
 

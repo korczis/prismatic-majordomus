@@ -364,6 +364,10 @@ impl ExecutionStore {
                     started: None,
                     reported: None,
                 };
+                record
+                    .snapshot
+                    .idempotency_key
+                    .clone_from(&seed.idempotency_key);
                 for event in recorded.events {
                     // a gap means a line was lost: what follows it is not believed
                     if event.sequence != record.snapshot.last_sequence + 1 {
@@ -454,19 +458,64 @@ impl ExecutionStore {
         actor: Actor,
         repository: RepositoryRef,
     ) -> Arc<AtomicBool> {
-        let created = self.insert(
-            id,
-            Seed {
-                capability,
-                title,
-                input,
-                cancellable,
-                actor,
-                repository,
-            },
-            None,
-        );
+        let seed = Seed {
+            capability,
+            title,
+            input,
+            cancellable,
+            actor,
+            repository,
+        };
+        self.create_keyed(id, seed, None)
+    }
+
+    /// [`Self::create`], under the idempotency key the client started it with, so that
+    /// [`Self::keyed`] finds it and a restart keeps the key (ADR 0225).
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let id = ExecutionId::fresh();
+    /// store.create_keyed(id.clone(), Seed {
+    ///     capability: "executions.demonstrate", title: "Demo", input: serde_json::json!({}),
+    ///     cancellable: true, actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// }, Some("click-1".into()));
+    /// assert_eq!(store.keyed("click-1").map(|e| e.id), Some(id));
+    /// assert!(store.keyed("click-2").is_none());
+    /// ```
+    pub fn create_keyed(
+        &self,
+        id: ExecutionId,
+        seed: Seed<'_>,
+        idempotency_key: Option<String>,
+    ) -> Arc<AtomicBool> {
+        let created = self.insert(id, seed, None, idempotency_key);
         self.publish_created(created)
+    }
+
+    /// The execution this store remembers under an idempotency key. A key is held as long
+    /// as its execution is remembered: one forgotten by the bound no longer answers.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, ExecutionStore, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// assert!(store.keyed("click-1").is_none(), "nothing started under it yet");
+    /// let id = ExecutionId::fresh();
+    /// store.create_keyed(id.clone(), Seed {
+    ///     capability: "executions.demonstrate", title: "Demo", input: serde_json::json!({}),
+    ///     cancellable: true, actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// }, Some("click-1".into()));
+    /// let found = store.keyed("click-1").unwrap();
+    /// assert_eq!((found.id, found.idempotency_key.as_deref()), (id, Some("click-1")));
+    /// ```
+    pub fn keyed(&self, idempotency_key: &str) -> Option<Execution> {
+        self.lock()
+            .records
+            .values()
+            .find(|r| r.snapshot.idempotency_key.as_deref() == Some(idempotency_key))
+            .map(|r| r.snapshot.clone())
     }
 
     /// Hold an execution another process runs and reports here, so that this process's
@@ -515,6 +564,7 @@ impl ExecutionStore {
                 heard: Instant::now(),
                 pid,
             }),
+            None,
         );
         self.publish_created(created);
         Ok(())
@@ -710,11 +760,13 @@ impl ExecutionStore {
         id: ExecutionId,
         seed: Seed<'_>,
         reported: Option<Reported>,
+        idempotency_key: Option<String>,
     ) -> (ExecutionId, Arc<AtomicBool>, EventPayload) {
         let (capability, title, input) = (seed.capability, seed.title, seed.input.clone());
         let cancel = Arc::new(AtomicBool::new(false));
         let now = crate::peers::rfc3339(std::time::SystemTime::now());
-        let snapshot = fresh_snapshot(id.clone(), seed, now);
+        let mut snapshot = fresh_snapshot(id.clone(), seed, now);
+        snapshot.idempotency_key = idempotency_key;
         if let Some(journal) = &self.journal {
             // first, before any event of it can be written
             journal.append(
@@ -729,6 +781,7 @@ impl ExecutionStore {
                     repository: snapshot.repository.clone(),
                     created_at: snapshot.created_at.clone(),
                     reported_pid: reported.as_ref().map(|r| r.pid),
+                    idempotency_key: snapshot.idempotency_key.clone(),
                 }),
             );
         }
@@ -1092,6 +1145,7 @@ fn fresh_snapshot(id: ExecutionId, seed: Seed<'_>, created_at: String) -> Execut
         cancellable: seed.cancellable,
         actor: seed.actor,
         repository: seed.repository,
+        idempotency_key: None,
     }
 }
 
