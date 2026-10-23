@@ -130,7 +130,7 @@ for p in $providers; do
       esac
     done
     [ "$(printf '%s\n' $seams | sort | uniq -d)" = "" ] || finding "$p" usage "offers.usage names a seam twice"
-    if printf '%s\n' $seams | grep -qx none && [ "$(printf '%s\n' $seams | wc -l | tr -d ' ')" != 1 ]; then
+    if grep -qx none <<<"$(printf '%s\n' $seams)" && [ "$(printf '%s\n' $seams | wc -l | tr -d ' ')" != 1 ]; then
       finding "$p" usage "offers.usage names none beside a seam; none is the answer only when nothing else is"
     fi
     if [ -z "$usage_evidence" ]; then

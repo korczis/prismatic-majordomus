@@ -5,8 +5,7 @@ slug: the-follow-backlog-test-waits-on-the-cursor
 priority: p1
 profile: implementation
 parallel_safe: true
-serves:
-  - "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
+serves: []
 objective: "http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again writes its backlog only once the follower's cursor stands, and writes it whole, so a loaded runner cannot turn it red."
 why: "Train 5's validate 39997497168 failed rust (2) on that test alone (3765 passed, 1 failed): 'never came', with one signal and no stream.resync. run() writes stream.ready (follow.rs:500) before it takes its starting cursor (follow.rs:518, a monitor.stream read under the process-wide PAGE mutex). The test waited for ready plus 50 ms, so on the runner the cursor was taken after two of the three sessions. Every append also advances BLACKBOARD (mesh/journal.rs:1999), so a stalled test thread could split the backlog one signal per round. Train 4's run had passed it: a verdict that depends on the runner's load is a rerun, not a verdict."
 current_state: "The test waits for any frame and sleeps 50 ms before writing three sessions, each its own change."

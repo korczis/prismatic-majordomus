@@ -12,7 +12,6 @@ desired_state: "A session that is not the worker leaves the worker's task and th
 scope:
   - "lib/capture.sh"
   - "lib/session.sh"
-  - "test/cases/3461_a_subprocess_session_is_not_the_worker.sh"
   - ".ai/repo/project/issues/I3061.yaml"
 acceptance_criteria:
   - "With a worker episode open on an active task, a second provider session's start then interrupted end leaves the task's outcome unchanged (not handed_over) and git status clean under .ai/repo/sessions/"

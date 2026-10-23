@@ -146,7 +146,10 @@ impl Activity {
             why.push(format!("{} peer(s) attached", self.peers));
         }
         if self.executions > 0 {
-            why.push(format!("{} execution(s) queued or running", self.executions));
+            why.push(format!(
+                "{} execution(s) queued or running",
+                self.executions
+            ));
         }
         if self.channels > 0 {
             why.push(format!("{} live channel(s) open", self.channels));
@@ -312,9 +315,18 @@ mod tests {
         assert!(idle.is_idle());
         for busy in [
             Activity { peers: 2, ..idle },
-            Activity { executions: 1, ..idle },
-            Activity { channels: 1, ..idle },
-            Activity { client_request: true, ..idle },
+            Activity {
+                executions: 1,
+                ..idle
+            },
+            Activity {
+                channels: 1,
+                ..idle
+            },
+            Activity {
+                client_request: true,
+                ..idle
+            },
         ] {
             assert!(!busy.is_idle(), "{busy:?} was judged idle");
         }
@@ -343,7 +355,13 @@ mod tests {
         let due = timer
             .observe(&Activity::default(), t0 + bound)
             .expect("due at the bound");
-        assert_eq!(due, IdleExit { idle_for: bound, bound });
+        assert_eq!(
+            due,
+            IdleExit {
+                idle_for: bound,
+                bound
+            }
+        );
     }
 
     #[test]
