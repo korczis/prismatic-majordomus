@@ -233,7 +233,8 @@ Two layers, deliberately separate:
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`, and a node's offer of its build
+cache, `build_cache_offered` and `build_cache_withdrawn` ([Build-cache offers](#build-cache-offers)). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -349,6 +350,38 @@ path of the publishing machine travels. On another runtime, `mesh handover consu
 into that checkout's handovers directory — once, however often consumed — naming the local
 repository and `mesh:<origin runtime>` as its worktree, so `majordomus handover --resolve` on
 the same branch finds it as another checkout's handover.
+
+## Build-cache offers
+
+A node that serves a shared build cache (ADR 0157) says so through the journal, not through
+a committed endpoint and not through the advertisement datagram, which is size-bound. The
+store is declared in the node's own file, `$XDG_CONFIG_HOME/majordomus/build-cache.json`
+(else `~/.config/majordomus/build-cache.json`), outside every repository: an endpoint is a
+fact about a running machine.
+
+- **Published while the store answers.** On every heartbeat, before it beats, the runtime
+  probes its store's readiness route (`mesh::build_cache::probe_health`, bounded at 500 ms).
+  A healthy store not offered yet, or offered differently, is written as a
+  `build_cache_offered` event: protocol, provider, scope, endpoint, bucket, priority,
+  headroom and a lifetime (the cooperation expiry). A store whose probe stops passing, or
+  that is no longer declared, is withdrawn with `build_cache_withdrawn` and a reason from a
+  fixed vocabulary. Nothing is written while nothing changed; a headroom that moves by less
+  than a tenth is not a change.
+- **Signed, and nothing secret.** The record is an ordinary event, signed by its node's key.
+  It has no field for a credential, and its endpoint is a scheme and an address only: user
+  information, a path, a query or a fragment is refused before signing, everywhere.
+- **Read only from trusted keys.** A reader verifies each record's signature against its
+  stream's key again and reads it only when the trust in force trusts that key; a key
+  withdrawn from the allowlist stops being read at once. Presence on a port is never trust.
+- **Expiring with the beat.** An offer is fresh while its stream's signed beat rose within
+  the offer's lifetime (and within the reader's own expiry) on the reader's monotonic clock.
+  A provider whose runtime stops is stale within its lifetime with nobody withdrawing it.
+  Each stream's newest record speaks for it; two servers of one machine make one offer, the
+  fresher.
+
+`mesh state` answers the reading under `build_cache`: the offers the selection
+(`mesh::build_cache::select`) takes, and every record that is not one, with why. An older
+runtime stores and relays both kinds without reading them.
 
 ## Compaction
 

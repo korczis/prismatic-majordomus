@@ -375,6 +375,11 @@ impl Memory {
             }
             // read raw above, before the body is typed: a withdrawal never reaches this match
             EventBody::ReviewWithdrawn { .. } => return None,
+            // a store offered or withdrawn is the build cache's news, not the cooperation's:
+            // `mesh state` reads it
+            EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {
+                return None
+            }
         };
         signal.machine = Some(machine);
         Some(signal)

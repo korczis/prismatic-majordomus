@@ -40985,10 +40985,10 @@
             "docs/MESH.md"
           ],
           "slug": "a-provider-offers-its-cache-as-an-expiring-mesh-record",
-          "updated_at": "2026-10-13",
+          "updated_at": "2026-10-22",
           "validation": [
             "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=2 bash test/run.sh 3013_a_mesh_build_cache"
+            "MJ_TEST_JOBS=2 bash test/run.sh 3954_a_store_is_offered_in_a_signed_record"
           ]
         }
       },
@@ -87099,6 +87099,13 @@
         "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+        "kind": "test",
+        "label": "test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3954-a-store-is-offered-in-a-signed-record-sh",
+        "source": "test/cases/3954_a_store_is_offered_in_a_signed_record.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -129899,6 +129906,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -135010,8 +135022,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3782,
-      "edges": 8751,
+      "nodes": 3783,
+      "edges": 8752,
       "acyclic": false,
       "truncated": false
     }
