@@ -6,6 +6,7 @@ priority: p1
 profile: implementation
 parallel_safe: false
 serves:
+  - a-session-proceeds-through-the-mesh#it-stops-when-the-intent-is-met
   - a-session-proceeds-through-the-mesh#a-fresh-session-finds-the-right-work
 objective: "proceed.step derives one step from intent_realization and the claim-aware plan.next into a work order (do, fan_out, report, next_due_at); the /proceed skill is generated from its .skill() declaration. It builds on the pushed stack feature/proceed-names-the-next-admissible-work (I2972-I2976, I3040, ADR 0177) and writes no second body."
 why: "/proceed names work but does not claim it, fan it out, report it or schedule the next step, and a hand-written skill drifts from the capability."

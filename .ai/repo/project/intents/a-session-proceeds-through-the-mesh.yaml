@@ -10,37 +10,36 @@ milestones:
   - a-session-proceeds-through-the-mesh
 satisfaction:
   - id: a-fresh-session-finds-the-right-work
-    criterion: "a fresh session in a supervised repository is told by /proceed which admissible work to take, derived from intent_realization and the claim-aware plan.next, with no question asked of a person"
-    evidence: test
-    ref: test/cases/4005_proceed_step_is_one_idempotent_work_order.sh
+    criterion: "a fresh session in a supervised repository is told by /proceed which admissible work to take, derived from intent_realization and the claim-aware plan.next, with no question asked of a person (planned proof: case 4005, issue I4005)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
   - id: two-sessions-never-share-an-item
-    criterion: "two sessions asking for work at once never receive the same item: the item's mesh claim is taken in the handler before any worker starts, an overlap is refused with a reason, and the claim is released when the run ends"
-    evidence: test
-    ref: test/cases/4004_the_executor_holds_the_issues_claim_while_it_runs.sh
+    criterion: "two sessions asking for work at once never receive the same item: the item's mesh claim is taken in the handler before any worker starts, an overlap is refused with a reason, and the claim is released when the run ends (planned proof: case 4004, issue I4004)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
   - id: a-dead-loop-resumes
-    criterion: "a proceeding loop that stopped is detected from deadlines and events, woken, its handover published and resumed by another session, and reaped only by its owner or a seat after assess-before-deleting"
-    evidence: test
-    ref: test/cases/4009_watchdog_wakes_hands_over_and_reaps.sh
+    criterion: "a proceeding loop that stopped is detected from deadlines and events, woken, its handover published and resumed by another session, and reaped only by its owner or a seat after assess-before-deleting (planned proof: case 4009, issue I4009)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
   - id: a-stall-is-signalled
-    criterion: "a stuck or silent session is signalled by a phase deadline and a liveness event, never by polling, and the signal names the claim, the holder and the overdue phase"
-    evidence: test
-    ref: test/cases/4009_watchdog_wakes_hands_over_and_reaps.sh
+    criterion: "a stuck or silent session is signalled by a phase deadline and a liveness event, never by polling, and the signal names the claim, the holder and the overdue phase (planned proof: case 4009, issue I4009)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
   - id: heavy-work-shares-the-machine
-    criterion: "heavy work (pre-push, coverage, builds) takes one of N machine-wide slots with the disk floor read from rule data; a full queue answers a bounded wait naming its holders, and an idle serve and a deleting push cost the machine nothing"
-    evidence: test
-    ref: test/cases/4006_machine_slot_shares_heavy_work.sh
+    criterion: "heavy work (pre-push, coverage, builds) takes one of N machine-wide slots with the disk floor read from rule data; a full queue answers a bounded wait naming its holders, and an idle serve and a deleting push cost the machine nothing (planned proof: case 4006, issue I4006)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
   - id: it-stops-when-the-intent-is-met
-    criterion: "a /proceed step on an intent whose realisation is met answers that it is done and schedules no next step"
-    evidence: test
-    ref: test/cases/4005_proceed_step_is_one_idempotent_work_order.sh
+    criterion: "a /proceed step on an intent whose realisation is met answers that it is done and schedules no next step (planned proof: case 4005, issue I4005)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
   - id: an-implement-request-runs-once
-    criterion: "an implement request runs once: a repeated executions.start with the same idempotency key answers the same execution id and a double click never starts two executions (Mission Control)"
-    evidence: test
-    ref: test/cases/4000_executions_start_takes_an_idempotency_key.sh
+    criterion: "an implement request runs once: a repeated executions.start with the same idempotency key answers the same execution id and a double click never starts two executions (Mission Control) (planned proof: case 4000, issue I4000)"
+    evidence: command
+    ref: "majordomus intent explain a-session-proceeds-through-the-mesh"
 governance:
   - rule:project.work-serves-a-declared-intent
   - rule:project.no-new-nouns
-  - adr:adr-0177
   - adr:adr-0200
 non_goals:
   - "Push assignment of work to peers before I3198"

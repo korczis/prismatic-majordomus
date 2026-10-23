@@ -6,6 +6,7 @@ priority: p1
 profile: implementation
 parallel_safe: false
 serves:
+  - a-session-proceeds-through-the-mesh#a-dead-loop-resumes
   - a-session-proceeds-through-the-mesh#a-stall-is-signalled
 objective: "/watchdog: the session-side verb that reads the liveness signals of I3990-I3994 (suspended claims, phase beats, overdue) and runs wake, then handover, then reap; reap only by the owner or a seat and only after assess-before-deleting."
 why: "A stuck, silent or dead loop is found by a person; nothing wakes it, hands its work over or reaps what it left."
