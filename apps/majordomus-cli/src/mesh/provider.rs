@@ -21,7 +21,7 @@
 //! ```
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -42,6 +42,10 @@ pub struct Observation {
     pub bytes: Vec<u8>,
 }
 
+/// Where a beacon reads its endpoints again before it signs: a server bound to every
+/// interface is reachable at whatever addresses those interfaces hold now.
+pub type EndpointSource = Arc<dyn Fn() -> Vec<String> + Send + Sync>;
+
 /// What this node says about itself: the signer plus the advertised facts, with one
 /// monotonically increasing sequence shared by every transmitting provider — a reader
 /// deduplicates by (instance, seq) regardless of which transport delivered first.
@@ -49,7 +53,8 @@ pub struct Beacon {
     identity: Arc<NodeIdentity>,
     runtime: String,
     seq: AtomicU64,
-    endpoints: Vec<String>,
+    endpoints: Mutex<Vec<String>>,
+    source: Mutex<Option<EndpointSource>>,
     caps: Vec<String>,
     repos: Vec<String>,
     version: String,
@@ -69,7 +74,8 @@ impl Beacon {
             identity,
             runtime: String::new(),
             seq: AtomicU64::new(0),
-            endpoints,
+            endpoints: Mutex::new(endpoints),
+            source: Mutex::new(None),
             caps,
             repos,
             version: version.into(),
@@ -101,14 +107,45 @@ impl Beacon {
         self
     }
 
+    /// Read the endpoints from `source` before every envelope from now on, instead of
+    /// keeping the ones the beacon was built with. A server bound to `0.0.0.0` advertised
+    /// the interface addresses it had when it started; when DHCP moved the machine's
+    /// address, it went on advertising one nobody answered at, and no other machine could
+    /// dial it until it was restarted. An empty answer keeps the last endpoints, because a
+    /// moment with no interface up is not a reason to advertise nothing.
+    ///
+    /// ```
+    /// use std::sync::{Arc, Mutex};
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::provider::Beacon;
+    ///
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// let beacon = Beacon::new(identity, vec!["10.0.0.1:1".into()], vec![], vec![], "docs");
+    /// let now = Arc::new(Mutex::new(vec!["10.0.0.2:1".to_string()]));
+    /// let read = Arc::clone(&now);
+    /// beacon.follow(Arc::new(move || read.lock().unwrap().clone()));
+    /// assert_eq!(beacon.next_envelope().adv.ep, ["10.0.0.2:1"]);
+    /// *now.lock().unwrap() = vec![];
+    /// assert_eq!(beacon.next_envelope().adv.ep, ["10.0.0.2:1"], "nothing up keeps the last");
+    /// assert_eq!(beacon.endpoints(), ["10.0.0.2:1"]);
+    /// ```
+    pub fn follow(&self, source: EndpointSource) {
+        *self.source.lock().expect("beacon source") = Some(source);
+    }
+
     /// The next signed envelope, sequence advanced.
     pub fn next_envelope(&self) -> Envelope {
+        let source = self.source.lock().expect("beacon source").clone();
+        let mut endpoints = self.endpoints.lock().expect("beacon endpoints");
+        if let Some(fresh) = source.map(|read| read()).filter(|e| !e.is_empty()) {
+            *endpoints = fresh;
+        }
         let seq = self.seq.fetch_add(1, Ordering::SeqCst) + 1;
         advertise_as(
             &self.identity,
             &self.runtime,
             seq,
-            &self.endpoints,
+            &endpoints,
             &self.caps,
             &self.repos,
             &self.version,
@@ -125,12 +162,28 @@ impl Beacon {
         &self.runtime
     }
 
-    /// The `host:port` authorities this beacon puts into every advertisement it signs.
-    /// They are fixed when the beacon is built, so that every transport announces the same
+    /// The `host:port` authorities the next advertisement this beacon signs will carry.
+    /// One beacon signs for every transport, so every transport announces the same
     /// reachability and a listener never has to reconcile two accounts of where one node
-    /// answers.
-    pub fn endpoints(&self) -> &[String] {
-        &self.endpoints
+    /// answers; [`Beacon::follow`] lets that one account move with the machine.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::provider::Beacon;
+    ///
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// let beacon = Beacon::new(identity, vec!["10.0.0.1:1".into()], vec![], vec![], "docs");
+    /// assert_eq!(beacon.endpoints(), ["10.0.0.1:1"]);
+    /// beacon.follow(Arc::new(|| vec!["10.0.0.2:1".to_string()]));
+    /// assert_eq!(beacon.endpoints(), ["10.0.0.2:1"], "what the next envelope carries");
+    /// ```
+    pub fn endpoints(&self) -> Vec<String> {
+        let source = self.source.lock().expect("beacon source").clone();
+        source
+            .map(|read| read())
+            .filter(|e| !e.is_empty())
+            .unwrap_or_else(|| self.endpoints.lock().expect("beacon endpoints").clone())
     }
 }
 
