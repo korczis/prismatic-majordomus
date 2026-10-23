@@ -1,16 +1,23 @@
 //! The `worktree` module: the branch-to-worktree topology of this repository, projected.
 //!
-//! Six questions, all read-only, all answered by [`crate::worktree::WorktreeService`] —
-//! the same service the command line renders and the git hooks ask. Declaring them here is
-//! what puts them on MCP (as tools and as a resource), on HTTP, in the OpenAPI document, in
-//! the Swagger UI, in the Cockpit and in the generated reference, without any of those
-//! carrying a route, a schema or a sentence of their own.
+//! Six questions, all read-only, and one command, all answered by
+//! [`crate::worktree::WorktreeService`] — the same service the command line renders and the
+//! git hooks ask. Declaring them here is what puts them on MCP (as tools and as a resource),
+//! on HTTP, in the OpenAPI document, in the Swagger UI, in the Cockpit and in the generated
+//! reference, without any of those carrying a route, a schema or a sentence of their own.
 //!
-//! Creating, migrating, repairing and removing are deliberately *not* here. A capability that
-//! writes the repository must declare `Effect::RepositoryMutation`, and the set of those is
-//! pinned by a test in `builtin`; moving worktrees on disk is not a thing the shared MCP
-//! server takes on. They are command-line operations, they call the same service, and the
-//! Cockpit names the exact command for each.
+//! The one command is `worktree.create` (I4002): the canonical worktree of a branch, made or
+//! found, which is what an executor needs before it can do any work in isolation. It is
+//! [`WorktreeService::ensure`] and nothing else — the path is derived, a misplaced or
+//! conflicting worktree is refused with the service's own reason, `git worktree add` runs
+//! under a deadline — and it declares `Effect::RepositoryMutation`, so every surface asks
+//! before it runs. Its command-line projection is `majordomus worktree ensure`, which has
+//! the same idempotent contract; `worktree create` stays the command that refuses a worktree
+//! already there.
+//!
+//! Migrating, repairing and removing are deliberately *not* here: they move or delete work
+//! that exists, which is not a thing the shared MCP server takes on. They are command-line
+//! operations, they call the same service, and the Cockpit names the exact command for each.
 
 use std::path::Path;
 
@@ -20,16 +27,16 @@ use serde::{Deserialize, Serialize};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
-    CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
+    CachePolicy, CapabilityKind, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
-    migrate, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, Threshold,
+    migrate, CreateReport, CreateRequest, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, Threshold,
     TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
 };
 use crate::{capability, module};
 
-use super::{get, mcp, Empty};
+use super::{get, mcp, post, Empty};
 
 /// The URI under which the topology is read as an MCP resource.
 pub const WORKTREES_URI: &str = "majordomus://worktrees";
@@ -107,6 +114,35 @@ impl BenchmarkCases for UncommittedInput {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The branch whose canonical worktree is wanted.
+pub struct CreateInput {
+    /// The branch, full name (`feature/improve-cli`). Checked out when it exists here,
+    /// taken up from the remote when the remote has it, otherwise created at `base`.
+    pub branch: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The commit or ref a new branch starts from, as given and never fetched. Default: the
+    /// remote's trunk, fetched now within a deadline, then the local trunk, said in `start`.
+    /// Ignored when the branch exists.
+    pub base: Option<String>,
+}
+
+impl BenchmarkCases for CreateInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // A benchmark must not create worktrees: the one case is a name the service refuses
+        // before git is asked anything, so it measures the whole path to the refusal and
+        // leaves the repository as it was.
+        vec![NamedCase::new(
+            "refused-name",
+            CreateInput {
+                branch: "feature/../escape".into(),
+                base: None,
+            },
+        )]
+    }
+}
+
 // ---------------------------------------------------------------- the service, from a context
 
 fn refused(e: WorktreeError) -> CapabilityError {
@@ -169,6 +205,15 @@ fn worktree_status(ctx: &Context, input: StatusInput) -> Result<StatusReport, Ca
 
 fn worktree_inspect(ctx: &Context, input: InspectInput) -> Result<InspectReport, CapabilityError> {
     service_of(ctx)?.inspect(&input.branch).map_err(refused)
+}
+
+fn worktree_create(ctx: &Context, input: CreateInput) -> Result<CreateReport, CapabilityError> {
+    service_of(ctx)?
+        .ensure(&CreateRequest {
+            branch: input.branch,
+            base: input.base,
+        })
+        .map_err(refused)
 }
 
 fn worktree_migration_plan(ctx: &Context, _: Empty) -> Result<MigrationPlan, CapabilityError> {
@@ -253,6 +298,25 @@ pub fn module() -> ModuleDescriptor {
                 handler: worktree_inspect,
             },
             capability! {
+                id: "worktree.create",
+                kind: CapabilityKind::Command,
+                title: "The canonical worktree of a branch, made or found",
+                description: "Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.",
+                input: CreateInput,
+                output: CreateReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_worktree_create"),
+                    http: post("/api/v1/worktrees/create"),
+                    cli: Some(CliExposure { path: vec!["worktree".into(), "ensure".into()] }),
+                },
+                tags: ["worktree", "git", "topology", "isolation"],
+                handler: worktree_create,
+            }
+            // It adds a branch, a registration under the common directory and a directory
+            // beside the checkout: a write, and every surface asks before it runs.
+            .writes_repository(),
+            capability! {
                 id: "worktree.migration_plan",
                 title: "What it would take to bring every worktree home",
                 description: "One step per misplaced worktree with a branch: where it is, where it belongs, how it would move, the uncommitted work that moves with it, and what blocks it; plus the exceptions the migration cannot address by design — detached worktrees, stale registrations, the primary checkout off the trunk — each with what a person does about it. Planning changes nothing; `majordomus worktree migrate` applies it with a fingerprint taken before and after every move.",
@@ -331,6 +395,11 @@ mod tests {
                 "/api/v1/worktrees/inspect",
             ),
             (
+                "worktree.create",
+                "majordomus_worktree_create",
+                "/api/v1/worktrees/create",
+            ),
+            (
                 "worktree.migration_plan",
                 "majordomus_worktree_migration_plan",
                 "/api/v1/worktrees/migration",
@@ -404,16 +473,127 @@ mod tests {
         );
     }
 
-    /// Every capability of the module is read-only: the registry's contract, and the
-    /// reason the mutations live on the command line.
+    /// Every capability of the module is read-only but the one that creates, and that one
+    /// says it writes the repository, by POST: migrating, repairing and removing stay on
+    /// the command line.
     #[test]
-    fn every_capability_is_a_query() {
+    fn every_capability_is_a_query_but_the_create() {
         for e in module().capabilities {
-            assert!(
-                e.capability.kind.is_read_only(),
-                "{} writes",
-                e.capability.id
-            );
+            let c = &e.capability;
+            if c.id.as_str() == "worktree.create" {
+                assert_eq!(c.execution.effect, crate::capability::Effect::RepositoryMutation);
+                assert!(c.execution.needs_confirmation());
+                assert_eq!(
+                    c.exposure.http.as_ref().map(|h| h.method.as_str()),
+                    Some("POST")
+                );
+                continue;
+            }
+            assert!(c.kind.is_read_only(), "{} writes", c.id);
         }
+    }
+
+    /// A git repository with one commit, a bare `origin` holding it as its trunk, and the
+    /// executable's context over it.
+    fn served() -> (tempfile::TempDir, std::path::PathBuf, crate::app::App) {
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().canonicalize().unwrap();
+        let repo = root.join("repo");
+        let git = |cwd: &Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(cwd)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+        };
+        copy_tree(fixture.root(), &repo);
+        git(&repo, &["init", "-q", "-b", "master"]);
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-q", "-m", "init"]);
+        let origin = root.join("origin.git");
+        git(&root, &["init", "-q", "--bare", "-b", "master", "origin.git"]);
+        git(&repo, &["remote", "add", "origin", &origin.to_string_lossy()]);
+        git(&repo, &["push", "-q", "-u", "origin", "master"]);
+        let app = crate::app::App::load(&crate::cli::RepoArgs {
+            repo: Some(repo.clone()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            share: Some(Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        drop(fixture);
+        (tmp, repo, app)
+    }
+
+    fn copy_tree(from: &Path, to: &Path) {
+        std::fs::create_dir_all(to).unwrap();
+        for entry in std::fs::read_dir(from).unwrap() {
+            let entry = entry.unwrap();
+            let target = to.join(entry.file_name());
+            if entry.file_type().unwrap().is_dir() {
+                if entry.file_name() == ".git" {
+                    continue;
+                }
+                copy_tree(&entry.path(), &target);
+            } else {
+                std::fs::copy(entry.path(), &target).unwrap();
+            }
+        }
+    }
+
+    /// Created at the canonical path from the remote's trunk, then found there on the
+    /// second call with nothing created, and refused for a branch checked out elsewhere.
+    #[test]
+    fn a_create_makes_finds_and_refuses() {
+        let (_tmp, repo, app) = served();
+        let ask = |branch: &str| {
+            app.context
+                .execute("worktree.create", serde_json::json!({ "branch": branch }))
+        };
+        let canonical = repo
+            .parent()
+            .unwrap()
+            .join("repo-wt/feature/x/y")
+            .to_string_lossy()
+            .to_string();
+
+        let made: CreateReport = serde_json::from_value(ask("feature/x/y").unwrap()).unwrap();
+        assert_eq!(made.path, canonical);
+        assert_eq!(made.branch, "feature/x/y");
+        assert!(!made.existed && made.branch_created);
+        assert_eq!(made.base.as_deref(), Some("origin/master"));
+        let head = made.head.clone().expect("a head");
+        assert_eq!(made.start_commit.as_deref(), Some(head.as_str()));
+
+        let found: CreateReport = serde_json::from_value(ask("feature/x/y").unwrap()).unwrap();
+        assert!(found.existed && !found.branch_created);
+        assert_eq!(found.path, canonical);
+        assert_eq!(found.head.as_deref(), Some(head.as_str()));
+
+        // the branch checked out by hand somewhere else is refused, and stays there
+        let away = repo.parent().unwrap().join("away");
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(["worktree", "add", "-q", "-b", "fix/elsewhere"])
+            .arg(&away)
+            .output()
+            .unwrap();
+        assert!(out.status.success());
+        let refused = ask("fix/elsewhere").unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::Refused(m) if m.contains("fix/elsewhere")),
+            "{refused:?}"
+        );
+        assert!(away.is_dir());
+        assert!(!repo.parent().unwrap().join("repo-wt/fix/elsewhere").exists());
+
+        // a name with no place in the container is refused before git is asked
+        let escape = ask("feature/../escape").unwrap_err();
+        assert!(matches!(escape, CapabilityError::Refused(_)), "{escape:?}");
     }
 }

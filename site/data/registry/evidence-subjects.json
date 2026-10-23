@@ -1054,6 +1054,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:worktree.create",
+      "path": "/evidence/capabilities/worktree-create/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:worktree.inspect",
       "path": "/evidence/capabilities/worktree-inspect/"
     },
@@ -6267,6 +6272,18 @@
       "programs": [],
       "members": [
         "command:why validate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.create": {
+      "kind": "capability",
+      "id": "worktree.create",
+      "page": "/evidence/capabilities/worktree-create/",
+      "programs": [],
+      "members": [
+        "command:worktree ensure"
       ],
       "routes": [],
       "mechanisms": [],
@@ -21936,6 +21953,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_worktree_create": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_create",
+      "alias_of": "capability:worktree.create",
+      "programs": [],
+      "members": [
+        "capability:worktree.create"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_worktree_inspect": {
       "kind": "mcp",
       "id": "majordomus_worktree_inspect",
@@ -28817,6 +28846,7 @@
     "suite:3860_the_plan_graph_is_drawn_by_milestone",
     "suite:387_no_payload_is_passed_through_argv",
     "suite:390_unresolved_relation_refuses_generation",
+    "suite:4002_a_worktree_is_created_by_one_capability",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",
     "suite:406_one_declaration_every_surface",

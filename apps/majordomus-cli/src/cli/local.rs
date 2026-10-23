@@ -268,11 +268,6 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
     },
     LocalCommand {
-        command: "worktree ensure",
-        reason: LocalReason::WritesRepository,
-        note: "creates the canonical worktree of a branch when it is absent, which is the same write made idempotent.",
-    },
-    LocalCommand {
         command: "worktree repair",
         reason: LocalReason::WritesRepository,
         note: "rewrites the git administrative files of a worktree whose links no longer resolve.",

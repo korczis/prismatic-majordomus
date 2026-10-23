@@ -1,6 +1,6 @@
 ---
 name: mj-worktree
-description: "Majordomus worktree: One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk; Uncommitted work in the linked worktrees, and what…"
+description: "Majordomus worktree: The canonical worktree of a branch, made or found; One branch: where its worktree belongs and what is there; What it would take to bring every worktree home; Where this is, and whether that is where it belongs; The whole topology; How far a checkout is from the remote trunk…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `worktree.create` | The canonical worktree of a branch, made or found | `majordomus_worktree_create` | `majordomus worktree ensure` | changes |
 | `worktree.inspect` | One branch: where its worktree belongs and what is there | `majordomus_worktree_inspect` | `majordomus worktree inspect` | reads |
 | `worktree.migration_plan` | What it would take to bring every worktree home | `majordomus_worktree_migration_plan` | `majordomus worktree migrate` | reads |
 | `worktree.status` | Where this is, and whether that is where it belongs | `majordomus_worktree_status` | `majordomus worktree status` | reads |

@@ -336,7 +336,10 @@ mod tests {
                 "intents.propose",
                 "plan.transition",
                 "reasoning.record",
-                "recover.orphans"
+                "recover.orphans",
+                // the canonical worktree of a branch, made or found; never moved or removed
+                // (I4002)
+                "worktree.create"
             ]
         );
     }

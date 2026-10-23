@@ -269,7 +269,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `.claude/skills/mj-trace/SKILL.md` | `editors/domain` | markdown | 1637 | `ffb35fc65a55a0f5` |
 | `.claude/skills/mj-web/SKILL.md` | `editors/domain` | markdown | 1363 | `6d4230b856f42d1c` |
 | `.claude/skills/mj-why/SKILL.md` | `editors/domain` | markdown | 1922 | `1e3df4edcf9f42a0` |
-| `.claude/skills/mj-worktree/SKILL.md` | `editors/domain` | markdown | 2426 | `b9b241352803b4d6` |
+| `.claude/skills/mj-worktree/SKILL.md` | `editors/domain` | markdown | 2571 | `096a5f7ede953245` |
 | `.claude/skills/pack-for-chatgpt/SKILL.md` | `editors/skill` | markdown | 1007 | `f8c40a2876393e7d` |
 | `.claude/skills/pack-for-review/SKILL.md` | `editors/skill` | markdown | 982 | `b6d28b771352f46a` |
 | `.claude/skills/repo-review/SKILL.md` | `editors/skill` | markdown | 859 | `71da2104b02d6830` |
@@ -292,10 +292,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
-| `docs/generated/benchmarks.json` | `benchmarks` | json | 59188 | `b6d3550fde161b68` |
-| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 26008 | `ef7f4271c96e1eed` |
-| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 41568 | `d7ab5b85bca760cb` |
-| `docs/generated/capabilities.md` | `capabilities` | markdown | 44974 | `9da0c47aec0e2dc9` |
+| `docs/generated/benchmarks.json` | `benchmarks` | json | 59431 | `e9d18bc0dd92cb3d` |
+| `docs/generated/benchmarks.md` | `benchmarks` | markdown | 26104 | `074b45564a4a0273` |
+| `docs/generated/benchmarks.yaml` | `benchmarks` | yaml | 41735 | `4999f9d1d7fedba1` |
+| `docs/generated/capabilities.md` | `capabilities` | markdown | 45162 | `ae13a8f34b3942ce` |
 | `docs/generated/changelog.json` | `changelog` | json | 1414063 | `bf7ff94ae6115826` |
 | `docs/generated/changelog.md` | `changelog` | markdown | 300906 | `198233696dffd7d9` |
 | `docs/generated/changelog.yaml` | `changelog` | yaml | 1116451 | `975b9c89af63cce8` |
@@ -309,7 +309,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `52031e569138f515` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `46a60ce991db2e51` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `4052a6677e5b73a2` |
-| `docs/generated/graph.json` | `graph` | json | 5281716 | `f2fa3598661aac2e` |
+| `docs/generated/graph.json` | `graph` | json | 5283286 | `d91a141cadd8e5a7` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `37d29841995d74d4` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `362e2d4e556b6006` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2401 | `fd6b9dbab7a9ff92` |
@@ -368,14 +368,14 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/trace.md` | `modules/trace` | markdown | 4586 | `f828f732b71e568e` |
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1470 | `a19026d130ba37f1` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6129 | `976938410b23ddd9` |
-| `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 7976 | `4bd2781db1e9e277` |
-| `docs/generated/openapi.json` | `openapi` | json | 2614436 | `83b8a804678c7ee9` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 2115356 | `5c25d555f448d86c` |
+| `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 10050 | `da1ffbfd4163cc9a` |
+| `docs/generated/openapi.json` | `openapi` | json | 2630868 | `992ed7269e0620e6` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 2128279 | `f7f4fb3cb4f52e76` |
 | `docs/generated/providers.json` | `providers` | json | 9484 | `0e6b07481d2e7527` |
 | `docs/generated/providers.md` | `providers` | markdown | 2577 | `499ef7d58340c3ba` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 8877 | `ad3790aa2b53116b` |
-| `docs/generated/registry.json` | `registry` | json | 3955407 | `551439898304456d` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 3193695 | `08311fc2560bff71` |
+| `docs/generated/registry.json` | `registry` | json | 3979346 | `879a09cfc44a1b73` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 3212043 | `2cbe0b9a0129c3bc` |
 | `docs/generated/web.json` | `web` | json | 5562 | `379661b5e57e3c8c` |
 | `docs/generated/web.yaml` | `web` | yaml | 4233 | `21b6fbccc16573aa` |
 | `share/allow/adr.txt` | `allow/adr` | text | 380 | `4b6f70c1636d55c2` |
@@ -434,10 +434,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 245 | `22aeea196cced12e` |
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `ff6803878515ab46` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 826129 | `bd1fd32533ea93c5` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 826949 | `bec84d5e77c2e7d2` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `923e4004f1db5e57` |
-| `site/data/registry/product.json` | `site-product` | json | 767568 | `20a10bf7741ba48f` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7802731 | `9a143033cd82e6e1` |
+| `site/data/registry/product.json` | `site-product` | json | 768342 | `b4a5fd42c57be368` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7831350 | `61fb6c29e18ca704` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `300b30d3144ed604` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `ade5e059bf55bb30` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `d2ebe74220e5c13d` |
