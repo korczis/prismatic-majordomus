@@ -609,7 +609,8 @@ value came from: [`docs/WEB.md`](docs/WEB.md),
 **Clients start it themselves.** [`.mcp.json`](.mcp.json) (Claude Code),
 [`.gemini/settings.json`](.gemini/settings.json) (Gemini CLI) and
 [`.codex/config.toml`](.codex/config.toml) (Codex) name [`bin/majordomus-mcp`](bin/majordomus-mcp),
-which builds the executable when it must and runs `majordomus mcp`. Open the repository in
+which runs `majordomus mcp` from the tree's executable and never builds it (`just build` does;
+a release of the tree's generation stands in, ADR 0224). Open the repository in
 any of them and the server is there; open it in two and they share one. Which tools the
 distribution has an adapter for, what each reads and where each keeps its scratch
 checkouts is one generated table, [`docs/generated/providers.md`](docs/generated/providers.md),

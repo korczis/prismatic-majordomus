@@ -10,8 +10,11 @@ while read -r _local_ref local_sha remote_ref _remote_sha; do
   case "$remote_ref" in refs/majordomus/*) ;; *) only_layer=0; heads="$heads $local_sha" ;; esac
 done
 [ "$any" = 1 ] && [ "$only_layer" = 1 ] && exit 0
-# A hook never starts a cold build of the executable: when it is missing, bin/majordomus-cli
-# asks the installed release instead (I3831). Every check below runs and refuses as before.
+# A hook never starts a build of the executable (I3831, ADR 0224): when it is missing or stale,
+# bin/majordomus-cli answers through the installed release of this tree's generation, or
+# refuses with exit 12 naming `just build`, and so does this hook. Every check below runs and
+# refuses as before.
+# majordomus-on-stale-executable: fallback, else refuse
 MAJORDOMUS_HOOK=1; export MAJORDOMUS_HOOK
 bin/majordomus finish --check || exit $?
 # No two cases share a number. Each branch is clean alone and the pair exists only once both

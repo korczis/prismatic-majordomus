@@ -249,6 +249,17 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ci-plan
+      # The explicit build (ADR 0224): no gate builds, so the job builds the executable once,
+      # here, and every gate and script that asks bin/majordomus-cli gets it. Six of this
+      # job's gates and the scripts several others call run the executable; each used to
+      # reach it through `cargo run` or a launcher that built, and waited on the build lock.
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable, built once for every gate
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+          echo "MAJORDOMUS_BIN_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       # Every gate the model assigns to this job, in its order, as the plan selected them:
       # shell-lint, ui-check and core-check on every plan, and the structural gates a change
       # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched
@@ -896,8 +907,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: rust
         uses: ./.github/actions/setup-rust
+      # the explicit build, then the gate's own line through the launcher (ADR 0224)
+      - name: the executable, built for the benchmark
+        run: RUSTFLAGS='' cargo build --quiet --locked
       - id: bench
-        run: cargo run --quiet -- bench --profile ci --check --no-write
+        run: ../../bin/majordomus-cli bench --profile ci --check --no-write
       - if: always()
         run: ../../scripts/ci/summary --job bench --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - name: the bench receipt
