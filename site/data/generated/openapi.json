@@ -269,8 +269,13 @@
     "schema-Budget": "docs/api/devcontext/",
     "schema-Budgets": "docs/api/deploy/",
     "schema-Build": "docs/api/deploy/",
+    "schema-BuildCacheHealth": "docs/api/mesh/",
     "schema-BuildCacheKeyReport": "docs/api/mesh/",
     "schema-BuildCacheKindKey": "docs/api/mesh/",
+    "schema-BuildCacheNodeOffer": "docs/api/mesh/",
+    "schema-BuildCacheOfferReading": "docs/api/mesh/",
+    "schema-BuildCachePassedOver": "docs/api/mesh/",
+    "schema-BuildCacheScope": "docs/api/mesh/",
     "schema-BuildIdentity": "docs/api/served/",
     "schema-BuildReport": "docs/api/distribution/",
     "schema-CachePolicy": "docs/api/capabilities/",
@@ -1281,7 +1286,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 203,
-    "schemas": 1016,
+    "schemas": 1021,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1646,8 +1651,13 @@
     "Budget": "devcontext",
     "Budgets": "deploy",
     "Build": "deploy",
+    "BuildCacheHealth": "mesh",
     "BuildCacheKeyReport": "mesh",
     "BuildCacheKindKey": "mesh",
+    "BuildCacheNodeOffer": "mesh",
+    "BuildCacheOfferReading": "mesh",
+    "BuildCachePassedOver": "mesh",
+    "BuildCacheScope": "mesh",
     "BuildIdentity": "served",
     "BuildReport": "distribution",
     "CachePolicy": "capabilities",
@@ -6011,6 +6021,37 @@
       "variants": []
     },
     {
+      "description": "How the offering node's own probe judges the store.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "BuildCacheHealth",
+      "properties": [],
+      "type": "\"healthy\" | \"degraded\" | \"unhealthy\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BuildCacheNodeOffer"
+      ],
+      "values": [
+        {
+          "description": "Ready and answering.",
+          "value": "healthy"
+        },
+        {
+          "description": "Answering, but something the policy cares about is wrong (low headroom, slow).",
+          "value": "degraded"
+        },
+        {
+          "description": "Not answering, or refusing.",
+          "value": "unhealthy"
+        },
+        {
+          "description": "The probe could not say: never `Healthy`.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```",
       "home": "mesh",
       "is_enum": false,
@@ -6119,6 +6160,191 @@
         "BuildCacheKeyReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One node's offer. Carries no credential and no secret of any kind.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "BuildCacheNodeOffer",
+      "properties": [
+        {
+          "description": "The offering node's id: the last tie-break, so ordering is total.",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The protocol the store speaks (`s3`).",
+          "name": "protocol",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What serves it (`minio`, `garage`, ...): data, not a code path.",
+          "name": "provider",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How far the endpoint is meant to be reached.",
+          "name": "scope",
+          "refs": [
+            "BuildCacheScope"
+          ],
+          "required": true,
+          "type": "BuildCacheScope"
+        },
+        {
+          "description": "The non-secret address a client connects to.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The bucket the cache lives in.",
+          "name": "bucket",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The offering node's own preference, higher first.",
+          "name": "priority",
+          "refs": [],
+          "required": true,
+          "type": "integer (int32)"
+        },
+        {
+          "description": "Free space on the data path, in GiB, when the node said.",
+          "name": "headroom_gib",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The node's own judgement of the store.",
+          "name": "health",
+          "refs": [
+            "BuildCacheHealth"
+          ],
+          "required": true,
+          "type": "BuildCacheHealth"
+        },
+        {
+          "description": "Seconds since the offer was last refreshed.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "A measured round trip from the asking node, in milliseconds, when one was.",
+          "name": "rtt_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BuildCacheOfferReading"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&[], &|_| true, &|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "BuildCacheOfferReading",
+      "properties": [
+        {
+          "description": "The offers of trusted runtimes whose beat rose within the offer's lifetime, one per\nnode, in node order: what `super::select` takes.",
+          "name": "offers",
+          "refs": [
+            "BuildCacheNodeOffer"
+          ],
+          "required": true,
+          "type": "array of BuildCacheNodeOffer"
+        },
+        {
+          "description": "Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds.",
+          "name": "ignored",
+          "refs": [
+            "BuildCachePassedOver"
+          ],
+          "required": true,
+          "type": "array of BuildCachePassedOver"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStateAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "An offer that was not chosen, and the rule that said no.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "BuildCachePassedOver",
+      "properties": [
+        {
+          "description": "The offer's node.",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The rule, in words.",
+          "name": "why",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BuildCacheOfferReading"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How far an offer's endpoint is meant to be reached, nearest first.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "BuildCacheScope",
+      "properties": [],
+      "type": "\"host\" | \"lan\" | \"mesh\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BuildCacheNodeOffer"
+      ],
+      "values": [
+        {
+          "description": "Reachable from the machine that offers it and no other.",
+          "value": "host"
+        },
+        {
+          "description": "Reachable on the offering machine's local network.",
+          "value": "lan"
+        },
+        {
+          "description": "Reachable by every node of the mesh.",
+          "value": "mesh"
+        }
+      ],
       "variants": []
     },
     {
@@ -33300,6 +33526,15 @@
           ],
           "required": true,
           "type": "array of StreamView"
+        },
+        {
+          "description": "The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none.",
+          "name": "build_cache",
+          "refs": [
+            "BuildCacheOfferReading"
+          ],
+          "required": false,
+          "type": "BuildCacheOfferReading | null"
         }
       ],
       "type": "object",

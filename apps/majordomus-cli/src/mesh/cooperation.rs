@@ -1172,6 +1172,16 @@ pub struct Cooperation {
     projected: Mutex<BTreeMap<String, Projected>>,
     admission: Mutex<()>,
     rounds: Mutex<BTreeMap<String, Arc<Mutex<()>>>>,
+    build_cache: Mutex<BuildCachePublisher>,
+}
+
+/// What this runtime publishes of the build cache its node serves (I2671): the node file it
+/// reads the declaration from on every heartbeat, and the offer it last wrote — none after a
+/// withdrawal, and none in a new run, which is a new stream.
+#[derive(Default)]
+struct BuildCachePublisher {
+    file: Option<PathBuf>,
+    published: Option<super::journal::BuildCacheOffer>,
 }
 
 /// The most refusals the table lists: a stream of hellos from invented keys must not grow
@@ -1335,6 +1345,7 @@ impl Cooperation {
             projected: Mutex::new(BTreeMap::new()),
             admission: Mutex::new(()),
             rounds: Mutex::new(BTreeMap::new()),
+            build_cache: Mutex::new(BuildCachePublisher::default()),
         }))
     }
 
@@ -1550,6 +1561,9 @@ impl Cooperation {
                 tracing::info!(runtime_id = %me.own_key, repository_id = %me.repository.id, "mesh cooperation started");
                 let mut tick: u64 = 0;
                 while !me.stop.load(Ordering::SeqCst) {
+                    // probed before the beat: a beat is then also the word that the store
+                    // this runtime offers answered (I2671)
+                    me.refresh_build_cache_offer();
                     me.journal.beat_own();
                     me.project_board();
                     me.reconcile_workers();
@@ -3138,6 +3152,69 @@ impl Cooperation {
             .into_iter()
             .map(|(id, (l, age))| (id, l, age.map(|a| a.as_millis() as u64)))
             .collect()
+    }
+
+    /// Offer the build cache the node file at `file` declares, from the next heartbeat on;
+    /// `None` offers nothing, and withdraws at the next heartbeat what was offered.
+    pub(crate) fn serve_build_cache_from(&self, file: Option<PathBuf>) {
+        self.build_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .file = file;
+    }
+
+    /// Probe this node's store and write the build-cache record that changed, if one did:
+    /// an offer of a healthy store not offered yet or offered differently, a withdrawal of one
+    /// that stopped answering or is no longer declared (`mesh::build_cache::offer`). Called on
+    /// every heartbeat before the beat; the probe is bounded by
+    /// [`super::build_cache::PROBE_BUDGET`].
+    pub(crate) fn refresh_build_cache_offer(&self) -> Option<MeshEvent> {
+        use super::build_cache::offer;
+        let mut publisher = self
+            .build_cache
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let now = offer::current(
+            publisher.file.as_deref(),
+            self.journal.own_stream().node(),
+            self.expiry(),
+            super::build_cache::PROBE_BUDGET,
+        );
+        let body = offer::next_event(publisher.published.as_ref(), now)?;
+        let offered = match &body {
+            EventBody::BuildCacheOffered { offer } => Some(offer.clone()),
+            _ => None,
+        };
+        match self.journal.append_own(body) {
+            Ok(event) => {
+                publisher.published = offered;
+                Some(event)
+            }
+            Err(e) => {
+                tracing::warn!(runtime_id = %self.own_key, error = %e, "mesh build-cache record not written");
+                None
+            }
+        }
+    }
+
+    /// The build-cache offers of the mesh as this runtime reads them now: each stream's newest
+    /// record, read as an offer only when its signature verifies, the trust in force trusts
+    /// its key, and its stream beat within the offer's lifetime and this runtime's expiry
+    /// (`mesh::build_cache::offer::read`). What `mesh::build_cache::select` takes.
+    pub(crate) fn build_cache_offers(&self) -> super::build_cache::offer::OfferReading {
+        let ages = self.journal.stream_liveness(self.expiry());
+        let records: Vec<MeshEvent> = self
+            .journal
+            .events()
+            .into_iter()
+            .filter(|e| super::build_cache::offer::KINDS.contains(&e.kind()))
+            .collect();
+        super::build_cache::offer::read(
+            &records,
+            &|pk| self.trust_of_key(pk).is_trusted(),
+            &|s| ages.get(s).and_then(|(_, age)| *age),
+            self.expiry(),
+        )
     }
 
     /// Verify cooperation now: the local checks, then one sync round with every peer this

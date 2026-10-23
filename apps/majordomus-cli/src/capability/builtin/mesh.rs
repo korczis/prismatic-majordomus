@@ -692,6 +692,10 @@ pub struct MeshStateAnswer {
     pub state: Option<CooperationState>,
     /// Every stream's liveness.
     pub streams: Vec<StreamView>,
+    /// The build-cache offers this runtime reads from the journal, and every record it does
+    /// not read as one with why (I2671); absent when the journal holds none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_cache: Option<crate::mesh::build_cache::offer::OfferReading>,
 }
 
 fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, CapabilityError> {
@@ -704,9 +708,12 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
             summary: None,
             state: None,
             streams: Vec::new(),
+            build_cache: None,
         });
     };
     let state = page::narrow(&c.state(), &query);
+    let build_cache =
+        Some(c.build_cache_offers()).filter(|r| !(r.offers.is_empty() && r.ignored.is_empty()));
     let streams: Vec<StreamView> = c
         .streams()
         .into_iter()
@@ -731,6 +738,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
                 state: None,
                 // the streams are the summary's runtimes, told once
                 streams: Vec::new(),
+                build_cache,
             }
         }
         View::Full => MeshStateAnswer {
@@ -740,6 +748,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
             summary: None,
             state: Some(state),
             streams,
+            build_cache,
         },
     })
 }

@@ -15277,6 +15277,21 @@ components:
         - profile
         - inputs
       description: What is shipped and what it is built from.
+    BuildCacheHealth:
+      oneOf:
+        - type: string
+          const: healthy
+          description: Ready and answering.
+        - type: string
+          const: degraded
+          description: "Answering, but something the policy cares about is wrong (low headroom, slow)."
+        - type: string
+          const: unhealthy
+          description: "Not answering, or refusing."
+        - type: string
+          const: unknown
+          description: "The probe could not say: never `Healthy`."
+      description: "How the offering node's own probe judges the store.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```"
     BuildCacheKeyReport:
       type: object
       properties:
@@ -15338,6 +15353,106 @@ components:
         - inputs
         - digest
       description: "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
+    BuildCacheNodeOffer:
+      type: object
+      properties:
+        node:
+          type: string
+          description: "The offering node's id: the last tie-break, so ordering is total."
+        protocol:
+          type: string
+          description: "The protocol the store speaks (`s3`)."
+        provider:
+          type: string
+          description: "What serves it (`minio`, `garage`, ...): data, not a code path."
+        scope:
+          "$ref": "#/components/schemas/BuildCacheScope"
+          description: How far the endpoint is meant to be reached.
+        endpoint:
+          type: string
+          description: The non-secret address a client connects to.
+        bucket:
+          type: string
+          description: The bucket the cache lives in.
+        priority:
+          type: integer
+          format: int32
+          description: "The offering node's own preference, higher first."
+        headroom_gib:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Free space on the data path, in GiB, when the node said."
+        health:
+          "$ref": "#/components/schemas/BuildCacheHealth"
+          description: "The node's own judgement of the store."
+        age_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds since the offer was last refreshed.
+        rtt_ms:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: "A measured round trip from the asking node, in milliseconds, when one was."
+      required:
+        - node
+        - protocol
+        - provider
+        - scope
+        - endpoint
+        - bucket
+        - priority
+        - health
+        - age_seconds
+      description: "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+    BuildCacheOfferReading:
+      type: object
+      properties:
+        offers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BuildCacheNodeOffer"
+          description: "The offers of trusted runtimes whose beat rose within the offer's lifetime, one per\nnode, in node order: what `super::select` takes."
+        ignored:
+          type: array
+          items:
+            "$ref": "#/components/schemas/BuildCachePassedOver"
+          description: "Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds."
+      required:
+        - offers
+        - ignored
+      description: "What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&[], &|_| true, &|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```"
+    BuildCachePassedOver:
+      type: object
+      properties:
+        node:
+          type: string
+          description: "The offer's node."
+        why:
+          type: string
+          description: "The rule, in words."
+      required:
+        - node
+        - why
+      description: "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
+    BuildCacheScope:
+      oneOf:
+        - type: string
+          const: host
+          description: Reachable from the machine that offers it and no other.
+        - type: string
+          const: lan
+          description: "Reachable on the offering machine's local network."
+        - type: string
+          const: mesh
+          description: Reachable by every node of the mesh.
+      description: "How far an offer's endpoint is meant to be reached, nearest first.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);\n```"
     BuildIdentity:
       type: object
       properties:
@@ -30200,6 +30315,11 @@ components:
           items:
             "$ref": "#/components/schemas/StreamView"
           description: "Every stream's liveness."
+        build_cache:
+          anyOf:
+            - "$ref": "#/components/schemas/BuildCacheOfferReading"
+            - type: "null"
+          description: "The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none."
       required:
         - active
         - view
