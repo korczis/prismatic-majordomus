@@ -9291,12 +9291,12 @@
         }
       },
       {
-        "id": "majordomus://adr/adr-0222",
+        "id": "majordomus://adr/adr-0225",
         "kind": "adr",
-        "label": "adr-0222",
+        "label": "adr-0225",
         "summary": "An execution started for an issue is durable and idempotent, an interrupted one is recovered as interrupted, and an unknown outcome is never retried",
-        "route": "/cockpit/objects/adr/adr-0222",
-        "source": ".ai/repo/adrs/0222-an-issue-execution-is-durable-idempotent-and-never-replayed-blind.md",
+        "route": "/cockpit/objects/adr/adr-0225",
+        "source": ".ai/repo/adrs/0225-an-issue-execution-is-durable-idempotent-and-never-replayed-blind.md",
         "status": "proposed",
         "facts": {
           "date": "2026-10-23",
@@ -21877,7 +21877,7 @@
         "facts": {
           "created_at": "2026-10-23",
           "invariants": [
-            "A click starts an execution of the shared executor; the UI never decides whether work may run (ADR 0135, ADR 0222)",
+            "A click starts an execution of the shared executor; the UI never decides whether work may run (ADR 0135, ADR 0225)",
             "One execution model: no second scheduler, no parallel orchestrator, no ui_tasks.json",
             "An unknown outcome of a mutation is never a reason to repeat it",
             "A worker is an optional adapter; no provider is required",
@@ -64184,7 +64184,7 @@
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test execution_idempotency"
           ],
-          "why": "ADR 0222 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39)."
+          "why": "ADR 0225 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39)."
         }
       },
       {
@@ -64232,7 +64232,7 @@
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test worker_adapter"
           ],
-          "why": "ADR 0222 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today."
+          "why": "ADR 0225 decision 5: a worker is an adapter, never a requirement; nothing in the execution path spawns a worker today."
         }
       },
       {
@@ -64284,7 +64284,7 @@
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test issue_implement",
             "majordomus generate --check"
           ],
-          "why": "ADR 0222 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease."
+          "why": "ADR 0225 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease."
         }
       },
       {
@@ -64332,7 +64332,7 @@
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::idd"
           ],
-          "why": "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0222 consequences."
+          "why": "Owner's P0 of 2026-10-23, section 6: one contextual primary move instead of three near-synonymous verbs; ADR 0225 consequences."
         }
       },
       {
@@ -64421,7 +64421,7 @@
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test issue_implement"
           ],
-          "why": "Owner's P0 DoD ends with 'a testable result with evidence'; ADR 0222 decision 6 separates done from delivered."
+          "why": "Owner's P0 DoD ends with 'a testable result with evidence'; ADR 0225 decision 6 separates done from delivered."
         }
       },
       {
@@ -68847,7 +68847,7 @@
             "Running anything from the published site"
           ],
           "order": 514,
-          "outcome": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0222 and the intent an-issue-is-implemented-from-one-click.",
+          "outcome": "I3980 to I3986 close the P0 vertical slice, local click-to-execute, under ADR 0225 and the intent an-issue-is-implemented-from-one-click.",
           "priority": "p0",
           "risks": [
             "I3225 (a capability runs from /ui) is BLOCKED; I3984 reuses the move path that works today (share/cockpit/moves.js) and must not wait for it, and I3225 then folds both onto one shared start path",
@@ -102214,47 +102214,47 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "file:apps/majordomus-cli/src/economics/runner.rs",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "file:apps/majordomus-cli/src/execution/mod.rs",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "file:apps/majordomus-cli/src/execution/store.rs",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "file:apps/majordomus-cli/src/http/events.rs",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "kind:adr",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "majordomus://adr/adr-0135",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "majordomus://intent/an-issue-is-implemented-from-one-click",
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0222",
+        "source": "majordomus://adr/adr-0225",
         "target": "majordomus://milestone/one-click-implement",
         "kind": "put_in_force"
       },

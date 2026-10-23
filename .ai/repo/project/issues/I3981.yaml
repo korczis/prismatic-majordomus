@@ -5,7 +5,7 @@ slug: a-start-is-idempotent
 priority: p0
 profile: implementation
 objective: "Add an optional idempotency_key to the input of executions.start (declared in the capability, so every projection carries it after majordomus generate); keep the key on the journaled record (I3980); a repeated start answers the existing execution's view, a conflicting one is refused naming it; share/cockpit/executions.js and moves.js send a key per click."
-why: "ADR 0222 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39)."
+why: "ADR 0225 decision 3: every mutating click carries an idempotency key; today the only guard is a disabled button (share/cockpit/executions.js:39)."
 current_state: "executions.start (capability/builtin/executions.rs:700) has no key; a double submit from two tabs starts two executions."
 desired_state: "Two starts with one key from two tabs yield one execution; the UI's start path always sends a key."
 scope:
