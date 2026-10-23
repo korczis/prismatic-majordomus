@@ -41,7 +41,7 @@ const WRAPPER: &str = include_str!("../../../../share/mesh-cache-provider/sccach
 
 /// Where the per-node credentials and environments live on the provider, outside any
 /// repository and readable by root alone.
-const NODE_DIR: &str = "/etc/prismatic/mesh-build-cache";
+const NODE_DIR: &str = "/etc/majordomus/mesh-build-cache";
 
 /// What the provisioning declares: who runs the builds, which store, how bounded, which
 /// nodes receive an identity.
@@ -237,7 +237,7 @@ fn wants(policy: &Policy) -> Vec<Want> {
     };
     let mut out = vec![
         declared(
-            "/usr/local/libexec/prismatic/disk-guard".into(),
+            "/usr/local/libexec/majordomus/disk-guard".into(),
             0o755,
             GUARD,
             "disk-guard",

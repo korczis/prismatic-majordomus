@@ -20,7 +20,7 @@
 # The ballast is a file of BALLAST_GIB kept while space is plentiful and released at the hard
 # floor, so the host always has room for the commands that recover it.
 #
-# Settings are overridable in /etc/prismatic/disk-guard.conf. Every action is a journal line;
+# Settings are overridable in /etc/majordomus/disk-guard.conf. Every action is a journal line;
 # the last run is summarised in $STATE. DRY_RUN=1 changes nothing.
 set -uo pipefail
 
@@ -30,15 +30,15 @@ set -uo pipefail
 : "${IDLE_MIN:=120}"
 : "${HARD_IDLE_MIN:=20}"
 : "${SCAN_EVERY_MIN:=60}"
-: "${BALLAST:=/var/lib/prismatic/ballast}"
+: "${BALLAST:=/var/lib/majordomus/ballast}"
 : "${BALLAST_GIB:=8}"
 : "${RUNNER_VOLUME_CAP_GIB:=60}"
 : "${BUILDER_KEEP:=20GB}"
 HOMES=(/home/korczis)
-: "${STATE:=/var/lib/prismatic/disk-guard.json}"
-: "${SCAN_STAMP:=/var/lib/prismatic/disk-guard.scan}"
+: "${STATE:=/var/lib/majordomus/disk-guard.json}"
+: "${SCAN_STAMP:=/var/lib/majordomus/disk-guard.scan}"
 # shellcheck source=/dev/null
-[ -r /etc/prismatic/disk-guard.conf ] && . /etc/prismatic/disk-guard.conf
+[ -r /etc/majordomus/disk-guard.conf ] && . /etc/majordomus/disk-guard.conf
 
 exec 9>/run/disk-guard.lock
 flock -n 9 || { echo "another run holds the lock"; exit 0; }

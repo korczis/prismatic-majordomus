@@ -32,7 +32,7 @@ jq -e '.plan.changes > 0 and (.plan.files | all(.state == "missing"))' "$S/plan.
   || fail "an empty root does not owe every file" "$S/plan.json"
 [ ! -e "$S/host" ] || fail "a plan created its root"
 for node in $(jq -r '.policy.nodes[]' "$S/plan.json"); do
-  jq -e --arg n "$node" '.plan.files | any(.path == "/etc/prismatic/mesh-build-cache/" + $n + "/credentials" and .source == "generated" and .mode == "0600")' \
+  jq -e --arg n "$node" '.plan.files | any(.path == "/etc/majordomus/mesh-build-cache/" + $n + "/credentials" and .source == "generated" and .mode == "0600")' \
     "$S/plan.json" >/dev/null || fail "no generated 0600 credential for $node"
   jq -e --arg n "$node" '.plan.steps | any(.id == "identity-" + $n and (.line | contains("<secret of " + $n + ">")))' \
     "$S/plan.json" >/dev/null || fail "no identity step for $node"
@@ -47,17 +47,19 @@ jq -e '.plan.steps | any(.id == "expiry") and any(.id == "ci-cache-quota") and a
 prov --apply --root "$S/host" > "$S/apply1.json" 2> "$S/err" || fail "the staged apply failed" "$S/err" "$S/apply1.json"
 jq -e '.ok == true and (.apply.written | length) > 0 and (.apply.generated | length) == (.policy.nodes | length) and .apply.after.changes == 0' \
   "$S/apply1.json" >/dev/null || fail "the staged apply did not bring the root to the policy" "$S/apply1.json"
-cred="$S/host/etc/prismatic/mesh-build-cache/mbp/credentials"
+cred="$S/host/etc/majordomus/mesh-build-cache/mbp/credentials"
 [ -f "$cred" ] || fail "no credential for mbp"
 mode="$(ls -l "$cred" | cut -c1-10)"
 [ "$mode" = "-rw-------" ] || fail "a credential is not mode 0600: $mode"
-sum1="$(cat "$S"/host/etc/prismatic/mesh-build-cache/*/credentials | shasum)"
+cat "$S"/host/etc/majordomus/mesh-build-cache/*/credentials > "$S/creds.cat"
+sum1="$(sha256_of_file "$S/creds.cat")"
 
 # ---------------------------------------------------------------- 3. the second apply changes nothing
 prov --apply --root "$S/host" > "$S/apply2.json" 2> "$S/err" || fail "the second apply failed" "$S/err" "$S/apply2.json"
 jq -e '.ok == true and (.apply.written | length) == 0 and (.apply.generated | length) == 0 and .plan.changes == 0' \
   "$S/apply2.json" >/dev/null || fail "a second apply changed something" "$S/apply2.json"
-[ "$sum1" = "$(cat "$S"/host/etc/prismatic/mesh-build-cache/*/credentials | shasum)" ] \
+cat "$S"/host/etc/majordomus/mesh-build-cache/*/credentials > "$S/creds.cat"
+[ "$sum1" = "$(sha256_of_file "$S/creds.cat")" ] \
   || fail "a second apply rewrote a credential"
 
 # ---------------------------------------------------------------- 4. drift and the cargo wrapper
@@ -75,7 +77,7 @@ jq -e '(.apply.written | length) == 0' "$S/apply4.json" >/dev/null || fail "the 
 
 # ---------------------------------------------------------------- 5. no secret anywhere
 for f in "$S"/*.json; do
-  for secret in $(sed -n 's/^aws_secret_access_key = //p' "$S"/host/etc/prismatic/mesh-build-cache/*/credentials); do
+  for secret in $(sed -n 's/^aws_secret_access_key = //p' "$S"/host/etc/majordomus/mesh-build-cache/*/credentials); do
     ! grep -q "$secret" "$f" || fail "an answer holds a credential's secret: $f"
     ! ( cd "$ROOT" && git grep -q "$secret" -- . ) || fail "a tracked file holds a credential's secret"
   done
