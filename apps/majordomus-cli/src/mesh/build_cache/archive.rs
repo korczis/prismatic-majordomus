@@ -86,12 +86,17 @@ impl Drop for Scratch {
 }
 
 fn run_tar(args: &[&std::ffi::OsStr]) -> Result<Vec<u8>, String> {
+    run_tar_within(args, TAR_BUDGET)
+}
+
+/// [`run_tar`] with the budget as a parameter, so that a stall is testable in milliseconds.
+fn run_tar_within(args: &[&std::ffi::OsStr], budget: Duration) -> Result<Vec<u8>, String> {
     let mut command = Command::new("tar");
     command.args(args);
     // macOS tar otherwise adds an AppleDouble `._name` entry for every file with extended
     // attributes, which another platform would unpack as files of its own
     command.env("COPYFILE_DISABLE", "1");
-    let output = bounded_output(&mut command, TAR_BUDGET)
+    let output = bounded_output(&mut command, budget)
         .ok_or_else(|| "tar did not start, or did not finish within its budget".to_string())?;
     if output.status.success() {
         Ok(output.stdout)
@@ -575,5 +580,315 @@ mod tests {
             "released, it is taken again"
         );
         assert_eq!(subdirectories(&c), vec!["debug".to_string()]);
+    }
+
+    fn is_root() -> bool {
+        // SAFETY: geteuid has no preconditions and reads the process's own credentials.
+        unsafe { libc::geteuid() == 0 }
+    }
+
+    fn mode(path: &Path, bits: u32) {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(path, fs::Permissions::from_mode(bits)).unwrap();
+    }
+
+    /// A gzip tar archive written by hand, so that it can carry what `tar -c` never writes:
+    /// `(name, typeflag, link name, content)`.
+    fn forged(entries: &[(&str, u8, &str, &str)]) -> Vec<u8> {
+        let mut raw = Vec::new();
+        for (name, flag, link, body) in entries {
+            let mut h = [0u8; 512];
+            h[..name.len()].copy_from_slice(name.as_bytes());
+            h[100..107].copy_from_slice(b"0000644");
+            h[108..115].copy_from_slice(b"0000000");
+            h[116..123].copy_from_slice(b"0000000");
+            h[124..135].copy_from_slice(format!("{:011o}", body.len()).as_bytes());
+            h[136..147].copy_from_slice(b"00000000000");
+            h[156] = *flag;
+            h[157..157 + link.len()].copy_from_slice(link.as_bytes());
+            h[257..263].copy_from_slice(b"ustar\0");
+            h[263..265].copy_from_slice(b"00");
+            h[148..156].copy_from_slice(b"        ");
+            let sum: u32 = h.iter().map(|b| u32::from(*b)).sum();
+            h[148..156].copy_from_slice(format!("{sum:06o}\0 ").as_bytes());
+            raw.extend_from_slice(&h);
+            raw.extend_from_slice(body.as_bytes());
+            raw.resize(raw.len().div_ceil(512) * 512, 0);
+        }
+        raw.extend_from_slice(&[0u8; 1024]);
+        let mut gzip = Command::new("gzip")
+            .arg("-c")
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        let mut stdin = gzip.stdin.take().unwrap();
+        let writer = std::thread::spawn(move || {
+            use std::io::Write;
+            stdin.write_all(&raw).unwrap();
+        });
+        let out = gzip.wait_with_output().unwrap();
+        writer.join().unwrap();
+        out.stdout
+    }
+
+    #[test]
+    fn a_file_that_cannot_be_read_is_an_error_not_a_digest() {
+        let dir = tempfile::tempdir().unwrap();
+        // absent: the open fails
+        assert!(sha256_file(&dir.path().join("none")).is_err());
+        // a directory opens but cannot be read
+        assert!(sha256_file(dir.path()).is_err());
+    }
+
+    #[test]
+    fn a_scratch_directory_needs_a_parent_it_can_make_and_write_in() {
+        let dir = tempfile::tempdir().unwrap();
+        // no parent at all
+        assert!(Scratch::beside(Path::new("/"), "x").is_err());
+        // a parent that is a file cannot be made a directory
+        let file = dir.path().join("file");
+        fs::write(&file, "x").unwrap();
+        assert!(Scratch::beside(&file.join("t"), "x").is_err());
+        // a target with no final name (`..`) is named "target"
+        let odd = dir.path().join("p/..");
+        let scratch = Scratch::beside(&odd, "x").unwrap();
+        let name = scratch
+            .path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .into_owned();
+        assert!(name.starts_with(".target.mj-x-"), "{name}");
+        drop(scratch);
+        // a parent that cannot be written in refuses the directory itself
+        if !is_root() {
+            let locked = dir.path().join("locked");
+            fs::create_dir(&locked).unwrap();
+            mode(&locked, 0o500);
+            let refused = Scratch::beside(&locked.join("t"), "x");
+            mode(&locked, 0o700);
+            assert!(refused.is_err());
+        }
+    }
+
+    #[test]
+    fn a_tar_that_stalls_is_killed_and_counted_as_a_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        let fifo = dir.path().join("pipe");
+        let c = std::ffi::CString::new(fifo.to_string_lossy().as_bytes()).unwrap();
+        // SAFETY: a valid NUL-terminated path; mkfifo only creates the node.
+        assert_eq!(unsafe { libc::mkfifo(c.as_ptr(), 0o600) }, 0);
+        // tar blocks opening a pipe nobody writes to
+        let err = run_tar_within(
+            &["-tzf".as_ref(), fifo.as_os_str()],
+            Duration::from_millis(300),
+        )
+        .unwrap_err();
+        assert!(err.contains("did not start, or did not finish"), "{err}");
+    }
+
+    #[test]
+    fn an_archive_naming_a_path_outside_its_target_is_refused_before_anything_is_written() {
+        let dir = tempfile::tempdir().unwrap();
+        for (name, why) in [("/abs/file", "absolute"), ("a/../../up", "..")] {
+            let archive = dir.path().join("bad.tar.gz");
+            fs::write(&archive, forged(&[(name, b'0', "", "x")])).unwrap();
+            let err = check_listing(&archive).unwrap_err();
+            assert!(err.starts_with("the archive was refused"), "{err}");
+            assert!(err.contains(why), "{err}");
+            // and the unpack stops there: no scratch is made
+            let target = dir.path().join("out");
+            assert!(unpack_beside(&archive, &target).is_err());
+            assert_eq!(
+                fs::read_dir(dir.path()).unwrap().count(),
+                1,
+                "only the archive"
+            );
+        }
+        let fine = dir.path().join("fine.tar.gz");
+        fs::write(&fine, forged(&[("a", b'0', "", "x"), ("d/", b'5', "", "")])).unwrap();
+        assert_eq!(check_listing(&fine), Ok(2));
+    }
+
+    #[test]
+    fn a_link_in_a_dotted_path_resolves_against_its_normal_components_only() {
+        assert_eq!(
+            resolve_inside(Path::new("./a/./b"), Path::new("c")),
+            Some(PathBuf::from("a/c"))
+        );
+        assert_eq!(
+            resolve_inside(Path::new("../a/b"), Path::new("c")),
+            Some(PathBuf::from("a/c"))
+        );
+    }
+
+    #[test]
+    fn a_tree_that_cannot_be_read_is_refused_with_its_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let err = check_tree(&dir.path().join("absent")).unwrap_err();
+        assert!(
+            err.starts_with(": "),
+            "the root is named by its empty relative path: {err}"
+        );
+    }
+
+    #[test]
+    fn an_archive_that_lists_fine_but_cannot_be_unpacked_leaves_nothing_behind() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("hard.tar.gz");
+        // a hard link to an entry the archive does not carry: listed, then refused by tar
+        fs::write(&archive, forged(&[("link", b'1', "missing-target", "")])).unwrap();
+        assert_eq!(check_listing(&archive), Ok(1));
+        let target = dir.path().join("out");
+        let err = unpack_beside(&archive, &target).unwrap_err();
+        assert!(err.contains("tar failed"), "{err}");
+        assert_eq!(
+            fs::read_dir(dir.path()).unwrap().count(),
+            1,
+            "the scratch is gone"
+        );
+    }
+
+    #[test]
+    fn unpacking_beside_a_target_without_a_parent_fails_after_the_listing() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("src");
+        tree(&src, &[("a", "a")]);
+        let archive = dir.path().join("ok.tar.gz");
+        create(&src, &archive, &[]).unwrap();
+        let err = unpack_beside(&archive, Path::new("/")).unwrap_err();
+        assert!(err.contains("needs a parent"), "{err}");
+    }
+
+    #[test]
+    fn replacing_a_target_reports_what_could_not_be_moved_and_puts_the_old_one_back() {
+        let dir = tempfile::tempdir().unwrap();
+        // the target exists but has no parent to put a trash beside
+        let scratch = Scratch::beside(&dir.path().join("s"), "restore").unwrap();
+        let err = replace(scratch, Path::new("/")).unwrap_err();
+        assert!(err.contains("needs a parent"), "{err}");
+
+        // a directory that cannot be moved aside
+        if !is_root() {
+            let target = dir.path().join("fixed");
+            tree(&target, &[("old", "old")]);
+            let scratch = Scratch::beside(&target, "restore").unwrap();
+            mode(&target, 0o500);
+            let err = replace(scratch, &target).unwrap_err();
+            mode(&target, 0o700);
+            assert!(err.contains("cannot be moved aside"), "{err}");
+            assert!(target.join("old").exists());
+        }
+
+        // nothing to put in place, and no old target: the refusal names the target
+        let fresh = dir.path().join("fresh");
+        let scratch = Scratch::beside(&fresh, "restore").unwrap();
+        fs::remove_dir(&scratch.path).unwrap();
+        let err = replace(scratch, &fresh).unwrap_err();
+        assert!(err.contains("cannot be put in place"), "{err}");
+        assert!(!fresh.exists());
+
+        // nothing to put in place, with an old target: the old one is back where it was
+        let kept = dir.path().join("kept");
+        tree(&kept, &[("old", "old")]);
+        let scratch = Scratch::beside(&kept, "restore").unwrap();
+        fs::remove_dir(&scratch.path).unwrap();
+        let err = replace(scratch, &kept).unwrap_err();
+        assert!(err.contains("cannot be put in place"), "{err}");
+        assert_eq!(fs::read_to_string(kept.join("old")).unwrap(), "old");
+    }
+
+    #[test]
+    fn a_profile_lock_says_why_it_could_not_be_taken() {
+        let dir = tempfile::tempdir().unwrap();
+        // without creating, an absent profile has no directory to stand for
+        assert!(lock_profile(&dir.path().join("absent"), false).is_err());
+        // without creating, an existing profile with no lock file is taken as it is
+        let bare = dir.path().join("bare");
+        fs::create_dir(&bare).unwrap();
+        assert!(lock_profile(&bare, false).unwrap().is_some());
+        // creating under a file cannot make the directory
+        let file = dir.path().join("file");
+        fs::write(&file, "x").unwrap();
+        assert!(lock_profile(&file.join("debug"), true).is_err());
+        assert!(lock_profiles(&file, &["debug".into()], true).is_err());
+        // a lock path that is a directory cannot be opened for appending
+        let odd = dir.path().join("odd");
+        fs::create_dir_all(odd.join(CARGO_LOCKS[0])).unwrap();
+        assert!(lock_profile(&odd, true).unwrap_err().contains("odd"));
+    }
+
+    #[test]
+    fn merging_keeps_what_is_there_descends_into_shared_directories_and_reports_failures() {
+        let dir = tempfile::tempdir().unwrap();
+        let from = dir.path().join("from");
+        let into = dir.path().join("into");
+        tree(
+            &from,
+            &[
+                ("shared/new", "n"),
+                ("shared/same", "from"),
+                ("only", "o"),
+                ("clash", "from"),
+            ],
+        );
+        tree(&into, &[("shared/same", "into"), ("clash/inside", "i")]);
+        merge_into(&from, &into).unwrap();
+        assert_eq!(fs::read_to_string(into.join("shared/new")).unwrap(), "n");
+        assert_eq!(
+            fs::read_to_string(into.join("shared/same")).unwrap(),
+            "into"
+        );
+        assert_eq!(fs::read_to_string(into.join("only")).unwrap(), "o");
+        assert!(
+            into.join("clash").is_dir(),
+            "an entry already there is kept as it is"
+        );
+
+        // a source that is not there
+        assert!(merge_into(&dir.path().join("none"), &dir.path().join("x")).is_err());
+        // a destination that cannot be made
+        let file = dir.path().join("file");
+        fs::write(&file, "x").unwrap();
+        assert!(merge_into(&from, &file.join("d")).is_err());
+        // a destination that cannot be written in
+        if !is_root() {
+            let locked = dir.path().join("locked");
+            fs::create_dir(&locked).unwrap();
+            mode(&locked, 0o500);
+            let refused = merge_into(&from, &locked);
+            mode(&locked, 0o700);
+            assert!(refused.is_err());
+        }
+    }
+
+    #[test]
+    fn a_build_directory_that_cannot_be_filled_says_so() {
+        if is_root() {
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let b = dir.path().join("build");
+        fs::create_dir_all(b.join("debug")).unwrap();
+        fs::write(b.join("debug").join(CARGO_LOCKS[0]), "").unwrap();
+        mode(&b.join("debug"), 0o500);
+        let scratch = Scratch::beside(&b, "restore").unwrap();
+        tree(&scratch.path, &[("debug/deps/a.rlib", "a")]);
+        let err = place_build_dir(scratch, &b).unwrap_err();
+        mode(&b.join("debug"), 0o700);
+        assert!(
+            err.contains("could not be filled from the archive"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn the_size_of_a_tree_counts_regular_files_only() {
+        let dir = tempfile::tempdir().unwrap();
+        tree(dir.path(), &[("a/b", "12345"), ("c", "123")]);
+        std::os::unix::fs::symlink("a/b", dir.path().join("link")).unwrap();
+        assert_eq!(tree_bytes(dir.path()), 8, "a link adds nothing");
+        assert_eq!(tree_bytes(&dir.path().join("absent")), 0);
     }
 }
