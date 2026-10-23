@@ -241,6 +241,13 @@ pub(crate) type Stated = Result<(Option<String>, String), String>;
 
 /// Ask the toolchain of `kind` in `dir`.
 pub(crate) fn state_toolchain(kind: Kind, dir: &Path) -> Stated {
+    state_toolchain_with(kind, dir, &ask)
+}
+
+/// What a program in `dir` answers to `args`, or nothing.
+type Asker<'a> = &'a dyn Fn(&Path, &str, &[&str]) -> Option<String>;
+
+fn state_toolchain_with(kind: Kind, dir: &Path, ask: Asker<'_>) -> Stated {
     match kind {
         Kind::CargoBuildDir => {
             let vv = ask(dir, "rustc", &["-vV"]).ok_or("rustc does not answer `rustc -vV`")?;
@@ -867,5 +874,97 @@ mod tests {
         assert_eq!(r.kinds[0].dir, "site");
         assert_eq!(report(&root, None).kinds.len(), 2);
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn every_toolchain_names_what_it_lacks_and_states_what_it_has() {
+        let dir = std::env::temp_dir();
+        let nothing = |_: &Path, _: &str, _: &[&str]| None;
+        assert_eq!(
+            state_toolchain_with(Kind::CargoBuildDir, &dir, &nothing),
+            Err("rustc does not answer `rustc -vV`".into())
+        );
+        assert_eq!(
+            state_toolchain_with(Kind::MixDeps, &dir, &nothing),
+            Err("elixir does not answer `elixir --short-version`".into())
+        );
+        assert_eq!(
+            state_toolchain_with(Kind::NpmModules, &dir, &nothing),
+            Err("node does not answer `node --version`".into())
+        );
+        let only = |names: &'static [&'static str]| {
+            move |_: &Path, program: &str, _: &[&str]| {
+                names.contains(&program).then(|| match program {
+                    "elixir" => "1.19.0".to_string(),
+                    "node" => "v24.8.0".to_string(),
+                    "npm" => "11.6.1".to_string(),
+                    _ => "28".to_string(),
+                })
+            }
+        };
+        assert_eq!(
+            state_toolchain_with(Kind::MixDeps, &dir, &only(&["elixir"])),
+            Err("erl does not state its OTP release".into())
+        );
+        assert_eq!(
+            state_toolchain_with(Kind::MixDeps, &dir, &only(&["elixir", "erl"])),
+            Ok((
+                Some(PLATFORM_ANY.to_string()),
+                "elixir-1.19.0-otp-28".to_string()
+            ))
+        );
+        assert_eq!(
+            state_toolchain_with(Kind::NpmModules, &dir, &only(&["node"])),
+            Err("npm does not answer `npm --version`".into())
+        );
+        assert_eq!(
+            state_toolchain_with(Kind::NpmModules, &dir, &only(&["node", "npm"])),
+            Ok((None, "node-24.8.0-npm-11".to_string()))
+        );
+        let rustc = |_: &Path, program: &str, _: &[&str]| {
+            (program == "rustc")
+                .then(|| "rustc 1.90.0\nhost: aarch64-apple-darwin\nrelease: 1.90.0\n".to_string())
+        };
+        assert_eq!(
+            state_toolchain_with(Kind::CargoBuildDir, &dir, &rustc),
+            Ok((
+                Some("aarch64-apple-darwin".to_string()),
+                "rustc-1.90.0".to_string()
+            ))
+        );
+    }
+
+    #[test]
+    fn a_cargo_build_dir_without_a_declaration_is_the_workspaces_own_target() {
+        let root = std::env::temp_dir().join(format!("mj-key-nodecl-{}", std::process::id()));
+        let deep = root.join("a/b");
+        std::fs::create_dir_all(&deep).unwrap();
+        std::fs::write(root.join("Cargo.lock"), "x").unwrap();
+        let found = cargo_build_dir(&root, &deep, Path::new("/cache"));
+        assert_eq!(
+            found,
+            deep.join("target"),
+            "no config at any level up to the root"
+        );
+        std::fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[test]
+    fn a_nested_workspace_reads_the_configs_of_every_ancestor() {
+        let t = tracked(&[
+            "a/b/Cargo.lock",
+            "a/.cargo/config.toml",
+            "a/b/rust-toolchain.toml",
+            ".cargo/config.toml",
+        ]);
+        assert_eq!(
+            inputs_of(Kind::CargoBuildDir, "a/b", &t),
+            tracked(&[
+                ".cargo/config.toml",
+                "a/.cargo/config.toml",
+                "a/b/Cargo.lock",
+                "a/b/rust-toolchain.toml"
+            ])
+        );
     }
 }
