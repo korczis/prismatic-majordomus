@@ -92,12 +92,16 @@ jobs:
             echo "present=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # One commit is all the slug reads: `deploy slug` resolves the sha and reads its tree
+      # and blobs (rev-parse, ls-tree, cat-file), and the build takes the commit from
+      # MAJORDOMUS_BUILD_COMMIT. The whole history of a repository with a thousand branches
+      # ran past the old three-minute bound in two of four runs (39862104898, 39876262734).
       - uses: actions/checkout@v4
         if: steps.credentials.outputs.present == 'true'
-        timeout-minutes: 3
+        timeout-minutes: 5
         with:
           ref: ${{ steps.subject.outputs.sha }}
-          fetch-depth: 0
+          fetch-depth: 1
           persist-credentials: false
 
       # The target and the packages it needs are the distribution model's, as release.yml
