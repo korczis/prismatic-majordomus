@@ -1,0 +1,33 @@
+id: I4173
+milestone: the-ui-runs-and-explains
+title: "Execution log and event payloads rendered on /ui and /cockpit are escaped, and a hostile payload cannot run script or forge a link"
+slug: execution-payloads-are-escaped-on-the-ui
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Execution events and logs rendered by apps/majordomus-cli/src/ui and apps/majordomus-cli/src/cockpit pass through the escaping of apps/majordomus-cli/src/web/html.rs (escape) or cockpit/html.rs (escape), and links built from a payload are generated from validated routes only."
+why: "The ask is in campaigns/majordomus-idd-001-prompt-pack (acceptance matrix), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: escape exists in apps/majordomus-cli/src/web/html.rs and src/cockpit/html.rs; the audit finds only I1207 covering hostile provider metadata on sign-in, none covering execution events."
+desired_state: "A payload containing markup or script displays as inert text on both surfaces."
+scope:
+  - ".ai/repo/project/issues/I4173.yaml"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/web/html.rs"
+  - "test/cases/4173_execution_payloads_are_escaped_on_the_ui.sh"
+non_scope:
+  - "Provider sign-in metadata (I1207)"
+  - "Content security policy headers"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A browser case feeds an HTML and script payload through an execution event and both /ui and /cockpit show inert text"
+  - "A payload cannot create a link to a route outside the table of known routes"
+validation:
+  - "bash test/run.sh 4173_execution_payloads_are_escaped_on_the_ui"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib cockpit::"
+evidence_required:
+  - "browser_case_inert_text"
+  - "link_forgery_refused"
+created_at: 2026-10-23
+updated_at: 2026-10-23

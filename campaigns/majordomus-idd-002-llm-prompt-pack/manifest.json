@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "pack_id": "mj-idd-002",
+  "name": "Majordomus Intent-Driven Development Control Plane",
+  "version": "2.0.0",
+  "language": "en",
+  "target": {
+    "repository": "korczis/prismatic-majordomus",
+    "ui_route": "/ui",
+    "repo_root": "discover",
+    "runtime": "existing canonical Rust binary; existing Rhai as applicable"
+  },
+  "principles": [
+    "source-evidence-first",
+    "reuse-before-build",
+    "typed-canonical-model",
+    "derive-everywhere",
+    "no-surface-local-state-authority",
+    "secure-mutation",
+    "replayable-events",
+    "evidence-before-closure",
+    "small-verified-releases",
+    "governance-with-executable-gates",
+    "profit-measured-not-assumed"
+  ],
+  "entrypoint": "prompts/MASTER.md",
+  "orchestration": {
+    "default_mode": "single-agent",
+    "multi_agent": "only if coordination is verified",
+    "scheduler": "dependencies-first, smallest verified vertical slice",
+    "release_strategy": "progressive",
+    "unavailable_approval": "block affected action, keep independent work moving"
+  },
+  "missions": [
+    {
+      "id": "preflight",
+      "order": 1,
+      "title": "Preflight and source audit",
+      "depends_on": [],
+      "objective": "Audit actual source of truth and produce evidence-backed gap ledger",
+      "prompt": "prompts/01-PREFLIGHT.md"
+    },
+    {
+      "id": "contracts",
+      "order": 2,
+      "title": "Canonical lifecycle",
+      "depends_on": [
+        "preflight"
+      ],
+      "objective": "Intent, plan, issue and milestone canonical contracts",
+      "prompt": "prompts/02-CONTRACTS.md"
+    },
+    {
+      "id": "ui",
+      "order": 3,
+      "title": "UI execution and live graph",
+      "depends_on": [
+        "contracts"
+      ],
+      "objective": "Actionable UI and replay-safe projection",
+      "prompt": "prompts/03-UI.md"
+    },
+    {
+      "id": "mesh",
+      "order": 4,
+      "title": "Mesh execution",
+      "depends_on": [
+        "contracts",
+        "ui"
+      ],
+      "objective": "Peer scheduling, leases, recovery",
+      "prompt": "prompts/04-MESH.md"
+    },
+    {
+      "id": "evidence",
+      "order": 5,
+      "title": "Verified delivery",
+      "depends_on": [
+        "contracts",
+        "mesh"
+      ],
+      "objective": "Evidence-linked closure and integration",
+      "prompt": "prompts/05-EVIDENCE.md"
+    },
+    {
+      "id": "governance",
+      "order": 6,
+      "title": "Self-evolving governance",
+      "depends_on": [
+        "preflight"
+      ],
+      "objective": "Rules evolution with executable tests",
+      "prompt": "prompts/06-GOVERNANCE.md"
+    },
+    {
+      "id": "economics",
+      "order": 7,
+      "title": "Performance and unit economics",
+      "depends_on": [
+        "ui",
+        "governance"
+      ],
+      "objective": "Benchmark and optimization",
+      "prompt": "prompts/07-ECONOMICS.md"
+    },
+    {
+      "id": "release",
+      "order": 8,
+      "title": "Release validation",
+      "depends_on": [
+        "ui",
+        "mesh",
+        "evidence",
+        "governance",
+        "economics"
+      ],
+      "objective": "Progressive safe releases",
+      "prompt": "prompts/08-RELEASE.md"
+    },
+    {
+      "id": "review",
+      "order": 9,
+      "title": "Adversarial review",
+      "depends_on": [
+        "preflight"
+      ],
+      "objective": "Independent, repeatable challenge",
+      "prompt": "prompts/09-REVIEW.md"
+    }
+  ],
+  "contracts": {
+    "mission_spec": "schemas/mission.schema.json",
+    "report": "schemas/evidence.schema.json",
+    "state": "schemas/run-state.schema.json"
+  },
+  "quality_gates": [
+    "source-lineage",
+    "canonical-cross-surface",
+    "policy-auth",
+    "unit-integration-e2e",
+    "reconnect-replay",
+    "mesh-lease-recovery",
+    "security",
+    "performance-measured",
+    "derived-drift",
+    "governance-mutation-test",
+    "deploy-observation"
+  ],
+  "completion": "Only completed when evidence schema validates and all applicable required gates pass; otherwise blocked/partial"
+}

@@ -1,0 +1,35 @@
+id: I4191
+milestone: a-provider-carries-the-contract-natively
+title: "A Rust symbol lookup is answered by the installed language server when present, and says so when absent"
+slug: rust-symbol-lookup-by-lsp
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a symbol lookup that asks the installed Rust language server for a definition and reports unavailable when none is installed, in apps/majordomus-cli/src/devcontext (source ranges come from I3171). The module to host the language-server client must be chosen when the issue is started."
+why: "The owner handed over an ask in campaigns/majordomus-native-acceleration-2026-10-22 (P02) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/devcontext holds budget.rs, mod.rs, model.rs and select.rs; I3308 is Zed schema validation and I3171 is source ranges; no language-server client was found."
+desired_state: "A fixture crate answers a definition query through the language server, and a missing server reports unavailable and never guesses."
+scope:
+  - "apps/majordomus-cli/src/devcontext"
+  - "test/cases/4191_a_symbol_lookup_asks_the_language_server.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4191.yaml"
+non_scope:
+  - "Writing a language server"
+  - "Languages other than Rust"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A fixture crate answers a definition query through LSP"
+  - "A missing server reports unavailable"
+  - "The answer names the server that gave it"
+validation:
+  - "bash test/run.sh 4191_a_symbol_lookup_asks_the_language_server"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::"
+  - "majordomus plan validate"
+evidence_required:
+  - lsp_definition_answered
+  - absent_server_unavailable
+  - answer_names_server
+created_at: 2026-10-23
+updated_at: 2026-10-23

@@ -1,0 +1,36 @@
+id: I4184
+milestone: development-runtime
+title: "The speculative warm-up never delays a reader's first request"
+slug: warm-up-yields-to-readers
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Bound the warm-up thread of Ui::warm_once (apps/majordomus-cli/src/ui/mod.rs, thread mj-ui-warm) and the capability readings it fills (apps/majordomus-cli/src/capability/readings.rs) so a user request is never queued behind it, with the warm worker count and queue bounded and reported through perf counters (apps/majordomus-cli/src/perf.rs)."
+why: "The owner handed over an ask in campaigns/majordomus-performance-rescue-2026-10-23 (prompt 03) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: ui/mod.rs spawns one thread named mj-ui-warm from warm_once, guarded by an atomic flag; capability/readings.rs exists; no record bounds the warm-up against user requests."
+desired_state: "With the warm thread busy and a source slow, a user request is served within budget, and the warm worker count and queue are bounded and reported."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/perf.rs"
+  - "test/cases/4184_the_warm_up_never_delays_a_first_request.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4184.yaml"
+non_scope:
+  - "Cold-process budgets, which are I4183"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A request made while the warm thread is busy and a source is slow is served within budget"
+  - "Warm worker count and queue length have a declared bound"
+  - "Both are reported in perf.counters"
+validation:
+  - "bash test/run.sh 4184_the_warm_up_never_delays_a_first_request"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "majordomus bench --check"
+evidence_required:
+  - request_served_while_warming
+  - warm_bound_declared
+  - warm_counters_reported
+created_at: 2026-10-23
+updated_at: 2026-10-23

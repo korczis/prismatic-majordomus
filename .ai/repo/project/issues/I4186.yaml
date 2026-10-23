@@ -1,0 +1,35 @@
+id: I4186
+milestone: development-runtime
+title: "A reading is never served to another checkout, and a worktree switch reads again"
+slug: a-reading-belongs-to-its-checkout
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Key every cached reading (apps/majordomus-cli/src/capability/readings.rs) by repository root and revision, and show both in the reading's answer, so one server never answers for another checkout and a worktree switch reads again."
+why: "The owner handed over an ask in campaigns/majordomus-performance-rescue-2026-10-23 (prompt 10) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: capability/readings.rs holds the readings; I0821 and I0841 cover the flatten cache only."
+desired_state: "Each reading names its own repository and revision, and switching worktree changes the answer."
+scope:
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/repository.rs"
+  - "test/cases/4186_a_reading_is_never_served_to_another_checkout.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4186.yaml"
+non_scope:
+  - "Invalidation by dependency, which is I4196"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A two-checkout case shows each reading naming its own repository and revision"
+  - "A worktree switch changes the answer"
+  - "No reading of one checkout is served for another"
+validation:
+  - "bash test/run.sh 4186_a_reading_is_never_served_to_another_checkout"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::"
+  - "majordomus plan validate"
+evidence_required:
+  - two_checkout_case
+  - readings_name_checkout
+  - switch_rereads
+created_at: 2026-10-23
+updated_at: 2026-10-23

@@ -1,0 +1,38 @@
+id: I4180
+milestone: runtime-adapters
+title: "majordomus profile list, show, resolve and explain are declared capabilities"
+slug: profile-commands-are-capabilities
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Declare list, show, resolve and explain for profiles as capability! entries in a new apps/majordomus-cli/src/capability/builtin/profile.rs, so the CLI, HTTP API, OpenAPI and MCP carry them from one declaration. They read the profile files under .ai/repo/profiles and the resolver of I4178."
+why: "The owner handed over an ask in campaigns/majordomus-profile-system-v2-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: `majordomus profile --help` answers `unknown command: profile`; .ai/repo/profiles holds debugging.yaml, deep-work.yaml, implementation.yaml and routine.yaml; share/allow/profile.txt lists the keys a profile may carry; no module under apps/majordomus-cli/src/capability/builtin is named for profiles."
+desired_state: "A profile is listed, shown, resolved for a task and explained on the CLI, in the API, in OpenAPI and over MCP, and a custom profile file added under .ai/repo/profiles appears on all four with no other edit."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "share/commands.yaml"
+  - "apps/majordomus-cli/src/command_graph"
+  - "test/cases/4180_the_profile_commands_are_capabilities.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4180.yaml"
+non_scope:
+  - "The effective-profile resolver itself, which is I4178"
+  - "The /ui profile chooser, which is I4181"
+depends_on:
+  - I4178
+serves: []
+acceptance_criteria:
+  - "profile list, show, resolve and explain are capabilities with API, OpenAPI and MCP projections and no hand-written registration"
+  - "A profile file added under .ai/repo/profiles appears on all four surfaces with no other edit"
+  - "An unknown profile name is refused and names the profiles that exist"
+validation:
+  - "bash test/run.sh 4180_the_profile_commands_are_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::"
+  - "majordomus generate --check"
+evidence_required:
+  - profile_capabilities_declared
+  - custom_profile_on_four_surfaces
+  - unknown_profile_refused
+created_at: 2026-10-23
+updated_at: 2026-10-23

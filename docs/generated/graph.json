@@ -16916,14 +16916,6 @@
         "source": "docs/PLANNING.md"
       },
       {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
-      },
-      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -64035,6 +64027,1808 @@
         }
       },
       {
+        "id": "majordomus://issue/I4160",
+        "kind": "issue",
+        "label": "I4160",
+        "summary": "Every mark of the Observatory carries the record ids, transform and class it was drawn from, and a signal without lineage draws nothing and says why",
+        "route": "/cockpit/objects/issue/i4160",
+        "source": ".ai/repo/project/issues/I4160.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A case injects a signal with missing lineage and the page shows a diagnostic and no mark for it",
+            "A real journal event is found by its record id in an inspector view",
+            "Each mark names its class as one of observed, derived, inferred or estimated"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "Every drawn mark can be traced to the record ids and transform it came from and states its class; a signal without lineage is refused with a visible reason.",
+          "evidence_required": [
+            "lineage_inspector_case",
+            "missing_lineage_refused",
+            "class_vocabulary_tested"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Changing which sources the scenes read",
+            "Kiosk installation and endurance"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4160.yaml",
+            "apps/majordomus-cli/src/ui/observatory.rs",
+            "share/ui/observatory.js",
+            "share/ui/observatory-kiosk.js",
+            "test/cases/4160_an_observatory_mark_carries_its_lineage.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-observatory-mark-carries-its-lineage",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4160_an_observatory_mark_carries_its_lineage 3011_the_observatory_draws_nothing_it_did_not_read",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::observatory::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4161",
+        "kind": "issue",
+        "label": "I4161",
+        "summary": "A kiosk is installed and recovered from a runbook that names its prerequisites, authorisation, privacy checks and measured resource budgets",
+        "route": "/cockpit/objects/issue/i4161",
+        "source": ".ai/repo/project/issues/I4161.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A runbook section names prerequisites, authorisation, privacy checks and resource budgets",
+            "Every command in the section is run by a case",
+            "Every figure names the hardware and the revision it was measured on"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A person can install a kiosk, authorise it, check what it exposes and recover it from the runbook, and every figure in it was measured and names its hardware and revision.",
+          "evidence_required": [
+            "runbook_commands_run",
+            "budgets_measured",
+            "privacy_checks_listed"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Endurance of the Observatory over days",
+            "Support for displays other than systemd/Chromium and macOS"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4161.yaml",
+            "docs/MAJORDOMUS_UI.md",
+            "test/cases/4161_a_kiosk_has_an_installation_runbook.sh",
+            "apps/majordomus-cli/src/ui/observatory.rs"
+          ],
+          "serves": [],
+          "slug": "a-kiosk-has-an-installation-runbook",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4161_a_kiosk_has_an_installation_runbook",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4162",
+        "kind": "issue",
+        "label": "I4162",
+        "summary": "A usage estimate names the price-list version, currency and tier effective at the time of the usage, and an unknown price reads unknown",
+        "route": "/cockpit/objects/issue/i4162",
+        "source": ".ai/repo/project/issues/I4162.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two fixtures at different price dates give different estimates, each naming its list version and currency",
+            "A model missing from the list reads unknown and never 0"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "Every estimate states which price list, currency and tier produced it, and an unlisted model reads unknown.",
+          "evidence_required": [
+            "two_price_dates_differ",
+            "unknown_price_reads_unknown"
+          ],
+          "milestone": "every-sessions-usage-is-observed",
+          "non_scope": [
+            "Billed amounts from a provider invoice",
+            "Changing the reported-token fields"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4162.yaml",
+            "apps/majordomus-cli/src/economics",
+            "share",
+            "test/cases/4162_an_estimate_names_its_price_list.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-estimate-names-its-price-list",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4162_an_estimate_names_its_price_list 430_economics",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4163",
+        "kind": "issue",
+        "label": "I4163",
+        "summary": "Reported usage is rolled up from issue to milestone and intent, and to the mesh peer that spent it, with the unattributed remainder shown beside every roll-up",
+        "route": "/cockpit/objects/issue/i4163",
+        "source": ".ai/repo/project/issues/I4163.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "At each level the total equals attributed plus unattributed",
+            "A two-peer fixture shows each peer's share",
+            "The unattributed remainder is printed beside every roll-up"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "Spend reads at issue, milestone, intent and peer level, and at every level attributed plus unattributed equals the total.",
+          "evidence_required": [
+            "rollup_totals_balance",
+            "two_peer_fixture",
+            "remainder_shown"
+          ],
+          "milestone": "every-sessions-usage-is-observed",
+          "non_scope": [
+            "Pricing the usage",
+            "Attribution of usage that carries no task"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4163.yaml",
+            "apps/majordomus-cli/src/economics",
+            "apps/majordomus-cli/src/capability/builtin/economics.rs",
+            "test/cases/4163_usage_rolls_up_with_its_remainder.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "usage-rolls-up-with-its-remainder",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4163_usage_rolls_up_with_its_remainder",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4164",
+        "kind": "issue",
+        "label": "I4164",
+        "summary": "A Rust file's references and imports are read as typed, directed edges with unresolved ones kept explicit, and a changed import target removes the old edge",
+        "route": "/cockpit/objects/issue/i4164",
+        "source": ".ai/repo/project/issues/I4164.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A hand-checked fixture with a homonym, a cycle and invalid syntax gives the expected edges",
+            "An unresolved reference is an explicit edge, not a dropped one",
+            "Incremental equals full rebuild after add, edit, delete and rename"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3171"
+          ],
+          "desired_state": "Edges between Rust files are data with a type, a direction and a resolution state, and an incremental update equals a full rebuild.",
+          "evidence_required": [
+            "fixture_edges_match",
+            "incremental_equals_full",
+            "unresolved_edges_explicit"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Languages other than Rust",
+            "Ranking of retrieval results"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4164.yaml",
+            "apps/majordomus-cli/src/devcontext",
+            "test/cases/4164_rust_references_are_typed_edges.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "rust-references-are-typed-edges",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4164_rust_references_are_typed_edges",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4165",
+        "kind": "issue",
+        "label": "I4165",
+        "summary": "A retrieval query returns hits with source, span, reason and score parts, bounded and deterministic, and a gold set on a frozen revision measures its relevance",
+        "route": "/cockpit/objects/issue/i4165",
+        "source": ".ai/repo/project/issues/I4165.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One case reports recall on the gold set for the frozen revision",
+            "An unanswerable query returns an explicit absence, not a weak hit",
+            "Output is identical across runs and bounded in size"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "The relevance of retrieval is a measured recall on a registered gold set, and each hit explains itself.",
+          "evidence_required": [
+            "gold_set_recall",
+            "honest_absence_case",
+            "deterministic_output"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Building the reference graph (I4164)",
+            "Learned rankers"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4165.yaml",
+            "apps/majordomus-cli/src/devcontext",
+            "share",
+            "test/cases/4165_retrieval_is_measured_on_a_gold_set.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "retrieval-is-measured-on-a-gold-set",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4165_retrieval_is_measured_on_a_gold_set",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::select::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4166",
+        "kind": "issue",
+        "label": "I4166",
+        "summary": "A changed symbol names the dependents and tests it reaches with the path and provenance of each edge, and an unsupported area reports partial instead of no impact",
+        "route": "/cockpit/objects/issue/i4166",
+        "source": ".ai/repo/project/issues/I4166.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Changing a shared function lists its consumers and tests with the path of each edge",
+            "An unsupported dynamic call yields partial and the full test fallback",
+            "A recommendation never releases a mandatory gate"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: layer-level impact is delivered by I3407, I3412 and I3238; the audit finds nothing at symbol level, and the reference graph it needs is I4164.",
+          "depends_on": [
+            "I4164"
+          ],
+          "desired_state": "A change reports what it reaches, how it knows, and where it cannot know.",
+          "evidence_required": [
+            "consumers_listed",
+            "partial_on_unsupported",
+            "mandatory_gate_kept"
+          ],
+          "milestone": "an-entity-says-how-it-is-known-and-what-it-affects",
+          "non_scope": [
+            "Dynamic dispatch resolution",
+            "Changing which gates are mandatory"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4166.yaml",
+            "apps/majordomus-cli/src/devcontext",
+            "apps/majordomus-cli/src/gates",
+            "test/cases/4166_a_symbol_change_names_its_dependents.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "a-symbol-change-names-its-dependents",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4166_a_symbol_change_names_its_dependents",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4167",
+        "kind": "issue",
+        "label": "I4167",
+        "summary": "A supported pure function's refactoring is compared against its base on the same inputs inside the existing isolated runner, and the result is recorded in the evidence ledger",
+        "route": "/cockpit/objects/issue/i4167",
+        "source": ".ai/repo/project/issues/I4167.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A swapped-endpoint mutation of a supported function fails the case",
+            "The recorded outcome is one of found, not found, unsupported, timeout or not_run",
+            "The result appears in the evidence ledger with the base and head revisions"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A refactor that changes the behaviour of a supported pure function fails a case, and every other outcome is recorded by name.",
+          "evidence_required": [
+            "mutation_fails",
+            "outcome_vocabulary",
+            "ledger_entry"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Impure functions or I/O",
+            "Property-based input generation"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4167.yaml",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/ledger.rs",
+            "test/cases/4167_a_refactor_is_compared_with_its_base.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "a-refactor-is-compared-with-its-base",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4167_a_refactor_is_compared_with_its_base",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib evidence::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4168",
+        "kind": "issue",
+        "label": "I4168",
+        "summary": "The context-selection benefit is measured over four registered arms with failures counted in cost, and an unrun arm reads not_run",
+        "route": "/cockpit/objects/issue/i4168",
+        "source": ".ai/repo/project/issues/I4168.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The economics summary lists the four arms with their baseline",
+            "An arm without a baseline is refused and an unrun arm reads not_run",
+            "Failed attempts are counted in each arm's cost"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: apps/majordomus-cli/src/economics holds claims.rs, context.rs, report.rs and runner.rs; the audit finds I3298 with one arm per mechanism and no four-arm factorial.",
+          "depends_on": [],
+          "desired_state": "The benefit of selected context is a number over four arms with their baseline, or an explicit not_run.",
+          "evidence_required": [
+            "four_arm_summary",
+            "baseline_required",
+            "not_run_reported"
+          ],
+          "milestone": "a-registered-corpus-judges-majordomus",
+          "non_scope": [
+            "Running paid model calls in CI",
+            "Changing the existing per-mechanism arms of I3298"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4168.yaml",
+            "apps/majordomus-cli/src/economics",
+            "share",
+            "test/cases/4168_context_benefit_has_four_arms.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "context-benefit-has-four-arms",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4168_context_benefit_has_four_arms 431_economics_claims_gated",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4169",
+        "kind": "issue",
+        "label": "I4169",
+        "summary": "An intent carries an autonomy policy that names the effects a launch may take, and an effect outside it waits for the owner as a recorded awaiting-approval state",
+        "route": "/cockpit/objects/issue/i4169",
+        "source": ".ai/repo/project/issues/I4169.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a policy excluding merge, a launched run reaches a pull request and then shows awaiting_approval in the CLI, the API and /ui",
+            "No merge occurs while the state is awaiting_approval",
+            "An intent without a policy takes no effect beyond a read"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A person states per intent which effects may happen unattended, and anything else waits visibly for them.",
+          "evidence_required": [
+            "policy_excludes_merge",
+            "awaiting_approval_shown",
+            "no_effect_without_policy"
+          ],
+          "milestone": "intent-lifecycle",
+          "non_scope": [
+            "Authorising a caller (I2123)",
+            "Scheduling of ready issues (I4170)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4169.yaml",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/ui/intent.rs",
+            "share/schemas",
+            "share/kinds.yaml",
+            "test/cases/4169_an_intent_carries_an_autonomy_policy.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-intent-carries-an-autonomy-policy",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4169_an_intent_carries_an_autonomy_policy",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4170",
+        "kind": "issue",
+        "label": "I4170",
+        "summary": "Ready issues of an approved intent are scheduled to local and mesh workers under a declared bound on concurrent work, and a blocked or conflicting issue is never scheduled",
+        "route": "/cockpit/objects/issue/i4170",
+        "source": ".ai/repo/project/issues/I4170.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With N ready issues, a bound k and one scope conflict, at most k run and the conflicting one is queued with a reason",
+            "A blocked issue is never scheduled",
+            "The bound is declared in a record, not hard-coded"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I4169"
+          ],
+          "desired_state": "Ready work starts by itself within a declared bound and never over a conflict.",
+          "evidence_required": [
+            "bound_respected",
+            "conflict_queued_with_reason",
+            "blocked_not_scheduled"
+          ],
+          "milestone": "mesh-peers-execute-assigned-work",
+          "non_scope": [
+            "Choosing which intent to approve",
+            "Remote machine provisioning"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4170.yaml",
+            "apps/majordomus-cli/src/plan",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "apps/majordomus-cli/src/mesh",
+            "test/cases/4170_ready_issues_are_scheduled_under_a_bound.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "ready-issues-are-scheduled-under-a-bound",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4170_ready_issues_are_scheduled_under_a_bound",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4171",
+        "kind": "issue",
+        "label": "I4171",
+        "summary": "A running execution can be paused, resumed or cancelled by an authorised caller from CLI, MCP and /ui, and the transition is recorded",
+        "route": "/cockpit/objects/issue/i4171",
+        "source": ".ai/repo/project/issues/I4171.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Cancelling mid-run leaves a recorded cancelled state",
+            "Resuming a paused run repeats no completed effect",
+            "An unauthorised caller is refused on every surface"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "An execution in flight can be stopped or held and continued, with every transition recorded.",
+          "evidence_required": [
+            "cancel_recorded",
+            "resume_repeats_nothing",
+            "unauthorised_refused"
+          ],
+          "milestone": "the-ui-runs-and-explains",
+          "non_scope": [
+            "Execution start (existing)",
+            "Killing an operating-system process outside an execution"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4171.yaml",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/capability/builtin/executions.rs",
+            "apps/majordomus-cli/src/commands/executions.rs",
+            "apps/majordomus-cli/src/ui",
+            "test/cases/4171_an_execution_can_be_paused_and_cancelled.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-execution-can-be-paused-and-cancelled",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4171_an_execution_can_be_paused_and_cancelled",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4172",
+        "kind": "issue",
+        "label": "I4172",
+        "summary": "One guarded scenario on this repository takes a small intent through merge, release and a served commit under an owner-recorded authorisation, and its recovery from a killed worker is shown",
+        "route": "/cockpit/objects/issue/i4172",
+        "source": ".ai/repo/project/issues/I4172.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Committed evidence exists for each stage, or an explicit BLOCKED record names the stage",
+            "The killed worker is recovered without a second effect",
+            "The authorisation used is the owner's recorded one"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: I3260 and I3261 prove the intent loop on fixtures; the audit finds no run on the real repository.",
+          "depends_on": [
+            "I4169"
+          ],
+          "desired_state": "The loop is shown once on the real repository with evidence per stage, or the blocked stage is named.",
+          "evidence_required": [
+            "stage_evidence",
+            "recovery_after_kill",
+            "owner_authorisation"
+          ],
+          "milestone": "the-intent-loop-is-proved-end-to-end",
+          "non_scope": [
+            "Making the scenario part of every CI run",
+            "Deploying to a provider the owner has not authorised"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4172.yaml",
+            "test/cases/4172_the_intent_loop_runs_on_this_repository.sh",
+            "apps/majordomus-cli/src/execution",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "the-intent-loop-runs-on-this-repository",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4172_the_intent_loop_runs_on_this_repository",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4173",
+        "kind": "issue",
+        "label": "I4173",
+        "summary": "Execution log and event payloads rendered on /ui and /cockpit are escaped, and a hostile payload cannot run script or forge a link",
+        "route": "/cockpit/objects/issue/i4173",
+        "source": ".ai/repo/project/issues/I4173.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A browser case feeds an HTML and script payload through an execution event and both /ui and /cockpit show inert text",
+            "A payload cannot create a link to a route outside the table of known routes"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A payload containing markup or script displays as inert text on both surfaces.",
+          "evidence_required": [
+            "browser_case_inert_text",
+            "link_forgery_refused"
+          ],
+          "milestone": "the-ui-runs-and-explains",
+          "non_scope": [
+            "Provider sign-in metadata (I1207)",
+            "Content security policy headers"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4173.yaml",
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/web/html.rs",
+            "test/cases/4173_execution_payloads_are_escaped_on_the_ui.sh"
+          ],
+          "serves": [],
+          "slug": "execution-payloads-are-escaped-on-the-ui",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4173_execution_payloads_are_escaped_on_the_ui",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib cockpit::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4174",
+        "kind": "issue",
+        "label": "I4174",
+        "summary": "A delivery move is offered on /ui/delivery only when policy admits it, runs through the existing capability with its stage and observed outcome shown, and a refused move names the policy",
+        "route": "/cockpit/objects/issue/i4174",
+        "source": ".ai/repo/project/issues/I4174.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A browser case shows one admitted and one refused move",
+            "Each move records an execution id and the deciding policy",
+            "The outcome shown is the observed one, not the requested one"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: apps/majordomus-cli/src/ui/delivery.rs defines ROUTE /ui/delivery and renders gate links; I3071 plans the page as a read-only view.",
+          "depends_on": [],
+          "desired_state": "/ui/delivery moves the work forward where policy allows and explains where it does not.",
+          "evidence_required": [
+            "admitted_move_case",
+            "refused_move_names_policy",
+            "execution_id_recorded"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "non_scope": [
+            "Changing the policies themselves",
+            "Deploy to a provider"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4174.yaml",
+            "apps/majordomus-cli/src/ui/delivery.rs",
+            "apps/majordomus-cli/src/execution",
+            "test/cases/4174_delivery_moves_are_offered_by_policy.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "delivery-moves-are-offered-by-policy",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4174_delivery_moves_are_offered_by_policy",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::delivery::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4175",
+        "kind": "issue",
+        "label": "I4175",
+        "summary": "Choosing Implement on an issue in /ui creates one authorised execution that a local worker runs in an isolated worktree, and a repeated click returns the same execution id",
+        "route": "/cockpit/objects/issue/i4175",
+        "source": ".ai/repo/project/issues/I4175.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A real-browser test double-clicks and reloads and shows one execution, one worktree and one claim",
+            "With no worker enabled the page shows a waiting reason",
+            "An unauthorised caller is refused"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I4169"
+          ],
+          "desired_state": "One click on an issue produces exactly one execution, one worktree and one claim.",
+          "evidence_required": [
+            "double_click_one_execution",
+            "waiting_reason_shown",
+            "unauthorised_refused"
+          ],
+          "milestone": "the-ui-runs-and-explains",
+          "non_scope": [
+            "Model choice for the worker",
+            "Merge and release (I4172)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4175.yaml",
+            "apps/majordomus-cli/src/ui/issues.rs",
+            "apps/majordomus-cli/src/execution",
+            "share/ui",
+            "test/cases/4175_implement_from_the_ui_is_idempotent.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "implement-from-the-ui-is-idempotent",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4175_implement_from_the_ui_is_idempotent",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4176",
+        "kind": "issue",
+        "label": "I4176",
+        "summary": "A queued privileged ticket is re-authorised when a worker consumes it, and a transport acknowledgement is never recorded as completion",
+        "route": "/cockpit/objects/issue/i4176",
+        "source": ".ai/repo/project/issues/I4176.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An authorisation revoked between queue and consume refuses the ticket",
+            "An acknowledgement with no result leaves the issue unverified"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: apps/majordomus-cli/src/mesh exists and declares mesh_handover_consume among its capabilities; no record states re-authorisation at consume.",
+          "depends_on": [],
+          "desired_state": "A revoked authorisation stops a queued ticket, and an acknowledged ticket without a result stays unverified.",
+          "evidence_required": [
+            "revoked_ticket_refused",
+            "ack_not_completion"
+          ],
+          "milestone": "mesh-peers-execute-assigned-work",
+          "non_scope": [
+            "Issuing authorisations",
+            "Transport encryption"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4176.yaml",
+            "apps/majordomus-cli/src/mesh",
+            "test/cases/4176_a_ticket_is_reauthorised_at_consume.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "a-ticket-is-reauthorised-at-consume",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4176_a_ticket_is_reauthorised_at_consume",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4177",
+        "kind": "issue",
+        "label": "I4177",
+        "summary": "An outcome the system cannot confirm after a failure is recorded as unknown-outcome and reconciled against remote evidence before any retry of a non-idempotent step",
+        "route": "/cockpit/objects/issue/i4177",
+        "source": ".ai/repo/project/issues/I4177.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A worker killed mid-merge shows unknown-outcome",
+            "The retry checks the forge first and makes no second merge"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "After a crash mid-effect the system says it does not know, checks, and then acts.",
+          "evidence_required": [
+            "unknown_outcome_recorded",
+            "forge_checked_before_retry"
+          ],
+          "milestone": "recovery-from-injected-faults-is-proven",
+          "non_scope": [
+            "Recovery of read-only steps",
+            "Changing the existing fault injections"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4177.yaml",
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/integration",
+            "test/cases/4177_an_unconfirmed_outcome_is_unknown.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-unconfirmed-outcome-is-unknown",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4177_an_unconfirmed_outcome_is_unknown",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4178",
+        "kind": "issue",
+        "label": "I4178",
+        "summary": "A task's effective profile resolves through one typed resolver that is byte-stable, names the source of every field and a content fingerprint, and can tighten but never weaken repository policy",
+        "route": "/cockpit/objects/issue/i4178",
+        "source": ".ai/repo/project/issues/I4178.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A property test shows byte-identical output across runs and input orderings",
+            "Every field names its source and the profile carries a content fingerprint",
+            "A profile that widens a hard policy is refused"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "Every task has one effective profile whose every field says where it came from and which is identical across runs.",
+          "evidence_required": [
+            "byte_stable_property",
+            "field_provenance",
+            "widening_refused"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Recording the fingerprint on tasks (I4179)",
+            "The chooser UI (I4181)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4178.yaml",
+            "apps/majordomus-cli/src/policy.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "share",
+            "lib",
+            ".ai/repo/profiles",
+            "test/cases/4178_an_effective_profile_has_one_resolver.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "an-effective-profile-has-one-resolver",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4178_an_effective_profile_has_one_resolver 16_profiles",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib policy::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4179",
+        "kind": "issue",
+        "label": "I4179",
+        "summary": "The effective profile's identity and fingerprint are recorded on the intent, task and execution it served, and a change of profile re-resolves under a new revision",
+        "route": "/cockpit/objects/issue/i4179",
+        "source": ".ai/repo/project/issues/I4179.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "intent explain and the execution record show the same fingerprint",
+            "A policy edit shows a new revision for newly resolved work"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I4178"
+          ],
+          "desired_state": "What profile governed a piece of work is readable from the work and changes when the profile does.",
+          "evidence_required": [
+            "fingerprint_on_records",
+            "new_revision_on_edit"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Resolution itself (I4178)",
+            "Back-filling closed records"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4179.yaml",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/execution",
+            "share/schemas",
+            "test/cases/4179_a_served_profile_is_recorded_by_fingerprint.sh",
+            "docs"
+          ],
+          "serves": [],
+          "slug": "a-served-profile-is-recorded-by-fingerprint",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4179_a_served_profile_is_recorded_by_fingerprint",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4180",
+        "kind": "issue",
+        "label": "I4180",
+        "summary": "majordomus profile list, show, resolve and explain are declared capabilities",
+        "route": "/cockpit/objects/issue/i4180",
+        "source": ".ai/repo/project/issues/I4180.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "profile list, show, resolve and explain are capabilities with API, OpenAPI and MCP projections and no hand-written registration",
+            "A profile file added under .ai/repo/profiles appears on all four surfaces with no other edit",
+            "An unknown profile name is refused and names the profiles that exist"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I4178"
+          ],
+          "evidence_required": [
+            "profile_capabilities_declared",
+            "custom_profile_on_four_surfaces",
+            "unknown_profile_refused"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "The effective-profile resolver itself, which is I4178",
+            "The /ui profile chooser, which is I4181"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin",
+            "share/commands.yaml",
+            "apps/majordomus-cli/src/command_graph",
+            "test/cases/4180_the_profile_commands_are_capabilities.sh",
+            "docs",
+            ".ai/repo/project/issues/I4180.yaml"
+          ],
+          "serves": [],
+          "slug": "profile-commands-are-capabilities",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4180_the_profile_commands_are_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4181",
+        "kind": "issue",
+        "label": "I4181",
+        "summary": "The UI shows a profile chooser that previews the effective constraints and where each came from",
+        "route": "/cockpit/objects/issue/i4181",
+        "source": ".ai/repo/project/issues/I4181.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A browser case at 320px selects a profile and shows the diff against the current one",
+            "Every constraint shown names the source that set it",
+            "The chosen profile is read back by the CLI from the same record"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: No file under apps/majordomus-cli/src/ui names profiles; ui/work.rs and ui/idd.rs exist; the profile capabilities this needs are I4180.",
+          "depends_on": [
+            "I4178",
+            "I4180"
+          ],
+          "desired_state": "Choosing a profile in /ui shows its effective constraints, their sources and a diff against the current profile before a launch, at 320px as well as wide, and the CLI reads the same record.",
+          "evidence_required": [
+            "browser_case_320px",
+            "provenance_shown",
+            "cli_reads_choice"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Resolving a profile, which is I4178",
+            "Declaring the capabilities, which is I4180"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "share/ui",
+            "test/cases/4181_the_ui_previews_a_profile_before_a_launch.sh",
+            "docs",
+            ".ai/repo/project/issues/I4181.yaml"
+          ],
+          "serves": [],
+          "slug": "ui-profile-chooser",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4181_the_ui_previews_a_profile_before_a_launch",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4182",
+        "kind": "issue",
+        "label": "I4182",
+        "summary": "Every profile axis reads as requested, resolved, attempted, observed, verified, unobservable or denied",
+        "route": "/cockpit/objects/issue/i4182",
+        "source": ".ai/repo/project/issues/I4182.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each axis of a run carries exactly one of the seven states",
+            "An axis the adapter cannot observe reads unobservable and never verified",
+            "A denied axis names the policy that denied it"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A run through an adapter with no observation for an axis reports that axis as unobservable, and no axis reads verified without an observation.",
+          "evidence_required": [
+            "axis_states_recorded",
+            "unobservable_never_verified",
+            "denied_names_policy"
+          ],
+          "milestone": "runtime-adapters",
+          "non_scope": [
+            "Adding new profile axes"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/execution",
+            "apps/majordomus-cli/src/providers.rs",
+            "share/schemas",
+            "test/cases/4182_an_unobserved_axis_never_reads_verified.sh",
+            "docs",
+            ".ai/repo/project/issues/I4182.yaml"
+          ],
+          "serves": [],
+          "slug": "profile-axis-states",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4182_an_unobserved_axis_never_reads_verified",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4183",
+        "kind": "issue",
+        "label": "I4183",
+        "summary": "A cold /ui answers its first paint within its budget, whatever its slowest source is doing",
+        "route": "/cockpit/objects/issue/i4183",
+        "source": ".ai/repo/project/issues/I4183.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "bench --check records a fresh-process first request per screen",
+            "A fixture with one stalled source still answers the shell within the declared budget",
+            "The check fails when the shell is answered later than its budget"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "Each /ui screen has a declared cold-process budget for its first answer, bench --check records it, and a stalled source cannot make the shell late.",
+          "evidence_required": [
+            "cold_first_request_recorded",
+            "stalled_source_within_budget",
+            "budget_breach_fails"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The speculative warm-up, which is I4184",
+            "Browser paint budgets, which are I4188"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/bench",
+            "apps/majordomus-cli/src/ui",
+            ".ai/repo/benchmarks",
+            "test/cases/4183_a_cold_ui_answers_within_its_budget.sh",
+            "docs",
+            ".ai/repo/project/issues/I4183.yaml"
+          ],
+          "serves": [],
+          "slug": "cold-ui-first-paint-budget",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "majordomus bench --check",
+            "bash test/run.sh 4183_a_cold_ui_answers_within_its_budget",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib bench::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4184",
+        "kind": "issue",
+        "label": "I4184",
+        "summary": "The speculative warm-up never delays a reader's first request",
+        "route": "/cockpit/objects/issue/i4184",
+        "source": ".ai/repo/project/issues/I4184.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request made while the warm thread is busy and a source is slow is served within budget",
+            "Warm worker count and queue length have a declared bound",
+            "Both are reported in perf.counters"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "With the warm thread busy and a source slow, a user request is served within budget, and the warm worker count and queue are bounded and reported.",
+          "evidence_required": [
+            "request_served_while_warming",
+            "warm_bound_declared",
+            "warm_counters_reported"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Cold-process budgets, which are I4183"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/capability/readings.rs",
+            "apps/majordomus-cli/src/perf.rs",
+            "test/cases/4184_the_warm_up_never_delays_a_first_request.sh",
+            "docs",
+            ".ai/repo/project/issues/I4184.yaml"
+          ],
+          "serves": [],
+          "slug": "warm-up-yields-to-readers",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4184_the_warm_up_never_delays_a_first_request",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
+            "majordomus bench --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4185",
+        "kind": "issue",
+        "label": "I4185",
+        "summary": "A saturated server answers its probe at once and refuses excess work with a timely 503",
+        "route": "/cockpit/objects/issue/i4185",
+        "source": ".ai/repo/project/issues/I4185.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With N slow handlers plus an asset burst, /health answers within its budget",
+            "Excess work is refused with a 503 within a declared time",
+            "The 503 count is visible in perf.counters"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "With N slow handlers and an asset burst, /health answers within budget, the excess is refused with a timely 503, and the 503 count appears in perf.counters.",
+          "evidence_required": [
+            "probe_under_saturation",
+            "timely_503",
+            "counter_in_perf"
+          ],
+          "milestone": "failure-is-visible",
+          "non_scope": [
+            "Slow-client deadlines, which I2156 covers"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http",
+            "apps/majordomus-cli/src/perf.rs",
+            "test/cases/4185_a_saturated_server_still_answers_its_probe.sh",
+            "docs",
+            ".ai/repo/project/issues/I4185.yaml"
+          ],
+          "serves": [],
+          "slug": "saturated-server-answers-its-probe",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4185_a_saturated_server_still_answers_its_probe",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::",
+            "majordomus bench --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4186",
+        "kind": "issue",
+        "label": "I4186",
+        "summary": "A reading is never served to another checkout, and a worktree switch reads again",
+        "route": "/cockpit/objects/issue/i4186",
+        "source": ".ai/repo/project/issues/I4186.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A two-checkout case shows each reading naming its own repository and revision",
+            "A worktree switch changes the answer",
+            "No reading of one checkout is served for another"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: capability/readings.rs holds the readings; I0821 and I0841 cover the flatten cache only.",
+          "depends_on": [],
+          "desired_state": "Each reading names its own repository and revision, and switching worktree changes the answer.",
+          "evidence_required": [
+            "two_checkout_case",
+            "readings_name_checkout",
+            "switch_rereads"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Invalidation by dependency, which is I4196"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/readings.rs",
+            "apps/majordomus-cli/src/repository.rs",
+            "test/cases/4186_a_reading_is_never_served_to_another_checkout.sh",
+            "docs",
+            ".ai/repo/project/issues/I4186.yaml"
+          ],
+          "serves": [],
+          "slug": "a-reading-belongs-to-its-checkout",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4186_a_reading_is_never_served_to_another_checkout",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4187",
+        "kind": "issue",
+        "label": "I4187",
+        "summary": "The UI's time cost grows no faster than its backlog",
+        "route": "/cockpit/objects/issue/i4187",
+        "source": ".ai/repo/project/issues/I4187.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A bench records UI time at 1x, 10x and 100x fixture sizes",
+            "The slope is stored beside the other benchmark records",
+            "The check fails on superlinear growth"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: apps/majordomus-cli/src/bench holds the benchmark runner and baseline code; no scale-slope record was found.",
+          "depends_on": [],
+          "desired_state": "bench --check records the cost slope of the UI at three fixture sizes and fails when growth is superlinear.",
+          "evidence_required": [
+            "three_size_run",
+            "slope_recorded",
+            "superlinear_fails"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Fixing any superlinear screen the bench finds; each gets its own issue"
+          ],
+          "objective": "Add a scale-slope benchmark under apps/majordomus-cli/src/bench that runs the UI screens over fixtures at 1x, 10x and 100x record counts, records the slope, and fails on superlinear growth.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/bench",
+            ".ai/repo/benchmarks",
+            "test/cases/4187_the_ui_cost_grows_no_faster_than_its_backlog.sh",
+            "docs",
+            ".ai/repo/project/issues/I4187.yaml"
+          ],
+          "serves": [],
+          "slug": "ui-cost-scales-with-backlog",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "majordomus bench --check",
+            "bash test/run.sh 4187_the_ui_cost_grows_no_faster_than_its_backlog",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib bench::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4188",
+        "kind": "issue",
+        "label": "I4188",
+        "summary": "A browser's first and largest paint of /ui and /cockpit is under a declared budget",
+        "route": "/cockpit/objects/issue/i4188",
+        "source": ".ai/repo/project/issues/I4188.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/ui records FCP and LCP per discovered route",
+            "bench --check fails when a route exceeds its declared budget",
+            "The routes come from discovery, with no hand list"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: scripts/ui exists; I1021 and I3216 are width audits; no first or largest paint budget was found outside the mesh page.",
+          "depends_on": [],
+          "desired_state": "Every discovered /ui and /cockpit route has a recorded FCP and LCP and a declared budget that bench --check holds.",
+          "evidence_required": [
+            "fcp_lcp_recorded",
+            "budget_held",
+            "routes_discovered"
+          ],
+          "milestone": "the-ui-works-on-a-phone",
+          "non_scope": [
+            "Making slow routes fast; each breach gets its own issue"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ui",
+            "apps/majordomus-cli/src/bench",
+            ".ai/repo/benchmarks",
+            "test/cases/4188_every_route_paints_within_its_budget.sh",
+            "docs",
+            ".ai/repo/project/issues/I4188.yaml"
+          ],
+          "serves": [],
+          "slug": "ui-paint-budget",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4188_every_route_paints_within_its_budget",
+            "majordomus bench --check",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4189",
+        "kind": "issue",
+        "label": "I4189",
+        "summary": "A headless model result is accepted only when its stream finished, its schema validated and its references resolve",
+        "route": "/cockpit/objects/issue/i4189",
+        "source": ".ai/repo/project/issues/I4189.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A truncated stream is recorded as failed",
+            "A refusal is recorded as failed",
+            "A result with a reference that does not resolve is recorded as failed"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: providers.rs and the reasoning directory exist; I3418 records model and source and I3426 bounds advisor text.",
+          "depends_on": [],
+          "desired_state": "A truncated stream, a refusal and a bad reference each end in an explicit failed state, and only a complete, valid, resolved result is accepted.",
+          "evidence_required": [
+            "truncated_stream_failed",
+            "refusal_failed",
+            "bad_reference_failed"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Choosing which model runs"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/providers.rs",
+            "apps/majordomus-cli/src/reasoning",
+            "scripts/advisor-consult",
+            "test/cases/4189_a_headless_result_is_accepted_only_when_complete.sh",
+            "docs",
+            ".ai/repo/project/issues/I4189.yaml"
+          ],
+          "serves": [],
+          "slug": "headless-result-acceptance",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4189_a_headless_result_is_accepted_only_when_complete",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4190",
+        "kind": "issue",
+        "label": "I4190",
+        "summary": "One MCP response over a declared byte budget is bounded and says what it left out",
+        "route": "/cockpit/objects/issue/i4190",
+        "source": ".ai/repo/project/issues/I4190.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The named capability's measured MCP payload is under the declared byte budget",
+            "A truncated response says what it left out",
+            "A gate fails when the payload exceeds the budget"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "The named capability's measured MCP payload is under its budget, says what it omitted, and a gate fails when it exceeds the budget.",
+          "evidence_required": [
+            "payload_under_budget",
+            "omission_stated",
+            "gate_fails_over_budget"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Bounding tools/list, which I3307 did"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mcp",
+            "apps/majordomus-cli/src/capability",
+            "share/commands.yaml",
+            "test/cases/4190_an_mcp_response_over_budget_is_bounded.sh",
+            "docs",
+            ".ai/repo/project/issues/I4190.yaml"
+          ],
+          "serves": [],
+          "slug": "mcp-response-byte-budget",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4190_an_mcp_response_over_budget_is_bounded",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mcp::",
+            "majordomus generate --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4191",
+        "kind": "issue",
+        "label": "I4191",
+        "summary": "A Rust symbol lookup is answered by the installed language server when present, and says so when absent",
+        "route": "/cockpit/objects/issue/i4191",
+        "source": ".ai/repo/project/issues/I4191.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture crate answers a definition query through LSP",
+            "A missing server reports unavailable",
+            "The answer names the server that gave it"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A fixture crate answers a definition query through the language server, and a missing server reports unavailable and never guesses.",
+          "evidence_required": [
+            "lsp_definition_answered",
+            "absent_server_unavailable",
+            "answer_names_server"
+          ],
+          "milestone": "a-provider-carries-the-contract-natively",
+          "non_scope": [
+            "Writing a language server",
+            "Languages other than Rust"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/devcontext",
+            "test/cases/4191_a_symbol_lookup_asks_the_language_server.sh",
+            "docs",
+            ".ai/repo/project/issues/I4191.yaml"
+          ],
+          "serves": [],
+          "slug": "rust-symbol-lookup-by-lsp",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4191_a_symbol_lookup_asks_the_language_server",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4192",
+        "kind": "issue",
+        "label": "I4192",
+        "summary": "One structured microtask runs on a local model against a registered corpus and is accepted or refused on its score",
+        "route": "/cockpit/objects/issue/i4192",
+        "source": ".ai/repo/project/issues/I4192.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The run's records name the local model and the corpus",
+            "A passing score is accepted",
+            "A failing score yields a refusal"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: apps/majordomus-cli/src/models and economics exist; I3418 and I3423 are adjacent only.",
+          "depends_on": [],
+          "desired_state": "The run's records name the local model and the corpus, and a failing score yields a refusal.",
+          "evidence_required": [
+            "model_and_corpus_named",
+            "pass_accepted",
+            "fail_refused"
+          ],
+          "milestone": "an-inference-names-its-source-and-budget",
+          "non_scope": [
+            "Training or fine-tuning a model"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/models",
+            "apps/majordomus-cli/src/economics",
+            "share/models.yaml",
+            "test/cases/4192_a_local_microtask_is_accepted_on_its_score.sh",
+            "docs",
+            ".ai/repo/project/issues/I4192.yaml"
+          ],
+          "serves": [],
+          "slug": "local-microtask-scored",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4192_a_local_microtask_is_accepted_on_its_score",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4193",
+        "kind": "issue",
+        "label": "I4193",
+        "summary": "Every UI route, breadcrumb and entity link is generated from one typed route table",
+        "route": "/cockpit/objects/issue/i4193",
+        "source": ".ai/repo/project/issues/I4193.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A new entity appears in navigation, breadcrumbs and links with no consumer edit",
+            "A test fails when a hand-written path disagrees with the table",
+            "Existing routes still answer"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A new entity appears in navigation and links with no consumer edit, and a hand-written path that disagrees with the table fails a test.",
+          "evidence_required": [
+            "route_table_declared",
+            "new_entity_needs_no_edit",
+            "disagreement_fails"
+          ],
+          "milestone": "the-ui-runs-and-explains",
+          "non_scope": [
+            "Changing any URL users have bookmarked"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit",
+            "share/ui",
+            "test/cases/4193_ui_routes_come_from_one_typed_table.sh",
+            "docs",
+            ".ai/repo/project/issues/I4193.yaml"
+          ],
+          "serves": [],
+          "slug": "one-typed-ui-route-table",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4193_ui_routes_come_from_one_typed_table",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4194",
+        "kind": "issue",
+        "label": "I4194",
+        "summary": "A UI document and asset answer a conditional request with 304, and a fill is computed once under concurrent load",
+        "route": "/cockpit/objects/issue/i4194",
+        "source": ".ai/repo/project/issues/I4194.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A repeated If-None-Match with the current ETag gets 304 for a UI document and for an asset",
+            "100 concurrent cold requests call the source once",
+            "A changed document gets a new ETag"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A repeated ETag gets 304 for a UI document and asset, and 100 concurrent cold requests call the source once.",
+          "evidence_required": [
+            "etag_304_observed",
+            "single_flight_fill",
+            "changed_gets_new_etag"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Dependency-keyed invalidation, which is I4196"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui",
+            "apps/majordomus-cli/src/cockpit/assets.rs",
+            "apps/majordomus-cli/src/capability/readings.rs",
+            "apps/majordomus-cli/src/http",
+            "test/cases/4194_ui_answers_a_conditional_request_with_304.sh",
+            "docs",
+            ".ai/repo/project/issues/I4194.yaml"
+          ],
+          "serves": [],
+          "slug": "ui-conditional-requests",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4194_ui_answers_a_conditional_request_with_304",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
+            "majordomus bench --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4195",
+        "kind": "issue",
+        "label": "I4195",
+        "summary": "The mesh page renders a bounded neighbourhood however large the mesh grows",
+        "route": "/cockpit/objects/issue/i4195",
+        "source": ".ai/repo/project/issues/I4195.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A 10 000-node fixture opens with at most N browser nodes",
+            "Expanding a node loads its neighbours on demand",
+            "N is declared in one place"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: ui/mesh.rs exists; I2462 (done) is the mesh graph and I3138 the whole-mesh page; the mesh page draws no bound on browser nodes that was found by reading it.",
+          "depends_on": [],
+          "desired_state": "A 10 000-node fixture opens with at most N browser nodes and the rest expand on demand.",
+          "evidence_required": [
+            "ten_thousand_node_fixture",
+            "on_demand_expansion",
+            "bound_declared"
+          ],
+          "milestone": "prismatic-lumen",
+          "non_scope": [
+            "Changing mesh discovery"
+          ],
+          "objective": "Render in apps/majordomus-cli/src/ui/mesh.rs only a bounded neighbourhood of the selected node, with the rest expanded on demand, so a mesh of 10 000 nodes opens with at most N browser nodes.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "share/ui",
+            "test/cases/4195_the_mesh_page_renders_a_bounded_neighbourhood.sh",
+            "docs",
+            ".ai/repo/project/issues/I4195.yaml"
+          ],
+          "serves": [],
+          "slug": "mesh-page-bounded-neighbourhood",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4195_the_mesh_page_renders_a_bounded_neighbourhood",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::",
+            "majordomus bench --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4196",
+        "kind": "issue",
+        "label": "I4196",
+        "summary": "A change invalidates exactly the UI readings that depend on it, and an unrelated change keeps them warm",
+        "route": "/cockpit/objects/issue/i4196",
+        "source": ".ai/repo/project/issues/I4196.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A change to a file a reading read invalidates that reading",
+            "A change to an unrelated file leaves the reading hot",
+            "Each reading declares what it depends on"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: capability/readings.rs holds the readings, revalidated behind the reader since I2486; no dependency key was found.",
+          "depends_on": [],
+          "desired_state": "A relevant change invalidates its readings and an irrelevant change keeps them hot, each shown by a case.",
+          "evidence_required": [
+            "relevant_change_invalidates",
+            "irrelevant_change_keeps_hot",
+            "dependencies_declared"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Per-checkout keys, which are I4186"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/readings.rs",
+            "apps/majordomus-cli/src/ui",
+            "test/cases/4196_a_change_invalidates_only_its_readings.sh",
+            "docs",
+            ".ai/repo/project/issues/I4196.yaml"
+          ],
+          "serves": [],
+          "slug": "ui-readings-keyed-by-dependency",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4196_a_change_invalidates_only_its_readings",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::",
+            "majordomus bench --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4197",
+        "kind": "issue",
+        "label": "I4197",
+        "summary": "A ported command behaves the same on names that are not UTF-8, hold a space or differ only in case",
+        "route": "/cockpit/objects/issue/i4197",
+        "source": ".ai/repo/project/issues/I4197.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A Rust integration case runs one ported command over a non-UTF-8 name, a name with a space and names differing only in case",
+            "It asserts the shell original's exit code and output",
+            "It runs in a disposable repository"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Measured on master 575d39f8d24: apps/majordomus-cli/src/automation and apps/majordomus-cli/src/script exist; no record states portability of ported commands.",
+          "depends_on": [],
+          "desired_state": "A ported command gives the shell original's exit code and output on such names, on every platform the CI runs.",
+          "evidence_required": [
+            "non_utf8_case",
+            "space_and_case_names",
+            "shell_parity_asserted"
+          ],
+          "milestone": "repository-automation-is-typed",
+          "non_scope": [
+            "Porting further commands"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/automation",
+            "apps/majordomus-cli/src/script",
+            "apps/majordomus-cli/tests",
+            "test/cases/4197_a_ported_command_is_portable_across_names.sh",
+            "docs",
+            ".ai/repo/project/issues/I4197.yaml"
+          ],
+          "serves": [],
+          "slug": "ported-commands-are-portable",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4197_a_ported_command_is_portable_across_names",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation::",
+            "majordomus shell check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4198",
+        "kind": "issue",
+        "label": "I4198",
+        "summary": "A Gigalixir deployment can be rolled back to its previous release, and the rollback is proven by the commit the hosted URL then serves",
+        "route": "/cockpit/objects/issue/i4198",
+        "source": ".ai/repo/project/issues/I4198.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A recorded run names the previous release and triggers the rollback",
+            "An external fetch of /api/v1/live answers the previous release's commit",
+            "A rollback with no previous release is refused"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "desired_state": "A recorded run names the previous release, triggers the rollback, and an external fetch of /api/v1/live answers that release's commit.",
+          "evidence_required": [
+            "previous_release_named",
+            "served_commit_after_rollback",
+            "no_previous_refused"
+          ],
+          "milestone": "fly-deployment",
+          "non_scope": [
+            "Rolling back a Fly deployment, which I0917 cancelled"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/deploy",
+            ".github/workflows/provider.yml",
+            ".ai/repo/deployments",
+            "test/cases/4198_a_gigalixir_rollback_is_proven_by_the_served_commit.sh",
+            "docs",
+            ".ai/repo/project/issues/I4198.yaml"
+          ],
+          "serves": [],
+          "slug": "gigalixir-rollback-is-proven",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 4198_a_gigalixir_rollback_is_proven_by_the_served_commit",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -108064,11 +109858,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -123104,6 +124893,441 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4160",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4160",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4161",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4161",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4162",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4162",
+        "target": "majordomus://milestone/every-sessions-usage-is-observed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4163",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4163",
+        "target": "majordomus://milestone/every-sessions-usage-is-observed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4164",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4164",
+        "target": "majordomus://issue/I3171",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4164",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4165",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4165",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4166",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4166",
+        "target": "majordomus://issue/I4164",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4166",
+        "target": "majordomus://milestone/an-entity-says-how-it-is-known-and-what-it-affects",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4167",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4167",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4168",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4168",
+        "target": "majordomus://milestone/a-registered-corpus-judges-majordomus",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4169",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4169",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4170",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4170",
+        "target": "majordomus://issue/I4169",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4170",
+        "target": "majordomus://milestone/mesh-peers-execute-assigned-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4171",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4171",
+        "target": "majordomus://milestone/the-ui-runs-and-explains",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4172",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4172",
+        "target": "majordomus://issue/I4169",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4172",
+        "target": "majordomus://milestone/the-intent-loop-is-proved-end-to-end",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4173",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4173",
+        "target": "majordomus://milestone/the-ui-runs-and-explains",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4174",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4174",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4175",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4175",
+        "target": "majordomus://issue/I4169",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4175",
+        "target": "majordomus://milestone/the-ui-runs-and-explains",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4176",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4176",
+        "target": "majordomus://milestone/mesh-peers-execute-assigned-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4177",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4177",
+        "target": "majordomus://milestone/recovery-from-injected-faults-is-proven",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4178",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4178",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4179",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4179",
+        "target": "majordomus://issue/I4178",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4179",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4180",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4180",
+        "target": "majordomus://issue/I4178",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4180",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4181",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4181",
+        "target": "majordomus://issue/I4178",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4181",
+        "target": "majordomus://issue/I4180",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4181",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4182",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4182",
+        "target": "majordomus://milestone/runtime-adapters",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4183",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4183",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4184",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4184",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4185",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4185",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4186",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4186",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4187",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4187",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4188",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4188",
+        "target": "majordomus://milestone/the-ui-works-on-a-phone",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4189",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4189",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4190",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4190",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4191",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4191",
+        "target": "majordomus://milestone/a-provider-carries-the-contract-natively",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4192",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4192",
+        "target": "majordomus://milestone/an-inference-names-its-source-and-budget",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4193",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4193",
+        "target": "majordomus://milestone/the-ui-runs-and-explains",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4194",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4194",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4195",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4195",
+        "target": "majordomus://milestone/prismatic-lumen",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4196",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4196",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4197",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4197",
+        "target": "majordomus://milestone/repository-automation-is-typed",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4198",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4198",
+        "target": "majordomus://milestone/fly-deployment",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -134330,8 +136554,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3768,
-      "edges": 8711,
+      "nodes": 3806,
+      "edges": 8797,
       "acyclic": false,
       "truncated": false
     }

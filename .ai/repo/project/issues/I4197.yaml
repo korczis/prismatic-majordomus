@@ -1,0 +1,36 @@
+id: I4197
+milestone: repository-automation-is-typed
+title: "A ported command behaves the same on names that are not UTF-8, hold a space or differ only in case"
+slug: ported-commands-are-portable
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a disposable-repository Rust integration case that runs one ported command over paths, arguments and environment values that are not UTF-8, hold a space or differ only in case, and asserts the shell original's exit code and output. The ported commands live in apps/majordomus-cli/src/automation and apps/majordomus-cli/src/script."
+why: "The owner handed over an ask in campaigns/majordomus-shellfall-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/automation and apps/majordomus-cli/src/script exist; no record states portability of ported commands."
+desired_state: "A ported command gives the shell original's exit code and output on such names, on every platform the CI runs."
+scope:
+  - "apps/majordomus-cli/src/automation"
+  - "apps/majordomus-cli/src/script"
+  - "apps/majordomus-cli/tests"
+  - "test/cases/4197_a_ported_command_is_portable_across_names.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4197.yaml"
+non_scope:
+  - "Porting further commands"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A Rust integration case runs one ported command over a non-UTF-8 name, a name with a space and names differing only in case"
+  - "It asserts the shell original's exit code and output"
+  - "It runs in a disposable repository"
+validation:
+  - "bash test/run.sh 4197_a_ported_command_is_portable_across_names"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation::"
+  - "majordomus shell check"
+evidence_required:
+  - non_utf8_case
+  - space_and_case_names
+  - shell_parity_asserted
+created_at: 2026-10-23
+updated_at: 2026-10-23

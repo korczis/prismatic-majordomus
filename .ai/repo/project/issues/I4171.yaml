@@ -1,0 +1,37 @@
+id: I4171
+milestone: the-ui-runs-and-explains
+title: "A running execution can be paused, resumed or cancelled by an authorised caller from CLI, MCP and /ui, and the transition is recorded"
+slug: an-execution-can-be-paused-and-cancelled
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "apps/majordomus-cli/src/capability/builtin/executions.rs, which has executions.cancel, gains pause and resume, and the state machine in apps/majordomus-cli/src/execution/model.rs (ExecutionState::may_move_to) records each transition with its actor; the CLI, MCP and /ui offer the same capabilities to an authorised caller only."
+why: "The ask is in campaigns/majordomus-autonomous-idd-maximal-opus-fable (03_WORKTREES_PR.md), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/capability/builtin/executions.rs declares executions.cancel (POST /api/v1/executions/cancel); execution/model.rs defines ExecutionState with is_final, is_active and may_move_to; the audit finds no pause or resume."
+desired_state: "An execution in flight can be stopped or held and continued, with every transition recorded."
+scope:
+  - ".ai/repo/project/issues/I4171.yaml"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/commands/executions.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "test/cases/4171_an_execution_can_be_paused_and_cancelled.sh"
+  - "docs"
+non_scope:
+  - "Execution start (existing)"
+  - "Killing an operating-system process outside an execution"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Cancelling mid-run leaves a recorded cancelled state"
+  - "Resuming a paused run repeats no completed effect"
+  - "An unauthorised caller is refused on every surface"
+validation:
+  - "bash test/run.sh 4171_an_execution_can_be_paused_and_cancelled"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+evidence_required:
+  - "cancel_recorded"
+  - "resume_repeats_nothing"
+  - "unauthorised_refused"
+created_at: 2026-10-23
+updated_at: 2026-10-23

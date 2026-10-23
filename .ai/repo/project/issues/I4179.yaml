@@ -1,0 +1,35 @@
+id: I4179
+milestone: runtime-adapters
+title: "The effective profile's identity and fingerprint are recorded on the intent, task and execution it served, and a change of profile re-resolves under a new revision"
+slug: a-served-profile-is-recorded-by-fingerprint
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "The fingerprint and identity from the resolver of I4178 are written onto the intent record, the task and the execution record (apps/majordomus-cli/src/intent.rs, src/execution/model.rs), shown by intent explain, and a profile or policy edit re-resolves under a new revision."
+why: "The ask is in campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/execution/model.rs defines the Execution record and apps/majordomus-cli/src/intent.rs the intent; neither was found to carry a profile fingerprint, and the resolver it would come from is I4178."
+desired_state: "What profile governed a piece of work is readable from the work and changes when the profile does."
+scope:
+  - ".ai/repo/project/issues/I4179.yaml"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/execution"
+  - "share/schemas"
+  - "test/cases/4179_a_served_profile_is_recorded_by_fingerprint.sh"
+  - "docs"
+non_scope:
+  - "Resolution itself (I4178)"
+  - "Back-filling closed records"
+depends_on:
+  - "I4178"
+serves: []
+acceptance_criteria:
+  - "intent explain and the execution record show the same fingerprint"
+  - "A policy edit shows a new revision for newly resolved work"
+validation:
+  - "bash test/run.sh 4179_a_served_profile_is_recorded_by_fingerprint"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+evidence_required:
+  - "fingerprint_on_records"
+  - "new_revision_on_edit"
+created_at: 2026-10-23
+updated_at: 2026-10-23

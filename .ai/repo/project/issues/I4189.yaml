@@ -1,0 +1,36 @@
+id: I4189
+milestone: a-provider-carries-the-contract-natively
+title: "A headless model result is accepted only when its stream finished, its schema validated and its references resolve"
+slug: headless-result-acceptance
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Gate acceptance of a headless provider's result in apps/majordomus-cli/src/providers.rs and apps/majordomus-cli/src/reasoning on three checks: the stream ended normally, the output validates against its schema, and every reference it names resolves; anything else is recorded as an explicit failed state."
+why: "The owner handed over an ask in campaigns/majordomus-native-acceleration-2026-10-22 (P03) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: providers.rs and the reasoning directory exist; I3418 records model and source and I3426 bounds advisor text."
+desired_state: "A truncated stream, a refusal and a bad reference each end in an explicit failed state, and only a complete, valid, resolved result is accepted."
+scope:
+  - "apps/majordomus-cli/src/providers.rs"
+  - "apps/majordomus-cli/src/reasoning"
+  - "scripts/advisor-consult"
+  - "test/cases/4189_a_headless_result_is_accepted_only_when_complete.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4189.yaml"
+non_scope:
+  - "Choosing which model runs"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A truncated stream is recorded as failed"
+  - "A refusal is recorded as failed"
+  - "A result with a reference that does not resolve is recorded as failed"
+validation:
+  - "bash test/run.sh 4189_a_headless_result_is_accepted_only_when_complete"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::"
+  - "majordomus plan validate"
+evidence_required:
+  - truncated_stream_failed
+  - refusal_failed
+  - bad_reference_failed
+created_at: 2026-10-23
+updated_at: 2026-10-23

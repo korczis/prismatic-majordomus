@@ -1,0 +1,36 @@
+id: I4198
+milestone: fly-deployment
+title: "A Gigalixir deployment can be rolled back to its previous release, and the rollback is proven by the commit the hosted URL then serves"
+slug: gigalixir-rollback-is-proven
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a rollback of a Gigalixir deployment to its previous release to apps/majordomus-cli/src/deploy (mod.rs, observed.rs, render.rs), run from the provider workflow .github/workflows/provider.yml, and prove it by an external fetch of /api/v1/live that answers the previous release's commit."
+why: "The owner handed over an ask in campaigns/majordomus-12h-release-pack-2026-10-22 (prompt 04) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/deploy and .github/workflows/provider.yml exist; I2722 rolls back a hub under a service manager, I0917 (Fly rollback) is cancelled, and Gigalixir CD is I3820 and I3821."
+desired_state: "A recorded run names the previous release, triggers the rollback, and an external fetch of /api/v1/live answers that release's commit."
+scope:
+  - "apps/majordomus-cli/src/deploy"
+  - ".github/workflows/provider.yml"
+  - ".ai/repo/deployments"
+  - "test/cases/4198_a_gigalixir_rollback_is_proven_by_the_served_commit.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4198.yaml"
+non_scope:
+  - "Rolling back a Fly deployment, which I0917 cancelled"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A recorded run names the previous release and triggers the rollback"
+  - "An external fetch of /api/v1/live answers the previous release's commit"
+  - "A rollback with no previous release is refused"
+validation:
+  - "bash test/run.sh 4198_a_gigalixir_rollback_is_proven_by_the_served_commit"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::"
+  - "majordomus plan validate"
+evidence_required:
+  - previous_release_named
+  - served_commit_after_rollback
+  - no_previous_refused
+created_at: 2026-10-23
+updated_at: 2026-10-23

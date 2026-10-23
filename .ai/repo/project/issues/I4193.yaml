@@ -1,0 +1,36 @@
+id: I4193
+milestone: the-ui-runs-and-explains
+title: "Every UI route, breadcrumb and entity link is generated from one typed route table"
+slug: one-typed-ui-route-table
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Replace the hand-written paths of apps/majordomus-cli/src/ui (mod.rs, navbar.rs, view.rs) and apps/majordomus-cli/src/cockpit (nav.rs) with one typed route table that routes, breadcrumbs and entity links are generated from."
+why: "The owner handed over an ask in campaigns/majordomus-ui-speed-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: ui/mod.rs holds the screens and a test that every answered route is a screen or a panel; cockpit/nav.rs states that its list and cockpit::STATIC_ROUTES describe the same Cockpit; I2481 links every named entity; no single route table was found."
+desired_state: "A new entity appears in navigation and links with no consumer edit, and a hand-written path that disagrees with the table fails a test."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit"
+  - "share/ui"
+  - "test/cases/4193_ui_routes_come_from_one_typed_table.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4193.yaml"
+non_scope:
+  - "Changing any URL users have bookmarked"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A new entity appears in navigation, breadcrumbs and links with no consumer edit"
+  - "A test fails when a hand-written path disagrees with the table"
+  - "Existing routes still answer"
+validation:
+  - "bash test/run.sh 4193_ui_routes_come_from_one_typed_table"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "majordomus plan validate"
+evidence_required:
+  - route_table_declared
+  - new_entity_needs_no_edit
+  - disagreement_fails
+created_at: 2026-10-23
+updated_at: 2026-10-23

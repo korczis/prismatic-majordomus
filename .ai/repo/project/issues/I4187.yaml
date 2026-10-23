@@ -1,0 +1,35 @@
+id: I4187
+milestone: M004
+title: "The UI's time cost grows no faster than its backlog"
+slug: ui-cost-scales-with-backlog
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a scale-slope benchmark under apps/majordomus-cli/src/bench that runs the UI screens over fixtures at 1x, 10x and 100x record counts, records the slope, and fails on superlinear growth."
+why: "The owner handed over an ask in campaigns/majordomus-performance-rescue-2026-10-23 (prompt 16) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/bench holds the benchmark runner and baseline code; no scale-slope record was found."
+desired_state: "bench --check records the cost slope of the UI at three fixture sizes and fails when growth is superlinear."
+scope:
+  - "apps/majordomus-cli/src/bench"
+  - ".ai/repo/benchmarks"
+  - "test/cases/4187_the_ui_cost_grows_no_faster_than_its_backlog.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4187.yaml"
+non_scope:
+  - "Fixing any superlinear screen the bench finds; each gets its own issue"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A bench records UI time at 1x, 10x and 100x fixture sizes"
+  - "The slope is stored beside the other benchmark records"
+  - "The check fails on superlinear growth"
+validation:
+  - "majordomus bench --check"
+  - "bash test/run.sh 4187_the_ui_cost_grows_no_faster_than_its_backlog"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib bench::"
+evidence_required:
+  - three_size_run
+  - slope_recorded
+  - superlinear_fails
+created_at: 2026-10-23
+updated_at: 2026-10-23

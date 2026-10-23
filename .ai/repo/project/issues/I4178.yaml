@@ -1,0 +1,38 @@
+id: I4178
+milestone: runtime-adapters
+title: "A task's effective profile resolves through one typed resolver that is byte-stable, names the source of every field and a content fingerprint, and can tighten but never weaken repository policy"
+slug: an-effective-profile-has-one-resolver
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A typed resolver, read from the profile files in .ai/repo/profiles and the policy in .ai/repo/repo, produces a task's effective profile as byte-stable data with the source of every field and a content fingerprint, and refuses a profile that widens a hard policy. The module is new; the axis-to-limit mapping of I0201 to I0206 in share and lib is where it starts."
+why: "The ask is in campaigns/majordomus-profile-system-v2-prompt-pack/MAJORDOMUS_PROFILE_SYSTEM_V2_PROMPT_PACK.md, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: .ai/repo/profiles holds debugging.yaml, deep-work.yaml, implementation.yaml, routine.yaml and a README; I0201 to I0206 derive runtime limits from profile axes; no resolver, provenance or fingerprint was found, and no profile command appears among apps/majordomus-cli/src/commands."
+desired_state: "Every task has one effective profile whose every field says where it came from and which is identical across runs."
+scope:
+  - ".ai/repo/project/issues/I4178.yaml"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "share"
+  - "lib"
+  - ".ai/repo/profiles"
+  - "test/cases/4178_an_effective_profile_has_one_resolver.sh"
+  - "docs"
+non_scope:
+  - "Recording the fingerprint on tasks (I4179)"
+  - "The chooser UI (I4181)"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A property test shows byte-identical output across runs and input orderings"
+  - "Every field names its source and the profile carries a content fingerprint"
+  - "A profile that widens a hard policy is refused"
+validation:
+  - "bash test/run.sh 4178_an_effective_profile_has_one_resolver 16_profiles"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib policy::"
+evidence_required:
+  - "byte_stable_property"
+  - "field_provenance"
+  - "widening_refused"
+created_at: 2026-10-23
+updated_at: 2026-10-23

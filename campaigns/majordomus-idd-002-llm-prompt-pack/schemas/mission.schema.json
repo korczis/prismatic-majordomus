@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://majordomus.dev/schemas/mj-idd-002/mission.schema.json",
+  "required": [
+    "id",
+    "title",
+    "objective",
+    "dependencies",
+    "inputs",
+    "deliverables",
+    "acceptance",
+    "gates",
+    "rollback"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]+$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 3
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 10
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "deliverables": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "acceptance": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "gates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "rollback": {
+      "type": "string",
+      "minLength": 10
+    },
+    "risk": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "surface": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

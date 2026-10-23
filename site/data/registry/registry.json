@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "192d43271727fc5e4d52160c5ee1e516f4332ad17286125ec64558a2b6a885e7",
+    "fingerprint": "7b180a221efa2e66084f1fcf720337460d509d79836d84ccb9dc53fef1d468ba",
     "summary": {
-      "total": 3314,
+      "total": 3352,
       "builtin": 208,
-      "declarative": 3106,
+      "declarative": 3144,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3106
+        "resource": 3144
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3116
+        "implemented": 3154
       },
       "mcp_tools": 197,
-      "mcp_resources": 3161,
+      "mcp_resources": 3199,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -85925,7 +85925,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 350,
+        "capabilities": 349,
         "capability_ids": []
       },
       {
@@ -86222,7 +86222,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 898,
+        "capabilities": 937,
         "capability_ids": []
       },
       {
@@ -86889,7 +86889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9f1a261184ea6b1b45421fbdad4386d682be485dcaeb2b1fd3f684e6c2fbafd0",
+    "fingerprint": "326cd77110d4557caf6163fd24331c6a879fc0d3a25ad6cab620aed685928ba4",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86923,13 +86923,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 350,
+      "document": 349,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
       "intent": 35,
-      "issue": 898,
+      "issue": 937,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 102,
@@ -86947,7 +86947,9 @@
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -94173,15 +94175,6 @@
         "path": "docs/PLANNING.md",
         "source_class": "document",
         "bytes": 38838
-      },
-      {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 795321
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107889,6 +107882,435 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I4160",
+        "kind": "issue",
+        "identity": "I4160",
+        "title": "Every mark of the Observatory carries the record ids, transform and class it was drawn from, and a signal without lineage draws nothing and says why",
+        "description": "Each mark that apps/majordomus-cli/src/ui/observatory.rs projects (event_marks, project_from) gains a lineage record of source record ids, transform and a class of observed, derived, inferred or estimated, drawn by share/ui/observatory.js; a signal without lineage draws no mark and the page shows a diagnostic naming the missing part.",
+        "path": ".ai/repo/project/issues/I4160.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2597
+      },
+      {
+        "uri": "majordomus://issue/I4161",
+        "kind": "issue",
+        "identity": "I4161",
+        "title": "A kiosk is installed and recovered from a runbook that names its prerequisites, authorisation, privacy checks and measured resource budgets",
+        "description": "docs/MAJORDOMUS_UI.md gains a kiosk runbook for a Linux systemd and Chromium display and for a macOS display, each step a command that a case under test/cases runs against /ui/kiosk, with privacy checks and resource budgets that name their hardware and revision.",
+        "path": ".ai/repo/project/issues/I4161.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2150
+      },
+      {
+        "uri": "majordomus://issue/I4162",
+        "kind": "issue",
+        "identity": "I4162",
+        "title": "A usage estimate names the price-list version, currency and tier effective at the time of the usage, and an unknown price reads unknown",
+        "description": "The estimate in apps/majordomus-cli/src/economics (model.rs, usage.rs, runner.rs) is computed from a dated price list whose version, currency and tier are recorded with the estimate; a model absent from the list yields unknown, never zero.",
+        "path": ".ai/repo/project/issues/I4162.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2092
+      },
+      {
+        "uri": "majordomus://issue/I4163",
+        "kind": "issue",
+        "identity": "I4163",
+        "title": "Reported usage is rolled up from issue to milestone and intent, and to the mesh peer that spent it, with the unattributed remainder shown beside every roll-up",
+        "description": "Usage already attributed to session, task and issue by apps/majordomus-cli/src/economics is summed per milestone, per intent and per mesh peer, and each roll-up reports the unattributed remainder next to its total.",
+        "path": ".ai/repo/project/issues/I4163.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2117
+      },
+      {
+        "uri": "majordomus://issue/I4164",
+        "kind": "issue",
+        "identity": "I4164",
+        "title": "A Rust file's references and imports are read as typed, directed edges with unresolved ones kept explicit, and a changed import target removes the old edge",
+        "description": "The source outline that I3171 added is extended with a reference graph: imports and references of a Rust file become typed, directed edges, an unresolved reference stays as an explicit unresolved edge, and a rebuild after an edit removes edges whose target changed. The module that holds the outline (apps/majordomus-cli/src/ui/source.rs and apps/majordomus-cli/src/devcontext were read; the I3171 outline module must be found first) owns the change.",
+        "path": ".ai/repo/project/issues/I4164.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2348
+      },
+      {
+        "uri": "majordomus://issue/I4165",
+        "kind": "issue",
+        "identity": "I4165",
+        "title": "A retrieval query returns hits with source, span, reason and score parts, bounded and deterministic, and a gold set on a frozen revision measures its relevance",
+        "description": "devcontext selection (apps/majordomus-cli/src/devcontext/select.rs, select and offer) returns each hit with source, span, reason and the parts of its score, in a bounded and deterministic order, and a committed gold set on a frozen revision yields a recall figure; an unanswerable query returns an honest absence.",
+        "path": ".ai/repo/project/issues/I4165.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2160
+      },
+      {
+        "uri": "majordomus://issue/I4166",
+        "kind": "issue",
+        "identity": "I4166",
+        "title": "A changed symbol names the dependents and tests it reaches with the path and provenance of each edge, and an unsupported area reports partial instead of no impact",
+        "description": "Impact analysis moves from layer level to symbol level: a changed Rust symbol lists the dependents and tests reachable over the reference graph of I4164 with the path and provenance of every edge, reports partial with the full-test fallback where the graph cannot see, and never releases a mandatory gate by recommendation. The owning impact module must be found among the layer-level code of I3407, I3412 and I3238.",
+        "path": ".ai/repo/project/issues/I4166.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2256
+      },
+      {
+        "uri": "majordomus://issue/I4167",
+        "kind": "issue",
+        "identity": "I4167",
+        "title": "A supported pure function's refactoring is compared against its base on the same inputs inside the existing isolated runner, and the result is recorded in the evidence ledger",
+        "description": "A differential check runs a supported pure Rust function at the base revision and at the working tree on the same inputs inside the existing isolated runner, and records the outcome (found, not found, unsupported, timeout or not_run) in the evidence ledger (apps/majordomus-cli/src/evidence, apps/majordomus-cli/src/ledger.rs).",
+        "path": ".ai/repo/project/issues/I4167.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2242
+      },
+      {
+        "uri": "majordomus://issue/I4168",
+        "kind": "issue",
+        "identity": "I4168",
+        "title": "The context-selection benefit is measured over four registered arms with failures counted in cost, and an unrun arm reads not_run",
+        "description": "The economics summary (apps/majordomus-cli/src/economics, report.rs and claims.rs) gains a four-arm comparison of base, structure, context and both over one registered corpus, counting failed attempts in cost; an arm that was not run reads not_run and an arm without a baseline is refused.",
+        "path": ".ai/repo/project/issues/I4168.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2093
+      },
+      {
+        "uri": "majordomus://issue/I4169",
+        "kind": "issue",
+        "identity": "I4169",
+        "title": "An intent carries an autonomy policy that names the effects a launch may take, and an effect outside it waits for the owner as a recorded awaiting-approval state",
+        "description": "The intent record (apps/majordomus-cli/src/intent.rs, share/kinds.yaml, share/schemas) gains an autonomy policy naming the effects a launch may take, such as open a pull request, merge, release or deploy; the execution engine (apps/majordomus-cli/src/execution) stops before an effect outside the policy and records awaiting_approval, shown by the CLI, the API and /ui.",
+        "path": ".ai/repo/project/issues/I4169.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2423
+      },
+      {
+        "uri": "majordomus://issue/I4170",
+        "kind": "issue",
+        "identity": "I4170",
+        "title": "Ready issues of an approved intent are scheduled to local and mesh workers under a declared bound on concurrent work, and a blocked or conflicting issue is never scheduled",
+        "description": "A scheduler reads the ready issues of an approved intent (apps/majordomus-cli/src/plan, src/intent_plan.rs) and assigns them through the lease of I3198 and I3199 to local and mesh workers (apps/majordomus-cli/src/mesh), keeping at most k running and queueing an issue whose scope conflicts or whose dependency is open, with a reason.",
+        "path": ".ai/repo/project/issues/I4170.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2203
+      },
+      {
+        "uri": "majordomus://issue/I4171",
+        "kind": "issue",
+        "identity": "I4171",
+        "title": "A running execution can be paused, resumed or cancelled by an authorised caller from CLI, MCP and /ui, and the transition is recorded",
+        "description": "apps/majordomus-cli/src/capability/builtin/executions.rs, which has executions.cancel, gains pause and resume, and the state machine in apps/majordomus-cli/src/execution/model.rs (ExecutionState::may_move_to) records each transition with its actor; the CLI, MCP and /ui offer the same capabilities to an authorised caller only.",
+        "path": ".ai/repo/project/issues/I4171.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2266
+      },
+      {
+        "uri": "majordomus://issue/I4172",
+        "kind": "issue",
+        "identity": "I4172",
+        "title": "One guarded scenario on this repository takes a small intent through merge, release and a served commit under an owner-recorded authorisation, and its recovery from a killed worker is shown",
+        "description": "A guarded scenario under test/cases takes one small intent of this repository from approval to a pull request, a merge, a release and a served commit under an authorisation the owner recorded, and kills the worker once to show recovery; a stage that cannot run records BLOCKED naming the stage instead of passing.",
+        "path": ".ai/repo/project/issues/I4172.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2050
+      },
+      {
+        "uri": "majordomus://issue/I4173",
+        "kind": "issue",
+        "identity": "I4173",
+        "title": "Execution log and event payloads rendered on /ui and /cockpit are escaped, and a hostile payload cannot run script or forge a link",
+        "description": "Execution events and logs rendered by apps/majordomus-cli/src/ui and apps/majordomus-cli/src/cockpit pass through the escaping of apps/majordomus-cli/src/web/html.rs (escape) or cockpit/html.rs (escape), and links built from a payload are generated from validated routes only.",
+        "path": ".ai/repo/project/issues/I4173.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2033
+      },
+      {
+        "uri": "majordomus://issue/I4174",
+        "kind": "issue",
+        "identity": "I4174",
+        "title": "A delivery move is offered on /ui/delivery only when policy admits it, runs through the existing capability with its stage and observed outcome shown, and a refused move names the policy",
+        "description": "apps/majordomus-cli/src/ui/delivery.rs (route /ui/delivery) offers a move such as open pull request, drain or release only when the policy admits it, runs it through the existing capability as an execution, and shows its stage and observed outcome; a refused move names the deciding policy.",
+        "path": ".ai/repo/project/issues/I4174.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2030
+      },
+      {
+        "uri": "majordomus://issue/I4175",
+        "kind": "issue",
+        "identity": "I4175",
+        "title": "Choosing Implement on an issue in /ui creates one authorised execution that a local worker runs in an isolated worktree, and a repeated click returns the same execution id",
+        "description": "An Implement action on an issue page (apps/majordomus-cli/src/ui/issues.rs) starts one authorised execution through apps/majordomus-cli/src/execution that a local worker runs in a worktree created by the worktree topology; an idempotency key derived from the issue and actor makes a double click, reload or retry return the same execution id, and with no worker enabled the page states the waiting reason.",
+        "path": ".ai/repo/project/issues/I4175.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2294
+      },
+      {
+        "uri": "majordomus://issue/I4176",
+        "kind": "issue",
+        "identity": "I4176",
+        "title": "A queued privileged ticket is re-authorised when a worker consumes it, and a transport acknowledgement is never recorded as completion",
+        "description": "The mesh handover and ticket consumption in apps/majordomus-cli/src/mesh re-checks the authorisation of a privileged ticket at the moment a worker consumes it, and records completion only from a result, never from a transport acknowledgement.",
+        "path": ".ai/repo/project/issues/I4176.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1899
+      },
+      {
+        "uri": "majordomus://issue/I4177",
+        "kind": "issue",
+        "identity": "I4177",
+        "title": "An outcome the system cannot confirm after a failure is recorded as unknown-outcome and reconciled against remote evidence before any retry of a non-idempotent step",
+        "description": "The execution engine (apps/majordomus-cli/src/execution) gains an unknown-outcome state for a step whose result could not be confirmed after a failure, and a retry of a non-idempotent step such as a merge first reads the forge (apps/majordomus-cli/src/integration) and makes no second effect when the first landed.",
+        "path": ".ai/repo/project/issues/I4177.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2079
+      },
+      {
+        "uri": "majordomus://issue/I4178",
+        "kind": "issue",
+        "identity": "I4178",
+        "title": "A task's effective profile resolves through one typed resolver that is byte-stable, names the source of every field and a content fingerprint, and can tighten but never weaken repository policy",
+        "description": "A typed resolver, read from the profile files in .ai/repo/profiles and the policy in .ai/repo/repo, produces a task's effective profile as byte-stable data with the source of every field and a content fingerprint, and refuses a profile that widens a hard policy. The module is new; the axis-to-limit mapping of I0201 to I0206 in share and lib is where it starts.",
+        "path": ".ai/repo/project/issues/I4178.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2404
+      },
+      {
+        "uri": "majordomus://issue/I4179",
+        "kind": "issue",
+        "identity": "I4179",
+        "title": "The effective profile's identity and fingerprint are recorded on the intent, task and execution it served, and a change of profile re-resolves under a new revision",
+        "description": "The fingerprint and identity from the resolver of I4178 are written onto the intent record, the task and the execution record (apps/majordomus-cli/src/intent.rs, src/execution/model.rs), shown by intent explain, and a profile or policy edit re-resolves under a new revision.",
+        "path": ".ai/repo/project/issues/I4179.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2082
+      },
+      {
+        "uri": "majordomus://issue/I4180",
+        "kind": "issue",
+        "identity": "I4180",
+        "title": "majordomus profile list, show, resolve and explain are declared capabilities",
+        "description": "Declare list, show, resolve and explain for profiles as capability! entries in a new apps/majordomus-cli/src/capability/builtin/profile.rs, so the CLI, HTTP API, OpenAPI and MCP carry them from one declaration. They read the profile files under .ai/repo/profiles and the resolver of I4178.",
+        "path": ".ai/repo/project/issues/I4180.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2463
+      },
+      {
+        "uri": "majordomus://issue/I4181",
+        "kind": "issue",
+        "identity": "I4181",
+        "title": "The UI shows a profile chooser that previews the effective constraints and where each came from",
+        "description": "Add a profile chooser to the launch screens in apps/majordomus-cli/src/ui (work.rs and idd.rs) that calls the profile capabilities of I4180, shows the effective constraints with their provenance and a diff against the current profile, and writes the choice as the record the CLI reads.",
+        "path": ".ai/repo/project/issues/I4181.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2080
+      },
+      {
+        "uri": "majordomus://issue/I4182",
+        "kind": "issue",
+        "identity": "I4182",
+        "title": "Every profile axis reads as requested, resolved, attempted, observed, verified, unobservable or denied",
+        "description": "Give each profile axis one state from requested, resolved, attempted, observed, verified, unobservable and denied, held in the execution record (apps/majordomus-cli/src/execution/model.rs) and set by the provider adapters (apps/majordomus-cli/src/providers.rs), so an axis the runtime cannot observe never reads verified.",
+        "path": ".ai/repo/project/issues/I4182.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2125
+      },
+      {
+        "uri": "majordomus://issue/I4183",
+        "kind": "issue",
+        "identity": "I4183",
+        "title": "A cold /ui answers its first paint within its budget, whatever its slowest source is doing",
+        "description": "Make bench --check record a fresh-process first request for each /ui screen and fail when the shell is answered later than its declared budget while one source stalls. The code is apps/majordomus-cli/src/bench (runner.rs, baseline.rs, results.rs) and the first answer of apps/majordomus-cli/src/ui/mod.rs.",
+        "path": ".ai/repo/project/issues/I4183.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2348
+      },
+      {
+        "uri": "majordomus://issue/I4184",
+        "kind": "issue",
+        "identity": "I4184",
+        "title": "The speculative warm-up never delays a reader's first request",
+        "description": "Bound the warm-up thread of Ui::warm_once (apps/majordomus-cli/src/ui/mod.rs, thread mj-ui-warm) and the capability readings it fills (apps/majordomus-cli/src/capability/readings.rs) so a user request is never queued behind it, with the warm worker count and queue bounded and reported through perf counters (apps/majordomus-cli/src/perf.rs).",
+        "path": ".ai/repo/project/issues/I4184.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2217
+      },
+      {
+        "uri": "majordomus://issue/I4185",
+        "kind": "issue",
+        "identity": "I4185",
+        "title": "A saturated server answers its probe at once and refuses excess work with a timely 503",
+        "description": "Keep the liveness probe off the handler pool that slow handlers and an asset burst saturate, and answer excess work with a 503 at once, counted in perf.counters. The code is apps/majordomus-cli/src/http/deadline.rs (refused_busy counts 503s today), apps/majordomus-cli/src/http/server.rs and apps/majordomus-cli/src/http/router.rs.",
+        "path": ".ai/repo/project/issues/I4185.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2211
+      },
+      {
+        "uri": "majordomus://issue/I4186",
+        "kind": "issue",
+        "identity": "I4186",
+        "title": "A reading is never served to another checkout, and a worktree switch reads again",
+        "description": "Key every cached reading (apps/majordomus-cli/src/capability/readings.rs) by repository root and revision, and show both in the reading's answer, so one server never answers for another checkout and a worktree switch reads again.",
+        "path": ".ai/repo/project/issues/I4186.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1951
+      },
+      {
+        "uri": "majordomus://issue/I4187",
+        "kind": "issue",
+        "identity": "I4187",
+        "title": "The UI's time cost grows no faster than its backlog",
+        "description": "Add a scale-slope benchmark under apps/majordomus-cli/src/bench that runs the UI screens over fixtures at 1x, 10x and 100x record counts, records the slope, and fails on superlinear growth.",
+        "path": ".ai/repo/project/issues/I4187.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1859
+      },
+      {
+        "uri": "majordomus://issue/I4188",
+        "kind": "issue",
+        "identity": "I4188",
+        "title": "A browser's first and largest paint of /ui and /cockpit is under a declared budget",
+        "description": "Make the browser audit scripts/ui record first and largest contentful paint for every discovered /ui and /cockpit route and make bench --check hold them to a declared budget. The audit script is scripts/ui; the budgets live with the benchmark records (apps/majordomus-cli/src/bench).",
+        "path": ".ai/repo/project/issues/I4188.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1959
+      },
+      {
+        "uri": "majordomus://issue/I4189",
+        "kind": "issue",
+        "identity": "I4189",
+        "title": "A headless model result is accepted only when its stream finished, its schema validated and its references resolve",
+        "description": "Gate acceptance of a headless provider's result in apps/majordomus-cli/src/providers.rs and apps/majordomus-cli/src/reasoning on three checks: the stream ended normally, the output validates against its schema, and every reference it names resolves; anything else is recorded as an explicit failed state.",
+        "path": ".ai/repo/project/issues/I4189.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2127
+      },
+      {
+        "uri": "majordomus://issue/I4190",
+        "kind": "issue",
+        "identity": "I4190",
+        "title": "One MCP response over a declared byte budget is bounded and says what it left out",
+        "description": "Bound the payload of the one MCP capability the pack names to a declared byte budget in apps/majordomus-cli/src/mcp (bridge.rs, surface.rs), with a statement of what was left out, and add a gate that fails when a measured payload exceeds it.",
+        "path": ".ai/repo/project/issues/I4190.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2120
+      },
+      {
+        "uri": "majordomus://issue/I4191",
+        "kind": "issue",
+        "identity": "I4191",
+        "title": "A Rust symbol lookup is answered by the installed language server when present, and says so when absent",
+        "description": "Add a symbol lookup that asks the installed Rust language server for a definition and reports unavailable when none is installed, in apps/majordomus-cli/src/devcontext (source ranges come from I3171). The module to host the language-server client must be chosen when the issue is started.",
+        "path": ".ai/repo/project/issues/I4191.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2101
+      },
+      {
+        "uri": "majordomus://issue/I4192",
+        "kind": "issue",
+        "identity": "I4192",
+        "title": "One structured microtask runs on a local model against a registered corpus and is accepted or refused on its score",
+        "description": "Run one structured microtask on a local model through the model catalogue (apps/majordomus-cli/src/models, share/models.yaml) against a registered corpus (apps/majordomus-cli/src/economics), record the model and corpus, and refuse the result when its score fails.",
+        "path": ".ai/repo/project/issues/I4192.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1951
+      },
+      {
+        "uri": "majordomus://issue/I4193",
+        "kind": "issue",
+        "identity": "I4193",
+        "title": "Every UI route, breadcrumb and entity link is generated from one typed route table",
+        "description": "Replace the hand-written paths of apps/majordomus-cli/src/ui (mod.rs, navbar.rs, view.rs) and apps/majordomus-cli/src/cockpit (nav.rs) with one typed route table that routes, breadcrumbs and entity links are generated from.",
+        "path": ".ai/repo/project/issues/I4193.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2011
+      },
+      {
+        "uri": "majordomus://issue/I4194",
+        "kind": "issue",
+        "identity": "I4194",
+        "title": "A UI document and asset answer a conditional request with 304, and a fill is computed once under concurrent load",
+        "description": "Give the /ui documents and assets the ETag and If-None-Match handling that apps/majordomus-cli/src/cockpit/assets.rs already has for the Cockpit's assets, and make a cold cache fill single-flight in apps/majordomus-cli/src/capability/readings.rs so concurrent requests call the source once.",
+        "path": ".ai/repo/project/issues/I4194.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2129
+      },
+      {
+        "uri": "majordomus://issue/I4195",
+        "kind": "issue",
+        "identity": "I4195",
+        "title": "The mesh page renders a bounded neighbourhood however large the mesh grows",
+        "description": "Render in apps/majordomus-cli/src/ui/mesh.rs only a bounded neighbourhood of the selected node, with the rest expanded on demand, so a mesh of 10 000 nodes opens with at most N browser nodes.",
+        "path": ".ai/repo/project/issues/I4195.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1764
+      },
+      {
+        "uri": "majordomus://issue/I4196",
+        "kind": "issue",
+        "identity": "I4196",
+        "title": "A change invalidates exactly the UI readings that depend on it, and an unrelated change keeps them warm",
+        "description": "Give each reading in apps/majordomus-cli/src/capability/readings.rs a dependency key naming the files and records it read, so a change invalidates the readings that depend on it and keeps the others warm.",
+        "path": ".ai/repo/project/issues/I4196.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1860
+      },
+      {
+        "uri": "majordomus://issue/I4197",
+        "kind": "issue",
+        "identity": "I4197",
+        "title": "A ported command behaves the same on names that are not UTF-8, hold a space or differ only in case",
+        "description": "Add a disposable-repository Rust integration case that runs one ported command over paths, arguments and environment values that are not UTF-8, hold a space or differ only in case, and asserts the shell original's exit code and output. The ported commands live in apps/majordomus-cli/src/automation and apps/majordomus-cli/src/script.",
+        "path": ".ai/repo/project/issues/I4197.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2065
+      },
+      {
+        "uri": "majordomus://issue/I4198",
+        "kind": "issue",
+        "identity": "I4198",
+        "title": "A Gigalixir deployment can be rolled back to its previous release, and the rollback is proven by the commit the hosted URL then serves",
+        "description": "Add a rollback of a Gigalixir deployment to its previous release to apps/majordomus-cli/src/deploy (mod.rs, observed.rs, render.rs), run from the provider workflow .github/workflows/provider.yml, and prove it by an external fetch of /api/v1/live that answers the previous release's commit.",
+        "path": ".ai/repo/project/issues/I4198.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2258
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -120758,7 +121180,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 350
+      "objects": 349
     },
     {
       "name": "domain",
@@ -120815,7 +121237,7 @@
       "identity": [
         "id"
       ],
-      "objects": 898
+      "objects": 937
     },
     {
       "name": "knowledge",

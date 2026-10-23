@@ -1,0 +1,38 @@
+{
+  "id": "contracts",
+  "title": "Canonical lifecycle",
+  "objective": "Intent, plan, issue and milestone canonical contracts",
+  "dependencies": [
+    "preflight"
+  ],
+  "inputs": [
+    "actual repository source",
+    "active .ai rules and ADRs",
+    "current tests and deployment evidence"
+  ],
+  "deliverables": [
+    "Intent, plan, issue and milestone canonical contracts",
+    "documented contract and source references",
+    "tests, governance review and evidence report"
+  ],
+  "acceptance": [
+    "reuse existing canonical sources whenever present",
+    "no second ungoverned behavior implementation",
+    "machine-testable proof of stated capability"
+  ],
+  "gates": [
+    "source-lineage",
+    "unit-integration-e2e",
+    "governance-mutation-test",
+    "derived-drift"
+  ],
+  "rollback": "Revert isolated slice or disable new capability behind existing feature gating without damaging persisted canonical state.",
+  "risk": "medium",
+  "surface": [
+    "CLI",
+    "MCP",
+    "API",
+    "UI",
+    "docs"
+  ]
+}

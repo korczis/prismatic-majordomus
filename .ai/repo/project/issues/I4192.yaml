@@ -1,0 +1,36 @@
+id: I4192
+milestone: an-inference-names-its-source-and-budget
+title: "One structured microtask runs on a local model against a registered corpus and is accepted or refused on its score"
+slug: local-microtask-scored
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Run one structured microtask on a local model through the model catalogue (apps/majordomus-cli/src/models, share/models.yaml) against a registered corpus (apps/majordomus-cli/src/economics), record the model and corpus, and refuse the result when its score fails."
+why: "The owner handed over an ask in campaigns/majordomus-native-acceleration-2026-10-22 (P08) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/models and economics exist; I3418 and I3423 are adjacent only."
+desired_state: "The run's records name the local model and the corpus, and a failing score yields a refusal."
+scope:
+  - "apps/majordomus-cli/src/models"
+  - "apps/majordomus-cli/src/economics"
+  - "share/models.yaml"
+  - "test/cases/4192_a_local_microtask_is_accepted_on_its_score.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4192.yaml"
+non_scope:
+  - "Training or fine-tuning a model"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "The run's records name the local model and the corpus"
+  - "A passing score is accepted"
+  - "A failing score yields a refusal"
+validation:
+  - "bash test/run.sh 4192_a_local_microtask_is_accepted_on_its_score"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+  - "majordomus plan validate"
+evidence_required:
+  - model_and_corpus_named
+  - pass_accepted
+  - fail_refused
+created_at: 2026-10-23
+updated_at: 2026-10-23

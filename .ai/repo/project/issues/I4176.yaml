@@ -1,0 +1,32 @@
+id: I4176
+milestone: mesh-peers-execute-assigned-work
+title: "A queued privileged ticket is re-authorised when a worker consumes it, and a transport acknowledgement is never recorded as completion"
+slug: a-ticket-is-reauthorised-at-consume
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The mesh handover and ticket consumption in apps/majordomus-cli/src/mesh re-checks the authorisation of a privileged ticket at the moment a worker consumes it, and records completion only from a result, never from a transport acknowledgement."
+why: "The ask is in campaigns/majordomus-mission-control-pack-2026-10-22 ( on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/mesh exists and declares mesh_handover_consume among its capabilities; no record states re-authorisation at consume."
+desired_state: "A revoked authorisation stops a queued ticket, and an acknowledged ticket without a result stays unverified."
+scope:
+  - ".ai/repo/project/issues/I4176.yaml"
+  - "apps/majordomus-cli/src/mesh"
+  - "test/cases/4176_a_ticket_is_reauthorised_at_consume.sh"
+  - "docs"
+non_scope:
+  - "Issuing authorisations"
+  - "Transport encryption"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "An authorisation revoked between queue and consume refuses the ticket"
+  - "An acknowledgement with no result leaves the issue unverified"
+validation:
+  - "bash test/run.sh 4176_a_ticket_is_reauthorised_at_consume"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::"
+evidence_required:
+  - "revoked_ticket_refused"
+  - "ack_not_completion"
+created_at: 2026-10-23
+updated_at: 2026-10-23

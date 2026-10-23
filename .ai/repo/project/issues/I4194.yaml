@@ -1,0 +1,37 @@
+id: I4194
+milestone: development-runtime
+title: "A UI document and asset answer a conditional request with 304, and a fill is computed once under concurrent load"
+slug: ui-conditional-requests
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Give the /ui documents and assets the ETag and If-None-Match handling that apps/majordomus-cli/src/cockpit/assets.rs already has for the Cockpit's assets, and make a cold cache fill single-flight in apps/majordomus-cli/src/capability/readings.rs so concurrent requests call the source once."
+why: "The owner handed over an ask in campaigns/majordomus-ui-speed-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: cockpit/assets.rs implements If-None-Match for the Cockpit's assets; no ETag handling was found in apps/majordomus-cli/src/ui; I2486 and I3442 cover readings, not conditional HTTP or single-flight."
+desired_state: "A repeated ETag gets 304 for a UI document and asset, and 100 concurrent cold requests call the source once."
+scope:
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit/assets.rs"
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/http"
+  - "test/cases/4194_ui_answers_a_conditional_request_with_304.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4194.yaml"
+non_scope:
+  - "Dependency-keyed invalidation, which is I4196"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A repeated If-None-Match with the current ETag gets 304 for a UI document and for an asset"
+  - "100 concurrent cold requests call the source once"
+  - "A changed document gets a new ETag"
+validation:
+  - "bash test/run.sh 4194_ui_answers_a_conditional_request_with_304"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "majordomus bench --check"
+evidence_required:
+  - etag_304_observed
+  - single_flight_fill
+  - changed_gets_new_etag
+created_at: 2026-10-23
+updated_at: 2026-10-23
