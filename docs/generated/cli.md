@@ -177,6 +177,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this runtime asked for, with its result |
 | [`majordomus mesh build-cache`](#majordomus-mesh-build-cache) | `/docs/cli/mesh/build-cache/` | The mesh build cache: what each dependency install and build directory is cached under |
 | [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key) | `/docs/cli/mesh/build-cache/key/` | Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest |
+| [`majordomus mesh build-cache provision`](#majordomus-mesh-build-cache-provision) | `/docs/cli/mesh/build-cache/provision/` | Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported |
 | [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
@@ -5043,7 +5044,7 @@ Examples:
 
 The mesh build cache: what each dependency install and build directory is cached under
 
-Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key).
+Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key), [`majordomus mesh build-cache provision`](#majordomus-mesh-build-cache-provision).
 
 ```text
 majordomus mesh build-cache <COMMAND>
@@ -5078,6 +5079,36 @@ Examples:
   ```
 
   Verified: exits 0; prints platform.
+
+<a id="majordomus-mesh-build-cache-provision"></a>
+## `majordomus mesh build-cache provision`
+
+Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported
+
+```text
+majordomus mesh build-cache provision [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--dry-run` | flag | — | Only plan (the default) |
+| `--apply` | flag | — | Carry the plan out; needs root on the real root |
+| `--root` | `<ROOT>` | — | Read and write the host's paths under this directory instead of `/` |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What this host still owes as a mesh build cache provider** — The plan of the provider's host layer against what this machine holds: the disk guard and its timer, the always-restart service drop-ins, the bounded journal and container log, the identity and credential of every node and the rustc wrapper, each file marked missing, different, wrong mode or current, and the commands an apply would run. It plans only and names no secret; `--apply` as root brings the host to it, and a second apply changes nothing.
+
+  ```console
+  $ majordomus mesh build-cache provision --dry-run
+  ```
+
+  Verified: exits 0; prints disk-guard, plan.
 
 <a id="majordomus-monitor"></a>
 ## `majordomus monitor`

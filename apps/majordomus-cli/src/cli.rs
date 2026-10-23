@@ -767,7 +767,7 @@ pub enum MeshCommand {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
 /// let cache: MeshBuildCacheArgs = cache;
-/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
 /// assert_eq!(key.kind, Some(Kind::NpmModules));
 /// ```
 pub struct MeshBuildCacheArgs {
@@ -778,7 +778,8 @@ pub struct MeshBuildCacheArgs {
 
 #[derive(Debug, Subcommand)]
 /// The `mesh build-cache` subcommands: each reads this repository and this machine, and none
-/// of them writes anything; `key` names what every tracked lockfile is cached under.
+/// of them but `provision --apply` writes anything; `key` names what every tracked lockfile is
+/// cached under, and `provision` plans (and, as root, applies) a cache provider's host layer.
 ///
 /// ```
 /// use clap::Parser;
@@ -792,6 +793,8 @@ pub struct MeshBuildCacheArgs {
 pub enum MeshBuildCacheCommand {
     /// Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest
     Key(MeshBuildCacheKeyArgs),
+    /// Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported
+    Provision(MeshProvisionArgs),
 }
 
 #[derive(Debug, Args)]
@@ -804,7 +807,7 @@ pub enum MeshBuildCacheCommand {
 /// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--format", "json"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
-/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
 /// let key: MeshBuildCacheKeyArgs = key;
 /// assert_eq!(key.kind, None);
 /// ```
@@ -897,6 +900,39 @@ pub struct MeshFirewallApplyArgs {
     #[arg(long)]
     /// The port this checkout's server listens on beyond loopback, when it does
     pub port: Option<u16>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache provision`: a plan by default (`--dry-run` says so explicitly), `--apply`
+/// to carry it out. `--root` is a staging directory for the host's paths: files only, no
+/// privilege, no command.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshCommand, MeshProvisionArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "provision", "--apply", "--root", "/tmp/x"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Provision(p) = cache.command else { panic!("expected `provision`") };
+/// let p: MeshProvisionArgs = p;
+/// assert!(p.apply && p.root.as_deref() == Some("/tmp/x"));
+/// // planning and applying are not both asked for
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "build-cache", "provision", "--apply", "--dry-run"]).is_err());
+/// ```
+pub struct MeshProvisionArgs {
+    #[arg(long, conflicts_with = "apply")]
+    /// Only plan (the default)
+    pub dry_run: bool,
+    #[arg(long)]
+    /// Carry the plan out; needs root on the real root
+    pub apply: bool,
+    #[arg(long)]
+    /// Read and write the host's paths under this directory instead of `/`
+    pub root: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -7460,6 +7496,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "firewall", "apply"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache provision",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-provision",
+            title: "What this host still owes as a mesh build cache provider",
+            description: "The plan of the provider's host layer against what this machine holds: the disk guard and its timer, the always-restart service drop-ins, the bounded journal and container log, the identity and credential of every node and the rustc wrapper, each file marked missing, different, wrong mode or current, and the commands an apply would run. It plans only and names no secret; `--apply` as root brings the host to it, and a second apply changes nothing.",
+            argv: &["mesh", "build-cache", "provision", "--dry-run"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["disk-guard", "plan"]),
         }],
     },
     CommandExamples {

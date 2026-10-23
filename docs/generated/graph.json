@@ -1006,6 +1006,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.build_cache.provision",
+        "kind": "capability",
+        "label": "mesh.build_cache.provision",
+        "summary": "Provision this node as a mesh build cache provider",
+        "route": "/cockpit/capabilities/mesh.build_cache.provision",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.claim",
         "kind": "capability",
         "label": "mesh.claim",
@@ -87099,6 +87108,13 @@
         "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "kind": "test",
+        "label": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "route": "/cockpit/objects/test/test-cases-3956-a-node-is-provisioned-as-a-cache-provider-sh",
+        "source": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -93091,6 +93107,16 @@
       {
         "source": "capability:mesh.build_cache.key",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.provision",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.provision",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -129899,6 +129925,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134485,6 +134516,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.build_cache.provision",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.claim",
         "kind": "composes"
       },
@@ -135010,8 +135046,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3782,
-      "edges": 8751,
+      "nodes": 3784,
+      "edges": 8755,
       "acyclic": false,
       "truncated": false
     }

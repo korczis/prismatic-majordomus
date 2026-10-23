@@ -32,6 +32,7 @@
 
 pub mod artifacts;
 pub(crate) mod brief;
+pub(crate) mod cache_provision;
 pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;

@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+# disk-guard: keeps the build host's root filesystem off the cliff. Run by disk-guard.timer.
+#
+# This host builds and deploys for the whole mesh. At zero free bytes nothing runs, not even
+# the command that would free space, so the guard acts long before that, by tiers of free
+# space on /:
+#
+#   always  runner containers stopped for an hour, dangling images, the builder cache over
+#           BUILDER_KEEP, runner volumes over RUNNER_VOLUME_CAP_GIB (unused ones, largest
+#           first), and cargo build output nobody wrote for STALE_MIN minutes;
+#   soft    below SOFT_GIB: cargo build output idle for IDLE_MIN, every unused runner volume;
+#   hard    below HARD_GIB: the ballast is released first, then cargo build output idle for
+#           HARD_IDLE_MIN, the shared build directories, every unused image, the journal.
+#
+# Build output is a directory whose CACHEDIR.TAG says cargo created it, outside cargo's
+# registry and git checkouts. Nothing else under a home is touched: no source, worktree,
+# .git, virtualenv, registry or toolchain. A directory with an open file, or a write inside
+# its idle window, is skipped; a check that cannot tell (lsof timed out) also skips.
+#
+# The ballast is a file of BALLAST_GIB kept while space is plentiful and released at the hard
+# floor, so the host always has room for the commands that recover it.
+#
+# Settings are overridable in /etc/prismatic/disk-guard.conf. Every action is a journal line;
+# the last run is summarised in $STATE. DRY_RUN=1 changes nothing.
+set -uo pipefail
+
+: "${SOFT_GIB:=80}"
+: "${HARD_GIB:=30}"
+: "${STALE_MIN:=1440}"
+: "${IDLE_MIN:=120}"
+: "${HARD_IDLE_MIN:=20}"
+: "${SCAN_EVERY_MIN:=60}"
+: "${BALLAST:=/var/lib/prismatic/ballast}"
+: "${BALLAST_GIB:=8}"
+: "${RUNNER_VOLUME_CAP_GIB:=60}"
+: "${BUILDER_KEEP:=20GB}"
+HOMES=(/home/korczis)
+: "${STATE:=/var/lib/prismatic/disk-guard.json}"
+: "${SCAN_STAMP:=/var/lib/prismatic/disk-guard.scan}"
+# shellcheck source=/dev/null
+[ -r /etc/prismatic/disk-guard.conf ] && . /etc/prismatic/disk-guard.conf
+
+exec 9>/run/disk-guard.lock
+flock -n 9 || { echo "another run holds the lock"; exit 0; }
+mkdir -p "$(dirname "$STATE")"
+
+actions=()
+note() { echo "$1${DRY_RUN:+(dry) }$2"; actions+=("$2"); }
+info() { note '<6>' "$1"; }
+warn() { note '<4>' "$1"; }
+# DRY_RUN=1 reports what would be done and changes nothing.
+act() { if [ -n "${DRY_RUN:-}" ]; then echo "would: $*"; else "$@"; fi; }
+free_gib() { df -BG --output=avail / | tail -1 | tr -dc '0-9'; }
+size_gib() { du -sxBG "$1" 2>/dev/null | cut -f1 | tr -dc '0-9'; }
+
+# Idle: nothing written within $2 minutes and no process holding a file open. lsof exits 1
+# when it finds nothing; 0 (open files) and 124 (could not tell) both mean "not idle".
+idle() {
+  [ -d "$1" ] || return 1
+  [ -z "$(find "$1" -mmin "-$2" -print -quit 2>/dev/null)" ] || return 1
+  timeout 120 lsof -t +D "$1" >/dev/null 2>&1
+  [ $? -eq 1 ]
+}
+
+# Every cargo build directory under the homes, outermost first.
+cargo_dirs() {
+  local h
+  for h in "${HOMES[@]}"; do
+    find "$h/dev" "$h/.cache" "$h/.cargo/build-private" "$h/offload" -maxdepth 9 \
+      \( -name .git -o -name node_modules -o -name .venv -o -path "$h/.cargo/registry" \
+         -o -path "$h/.cargo/git" -o -path "$h/.cache/sccache" \) -prune \
+      -o -name CACHEDIR.TAG -print 2>/dev/null
+  done | while read -r tag; do
+    grep -q 'created by cargo' "$tag" 2>/dev/null && dirname "$tag"
+  done | sort -u
+}
+
+reclaim_cargo() {
+  local minutes=$1 dir size
+  while read -r dir; do
+    [ -d "$dir" ] || continue
+    idle "$dir" "$minutes" || continue
+    size=$(size_gib "$dir")
+    act rm -rf --one-file-system -- "$dir" && info "removed cargo output idle >${minutes}m: $dir (${size}G)"
+  done < <(cargo_dirs)
+}
+
+runner_volumes_unused() {
+  local v
+  for v in $(docker volume ls -q --filter name=^runner- 2>/dev/null); do
+    [ -z "$(docker ps -aq --filter "volume=$v" 2>/dev/null)" ] || continue
+    printf '%s %s\n' "$(du -sxB1 "/var/lib/docker/volumes/$v/_data" 2>/dev/null | cut -f1)" "$v"
+  done | sort -rn
+}
+
+runner_volumes_total_gib() {
+  local v total=0 s
+  for v in $(docker volume ls -q --filter name=^runner- 2>/dev/null); do
+    s=$(du -sxB1 "/var/lib/docker/volumes/$v/_data" 2>/dev/null | cut -f1)
+    total=$((total + ${s:-0}))
+  done
+  echo $((total / 1073741824))
+}
+
+reclaim_runner_volumes() {
+  local cap=$1 total bytes v
+  total=$(runner_volumes_total_gib)
+  [ "$total" -gt "$cap" ] || return 0
+  while read -r bytes v; do
+    [ -n "$v" ] || continue
+    act docker volume rm "$v" >/dev/null 2>&1 && info "removed runner volume $v ($((bytes / 1073741824))G)"
+    total=$((total - bytes / 1073741824))
+    [ "$total" -gt "$cap" ] || break
+  done < <(runner_volumes_unused)
+}
+
+before=$(free_gib)
+tier=always
+
+# Always: containers and images that nothing will run again.
+if command -v docker >/dev/null && docker info >/dev/null 2>&1; then
+  act docker container prune -f --filter until=1h \
+    --filter label=com.gitlab.gitlab-runner.managed=true >/dev/null 2>&1
+  act docker image prune -f >/dev/null 2>&1
+  act docker builder prune -f --keep-storage "$BUILDER_KEEP" >/dev/null 2>&1
+  reclaim_runner_volumes "$RUNNER_VOLUME_CAP_GIB"
+fi
+
+# Always, at most once per SCAN_EVERY_MIN: cargo output abandoned for a day.
+if [ -z "$(find "$SCAN_STAMP" -mmin "-$SCAN_EVERY_MIN" 2>/dev/null)" ]; then
+  reclaim_cargo "$STALE_MIN"
+  act touch "$SCAN_STAMP"
+fi
+
+if [ "$(free_gib)" -lt "$SOFT_GIB" ]; then
+  tier=soft
+  warn "free $(free_gib)G is below the soft floor ${SOFT_GIB}G"
+  reclaim_runner_volumes 0
+  reclaim_cargo "$IDLE_MIN"
+fi
+
+if [ "$(free_gib)" -lt "$HARD_GIB" ]; then
+  tier=hard
+  warn "free $(free_gib)G is below the hard floor ${HARD_GIB}G"
+  [ -f "$BALLAST" ] && act rm -f "$BALLAST" && warn "released the ${BALLAST_GIB}G ballast"
+  reclaim_cargo "$HARD_IDLE_MIN"
+  for h in "${HOMES[@]}"; do
+    for d in "$h"/.cargo/build-shared/*; do
+      idle "$d" "$HARD_IDLE_MIN" && act rm -rf --one-file-system -- "$d" \
+        && warn "removed shared build directory $d"
+    done
+  done
+  act docker image prune -af >/dev/null 2>&1 && info "removed every unused image"
+  act journalctl --vacuum-size=200M >/dev/null 2>&1
+fi
+
+# The ballast comes back once there is room for it above the soft floor.
+if [ ! -f "$BALLAST" ] && [ "$(free_gib)" -gt $((SOFT_GIB + BALLAST_GIB)) ]; then
+  act fallocate -l "${BALLAST_GIB}G" "$BALLAST" && act chmod 0400 "$BALLAST" \
+    && info "ballast of ${BALLAST_GIB}G in place"
+fi
+
+after=$(free_gib)
+[ "$after" -lt "$HARD_GIB" ] && warn "still below the hard floor after reclaiming: ${after}G free"
+
+{
+  printf '{"at":"%s","tier":"%s","free_gib_before":%s,"free_gib_after":%s,' \
+    "$(date -u +%FT%TZ)" "$tier" "$before" "$after"
+  printf '"soft_gib":%s,"hard_gib":%s,"ballast":%s,"actions":[' \
+    "$SOFT_GIB" "$HARD_GIB" "$([ -f "$BALLAST" ] && echo true || echo false)"
+  sep=
+  for a in "${actions[@]+"${actions[@]}"}"; do
+    printf '%s"%s"' "$sep" "${a//\"/\\\"}"
+    sep=,
+  done
+  printf ']}\n'
+} > "$STATE.tmp" && act mv -f "$STATE.tmp" "$STATE"
+echo "tier=$tier free ${before}G -> ${after}G, ${#actions[@]} action(s)"

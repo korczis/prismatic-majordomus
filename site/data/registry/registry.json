@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "b4b45b65b970f7fde163883bfddf9291927eda25e711607613850ea24cea3c21",
+    "fingerprint": "f90450c0ad5ebd7fe4884c5eda800ffb8a59edc13a4dd540a2ba1bdbd43c4b77",
     "summary": {
-      "total": 3328,
-      "builtin": 209,
-      "declarative": 3119,
+      "total": 3330,
+      "builtin": 210,
+      "declarative": 3120,
       "by_kind": {
-        "command": 32,
+        "command": 33,
         "query": 177,
-        "resource": 3119
+        "resource": 3120
       },
       "by_stability": {
         "behaviorally_verified": 143,
-        "experimental": 56,
-        "implemented": 3129
+        "experimental": 57,
+        "implemented": 3130
       },
       "mcp_tools": 198,
-      "mcp_resources": 3174,
+      "mcp_resources": 3175,
       "http_routes": 203,
-      "cli_commands": 113,
+      "cli_commands": 114,
       "modules": 92,
       "benchmark_required": 175,
-      "benchmark_waived": 34,
+      "benchmark_waived": 35,
       "cached": 54
     },
     "builtin": [
@@ -45451,6 +45451,472 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
       {
+        "id": "mesh.build_cache.provision",
+        "module": "mesh",
+        "kind": "command",
+        "title": "Provision this node as a mesh build cache provider",
+        "description": "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.",
+        "input": {
+          "name": "ProvisionInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "apply": {
+                "type": "boolean",
+                "description": "Carry the plan out. Absent, the capability only plans and changes nothing. Under the\ndefault root `/` it needs root and refuses without it.",
+                "default": false
+              },
+              "root": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The directory the host's paths are read from and written under; default `/`. Any other\nroot is a staging directory: files only, no privilege, no command."
+              }
+            },
+            "description": "The input of `mesh.build_cache.provision`.",
+            "title": "ProvisionInput"
+          }
+        },
+        "output": {
+          "name": "ProvisionReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "description": "`plan` or `apply`."
+              },
+              "root": {
+                "type": "string",
+                "description": "The root read."
+              },
+              "policy": {
+                "$ref": "#/$defs/Policy",
+                "description": "The policy in force: declared, not a secret."
+              },
+              "plan": {
+                "$ref": "#/$defs/Plan",
+                "description": "What the host owed when asked."
+              },
+              "apply": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ApplyReport"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "What the apply did; absent for a plan."
+              },
+              "ok": {
+                "type": "boolean",
+                "description": "A plan always holds; an apply holds when nothing failed and nothing is owed after it."
+              }
+            },
+            "required": [
+              "mode",
+              "root",
+              "policy",
+              "plan",
+              "ok"
+            ],
+            "description": "The answer: the plan against the host as observed, and the apply's report when asked.",
+            "title": "ProvisionReport",
+            "$defs": {
+              "Policy": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "user": {
+                    "type": "string",
+                    "description": "The user whose builds use the cache on this host."
+                  },
+                  "home": {
+                    "type": "string",
+                    "description": "That user's home directory."
+                  },
+                  "alias": {
+                    "type": "string",
+                    "description": "The `mc` alias of the store."
+                  },
+                  "tailnet_address": {
+                    "type": "string",
+                    "description": "The address other nodes reach the store at."
+                  },
+                  "port": {
+                    "type": "integer",
+                    "format": "uint16",
+                    "minimum": 0,
+                    "maximum": 65535,
+                    "description": "The store's port."
+                  },
+                  "bucket": {
+                    "type": "string",
+                    "description": "The cache bucket."
+                  },
+                  "region": {
+                    "type": "string",
+                    "description": "The region sccache signs for."
+                  },
+                  "expire_days": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Days after which an entry expires."
+                  },
+                  "bucket_quota_gib": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The cache bucket's hard quota, in GiB."
+                  },
+                  "gitlab_bucket": {
+                    "type": "string",
+                    "description": "The CI cache bucket this host already serves, bounded the same way."
+                  },
+                  "gitlab_quota_gib": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its quota, in GiB."
+                  },
+                  "policy_name": {
+                    "type": "string",
+                    "description": "The name of the least-privilege policy every node identity carries."
+                  },
+                  "local_node": {
+                    "type": "string",
+                    "description": "The node this host is: its builds use the loopback endpoint."
+                  },
+                  "nodes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Every node that receives an identity."
+                  },
+                  "critical_services": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The services that restart always and are the last the OOM killer takes."
+                  }
+                },
+                "required": [
+                  "user",
+                  "home",
+                  "alias",
+                  "tailnet_address",
+                  "port",
+                  "bucket",
+                  "region",
+                  "expire_days",
+                  "bucket_quota_gib",
+                  "gitlab_bucket",
+                  "gitlab_quota_gib",
+                  "policy_name",
+                  "local_node",
+                  "nodes",
+                  "critical_services"
+                ],
+                "description": "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
+              },
+              "Plan": {
+                "type": "object",
+                "properties": {
+                  "files": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FileAction"
+                    },
+                    "description": "Every file the policy owns."
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/EditAction"
+                    },
+                    "description": "The line edits."
+                  },
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Step"
+                    },
+                    "description": "The commands, in the order they run."
+                  },
+                  "changes": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many files are missing, different or of the wrong mode, plus edits owed."
+                  },
+                  "unobservable": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many files this process could not observe."
+                  }
+                },
+                "required": [
+                  "files",
+                  "edits",
+                  "steps",
+                  "changes",
+                  "unobservable"
+                ],
+                "description": "The plan: every file, edit and command the host still owes."
+              },
+              "FileAction": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path on the host."
+                  },
+                  "mode": {
+                    "type": "string",
+                    "description": "The mode it must have, in octal."
+                  },
+                  "owner": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The owner it must have, when not root."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Where its content comes from: `declared`, `generated` or `copy:<path>`. Never the content."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/FileState",
+                    "description": "Where it stands."
+                  }
+                },
+                "required": [
+                  "path",
+                  "mode",
+                  "source",
+                  "state"
+                ],
+                "description": "One file of the plan."
+              },
+              "FileState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "missing",
+                    "description": "Absent."
+                  },
+                  {
+                    "type": "string",
+                    "const": "different",
+                    "description": "Present with other content."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mode",
+                    "description": "Right content, wrong mode."
+                  },
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "As wanted."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unobservable",
+                    "description": "Could not be observed by this process; apply as root decides."
+                  }
+                ],
+                "description": "Where a file stands against what the policy wants."
+              },
+              "EditAction": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The file edited."
+                  },
+                  "from": {
+                    "type": "string",
+                    "description": "The line replaced."
+                  },
+                  "to": {
+                    "type": "string",
+                    "description": "The line it becomes."
+                  },
+                  "owed": {
+                    "type": "boolean",
+                    "description": "The edit is still owed."
+                  }
+                },
+                "required": [
+                  "path",
+                  "from",
+                  "to",
+                  "owed"
+                ],
+                "description": "A line edit the plan owes: the cargo config of the build user."
+              },
+              "Step": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "A stable name."
+                  },
+                  "line": {
+                    "type": "string",
+                    "description": "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+                  },
+                  "when": {
+                    "type": "string",
+                    "description": "Run only when a file of the named group changed (`systemd`, `journald`, `docker`), or always."
+                  }
+                },
+                "required": [
+                  "id",
+                  "line",
+                  "when"
+                ],
+                "description": "A command the apply runs once the files are in place, as root."
+              },
+              "ApplyReport": {
+                "type": "object",
+                "properties": {
+                  "ok": {
+                    "type": "boolean",
+                    "description": "Nothing failed and nothing was refused."
+                  },
+                  "refused": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why nothing was done, when it was refused."
+                  },
+                  "root": {
+                    "type": "string",
+                    "description": "The root the files were written under."
+                  },
+                  "written": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Paths written or corrected, never their content."
+                  },
+                  "generated": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Paths of credentials this run generated."
+                  },
+                  "ran": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Ran"
+                    },
+                    "description": "The command lines that ran, each with its outcome."
+                  },
+                  "skipped": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Commands that did not run, and why."
+                  },
+                  "after": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/Plan"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The plan after the apply: `changes` is 0 when the host now holds the policy."
+                  }
+                },
+                "required": [
+                  "ok",
+                  "root",
+                  "written",
+                  "generated",
+                  "ran",
+                  "skipped"
+                ],
+                "description": "What an apply did."
+              },
+              "Ran": {
+                "type": "object",
+                "properties": {
+                  "line": {
+                    "type": "string",
+                    "description": "The line, with a secret as a placeholder."
+                  },
+                  "ok": {
+                    "type": "boolean",
+                    "description": "It exited zero."
+                  },
+                  "output": {
+                    "type": "string",
+                    "description": "Its output when it failed (a secret removed)."
+                  }
+                },
+                "required": [
+                  "line",
+                  "ok",
+                  "output"
+                ],
+                "description": "One command that ran."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "cli": {
+            "path": [
+              "mesh",
+              "build-cache",
+              "provision"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "developer",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "build-cache",
+          "provisioning"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
         "id": "mesh.claim",
         "module": "mesh",
         "kind": "command",
@@ -86497,9 +86963,10 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 25,
+        "capabilities": 26,
         "capability_ids": [
           "mesh.build_cache.key",
+          "mesh.build_cache.provision",
           "mesh.claim",
           "mesh.cooperation",
           "mesh.doctor",
@@ -86999,7 +87466,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 603,
+        "capabilities": 604,
         "capability_ids": []
       },
       {
@@ -87091,7 +87558,7 @@
     ]
   },
   "index": {
-    "fingerprint": "87286ba4af065056b220e161d970417483416320e55f58cacd323ebd41194b0c",
+    "fingerprint": "a9220be69d68b44cdcd4272036cacbd65d3df377970711717ed3c7126289a786",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87145,7 +87612,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 603,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },
@@ -118489,6 +118956,14 @@
         "bytes": 6520
       },
       {
+        "uri": "majordomus://test/test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "kind": "test",
+        "identity": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "path": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "source_class": "case",
+        "bytes": 6668
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -121325,7 +121800,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 603
+      "objects": 604
     },
     {
       "name": "use-case",
@@ -144122,6 +144597,161 @@
                     "command": "majordomus mesh build-cache key --kind mix-deps",
                     "setup": [],
                     "expectation": "exits 0; prints platform"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "mesh",
+                  "build-cache",
+                  "provision"
+                ],
+                "route": "/docs/cli/mesh/build-cache/provision/",
+                "executable": true,
+                "usage": "majordomus mesh build-cache provision [OPTIONS]",
+                "about": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
+                "args": [
+                  {
+                    "name": "dry_run",
+                    "long": "dry-run",
+                    "positional": false,
+                    "help": "Only plan (the default)",
+                    "value_name": "DRY_RUN",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "apply",
+                    "long": "apply",
+                    "positional": false,
+                    "help": "Carry the plan out; needs root on the real root",
+                    "value_name": "APPLY",
+                    "takes_value": false,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "root",
+                    "long": "root",
+                    "positional": false,
+                    "help": "Read and write the host's paths under this directory instead of `/`",
+                    "value_name": "ROOT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "`text` for a person, `json` for a machine; both render the same answer",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "mesh-build-cache-provision",
+                    "title": "What this host still owes as a mesh build cache provider",
+                    "description": "The plan of the provider's host layer against what this machine holds: the disk guard and its timer, the always-restart service drop-ins, the bounded journal and container log, the identity and credential of every node and the rustc wrapper, each file marked missing, different, wrong mode or current, and the commands an apply would run. It plans only and names no secret; `--apply` as root brings the host to it, and a second apply changes nothing.",
+                    "argv": [
+                      "mesh",
+                      "build-cache",
+                      "provision",
+                      "--dry-run"
+                    ],
+                    "command": "majordomus mesh build-cache provision --dry-run",
+                    "setup": [],
+                    "expectation": "exits 0; prints disk-guard, plan"
                   }
                 ],
                 "subcommands": []
@@ -169161,6 +169791,14 @@
           "reason": "external_dependency"
         },
         {
+          "subject": "mesh.build_cache.provision",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
           "subject": "mesh.claim",
           "module": "mesh",
           "transport": "direct",
@@ -171458,10 +172096,10 @@
       ],
       "tallies": {
         "direct": {
-          "required": 209,
+          "required": 210,
           "covered": 175,
           "missing": 0,
-          "waived": 34,
+          "waived": 35,
           "inapplicable": 0
         },
         "http": {
@@ -171486,10 +172124,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 624,
+          "required": 625,
           "covered": 535,
           "missing": 0,
-          "waived": 89,
+          "waived": 90,
           "inapplicable": 0
         }
       }

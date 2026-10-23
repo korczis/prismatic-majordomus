@@ -56,6 +56,13 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 render_build_cache_key,
                 never,
             ),
+            MeshBuildCacheCommand::Provision(x) => in_process(
+                x.query,
+                &["mesh", "build-cache", "provision"],
+                json!({ "apply": x.apply, "root": x.root }),
+                render_provision,
+                not_ok,
+            ),
         },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
@@ -747,6 +754,72 @@ fn render_firewall(v: &Value) -> String {
         }
     }
     out.push_str(&format!("verdict     {}", s(v, "verdict")));
+    out
+}
+
+fn render_provision(v: &Value) -> String {
+    let mut out = format!(
+        "mode        {}\nroot        {}\n",
+        s(v, "mode"),
+        s(v, "root")
+    );
+    for f in v["plan"]["files"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {} {} ({})\n",
+            s(f, "state"),
+            s(f, "mode"),
+            s(f, "path"),
+            s(f, "source")
+        ));
+    }
+    for e in v["plan"]["edits"].as_array().into_iter().flatten() {
+        out.push_str(&format!(
+            "{:<13} {}\n",
+            if e["owed"] == json!(true) {
+                "edit"
+            } else {
+                "current"
+            },
+            s(e, "path")
+        ));
+    }
+    for st in v["plan"]["steps"].as_array().into_iter().flatten() {
+        out.push_str(&format!("step ({})  {}\n", s(st, "when"), s(st, "line")));
+    }
+    out.push_str(&format!(
+        "plan        {} change(s) owed, {} not observable here\n",
+        v["plan"]["changes"], v["plan"]["unobservable"]
+    ));
+    if let Some(a) = v.get("apply").filter(|a| a.is_object()) {
+        if let Some(r) = a["refused"].as_str() {
+            out.push_str(&format!("refused     {r}\n"));
+        }
+        for p in a["written"].as_array().into_iter().flatten() {
+            out.push_str(&format!("written     {}\n", p.as_str().unwrap_or("")));
+        }
+        for r in a["ran"].as_array().into_iter().flatten() {
+            out.push_str(&format!(
+                "{}  {}\n",
+                if r["ok"] == json!(true) {
+                    "ok  "
+                } else {
+                    "FAIL"
+                },
+                s(r, "line")
+            ));
+        }
+        for k in a["skipped"].as_array().into_iter().flatten() {
+            out.push_str(&format!("skipped     {}\n", k.as_str().unwrap_or("")));
+        }
+    }
+    out.push_str(&format!(
+        "verdict     {}",
+        if v["ok"] == json!(true) {
+            "ok"
+        } else {
+            "not provisioned (see above)"
+        }
+    ));
     out
 }
 

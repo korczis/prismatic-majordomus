@@ -1,0 +1,50 @@
+#!/bin/sh
+# sccache-mesh: the rustc wrapper of a mesh node. sccache with this node's disk as the first
+# level and the mesh build cache (S3 on the build host) as the second (ADR 0157).
+#
+# sccache fixes its chain when its server starts, and refuses to start when an S3 level does
+# not answer then. So the second level is handed to a starting server only when the store
+# answered a health probe within the last minute; otherwise the build runs on the local level
+# alone, exactly as before. A server already running ignores all of this.
+#
+# Keys are prefixed with the host's target triple: nodes of one triple share every entry, and
+# no node pays for lookups of entries it could never use.
+#
+# SCCACHE_MESH_OFF=1 disables the second level. ~/.config/mesh-build-cache/env holds the
+# endpoint and bucket (no secret); ~/.config/mesh-build-cache/credentials (mode 0600, AWS
+# format, profile mesh-build-cache) holds this node's own key. Only the credentials file's
+# path is exported, never the key: an exported secret is readable in every compiler's
+# environment (`ps eww`, /proc/<pid>/environ) and in every build script.
+conf=${XDG_CONFIG_HOME:-$HOME/.config}/mesh-build-cache
+if [ -z "${SCCACHE_MESH_OFF:-}" ] && [ -z "${SCCACHE_MULTILEVEL_CHAIN:-}" ] \
+  && [ -r "$conf/env" ] && [ -r "$conf/credentials" ]; then
+  . "$conf/env"
+  health=$conf/health
+  if [ -z "$(find "$health" -mmin -1 2>/dev/null)" ]; then
+    if curl -fsS -m 0.3 "$MESH_CACHE_ENDPOINT/minio/health/live" >/dev/null 2>&1; then
+      state=up
+    else
+      state=down
+    fi
+    printf '%s\n' "$state" > "$health.$$" && mv -f "$health.$$" "$health"
+  fi
+  if [ "$(cat "$health" 2>/dev/null)" = up ]; then
+    case "$(uname -sm)" in
+      'Darwin arm64') triple=aarch64-apple-darwin ;;
+      'Darwin x86_64') triple=x86_64-apple-darwin ;;
+      'Linux x86_64') triple=x86_64-unknown-linux-gnu ;;
+      'Linux aarch64') triple=aarch64-unknown-linux-gnu ;;
+      *) triple=unknown ;;
+    esac
+    export SCCACHE_MULTILEVEL_CHAIN=disk,s3 \
+      SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0 \
+      SCCACHE_BUCKET="$MESH_CACHE_BUCKET" \
+      SCCACHE_ENDPOINT="$MESH_CACHE_ENDPOINT" \
+      SCCACHE_REGION="${MESH_CACHE_REGION:-us-east-1}" \
+      SCCACHE_S3_USE_SSL=false \
+      SCCACHE_S3_KEY_PREFIX="rust/$triple/" \
+      AWS_SHARED_CREDENTIALS_FILE="$conf/credentials" \
+      AWS_PROFILE=mesh-build-cache
+  fi
+fi
+exec "${SCCACHE_MESH_SCCACHE:-sccache}" "$@"
