@@ -62,6 +62,15 @@ impl Lane {
     const ALL: [Lane; 3] = [Lane::Feedback, Lane::Proof, Lane::Release];
 
     /// The word the model spells the lane with.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::Lane;
+    ///
+    /// // the word a gate's `lane:` field carries, for each of the three lanes
+    /// assert_eq!(Lane::Feedback.as_str(), "feedback");
+    /// assert_eq!(Lane::Proof.as_str(), "proof");
+    /// assert_eq!(Lane::Release.as_str(), "release");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Lane::Feedback => "feedback",
