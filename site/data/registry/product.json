@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.6"
   },
-  "fingerprint": "7e03fc63f55fbc94eadebe45967d3846019a03ce47321cbe3904926542602280",
+  "fingerprint": "846919c23ce58d7dc66ec3489c81725c6cbd2c88e1756aa580177fb065ff94eb",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 79,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 140,
+        "capabilities": 141,
         "moments": 38
       },
       "evidence": {
@@ -5574,6 +5574,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
               "id": "mesh.build_cache.key",
               "title": "What every dependency install and build directory is cached under",
               "kind": "query",
@@ -5894,11 +5903,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 25,
-        "mcp_tools": 22,
+        "capabilities": 26,
+        "mcp_tools": 23,
         "mcp_resources": 2,
-        "http_routes": 24,
-        "cli_paths": 5,
+        "http_routes": 25,
+        "cli_paths": 6,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -9570,6 +9579,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
               "id": "mesh.build_cache.key",
               "title": "What every dependency install and build directory is cached under",
               "kind": "query",
@@ -10314,11 +10332,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 63,
-        "mcp_tools": 56,
+        "capabilities": 64,
+        "mcp_tools": 57,
         "mcp_resources": 9,
-        "http_routes": 60,
-        "cli_paths": 20,
+        "http_routes": 61,
+        "cli_paths": 21,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10778,6 +10796,15 @@
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
             {
               "id": "mesh.build_cache.key",
               "title": "What every dependency install and build directory is cached under",
@@ -11729,11 +11756,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 103,
-        "mcp_tools": 94,
+        "capabilities": 104,
+        "mcp_tools": 95,
         "mcp_resources": 16,
-        "http_routes": 99,
-        "cli_paths": 45,
+        "http_routes": 100,
+        "cli_paths": 46,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -18451,17 +18478,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3328,
-    "builtin": 209,
-    "declarative": 3119,
+    "capabilities": 3330,
+    "builtin": 210,
+    "declarative": 3120,
     "modules": 58,
-    "mcp_tools": 198,
-    "mcp_resources": 3174,
-    "http_routes": 203,
-    "cli_commands": 211,
+    "mcp_tools": 199,
+    "mcp_resources": 3175,
+    "http_routes": 204,
+    "cli_commands": 212,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3119,
+    "objects": 3120,
     "by_kind": {
       "adr": 161,
       "application": 5,
@@ -18494,7 +18521,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 603,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },

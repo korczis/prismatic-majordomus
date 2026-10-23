@@ -205,6 +205,46 @@ fn mesh_build_cache_key(
     ))
 }
 
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.env`.
+pub struct BuildCacheEnvInput {
+    /// The sccache executable to ask; `sccache` when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sccache: Option<String>,
+    /// The node file naming the store this node offers or knows.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub node_file: Option<String>,
+    /// The AWS-format credential file, mode 0600.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credentials: Option<String>,
+}
+
+impl BenchmarkCases for BuildCacheEnvInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "no-sccache",
+            BuildCacheEnvInput {
+                sccache: Some("no-such-sccache".into()),
+                ..BuildCacheEnvInput::default()
+            },
+        )]
+    }
+}
+
+fn mesh_build_cache_env(
+    _ctx: &Context,
+    input: BuildCacheEnvInput,
+) -> Result<crate::mesh::build_cache::env::EnvReport, CapabilityError> {
+    Ok(crate::mesh::build_cache::env::report(
+        &crate::mesh::build_cache::env::EnvOptions {
+            sccache: input.sccache.unwrap_or_else(|| "sccache".to_string()),
+            node_file: input.node_file.map(std::path::PathBuf::from),
+            credentials: input.credentials.map(std::path::PathBuf::from),
+        },
+    ))
+}
+
 fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
     Ok(firewall_report(ctx, &input))
 }
@@ -1411,6 +1451,25 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_doctor,
             }
             // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
+            capability! {
+                id: "mesh.build_cache.env",
+                title: "The sccache client configuration for the store this node selected",
+                description: "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+                input: BuildCacheEnvInput,
+                output: crate::mesh::build_cache::env::EnvReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_build_cache_env"),
+                    http: get("/api/v1/mesh/build-cache/env"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "env".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_build_cache_env,
+            }
+            // this machine's own sccache, files and store, not the repository's: a loopback caller only
             .reads_only_locally(),
             capability! {
                 id: "mesh.build_cache.key",

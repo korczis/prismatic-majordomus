@@ -30869,8 +30869,15 @@
         "I3953"
       ],
       "scope": [
-        "apps/majordomus-cli/src/environment/",
-        "docs/ENVIRONMENT.md"
+        "apps/majordomus-cli/src/mesh/build_cache/env.rs",
+        "apps/majordomus-cli/src/mesh/build_cache.rs",
+        "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/commands/mesh.rs",
+        "share/libexec/sccache-mesh",
+        ".ai/repo/automation/inventory.jsonl",
+        "docs/MESH.md",
+        "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh"
       ],
       "non_scope": [
         "Writing ~/.cargo/config.toml",
@@ -30878,8 +30885,8 @@
       ],
       "objective": "Emit the sccache environment for the chosen offer through majordomus env, local as level one and the offer as level two, with no hand-set variable.",
       "why": "The owner, 2026-10-13, with full clearance: set up MinIO, an sccache server and every mesh node, verified and validated. The cluster compiles the same Rust on every machine from a cold cache; two declared offload hosts were under their disk minimum that day. See ADR 0157.",
-      "current_state": "Measured on master b29cf4e487 on 2026-10-13: RUSTC_WRAPPER=sccache is set by the user's ~/.cargo/config.toml with no remote; environment/shell.rs exports nothing about it.",
-      "desired_state": "majordomus env exports the derived configuration when sccache is present and an offer is selected, local-only otherwise, and a diagnostic when sccache is absent; the committed .envrc is unchanged; a user's cargo config is never edited.",
+      "current_state": "Measured on master b29cf4e487 on 2026-10-13: RUSTC_WRAPPER=sccache is set by the user's ~/.cargo/config.toml with no remote; environment/shell.rs exports nothing about it. Measured on 2026-10-22 with sccache 0.17.0 on private ports: a server given SCCACHE_MULTILEVEL_CHAIN=bogus refuses to start with 'Unknown cache level', and a chain level without its settings refuses with 'not configured', so multi-level support is read by asking a throwaway server; a cache entry is keyed by the absolute path of the cargo target directory (two target dirs: no hit, even from one checkout) and a workspace crate also by its checkout path (CARGO_MANIFEST_DIR), while a registry crate hits across two checkouts that share a target directory path.",
+      "desired_state": "`majordomus mesh build-cache env` (capability mesh.build_cache.env) prints the derived configuration when sccache is present, has the chain, a 0600 credential file exists and the selected offer is healthy now, local-only otherwise with the reason, and a diagnostic when sccache is absent; share/libexec/sccache-mesh asks it only when no sccache server runs; the committed .envrc is unchanged; a user's cargo config is never edited.",
       "acceptance_criteria": [
         "With an offer selected the exported variables name it and the local level and no secret is printed",
         "With no offer the client is local-only",
@@ -30890,7 +30897,7 @@
       ],
       "validation": [
         "bin/majordomus plan validate",
-        "MJ_TEST_JOBS=2 bash test/run.sh 3013_a_mesh_build_cache"
+        "MJ_TEST_JOBS=2 bash test/run.sh 3955_the_sccache_client_is_derived_from_the_selected_store"
       ],
       "evidence_required": [
         "client_derivation_case",

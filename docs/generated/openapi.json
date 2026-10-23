@@ -9653,6 +9653,121 @@
         }
       }
     },
+    "/api/v1/mesh/build-cache/env": {
+      "get": {
+        "operationId": "mesh.build_cache.env",
+        "summary": "The sccache client configuration for the store this node selected",
+        "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "sccache",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The sccache executable to ask; `sccache` when absent.",
+            "examples": {
+              "no-sccache": {
+                "value": "no-such-sccache"
+              }
+            }
+          },
+          {
+            "name": "node_file",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The node file naming the store this node offers or knows."
+          },
+          {
+            "name": "credentials",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The AWS-format credential file, mode 0600."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sccache client configuration for the store this node selected: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildCacheEnvReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.build_cache.env",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_build_cache_env"
+        },
+        "x-majordomus-cli": "mesh build-cache env"
+      }
+    },
     "/api/v1/mesh/build-cache/key": {
       "get": {
         "operationId": "mesh.build_cache.key",
@@ -23350,6 +23465,80 @@
         ],
         "description": "What is shipped and what it is built from."
       },
+      "BuildCacheEnvReport": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/Mode",
+            "description": "What the client is configured as."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why, always one sentence; for a local-only answer, the condition that did not hold."
+          },
+          "sccache": {
+            "$ref": "#/components/schemas/BuildCacheSccache",
+            "description": "The installed sccache."
+          },
+          "store": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BuildCacheStore"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The selected store, when one was."
+          },
+          "credentials_file": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The path of the credential file the variables name; never its content."
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheEnvVar"
+            },
+            "description": "The variables to set in the environment of the process that starts the sccache\nserver; empty when the client is local-only."
+          },
+          "passed_over": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfferPassedOver"
+            },
+            "description": "The offers selection passed over, with the rule."
+          }
+        },
+        "required": [
+          "mode",
+          "reason",
+          "sccache",
+          "variables"
+        ],
+        "description": "The answer of `report`.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::{EnvReport, Mode, Sccache};\nlet r = EnvReport {\n    mode: Mode::LocalOnly, reason: \"sccache is not installed\".into(),\n    sccache: Sccache { found: false, version: None, multilevel: None, detail: String::new() },\n    store: None, credentials_file: None, variables: vec![], passed_over: vec![],\n};\nassert!(r.variables.is_empty());\n```"
+      },
+      "BuildCacheEnvVar": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The variable."
+          },
+          "value": {
+            "type": "string",
+            "description": "Its value: never a key, at most the path of a credential file."
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "description": "One variable of the client's environment.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::EnvVar;\nlet v = EnvVar { name: \"SCCACHE_REGION\".into(), value: \"us-east-1\".into() };\nassert_eq!(v.name, \"SCCACHE_REGION\");\n```"
+      },
       "BuildCacheKeyReport": {
         "type": "object",
         "properties": {
@@ -23432,6 +23621,66 @@
           "digest"
         ],
         "description": "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
+      },
+      "BuildCacheSccache": {
+        "type": "object",
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "description": "Whether `--version` was answered."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version it stated."
+          },
+          "multilevel": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether it has the multi-level chain: measured, and unknown when the measurement\ncould not be made."
+          },
+          "detail": {
+            "type": "string",
+            "description": "How that was found out, in words."
+          }
+        },
+        "required": [
+          "found",
+          "detail"
+        ],
+        "description": "What the installed sccache is, as measured.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Sccache;\nlet s = Sccache { found: false, version: None, multilevel: None, detail: \"absent\".into() };\nassert!(!s.found);\n```"
+      },
+      "BuildCacheStore": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offering node."
+          },
+          "provider": {
+            "type": "string",
+            "description": "What serves the store."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The non-secret endpoint."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "The bucket."
+          }
+        },
+        "required": [
+          "node",
+          "provider",
+          "endpoint",
+          "bucket"
+        ],
+        "description": "The store the second level is.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Store;\nlet s = Store { node: \"n1\".into(), provider: \"minio\".into(),\n    endpoint: \"http://192.168.100.30:9000\".into(), bucket: \"b\".into() };\nassert_eq!(s.provider, \"minio\");\n```"
       },
       "BuildIdentity": {
         "type": "object",
@@ -44979,6 +45228,21 @@
         ],
         "description": "One issue of a milestone, as a node of its graph."
       },
+      "Mode": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "Local disk first, the selected store second."
+          },
+          {
+            "type": "string",
+            "const": "local-only",
+            "description": "The local disk alone: the build is what it was."
+          }
+        ],
+        "description": "What the client is configured as.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Mode;\nassert_ne!(Mode::Mesh, Mode::LocalOnly);\n```"
+      },
       "ModeResolution": {
         "type": "object",
         "properties": {
@@ -46748,6 +47012,24 @@
           "draft"
         ],
         "description": "One release the forge published."
+      },
+      "OfferPassedOver": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offer's node."
+          },
+          "why": {
+            "type": "string",
+            "description": "The rule, in words."
+          }
+        },
+        "required": [
+          "node",
+          "why"
+        ],
+        "description": "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
       },
       "OpenEpisode": {
         "type": "object",

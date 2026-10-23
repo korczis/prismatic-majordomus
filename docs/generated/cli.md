@@ -177,6 +177,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review withdraw`](#majordomus-mesh-review-withdraw) | `/docs/cli/mesh/review/withdraw/` | Withdraw a review request this runtime asked for, with its result |
 | [`majordomus mesh build-cache`](#majordomus-mesh-build-cache) | `/docs/cli/mesh/build-cache/` | The mesh build cache: what each dependency install and build directory is cached under |
 | [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key) | `/docs/cli/mesh/build-cache/key/` | Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest |
+| [`majordomus mesh build-cache env`](#majordomus-mesh-build-cache-env) | `/docs/cli/mesh/build-cache/env/` | The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only |
 | [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
@@ -5043,7 +5044,7 @@ Examples:
 
 The mesh build cache: what each dependency install and build directory is cached under
 
-Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key).
+Subcommands: [`majordomus mesh build-cache key`](#majordomus-mesh-build-cache-key), [`majordomus mesh build-cache env`](#majordomus-mesh-build-cache-env).
 
 ```text
 majordomus mesh build-cache <COMMAND>
@@ -5078,6 +5079,32 @@ Examples:
   ```
 
   Verified: exits 0; prints platform.
+
+<a id="majordomus-mesh-build-cache-env"></a>
+## `majordomus mesh build-cache env`
+
+The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only
+
+```text
+majordomus mesh build-cache env [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--sccache` | `<SCCACHE>` | — | The sccache executable to ask (a name on PATH or a path); `sccache` when unset |
+| `--node-file` | `<NODE_FILE>` | — | The node file that names the store this node offers or knows; `~/.config/majordomus/build-cache.json` when unset |
+| `--credentials` | `<CREDENTIALS>` | — | The AWS-format credential file, mode 0600, profile `mesh-build-cache`; `~/.config/mesh-build-cache/credentials` when unset |
+| `--format` | `text` \| `json` | `text` | `text` is the script an `eval` reads; `json` is the full answer, with its reason — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The sccache client of this node, derived** — The environment the process that starts the sccache server should have: local disk first and the selected store second, only when sccache has the chain, a credential file of mode 0600 exists and the store answers now; otherwise nothing, and the comment line says which condition did not hold. The credential is a file path, never a key. `--format json` gives the whole answer.
+
+  ```console
+  $ majordomus mesh build-cache env --sccache no-such-sccache
+  ```
+
+  Verified: exits 0; prints build cache: local-only.
 
 <a id="majordomus-monitor"></a>
 ## `majordomus monitor`

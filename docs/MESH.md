@@ -731,6 +731,49 @@ that row, in one commit — and a disposable repository proves every briefing an
 through the start event. The hubs are started by hand; an installer that runs one as a service
 is owed as a typed capability or a Rhai workflow (ADR 0059).
 
+## The sccache client of a node
+
+`majordomus mesh build-cache env` prints the environment of the process that starts this
+machine's sccache server: the local disk as the first level and the store this node selected
+(ADR 0157) as the second. It reads this machine alone, never a repository, so a compile in any
+directory can ask it; `--format json` and the tool `majordomus_mesh_build_cache_env` give the
+whole answer with its reason. Nothing is written: `~/.cargo/config.toml` and the shell profile
+stay the user's.
+
+The second level is a start-up decision, because sccache fixes its chain when its server starts
+and fails the compile when an S3 level does not answer then (a store that stops while the server
+runs is only a miss). The store is added only when all of these hold at that moment, and the
+answer names the one that did not when it is left out:
+
+1. `sccache --version` answers;
+2. the node file `~/.config/majordomus/build-cache.json` (outside the repository) offers or
+   knows a store and selection chooses it, which needs the store to answer its readiness route
+   within 300 ms (an unknown is never healthy);
+3. the credential file `~/.config/mesh-build-cache/credentials` is a regular file of mode 0600
+   holding the profile `mesh-build-cache`;
+4. the installed sccache has the multi-level chain, measured by starting a throwaway server on a
+   private port, in a private home, with a chain level that does not exist: an sccache that knows
+   the chain refuses it by name, one that does not starts and is stopped again.
+
+The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
+`SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>` and
+`AWS_PROFILE=mesh-build-cache`. A key is never exported: the environment of every compiler and
+build script would carry it, so only the credential file's path is named.
+
+`share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
+on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its
+arguments unchanged. A running server ignores the environment, so nothing is asked then.
+`SCCACHE_MESH_OFF=1` keeps a build local-only; a missing `majordomus` changes nothing.
+
+What a second node can reuse is bounded by sccache's own key, measured on 2026-10-22 with sccache
+0.17.0: an entry is keyed by the absolute path of the cargo target directory, and a workspace
+crate also by the path of its checkout (`CARGO_MANIFEST_DIR`). Two compiles of one crate in one
+checkout with two different target directories both miss; two checkouts that use the same target
+directory path hit for registry crates and miss for the workspace's own crates. So reuse between
+nodes holds for registry dependencies when their target directory has the same path (not measured here
+for ADR 0139's shared build directory) and for workspace crates only at the same checkout path; `--remap-path-prefix` does not change that.
+
 ## The host firewall
 
 The declaration says who may link; the host firewall says what reaches the socket at all, and

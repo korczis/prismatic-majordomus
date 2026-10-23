@@ -997,6 +997,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.build_cache.env",
+        "kind": "capability",
+        "label": "mesh.build_cache.env",
+        "summary": "The sccache client configuration for the store this node selected",
+        "route": "/cockpit/capabilities/mesh.build_cache.env",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:mesh.build_cache.key",
         "kind": "capability",
         "label": "mesh.build_cache.key",
@@ -41043,7 +41052,6 @@
         "source": ".ai/repo/project/issues/I2673.yaml",
         "facts": {
           "created_at": "2026-10-13",
-          "current_state": "Measured on master b29cf4e487 on 2026-10-13: RUSTC_WRAPPER=sccache is set by the user's ~/.cargo/config.toml with no remote; environment/shell.rs exports nothing about it.",
           "depends_on": [
             "I2670",
             "I2672"
@@ -41062,14 +41070,21 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/environment/",
-            "docs/ENVIRONMENT.md"
+            "apps/majordomus-cli/src/mesh/build_cache/env.rs",
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "share/libexec/sccache-mesh",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/MESH.md",
+            "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh"
           ],
           "slug": "the-sccache-client-is-derived-from-the-selected-offer",
           "updated_at": "2026-10-13",
           "validation": [
             "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=2 bash test/run.sh 3013_a_mesh_build_cache"
+            "MJ_TEST_JOBS=2 bash test/run.sh 3955_the_sccache_client_is_derived_from_the_selected_store"
           ]
         }
       },
@@ -87099,6 +87114,13 @@
         "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "kind": "test",
+        "label": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "route": "/cockpit/objects/test/test-cases-3955-the-sccache-client-is-derived-from-the-selected-store-sh",
+        "source": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -93070,6 +93092,26 @@
       },
       {
         "source": "capability:mcp.projection",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -129899,6 +129941,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134480,6 +134527,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.build_cache.env",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.build_cache.key",
         "kind": "composes"
       },
@@ -135010,8 +135062,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3782,
-      "edges": 8751,
+      "nodes": 3784,
+      "edges": 8757,
       "acyclic": false,
       "truncated": false
     }

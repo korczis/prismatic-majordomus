@@ -16932,6 +16932,75 @@ cli:
                   setup: []
                   expectation: exits 0; prints platform
               subcommands: []
+            - path:
+                - majordomus
+                - mesh
+                - build-cache
+                - env
+              route: /docs/cli/mesh/build-cache/env/
+              executable: true
+              usage: "majordomus mesh build-cache env [OPTIONS]"
+              about: "The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only"
+              args:
+                - name: sccache
+                  long: sccache
+                  positional: false
+                  help: "The sccache executable to ask (a name on PATH or a path); `sccache` when unset"
+                  value_name: SCCACHE
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: node_file
+                  long: node-file
+                  positional: false
+                  help: "The node file that names the store this node offers or knows; `~/.config/majordomus/build-cache.json` when unset"
+                  value_name: NODE_FILE
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: credentials
+                  long: credentials
+                  positional: false
+                  help: "The AWS-format credential file, mode 0600, profile `mesh-build-cache`; `~/.config/mesh-build-cache/credentials` when unset"
+                  value_name: CREDENTIALS
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values: []
+                  defaults: []
+                - name: format
+                  long: format
+                  positional: false
+                  help: "`text` is the script an `eval` reads; `json` is the full answer, with its reason"
+                  value_name: FORMAT
+                  takes_value: true
+                  required: false
+                  global: false
+                  possible_values:
+                    - name: text
+                      help: Lines for a person
+                    - name: json
+                      help: "One JSON document, deterministic"
+                  defaults:
+                    - text
+              examples:
+                - id: mesh-build-cache-env
+                  title: "The sccache client of this node, derived"
+                  description: "The environment the process that starts the sccache server should have: local disk first and the selected store second, only when sccache has the chain, a credential file of mode 0600 exists and the store answers now; otherwise nothing, and the comment line says which condition did not hold. The credential is a file path, never a key. `--format json` gives the whole answer."
+                  argv:
+                    - mesh
+                    - build-cache
+                    - env
+                    - "--sccache"
+                    - no-such-sccache
+                  command: majordomus mesh build-cache env --sccache no-such-sccache
+                  setup: []
+                  expectation: "exits 0; prints build cache: local-only"
+              subcommands: []
     - path:
         - majordomus
         - monitor
