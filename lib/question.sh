@@ -52,6 +52,10 @@ mj_question_add() {
   mj_is_multiline "$text" && mj_die "$MJ_EX_USAGE" "question add: the question must be single-line" 
   case "$text" in *" — "*) mj_die "$MJ_EX_USAGE" "question add: the question must not contain ' — '; it separates the fields" ;; esac
   mj_question_require
+  # A question is opened against a task: without one there is nothing for it to block (ADR
+  # 0164 changes only who it is attributed to, "none" when the active task is another live
+  # session's).
+  mj_load_current || mj_die "$MJ_EX_MISSING" "no active task; a question is opened against a task"
   mj_record_attribution
   local id="${MJ_RECORD_TASK:-none}" fields=""
   [ -z "$MJ_RECORD_TASK" ] || fields="\"task_id\":\"$MJ_RECORD_TASK\","
