@@ -464,7 +464,16 @@ impl PeerBoard {
 
     /// When this peer last did real work, on this process's clock; `None` for a peer that
     /// has done none, or is not on the board.
-    pub(crate) fn progressed_at(&self, id: &PeerId) -> Option<Instant> {
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let p = board.attach(Transport::Http);
+    /// assert!(board.progressed_at(&p).is_none(), "attached is not progress");
+    /// board.progress(&p);
+    /// assert!(board.progressed_at(&p).is_some());
+    /// ```
+    pub fn progressed_at(&self, id: &PeerId) -> Option<Instant> {
         self.lock().get(&id.seq()).and_then(|s| s.last_progress)
     }
 

@@ -1240,8 +1240,14 @@ struct BeatWindow {
 }
 
 /// What `mesh doctor` reads of a runtime's session beats (I3990).
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::SessionBeatTally;
+/// let tally = SessionBeatTally { written: 3, limit: 192, window_seconds: 3600, ..Default::default() };
+/// assert!(tally.written < tally.limit && !tally.withheld_recently);
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub(crate) struct SessionBeatTally {
+pub struct SessionBeatTally {
     /// Session beats written since the runtime started.
     pub written: u64,
     /// Session beats withheld since it started because the window's limit was reached.
