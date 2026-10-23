@@ -441,7 +441,8 @@ impl PeerAddress {
         )
     }
 
-    /// The address a bridge carried in `initialize` params, under [`ADDRESS_META`].
+    /// The address a bridge carried in `initialize` params, under
+    /// `_meta["dev.majordomus/address"]`.
     ///
     /// ```
     /// use majordomus_cli::peers::PeerAddress;
@@ -498,7 +499,7 @@ impl PeerAddress {
 }
 
 /// Put the address of the worker that started this process into an `initialize` message's
-/// params, under [`ADDRESS_META`], unless the client already put one there.
+/// params, under `_meta["dev.majordomus/address"]`, unless the client already put one there.
 ///
 /// ```
 /// use majordomus_cli::peers::{with_address, PeerAddress};
