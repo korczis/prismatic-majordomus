@@ -5,7 +5,7 @@ kind: adr
 title: A client always gets a server, and a session that is opened starts by joining the cluster
 status: superseded
 date: 2026-10-22
-superseded_by: adr-0222
+superseded_by: adr-0223
 tags:
   - coordination
   - mesh

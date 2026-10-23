@@ -3,7 +3,7 @@ title: "No ordinary command builds: every entry path fails fast or answers throu
 slug: ordinary-commands-never-build
 order: 182
 priority: p0
-problem: "On 2026-10-22 a pre-push sat forty minutes in one gate and timed out at ninety, queued behind the shared build lock with the tree's executable already built: nine gates run cargo run and ignore MAJORDOMUS_BIN, and at least seven other entry paths build implicitly or pass silently on a stale executable. ADR 0222 (accepted the same day, superseding ADR 0172) decides that only an explicit build builds."
+problem: "On 2026-10-22 a pre-push sat forty minutes in one gate and timed out at ninety, queued behind the shared build lock with the tree's executable already built: nine gates run cargo run and ignore MAJORDOMUS_BIN, and at least seven other entry paths build implicitly or pass silently on a stale executable. ADR 0223 (accepted the same day, superseding ADR 0172) decides that only an explicit build builds."
 outcome: "Every entry path and every gate calls the tree's executable, a missing or stale one fails fast naming the explicit build or answers through a release whose generation matches, and no caller passes silently."
 current_state: "Measured on master 2034d4a3f0b: bin/majordomus-cli rebuilds a stale executable for every caller; nine gates in .ai/repo/ci/gates.yaml run cargo run; test/lib.sh runs a raw cargo build; the edit guard passes on exit 12; mj_rust_installed accepts a release on --version alone."
 desired_state: "A case counts zero cargo invocations across every path with the executable missing and stale, and a mismatched release is refused."

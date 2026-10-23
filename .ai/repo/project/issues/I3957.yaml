@@ -6,7 +6,7 @@ priority: p0
 profile: implementation
 parallel_safe: false
 objective: "Change bin/majordomus-cli so a missing or stale executable exits 12 naming the explicit build for every caller, or answers through the installed release only when its build generation matches the tree; make the nine cargo-run gates of .ai/repo/ci/gates.yaml, test/lib.sh and the just bridge call the tree's executable; make the edit guard and the pre-commit guard declare their outcome instead of passing silently."
-why: "The owner, 2026-10-22: ADR 0172 is replaced (by ADR 0222) and I3180 cancelled, after a pre-push timed out at ninety minutes in cargo-run gates queued behind the shared build lock, and the architecture review recorded as intent every-capability-has-one-owner-and-the-cli-never-builds."
+why: "The owner, 2026-10-22: ADR 0172 is replaced (by ADR 0223) and I3180 cancelled, after a pre-push timed out at ninety minutes in cargo-run gates queued behind the shared build lock, and the architecture review recorded as intent every-capability-has-one-owner-and-the-cli-never-builds."
 current_state: "Measured on master 2034d4a3f0b: see milestone ordinary-commands-never-build."
 desired_state: "Zero cargo invocations from any ordinary path with the executable missing or stale; a mismatched release refused; no silent pass."
 scope:
@@ -27,7 +27,7 @@ acceptance_criteria:
   - "A case extending the stand-in-cargo fixtures of cases 3831 and 3177 walks every command path through bin/majordomus, bin/majordomus-cli, bin/majordomus-mcp, the just bridge, each git hook and every gate, with the executable missing and then stale, and counts zero cargo invocations"
   - "An installed release whose build generation differs from the tree is refused, and one whose generation matches is used"
   - "The edit guard and the pre-commit guard name their outcome for a stale executable; neither passes silently"
-  - "Cases 3177, 3221 and 3831 still pass, or are amended with the reason ADR 0222 gives"
+  - "Cases 3177, 3221 and 3831 still pass, or are amended with the reason ADR 0223 gives"
 validation:
   - "bin/majordomus plan validate"
   - "MJ_TEST_JOBS=2 bash test/run.sh 3958_no_entry_path_or_gate_builds"
