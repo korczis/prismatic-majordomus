@@ -1,7 +1,7 @@
 +++
 title = "Adoption"
 description = "day one, week one, several workers, removal"
-weight = 31
+weight = 32
 [extra]
 source = "docs/ADOPTION.md"
 +++
