@@ -99,6 +99,14 @@ fn endpoints(hosting: &MeshHosting, bound: &str) -> Vec<String> {
     }
 }
 
+/// Whether a server bound at `bound` is bound to every interface, so that what it can be
+/// reached at changes with them.
+fn follows_interfaces(bound: &str) -> bool {
+    bound
+        .parse::<std::net::SocketAddr>()
+        .is_ok_and(|addr| addr.ip().is_unspecified())
+}
+
 /// Activate the mesh from the repository's declaration, when there is one and it is
 /// enabled. Every failure is a reason on `mesh.status`, never a failed server.
 fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHosting) {
@@ -138,10 +146,11 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
             return;
         }
     };
-    let endpoints = endpoints(
-        hosting,
-        url.trim_start_matches("http://").trim_end_matches('/'),
-    );
+    let bound = url
+        .trim_start_matches("http://")
+        .trim_end_matches('/')
+        .to_string();
+    let endpoints = endpoints(hosting, &bound);
     let root = std::path::Path::new(&ctx.index.repository.root);
     // One runtime per checkout, and one repository identity per repository on every
     // machine — derived from content or declared, never from a path.
@@ -171,7 +180,14 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
             return;
         }
         Ok(()) => {
-            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration")
+            tracing::info!(node = %node, runtime_id = %runtime, "mesh active: this node announces and listens per the declaration");
+            // a server bound to every interface advertises the addresses they hold now, not
+            // the ones they held when it started: DHCP moves a machine's address under it
+            if hosting.advertise.is_none() && follows_interfaces(&bound) {
+                ctx.mesh.follow_endpoints(Arc::new(move || {
+                    crate::mesh::address::advertised_endpoints(&bound)
+                }));
+            }
         }
         Err(e) => {
             tracing::warn!(error = %e, "the mesh did not activate");
@@ -754,6 +770,14 @@ mod tests {
             endpoints(&MeshHosting::default(), "127.0.0.1:4000"),
             crate::mesh::address::advertised_endpoints("127.0.0.1:4000")
         );
+    }
+
+    #[test]
+    fn only_a_server_bound_to_every_interface_follows_them() {
+        assert!(follows_interfaces("0.0.0.0:8791"));
+        assert!(!follows_interfaces("127.0.0.1:8741"));
+        assert!(!follows_interfaces("192.168.100.100:8791"));
+        assert!(!follows_interfaces("hub.example:443"));
     }
 
     /// A hosted hub whose seed variable is unset activates no mesh: `mesh.status` says why,

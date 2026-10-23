@@ -64026,6 +64026,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4013",
+        "kind": "issue",
+        "label": "I4013",
+        "summary": "A server bound to every interface advertises the addresses it has now",
+        "route": "/cockpit/objects/issue/i4013",
+        "source": ".ai/repo/project/issues/I4013.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A followed beacon signs the endpoints its source answers now",
+            "An empty answer keeps the last endpoints",
+            "Only a server bound to the unspecified address follows its interfaces"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "shared.rs derives the advertised endpoints once, at activation; Beacon keeps them for its lifetime.",
+          "depends_on": [],
+          "evidence_required": [
+            "only_a_server_bound_to_every_interface_follows_them"
+          ],
+          "milestone": "mesh-connectivity",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/provider.rs",
+            "apps/majordomus-cli/src/mesh/manager.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            ".ai/repo/project/issues/I4013.yaml"
+          ],
+          "serves": [],
+          "slug": "a-hub-advertises-the-address-it-has-now",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --doc mesh::provider",
+            "cargo test --lib shared::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -123072,6 +123110,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4013",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4013",
+        "target": "majordomus://milestone/mesh-connectivity",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -134293,8 +134341,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3768,
+      "edges": 8712,
       "acyclic": false,
       "truncated": false
     }

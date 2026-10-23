@@ -562,6 +562,14 @@ impl MeshRuntime {
         }
     }
 
+    /// Advertise what `source` answers from now on, read again before every beacon (see
+    /// [`Beacon::follow`]). Does nothing while the mesh is not active.
+    pub fn follow_endpoints(&self, source: super::provider::EndpointSource) {
+        if let Some(active) = self.state.lock().expect("mesh state").as_ref() {
+            active.beacon.follow(source);
+        }
+    }
+
     /// The status, as every surface answers it.
     pub fn status(&self) -> MeshStatus {
         let state = self.state.lock().expect("mesh state");
@@ -574,7 +582,7 @@ impl MeshRuntime {
                     active: true,
                     reason: None,
                     identity: Some(active.beacon.identity().public.clone()),
-                    advertised: active.beacon.endpoints().to_vec(),
+                    advertised: active.beacon.endpoints(),
                     trust_policy: Some(active.trust.policy.as_str().into()),
                     providers,
                     tallies: Tallies::default(),
