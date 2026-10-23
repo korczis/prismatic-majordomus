@@ -76,7 +76,7 @@ fn outside_an_execution_it_is_refused() {
 }
 
 #[test]
-fn a_ready_issue_is_worked_in_its_own_worktree_through_four_steps() {
+fn a_ready_issue_is_worked_in_its_own_worktree_through_five_steps() {
     let f = common::Fixture::new();
     let (ctx, store, id) = running(&f);
     let report = implement(
@@ -87,6 +87,13 @@ fn a_ready_issue_is_worked_in_its_own_worktree_through_four_steps() {
     .expect("a ready issue is implemented");
     assert_eq!(report.branch, "feature/I0001-issue-I0001");
     assert_eq!(report.adapter, "fixture");
+    assert_eq!(report.state, "done", "done, never delivered");
+    assert_eq!(
+        report.verified.len(),
+        1,
+        "the fixture issue declares one validation"
+    );
+    assert!(report.verified[0].ok);
     let worktree = std::path::Path::new(&report.worktree);
     assert!(
         worktree.join("made-by-worker").exists(),
@@ -100,6 +107,7 @@ fn a_ready_issue_is_worked_in_its_own_worktree_through_four_steps() {
             ("lease".into(), StepState::Completed),
             ("worktree".into(), StepState::Completed),
             ("dispatch".into(), StepState::Completed),
+            ("verify".into(), StepState::Completed),
         ]
     );
     let logs: Vec<String> = store
@@ -178,5 +186,54 @@ fn a_failing_worker_fails_the_implementation() {
     assert!(
         matches!(&failed, CapabilityError::Internal(m) if m.contains("exited 4")),
         "{failed:?}"
+    );
+}
+
+/// The fixture issue with its validation replaced.
+fn with_validation(f: &common::Fixture, validation: &str) {
+    f.write(
+        ".ai/repo/project/issues/I0001.yaml",
+        &common::ISSUE.replace("validation:\n  - \"true\"\n", validation),
+    );
+    f.commit("the issue's validation");
+}
+
+#[test]
+fn a_worker_whose_validation_fails_fails_the_implementation_naming_the_command() {
+    let f = common::Fixture::new();
+    with_validation(&f, "validation:\n  - \"test -f made-by-worker\"\n");
+    let (ctx, store, id) = running(&f);
+    // the worker succeeds and makes nothing the validation looks for
+    let failed = implement(&ctx, &input("I0001"), &worker("true")).unwrap_err();
+    assert!(
+        matches!(&failed, CapabilityError::Internal(m)
+            if m.starts_with("verification_failed: `test -f made-by-worker`")),
+        "{failed:?}"
+    );
+    assert_eq!(
+        steps(&store, &id).last().cloned(),
+        Some(("verify".into(), StepState::Failed))
+    );
+}
+
+#[test]
+fn the_validation_runs_in_the_worktree_the_worker_wrote() {
+    let f = common::Fixture::new();
+    with_validation(&f, "validation:\n  - \"test -f made-by-worker\"\n");
+    let (ctx, _, _) = running(&f);
+    let report = implement(&ctx, &input("I0001"), &worker("echo done > made-by-worker"))
+        .expect("the validation finds the worker's file in the worktree");
+    assert_eq!(report.verified[0].command, "test -f made-by-worker");
+}
+
+#[test]
+fn an_issue_with_no_validation_cannot_be_verified() {
+    let f = common::Fixture::new();
+    with_validation(&f, "validation: []\n");
+    let (ctx, _, _) = running(&f);
+    let refused = implement(&ctx, &input("I0001"), &worker("true")).unwrap_err();
+    assert!(
+        matches!(&refused, CapabilityError::Refused(m) if m.starts_with("no_validation: I0001")),
+        "{refused:?}"
     );
 }
