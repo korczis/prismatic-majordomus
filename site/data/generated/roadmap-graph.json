@@ -2,7 +2,7 @@
   "schema": 1,
   "source": ".ai/repo/project/milestones/",
   "edge_kinds": {
-    "requires": "the target cannot begin until the source is accepted"
+    "unblocks": "the source unblocks the target: the target cannot begin until the source is accepted"
   },
   "nodes": [
     {
@@ -107,8 +107,8 @@
     {
       "id": "derived-data-integrity",
       "kind": "milestone",
-      "label": "v0.28.0  derived-data-integrity",
-      "status": "DONE",
+      "label": "derived-data-integrity",
+      "status": "ACTIVE",
       "route": "/plan/derived-data-integrity/",
       "external": false,
       "summary": "A committed derivation describes something it can be a projection of"
@@ -116,8 +116,8 @@
     {
       "id": "work-graph-github",
       "kind": "milestone",
-      "label": "v0.27.0  work-graph-github",
-      "status": "DONE",
+      "label": "work-graph-github",
+      "status": "ACTIVE",
       "route": "/plan/work-graph-github/",
       "external": false,
       "summary": "The projection to GitHub is gated, identified and traversable, and a merged pull request leads back to the outcome it served"
@@ -414,7 +414,7 @@
       "id": "a-visitor-understands-and-checks-majordomus",
       "kind": "milestone",
       "label": "a-visitor-understands-and-checks-majordomus",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/a-visitor-understands-and-checks-majordomus/",
       "external": false,
       "summary": "A first-time visitor of majordomus.dev understands what Majordomus does and can check every claim it makes"
@@ -450,7 +450,7 @@
       "id": "a-change-is-judged-in-minutes",
       "kind": "milestone",
       "label": "a-change-is-judged-in-minutes",
-      "status": "BLOCKED",
+      "status": "PLANNED",
       "route": "/plan/a-change-is-judged-in-minutes/",
       "external": false,
       "summary": "A change is derived in under a second and judged in minutes, and nothing that could have changed is skipped"
@@ -636,10 +636,19 @@
       "summary": "Everything that happens in the repository is followed in one stream"
     },
     {
+      "id": "a-version-follows-the-work",
+      "kind": "milestone",
+      "label": "a-version-follows-the-work",
+      "status": "PLANNED",
+      "route": "/plan/a-version-follows-the-work/",
+      "external": false,
+      "summary": "Landed work is released as a measured version, and how long it has waited is a finding"
+    },
+    {
       "id": "a-derive-does-only-the-work-its-inputs-changed",
       "kind": "milestone",
       "label": "a-derive-does-only-the-work-its-inputs-changed",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/a-derive-does-only-the-work-its-inputs-changed/",
       "external": false,
       "summary": "A derive does only the work its inputs changed, and can say why"
@@ -652,6 +661,15 @@
       "route": "/plan/a-derivation-computed-once-is-reused/",
       "external": false,
       "summary": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence"
+    },
+    {
+      "id": "landing-survives-any-session",
+      "kind": "milestone",
+      "label": "landing-survives-any-session",
+      "status": "PLANNED",
+      "route": "/plan/landing-survives-any-session/",
+      "external": false,
+      "summary": "Landing green work survives any session, any restart and any machine"
     },
     {
       "id": "runtime-adapters",
@@ -910,197 +928,197 @@
     {
       "source": "foundation",
       "target": "runtime-adapters",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "intent-lifecycle",
       "target": "intent-planning",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "idd-workspace",
       "target": "idd-reads-at-a-glance",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "a-second-adopter-is-served",
       "target": "a-stranger-adopts-it-unaided",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "the-session-domain-is-written-once",
       "target": "entry-proves-what-it-handed",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "failure-is-visible",
       "target": "the-runtime-supervises-itself",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-lifecycle",
       "target": "the-runtime-supervises-itself",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-lifecycle",
       "target": "the-host-knows-its-runtimes",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "safe-self-update",
       "target": "the-host-knows-its-runtimes",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-trust",
       "target": "mesh-connectivity",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "mesh-journal-converges",
       "target": "mesh-connectivity",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "web-sign-in",
       "target": "the-mesh-is-operated-from-one-page",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "prismatic-lumen",
       "target": "the-mesh-is-operated-from-one-page",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "safe-self-update",
       "target": "the-hub-is-reached-from-any-device",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "development-runtime",
       "target": "delivery-flow-is-measured",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "safe-self-update",
       "target": "a-release-is-proven-end-to-end",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "test-evidence",
       "target": "a-release-is-proven-end-to-end",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "idd-workspace",
       "target": "the-ui-works-on-a-phone",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "a-derive-does-only-the-work-its-inputs-changed",
       "target": "a-derive-answers-within-a-second",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "an-outcome-becomes-a-reviewed-plan",
       "target": "intent-intake",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-trust",
       "target": "a-workspace-reaches-the-repository",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "a-promoted-record-opens-its-message",
       "target": "a-workspace-reaches-the-repository",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "capability-graph",
       "target": "an-entity-says-how-it-is-known-and-what-it-affects",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "every-sessions-usage-is-observed",
       "target": "an-inference-names-its-source-and-budget",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-adapters",
       "target": "execution-telemetry",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "intent-planning",
       "target": "intent-bound-work",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "mesh-journal-converges",
       "target": "mesh-peers-execute-assigned-work",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-trust",
       "target": "mesh-peers-execute-assigned-work",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "runtime-adapters",
       "target": "mesh-peers-execute-assigned-work",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "an-outcome-becomes-a-reviewed-plan",
       "target": "a-prompt-reaches-the-work-it-serves",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "every-surface-follows-what-changed",
       "target": "a-prompt-reaches-the-work-it-serves",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "an-entity-says-how-it-is-known-and-what-it-affects",
       "target": "a-prompt-reaches-the-work-it-serves",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "knowledge-acts-on-what-it-learns",
       "target": "knowledge-is-reconciled-before-it-is-reviewed",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "an-entity-says-how-it-is-known-and-what-it-affects",
       "target": "knowledge-is-reconciled-before-it-is-reviewed",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "execution-telemetry",
       "target": "cost-per-accepted-outcome",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "intent-bound-work",
       "target": "a-finish-reads-the-criteria-its-work-serves",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "cost-per-accepted-outcome",
       "target": "routing-recommendations",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "cost-per-accepted-outcome",
       "target": "operation-convergence",
-      "kind": "requires"
+      "kind": "unblocks"
     },
     {
       "source": "routing-recommendations",
       "target": "shared-policy",
-      "kind": "requires"
+      "kind": "unblocks"
     }
   ]
 }

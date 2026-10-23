@@ -1,0 +1,25 @@
+id: I3091
+milestone: architecture-is-enforced
+title: "A translated bar keeps the headroom of its English bar, whatever fonts the machine has"
+slug: a-translated-bar-keeps-its-headroom
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The layout check of scripts/lib/site-i18n-probe.mjs measures each sampled bar's headroom_em: the widest letter-spacing, in 0.02 em steps up to 0.12 em, at which the bar keeps its drawn height and rows. A copy owes min(its English page's headroom, 0.06 em) at every width the design declares."
+why: "On 2026-10-20 the alpha.1 top's Czech bar wrapped at 768 px on the CI runner's Linux Chrome (run 39335772019) while every macOS measurement drew it at the English height. Linux sets the same labels about 0.04 em wider, and a check that compares heights on the developer's fonts passed what the runner failed. With the old label the Czech bar had headroom 0.02 against the English 0.06, a difference the check can see on any machine."
+current_state: "The check compares the bar's height and rows as drawn on the machine that runs it."
+desired_state: "The check compares headroom, so a copy with less room than its English fails on macOS as on Linux."
+scope:
+  - "scripts/lib/site-i18n-probe.mjs"
+  - ".ai/repo/project/issues/I3091.yaml"
+depends_on: []
+acceptance_criteria:
+  - "The layout finding names headroom_em for the copy and its English page when the copy has less than min(English, 0.06)"
+  - "On a build whose Czech bar carries 'Jak funguje' the check reports /cs/ and /cs/docs/ at 768 px on macOS"
+  - "On a build whose Czech bar carries 'Princip' the check is clean"
+validation:
+  - "majordomus plan validate"
+  - "node scripts/lib/site-i18n-probe.mjs site/public https://majordomus.dev --only / --only /docs/ --only /cs/ --only /cs/docs/"
+evidence_required: []
+created_at: 2026-10-20
+updated_at: 2026-10-20

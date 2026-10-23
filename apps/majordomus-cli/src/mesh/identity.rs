@@ -524,4 +524,23 @@ mod tests {
             "Debug must not leak the signing key"
         );
     }
+
+    /// A hosted hub's key is its seed: one seed is one node at every boot, whatever space
+    /// surrounds it, and a seed that is not 32 bytes of hex is refused naming where it came
+    /// from and never what it was.
+    #[test]
+    fn a_seed_is_one_node_and_a_bad_seed_names_only_its_source() {
+        let seed = "11".repeat(32);
+        let a = NodeIdentity::from_seed_hex(&seed, "SEED").unwrap();
+        let b = NodeIdentity::from_seed_hex(&format!(" {seed}\n"), "SEED").unwrap();
+        assert_eq!(a.public.node_id, b.public.node_id);
+        for bad in ["abcd".to_string(), "zz".repeat(32)] {
+            let e = NodeIdentity::from_seed_hex(&bad, "SEED")
+                .err()
+                .unwrap()
+                .to_string();
+            assert!(e.starts_with("SEED: ") || e.contains("SEED: "), "{e}");
+            assert!(!e.contains(&bad), "{e}");
+        }
+    }
 }

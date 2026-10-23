@@ -1,0 +1,32 @@
+id: I3918
+milestone: truthful-plan-surfaces
+title: "README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are"
+slug: the-size-of-the-tool-is-said-truthfully
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "README.md and CONTRIBUTING.md stop saying the tool needs bash 3.2 and nothing else: they say that the shell tool is small and portable and hands every other command to the Rust executable it ships, prebuilt. The homepage's surfaces section (index.html:328-332) says what its numbers are: the capabilities are the builtin ones plus one generated resource per object of the layer (208 plus 3092 at 2026-10-22), and the MCP tools and HTTP routes are those builtin capabilities projected, so a reader does not read a small tool and a 3300-capability platform as a contradiction."
+why: "On 2026-10-22 an outside reviewer found the size contradictory and not credible: CONTRIBUTING.md:3 says small on purpose, README.md:129 says bash 3.2 or newer, git and sha256sum or openssl, nothing else, while the homepage shows 3300 capabilities, 197 MCP tools, 202 HTTP routes and a Rust executable. bin/majordomus:96-113 hands every command it does not know to the Rust majordomus-cli, and mcp, serve, generate and worktree exist only there. The owner chose to explain the registry figures."
+current_state: "README.md:129 and CONTRIBUTING.md:3,36 as quoted; product.json telemetry counts 3300 capabilities as 208 builtin and 3092 declarative, one per object (site.rs:1247-1260)."
+desired_state: "README and CONTRIBUTING state the Rust executable as a requirement of every command beyond the shell tool's own; the surfaces section names builtin capabilities and generated resources apart, each from the dataset, and site-check holds both figures."
+scope:
+  - "README.md"
+  - "CONTRIBUTING.md"
+  - "site/templates/index.html"
+  - "site/data/marketing.toml"
+  - "scripts/site-check"
+  - ".ai/repo/project/issues/I3918.yaml"
+acceptance_criteria:
+  - "No tracked document says the tool needs bash and nothing else"
+  - "The homepage names builtin capabilities and generated resources apart, each from the dataset"
+  - "site-check fails when either figure disagrees with the dataset"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/site-check"
+evidence_required:
+  - "size_said_truthfully"
+  - "registry_figures_explained"
+depends_on: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

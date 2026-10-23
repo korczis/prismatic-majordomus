@@ -183,8 +183,10 @@ jobs:
           SHA: ${{ steps.subject.outputs.sha }}
         run: |
           set -eu
-          [ -n "$GIGALIXIR_EMAIL" ] && [ -n "$GIGALIXIR_API_KEY" ] \
-            || { echo "::error::the secrets GIGALIXIR_EMAIL and GIGALIXIR_API_KEY are not both set"; exit 1; }
+          if [ -z "$GIGALIXIR_EMAIL" ] || [ -z "$GIGALIXIR_API_KEY" ]; then
+            echo "::error::the secrets GIGALIXIR_EMAIL and GIGALIXIR_API_KEY are not both set"
+            exit 1
+          fi
           echo "::add-mask::$GIGALIXIR_API_KEY"
           echo "::add-mask::$GIGALIXIR_EMAIL"
           home="$RUNNER_TEMP/provider-home"

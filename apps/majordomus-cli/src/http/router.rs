@@ -571,6 +571,15 @@ impl Router {
         if let Some(refusal) = Self::rebound(req) {
             return Some(Err(refusal));
         }
+        // the live channel carries every execution of this process, and those are not the
+        // repository: a caller on another host never follows them (ADR 0220 decision 4, I3842)
+        if req.is_remote() {
+            return Some(Err(Response::error(
+                403,
+                "forbidden",
+                "the live channel answers only a caller on this machine",
+            )));
+        }
         // a process whose topology does not resolve serves nothing, the live channel
         // included: the same answer every other path gets
         let resolution = self.resolution();
@@ -904,17 +913,20 @@ impl Router {
     }
 
     /// The pages that draw the mesh's working state — its sessions, claims, handovers, peers
-    /// and live signals — and so answer a caller on this machine only (ADR 0220 decision 4).
+    /// and live signals — or this process's executions, and so answer a caller on this
+    /// machine only (ADR 0220 decision 4; the executions since I3842).
     /// The capabilities behind them say the same through `local_only`; a page reads them
     /// in-process, so the page says it here.
-    pub const LOCAL_ONLY_PAGES: [&'static str; 4] = [
+    pub const LOCAL_ONLY_PAGES: [&'static str; 5] = [
         crate::ui::mesh::ROUTE,
         "/cockpit/mesh",
         "/cockpit/peers",
         "/cockpit/monitor",
+        "/cockpit/executions",
     ];
 
-    /// The refusal for a remote caller asking for a page of the mesh, when this is one.
+    /// The refusal for a remote caller asking for one of [`Router::LOCAL_ONLY_PAGES`], when
+    /// this is one.
     ///
     /// ```
     /// use majordomus_cli::http::{Request, Router};
@@ -922,6 +934,7 @@ impl Router {
     ///     .with_remote(Some("203.0.113.9".parse().unwrap()));
     /// assert!(Router::local_only_page(&remote("/ui/mesh")).is_some());
     /// assert!(Router::local_only_page(&remote("/cockpit/monitor/stream")).is_some());
+    /// assert!(Router::local_only_page(&remote("/cockpit/executions/e-1")).is_some());
     /// assert!(Router::local_only_page(&remote("/ui/meshes")).is_none());
     /// assert!(Router::local_only_page(&remote("/ui/")).is_none());
     /// let local = Request::parse_target("GET", "/ui/mesh", vec![])
@@ -1515,6 +1528,39 @@ mod tests {
         assert_eq!(Request::parse_target("GET", "/", vec![]).query, vec![]);
     }
 
+    /// I3842: the live channel carries every execution of this process, so its upgrade is
+    /// refused to a caller on another host and still opens for this machine.
+    #[test]
+    fn the_live_channel_never_opens_for_a_remote_caller() {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        let router = Router::new(repo.context().expect("a context"), "test").with_ui(None);
+        let upgrade = |from: &str| {
+            let mut req = Request::parse_target("GET", super::events::PATH, Vec::new())
+                .with_remote(Some(from.parse().unwrap()));
+            req.headers = vec![
+                ("host".into(), "127.0.0.1:8741".into()),
+                ("connection".into(), "Upgrade".into()),
+                ("upgrade".into(), "websocket".into()),
+                ("sec-websocket-version".into(), "13".into()),
+                (
+                    "sec-websocket-key".into(),
+                    "dGhlIHNhbXBsZSBub25jZQ==".into(),
+                ),
+            ];
+            req
+        };
+        match router.websocket(&upgrade("203.0.113.9")) {
+            Some(Err(r)) => assert_eq!(r.status, 403, "{}", r.body.text()),
+            Some(Ok(_)) => panic!("a remote caller opened the live channel"),
+            None => panic!("the upgrade was not recognised as one"),
+        }
+        assert!(
+            matches!(router.websocket(&upgrade("127.0.0.1")), Some(Ok(_))),
+            "this machine still opens the live channel"
+        );
+    }
+
     /// ADR 0220 decision 4: a caller on another host reads the repository and liveness, and
     /// none of the mesh's working state — not through its capabilities, not through its pages.
     #[test]
@@ -1529,6 +1575,7 @@ mod tests {
                 .map(|h| h.path.clone())
                 .unwrap_or_else(|| panic!("{id} has an HTTP route"))
         };
+        let executions = route("executions.list");
         let (state, peers, live) = (
             route("mesh.state"),
             route("peers.list"),
@@ -1541,7 +1588,14 @@ mod tests {
                     .with_remote(Some(from.parse().unwrap())),
             )
         };
-        for path in [state.as_str(), peers.as_str(), "/ui/mesh", "/cockpit/peers"] {
+        for path in [
+            state.as_str(),
+            peers.as_str(),
+            executions.as_str(),
+            "/ui/mesh",
+            "/cockpit/peers",
+            "/cockpit/executions",
+        ] {
             let r = ask(path, "203.0.113.9");
             assert_eq!(
                 r.status,
@@ -1576,6 +1630,10 @@ mod tests {
             "mesh.nodes",
             "peers.list",
             "monitor.stream",
+            "executions.list",
+            "executions.get",
+            "executions.events",
+            "executions.demonstrate",
         ] {
             assert!(
                 local_only.contains(&id),
@@ -1586,5 +1644,20 @@ mod tests {
             !local_only.contains(&"mesh.identity"),
             "a public key is meant to be read"
         );
+    }
+
+    /// A local-only page is refused to a remote caller below its route as well, a route that
+    /// only begins with its name is not one of its pages, and a caller on this machine is
+    /// answered.
+    #[test]
+    fn a_local_only_page_covers_what_is_below_it_and_nothing_beside_it() {
+        let from = |path: &str, address: &str| {
+            crate::http::Request::parse_target("GET", path, vec![])
+                .with_remote(Some(address.parse().unwrap()))
+        };
+        assert!(Router::local_only_page(&from("/cockpit/executions/e-1", "203.0.113.9")).is_some());
+        assert!(Router::local_only_page(&from("/cockpit/mesh", "203.0.113.9")).is_some());
+        assert!(Router::local_only_page(&from("/cockpit/meshes", "203.0.113.9")).is_none());
+        assert!(Router::local_only_page(&from("/cockpit/mesh/x", "127.0.0.1")).is_none());
     }
 }

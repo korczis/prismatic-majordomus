@@ -86,8 +86,9 @@ merged --match '#<pr>'` waits for one event and exits. The manual is `docs/MONIT
 Work moves through seats, and a seat is an exclusive mesh claim, never a name: one landing
 seat lands every green head, alone, in combined tops merged pinned to the head CI judged; one
 release seat releases whenever master holds landed work past the last tag; repair lanes merge
-master into conflicting branches; a worker takes one issue to one pull request, hands its green
-head to the landing seat and never merges. A stale checkout or branch is preserved in a
+master into conflicting branches; a worker takes one issue to one pull request and lands its own
+green head through the guarded lander's queue; at most five builders run on one machine
+and none below 35 GiB free. A stale checkout or branch is preserved in a
 `refs/rescue/` ref and then brought current without asking. Who holds each seat is drawn on
 `/ui/mesh`; the rule is `project.the-cooperation-model-is-the-owners-word` (ADR 0167).
 

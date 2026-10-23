@@ -22,6 +22,8 @@ acceptance_criteria:
   - "A fixture missing the final total is recorded incomplete, not completed"
   - "Codex usage of a session the person started is either received through the official seam evidenced in share/providers.yaml (I3287) and configured by I3289, or reported on every surface as not observed with the reason, never as zero and never only as unattributed (case)"
   - "No Codex session file or transcript is read (ADR 0213)"
+  - "An account/read authentication result is not usage evidence; absent token notifications remain not observed, never zero usage"
+  - "Subscription allowances, observed token counts, estimates and billed amounts are represented separately; an authenticated subscription is not evidence of zero marginal charge or unlimited capacity"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::usage"
   - "majordomus plan validate"
@@ -29,4 +31,4 @@ evidence_required:
   - "test_codex_cumulative_is_never_summed"
   - "case_unseen_codex_usage_is_not_observed"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-22

@@ -1,0 +1,40 @@
+id: I3075
+milestone: public-proof
+title: "An article explains the cooperation model in both languages: seats are claims, tops are judged once, stale work is brought current"
+slug: an-article-explains-the-seats
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/seats-not-names.md, an English article on the cooperation model the owner decided on 2026-10-16: a seat is an exclusive mesh claim and nothing else, the landing seat lands combined tops judged by one run and merged pinned to the head that run judged, stale checkouts and branches are preserved in rescue refs and brought current without asking, and the release seat releases whenever master holds landed work past the last tag. Every statement and figure is one ADR 0167, rule project.the-cooperation-model-is-the-owners-word, docs/INTEGRATION.md or the release records state, and what is not done reads as not done: the ADR is proposed and the typed prs compose never landed. site/content-src/kresla-ne-jmena.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both, and both relate the articles on the stream of signals, the bet on a layer and the pasted brief, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. The cooperation model decides how a dozen sessions land one repository's work, and the published site explains it only in the rule, the ADR and the integration manual, which are written for the sessions that follow them rather than for a reader."
+current_state: "No article explains the seats, combined tops or bringing stale work current. The four article groups relate each other and nothing else."
+desired_state: "/seats-not-names/ and /kresla-ne-jmena/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three of the other groups; check 21 passes with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3075.yaml"
+  - "site/content-src/seats-not-names.md"
+  - "site/content-src/kresla-ne-jmena.md"
+  - "site/content-src/everything-followed.md"
+  - "site/content-src/vsechno-v-jednom-proudu.md"
+  - "site/content-src/the-bet-on-a-layer.md"
+  - "site/content-src/teze.md"
+  - "site/content-src/a-pasted-brief-becomes-a-plan.md"
+  - "site/content-src/vlozene-zadani-se-stava-planem.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Changing the cooperation model, its rule or ADR 0167"
+  - "An article on the peer blackboard or the release currency, which describe work that has not landed"
+depends_on:
+  - "I3074"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = seats-not-names/ and the digest check 21 computes of its source"
+  - "Each figure in the article is one the repository states: 107 open pull requests and nine or more sessions on 16 October, 779 commits behind, fourteen issues and thirteen done, about an hour per pull request, twenty members for one run, and the three releases 0.28.0, 0.29.0 and 0.30.0 with their recorded times"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-19
+updated_at: 2026-10-19

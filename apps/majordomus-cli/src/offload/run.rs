@@ -246,9 +246,10 @@ git clean -fdq"#;
 /// directory held 87 GB on lundra and the volume reached 0 bytes. The build directory is
 /// pinned to the run directory too. Arguments: lock, worktrees
 /// directory, tag, shared build directory, derive command, spool, PATH prefix
-/// (colon-separated), then the files to touch. Prints `target <dir>`, then `nothing` or
+/// (colon-separated), the commit the derived files may observe (exported to the derive as
+/// `MJ_DERIVE_OBSERVE`; empty leaves it unset), then the files to touch. Prints `target <dir>`, then `nothing` or
 /// `derived <sha>`; exit 10 when the derive fails, 13 when the lock is not there.
-const DERIVE: &str = r#"l=$1; w=$2; tag=$3; shared=$4; derive=$5; spool=$6; prefix=$7; shift 7
+const DERIVE: &str = r#"l=$1; w=$2; tag=$3; shared=$4; derive=$5; spool=$6; prefix=$7; observe=$8; shift 8
 [ -d "$l" ] || { echo "the lock $l is not held" >&2; exit 13; }
 echo "pid $$"
 : > "$l/$$"
@@ -267,6 +268,7 @@ trap 'rm -rf "$private"; exit 130' INT
 trap 'rm -rf "$private"; exit 143' TERM
 export CARGO_TARGET_DIR="$private"
 export CARGO_BUILD_BUILD_DIR="$private"
+[ -n "$observe" ] && { MJ_DERIVE_OBSERVE=$observe; export MJ_DERIVE_OBSERVE; }
 echo "target $private"
 for f in "$@"; do [ -e "$f" ] && touch "$f"; done
 if ! env -u MAJORDOMUS_SHARE -u MAJORDOMUS_BIN "$derive" > "$log" 2>&1; then
@@ -385,6 +387,22 @@ pub fn offload(
     let top = git(&worktree, &["rev-parse", "--show-toplevel"])?;
     let worktree = PathBuf::from(top.trim());
 
+    // The commit the derived files may observe: the worktree's HEAD, never the input. The
+    // input of a dirty tree is a `git stash create` snapshot and that of a merge in progress
+    // a `commit-tree` commit; neither reaches origin, so a derived file that named one
+    // (delivery.json's observed.commit) could not be checked anywhere else, and CI's
+    // `generate-site-data --check` called it stale (#1759, I3836). Read before the input, so
+    // a branch with no commit yet is refused here, by what it lacks, before anything is
+    // snapshot.
+    let observe = git(&worktree, &["rev-parse", "--verify", "HEAD"])
+        .map_err(|_| {
+            refuse(
+                EXIT_PRECONDITION,
+                "the worktree's branch has no commit yet: a derive observes HEAD, so commit first",
+            )
+        })?
+        .trim()
+        .to_string();
     let input = input_commit(&worktree)?;
     let (host, probe_reports) = pick_host(d, request.host.as_deref(), log)?;
     let remote = remote_of(&host);
@@ -491,6 +509,7 @@ pub fn offload(
         &d.remote.derive,
         spool,
         &prefix,
+        &observe,
     ];
     args.extend(d.remote.touch.iter().map(String::as_str));
     let out = remote
@@ -824,6 +843,7 @@ mod tests {
                 shared.to_str().unwrap(),
                 derive.to_str().unwrap(),
                 spool.to_str().unwrap(),
+                "",
                 "",
             ];
             let out = std::process::Command::new("sh")

@@ -153,6 +153,44 @@ impl NextInput {
     }
 }
 
+/// The input of `release.currency`: whether to decide the version as well.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::release::CurrencyInput;
+/// // the version is decided unless the caller says it does not need it
+/// assert!(CurrencyInput::default().next());
+/// assert!(!CurrencyInput { next: Some(false) }.next());
+/// ```
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(rename = "ReleaseCurrencyInput")]
+pub struct CurrencyInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Whether to decide the version the public contract requires for the landed work, which
+    /// reads the last release's registry: yes when absent. The brief and doctor say no.
+    pub next: Option<bool>,
+}
+
+impl CurrencyInput {
+    /// Whether the version is to be decided.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::release::CurrencyInput;
+    /// assert!(CurrencyInput { next: None }.next());
+    /// ```
+    pub fn next(&self) -> bool {
+        self.next.unwrap_or(true)
+    }
+}
+
+impl BenchmarkCases for CurrencyInput {
+    /// None, for the reason [`AnalysisInput`] gives: the answer measures a trunk against the
+    /// releases it published, and a benchmark fixture has published nothing and has no remote.
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        Vec::new()
+    }
+}
+
 impl BenchmarkCases for NextInput {
     /// None, for the reason [`AnalysisInput`] gives: the answer reads committed registries
     /// at two refs, and a benchmark fixture has no history to read them from.
@@ -259,6 +297,25 @@ pub fn module() -> ModuleDescriptor {
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
                 handler: next,
             },
+            capability! {
+                id: CURRENCY_ID,
+                title: "Whether the trunk's landed work is released",
+                description: "How much landed work the trunk holds past the last release, since when, and at which version, measured when asked (I3070). The last release is the newer of the release the layer records and the newest version tag the trunk contains: a tag is pushed before its record lands. Landed work is every commit of the trunk past it except merges and release commits. A landing is a commit of the trunk's first-parent history, and the work has waited since the oldest landing that brought anything but release commits. The stance is current when nothing has landed past the release, owed when work has, and overdue once it has waited longer than six hours. The version the public contract requires is decided by the version selection release.version makes, but only from a recorded release and only in a checkout at the trunk; otherwise the answer says which it is not. Ask with next false to leave the version out, as the brief and doctor do. It reads git and the clock, so it is never committed into derived data.",
+                input: CurrencyInput,
+                output: release::currency::Currency,
+                stability: Stability::Implemented,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_release_currency".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/release/currency"),
+                    cli: None,
+                },
+                tags: ["release", "version", "delivery"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+                handler: currency,
+            },
         ],
     }
 }
@@ -268,6 +325,9 @@ pub const ANALYSIS_ID: &str = "release.analysis";
 
 /// The landing decision, named beside its declaration.
 pub const NEXT_ID: &str = "release.next";
+
+/// Whether the trunk is released, named beside its declaration.
+pub const CURRENCY_ID: &str = "release.currency";
 
 /// The capability's own id. Beside its declaration, so the two cannot drift apart without
 /// the test below noticing; the document carries it so that no page has to enumerate where
@@ -390,6 +450,21 @@ fn next(
         .map_err(|e| CapabilityError::NotFound(e.to_string()))
 }
 
+/// Whether the trunk's landed work is released, as of now; the version decided unless the
+/// caller said it does not need it.
+fn currency(
+    ctx: &Context,
+    input: CurrencyInput,
+) -> Result<release::currency::Currency, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let mut answer =
+        release::currency::measure(root, &ctx.index.objects, std::time::SystemTime::now());
+    if input.next() {
+        release::currency::decide_next(&mut answer, root, &ctx.registry, &ctx.index.objects);
+    }
+    Ok(answer)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -499,6 +574,27 @@ mod tests {
         }
     }
 
+    /// The capability answers whether the trunk is released, with or without the version: a
+    /// repository with no remote trunk is not measured, and says so either way.
+    #[test]
+    fn the_currency_answers_with_or_without_the_version() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        assert_eq!(CURRENCY_ID, "release.currency");
+        for next in [None, Some(false)] {
+            let answer = currency(&ctx, CurrencyInput { next }).expect("an answer");
+            assert_eq!(
+                answer.stance,
+                release::currency::Stance::Unknown,
+                "{next:?}"
+            );
+            assert!(answer.summary.contains("trunk"), "{}", answer.summary);
+        }
+        // a benchmark fixture has published nothing and has no remote, so there is nothing to
+        // measure and no case is offered
+        assert!(CurrencyInput::benchmark_cases(&CaseContext { index: &ctx.index }).is_empty());
+    }
+
     /// Two capabilities, and every surface that carries them is derived from this
     /// declaration: the MCP tools, the changelog resource, the HTTP routes, the OpenAPI
     /// operations. A refactor that renamed a route, dropped the resource or added a third
@@ -532,6 +628,11 @@ mod tests {
                 "release.next",
                 "majordomus_release_next",
                 "/api/v1/release/next",
+            ),
+            (
+                "release.currency",
+                "majordomus_release_currency",
+                "/api/v1/release/currency",
             ),
         ];
         let ids: Vec<&str> = m

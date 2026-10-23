@@ -599,10 +599,65 @@ assertion is a mutation rather than a description: a variant of the workflow wit
 appended is refused, naming the tag.
 
 Since 2026-10-16 that decision has an owner and a cadence: the release seat of
-[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v1.md)
+[rule `project.the-cooperation-model-is-the-owners-word`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md)
 (ADR 0167) cuts a release whenever master holds landed work past the last tag, not once per
 milestone, and verifies what the site serves after it. The rule says which mesh claim makes a
 session that seat; the tag still waits for `scripts/ci/release-verdict`.
+
+### How long landed work has waited
+
+The seat's cadence was a rule and not a measurement. Master could hold a day of landed work
+past the last tag while every check, the brief, doctor and the delivery screen stayed green.
+On 2026-10-19 the owner ordered a new measured version after every session and milestone,
+enforced. `release.currency` (I3070) is the measurement, and every surface that shows it
+reads that one answer:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Surface | How it is asked |
+|---|---|
+| Command line | `majordomus run release.currency` (`--input '{"next":false}'` leaves the version out) |
+| HTTP | `GET /api/v1/release/currency` |
+| MCP | the tool `majordomus_release_currency` |
+| Brief | the `release` line and section, read without the version |
+| Doctor | `clone release`: OK current, WARN owed, WARN overdue, INFO unknown |
+
+</div>
+
+
+It reads git and the clock when it is asked, and never enters committed derived data. The
+answer is made of three readings:
+
+- **The last release** is the newer of the release the layer records and the newest `v*` tag
+  the trunk (`origin/<trunk>`) contains. A tag is pushed before its record lands, so a trunk
+  being released is never reported as owed.
+- **Landed work** is every commit of the trunk past that release except merges and release
+  commits (`chore(release)`): what the next release would ship.
+- **How long it has waited** is the age of the oldest landing that brought anything but release
+  commits. A landing is a first-parent commit of the trunk: a merge of a top or a branch, or a
+  commit made on the trunk. The wait runs from when the landing reached the trunk, not from
+  when it was made. A top is composed for hours and lands by a fast-forward push, so its
+  commits are older than its landing. `landed_at` says how the date was read:
+  - `reflog`: when this clone's remote-tracking trunk first held the landing, from that ref's
+    reflog. A landing is seen no earlier than it lands, so this wait is a lower bound.
+  - `commit`: the landing's commit time, where the reflog does not show it arrive (a clone
+    made after it landed, or a reflog that was expired). A commit lands no earlier than it is
+    made, so this wait is an upper bound, and the answer says "at most".
+
+  Reading the forge's own record of the landing, from the observation `prs refresh` keeps,
+  is planned (I3076). `release.currency` itself never reaches the network (SECURITY.md).
+
+The stance:
+- **Current:** nothing has landed past the release.
+- **Owed:** something has.
+- **Overdue:** it has waited more than six hours, by its reflog. A commit-time bound past six
+  hours is owed and says so: a bound alone makes nothing overdue, so a top that has just
+  landed never reads overdue for the hours it took to compose.
+- **Unknown:** the answer says why: no remote trunk, or no release this clone can read.
+
+The version the contract requires is decided by the same selection `release version` makes
+(ADR 0051). It is decided only from a recorded release, and only in a checkout at the trunk;
+otherwise `next_unmeasured` says which of the two it is not.
 
 ## What proves it
 

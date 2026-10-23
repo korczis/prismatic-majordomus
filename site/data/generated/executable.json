@@ -3112,6 +3112,23 @@
       "tool": "majordomus_changelog"
     },
     {
+      "api_anchor": "/docs/api/release/#op-release-currency",
+      "claims": [],
+      "cli": null,
+      "id": "release.currency",
+      "kind": "query",
+      "module": "release",
+      "module_route": "/registry/modules/release/",
+      "resource": null,
+      "route": "/registry/capabilities/release-currency/",
+      "slug": "release-currency",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
+      "tests": [],
+      "title": "Whether the trunk's landed work is released",
+      "tool": "majordomus_release_currency"
+    },
+    {
       "api_anchor": "/docs/api/release/#op-release-next",
       "claims": [],
       "cli": null,
@@ -4326,11 +4343,11 @@
     ]
   },
   "counts": {
-    "capabilities": 207,
+    "capabilities": 208,
     "claims": 93,
     "modules": 58
   },
-  "generator": "majordomus-cli 1.0.0-alpha.1",
+  "generator": "majordomus-cli 1.0.0-alpha.6",
   "modules": [
     {
       "capabilities": [
@@ -5736,6 +5753,11 @@
           "id": "release.changelog",
           "route": "/registry/capabilities/release-changelog/",
           "slug": "release-changelog"
+        },
+        {
+          "id": "release.currency",
+          "route": "/registry/capabilities/release-currency/",
+          "slug": "release-currency"
         },
         {
           "id": "release.next",

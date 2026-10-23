@@ -4,7 +4,7 @@ description: "Carry a requested change through the repository evidence-first, fr
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: .ai/repo/skills/implement/SKILL.md; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.1 -->
+     Generator: majordomus-cli 1.0.0-alpha.6 -->
 
 # Implement a change
 
