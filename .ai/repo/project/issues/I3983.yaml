@@ -1,10 +1,10 @@
 id: I3983
 milestone: one-click-implement
-title: "issue.implement judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution"
+title: "implement.issue judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution"
 slug: an-issue-is-implemented-by-one-capability
 priority: p0
 profile: implementation
-objective: "Declare the capability issue.implement (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution."
+objective: "Declare the capability implement.issue (capability! under capability/builtin, then majordomus generate) whose steps are: readiness (devtask.issue readiness; refuse with its reason), lease (an exclusive mesh.claim of the issue's scope held by the execution's session; refuse naming the claim it meets; released at the terminal state, expiring with the heartbeat), worktree (majordomus worktree create for the issue's branch), dispatch (I3982's adapter). Started only as an execution."
 why: "ADR 0225 decision 4. The pieces exist apart (devtask/readiness.rs, mesh.claim, worktree/*), unconnected, and nothing is called a lease."
 current_state: "devtask.issue reports readiness read-only; plan.transition is the only move an issue offers; no capability starts work on an issue."
 desired_state: "One capability, one execution, four recorded steps; every refusal is typed and shown verbatim."

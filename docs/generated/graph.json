@@ -772,6 +772,15 @@
         "status": "query"
       },
       {
+        "id": "capability:implement.issue",
+        "kind": "capability",
+        "label": "implement.issue",
+        "summary": "Implement an issue",
+        "route": "/cockpit/capabilities/implement.issue",
+        "source": "apps/majordomus-cli/src/capability/builtin/implement.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:integration.cleanup",
         "kind": "capability",
         "label": "integration.cleanup",
@@ -64240,7 +64249,7 @@
         "id": "majordomus://issue/I3983",
         "kind": "issue",
         "label": "I3983",
-        "summary": "issue.implement judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
+        "summary": "implement.issue judges readiness, claims the issue's scope as the execution's lease, creates its worktree and hands it to a worker, each a step of one execution",
         "route": "/cockpit/objects/issue/i3983",
         "source": ".ai/repo/project/issues/I3983.yaml",
         "facts": {
@@ -64298,7 +64307,7 @@
         "facts": {
           "acceptance_criteria": [
             "Each of the five states renders exactly its one primary move (unit test over the view)",
-            "Implement starts issue.implement as an execution with an idempotency key; a refusal is the executor's text",
+            "Implement starts implement.issue as an execution with an idempotency key; a refusal is the executor's text",
             "The published snapshot of /ui/idd carries no control",
             "The view fits 390 px with no horizontal scroll"
           ],
@@ -68839,7 +68848,7 @@
             "majordomus intent explain an-issue-is-implemented-from-one-click reads every criterion satisfied"
           ],
           "created_at": "2026-10-23",
-          "current_state": "serve, /ui/idd, executions.start, the event cursor and test 3220 exist; durability, idempotency, issue.implement, a worker adapter, the lease and a restart-surviving browser case do not.",
+          "current_state": "serve, /ui/idd, executions.start, the event cursor and test 3220 exist; durability, idempotency, implement.issue, a worker adapter, the lease and a restart-surviving browser case do not.",
           "evidence_required": [],
           "non_scope": [
             "Remote execution on another mesh node (P1)",
@@ -90948,6 +90957,11 @@
         "label": "health"
       },
       {
+        "id": "module:implement",
+        "kind": "module",
+        "label": "implement"
+      },
+      {
         "id": "module:integration",
         "kind": "module",
         "label": "integration"
@@ -92547,6 +92561,11 @@
       {
         "source": "capability:health.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:implement.issue",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -134260,6 +134279,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:implement",
+        "target": "capability:implement.issue",
+        "kind": "composes"
+      },
+      {
         "source": "module:integration",
         "target": "capability:integration.cleanup",
         "kind": "composes"
@@ -134911,8 +134935,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3779,
-      "edges": 8744,
+      "nodes": 3781,
+      "edges": 8746,
       "acyclic": false,
       "truncated": false
     }

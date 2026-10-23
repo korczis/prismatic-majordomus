@@ -17,7 +17,7 @@
 //!                           Outcome: succeeded · failed(exit) · timed out · cancelled
 //! ```
 //!
-//! Nothing here picks an issue, claims a scope or creates a worktree: `issue.implement`
+//! Nothing here picks an issue, claims a scope or creates a worktree: `implement.issue`
 //! (I3983) does those as earlier steps of the same execution and hands this module the
 //! assignment.
 //!
@@ -160,6 +160,18 @@ impl std::fmt::Debug for dyn Adapter + '_ {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Adapter({})", self.id())
     }
+}
+
+/// The adapters this executable declares, in the order [`choose`] tries them. Claude Code
+/// alone for now; the declaration moves beside each provider in `share/providers.yaml`
+/// when that file's claim is free (I3982).
+///
+/// ```
+/// use majordomus_cli::worker::declared;
+/// assert_eq!(declared().iter().map(|a| a.id().to_string()).collect::<Vec<_>>(), ["claude-code"]);
+/// ```
+pub fn declared() -> Vec<Box<dyn Adapter>> {
+    vec![Box::new(ClaudeCode::default())]
 }
 
 /// The first available adapter, or every adapter's reason when none is.

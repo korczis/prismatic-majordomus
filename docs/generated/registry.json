@@ -212,6 +212,14 @@
       "capabilities": 3
     },
     {
+      "id": "implement",
+      "title": "Implement",
+      "description": "One issue implemented by one execution: readiness, lease, worktree, worker.",
+      "stability": "experimental",
+      "source": "builtin",
+      "capabilities": 1
+    },
+    {
       "id": "integration",
       "title": "Pull-request integration",
       "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
@@ -33213,6 +33221,110 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+    },
+    {
+      "id": "implement.issue",
+      "module": "implement",
+      "kind": "command",
+      "title": "Implement an issue",
+      "description": "Judge the issue's readiness, claim its scope as the execution's lease, create its worktree and hand the work to the first available worker adapter, each a step of one execution (ADR 0225). Started only as an execution, through executions.start.",
+      "input": {
+        "name": "ImplementInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "issue": {
+              "type": "string",
+              "description": "The issue to implement, as the canonical model spells it (`I3983`)."
+            },
+            "deadline_minutes": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "How many minutes the worker may run before its whole process group is stopped."
+            }
+          },
+          "required": [
+            "issue"
+          ],
+          "description": "The input of `implement.issue`: which issue, and how long its worker may run. Nothing\nelse is the caller's to choose — the worktree, the branch, the lease and the adapter\nare derived — so an execution's input names only what a person picked.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementInput;\nlet input: ImplementInput = serde_json::from_str(r#\"{\"issue\":\"I3983\"}\"#).unwrap();\nassert_eq!((input.issue.as_str(), input.deadline_minutes), (\"I3983\", None));\nassert!(serde_json::from_str::<ImplementInput>(r#\"{\"issue\":\"I1\",\"worktree\":\"/x\"}\"#).is_err(),\n    \"the worktree is derived, never given\");\n```",
+          "title": "ImplementInput"
+        }
+      },
+      "output": {
+        "name": "ImplementReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "issue": {
+              "type": "string",
+              "description": "The issue."
+            },
+            "branch": {
+              "type": "string",
+              "description": "The branch the work is on."
+            },
+            "worktree": {
+              "type": "string",
+              "description": "The worktree it ran in."
+            },
+            "lease": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The mesh claim that was the lease, when the mesh runs in this process."
+            },
+            "adapter": {
+              "type": "string",
+              "description": "The adapter that ran the worker."
+            },
+            "outcome": {
+              "type": "string",
+              "description": "How the worker ended, in words."
+            }
+          },
+          "required": [
+            "issue",
+            "branch",
+            "worktree",
+            "adapter",
+            "outcome"
+          ],
+          "description": "What an implementation ended with: where it ran, under which lease, by which worker,\nand how the worker ended. Done here means the worker ended successfully, never verified\nand never delivered.\n\n```\nuse majordomus_cli::capability::builtin::implement::ImplementReport;\nlet report = ImplementReport {\n    issue: \"I0001\".into(), branch: \"feature/I0001-x\".into(), worktree: \"/wt\".into(),\n    lease: None, adapter: \"claude-code\".into(), outcome: \"the worker succeeded\".into(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert!(json.get(\"lease\").is_none(), \"no mesh in the process: no lease is claimed\");\n```",
+          "title": "ImplementReport"
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::implement"
+      },
+      "exposure": {},
+      "availability": "runtime",
+      "visibility": "internal",
+      "stability": "experimental",
+      "tags": [
+        "issue",
+        "executions",
+        "worker"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": true,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/implement.rs"
     },
     {
       "id": "integration.cleanup",
