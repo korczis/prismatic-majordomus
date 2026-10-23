@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "35406f414c1cce6652c13c23a71dc2fb746bf6af04a80a48c0218ce7d073bc36",
+    "fingerprint": "c1af873c5bcf378114ff7453c5769555f35078e13df81230738731df9ad695e0",
     "summary": {
-      "total": 3314,
+      "total": 3315,
       "builtin": 208,
-      "declarative": 3106,
+      "declarative": 3107,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3106
+        "resource": 3107
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3116
+        "implemented": 3117
       },
       "mcp_tools": 197,
-      "mcp_resources": 3161,
+      "mcp_resources": 3162,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -26674,7 +26674,7 @@
             "properties": {
               "outcome": {
                 "type": "string",
-                "description": "What asking achieved: `requested`, `already_requested` or `already_finished`."
+                "description": "What asking achieved: `requested`, `already_requested`, `already_finished`, or\n`outcome_unknown` for an execution whose outcome waits for a reconciliation, which a\nstop cannot change."
               },
               "cancellable": {
                 "type": "boolean",
@@ -26754,7 +26754,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Why it failed, for a failed execution and never before."
+                    "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
                   },
                   "progress": {
                     "anyOf": [
@@ -26851,8 +26851,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -26861,8 +26871,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -26878,9 +26898,14 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "ExecutionError": {
                 "type": "object",
@@ -27415,8 +27440,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -27425,8 +27460,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -27442,16 +27487,21 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "ExecutionEvent": {
                 "type": "object",
                 "properties": {
                   "schema_version": {
                     "type": "string",
-                    "description": "The protocol version, `PROTOCOL_VERSION`."
+                    "description": "The protocol version, `PROTOCOL_VERSION`. A reader refuses a newer one by name."
                   },
                   "event_id": {
                     "type": "string",
@@ -27470,6 +27520,11 @@
                   "timestamp": {
                     "type": "string",
                     "description": "When the event was produced, RFC 3339 in UTC."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The id this execution's log lines and tracing spans carry: the execution id, under\nthe name a reader of a log expects, as the snapshot's own `correlation_id` is. Absent\nfrom an event an older writer produced, and read as empty there.",
+                    "default": ""
                   }
                 },
                 "required": [
@@ -27520,6 +27575,19 @@
                     "properties": {
                       "type": {
                         "type": "string",
+                        "const": "execution.authorizing"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "description": "A policy decision on whether it may run is being taken."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
                         "const": "execution.queued"
                       },
                       "data": {
@@ -27548,6 +27616,32 @@
                     "properties": {
                       "type": {
                         "type": "string",
+                        "const": "execution.claimed"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "holder": {
+                            "description": "Who holds it, in the holder's own words: a worker, a node, a session.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "holder"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A worker holds it and has not entered the handler yet."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
                         "const": "execution.started"
                       }
                     },
@@ -27555,6 +27649,19 @@
                       "type"
                     ],
                     "description": "A worker picked it up and is about to enter the handler."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.verifying"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "description": "The handler returned, and what it produced is being checked."
                   },
                   {
                     "type": "object",
@@ -27779,6 +27886,65 @@
                       "data"
                     ],
                     "description": "It finished, and it did not."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.refused"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "error": {
+                            "description": "Why, with the code `refused` or `forbidden`.",
+                            "$ref": "#/$defs/ExecutionError"
+                          },
+                          "policy": {
+                            "description": "The policy that decided, when one can be named.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "error"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A policy refused it before it ran: at the request, or when a worker claimed it."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.unknown_outcome"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "error": {
+                            "description": "What is known about why the outcome is not.",
+                            "$ref": "#/$defs/ExecutionError"
+                          }
+                        },
+                        "required": [
+                          "error"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "Whether the work happened is not known: the worker went silent, or its answer could\nnot be read. Not the last event: a reconciliation that reads evidence follows it."
                   }
                 ],
                 "description": "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
@@ -28056,7 +28222,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Why it failed, for a failed execution and never before."
+                "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
               },
               "progress": {
                 "anyOf": [
@@ -28154,8 +28320,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -28164,8 +28340,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -28181,9 +28367,14 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "ExecutionError": {
                 "type": "object",
@@ -28568,8 +28759,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -28578,8 +28779,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -28595,9 +28806,14 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               }
             }
           }
@@ -28717,7 +28933,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Why it failed, for a failed execution and never before."
+                    "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
                   },
                   "progress": {
                     "anyOf": [
@@ -28814,8 +29030,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -28824,8 +29050,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -28841,9 +29077,14 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "ExecutionError": {
                 "type": "object",
@@ -29189,7 +29430,7 @@
         "module": "executions",
         "kind": "query",
         "title": "The live channel's contract",
-        "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+        "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -29244,6 +29485,13 @@
                 },
                 "description": "The event types a client may receive, from the one enum that defines them."
               },
+              "states": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ExecutionStateView"
+                },
+                "description": "Every state an execution may be in and the states it may move to: the transition\ntable the store holds every event to, so a client never has to restate it."
+              },
               "stream_types": {
                 "type": "array",
                 "items": {
@@ -29270,6 +29518,7 @@
               "max_connections",
               "max_replay",
               "event_types",
+              "states",
               "stream_types",
               "event_schema",
               "stream_schema",
@@ -29300,6 +29549,92 @@
                   "required"
                 ],
                 "description": "One query parameter of the live channel."
+              },
+              "ExecutionStateView": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/ExecutionState",
+                    "description": "The state, as the snapshot and the list filter spell it."
+                  },
+                  "final": {
+                    "type": "boolean",
+                    "description": "Whether nothing more will be said about an execution in it."
+                  },
+                  "may_move_to": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/ExecutionState"
+                    },
+                    "description": "The states it may move to; every other move is refused."
+                  }
+                },
+                "required": [
+                  "state",
+                  "final",
+                  "may_move_to"
+                ],
+                "description": "One state of an execution, with the moves it allows."
+              },
+              "ExecutionState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "queued",
+                    "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "running",
+                    "description": "The handler is running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelling",
+                    "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
+                  },
+                  {
+                    "type": "string",
+                    "const": "succeeded",
+                    "description": "The handler returned an output."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The handler returned an error, or the worker could not run it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
+                  }
+                ],
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "LimitsView": {
                 "type": "object",
@@ -29396,7 +29731,7 @@
         "module": "executions",
         "kind": "command",
         "title": "Report an execution another process runs",
-        "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+        "description": "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only.",
         "input": {
           "name": "ReportInput",
           "schema": {
@@ -29453,7 +29788,7 @@
                 "properties": {
                   "schema_version": {
                     "type": "string",
-                    "description": "The protocol version, `PROTOCOL_VERSION`."
+                    "description": "The protocol version, `PROTOCOL_VERSION`. A reader refuses a newer one by name."
                   },
                   "event_id": {
                     "type": "string",
@@ -29472,6 +29807,11 @@
                   "timestamp": {
                     "type": "string",
                     "description": "When the event was produced, RFC 3339 in UTC."
+                  },
+                  "correlation_id": {
+                    "type": "string",
+                    "description": "The id this execution's log lines and tracing spans carry: the execution id, under\nthe name a reader of a log expects, as the snapshot's own `correlation_id` is. Absent\nfrom an event an older writer produced, and read as empty there.",
+                    "default": ""
                   }
                 },
                 "required": [
@@ -29522,6 +29862,19 @@
                     "properties": {
                       "type": {
                         "type": "string",
+                        "const": "execution.authorizing"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "description": "A policy decision on whether it may run is being taken."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
                         "const": "execution.queued"
                       },
                       "data": {
@@ -29550,6 +29903,32 @@
                     "properties": {
                       "type": {
                         "type": "string",
+                        "const": "execution.claimed"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "holder": {
+                            "description": "Who holds it, in the holder's own words: a worker, a node, a session.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "holder"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A worker holds it and has not entered the handler yet."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
                         "const": "execution.started"
                       }
                     },
@@ -29557,6 +29936,19 @@
                       "type"
                     ],
                     "description": "A worker picked it up and is about to enter the handler."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.verifying"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "description": "The handler returned, and what it produced is being checked."
                   },
                   {
                     "type": "object",
@@ -29781,6 +30173,65 @@
                       "data"
                     ],
                     "description": "It finished, and it did not."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.refused"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "error": {
+                            "description": "Why, with the code `refused` or `forbidden`.",
+                            "$ref": "#/$defs/ExecutionError"
+                          },
+                          "policy": {
+                            "description": "The policy that decided, when one can be named.",
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "error"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "A policy refused it before it ran: at the request, or when a worker claimed it."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "execution.unknown_outcome"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "error": {
+                            "description": "What is known about why the outcome is not.",
+                            "$ref": "#/$defs/ExecutionError"
+                          }
+                        },
+                        "required": [
+                          "error"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "Whether the work happened is not known: the worker went silent, or its answer could\nnot be read. Not the last event: a reconciliation that reads evidence follows it."
                   }
                 ],
                 "description": "One event about one execution.\n\n`sequence` is dense and starts at 1 within an execution: a client that has seen\nsequence `n` knows it has missed something when the next event it reads is not `n + 1`,\nand asks for the gap by cursor rather than reloading the world."
@@ -30026,7 +30477,7 @@
                         "type": "null"
                       }
                     ],
-                    "description": "Why it failed, for a failed execution and never before."
+                    "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
                   },
                   "progress": {
                     "anyOf": [
@@ -30123,8 +30574,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -30133,8 +30594,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -30150,9 +30621,14 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "ExecutionError": {
                 "type": "object",
@@ -30581,7 +31057,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Why it failed, for a failed execution and never before."
+                "description": "Why it failed, for a failed execution and never before; why it was refused, for a\nrefused one; and why its outcome is not known, for one whose outcome is not."
               },
               "progress": {
                 "anyOf": [
@@ -30684,8 +31160,18 @@
                 "oneOf": [
                   {
                     "type": "string",
+                    "const": "authorizing",
+                    "description": "Accepted, and a policy decision on whether it may run has not been taken yet."
+                  },
+                  {
+                    "type": "string",
                     "const": "queued",
                     "description": "Accepted, and no worker has picked it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "claimed",
+                    "description": "A worker holds it and has not entered the handler yet."
                   },
                   {
                     "type": "string",
@@ -30694,8 +31180,18 @@
                   },
                   {
                     "type": "string",
+                    "const": "verifying",
+                    "description": "The handler returned, and what it produced is being checked."
+                  },
+                  {
+                    "type": "string",
                     "const": "cancelling",
                     "description": "Cancellation was asked for and the handler has not stopped yet."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown_outcome",
+                    "description": "Whether the work happened is not known: the worker that ran it went silent or its\nanswer could not be read. Only a reconciliation moves it on, never a rerun."
                   },
                   {
                     "type": "string",
@@ -30711,9 +31207,14 @@
                     "type": "string",
                     "const": "cancelled",
                     "description": "It stopped because it was asked to."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "A policy refused it before it ran, at the request or when a worker claimed it."
                   }
                 ],
-                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::may_move_to` is the one\nplace they are written down: the engine asks before every change, the store refuses a\nmove it did not allow, and a client that reads a final state never sees it move again.\n\n```text\n  queued ──► running ──┬──► succeeded\n     │                 ├──► failed\n     │                 └──► cancelling ──┬──► cancelled\n     │                                   ├──► succeeded\n     └──► cancelled                      └──► failed\n```\n\nThere is no `starting`. An in-process engine claims an execution and enters its handler\nin the same instant, so a state between the two would be one no client could ever\nobserve and every client would have to handle."
+                "description": "Where an execution is in its life.\n\nThe transitions are the whole contract, and `ExecutionState::EDGES` is the one place\nthey are written down: `ExecutionState::may_move_to` reads it, the engine asks before\nevery change, the store refuses a move it does not allow, and a client that reads a\nfinal state never sees it move again.\n\n```text\n  authorizing     ──► queued | refused | failed | cancelled\n  queued          ──► running | claimed | refused | failed | cancelled\n  claimed         ──► running | queued | refused | failed | cancelling | unknown_outcome\n  running         ──► verifying | succeeded | failed | cancelling | unknown_outcome\n  verifying       ──► succeeded | failed | cancelling | unknown_outcome\n  cancelling      ──► cancelled | succeeded | failed | unknown_outcome\n  unknown_outcome ──► verifying | succeeded | failed | cancelled        (never running)\n  succeeded, failed, cancelled, refused: final\n```\n\nThe in-process engine moves `queued ──► running` directly: it claims an execution and\nenters its handler in the same instant, so `claimed` would be a state no client could\nobserve. `authorizing`, `claimed`, `verifying`, `refused` and `unknown_outcome` are\nentered by a worker that decides, holds, checks or loses an execution in its own time\n(Mission Control B3): a policy decision before the queue, a lease on a queued ticket, a\ncheck of what the handler produced, a refusal, and a run whose outcome cannot be read.\n\n`unknown_outcome` is the one state a retry may not leave by running again. Whether the\nwork happened is not known, so the next move is a reconciliation that reads evidence\n— to `verifying`, or straight to the outcome it found — and never `running`."
               },
               "ExecutionError": {
                 "type": "object",
@@ -86847,7 +87348,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 603,
+        "capabilities": 604,
         "capability_ids": []
       },
       {
@@ -86939,7 +87440,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0ff9a9edfdbe53c41f92bb6b5bbd5f7e477c8bebf30362120f0c89588d232a8a",
+    "fingerprint": "1cede3c535df34501b52d554bea1e61fa189e7411d2033338dc90a46381f7cfa",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86993,7 +87494,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 603,
+      "test": 604,
       "use-case": 49,
       "workspace": 1
     },
@@ -94033,7 +94534,7 @@
         "title": "Executions — watching a capability call happen",
         "path": "docs/EXECUTIONS.md",
         "source_class": "document",
-        "bytes": 26519
+        "bytes": 30766
       },
       {
         "uri": "majordomus://document/docs/EXTRACTION_REPORT.md",
@@ -118189,6 +118690,14 @@
         "bytes": 6937
       },
       {
+        "uri": "majordomus://test/test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+        "kind": "test",
+        "identity": "test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+        "path": "test/cases/4001_the_execution_state_machine_names_authorizing_to_unknown_outcome.sh",
+        "source_class": "case",
+        "bytes": 8672
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -121025,7 +121534,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 603
+      "objects": 604
     },
     {
       "name": "use-case",
@@ -154999,7 +155508,7 @@
         "name": "majordomus_execution_protocol",
         "id": "executions.protocol",
         "title": "The live channel's contract",
-        "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+        "description": "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
         "kind": "query",
         "read_only": true,
         "effect": "read",

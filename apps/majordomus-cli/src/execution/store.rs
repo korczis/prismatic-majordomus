@@ -113,6 +113,9 @@ pub enum CancelOutcome {
     AlreadyRequested,
     /// It had already finished; nothing was done.
     AlreadyFinished(ExecutionState),
+    /// Its outcome is not known: whether the work happened waits for a reconciliation, and
+    /// a stop cannot change what already did or did not happen. Nothing was done.
+    OutcomeUnknown,
     /// No such execution.
     Unknown,
 }
@@ -430,6 +433,61 @@ impl ExecutionStore {
         cancel
     }
 
+    /// Record a new execution that waits for a policy decision before it may be queued,
+    /// and publish its first events. Returns its cancellation token.
+    ///
+    /// The execution is created `authorizing`, the one state nothing moves into: whatever
+    /// takes the decision publishes `execution.queued` to admit it or `execution.refused`
+    /// to refuse it, and the store holds both to [`ExecutionState::may_move_to`]. Nothing in
+    /// this process runs an execution that is admitted this way: it is for a worker that
+    /// claims its tickets from the queue.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, EventPayload, ExecutionError};
+    /// use majordomus_cli::execution::{ExecutionId, ExecutionState, ExecutionStore, Limits};
+    /// use majordomus_cli::execution::{RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let seed = || Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::of(ActorKind::Http),
+    ///     repository: RepositoryRef { name: "r".into(), id: "id".into(), branch: None },
+    /// };
+    /// let admitted = ExecutionId::fresh();
+    /// store.create_authorizing(admitted.clone(), seed());
+    /// assert_eq!(store.get(&admitted).unwrap().state, ExecutionState::Authorizing);
+    /// assert!(store.publish(&admitted, EventPayload::Started).is_none(), "not authorised yet");
+    /// assert!(store.publish(&admitted, EventPayload::Queued { ahead: 0 }).is_some());
+    /// assert_eq!(store.get(&admitted).unwrap().state, ExecutionState::Queued);
+    ///
+    /// let refused = ExecutionId::fresh();
+    /// store.create_authorizing(refused.clone(), seed());
+    /// let error = ExecutionError {
+    ///     code: "refused".into(),
+    ///     message: "the policy does not allow this capability here".into(),
+    ///     suggestion: None,
+    ///     correlation_id: refused.to_string(),
+    /// };
+    /// let policy = Some("project.example".to_string());
+    /// assert!(store.publish(&refused, EventPayload::Refused { error, policy }).is_some());
+    /// let held = store.get(&refused).unwrap();
+    /// assert_eq!(held.state, ExecutionState::Refused);
+    /// assert_eq!(held.error.unwrap().code, "refused");
+    /// assert!(held.finished_at.is_some(), "refused is final");
+    /// ```
+    pub fn create_authorizing(&self, id: ExecutionId, seed: Seed<'_>) -> Arc<AtomicBool> {
+        let (mut record, created) = self.record(&id, seed, None, None);
+        record.snapshot.state = ExecutionState::Authorizing;
+        let cancel = Arc::clone(&record.cancel);
+        self.hold(&mut self.lock(), id.clone(), record);
+        self.publish(&id, created);
+        // the state it was created in, said as an event too, so the stream alone tells it
+        self.publish(&id, EventPayload::Authorizing);
+        cancel
+    }
+
     /// Record a new execution unless its idempotency key already started one (I4000).
     ///
     /// Without a key this is [`Self::create`]. With one, the key is looked up and the
@@ -637,9 +695,13 @@ impl ExecutionStore {
         outcome
     }
 
-    /// Fail every reported execution that is not finished and has not been heard from for
-    /// longer than `silence`, and answer which. The process that ran it was killed or lost
-    /// its way to this one; what it did afterwards is unknown here, which the error says.
+    /// Mark every reported execution that is not finished and has not been heard from for
+    /// longer than `silence` as of unknown outcome, and answer which. The process that ran
+    /// it was killed or lost its way to this one; what it did afterwards is unknown here, so
+    /// the execution says `unknown_outcome` — never `succeeded`, and not `failed` either,
+    /// which would be a claim nobody can back. A reporter that comes back reconciles it
+    /// with the outcome it reports; a `started` from it is refused, since nothing runs
+    /// again until the outcome is known.
     ///
     /// ```
     /// use majordomus_cli::execution::{Actor, EventPayload, ExecutionId, ExecutionState};
@@ -660,9 +722,15 @@ impl ExecutionStore {
     /// assert!(store.abandon_silent(Duration::from_secs(30)).is_empty(), "heard just now");
     /// std::thread::sleep(Duration::from_millis(20));
     /// assert_eq!(store.abandon_silent(Duration::from_millis(5)), vec![id.clone()]);
-    /// let failed = store.get(&id).unwrap();
-    /// assert_eq!(failed.state, ExecutionState::Failed);
-    /// assert_eq!(failed.error.unwrap().code, "unavailable");
+    /// let unknown = store.get(&id).unwrap();
+    /// assert_eq!(unknown.state, ExecutionState::UnknownOutcome);
+    /// assert_eq!(unknown.error.unwrap().code, "unavailable");
+    /// assert!(store.abandon_silent(Duration::from_millis(5)).is_empty(), "said once");
+    /// // the reporter is back: it may not run again, and its outcome reconciles the record
+    /// assert_eq!(store.report(&id, vec![(3, EventPayload::Started)]).unwrap().applied, 0);
+    /// let done = EventPayload::Completed { output: serde_json::json!(1) };
+    /// assert_eq!(store.report(&id, vec![(4, done)]).unwrap().applied, 1);
+    /// assert_eq!(store.get(&id).unwrap().state, ExecutionState::Succeeded);
     /// ```
     pub fn abandon_silent(&self, silence: Duration) -> Vec<ExecutionId> {
         let mut published = Vec::new();
@@ -672,6 +740,8 @@ impl ExecutionStore {
                 .records
                 .iter()
                 .filter(|(_, r)| r.snapshot.state.is_active())
+                // said already: saying it again would only repeat the event
+                .filter(|(_, r)| r.snapshot.state != ExecutionState::UnknownOutcome)
                 .filter_map(|(id, r)| {
                     let reported = r.reported.as_ref()?;
                     let quiet = reported.heard.elapsed();
@@ -680,7 +750,7 @@ impl ExecutionStore {
                 .collect();
             let mut abandoned = Vec::new();
             for (id, pid, quiet) in silent {
-                let payload = EventPayload::Failed {
+                let payload = EventPayload::UnknownOutcome {
                     error: ExecutionError {
                         code: "unavailable".into(),
                         message: format!(
@@ -692,8 +762,19 @@ impl ExecutionStore {
                         correlation_id: id.to_string(),
                     },
                 };
-                // an active execution may always fail, so the event is published; the
-                // id is named abandoned only when it was
+                // a reported execution that still says queued was held by the process that
+                // reported it, which may have entered the handler without saying so before
+                // it went silent: that is the claim the table leaves unknown_outcome from,
+                // and it is said first rather than skipped. The id is named abandoned only
+                // when the outcome was published.
+                let queued = inner.records.get(&id).map(|r| r.snapshot.state)
+                    == Some(ExecutionState::Queued);
+                if queued {
+                    let claimed = EventPayload::Claimed {
+                        holder: format!("process {pid}"),
+                    };
+                    published.extend(self.publish_locked(&mut inner, &id, claimed));
+                }
                 let event = self.publish_locked(&mut inner, &id, payload);
                 abandoned.extend(event.is_some().then_some(id));
                 published.extend(event);
@@ -925,7 +1006,8 @@ impl ExecutionStore {
             .count()
     }
 
-    /// How many are not finished: running, starting, cancelling or queued.
+    /// How many are not finished: authorising, queued, claimed, running, verifying,
+    /// cancelling, or waiting for their outcome to be reconciled.
     pub fn active(&self) -> usize {
         self.lock()
             .records
@@ -986,6 +1068,9 @@ impl ExecutionStore {
             if state.is_final() {
                 return CancelOutcome::AlreadyFinished(state);
             }
+            if state == ExecutionState::UnknownOutcome {
+                return CancelOutcome::OutcomeUnknown;
+            }
             if record.cancel_requested {
                 return CancelOutcome::AlreadyRequested;
             }
@@ -997,8 +1082,9 @@ impl ExecutionStore {
                 return CancelOutcome::Requested;
             }
             let token = Arc::clone(&record.cancel);
-            // a queued execution has no worker to notice the token, so it is finished here
-            let payload = if state == ExecutionState::Queued {
+            // a queued execution, or one still being authorised, has no worker to notice the
+            // token, so it is finished here
+            let payload = if matches!(state, ExecutionState::Queued | ExecutionState::Authorizing) {
                 EventPayload::Cancelled
             } else {
                 EventPayload::Cancelling { by: by.to_string() }
@@ -1168,7 +1254,9 @@ fn apply(record: &mut Record, payload: &EventPayload, sequence: u64, limits: Lim
             s.output = Some(output.clone());
             s.error = None;
         }
-        EventPayload::Failed { error } => {
+        EventPayload::Failed { error }
+        | EventPayload::Refused { error, .. }
+        | EventPayload::UnknownOutcome { error } => {
             s.error = Some(error.clone());
             s.output = None;
         }
@@ -1744,7 +1832,7 @@ mod tests {
     }
 
     #[test]
-    fn a_reporter_that_goes_silent_is_failed_rather_than_shown_running_for_ever() {
+    fn a_reporter_that_goes_silent_ends_of_unknown_outcome_rather_than_running_for_ever() {
         let store = store();
         let id = ExecutionId::fresh();
         store.adopt(id.clone(), seed(), 99).unwrap();
@@ -1769,8 +1857,13 @@ mod tests {
             vec![id.clone()]
         );
         let snapshot = store.get(&id).unwrap();
-        assert_eq!(snapshot.state, ExecutionState::Failed);
-        let error = snapshot.error.expect("an error");
+        assert_eq!(
+            snapshot.state,
+            ExecutionState::UnknownOutcome,
+            "what it did is not known: never completed, and not claimed failed"
+        );
+        assert!(snapshot.output.is_none());
+        let error = snapshot.error.expect("why the outcome is unknown");
         assert_eq!(error.code, "unavailable");
         assert!(error.message.contains("process 99"), "{}", error.message);
         assert_eq!(
@@ -1779,17 +1872,195 @@ mod tests {
             "this process's own execution is never abandoned"
         );
         assert!(store.abandon_silent(Duration::ZERO).is_empty(), "once");
-        // a reporter that comes back finds it final, and nothing moves it
+        assert_eq!(
+            store.request_cancel(&id, "client"),
+            CancelOutcome::OutcomeUnknown,
+            "a stop cannot change what did or did not happen"
+        );
+        // a reporter that comes back may not run it again, and its outcome reconciles it
+        let again = store.report(&id, vec![(4, EventPayload::Started)]).unwrap();
+        assert_eq!(
+            again.applied, 0,
+            "unknown_outcome never moves back to running"
+        );
+        assert_eq!(
+            store.get(&id).unwrap().state,
+            ExecutionState::UnknownOutcome
+        );
         store.report(
             &id,
             vec![(
-                4,
+                5,
                 EventPayload::Completed {
                     output: Value::Null,
                 },
             )],
         );
-        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Failed);
+        let reconciled = store.get(&id).unwrap();
+        assert_eq!(reconciled.state, ExecutionState::Succeeded);
+        assert!(
+            reconciled.error.is_none(),
+            "the outcome replaced the uncertainty"
+        );
+    }
+
+    #[test]
+    fn a_silent_reporter_of_a_queued_execution_held_it_and_its_outcome_is_unknown() {
+        let store = store();
+        let id = ExecutionId::fresh();
+        store.adopt(id.clone(), seed(), 77).unwrap();
+        std::thread::sleep(Duration::from_millis(20));
+        assert_eq!(
+            store.abandon_silent(Duration::from_millis(5)),
+            vec![id.clone()]
+        );
+        let page = store.events(&id, 0, 10).unwrap();
+        let names: Vec<_> = page.events.iter().map(|e| e.type_name()).collect();
+        assert_eq!(
+            names,
+            [
+                "execution.created",
+                "execution.claimed",
+                "execution.unknown_outcome"
+            ]
+        );
+        assert_eq!(
+            store.get(&id).unwrap().state,
+            ExecutionState::UnknownOutcome
+        );
+    }
+
+    #[test]
+    fn the_new_states_are_entered_and_left_only_along_the_table() {
+        let store = store();
+        // claimed, entered, verified
+        let id = start(&store);
+        let claimed = EventPayload::Claimed {
+            holder: "worker-1".into(),
+        };
+        assert!(store.publish(&id, claimed).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Claimed);
+        assert!(store.publish(&id, EventPayload::Started).is_some());
+        assert!(store.publish(&id, EventPayload::Verifying).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Verifying);
+        assert!(
+            store
+                .publish(&id, EventPayload::Queued { ahead: 0 })
+                .is_none(),
+            "what ran is not requeued"
+        );
+        let done = EventPayload::Completed {
+            output: serde_json::json!(1),
+        };
+        assert!(store.publish(&id, done).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Succeeded);
+
+        // refused when the worker authorises the ticket it claims; refused is final
+        let id = start(&store);
+        let claimed = EventPayload::Claimed {
+            holder: "worker-2".into(),
+        };
+        store.publish(&id, claimed);
+        let refusal = EventPayload::Refused {
+            error: ExecutionError {
+                code: "forbidden".into(),
+                message: "not on this node".into(),
+                suggestion: None,
+                correlation_id: id.to_string(),
+            },
+            policy: None,
+        };
+        assert!(store.publish(&id, refusal).is_some());
+        let refused = store.get(&id).unwrap();
+        assert_eq!(refused.state, ExecutionState::Refused);
+        assert!(refused.finished_at.is_some());
+        assert!(store.publish(&id, EventPayload::Started).is_none());
+        assert_eq!(
+            store.request_cancel(&id, "client"),
+            CancelOutcome::AlreadyFinished(ExecutionState::Refused)
+        );
+
+        // a run whose outcome is lost: never back to running, only reconciled
+        let id = start(&store);
+        store.publish(&id, EventPayload::Started);
+        let lost = EventPayload::UnknownOutcome {
+            error: ExecutionError {
+                code: "unavailable".into(),
+                message: "the worker stopped answering".into(),
+                suggestion: None,
+                correlation_id: id.to_string(),
+            },
+        };
+        assert!(store.publish(&id, lost).is_some());
+        let before = store.get(&id).unwrap();
+        assert!(store.publish(&id, EventPayload::Started).is_none());
+        assert!(store
+            .publish(&id, EventPayload::Claimed { holder: "w".into() })
+            .is_none());
+        assert_eq!(
+            store.get(&id).unwrap(),
+            before,
+            "a refused move changes nothing"
+        );
+        assert!(store.publish(&id, EventPayload::Verifying).is_some());
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Verifying);
+
+        // an execution waiting for its authorisation is cancelled at once: nobody runs it
+        let id = ExecutionId::fresh();
+        store.create_authorizing(id.clone(), seed());
+        assert_eq!(
+            store.request_cancel(&id, "client"),
+            CancelOutcome::Requested
+        );
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Cancelled);
+    }
+
+    #[test]
+    fn the_flows_of_the_engine_are_unchanged_by_the_new_states() {
+        let store = store();
+        let ok = start(&store);
+        for p in [
+            EventPayload::Queued { ahead: 0 },
+            EventPayload::Started,
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+        ] {
+            assert!(store.publish(&ok, p).is_some());
+        }
+        assert_eq!(store.get(&ok).unwrap().state, ExecutionState::Succeeded);
+        let bad = start(&store);
+        store.publish(&bad, EventPayload::Started);
+        store.publish(
+            &bad,
+            EventPayload::Failed {
+                error: ExecutionError {
+                    code: "internal".into(),
+                    message: "m".into(),
+                    suggestion: None,
+                    correlation_id: bad.to_string(),
+                },
+            },
+        );
+        assert_eq!(store.get(&bad).unwrap().state, ExecutionState::Failed);
+        let queued = start(&store);
+        assert_eq!(store.request_cancel(&queued, "c"), CancelOutcome::Requested);
+        assert_eq!(store.get(&queued).unwrap().state, ExecutionState::Cancelled);
+        let running = start(&store);
+        store.publish(&running, EventPayload::Started);
+        assert_eq!(
+            store.request_cancel(&running, "c"),
+            CancelOutcome::Requested
+        );
+        assert_eq!(
+            store.get(&running).unwrap().state,
+            ExecutionState::Cancelling
+        );
+        assert!(store.publish(&running, EventPayload::Cancelled).is_some());
+        assert_eq!(
+            store.get(&running).unwrap().state,
+            ExecutionState::Cancelled
+        );
     }
 
     #[test]

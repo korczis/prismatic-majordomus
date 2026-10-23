@@ -417,6 +417,19 @@ fn describe(event: &crate::execution::ExecutionEvent) -> Option<String> {
         Cancelled => "---  cancelled".to_string(),
         Completed { .. } => "---  completed".to_string(),
         Failed { error } => format!("FAIL {}: {}", error.code, error.message),
+        Claimed { holder } => format!("---  held by {holder}"),
+        Verifying => "---  checking what it produced".to_string(),
+        Refused { error, policy } => format!(
+            "REFUSED {}: {}{}",
+            error.code,
+            error.message,
+            policy
+                .as_ref()
+                .map(|p| format!(" ({p})"))
+                .unwrap_or_default()
+        ),
+        UnknownOutcome { error } => format!("UNKNOWN {}: {}", error.code, error.message),
+        Authorizing => "---  waiting for a policy decision".to_string(),
         Queued { .. } => return None,
     })
 }
@@ -772,6 +785,28 @@ mod tests {
                 error: ExecutionError {
                     code: "internal".into(),
                     message: "it broke".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+            },
+            EventPayload::Authorizing,
+            EventPayload::Claimed {
+                holder: "worker-1".into(),
+            },
+            EventPayload::Verifying,
+            EventPayload::Refused {
+                error: ExecutionError {
+                    code: "refused".into(),
+                    message: "not here".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+                policy: Some("project.example".into()),
+            },
+            EventPayload::UnknownOutcome {
+                error: ExecutionError {
+                    code: "unavailable".into(),
+                    message: "it went silent".into(),
                     suggestion: None,
                     correlation_id: "x".into(),
                 },

@@ -18,10 +18,48 @@ use super::model::{
 ///
 /// It is carried on every event and negotiated when a client connects. A change that a
 /// client written against version 1 could not ignore safely — a renamed field, a removed
-/// variant, a changed meaning — increments it. A new variant does not: a client is
-/// required to ignore a payload type it does not know, which is what
-/// [`EventPayload::is_terminal`] and the Cockpit's own reader are written to do.
+/// variant, a changed meaning — increments it. A new variant does not, and neither does a
+/// new state or a new envelope field: a client is required to ignore a payload type it
+/// does not know, which is what [`EventPayload::is_terminal`] and the Cockpit's own reader
+/// are written to do. A reader of this executable refuses an event of a newer version by
+/// name rather than guessing at it ([`check_schema_version`]).
 pub const PROTOCOL_VERSION: &str = "1";
+
+/// May a reader of this executable read an event of `version`? An older version or this
+/// one, yes; a newer one, or a word that is not a version, is refused with a sentence that
+/// names it, so a reader that meets an event from a newer writer says so instead of
+/// misreading it.
+///
+/// ```
+/// use majordomus_cli::execution::event::check_schema_version;
+/// assert!(check_schema_version("1").is_ok());
+/// let refused = check_schema_version("2").unwrap_err();
+/// assert!(refused.contains("version 2") && refused.contains("newer"), "{refused}");
+/// assert!(check_schema_version("one").is_err());
+/// ```
+pub fn check_schema_version(version: &str) -> Result<(), String> {
+    let ours: u32 = PROTOCOL_VERSION.parse().unwrap_or(1);
+    match version.parse::<u32>() {
+        Ok(theirs) if (1..=ours).contains(&theirs) => Ok(()),
+        Ok(theirs) if theirs > ours => Err(format!(
+            "an execution event of schema version {theirs} is newer than version {ours}, the newest this executable reads; upgrade majordomus to read it"
+        )),
+        _ => Err(format!(
+            "{version:?} is not an execution event schema version this executable reads (1 to {ours})"
+        )),
+    }
+}
+
+/// Deserialise `schema_version`, refusing one [`check_schema_version`] refuses: every
+/// reader of an event, whatever transport it came by, refuses a newer one the same way.
+fn read_schema_version<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let version = String::deserialize(deserializer)?;
+    check_schema_version(&version).map_err(serde::de::Error::custom)?;
+    Ok(version)
+}
 
 /// One event about one execution.
 ///
@@ -30,7 +68,9 @@ pub const PROTOCOL_VERSION: &str = "1";
 /// and asks for the gap by cursor rather than reloading the world.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExecutionEvent {
-    /// The protocol version, [`PROTOCOL_VERSION`].
+    /// The protocol version, [`PROTOCOL_VERSION`]. A reader refuses a newer one by name.
+    #[serde(deserialize_with = "read_schema_version")]
+    #[schemars(with = "String")]
     pub schema_version: String,
     /// The identity of this event: the execution's id and the sequence, so a client that
     /// deduplicates needs no composite key of its own.
@@ -41,6 +81,11 @@ pub struct ExecutionEvent {
     pub sequence: u64,
     /// When the event was produced, RFC 3339 in UTC.
     pub timestamp: String,
+    /// The id this execution's log lines and tracing spans carry: the execution id, under
+    /// the name a reader of a log expects, as the snapshot's own `correlation_id` is. Absent
+    /// from an event an older writer produced, and read as empty there.
+    #[serde(default)]
+    pub correlation_id: String,
     /// What happened.
     #[serde(flatten)]
     pub payload: EventPayload,
@@ -52,6 +97,7 @@ impl ExecutionEvent {
         ExecutionEvent {
             schema_version: PROTOCOL_VERSION.to_string(),
             event_id: format!("{execution_id}#{sequence}"),
+            correlation_id: execution_id.to_string(),
             execution_id,
             sequence,
             timestamp: crate::peers::rfc3339(std::time::SystemTime::now()),
@@ -84,15 +130,27 @@ pub enum EventPayload {
         /// The input, with sensitive values already replaced.
         input: Value,
     },
+    /// A policy decision on whether it may run is being taken.
+    #[serde(rename = "execution.authorizing")]
+    Authorizing,
     /// It is waiting for a worker.
     #[serde(rename = "execution.queued")]
     Queued {
         /// How many executions are ahead of it.
         ahead: usize,
     },
+    /// A worker holds it and has not entered the handler yet.
+    #[serde(rename = "execution.claimed")]
+    Claimed {
+        /// Who holds it, in the holder's own words: a worker, a node, a session.
+        holder: String,
+    },
     /// A worker picked it up and is about to enter the handler.
     #[serde(rename = "execution.started")]
     Started,
+    /// The handler returned, and what it produced is being checked.
+    #[serde(rename = "execution.verifying")]
+    Verifying,
     /// How far along it is.
     #[serde(rename = "execution.progress")]
     Progress(ProgressView),
@@ -151,6 +209,22 @@ pub enum EventPayload {
         /// Why.
         error: ExecutionError,
     },
+    /// A policy refused it before it ran: at the request, or when a worker claimed it.
+    #[serde(rename = "execution.refused")]
+    Refused {
+        /// Why, with the code `refused` or `forbidden`.
+        error: ExecutionError,
+        /// The policy that decided, when one can be named.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        policy: Option<String>,
+    },
+    /// Whether the work happened is not known: the worker went silent, or its answer could
+    /// not be read. Not the last event: a reconciliation that reads evidence follows it.
+    #[serde(rename = "execution.unknown_outcome")]
+    UnknownOutcome {
+        /// What is known about why the outcome is not.
+        error: ExecutionError,
+    },
 }
 
 impl EventPayload {
@@ -164,8 +238,11 @@ impl EventPayload {
     pub fn type_name(&self) -> &'static str {
         match self {
             EventPayload::Created { .. } => "execution.created",
+            EventPayload::Authorizing => "execution.authorizing",
             EventPayload::Queued { .. } => "execution.queued",
+            EventPayload::Claimed { .. } => "execution.claimed",
             EventPayload::Started => "execution.started",
+            EventPayload::Verifying => "execution.verifying",
             EventPayload::Progress(_) => "execution.progress",
             EventPayload::StepStarted { .. } => "execution.step.started",
             EventPayload::StepCompleted { .. } => "execution.step.completed",
@@ -175,6 +252,8 @@ impl EventPayload {
             EventPayload::Cancelled => "execution.cancelled",
             EventPayload::Completed { .. } => "execution.completed",
             EventPayload::Failed { .. } => "execution.failed",
+            EventPayload::Refused { .. } => "execution.refused",
+            EventPayload::UnknownOutcome { .. } => "execution.unknown_outcome",
         }
     }
 
@@ -184,23 +263,32 @@ impl EventPayload {
     /// use majordomus_cli::execution::EventPayload;
     /// assert!(EventPayload::Cancelled.is_terminal());
     /// assert!(!EventPayload::Started.is_terminal());
+    /// assert!(!EventPayload::Verifying.is_terminal());
     /// ```
     pub fn is_terminal(&self) -> bool {
         matches!(
             self,
-            EventPayload::Completed { .. } | EventPayload::Failed { .. } | EventPayload::Cancelled
+            EventPayload::Completed { .. }
+                | EventPayload::Failed { .. }
+                | EventPayload::Cancelled
+                | EventPayload::Refused { .. }
         )
     }
 
     /// The state this event puts the execution into, when it decides one.
     pub fn implies_state(&self) -> Option<ExecutionState> {
         match self {
+            EventPayload::Authorizing => Some(ExecutionState::Authorizing),
             EventPayload::Queued { .. } => Some(ExecutionState::Queued),
+            EventPayload::Claimed { .. } => Some(ExecutionState::Claimed),
             EventPayload::Started => Some(ExecutionState::Running),
+            EventPayload::Verifying => Some(ExecutionState::Verifying),
             EventPayload::Cancelling { .. } => Some(ExecutionState::Cancelling),
             EventPayload::Cancelled => Some(ExecutionState::Cancelled),
             EventPayload::Completed { .. } => Some(ExecutionState::Succeeded),
             EventPayload::Failed { .. } => Some(ExecutionState::Failed),
+            EventPayload::Refused { .. } => Some(ExecutionState::Refused),
+            EventPayload::UnknownOutcome { .. } => Some(ExecutionState::UnknownOutcome),
             _ => None,
         }
     }
@@ -275,6 +363,15 @@ mod tests {
         ExecutionEvent::new(ExecutionId::fresh(), 1, payload)
     }
 
+    fn error(code: &str) -> ExecutionError {
+        ExecutionError {
+            code: code.into(),
+            message: String::new(),
+            suggestion: None,
+            correlation_id: String::new(),
+        }
+    }
+
     #[test]
     fn an_event_is_one_envelope_with_a_type_and_a_data_member() {
         let e = event(EventPayload::Progress(ProgressView {
@@ -288,6 +385,7 @@ mod tests {
         assert_eq!(v["data"]["current"], 17);
         assert_eq!(v["sequence"], 1);
         assert_eq!(v["event_id"], format!("{}#1", e.execution_id));
+        assert_eq!(v["correlation_id"], e.execution_id.as_str());
         let back: ExecutionEvent = serde_json::from_value(v).unwrap();
         assert_eq!(back, e);
     }
@@ -300,8 +398,13 @@ mod tests {
                 title: "Demo".into(),
                 input: serde_json::json!({}),
             },
+            EventPayload::Authorizing,
             EventPayload::Queued { ahead: 0 },
+            EventPayload::Claimed {
+                holder: "worker-1".into(),
+            },
             EventPayload::Started,
+            EventPayload::Verifying,
             EventPayload::Progress(ProgressView {
                 current: 1,
                 total: None,
@@ -342,6 +445,23 @@ mod tests {
                     correlation_id: "x".into(),
                 },
             },
+            EventPayload::Refused {
+                error: ExecutionError {
+                    code: "refused".into(),
+                    message: "m".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+                policy: Some("p".into()),
+            },
+            EventPayload::UnknownOutcome {
+                error: ExecutionError {
+                    code: "unavailable".into(),
+                    message: "m".into(),
+                    suggestion: None,
+                    correlation_id: "x".into(),
+                },
+            },
         ];
         let mut names = std::collections::BTreeSet::new();
         for p in payloads {
@@ -353,7 +473,72 @@ mod tests {
             assert_eq!(back.type_name(), name);
             assert_eq!(back.is_terminal(), p.is_terminal());
         }
-        assert_eq!(names.len(), 12);
+        assert_eq!(names.len(), 17);
+    }
+
+    #[test]
+    fn every_state_is_announced_by_exactly_one_payload() {
+        let payloads = [
+            EventPayload::Authorizing,
+            EventPayload::Queued { ahead: 0 },
+            EventPayload::Claimed { holder: "w".into() },
+            EventPayload::Started,
+            EventPayload::Verifying,
+            EventPayload::Cancelling { by: "c".into() },
+            EventPayload::UnknownOutcome {
+                error: error("unavailable"),
+            },
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+            EventPayload::Failed {
+                error: error("internal"),
+            },
+            EventPayload::Cancelled,
+            EventPayload::Refused {
+                error: error("refused"),
+                policy: None,
+            },
+        ];
+        let states: Vec<_> = payloads
+            .iter()
+            .filter_map(EventPayload::implies_state)
+            .collect();
+        assert_eq!(
+            states,
+            ExecutionState::ALL,
+            "one payload per state, in the same order"
+        );
+        for p in &payloads {
+            assert_eq!(
+                p.is_terminal(),
+                p.implies_state().is_some_and(ExecutionState::is_final),
+                "{}",
+                p.type_name()
+            );
+        }
+    }
+
+    #[test]
+    fn a_reader_refuses_an_event_of_a_newer_schema_by_name() {
+        let e = event(EventPayload::Started);
+        let mut v = serde_json::to_value(&e).unwrap();
+        // an older writer's event, without a correlation id, is still read
+        v.as_object_mut().unwrap().remove("correlation_id");
+        let older: ExecutionEvent = serde_json::from_value(v.clone()).unwrap();
+        assert_eq!(older.correlation_id, "");
+        v["schema_version"] = "2".into();
+        let refused = serde_json::from_value::<ExecutionEvent>(v.clone()).unwrap_err();
+        let said = refused.to_string();
+        assert!(
+            said.contains("schema version 2") && said.contains("newer than version 1"),
+            "{said}"
+        );
+        v["schema_version"] = "".into();
+        assert!(
+            serde_json::from_value::<ExecutionEvent>(v).is_err(),
+            "not a version"
+        );
     }
 
     #[test]

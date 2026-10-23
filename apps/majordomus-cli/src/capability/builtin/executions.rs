@@ -396,7 +396,9 @@ impl BenchmarkCases for CancelInput {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 /// The answer of `executions.cancel`.
 pub struct CancelReport {
-    /// What asking achieved: `requested`, `already_requested` or `already_finished`.
+    /// What asking achieved: `requested`, `already_requested`, `already_finished`, or
+    /// `outcome_unknown` for an execution whose outcome waits for a reconciliation, which a
+    /// stop cannot change.
     pub outcome: String,
     /// Whether the capability declares that it looks at its cancellation flag. When it
     /// does not, the request is recorded and the execution runs to completion.
@@ -415,6 +417,7 @@ fn executions_cancel(ctx: &Context, input: CancelInput) -> Result<CancelReport, 
         CancelOutcome::Requested => "requested",
         CancelOutcome::AlreadyRequested => "already_requested",
         CancelOutcome::AlreadyFinished(_) => "already_finished",
+        CancelOutcome::OutcomeUnknown => "outcome_unknown",
         CancelOutcome::Unknown => {
             return Err(CapabilityError::NotFound(format!(
                 "no execution {id} in this process"
@@ -555,6 +558,9 @@ pub struct ProtocolReport {
     pub max_replay: usize,
     /// The event types a client may receive, from the one enum that defines them.
     pub event_types: Vec<String>,
+    /// Every state an execution may be in and the states it may move to: the transition
+    /// table the store holds every event to, so a client never has to restate it.
+    pub states: Vec<ExecutionStateView>,
     /// The stream's own control messages.
     pub stream_types: Vec<String>,
     /// The JSON Schema of an event, derived from the Rust type.
@@ -563,6 +569,18 @@ pub struct ProtocolReport {
     pub stream_schema: Value,
     /// What the store keeps, so a client knows what it may ask for.
     pub limits: LimitsView,
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// One state of an execution, with the moves it allows.
+pub struct ExecutionStateView {
+    /// The state, as the snapshot and the list filter spell it.
+    pub state: ExecutionState,
+    /// Whether nothing more will be said about an execution in it.
+    #[serde(rename = "final")]
+    pub is_final: bool,
+    /// The states it may move to; every other move is refused.
+    pub may_move_to: Vec<ExecutionState>,
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -630,6 +648,14 @@ fn executions_protocol(ctx: &Context, _: Empty) -> Result<ProtocolReport, Capabi
         max_connections: crate::http::events::MAX_CONNECTIONS,
         max_replay: crate::http::events::MAX_REPLAY,
         event_types: variants_of(&event_schema),
+        states: ExecutionState::ALL
+            .into_iter()
+            .map(|state| ExecutionStateView {
+                state,
+                is_final: state.is_final(),
+                may_move_to: state.successors(),
+            })
+            .collect(),
         stream_types: variants_of(&stream_schema),
         event_schema,
         stream_schema,
@@ -832,7 +858,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "executions.report",
                 kind: CapabilityKind::Command,
                 title: "Report an execution another process runs",
-                description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and fails it with `unavailable` once the reporter has been silent for 30 s. Nothing runs here. Changes this process's memory only.",
+                description: "What `majordomus run` posts while it runs a capability in its own process and a server already serves the checkout: the execution's description and its events after the last sequence this server took. The server holds it as an execution started by the command line, with the pid, in the same store, listing, Cockpit pages and live channel as its own; applies each event once and in order, answering where the next report starts; tells the reporter when somebody asked it to stop; and, once the reporter has been silent for 30 s, says its outcome is unknown (`unknown_outcome`, code `unavailable`) — never completed — until the reporter's own outcome reconciles it; a `started` after that is passed over, since nothing runs again before the outcome is known. Every event is held to the state machine `executions.protocol` lists, and an event of a newer schema version is refused by name. Nothing runs here. Changes this process's memory only.",
                 input: ReportInput,
                 output: ReportAnswer,
                 stability: Stability::BehaviorallyVerified,
@@ -844,7 +870,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "executions.protocol",
                 title: "The live channel's contract",
-                description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
+                description: "Where the WebSocket is, how a subscription and a reconnect are expressed, what the server writes, every state an execution may be in with the states it may move to (the transition table the store holds every event to), and the JSON Schema of every message — derived from the Rust types that implement it, so a client validating against this is validating against the implementation. OpenAPI cannot describe a socket; this is where that contract lives.",
                 input: Empty,
                 output: ProtocolReport,
                 stability: Stability::BehaviorallyVerified,
@@ -1022,9 +1048,18 @@ mod tests {
         assert!(events.contains(&"execution.progress".to_string()));
         assert_eq!(
             events.len(),
-            12,
+            17,
             "every payload variant is described: {events:?}"
         );
+        for new in [
+            "execution.authorizing",
+            "execution.claimed",
+            "execution.verifying",
+            "execution.refused",
+            "execution.unknown_outcome",
+        ] {
+            assert!(events.contains(&new.to_string()), "{new}: {events:?}");
+        }
         let stream =
             variants_of(&CanonicalSchema::of::<crate::http::events::StreamMessage>().schema);
         assert_eq!(
@@ -1106,6 +1141,78 @@ mod tests {
             Vec::new(),
         ));
         assert!(matches!(e, CapabilityError::Refused(_)), "{e}");
+    }
+
+    /// The protocol answers the whole transition table, and a report through the capability
+    /// every transport calls is held to it: a legal move is applied, an illegal one is
+    /// passed over, and a report whose events are of a newer schema is refused by name
+    /// before anything is read.
+    #[test]
+    fn the_protocol_answers_the_table_and_a_report_is_held_to_it() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let protocol = executions_protocol(&ctx, Empty::default()).expect("the protocol");
+        assert_eq!(protocol.states.len(), ExecutionState::ALL.len());
+        for view in &protocol.states {
+            assert_eq!(view.may_move_to, view.state.successors());
+            assert_eq!(view.is_final, view.state.is_final());
+        }
+        let unknown = protocol
+            .states
+            .iter()
+            .find(|v| v.state == ExecutionState::UnknownOutcome)
+            .expect("unknown_outcome is listed");
+        assert!(!unknown.may_move_to.contains(&ExecutionState::Running));
+        let v = serde_json::to_value(&protocol).unwrap();
+        assert_eq!(v["states"][0]["state"], "authorizing");
+        assert_eq!(v["states"][0]["final"], false);
+
+        let id = ExecutionId::fresh();
+        let event = |sequence, payload| ExecutionEvent::new(id.clone(), sequence, payload);
+        let lost = crate::execution::EventPayload::UnknownOutcome {
+            error: crate::execution::ExecutionError {
+                code: "unavailable".into(),
+                message: "the worker stopped answering".into(),
+                suggestion: None,
+                correlation_id: id.to_string(),
+            },
+        };
+        let answer = executions_report(
+            &ctx,
+            report_of(
+                id.as_str(),
+                "executions.demonstrate",
+                vec![
+                    event(2, crate::execution::EventPayload::Started),
+                    event(3, crate::execution::EventPayload::Verifying),
+                    event(4, lost),
+                    event(5, crate::execution::EventPayload::Started),
+                ],
+            ),
+        )
+        .expect("held");
+        assert_eq!(
+            (answer.applied, answer.through),
+            (3, 5),
+            "the rerun is passed over"
+        );
+        assert_eq!(
+            answer.execution.execution.state,
+            ExecutionState::UnknownOutcome
+        );
+
+        let mut newer = serde_json::to_value(report_of(
+            ExecutionId::fresh().as_str(),
+            "executions.demonstrate",
+            vec![started(&id, 2)],
+        ))
+        .unwrap();
+        newer["events"][0]["schema_version"] = "2".into();
+        let refused = serde_json::from_value::<ReportInput>(newer).unwrap_err();
+        assert!(
+            refused.to_string().contains("schema version 2"),
+            "{refused}"
+        );
     }
 
     /// A report about a capability this registry does not know is still held, its input as
