@@ -311,7 +311,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `52031e569138f515` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `46a60ce991db2e51` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `4052a6677e5b73a2` |
-| `docs/generated/graph.json` | `graph` | json | 5283652 | `98f4ec5110b1b2c5` |
+| `docs/generated/graph.json` | `graph` | json | 5283667 | `bedba389cee805a3` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `37d29841995d74d4` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `362e2d4e556b6006` |
 | `docs/generated/modules/brief.md` | `modules/brief` | markdown | 2401 | `fd6b9dbab7a9ff92` |
@@ -344,7 +344,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/intents.md` | `modules/intents` | markdown | 9826 | `7f83fc1b60ab3610` |
 | `docs/generated/modules/knowledge_base.md` | `modules/knowledge_base` | markdown | 4004 | `7d9bc3cceb8cd6bc` |
 | `docs/generated/modules/lifecycle.md` | `modules/lifecycle` | markdown | 4527 | `f996cea65cd2f69d` |
-| `docs/generated/modules/machine.md` | `modules/machine` | markdown | 4404 | `4669d9caa0798276` |
+| `docs/generated/modules/machine.md` | `modules/machine` | markdown | 4419 | `56932a5fa2e808c3` |
 | `docs/generated/modules/mcp.md` | `modules/mcp` | markdown | 2004 | `f174edfcc3228af8` |
 | `docs/generated/modules/mesh.md` | `modules/mesh` | markdown | 27235 | `13cefe46bf210e7a` |
 | `docs/generated/modules/models.md` | `modules/models` | markdown | 2906 | `e2be48acbeb7fee8` |
@@ -372,13 +372,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1470 | `a19026d130ba37f1` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6129 | `976938410b23ddd9` |
 | `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 7976 | `4bd2781db1e9e277` |
-| `docs/generated/openapi.json` | `openapi` | json | 2604488 | `12167dd40466b4b1` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 2106159 | `32763d27b2e6ae85` |
+| `docs/generated/openapi.json` | `openapi` | json | 2604503 | `45e7b967e580a806` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 2106174 | `a149dd8d66bc7b4e` |
 | `docs/generated/providers.json` | `providers` | json | 9484 | `0e6b07481d2e7527` |
 | `docs/generated/providers.md` | `providers` | markdown | 2577 | `499ef7d58340c3ba` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 8877 | `ad3790aa2b53116b` |
-| `docs/generated/registry.json` | `registry` | json | 3913693 | `f26d5e22449144ba` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 3157657 | `fd036a29ebd00f61` |
+| `docs/generated/registry.json` | `registry` | json | 3913723 | `5bc35d83ce77c6d2` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 3157687 | `761cfbdd5df1839b` |
 | `docs/generated/web.json` | `web` | json | 5562 | `379661b5e57e3c8c` |
 | `docs/generated/web.yaml` | `web` | yaml | 4233 | `21b6fbccc16573aa` |
 | `share/allow/adr.txt` | `allow/adr` | text | 380 | `4b6f70c1636d55c2` |
@@ -440,7 +440,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 830759 | `487bc0075cce5bba` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `923e4004f1db5e57` |
 | `site/data/registry/product.json` | `site-product` | json | 767661 | `0de87104d054c0a1` |
-| `site/data/registry/registry.json` | `site-registry` | json | 7790408 | `d1f34c371162cb7c` |
+| `site/data/registry/registry.json` | `site-registry` | json | 7790443 | `9a1d17b8c580a80f` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `300b30d3144ed604` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `ade5e059bf55bb30` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `d2ebe74220e5c13d` |

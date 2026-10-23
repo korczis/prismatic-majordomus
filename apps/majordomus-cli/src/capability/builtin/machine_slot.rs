@@ -1,4 +1,8 @@
-//! The `machine` module: what one machine admits at once (I4006).
+//! The `machine` module's slot: what one machine admits at once (I4006).
+//!
+//! The file is named for the slot rather than the module, because the module's namespace is the
+//! machine's and other capabilities about this machine (a scheduled sweep of its build output)
+//! belong in it beside these.
 //!
 //! Three capabilities over [`crate::machine_slot`]: `machine.slot.acquire` takes a slot for a
 //! process, waiting in arrival order up to a bound; `machine.slot.release` gives it back; and

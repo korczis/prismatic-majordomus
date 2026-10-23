@@ -5,5 +5,5 @@ weight = 105
 slug = "machine-slot-status"
 [extra]
 id = "machine.slot.status"
-source = "apps/majordomus-cli/src/capability/builtin/machine.rs"
+source = "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
 +++

@@ -62,7 +62,7 @@ pub mod intent_realization;
 pub mod intents;
 pub mod knowledge_base;
 pub mod lifecycle;
-pub(crate) mod machine;
+pub(crate) mod machine_slot;
 pub mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -210,7 +210,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         server,
         mcp,
         session_domain,
-        machine,
+        machine_slot,
         shell,
         pack,
         perf,

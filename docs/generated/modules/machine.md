@@ -20,7 +20,7 @@ Take one of the machine's slots for a running process, named by its pid, with a 
 | CLI | `majordomus machine slot acquire` |
 | cache | — |
 | benchmark | waived (destructive) |
-| provenance | builtin majordomus_cli::capability::builtin::machine |
+| provenance | builtin majordomus_cli::capability::builtin::machine_slot |
 | tags | machine, build, coordination |
 
 | input | type | required | description |
@@ -49,7 +49,7 @@ Give back the slot a process holds, and withdraw it from the queue if it waits; 
 | CLI | `majordomus machine slot release` |
 | cache | — |
 | benchmark | waived (destructive) |
-| provenance | builtin majordomus_cli::capability::builtin::machine |
+| provenance | builtin majordomus_cli::capability::builtin::machine_slot |
 | tags | machine, build, coordination |
 
 | input | type | required | description |
@@ -71,7 +71,7 @@ The slot directory as it stands: the limits and where they are declared, the fre
 | CLI | `majordomus machine slot status` |
 | cache | — |
 | benchmark | required |
-| provenance | builtin majordomus_cli::capability::builtin::machine |
+| provenance | builtin majordomus_cli::capability::builtin::machine_slot |
 | tags | machine, build, coordination |
 
 | input | type | required | description |

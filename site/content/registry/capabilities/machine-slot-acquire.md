@@ -5,5 +5,5 @@ weight = 103
 slug = "machine-slot-acquire"
 [extra]
 id = "machine.slot.acquire"
-source = "apps/majordomus-cli/src/capability/builtin/machine.rs"
+source = "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
 +++

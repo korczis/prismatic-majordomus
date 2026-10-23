@@ -52,7 +52,7 @@ pub(crate) mod generate;
 pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
-pub(crate) mod machine;
+pub(crate) mod machine_slot;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -126,7 +126,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
-        Command::Machine(args) => machine::run(args),
+        Command::Machine(args) => machine_slot::run(args),
     }
 }
 

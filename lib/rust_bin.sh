@@ -1127,6 +1127,9 @@ mj_cargo_private_dir() {
 mj_cargo_bounded() {
   mj_cs_root="$1"
   mj_rust_slot_acquire "$mj_cs_root" "cargo ${2:-build} in $mj_cs_root" || return $?
+  # a build never starts on top of its build directory's idle incremental sessions (I2713);
+  # a caller that asked the floor first has swept already, and this is then a no-op
+  mj_rust_prune_build_dir "$mj_cs_root"
   mj_cs_rc=0
   mj_cargo_bounded_run "$@" || mj_cs_rc=$?
   mj_rust_slot_release "$mj_cs_root"
@@ -1223,9 +1226,7 @@ mj_cargo_bounded_run() {
     shift
     case "$mj_cb_arg" in --quiet|-q) mj_cb_quiet=1 ;; *) set -- "$@" "$mj_cb_arg" ;; esac
   done
-  # a build never starts on top of its build directory's idle incremental sessions (I2713);
-  # a caller that asked the floor first has swept already, and this is then a no-op
-  mj_rust_prune_build_dir "$mj_cb_root"
+  # (the sweep of the build directory's idle sessions ran in mj_cargo_bounded, in the slot)
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
   [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1

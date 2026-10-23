@@ -32178,7 +32178,7 @@ capabilities:
             description: "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
     provenance:
       source: builtin
-      module: majordomus_cli::capability::builtin::machine
+      module: majordomus_cli::capability::builtin::machine_slot
     exposure:
       mcp:
         tool: majordomus_machine_slot_acquire
@@ -32206,7 +32206,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
-    source_path: apps/majordomus-cli/src/capability/builtin/machine.rs
+    source_path: apps/majordomus-cli/src/capability/builtin/machine_slot.rs
   - id: machine.slot.release
     module: machine
     kind: command
@@ -32292,7 +32292,7 @@ capabilities:
             description: "Whether a holder's process is still the one that took the slot."
     provenance:
       source: builtin
-      module: majordomus_cli::capability::builtin::machine
+      module: majordomus_cli::capability::builtin::machine_slot
     exposure:
       mcp:
         tool: majordomus_machine_slot_release
@@ -32320,7 +32320,7 @@ capabilities:
       effect: process_state
       cancellable: false
       concurrency: serial
-    source_path: apps/majordomus-cli/src/capability/builtin/machine.rs
+    source_path: apps/majordomus-cli/src/capability/builtin/machine_slot.rs
   - id: machine.slot.status
     module: machine
     kind: query
@@ -32495,7 +32495,7 @@ capabilities:
             description: "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
     provenance:
       source: builtin
-      module: majordomus_cli::capability::builtin::machine
+      module: majordomus_cli::capability::builtin::machine_slot
     exposure:
       mcp:
         tool: majordomus_machine_slot_status
@@ -32523,7 +32523,7 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
       local_only: true
-    source_path: apps/majordomus-cli/src/capability/builtin/machine.rs
+    source_path: apps/majordomus-cli/src/capability/builtin/machine_slot.rs
   - id: mcp.projection
     module: mcp
     kind: query

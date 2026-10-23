@@ -5,5 +5,5 @@ weight = 32
 slug = "machine"
 [extra]
 id = "machine"
-source = "apps/majordomus-cli/src/capability/builtin/machine.rs"
+source = "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
 +++
