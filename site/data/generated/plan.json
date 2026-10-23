@@ -47326,7 +47326,11 @@
         "doctor's retention check (I1303) reports the imported store against its cap",
         "majordomus workspaces (I1308) reports chatgpt-majordomus as synced with checkpoint age, conversation and message counts and I1305's support level from .ai/local/workspaces/chatgpt-majordomus/",
         "I1306's resume-and-repeat case runs green against the imported store",
-        "The store records the 2026-10-18 acquisition as made through an unverified local transport, so no record claims an integrity check it did not have"
+        "The store records the 2026-10-18 acquisition as made through an unverified local transport, so no record claims an integrity check it did not have",
+        "A later acquisition is reconciled as a dated delta against the existing source inventory; historical and current coverage counts are not added as though they were disjoint conversations",
+        "Coverage distinguishes indexed, fetched and readable message bodies; unresolved content references are reported as gaps, never empty messages or proof of full reading",
+        "No upstream message, parent or branch identifier is invented for a flattened capture; ambiguous positional citations remain unresolved until I3284 can pin them",
+        "The 297 indexed / 234 stored / 63 not fetched baseline is reconciled explicitly before any summary claims all 297 conversations were read in full"
       ],
       "validation": [
         "bin/majordomus doctor",
@@ -47746,7 +47750,9 @@
         "A request through the vendor listener runs a read capability and is refused a repository_mutation one",
         "A request arriving on the loopback listener with a forwarding header is refused remote-only reads' privileges, not granted loopback ones",
         "No credential appears in output or logs",
-        "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller"
+        "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller",
+        "A successful local loopback MCP read or native subscription account probe is not accepted as evidence that a remote vendor connector authenticates or can reach the listener",
+        "The vendor listener never exposes native-client subscription credentials, local workspace message bodies or a credential-bearing provider proxy"
       ],
       "validation": [
         "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers",
@@ -47799,7 +47805,10 @@
       "acceptance_criteria": [
         "A proposal from the vendor caller lands as a proposed intent whose provenance is the workspace reference",
         "A proposal carrying conversation text beyond the declared fields is refused",
-        "Without the ADR amendment the call is refused as today"
+        "Without the ADR amendment the call is refused as today",
+        "Local native-client execution and remote workspace proposals retain separate caller identities and trust decisions; a working local subscription does not authorise remote mutation",
+        "A proposal preserves its source reference and request identity; an unknown mutation outcome is reconciled before retry, rather than blindly replayed",
+        "Authentication, allowance and unavailable-client failures are explicit; a subscription path never silently falls back to a separately billed API"
       ],
       "validation": [
         "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent",
@@ -48046,7 +48055,9 @@
         "A fixture of increments and cumulative snapshots yields one total equal to the last cumulative value",
         "A fixture missing the final total is recorded incomplete, not completed",
         "Codex usage of a session the person started is either received through the official seam evidenced in share/providers.yaml (I3287) and configured by I3289, or reported on every surface as not observed with the reason, never as zero and never only as unattributed (case)",
-        "No Codex session file or transcript is read (ADR 0213)"
+        "No Codex session file or transcript is read (ADR 0213)",
+        "An account/read authentication result is not usage evidence; absent token notifications remain not observed, never zero usage",
+        "Subscription allowances, observed token counts, estimates and billed amounts are represented separately; an authenticated subscription is not evidence of zero marginal charge or unlimited capacity"
       ],
       "validation": [
         "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::usage",
