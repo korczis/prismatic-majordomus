@@ -1089,6 +1089,56 @@ mj_cargo_private_dir() {
     "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
 }
 
+# mj_build_cache_start <tree-root>
+#
+# Give this build the mesh build cache, once, when an sccache server is about to start
+# (project.every-build-path-goes-through-the-cache, ADR 0157, I3953).
+#
+# sccache fixes its levels when its server starts and fails a compile when an S3 level is
+# down at that moment, so the store is asked about exactly then and never per compilation:
+#   - a server already listening on its port is left alone (a connect, no probe, no process);
+#   - otherwise `majordomus mesh build-cache env` of this tree's executable derives the
+#     configuration (store healthy, credential file private, sccache with the chain) and the
+#     server is started with it, in a subshell so the variables reach the server and nothing
+#     else; only the credential file's path is ever in the environment, never a key;
+#   - then, and only then, cargo is pointed at sccache (RUSTC_WRAPPER) unless the caller
+#     already named a wrapper, including an empty one.
+# The store down, no sccache, no executable (a cold node), no nc to see the port, or
+# MAJORDOMUS_BUILD_CACHE=off: the build is exactly what it was, and one line says why. This
+# never fails a build; it returns 0 always, and once per process.
+mj_build_cache_start() {
+  [ -z "${MJ_BUILD_CACHE_DONE:-}" ] || return 0
+  MJ_BUILD_CACHE_DONE=1
+  [ "${MAJORDOMUS_BUILD_CACHE:-}" = off ] && return 0
+  command -v sccache >/dev/null 2>&1 || return 0
+  [ -z "${RUSTC_WRAPPER+x}" ] && [ -z "${RUSTC_WORKSPACE_WRAPPER+x}" ] || return 0
+  mj_bc_bin="$(mj_rust_bin "$1" 2>/dev/null || true)"
+  if [ ! -x "$mj_bc_bin" ]; then
+    printf 'majordomus: build cache: local-only: no majordomus executable yet (a cold node builds as before)\n' >&2
+    return 0
+  fi
+  command -v nc >/dev/null 2>&1 || { printf 'majordomus: build cache: local-only: no nc to see whether an sccache server runs\n' >&2; return 0; }
+  mj_bc_port="${SCCACHE_SERVER_PORT:-4226}"
+  if nc -z -w 1 127.0.0.1 "$mj_bc_port" >/dev/null 2>&1; then
+    # a running server has its levels: ask nothing, probe nothing
+    RUSTC_WRAPPER=sccache; export RUSTC_WRAPPER
+    return 0
+  fi
+  mj_bc_env="$("$mj_bc_bin" mesh build-cache env --sccache sccache 2>/dev/null || true)"
+  case "$mj_bc_env" in
+    *"export "*)
+      if ( eval "$mj_bc_env" && sccache --start-server ) >/dev/null 2>&1; then
+        RUSTC_WRAPPER=sccache; export RUSTC_WRAPPER
+      else
+        printf 'majordomus: build cache: local-only: sccache did not start with the store\n' >&2
+      fi ;;
+    *)
+      printf 'majordomus: build cache: %s\n' \
+        "$(printf '%s\n' "$mj_bc_env" | sed -n 's/^# build cache: //p' | head -n 1 | grep . || echo 'local-only: majordomus could not derive a configuration')" >&2 ;;
+  esac
+  return 0
+}
+
 # mj_cargo_bounded <tree-root> <cargo arguments...>
 #
 # Run cargo, and never wait in silence behind another build's lock
@@ -1133,6 +1183,7 @@ mj_cargo_bounded() {
   # a build never starts on top of its build directory's idle incremental sessions (I2713);
   # a caller that asked the floor first has swept already, and this is then a no-op
   mj_rust_prune_build_dir "$mj_cb_root"
+  mj_build_cache_start "$mj_cb_root"
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
   [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1

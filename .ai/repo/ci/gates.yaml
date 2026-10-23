@@ -88,6 +88,12 @@ gates:
     runs: scripts/liveness-check
     summary: a wait with no bound, a process spawned and never reaped, a command that pages to a terminal; a ratchet over the shell that still carries them
 
+  - id: build-cache-check
+    job: structure
+    always: true
+    runs: scripts/ci/build-cache-check
+    summary: a local script that runs cargo build, test or run, npm ci or install, or mix deps.get outside the cache's choke points declares why on the line; GitHub workflows are a declared exemption
+
   # Development semantics belong to the capability registry and every surface consumes them
   # (ADR 0040). File reads only — share/commands.yaml against docs/generated/registry.json,
   # plus the two Cockpit trees — so it belongs beside the other structure checks and needs
