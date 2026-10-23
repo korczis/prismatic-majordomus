@@ -64035,6 +64035,59 @@
         }
       },
       {
+        "id": "majordomus://issue/I3959",
+        "kind": "issue",
+        "label": "I3959",
+        "summary": "The shared build directory stays under its bound while builds run: between builds, under cargo's lock, its stale units are evicted oldest first until it is under the bound",
+        "route": "/cockpit/objects/issue/i3959",
+        "source": ".ai/repo/project/issues/I3959.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture build directory over its bound, with its profile lock free, has its stale units evicted oldest first until it is under the bound, and every evicted unit is named with its size",
+            "With the profile lock held by a stand-in build nothing in that profile is evicted, and that is said",
+            "A unit a running stand-in build holds open, a recent unit and a dependency generation some worktree's Cargo.lock names are kept",
+            "A dependency generation whose crate version no worktree's Cargo.lock names is evicted, and so is an idle llvm-cov-target",
+            "--dry-run evicts nothing and reports what it would",
+            "scripts/reap-orphans, over the bound while a build runs, evicts stale units under the lock rather than keeping the whole directory",
+            "After a build, a held lock is waited for in the background, bounded, and the build that finished does not wait"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I2787"
+          ],
+          "evidence_required": [
+            "the_shared_build_dir_stays_under_its_bound_test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The toolchain half of staleness: a generation built by a toolchain no worktree pins is not recognised, because cargo's rustc fingerprint cannot be recomputed from a toolchain file outside cargo",
+            "Not sharing build.rs output between trees (shared-build-dir-stamps-the-wrong-generation)",
+            "The number of concurrent builders"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "scripts/reap-orphans",
+            "scripts/ci/backlog-check",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+            "test/cases/08_no_forbidden_constructs.sh",
+            "test/run.sh",
+            "docs/WORKTREES.md",
+            ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md"
+          ],
+          "slug": "the-shared-build-dir-stays-bounded",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
+            "bash test/run.sh 3196_stale_crate_artifacts_are_pruned_under_cargos_lock",
+            "bash test/run.sh 1022_worktrees_share_build_intermediates",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -86617,6 +86670,13 @@
         "label": "test/cases/391_skills_are_proven_capabilities.sh",
         "route": "/cockpit/objects/test/test-cases-391-skills-are-proven-capabilities-sh",
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+        "kind": "test",
+        "label": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-3959-the-shared-build-dir-stays-under-its-bound-sh",
+        "source": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -123104,6 +123164,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3959",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3959",
+        "target": "majordomus://issue/I2787",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3959",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -129224,6 +129299,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134330,8 +134410,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3768,
-      "edges": 8711,
+      "nodes": 3770,
+      "edges": 8715,
       "acyclic": false,
       "truncated": false
     }
