@@ -559,6 +559,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.build_cache.ensure",
+      "path": "/evidence/capabilities/mesh-build-cache-ensure/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.build_cache.key",
       "path": "/evidence/capabilities/mesh-build-cache-key/"
     },
@@ -2879,6 +2884,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh build-cache ensure",
+      "path": "/evidence/commands/mesh-build-cache-ensure/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh build-cache key",
       "path": "/evidence/commands/mesh-build-cache-key/"
     },
@@ -5137,6 +5147,25 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.build_cache.ensure": {
+      "kind": "capability",
+      "id": "mesh.build_cache.ensure",
+      "page": "/evidence/capabilities/mesh-build-cache-ensure/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache ensure"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3952_a_dependency_install_is_restored_and_saved",
+          "path": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -15603,6 +15632,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh build-cache ensure": {
+      "kind": "command",
+      "id": "mesh build-cache ensure",
+      "page": "/evidence/commands/mesh-build-cache-ensure/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh build-cache key": {
       "kind": "command",
       "id": "mesh build-cache key",
@@ -24104,7 +24152,18 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3952_a_dependency_install_is_restored_and_saved",
+          "path": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+            ".ai/repo/rules/project/cache-is-invisible.v2.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },

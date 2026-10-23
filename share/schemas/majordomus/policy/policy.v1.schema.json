@@ -547,6 +547,18 @@
         }
       }
     },
+    "build_cache": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "The machine-wide local archive level of `mesh build-cache ensure` (ADR 0157, I3952): every checkout of a machine restores npm, mix and cargo build-directory archives from it and saves to it. Absent keeps the executable's default bound of 20 GiB.",
+      "properties": {
+        "local_max_gib": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The local level is held under this many GiB, oldest archives first, whenever an archive is added; scripts/reap-orphans measures it and reduces it to the same bound."
+        }
+      }
+    },
     "server": {
       "type": "object",
       "additionalProperties": false,

@@ -205,6 +205,67 @@ fn mesh_build_cache_key(
     ))
 }
 
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.ensure`.
+pub struct BuildCacheEnsureInput {
+    /// What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`.
+    pub kind: crate::mesh::build_cache::key::Kind,
+    /// The directory holding the lockfile, relative to the repository; absent names the only
+    /// one the repository tracks, or the one the command was started in.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dir: Option<String>,
+    /// The install or build command, run in that directory on a miss; required for npm and
+    /// mix, optional for a cargo build directory.
+    #[serde(default)]
+    pub command: Vec<String>,
+}
+
+impl BenchmarkCases for BuildCacheEnsureInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // nothing: it runs a command and writes outside the repository; timing it would
+        // measure the install and the disk, not this executable
+        Vec::new()
+    }
+}
+
+fn mesh_build_cache_ensure(
+    ctx: &Context,
+    input: BuildCacheEnsureInput,
+) -> Result<crate::mesh::build_cache::ensure::EnsureReport, CapabilityError> {
+    use crate::mesh::build_cache::{ensure, key};
+    if input.command.is_empty() && input.kind != key::Kind::CargoBuildDir {
+        return Err(CapabilityError::InvalidInput(format!(
+            "{} needs the install command after `--`",
+            input.kind.as_str()
+        )));
+    }
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let report = key::report(&root, Some(input.kind));
+    let cwd = std::env::current_dir().ok();
+    let cwd_rel = cwd
+        .as_deref()
+        .and_then(|c| c.strip_prefix(&root).ok())
+        .map(|r| r.to_string_lossy().into_owned());
+    // an instance that cannot be named is not a reason to withhold the install: it runs
+    // uncached, and says why (rule project.cache-is-invisible)
+    let kk = ensure::resolve(
+        &report,
+        input.kind,
+        input.dir.as_deref(),
+        cwd_rel.as_deref(),
+    )
+    .unwrap_or_else(|why| {
+        ensure::unresolved(input.kind, input.dir.as_deref().or(cwd_rel.as_deref()), why)
+    });
+    let declared = crate::repository::Repository::open(&root)
+        .ok()
+        .and_then(|r| crate::policy::LoadedPolicy::load(&r).ok())
+        .and_then(|p| p.policy.build_cache.local_max_gib);
+    let machine = ensure::Machine::from_env(declared);
+    Ok(ensure::ensure(&root, &kk, &input.command, &machine))
+}
+
 fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
     Ok(firewall_report(ctx, &input))
 }
@@ -1430,6 +1491,24 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_build_cache_key,
             },
             capability! {
+                id: "mesh.build_cache.ensure",
+                kind: CapabilityKind::Command,
+                title: "Restore an install before its command, and save it after",
+                description: "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).",
+                input: BuildCacheEnsureInput,
+                output: crate::mesh::build_cache::ensure::EnsureReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "ensure".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_build_cache_ensure,
+            },
+            capability! {
                 id: "mesh.firewall",
                 title: "The host firewall, as the mesh needs it",
                 description: "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
@@ -1740,6 +1819,8 @@ mod tests {
                 Some("majordomus_mesh_build_cache_key"),
                 "/api/v1/mesh/build-cache/key",
             ),
+            // a command served nowhere over HTTP or MCP: it runs the caller's install command
+            ("mesh.build_cache.ensure", None, ""),
             (
                 "mesh.firewall",
                 Some("majordomus_mesh_firewall"),
@@ -1890,12 +1971,11 @@ mod tests {
                         "{} changes state and must be a POST",
                         c.id
                     ),
-                    // a command served nowhere over HTTP runs a privileged host tool,
-                    // which nothing reachable over the network may do; there is one
-                    None => assert_eq!(
-                        c.id.as_str(),
-                        "mesh.firewall.apply",
-                        "{}: a command without an HTTP route must be the firewall's",
+                    // a command served nowhere over HTTP runs a privileged host tool or a
+                    // caller's own command, which nothing reachable over the network may do
+                    None => assert!(
+                        ["mesh.firewall.apply", "mesh.build_cache.ensure"].contains(&c.id.as_str()),
+                        "{}: a command without an HTTP route must run a host or caller command",
                         c.id
                     ),
                 }

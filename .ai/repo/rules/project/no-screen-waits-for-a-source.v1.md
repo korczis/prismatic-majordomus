@@ -7,7 +7,7 @@ description: A screen of the UI is rendered from the latest reading of each sour
 statement: A screen of the UI MUST ask for the latest reading of a source (`Context::read`) and MUST NOT call a handler (`Context::execute`) on the path of a request; a reading that is stale or pending MUST be shown as stale or pending, with its age where it has one, and MUST NOT be drawn as current; and an answer given through `execute` MUST remain what the handler returns.
 status: active
 class: blocking
-depends_on: [project.ui-derived-state@1, project.cache-is-invisible@1, project.interfaces-are-projections@1]
+depends_on: [project.ui-derived-state@1, project.cache-is-invisible@2, project.interfaces-are-projections@1]
 tags: [ui, performance, cache, derivation, enforcement]
 
 x-majordomus:

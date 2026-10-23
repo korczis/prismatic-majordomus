@@ -767,7 +767,7 @@ pub enum MeshCommand {
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
 /// let cache: MeshBuildCacheArgs = cache;
-/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
 /// assert_eq!(key.kind, Some(Kind::NpmModules));
 /// ```
 pub struct MeshBuildCacheArgs {
@@ -777,8 +777,8 @@ pub struct MeshBuildCacheArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `mesh build-cache` subcommands: each reads this repository and this machine, and none
-/// of them writes anything; `key` names what every tracked lockfile is cached under.
+/// The `mesh build-cache` subcommands: `key` names what every tracked lockfile is cached under
+/// and writes nothing; `ensure` restores an install before its command and saves it after.
 ///
 /// ```
 /// use clap::Parser;
@@ -792,6 +792,43 @@ pub struct MeshBuildCacheArgs {
 pub enum MeshBuildCacheCommand {
     /// Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest
     Key(MeshBuildCacheKeyArgs),
+    /// Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level
+    Ensure(MeshBuildCacheEnsureArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh build-cache ensure`: restore an install or a build directory before the command that
+/// would make it, run the command on a miss and save what it left. The exit code is the
+/// command's.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshCommand};
+/// use majordomus_cli::mesh::build_cache::key::Kind;
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "build-cache", "ensure", "npm-modules", "--dir", "site", "--", "npm", "ci",
+/// ]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
+/// let MeshBuildCacheCommand::Ensure(e) = cache.command else { panic!("expected `ensure`") };
+/// let e: MeshBuildCacheEnsureArgs = e;
+/// assert_eq!((e.kind, e.dir.as_deref()), (Kind::NpmModules, Some("site")));
+/// assert_eq!(e.command, ["npm", "ci"]);
+/// ```
+pub struct MeshBuildCacheEnsureArgs {
+    #[arg(value_enum)]
+    /// What is cached: npm-modules, mix-deps or cargo-build-dir
+    pub kind: crate::mesh::build_cache::key::Kind,
+    #[arg(long)]
+    /// The directory holding the lockfile, relative to the repository (default: the only one, or the current one)
+    pub dir: Option<String>,
+    #[arg(last = true)]
+    /// The install or build command, after `--`: run on a miss (and for mix and cargo on every run)
+    pub command: Vec<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -804,7 +841,7 @@ pub enum MeshBuildCacheCommand {
 /// let cli = Cli::try_parse_from(["majordomus", "mesh", "build-cache", "key", "--format", "json"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::BuildCache(cache) = mesh.command else { panic!("expected `build-cache`") };
-/// let MeshBuildCacheCommand::Key(key) = cache.command;
+/// let MeshBuildCacheCommand::Key(key) = cache.command else { panic!("expected `key`") };
 /// let key: MeshBuildCacheKeyArgs = key;
 /// assert_eq!(key.kind, None);
 /// ```
@@ -7427,6 +7464,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
             setup: &[],
             expect: Expect::StdoutContains(&["platform"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh build-cache ensure",
+        examples: &[ExampleDoc {
+            id: "mesh-build-cache-ensure",
+            title: "Run an install through the build cache",
+            description: "The command after `--` is what the install would run anyway. With the lockfile's key already in place nothing runs; a hit is restored from the local level or this node's store after its SHA-256 matches, and npm's install is then not run; a miss runs the command and saves what it left. A repository that tracks no such lockfile runs the command uncached and says why, as here; MAJORDOMUS_BUILD_CACHE=off bypasses every level. The exit code is the command's.",
+            argv: &["mesh", "build-cache", "ensure", "npm-modules", "--", "true"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["source     uncached"]),
         }],
     },
     CommandExamples {

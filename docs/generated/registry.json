@@ -265,7 +265,7 @@
       "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
       "stability": "experimental",
       "source": "builtin",
-      "capabilities": 25
+      "capabilities": 26
     },
     {
       "id": "models",
@@ -45686,6 +45686,308 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs"
+    },
+    {
+      "id": "mesh.build_cache.ensure",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Restore an install before its command, and save it after",
+      "description": "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).",
+      "input": {
+        "name": "BuildCacheEnsureInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/Kind",
+              "description": "What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`."
+            },
+            "dir": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The directory holding the lockfile, relative to the repository; absent names the only\none the repository tracks, or the one the command was started in."
+            },
+            "command": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The install or build command, run in that directory on a miss; required for npm and\nmix, optional for a cargo build directory.",
+              "default": []
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "description": "The input of `mesh.build_cache.ensure`.",
+          "title": "BuildCacheEnsureInput",
+          "$defs": {
+            "Kind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "cargo-build-dir",
+                  "description": "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+                },
+                {
+                  "type": "string",
+                  "const": "mix-deps",
+                  "description": "The `deps/` directory `mix deps.get` fills."
+                },
+                {
+                  "type": "string",
+                  "const": "npm-modules",
+                  "description": "The `node_modules/` directory `npm ci` fills."
+                }
+              ],
+              "description": "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "BuildCacheEnsureReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/Kind",
+              "description": "What is cached."
+            },
+            "dir": {
+              "type": "string",
+              "description": "The directory holding the lockfile, relative to the repository."
+            },
+            "target": {
+              "type": "string",
+              "description": "Where the content lives."
+            },
+            "key": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The key, when one could be derived."
+            },
+            "source": {
+              "$ref": "#/$defs/Source",
+              "description": "Where the content came from."
+            },
+            "command": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/CommandRun"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The command, when it ran."
+            },
+            "saved": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Level"
+              },
+              "description": "The levels a new archive was saved to."
+            },
+            "notes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Every miss, refusal and skip, in the order they happened."
+            },
+            "local": {
+              "$ref": "#/$defs/LocalLevel",
+              "description": "The local level after this run."
+            }
+          },
+          "required": [
+            "kind",
+            "dir",
+            "target",
+            "source",
+            "saved",
+            "notes",
+            "local"
+          ],
+          "description": "What `mesh build-cache ensure` did.",
+          "title": "BuildCacheEnsureReport",
+          "$defs": {
+            "Kind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "cargo-build-dir",
+                  "description": "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+                },
+                {
+                  "type": "string",
+                  "const": "mix-deps",
+                  "description": "The `deps/` directory `mix deps.get` fills."
+                },
+                {
+                  "type": "string",
+                  "const": "npm-modules",
+                  "description": "The `node_modules/` directory `npm ci` fills."
+                }
+              ],
+              "description": "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+            },
+            "Source": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "bypassed",
+                  "description": "`MAJORDOMUS_BUILD_CACHE=off`: no level was asked, the command ran."
+                },
+                {
+                  "type": "string",
+                  "const": "uncached",
+                  "description": "No key could be derived (a toolchain did not answer): the command ran uncached."
+                },
+                {
+                  "type": "string",
+                  "const": "in_place",
+                  "description": "The marker already named this key: nothing was done."
+                },
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Restored from this machine's local level."
+                },
+                {
+                  "type": "string",
+                  "const": "store",
+                  "description": "Restored from the store."
+                },
+                {
+                  "type": "string",
+                  "const": "command",
+                  "description": "Every level missed: the command made it."
+                },
+                {
+                  "type": "string",
+                  "const": "nothing",
+                  "description": "Nothing was restored and no command was given."
+                }
+              ],
+              "description": "Where the target's content came from."
+            },
+            "CommandRun": {
+              "type": "object",
+              "properties": {
+                "argv": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "What ran."
+                },
+                "exit": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "int32",
+                  "description": "Its exit code; absent when it could not start or a signal ended it."
+                }
+              },
+              "required": [
+                "argv"
+              ],
+              "description": "The command, and how it ended."
+            },
+            "Level": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "`~/.cache/majordomus/build-cache`."
+                },
+                {
+                  "type": "string",
+                  "const": "store",
+                  "description": "The selected store."
+                }
+              ],
+              "description": "A level an archive was saved to."
+            },
+            "LocalLevel": {
+              "type": "object",
+              "properties": {
+                "dir": {
+                  "type": "string",
+                  "description": "Where it is."
+                },
+                "bytes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What it holds, in bytes."
+                },
+                "bound_bytes": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "What it may hold."
+                },
+                "pruned": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Archives removed by this run to stay under the bound, oldest first."
+                }
+              },
+              "required": [
+                "dir",
+                "bytes",
+                "bound_bytes",
+                "pruned"
+              ],
+              "description": "The local level, measured after this run."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "cli": {
+          "path": [
+            "mesh",
+            "build-cache",
+            "ensure"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "developer",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "build",
+        "cache"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "destructive"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
     },
     {
       "id": "mesh.build_cache.key",

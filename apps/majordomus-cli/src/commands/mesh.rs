@@ -24,8 +24,8 @@ use serde_json::{json, Value};
 use crate::app::App;
 use crate::capability::CapabilityError;
 use crate::cli::{
-    MeshArgs, MeshBuildCacheCommand, MeshCommand, MeshFirewallCommand, MeshHandoverCommand,
-    MeshQueryArgs, MeshReviewCommand, MeshSessionCommand, OutputFormat,
+    MeshArgs, MeshBuildCacheCommand, MeshBuildCacheEnsureArgs, MeshCommand, MeshFirewallCommand,
+    MeshHandoverCommand, MeshQueryArgs, MeshReviewCommand, MeshSessionCommand, OutputFormat,
 };
 use crate::error::{Error, Result};
 
@@ -56,6 +56,8 @@ pub fn run(args: MeshArgs) -> Result<u8> {
                 render_build_cache_key,
                 never,
             ),
+            // it runs a command and writes outside the repository: this process, never a server
+            MeshBuildCacheCommand::Ensure(e) => build_cache_ensure(e),
         },
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
@@ -609,6 +611,76 @@ fn render_nodes(v: &Value) -> String {
             sources.join(","),
             n["last_seen"].as_str().unwrap_or("?"),
         ));
+    }
+    out.trim_end().to_string()
+}
+
+/// `mesh build-cache ensure`: the capability answered in this process, whose exit code is the
+/// command's own, so that a caller replacing `npm ci` with it sees the same failure.
+fn build_cache_ensure(e: MeshBuildCacheEnsureArgs) -> Result<u8> {
+    let app = App::load(&e.query.repo)?;
+    let input = json!({ "kind": e.kind, "dir": e.dir, "command": e.command });
+    let value = app
+        .context
+        .execute("mesh.build_cache.ensure", input)
+        .map_err(map)?;
+    emit(&e.query, &value, render_build_cache_ensure);
+    Ok(ensure_exit(&value))
+}
+
+/// The command's exit code, clamped to what a process can return; 0 when nothing ran, 1 when
+/// it could not start or a signal ended it.
+fn ensure_exit(v: &Value) -> u8 {
+    if !v["command"].is_object() {
+        return 0;
+    }
+    match v["command"]["exit"].as_i64() {
+        Some(0) => 0,
+        Some(n) => u8::try_from(n.clamp(1, 255)).unwrap_or(1),
+        None => 1,
+    }
+}
+
+/// `mesh build-cache ensure`: where the content came from, and every note.
+fn render_build_cache_ensure(v: &Value) -> String {
+    let mut out = format!("kind       {} ({})\n", s(v, "kind"), s(v, "dir"));
+    out.push_str(&format!(
+        "key        {}\n",
+        v["key"].as_str().unwrap_or("none")
+    ));
+    out.push_str(&format!("target     {}\n", s(v, "target")));
+    out.push_str(&format!(
+        "source     {}\n",
+        s(v, "source").replace('_', " ")
+    ));
+    if v["command"].is_object() {
+        let argv: Vec<&str> = v["command"]["argv"]
+            .as_array()
+            .map(|a| a.iter().filter_map(Value::as_str).collect())
+            .unwrap_or_default();
+        let exit = v["command"]["exit"]
+            .as_i64()
+            .map(|n| n.to_string())
+            .unwrap_or_else(|| "none".into());
+        out.push_str(&format!("command    {} -> exit {exit}\n", argv.join(" ")));
+    }
+    let saved: Vec<&str> = v["saved"]
+        .as_array()
+        .map(|a| a.iter().filter_map(Value::as_str).collect())
+        .unwrap_or_default();
+    if !saved.is_empty() {
+        out.push_str(&format!("saved      {}\n", saved.join(", ")));
+    }
+    let gib = |n: &Value| n.as_u64().unwrap_or(0) as f64 / (1024.0 * 1024.0 * 1024.0);
+    out.push_str(&format!(
+        "local      {}  {:.2} of {:.0} GiB, {} pruned\n",
+        s(&v["local"], "dir"),
+        gib(&v["local"]["bytes"]),
+        gib(&v["local"]["bound_bytes"]),
+        v["local"]["pruned"].as_u64().unwrap_or(0)
+    ));
+    for note in v["notes"].as_array().into_iter().flatten() {
+        out.push_str(&format!("note       {}\n", note.as_str().unwrap_or("")));
     }
     out.trim_end().to_string()
 }
@@ -2405,6 +2477,52 @@ mod tests {
         assert!(
             refused.is_err(),
             "a port that is not a number was answered: {refused:?}"
+        );
+    }
+
+    #[test]
+    fn an_ensure_answer_reads_as_its_source_command_levels_and_notes() {
+        let v = json!({
+            "kind": "npm-modules", "dir": "site", "target": "site/node_modules",
+            "key": "v1/npm-modules/p/t/d", "source": "in_place",
+            "command": { "argv": ["npm", "ci"], "exit": 0 },
+            "saved": ["local", "store"],
+            "notes": ["local: no archive under this key"],
+            "local": { "dir": "~/.cache/majordomus/build-cache", "bytes": 1073741824_u64,
+                       "bound_bytes": 21474836480_u64, "pruned": 2 },
+        });
+        let text = render_build_cache_ensure(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "kind       npm-modules (site)",
+                "key        v1/npm-modules/p/t/d",
+                "target     site/node_modules",
+                "source     in place",
+                "command    npm ci -> exit 0",
+                "saved      local, store",
+                "local      ~/.cache/majordomus/build-cache  1.00 of 20 GiB, 2 pruned",
+                "note       local: no archive under this key",
+            ]
+        );
+        assert_eq!(ensure_exit(&v), 0);
+        let bare = json!({ "kind": "mix-deps", "dir": ".", "source": "uncached",
+                           "saved": [], "notes": [], "local": {} });
+        let text = render_build_cache_ensure(&bare);
+        assert!(text.contains("key        none"), "{text}");
+        assert!(
+            !text.contains("command") && !text.contains("saved"),
+            "{text}"
+        );
+        assert_eq!(ensure_exit(&bare), 0, "nothing ran: nothing failed");
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 3 } })), 3);
+        assert_eq!(ensure_exit(&json!({ "command": { "exit": 300 } })), 255);
+        assert_eq!(ensure_exit(&json!({ "command": { "argv": ["x"] } })), 1);
+        let signalled = render_build_cache_ensure(&json!({ "command": { "argv": ["x"] } }));
+        assert!(
+            signalled.contains("command    x -> exit none"),
+            "{signalled}"
         );
     }
 }

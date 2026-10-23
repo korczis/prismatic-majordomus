@@ -1882,6 +1882,23 @@
       "tool": "majordomus_mcp"
     },
     {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh build-cache ensure",
+      "id": "mesh.build_cache.ensure",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-ensure/",
+      "slug": "mesh-build-cache-ensure",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Restore an install before its command, and save it after",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-key",
       "claims": [],
       "cli": "majordomus mesh build-cache key",
@@ -4360,7 +4377,7 @@
     ]
   },
   "counts": {
-    "capabilities": 209,
+    "capabilities": 210,
     "claims": 93,
     "modules": 58
   },
@@ -5259,6 +5276,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "mesh.build_cache.ensure",
+          "route": "/registry/capabilities/mesh-build-cache-ensure/",
+          "slug": "mesh-build-cache-ensure"
+        },
         {
           "id": "mesh.build_cache.key",
           "route": "/registry/capabilities/mesh-build-cache-key/",
