@@ -5,8 +5,8 @@ fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 
 # --- Linux's per-argument cap, measured on every host (I3942)
-# Linux refuses an exec whose any one argument exceeds MAX_ARG_STRLEN, 131072 bytes; macOS
-# has no such cap, so a payload that fails every CI run passes on the machine it is written
+# Linux refuses an exec whose any one argument, with its terminating NUL, exceeds
+# MAX_ARG_STRLEN, 131072 bytes, so the longest argument is 131071 bytes; macOS has no such cap, so a payload that fails every CI run passes on the machine it is written
 # on. scripts/ci/argv-limit-check refuses the spellings it knows, and three times a new one
 # crossed the cap (the claims matrix, forge_paths, then mj_project_mermaid at 132474 bytes
 # on train 4). Here the generator runs over every one of its real inputs with a jq on PATH
@@ -21,8 +21,8 @@ LC_ALL=C
 i=0
 for a in "\$@"; do
   i=\$((i + 1)); n=\${#a}
-  if [ "\$n" -gt 131072 ]; then
-    echo "argv-cap: jq argument \$i is \$n bytes, over Linux's 131072-byte MAX_ARG_STRLEN; pass it with --slurpfile/--rawfile or stdin" >&2
+  if [ "\$n" -gt 131071 ]; then
+    echo "argv-cap: jq argument \$i is \$n bytes, over the 131071 Linux allows (MAX_ARG_STRLEN 131072, NUL included); pass it with --slurpfile/--rawfile or stdin" >&2
     exit 126
   fi
   if [ "\$n" -gt 98304 ]; then
@@ -34,9 +34,9 @@ exec "$real_jq" "\$@"
 EOF
 chmod +x "$cap/jq"
 # the shim is held to what it claims: one byte over is refused, the cap itself is not
-big="$(head -c 131073 /dev/zero | tr '\0' a)"
+big="$(head -c 131072 /dev/zero | tr '\0' a)"
 rc=0; PATH="$cap:$PATH" jq -n --arg x "$big" '1' >/dev/null 2>&1 || rc=$?
-[ "$rc" = 126 ] || { echo "    the argv-cap shim let a 131073-byte argument through (exit $rc)"; exit 1; }
+[ "$rc" = 126 ] || { echo "    the argv-cap shim let a 131072-byte argument through (exit $rc)"; exit 1; }
 PATH="$cap:$PATH" jq -n --arg x "${big%a}" '1' >/dev/null \
   || { echo "    the argv-cap shim refused an argument at exactly the cap"; exit 1; }
 unset big; : > "$cap/near"
