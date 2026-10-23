@@ -43306,6 +43306,8 @@
             "An issue with a merged pull request shows merged with a link to that pull request",
             "The page names the commit and time its data was observed"
           ],
+          "completed_at": "2026-10-23T16:40:44Z",
+          "completed_event": "sha256:f1a63b93c6599eed6ed12218028844165943976ecf50eaaa649fa765018c6bea",
           "created_at": "2026-10-16",
           "current_state": "roadmap.html keeps milestones whose version is set; the issue counts are stamp-derived; nothing links a stage to its proof.",
           "depends_on": [
@@ -43332,7 +43334,9 @@
             "test/cases/3103_the_roadmap_draws_every_milestone.sh"
           ],
           "slug": "the-roadmap-draws-every-milestone",
-          "updated_at": "2026-10-16T19:11:27Z",
+          "started_at": "2026-10-23T16:31:45Z",
+          "started_event": "sha256:22058abbe05d19520e6f6fc15b6f033b97e6157006284a1cea05c65d67f6f387",
+          "updated_at": "2026-10-23T16:40:44Z",
           "validation": [
             "bash test/run.sh 12_site_build 3103_the_roadmap_draws_every_milestone"
           ],
@@ -43352,6 +43356,8 @@
             "Now names only milestones with work in flight",
             "The latest release shown is never older than the executable's own version when that version is tagged"
           ],
+          "completed_at": "2026-10-23T16:41:16Z",
+          "completed_event": "sha256:6417f7236d9532bb6ce27bed57a5ce3cd6381227a0cc3218a7dff52765541546",
           "created_at": "2026-10-16",
           "current_state": "ui/roadmap.rs reads plan.roadmap, plan.status, intents.list and plan.issues; latest release comes from the committed release records.",
           "depends_on": [
@@ -43373,7 +43379,9 @@
             "test/cases/3104_the_ui_roadmap_reads_delivery.sh"
           ],
           "slug": "the-ui-roadmap-reads-delivery",
-          "updated_at": "2026-10-16T15:46:53Z",
+          "started_at": "2026-10-23T16:32:32Z",
+          "started_event": "sha256:3dbdecba26a4e36c731dfade6d46e8e5a49a0bdfb2a7050bd30010c9a251d179",
+          "updated_at": "2026-10-23T16:41:16Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
             "bash test/run.sh 3104_the_ui_roadmap_reads_delivery"
@@ -44433,6 +44441,8 @@
             "The site job, or each probe job, records its duration and stays under half its timeout on the measured runner",
             "A probe finding still fails the job that found it, naming the route and the width"
           ],
+          "completed_at": "2026-10-23T16:39:37Z",
+          "completed_event": "sha256:43f129692cc2ed33db89554809aa587e827457a3ba5690c6991e6fc31a6fa295",
           "created_at": "2026-10-17",
           "current_state": "One step in the site job runs scripts/site-probe with SITE_PROBE_JOBS=4 under `scripts/ci/timed --bound 2700`; the job's timeout-minutes is 65 after 71b2 (50 before).",
           "depends_on": [],
@@ -44456,7 +44466,7 @@
           "slug": "the-site-probe-is-split",
           "started_at": "2026-10-19T20:38:09Z",
           "started_event": "sha256:7604395f474418fe6074373c6cde143cf594e67ccaad786d51c022e6e43d962d",
-          "updated_at": "2026-10-19T20:38:09Z",
+          "updated_at": "2026-10-23T16:39:37Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -44816,6 +44826,8 @@
             "A stage count delivery.json does not give, a missing stage row, or none drawn as a stage is refused by homepage-check",
             "A declared status count inside a link is still read and held to plan.json"
           ],
+          "completed_at": "2026-10-23T16:38:58Z",
+          "completed_event": "sha256:0fa1035b6394a53fe59548a4d2882e4685fe7be58775ca64ced9c097b1bd390b",
           "created_at": "2026-10-18",
           "current_state": "The card counts issues by declared status, read once from plan.json at the build commit; no count is a link; homepage-check reads a count only when it is the element's first text.",
           "depends_on": [
@@ -44839,7 +44851,9 @@
             "test/cases/333_homepage_narrative.sh"
           ],
           "slug": "the-homepage-counts-delivery",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-23T16:30:43Z",
+          "started_event": "sha256:bd73ea236b6c0f84ab0aa5745137910e4a6e37a4dd3961a63eb8ed1e64c439e7",
+          "updated_at": "2026-10-23T16:38:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
@@ -47474,6 +47488,8 @@
             "An announcement whose text holds a template delimiter is refused with the remedy",
             "Removing either check turns its case red"
           ],
+          "completed_at": "2026-10-23T16:38:17Z",
+          "completed_event": "sha256:c863073f58496ff9d42be1bafc7bd144b6dbe9fb81246cb4e442b65f63909dff",
           "created_at": "2026-10-19",
           "current_state": "Nothing refuses a delimiter in record prose or in board text; each one is found by a red site job or a red core-check.",
           "depends_on": [],
@@ -47498,7 +47514,9 @@
             "site"
           ],
           "slug": "prose-holds-no-template-delimiter",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-23T16:29:29Z",
+          "started_event": "sha256:7b22a11e6c6a73fe19bda39929969206f909002597881abee9c31ee4136f2abe",
+          "updated_at": "2026-10-23T16:38:17Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -47557,6 +47575,8 @@
         "route": "/cockpit/objects/issue/i3013",
         "source": ".ai/repo/project/issues/I3013.yaml",
         "facts": {
+          "completed_at": "2026-10-23T16:36:36Z",
+          "completed_event": "sha256:e25c636fa3bcf42b28c9770c477b74466cd43bf402e0328cb50eee851d448661",
           "created_at": "2026-10-20",
           "depends_on": [],
           "evidence_required": [
@@ -47577,7 +47597,9 @@
             "site"
           ],
           "slug": "the-evidence-job-runs-only-when-a-lane-left-a-report",
-          "updated_at": "2026-10-20",
+          "started_at": "2026-10-23T16:26:47Z",
+          "started_event": "sha256:f10024b6b4e6e42483cfdb1c2c6eba3ef3071d27b564fc12d2cc319143a248a3",
+          "updated_at": "2026-10-23T16:36:36Z",
           "validation": [
             "bash test/run.sh 3402_a_records_only_plan_skips_the_evidence_job",
             "bash test/run.sh 26_ci_wiring",
@@ -48032,6 +48054,8 @@
             "The SessionEnd shim, given a provider session that was started, closes the episode in less than its declared timeout",
             "With the end budget forced below the optional steps' cost, the episode still closes, and the skipped checkpoint and continuation are recorded as typed failures"
           ],
+          "completed_at": "2026-10-23T16:37:26Z",
+          "completed_event": "sha256:15e2481c880e1db8e669b74fb1cfd0d114fe83dbf9f4f7ded4c461688f14749d",
           "created_at": "2026-10-19",
           "evidence_required": [
             "verified"
@@ -48046,7 +48070,9 @@
             ".ai/repo/project/issues/I3060.yaml"
           ],
           "slug": "a-session-end-hook-fits-its-budget",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-23T16:28:16Z",
+          "started_event": "sha256:f47c08a207dd7bf3732732b40792ee1670b53a167017ea8c171f388a15d320ec",
+          "updated_at": "2026-10-23T16:37:26Z",
           "validation": [
             "CI=true bash test/run.sh --no-skips 3460"
           ]
@@ -49252,6 +49278,8 @@
             "A replaced file of the same or a newer version still takes over, as before",
             "The log line of a refused takeover names both versions"
           ],
+          "completed_at": "2026-10-23T16:41:55Z",
+          "completed_event": "sha256:e71196527c778fe6252db6f7f5e45429103f7bf872dd5ffb3e190f427475845c",
           "created_at": "2026-10-20",
           "depends_on": [],
           "evidence_required": [
@@ -49272,7 +49300,7 @@
           "slug": "an-older-binary-never-takes-a-newer-lease",
           "started_at": "2026-10-21T02:42:11Z",
           "started_event": "sha256:5dc2ab5068c58f0575f1f26322907154b0b928fcde9bc52f5a8f664813f21a4d",
-          "updated_at": "2026-10-21T02:42:43Z",
+          "updated_at": "2026-10-23T16:41:55Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease"
           ],
@@ -49341,6 +49369,8 @@
             "A server of another pid answering the freed address does not fail the test",
             "A failure names the pid still answering at the address"
           ],
+          "completed_at": "2026-10-23T16:42:56Z",
+          "completed_event": "sha256:7223eed455e548fbc33dcabdb191940953e0782d9c53b30db49c17920d09c071",
           "created_at": "2026-10-21",
           "current_state": "The test waits up to 5 s for any answer at the stopped server's address to stop, so another test's server on the reused port reads as the stopped one still running.",
           "depends_on": [],
@@ -49362,7 +49392,7 @@
           "slug": "a-stopped-server-is-told-from-its-port",
           "started_at": "2026-10-21T09:32:52Z",
           "started_event": "sha256:c696b8bdb7a205ccab6f3631535b649fa5ac9e182f6cc217d6f9740637700c60",
-          "updated_at": "2026-10-21T10:20:28Z",
+          "updated_at": "2026-10-23T16:42:56Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test serve_lifecycle"
           ],
@@ -65116,6 +65146,8 @@
             "An unverifiable certificate is refused naming the endpoint",
             "A public http endpoint is refused before connecting; loopback, private and overlay http endpoints still work"
           ],
+          "completed_at": "2026-10-23T16:40:11Z",
+          "completed_event": "sha256:c7fdc3f3b90aee798fbdaa33cab51e84cd381526fe732998256e726cd7c39d71",
           "created_at": "2026-10-21",
           "current_state": "bridge::connect accepts only http:// and opens a TcpStream; config.rs validates seeds as http://host:port; case 491 refuses any hub outside the private and overlay ranges.",
           "depends_on": [],
@@ -65148,7 +65180,9 @@
             "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
           ],
           "slug": "the-mesh-client-speaks-tls",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-23T16:33:16Z",
+          "started_event": "sha256:22b3e4f5215775ad669403c8b449f5a1f347997a2a3bb6c1c2f259fd617b2c0f",
+          "updated_at": "2026-10-23T16:40:11Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3823_the_mesh_client_speaks_tls"
           ],

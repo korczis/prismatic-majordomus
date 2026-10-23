@@ -38,4 +38,23 @@ depends_on: []
 serves:
   - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-23T16:40:11Z
+started_at: 2026-10-23T16:33:16Z
+started_event: sha256:22b3e4f5215775ad669403c8b449f5a1f347997a2a3bb6c1c2f259fd617b2c0f
+completed_at: 2026-10-23T16:40:11Z
+completed_event: sha256:c7fdc3f3b90aee798fbdaa33cab51e84cd381526fe732998256e726cd7c39d71
+evidence:
+  - covers: tls_endpoint_reached
+    type: ci
+    command: "bash test/run.sh 3823_the_mesh_client_speaks_tls"
+    result: "ok, passed in master validate 39784979979 (success at 2034d4a3f0b, which holds case 3823; fix c6eda574264); also ok in a local run on 2026-10-23 (9 s): an https hub is reached over TLS with its certificate verified"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:35:07Z
+  - covers: public_cleartext_refused
+    type: ci
+    command: "bash test/run.sh 3823_the_mesh_client_speaks_tls"
+    result: "ok, same run: the mesh doctor transport check refuses a public http hub or seed naming the address and the correction"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:35:21Z
