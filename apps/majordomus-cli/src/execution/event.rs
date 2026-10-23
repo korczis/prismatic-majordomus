@@ -11,7 +11,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::model::{
-    ExecutionDiagnostic, ExecutionError, ExecutionId, ExecutionState, LogStream, ProgressView,
+    ExecutionDiagnostic, ExecutionError, ExecutionId, ExecutionState, IssueClaim, LogStream,
+    ProgressView,
 };
 
 /// The version of the event protocol this executable speaks.
@@ -145,6 +146,12 @@ pub enum EventPayload {
         /// Who holds it, in the holder's own words: a worker, a node, a session.
         holder: String,
     },
+    /// Where the mesh claim of an execution started for an issue stands (I4004): wanted at
+    /// the start, then held, unclaimed or refused when a worker takes it up, and released
+    /// or kept as it ends. Moves no state: the `claimed`, `refused` and final events that
+    /// follow it do.
+    #[serde(rename = "execution.issue_claim")]
+    IssueClaim(IssueClaim),
     /// A worker picked it up and is about to enter the handler.
     #[serde(rename = "execution.started")]
     Started,
@@ -241,6 +248,7 @@ impl EventPayload {
             EventPayload::Authorizing => "execution.authorizing",
             EventPayload::Queued { .. } => "execution.queued",
             EventPayload::Claimed { .. } => "execution.claimed",
+            EventPayload::IssueClaim(_) => "execution.issue_claim",
             EventPayload::Started => "execution.started",
             EventPayload::Verifying => "execution.verifying",
             EventPayload::Progress(_) => "execution.progress",
@@ -462,6 +470,7 @@ mod tests {
                     correlation_id: "x".into(),
                 },
             },
+            EventPayload::IssueClaim(IssueClaim::wanted("I4004")),
         ];
         let mut names = std::collections::BTreeSet::new();
         for p in payloads {
@@ -473,7 +482,7 @@ mod tests {
             assert_eq!(back.type_name(), name);
             assert_eq!(back.is_terminal(), p.is_terminal());
         }
-        assert_eq!(names.len(), 17);
+        assert_eq!(names.len(), 18);
     }
 
     #[test]

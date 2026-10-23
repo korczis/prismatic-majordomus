@@ -100,7 +100,8 @@ the store refuses every other move, so a client that reads a final state never s
 again. `executions.protocol` answers the same table under `states`, so a client never
 restates it. The in-process engine moves `queued` straight to `running`: it claims an
 execution and enters its handler in the same instant, and nothing of it would be visible
-in `claimed`. `authorizing`, `claimed`, `verifying` and `refused` are entered by a worker
+in `claimed` — except for an execution started for an issue, which passes through
+`claimed` while it holds the issue's mesh claim ([below](#an-execution-for-an-issue-holds-its-claim)). `authorizing`, `claimed`, `verifying` and `refused` are entered by a worker
 that decides, holds or checks an execution in its own time (Mission Control B3); the store
 offers `create_authorizing` for an execution that waits for a policy decision, and the
 events below for every move after it. `unknown_outcome` is the state of a run whose outcome
@@ -174,6 +175,32 @@ executes in its own process, a key given to it is held there. The input is match
 digest of its canonical JSON, so the order a client wrote the keys in does not matter; the
 digest never leaves the store. Without a key every start starts an execution, as before.
 
+### An execution for an issue holds its claim
+
+A start may name the `issue` it works for (I4004; `I4004`, `#184`: 1 to 64 characters of
+`A-Z a-z 0-9 # . _ -`). Two workers that start one issue at once must not both run it, and
+the mesh already decides that question for sessions, so the execution asks it the same way:
+the worker that picks it up takes an **exclusive** mesh claim through `Cooperation::claim`,
+the function `mesh.claim` calls, as the mesh session `execution-<id>`, for the issue record's
+`scope` — or the pseudo-path `issue/<id>` when the record declares none or is not in this
+checkout — before the handler is entered. Held, the execution moves
+`queued → claimed → running`, with the session as the `holder`. A live exclusive claim of
+another session on that scope, on this runtime or any it has heard, refuses it: `refused`,
+policy `mesh.claim`, a message that starts `claim_conflict:` and names the holding session
+(`execution-<id>` for another execution) and its claim key, and nothing runs. The claim is
+given back — released and its session closed — before the final event is published, for
+every final state, and by the worker's guard when the worker unwinds instead. An
+`unknown_outcome` keeps it: whether the work happened is still to be read, and the scope is
+not free until it has been. A kept claim, or the claim of a process that died, ends when its
+runtime stops beating, as every mesh claim does; fencing a holder that returns after its
+claim expired is I3174's, not this. With no mesh cooperation in the serving process the
+execution runs without a claim and says so, never failing for it. Each step is the event
+`execution.issue_claim`, carrying `issue`, `standing` (`wanted` at the start, then `held`,
+`unclaimed` or `refused`, then `released` or `kept`), `scope`, `key`, `session` and a
+`detail`, and the snapshot's `issue_claim` is the latest of them. The issue is part of what
+an idempotency key is matched against. `majordomus run` takes no issue: it runs in its own
+process, where no mesh runs.
+
 ## One plane per checkout: `majordomus run` and the server
 
 `majordomus run` executes in its own process — the cost and the failure modes of a run are
@@ -230,6 +257,7 @@ members that vary, so a client switches on one string.
 | `execution.authorizing` | a policy decision on whether it may run is being taken |
 | `execution.queued` | it is waiting for a worker, and how many are ahead of it |
 | `execution.claimed` | a worker holds it, named in `holder`, and has not entered the handler |
+| `execution.issue_claim` | where the mesh claim of an execution started for an issue stands: wanted, held, unclaimed, refused, released, kept |
 | `execution.started` | the handler was entered |
 | `execution.verifying` | the handler returned, and what it produced is being checked |
 | `execution.progress` | how far along, with a total when the handler knows one |

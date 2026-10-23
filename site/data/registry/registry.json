@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "c1af873c5bcf378114ff7453c5769555f35078e13df81230738731df9ad695e0",
+    "fingerprint": "5f19270b3e3427106dbc4a490881936aea4bba6bb4fc44e9f8f7156e07a1f9cc",
     "summary": {
-      "total": 3315,
+      "total": 3316,
       "builtin": 208,
-      "declarative": 3107,
+      "declarative": 3108,
       "by_kind": {
         "command": 32,
         "query": 176,
-        "resource": 3107
+        "resource": 3108
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 55,
-        "implemented": 3117
+        "implemented": 3118
       },
       "mcp_tools": 197,
-      "mcp_resources": 3162,
+      "mcp_resources": 3163,
       "http_routes": 202,
       "cli_commands": 112,
       "modules": 92,
@@ -26820,6 +26820,17 @@
                     ],
                     "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
                   },
+                  "issue_claim": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/IssueClaim"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
+                  },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
                     "description": "Where to read more."
@@ -27165,6 +27176,87 @@
                   "id"
                 ],
                 "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+              },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
               },
               "ExecutionLinks": {
                 "type": "object",
@@ -27642,6 +27734,23 @@
                     "properties": {
                       "type": {
                         "type": "string",
+                        "const": "execution.issue_claim"
+                      },
+                      "data": {
+                        "$ref": "#/$defs/IssueClaim"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "Where the mesh claim of an execution started for an issue stands (I4004): wanted at\nthe start, then held, unclaimed or refused when a worker takes it up, and released\nor kept as it ends. Moves no state: the `claimed`, `refused` and final events that\nfollow it do."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
                         "const": "execution.started"
                       }
                     },
@@ -27952,6 +28061,87 @@
               "ExecutionId": {
                 "type": "string",
                 "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
+              },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
               },
               "ProgressView": {
                 "type": "object",
@@ -28287,6 +28477,17 @@
                   "null"
                 ],
                 "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+              },
+              "issue_claim": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/IssueClaim"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
               },
               "links": {
                 "$ref": "#/$defs/ExecutionLinks",
@@ -28634,6 +28835,87 @@
                   "id"
                 ],
                 "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+              },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
               },
               "ExecutionLinks": {
                 "type": "object",
@@ -28999,6 +29281,17 @@
                     ],
                     "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
                   },
+                  "issue_claim": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/IssueClaim"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
+                  },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
                     "description": "Where to read more."
@@ -29344,6 +29637,87 @@
                   "id"
                 ],
                 "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+              },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
               },
               "ExecutionLinks": {
                 "type": "object",
@@ -29929,6 +30303,23 @@
                     "properties": {
                       "type": {
                         "type": "string",
+                        "const": "execution.issue_claim"
+                      },
+                      "data": {
+                        "$ref": "#/$defs/IssueClaim"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "data"
+                    ],
+                    "description": "Where the mesh claim of an execution started for an issue stands (I4004): wanted at\nthe start, then held, unclaimed or refused when a worker takes it up, and released\nor kept as it ends. Moves no state: the `claimed`, `refused` and final events that\nfollow it do."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
                         "const": "execution.started"
                       }
                     },
@@ -30240,6 +30631,87 @@
                 "type": "string",
                 "description": "The identity of one execution: `x-<UTC timestamp>-<8 hex>`.\n\nThe shape is the layer's own — a task is `t-20260905034523-a9f1` — so that an id read\nin a log, a URL or a browser tab is recognisable as this repository's without a\ndependency on a UUID crate. The timestamp orders ids by creation for a reader; the\nsuffix, not the timestamp, is what makes two ids created in the same second differ."
               },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
+              },
               "ProgressView": {
                 "type": "object",
                 "properties": {
@@ -30542,6 +31014,17 @@
                       "null"
                     ],
                     "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+                  },
+                  "issue_claim": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/IssueClaim"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
                   },
                   "links": {
                     "$ref": "#/$defs/ExecutionLinks",
@@ -30889,6 +31372,87 @@
                 ],
                 "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
               },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
+              },
               "ExecutionLinks": {
                 "type": "object",
                 "properties": {
@@ -30961,7 +31525,7 @@
         "module": "executions",
         "kind": "command",
         "title": "Start a capability as an execution",
-        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
         "input": {
           "name": "StartInput",
           "schema": {
@@ -30985,6 +31549,16 @@
                 "minLength": 1,
                 "maxLength": 128,
                 "pattern": "^[A-Za-z0-9._:-]+$"
+              },
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is\nentered the execution takes the issue's exclusive mesh claim — the issue record's\n`scope`, or `issue/<id>` when it declares none — as the mesh session\n`execution-<id>`, and moves `queued -> claimed -> running`; a claim another session\nholds refuses it (`refused`, the holder named) and nothing runs. The claim is given\nback at the final state and kept for an outcome that is not known. With no mesh in\nthe serving process it runs unclaimed and its `execution.issue_claim` event says so.",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[A-Za-z0-9#._-]+$"
               }
             },
             "required": [
@@ -31122,6 +31696,17 @@
                   "null"
                 ],
                 "description": "The idempotency key the start was sent with, when it was sent with one: a repeated\nstart with this key answers this execution instead of starting another (I4000)."
+              },
+              "issue_claim": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/IssueClaim"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The issue it was started for, and the mesh claim it takes for it, when it was\nstarted for one (I4004)."
               },
               "links": {
                 "$ref": "#/$defs/ExecutionLinks",
@@ -31474,6 +32059,87 @@
                   "id"
                 ],
                 "description": "Which repository, and which checkout of it, an execution ran against.\n\nAn execution is never run against \"wherever this process happens to be\": the engine\nstamps the repository the index was read from, and a request that names a different one\nis refused. The path itself is not here — this value is served to whoever can reach the\nsocket, and where the checkout sits on the host is of no use to them."
+              },
+              "IssueClaim": {
+                "type": "object",
+                "properties": {
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue, as the start named it."
+                  },
+                  "standing": {
+                    "$ref": "#/$defs/ClaimStanding",
+                    "description": "Where the claim stands."
+                  },
+                  "scope": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the\nrecord declares none or is not in this checkout."
+                  },
+                  "key": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim's key, `<stream>/<claim>`, once one was taken."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh session the claim belongs to, once one was opened: `execution-<id>`."
+                  },
+                  "detail": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What there is to say: why it ran unclaimed, who holds the scope it was refused, why\nthe claim is kept, or that a release did not go through."
+                  }
+                },
+                "required": [
+                  "issue",
+                  "standing"
+                ],
+                "description": "The issue an execution works for and the mesh claim it holds for it (I4004): the issue,\nthe scope claimed, the claim's key while there is one, and where it stands.\n\n```\nuse majordomus_cli::execution::{ClaimStanding, IssueClaim};\nlet wanted = IssueClaim::wanted(\"I4004\");\nassert_eq!(wanted.standing, ClaimStanding::Wanted);\nassert!(wanted.scope.is_empty() && wanted.key.is_none());\nlet json = serde_json::to_value(&wanted).unwrap();\nassert_eq!(json, serde_json::json!({ \"issue\": \"I4004\", \"standing\": \"wanted\" }));\n```"
+              },
+              "ClaimStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "wanted",
+                    "description": "Started for an issue; the claim is taken when a worker picks it up."
+                  },
+                  {
+                    "type": "string",
+                    "const": "held",
+                    "description": "The exclusive claim is held, and the handler runs under it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "released",
+                    "description": "The claim was given back when the execution reached its final state."
+                  },
+                  {
+                    "type": "string",
+                    "const": "kept",
+                    "description": "The outcome is not known, so the claim is kept: whether the work happened is still\nto be read, and the scope is not free until it has been."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unclaimed",
+                    "description": "No mesh cooperation runs in this process, so it ran without a claim. Said, never a\nfailure."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Another session holds an exclusive claim on the scope; the execution was refused and\nnothing ran."
+                  }
+                ],
+                "description": "Where the mesh claim of an execution started for an issue stands (I4004).\n\n```text\n  wanted ──► held ──► released            the run reached a final state\n                 └──► kept                its outcome is not known: the claim stays\n         ──► unclaimed                    no mesh runs here: it ran without a claim\n         ──► refused                      another session holds the scope: nothing ran\n```\n\n```\nuse majordomus_cli::execution::ClaimStanding;\nlet word = serde_json::to_value(ClaimStanding::Kept).unwrap();\nassert_eq!(word, \"kept\");\nlet back: ClaimStanding = serde_json::from_value(\"unclaimed\".into()).unwrap();\nassert_eq!(back, ClaimStanding::Unclaimed);\n```"
               },
               "ExecutionLinks": {
                 "type": "object",
@@ -87348,7 +88014,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 604,
+        "capabilities": 605,
         "capability_ids": []
       },
       {
@@ -87440,7 +88106,7 @@
     ]
   },
   "index": {
-    "fingerprint": "1cede3c535df34501b52d554bea1e61fa189e7411d2033338dc90a46381f7cfa",
+    "fingerprint": "83bb681f0308c567ae590e7d110cd3b77bf1d66f2de03cd2079cc06b1b8cb98b",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87494,7 +88160,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 604,
+      "test": 605,
       "use-case": 49,
       "workspace": 1
     },
@@ -94534,7 +95200,7 @@
         "title": "Executions — watching a capability call happen",
         "path": "docs/EXECUTIONS.md",
         "source_class": "document",
-        "bytes": 30766
+        "bytes": 33132
       },
       {
         "uri": "majordomus://document/docs/EXTRACTION_REPORT.md",
@@ -118698,6 +119364,14 @@
         "bytes": 8672
       },
       {
+        "uri": "majordomus://test/test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "kind": "test",
+        "identity": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "path": "test/cases/4004_an_execution_holds_its_issue_claim.sh",
+        "source_class": "case",
+        "bytes": 8690
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -121534,7 +122208,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 604
+      "objects": 605
     },
     {
       "name": "use-case",
@@ -155525,7 +156199,7 @@
         "name": "majordomus_execution_start",
         "id": "executions.start",
         "title": "Start a capability as an execution",
-        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+        "description": "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
         "kind": "command",
         "read_only": false,
         "effect": "repository_mutation",
