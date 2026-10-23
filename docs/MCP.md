@@ -209,6 +209,24 @@ there is no process without a client — true in time rather than at every insta
 agent's entry is owed a server before its first attach, and a checkout nobody works in
 does not keep one.
 
+What keeps it is a client, not the machine (I4007). Every server on a machine hears the
+mesh's multicast and links to the others, a board gather reads every sibling checkout's
+board, and `serve status`, `serve ensure` and the gather probe every lease's server; when
+each of those requests counted as use, the servers of one Mac kept each other alive — fifteen
+of them, for up to eight hours, with no peer attached. So the idle timer, in
+`apps/majordomus-cli/src/idle.rs`, decides from what the server holds: no MCP session and no
+row on its peer board, no execution queued or running, no live `/events` channel, and no
+request from a client since its last look. The mesh transport (`/api/v1/mesh/link/hello`,
+`/api/v1/mesh/link/sync`, `/api/v1/mesh/register`), a probe of `/` (which this executable
+marks with `X-Majordomus-Probe`) and a sibling's `GET /api/v1/peers?checkouts=this` are
+not use. When the bound passes, the server logs the reason (`idle for N s (bound N s): no
+peer attached, no execution queued or running, ...; stopping`), runs the same ordered stop
+`serve stop` asks for — sessions and episodes closed, listeners closed, mesh drained, lease
+released — and exits 0. It leaves on its own; nothing signals it (ADR 0200). The bound is
+`server.idle_seconds` below; a server started without one — plain `serve`, a deployment,
+the server `majordomus mcp` hosts for its stdio client — never idle-exits.
+`test/cases/4007_an_idle_server_leaves_by_itself.sh` holds it.
+
 `serve stop` signals the server the lease names, when that server answers for this
 checkout, and waits for *that server's* lease to go — the document it read, by its token,
 not merely the path — and then for the process to exit. The `SIGTERM` it sends is the

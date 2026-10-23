@@ -7,7 +7,8 @@
 //! file (the parent closed its end) starts the shutdown, which waits for attached peers to
 //! leave. When stdin is anything else (a terminal, `/dev/null` under nohup or a service
 //! manager, a file) nothing is watched and the process runs until it is stopped — or, with
-//! `--idle`, until no peer has been attached for that long. There is no daemon mode either
+//! `--idle`, until nothing has used it for that long (`crate::idle` says what counts as use,
+//! and why another server's traffic does not). There is no daemon mode either
 //! way: whoever started the process owns it.
 //!
 //! Stopped means stopped in order. `SIGTERM` (which `serve stop` sends), `SIGINT` and
@@ -183,10 +184,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let idle = Duration::from_secs(args.idle);
         tracing::info!(
             idle_seconds = args.idle,
-            "stdin is not a pipe; the server stops when no peer has been attached for {} second(s)",
+            "stdin is not a pipe; the server stops when nothing has used it for {} second(s): no peer attached, no execution queued or running, no live channel, no client request (mesh links, probes and sibling board reads are not use)",
             args.idle
         );
-        let mut idle_since = Instant::now();
+        // idle is decided from what the server holds, by `crate::idle` (I2131, I4007)
+        let mut timer = crate::idle::IdleTimer::new(idle, Instant::now());
         let mut counted = Instant::now();
         loop {
             std::thread::sleep(STOP_POLL);
@@ -200,16 +202,15 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             if superseded_and_alone(&shared) {
                 break None;
             }
-            // in use: an MCP session attached, a request answered within the last second, or a
-            // live channel open — the Cockpit and the REST API count as much as a client (I2131)
-            if shared.peers_attached() > 0
-                || crate::http::server::used_within(Duration::from_secs(1))
-            {
-                idle_since = Instant::now();
-            } else if idle_since.elapsed() >= idle {
+            // in use: a peer attached, an execution not finished, a live channel open, or a
+            // client's request answered within the last second — the Cockpit and the REST API
+            // count as much as an MCP client; another server's traffic does not
+            let activity = shared.activity(Duration::from_secs(1));
+            if let Some(why) = timer.observe(&activity, Instant::now()) {
                 tracing::info!(
-                    "no peer for {} second(s); stopping",
-                    idle_since.elapsed().as_secs()
+                    idle_seconds = why.idle_for.as_secs(),
+                    bound_seconds = why.bound.as_secs(),
+                    "{why}; stopping"
                 );
                 break None;
             }
