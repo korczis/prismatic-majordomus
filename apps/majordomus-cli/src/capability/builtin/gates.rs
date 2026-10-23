@@ -760,7 +760,7 @@ mod tests {
     fn the_module_declares_what_it_claims() {
         let m = module();
         assert_eq!(m.id.as_str(), "gates");
-        assert_eq!(m.capabilities.len(), 3);
+        assert_eq!(m.capabilities.len(), 4);
         for e in &m.capabilities {
             assert_eq!(e.capability.id.namespace(), "gates");
             assert!(
