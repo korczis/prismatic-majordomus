@@ -580,6 +580,44 @@ has no file by configuration, and `not_durable` when the write failed. "Synced" 
 operating system's data sync of the journal file (`fdatasync` on Linux, `fsync` on macOS, which
 does not flush the drive's own cache), not a promise about the storage under it.
 
+### Every wait on a peer is bounded
+
+Nothing the executable does waits on a stuck peer for longer than a declared bound (I3993). The
+waits are listed once, in `apps/majordomus-cli/src/mesh/waits.rs` (`PEER_WAITS`): each with
+what it waits for, its bound — a declared key and its default, a constant of the executable, or
+no wait because the call answers at once — and where it goes when the bound is reached. When a
+wait reaches its bound it says `peer wait <id> reached its bound after <n> s waiting for <what>,
+held by <whom>; <routing>: <what happens>`. `mesh doctor`'s `peer_waits` check fails for a wait
+that nothing bounds, which a declaration can cause: `cooperation.session_ttl_seconds: 0` turns
+the progress rule off, and a claim held by a session that does nothing then shuts everybody
+out for as long as its runtime beats. Each entry names the source line it is recognised by,
+and the unit tests fail when that line is gone. The waits of the shell scripts are bounded by
+their callers and by `scripts/liveness-check`, not here.
+
+| wait | waits for | bound (default) | at the bound |
+|---|---|---|---|
+| `server.election.busy` | the server the lease names, alive but not answering | `server.busy_grace_seconds` (10 s) | take over the lease |
+| `server.election.join` | the lease to be joined or taken | `server.join_timeout_seconds` (20 s) | serve alone; the error names the lease and its holder |
+| `server.lease.change` | another process's change to the lease file | `lease::LOCK_PATIENCE` (2 s) | the change is not made; the next election recovers |
+| `server.bridge.request` | the shared server's answer to an MCP request | `mcp::bridge::REQUEST_TIMEOUT` (60 s) | fail over: elect again, serve or attach |
+| `server.ensure` | a starting server to become ready | `serve ensure --wait` (20 s) | report the standing found |
+| `server.stop` | a signalled server to release its lease and exit | `serve stop --wait` (10 s) | report the pid that would not stop |
+| `mesh.link.request` | another runtime's answer to a hello or a sync | `mesh::link::REQUEST_TIMEOUT` (5 s) | the round fails; a silent runtime expires |
+| `mesh.rendezvous.request` | a hub's answer to a registration | `mesh::rendezvous::REQUEST_TIMEOUT` (5 s) | back off; other endpoints go on |
+| `mesh.runtime.expiry` | a linked runtime that stopped beating | `cooperation.expiry_seconds` (30 s) | expired: its sessions end, its claims stop excluding |
+| `mesh.session.progress` | a claiming session that makes no progress | `cooperation.session_ttl_seconds` (600 s; 0 is unbounded) | its exclusive claims are suspended; the next claimant is admitted |
+| `mesh.claim.admission` | a scope another session holds | no wait | refused at once naming the claims met |
+| `mesh.review.answer` | a reviewer's answer | no wait | the request returns; open reads open, never agreed |
+| `mesh.handover.consume` | another session to take a handover | no wait | publishing returns; unconsumed reads published |
+| `mesh.cli.request` | the server's answer to a mesh command | `commands::mesh::REQUEST_TIMEOUT` (5 s) | report the server and route |
+| `mesh.verify.round` | a live round through the server | `commands::mesh::VERIFY_TIMEOUT` (60 s) | report the server |
+| `integration.lease` | the integration lease another executor holds | no wait | refused at once naming the holder (I3991) |
+| `integration.claim.request` | the server's answer to the integration claim | `integration::exclusive::TIMEOUT` (10 s) | the executor stops naming the server |
+| `offload.queue` | an offload host's derive lock | `queue.wait_max_seconds` (14400 s) | exit 75 naming the host, the lock's holders and the waiters ahead |
+| `offload.host.connect` | an offload host's ssh connection | ssh `ConnectTimeout` (8 s) | exit 12 naming the host |
+| `worktree.lock` | the worktree lock another session holds | `worktree::lock::WAIT` (20 s) | refused naming the lock and its holder |
+| `monitor.until` | a signal another session produces (`--until`, `--count`) | `monitor --timeout` (4 h) | exit 10 naming the signal waited for |
+
 ## Security model
 
 What the mesh defends against, and how:

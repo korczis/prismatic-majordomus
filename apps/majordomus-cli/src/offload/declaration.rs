@@ -170,8 +170,13 @@ fn default_lock_dir() -> String {
 fn default_poll() -> u64 {
     5
 }
+/// The seconds a waiter waits in a host's queue in all when the declaration says nothing:
+/// four hours, the longest a derive queue was seen to hold its waiters (I3993 registers it as
+/// the `offload.queue` peer wait).
+pub const DEFAULT_WAIT_MAX_SECONDS: u64 = 14_400;
+
 fn default_wait_max() -> u64 {
-    14_400
+    DEFAULT_WAIT_MAX_SECONDS
 }
 fn default_checkout() -> String {
     "dev/prismatic-majordomus".into()

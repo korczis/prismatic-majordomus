@@ -31,8 +31,8 @@ use crate::error::{Error, Result};
 
 /// One bounded request to the running server. A verification runs a round with every
 /// dialed peer, each bounded by the link timeout, so it gets longer.
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
-const VERIFY_TIMEOUT: Duration = Duration::from_secs(60);
+pub(crate) const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+pub(crate) const VERIFY_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// The exit code of an answered refusal or failed verdict.
 const EXIT_REFUSED: u8 = 10;

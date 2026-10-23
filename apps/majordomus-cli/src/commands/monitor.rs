@@ -8,7 +8,9 @@
 //! capability answered it, or, while following, one signal per line (NDJSON).
 //!
 //! Exit codes: 0 answered (or a follow ended by `--count` or `--until`); 10 refused (a bad
-//! cursor, an unknown source) or a follow that reached `--timeout` first.
+//! cursor, an unknown source) or a follow that reached its bound first: `--timeout`, or,
+//! when `--until` or `--count` waits on another session and no `--timeout` is given, the
+//! `monitor.until` peer wait's (I3993).
 
 use std::io::{IsTerminal, Write};
 use std::time::{Duration, Instant};
@@ -47,6 +49,7 @@ fn run_with(
         .or_else(|| std::env::var("MAJORDOMUS_MONITOR_FOR").ok())
         .filter(|r| !r.trim().is_empty());
     let started = Instant::now();
+    let bound = follow_bound(args.timeout, args.count, args.until.as_deref());
     let mut after = args.after.clone();
     let mut shown: u64 = 0;
     let mut warned: Option<String> = None;
@@ -137,15 +140,56 @@ fn run_with(
                 }
             }
         }
-        if args
-            .timeout
-            .is_some_and(|t| started.elapsed() >= Duration::from_secs(t))
-        {
-            eprintln!("monitor: --timeout reached before --count or --until was met");
+        if bound.is_some_and(|b| started.elapsed() >= b) {
+            for line in bound_reached(&args, started.elapsed()) {
+                eprintln!("monitor: {line}");
+            }
             return Ok(EXIT_REFUSED);
         }
         std::thread::sleep(Duration::from_secs(args.interval.max(1)));
     }
+}
+
+/// How long a follow waits: `--timeout` when given; otherwise, when it waits for something
+/// another session produces (`--until`, `--count`), the registered bound of the
+/// `monitor.until` peer wait ([`crate::mesh::waits::MONITOR_UNTIL_BOUND`], I3993); a plain
+/// follow is a stream its reader ends, and has none.
+fn follow_bound(timeout: Option<u64>, count: Option<u64>, until: Option<&str>) -> Option<Duration> {
+    match timeout {
+        Some(t) => Some(Duration::from_secs(t)),
+        None if count.is_some() || until.is_some() => Some(crate::mesh::waits::MONITOR_UNTIL_BOUND),
+        None => None,
+    }
+}
+
+/// What a follow says when its bound is reached: which bound, and the `monitor.until` peer
+/// wait's report naming the signal it waited for.
+fn bound_reached(args: &MonitorArgs, waited: Duration) -> Vec<String> {
+    let first = match args.timeout {
+        Some(_) => "--timeout reached before --count or --until was met".to_string(),
+        None => format!(
+            "the bound of {} s reached before --count or --until was met (no --timeout was given)",
+            crate::mesh::waits::MONITOR_UNTIL_BOUND.as_secs()
+        ),
+    };
+    let mut wanted = match (&args.until, args.count) {
+        (Some(kind), _) => format!("a `{kind}` signal"),
+        (None, Some(n)) => format!("{n} signal(s)"),
+        (None, None) => "a signal".to_string(),
+    };
+    if let Some(pattern) = &args.pattern {
+        wanted.push_str(&format!(" matching '{pattern}'"));
+    }
+    let held_by = format!(
+        "whoever was to produce {wanted} on the {} stream",
+        args.sources
+            .as_deref()
+            .unwrap_or("mesh, executor and github")
+    );
+    let report = crate::mesh::waits::find("monitor.until")
+        .map(|w| w.reached(waited, &held_by))
+        .unwrap_or_default();
+    vec![first, report]
 }
 
 /// Whether the text is painted: text, to a terminal, and `NO_COLOR` unset.
@@ -386,6 +430,68 @@ mod tests {
             crate::cli::Command::Monitor(m) => m,
             _ => panic!("expected monitor"),
         }
+    }
+
+    #[test]
+    fn a_follow_that_waits_on_another_session_is_bounded_and_a_plain_one_is_a_stream() {
+        let bound = crate::mesh::waits::MONITOR_UNTIL_BOUND;
+        assert_eq!(
+            follow_bound(Some(5), None, None),
+            Some(Duration::from_secs(5))
+        );
+        assert_eq!(
+            follow_bound(Some(5), Some(1), Some("merged")),
+            Some(Duration::from_secs(5))
+        );
+        assert_eq!(follow_bound(None, None, Some("merged")), Some(bound));
+        assert_eq!(follow_bound(None, Some(3), None), Some(bound));
+        assert_eq!(follow_bound(None, None, None), None);
+    }
+
+    #[test]
+    fn the_bound_reached_names_which_bound_and_the_signal_waited_for() {
+        let given = bound_reached(
+            &args(&[
+                "--follow",
+                "--until",
+                "merged",
+                "--match",
+                "#885",
+                "--timeout",
+                "1",
+            ]),
+            Duration::from_secs(1),
+        );
+        assert_eq!(
+            given[0],
+            "--timeout reached before --count or --until was met"
+        );
+        assert!(
+            given[1].starts_with("peer wait monitor.until reached its bound after 1 s"),
+            "{}",
+            given[1]
+        );
+        assert!(
+            given[1].contains("held by whoever was to produce a `merged` signal matching '#885' on the mesh, executor and github stream"),
+            "{}",
+            given[1]
+        );
+        let default = bound_reached(
+            &args(&["--follow", "--count", "2", "--sources", "mesh"]),
+            Duration::from_secs(14_400),
+        );
+        assert!(
+            default[0].starts_with("the bound of 14400 s reached"),
+            "{}",
+            default[0]
+        );
+        assert!(
+            default[1].contains("produce 2 signal(s) on the mesh stream"),
+            "{}",
+            default[1]
+        );
+        let neither = bound_reached(&args(&["--follow", "--timeout", "1"]), Duration::ZERO);
+        assert!(neither[1].contains("produce a signal on"), "{}", neither[1]);
     }
 
     fn page() -> Value {

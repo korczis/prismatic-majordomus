@@ -64227,9 +64227,19 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/mesh/cooperation.rs",
-            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/src/mesh/waits.rs",
+            "apps/majordomus-cli/src/mesh/mod.rs",
             "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/rendezvous.rs",
+            "apps/majordomus-cli/src/integration/exclusive.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "apps/majordomus-cli/src/offload/queue.rs",
+            "apps/majordomus-cli/src/offload/declaration.rs",
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
             "docs/MESH.md",
             ".ai/repo/project/issues/I3993.yaml"
           ],
@@ -86878,6 +86888,13 @@
         "label": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
         "route": "/cockpit/objects/test/test-cases-3991-the-integration-lease-lives-by-queue-progress-sh",
         "source": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "kind": "test",
+        "label": "test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "route": "/cockpit/objects/test/test-cases-3993-every-wait-on-a-peer-is-bounded-sh",
+        "source": "test/cases/3993_every_wait_on_a_peer_is_bounded.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -129590,6 +129607,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134701,8 +134723,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3776,
-      "edges": 8733,
+      "nodes": 3777,
+      "edges": 8734,
       "acyclic": false,
       "truncated": false
     }

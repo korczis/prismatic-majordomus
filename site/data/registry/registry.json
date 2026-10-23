@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "5820ed03f3a074dfd551127e16111b3dccd8d8af7cc277a6608a1cb7d6b8353d",
+    "fingerprint": "f05cbae4d4e928e87b0ad570ade2e23eb91e67f97416785dbf72e250571a72bc",
     "summary": {
-      "total": 3322,
+      "total": 3323,
       "builtin": 209,
-      "declarative": 3113,
+      "declarative": 3114,
       "by_kind": {
         "command": 33,
         "query": 176,
-        "resource": 3113
+        "resource": 3114
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3123
+        "implemented": 3124
       },
       "mcp_tools": 198,
-      "mcp_resources": 3168,
+      "mcp_resources": 3169,
       "http_routes": 203,
       "cli_commands": 112,
       "modules": 92,
@@ -87082,7 +87082,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 604,
+        "capabilities": 605,
         "capability_ids": []
       },
       {
@@ -87174,7 +87174,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4ad487151c01e3991d267332855124866ded3c1fb53a38a4e2b7a084b4b27b10",
+    "fingerprint": "39c0e240b186a3ef674af78a12462ed745ea98635a369a5b9816c348f8a8411a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87228,7 +87228,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 604,
+      "test": 605,
       "use-case": 49,
       "workspace": 1
     },
@@ -94394,7 +94394,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 77492
+        "bytes": 81562
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -108215,7 +108215,7 @@
         "path": ".ai/repo/project/issues/I3993.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2271
+        "bytes": 2736
       },
       {
         "uri": "majordomus://issue/I3994",
@@ -118504,6 +118504,14 @@
         "bytes": 10890
       },
       {
+        "uri": "majordomus://test/test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "kind": "test",
+        "identity": "test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "path": "test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "source_class": "case",
+        "bytes": 4212
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -121340,7 +121348,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 604
+      "objects": 605
     },
     {
       "name": "use-case",
@@ -144279,7 +144287,7 @@
             "name": "timeout",
             "long": "timeout",
             "positional": false,
-            "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d",
+            "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d; with --until or --count and no --timeout, 4h (the monitor.until peer wait)",
             "value_name": "TIMEOUT",
             "takes_value": true,
             "required": false,

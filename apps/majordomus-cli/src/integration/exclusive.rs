@@ -34,7 +34,7 @@ use serde_json::{json, Value};
 use super::drain::IntegrationLease;
 
 /// How long one request to this checkout's server may take.
-const TIMEOUT: Duration = Duration::from_secs(10);
+pub(crate) const TIMEOUT: Duration = Duration::from_secs(10);
 
 /// What an executor claims: one base branch of one forge repository.
 pub fn scope(repository: &str, base: &str) -> String {

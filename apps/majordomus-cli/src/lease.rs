@@ -618,9 +618,14 @@ pub fn elect(repo: &Repository) -> Result<Role> {
             Err(e) => return Err(Error::io(&path, e)),
         }
         if waited_since.elapsed() > timings().join_timeout {
+            // who holds the lease now, for the report at the bound (I3993)
+            let holder = held_by(&LeaseFile::read(&path));
+            let report = crate::mesh::waits::find("server.election.join")
+                .map(|w| format!(" ({})", w.reached(waited_since.elapsed(), &holder)))
+                .unwrap_or_default();
             return Err(Error::Lease {
                 reason: format!(
-                    "could not acquire or join the lease at {} within {} seconds",
+                    "could not acquire or join the lease at {} within {} seconds{report}",
                     path.display(),
                     timings().join_timeout.as_secs()
                 ),
@@ -640,6 +645,21 @@ enum Found {
     Stale(String),
     /// A lease without a URL, young enough that its owner may still be binding.
     Binding,
+}
+
+/// Who a lease file says holds the lease, in the words of a report: the server's pid and
+/// address, or what state the file is in.
+fn held_by(seen: &LeaseFile) -> String {
+    match seen {
+        LeaseFile::Absent => "nobody: the lease file was gone".into(),
+        LeaseFile::Empty => "a process that created the lease file and never wrote it".into(),
+        LeaseFile::Corrupt(reason) => format!("an unreadable lease file ({reason})"),
+        LeaseFile::Document(d) => format!(
+            "pid {} at {}",
+            d.pid,
+            d.url.as_deref().unwrap_or("no address yet (still binding)")
+        ),
+    }
 }
 
 /// What the running executable is, for the lease to record: the path it was started from
@@ -983,7 +1003,7 @@ fn take_over_with(
 /// is a holder that has been stopped (`SIGSTOP`, a debugger), and the change is then not
 /// made: a lease left in place is recovered by the next election, a lease removed or
 /// overwritten in error is not.
-const LOCK_PATIENCE: Duration = Duration::from_secs(2);
+pub(crate) const LOCK_PATIENCE: Duration = Duration::from_secs(2);
 
 /// The advisory lock every change to a lease file is made under: an exclusive `flock(2)` on
 /// `server.lock` beside it, held for as long as the value lives. The kernel releases it when
@@ -1786,6 +1806,37 @@ mod tests {
             executable: Some(exe.clone()),
             version: Some(version.into()),
         }
+    }
+
+    #[test]
+    fn the_holder_named_at_the_join_bound_is_what_the_lease_file_says() {
+        assert_eq!(
+            held_by(&LeaseFile::Absent),
+            "nobody: the lease file was gone"
+        );
+        assert_eq!(
+            held_by(&LeaseFile::Empty),
+            "a process that created the lease file and never wrote it"
+        );
+        assert_eq!(
+            held_by(&LeaseFile::Corrupt("not JSON".into())),
+            "an unreadable lease file (not JSON)"
+        );
+        let exe = ExecutableIdentity {
+            path: "/bin/majordomus".into(),
+            mtime: 0,
+            size: 0,
+        };
+        let mut doc = lease_from(&exe, "1.0.0");
+        assert_eq!(
+            held_by(&LeaseFile::Document(doc.clone())),
+            "pid 1 at http://127.0.0.1:1"
+        );
+        doc.url = None;
+        assert_eq!(
+            held_by(&LeaseFile::Document(doc)),
+            "pid 1 at no address yet (still binding)"
+        );
     }
 
     #[test]

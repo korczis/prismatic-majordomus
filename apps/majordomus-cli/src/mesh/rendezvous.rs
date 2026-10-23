@@ -34,7 +34,7 @@ use super::MeshError;
 pub const REGISTER_PATH: &str = "/api/v1/mesh/register";
 
 /// One request's bound.
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
+pub(crate) const REQUEST_TIMEOUT: Duration = Duration::from_secs(5);
 
 /// The most interval multiples backoff stretches to after consecutive failures.
 const MAX_BACKOFF_FACTOR: u32 = 8;

@@ -257,6 +257,71 @@ pub fn transport_check(config: &MeshConfig) -> DoctorCheck {
     )
 }
 
+/// The `peer_waits` check: every wait of the executable on another session or runtime
+/// ([`super::waits::PEER_WAITS`]) has a bound once `declared` is read — a declared key to its
+/// seconds, `None` when nothing declares it — and fails naming each one that has none (I3993).
+/// The declaration that can unbind one is `cooperation.session_ttl_seconds: 0`, which turns
+/// the progress rule off: a claim held by a session that does nothing then excludes
+/// everybody for as long as its runtime beats.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::peer_waits_check;
+/// use majordomus_cli::mesh::waits::PEER_WAITS;
+/// let held = peer_waits_check(PEER_WAITS, &|_| None);
+/// assert!(held.ok && held.detail.contains("each bounded"), "{}", held.detail);
+/// let off = peer_waits_check(PEER_WAITS, &|k| (k == "cooperation.session_ttl_seconds").then_some(0));
+/// assert!(!off.ok && off.detail.contains("mesh.session.progress"), "{}", off.detail);
+/// ```
+pub fn peer_waits_check(
+    waits: &[super::waits::PeerWait],
+    declared: &dyn Fn(&str) -> Option<u64>,
+) -> DoctorCheck {
+    let unbounded = super::waits::unbounded(waits, declared);
+    if unbounded.is_empty() {
+        let at_once = waits
+            .iter()
+            .filter(|w| w.bound == super::waits::Bound::NoWait)
+            .count();
+        let longest = waits
+            .iter()
+            .filter_map(|w| w.bound_with(declared).map(|b| (b, w.id)))
+            .max();
+        let longest = longest.map_or(String::new(), |(b, id)| {
+            format!(", the longest {} s ({id})", b.as_secs())
+        });
+        return DoctorCheck::pass(
+            "peer_waits",
+            format!(
+                "{} peer wait(s) of the executable, each bounded: {at_once} answered at once{longest}; docs/MESH.md lists them with their routing",
+                waits.len()
+            ),
+        );
+    }
+    let named: Vec<String> = unbounded
+        .iter()
+        .map(|w| format!("{} ({}): {}", w.id, w.waits_for, w.bound_text(declared)))
+        .collect();
+    DoctorCheck::fail(
+        "peer_waits",
+        named.join("; "),
+        "a caller of these waits on a stuck peer for as long as the peer stays stuck: nothing stops the wait, names the holder or routes around it",
+        "declare a bound for each (cooperation.session_ttl_seconds between four heartbeats and an hour), or bound the wait in the executable and register it in mesh::waits",
+    )
+}
+
+/// What `peer_waits` reads from a declaration in force: the mesh declaration's cooperation
+/// keys, and the server keys of the policy this process declared ([`crate::lease::timings`]).
+fn declared_wait(config: Option<&MeshConfig>, key: &str) -> Option<u64> {
+    let timings = crate::lease::timings();
+    match key {
+        "cooperation.session_ttl_seconds" => config.map(|c| c.cooperation.session_ttl_seconds),
+        "cooperation.expiry_seconds" => config.map(|c| c.cooperation.expiry_seconds),
+        "policy server.busy_grace_seconds" => Some(timings.busy_grace.as_secs()),
+        "policy server.join_timeout_seconds" => Some(timings.join_timeout.as_secs()),
+        _ => None,
+    }
+}
+
 /// The whole self-check.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshDoctorReport {
@@ -522,6 +587,13 @@ pub fn doctor_at(
     // host, and the one that was missing when a declared hub dropped every registration
     // at the kernel while the doctor said every check held.
     checks.push(firewall_check(&declaration));
+
+    // The peer waits: every wait of the executable on another session or runtime has a
+    // bound under the declaration in force (I3993).
+    let config = declaration.as_ref().and_then(|d| d.as_ref().ok());
+    checks.push(peer_waits_check(super::waits::PEER_WAITS, &|key| {
+        declared_wait(config, key)
+    }));
 
     // The runtime: what the process's mesh runtime decided about the declaration, when
     // anything decided. Every check above says the machine could run a mesh; this one says
@@ -819,6 +891,7 @@ mod tests {
                 "protocol",
                 "link",
                 "firewall",
+                "peer_waits",
                 "runtime"
             ]
         );
@@ -1151,5 +1224,84 @@ mod tests {
         ))));
         assert_eq!(report.checks[1].check, "transport");
         assert!(!report.ok);
+    }
+
+    #[test]
+    fn every_peer_wait_is_bounded_until_a_declaration_turns_the_progress_rule_off() {
+        let absent = doctor(None);
+        let waits = check(&absent, "peer_waits");
+        assert!(waits.ok, "{}", waits.detail);
+        assert!(
+            waits.detail.contains("the longest 14400 s"),
+            "{}",
+            waits.detail
+        );
+
+        let mut off = config(true);
+        off.cooperation.session_ttl_seconds = 0;
+        let report = doctor_at(Some(Ok(off)), None, None);
+        let waits = check(&report, "peer_waits");
+        assert!(!waits.ok && !report.ok);
+        assert!(
+            waits.detail.starts_with("mesh.session.progress (")
+                && waits.detail.ends_with("is 0, which turns it off"),
+            "{}",
+            waits.detail
+        );
+        assert!(waits
+            .remediation
+            .as_deref()
+            .unwrap_or_default()
+            .contains("cooperation.session_ttl_seconds"));
+    }
+
+    #[test]
+    fn a_wait_the_registry_marks_unbounded_fails_whatever_is_declared() {
+        let mut waits = crate::mesh::waits::PEER_WAITS.to_vec();
+        waits[0].bound = crate::mesh::waits::Bound::Unbounded;
+        let verdict = peer_waits_check(&waits, &|_| None);
+        assert!(!verdict.ok);
+        assert!(
+            verdict.detail.starts_with(waits[0].id),
+            "{}",
+            verdict.detail
+        );
+        assert!(
+            verdict.detail.ends_with(": unbounded"),
+            "{}",
+            verdict.detail
+        );
+        let none = peer_waits_check(&[], &|_| None);
+        assert!(
+            none.ok && none.detail.starts_with("0 peer wait(s)"),
+            "{}",
+            none.detail
+        );
+    }
+
+    #[test]
+    fn the_declared_keys_are_read_from_the_mesh_declaration_and_the_servers_timings() {
+        let mut c = config(true);
+        c.cooperation.session_ttl_seconds = 120;
+        c.cooperation.expiry_seconds = 45;
+        let t = crate::lease::timings();
+        assert_eq!(
+            declared_wait(Some(&c), "cooperation.session_ttl_seconds"),
+            Some(120)
+        );
+        assert_eq!(
+            declared_wait(Some(&c), "cooperation.expiry_seconds"),
+            Some(45)
+        );
+        assert_eq!(declared_wait(None, "cooperation.expiry_seconds"), None);
+        assert_eq!(
+            declared_wait(None, "policy server.busy_grace_seconds"),
+            Some(t.busy_grace.as_secs())
+        );
+        assert_eq!(
+            declared_wait(None, "policy server.join_timeout_seconds"),
+            Some(t.join_timeout.as_secs())
+        );
+        assert_eq!(declared_wait(Some(&c), "monitor --timeout"), None);
     }
 }

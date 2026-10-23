@@ -1618,7 +1618,7 @@ pub struct MonitorArgs {
     /// Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)
     #[arg(long)]
     pub until: Option<String>,
-    /// Give up following after this long, exiting 10: seconds, or a number with s, m, h or d
+    /// Give up following after this long, exiting 10: seconds, or a number with s, m, h or d; with --until or --count and no --timeout, 4h (the monitor.until peer wait)
     #[arg(long, value_parser = parse_duration)]
     pub timeout: Option<u64>,
     /// Seconds between two asks while following
