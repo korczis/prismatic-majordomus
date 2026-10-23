@@ -8173,7 +8173,10 @@ mod tests {
         assert_eq!(page.status, 200);
         let html = page.main.render();
         // the checkouts the summary counts are said, so the table is not read as all of them
-        assert!(html.contains(">5<"), "the stat is every checkout covered: {html}");
+        assert!(
+            html.contains(">5<"),
+            "the stat is every checkout covered: {html}"
+        );
         assert!(
             html.contains("3 more checkout(s) hold no board") && html.contains("(3 absent)"),
             "{html}"

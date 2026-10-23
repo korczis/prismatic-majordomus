@@ -564,11 +564,7 @@ fn peers_section(
     } else {
         BriefSectionState::Partial
     };
-    let mut summary = format!(
-        "{} attached on {} board(s)",
-        attached.len(),
-        list.covered
-    );
+    let mut summary = format!("{} attached on {} board(s)", attached.len(), list.covered);
     if !list.overlaps.is_empty() {
         summary.push_str(&format!(
             "; {} overlapping claim(s): majordomus_peers",

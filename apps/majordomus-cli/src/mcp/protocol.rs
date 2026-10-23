@@ -599,7 +599,10 @@ mod tests {
         let text = Server::new(surface.for_peer(me.clone()), "test").instructions();
         let nudge = text.find(" You have not announced anything.").expect(&text);
         let listed = text.find(" Attached here: ").expect(&text);
-        assert!(nudge < listed, "the caller's own sentence comes first: {text}");
+        assert!(
+            nudge < listed,
+            "the caller's own sentence comes first: {text}"
+        );
         let board_line = &text[listed..];
         assert!(
             board_line.chars().count() < crate::peers::SUMMARY_LINE + 200,
