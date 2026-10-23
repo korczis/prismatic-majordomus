@@ -26,7 +26,7 @@ test-shell *only:
 # The Rust crate's own suites: unit, integration, doctests.
 [group('test')]
 test-rust *args:
-    RUSTFLAGS='' cargo test --manifest-path "{{manifest}}" --no-fail-fast {{args}} # build-cache: a person's test run in the shared target; the cache joins through RUSTC_WRAPPER
+    source "{{root}}/lib/rust_bin.sh" && mj_build_cache_start "{{root}}" && RUSTFLAGS='' cargo test --manifest-path "{{manifest}}" --no-fail-fast {{args}}
 
 # Every Rust gate CI runs, in CI's order: fmt, clippy -D warnings, tests, rustdoc, benches compile, validate, generate --check, coverage threshold.
 [group('test')]
@@ -44,7 +44,7 @@ coverage:
 # The criterion microbenchmarks (benches/projections.rs, benches/shared.rs, benches/scaling.rs). `just bench scaling` runs one; `just bench-run` is the end-to-end measurement.
 [group('test')]
 bench *name:
-    RUSTFLAGS='' cargo bench --manifest-path "{{manifest}}" {{ if name == "" { "" } else { "--bench " + name } }}
+    source "{{root}}/lib/rust_bin.sh" && mj_build_cache_start "{{root}}" && RUSTFLAGS='' cargo bench --manifest-path "{{manifest}}" {{ if name == "" { "" } else { "--bench " + name } }}
 
 # bash -n and shellcheck over the shell tool, the scripts and every case (scripts/ci/shell-lint, the same gate CI runs).
 [group('test')]

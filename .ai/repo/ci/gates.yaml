@@ -102,7 +102,7 @@ gates:
     job: structure
     always: true
     runs: scripts/ci/build-cache-check
-    summary: a local script that runs cargo build, test or run, npm ci or install, or mix deps.get outside the cache's choke points declares why on the line; GitHub workflows are a declared exemption
+    summary: a local script that compiles the crate (any compiling cargo subcommand) or installs dependencies (npm, npx, yarn, pnpm, mix deps.get) outside the cache's choke points declares why on the line; GitHub workflows are a declared exemption
 
   # Development semantics belong to the capability registry and every surface consumes them
   # (ADR 0040). File reads only — share/commands.yaml against docs/generated/registry.json,

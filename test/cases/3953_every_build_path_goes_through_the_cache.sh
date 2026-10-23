@@ -16,8 +16,19 @@
 #   a cold node                 no majordomus executable: the build is what it was, one line
 #   the gate                    refuses `npm ci` and `cargo build` around the choke point, passes
 #                               a line that declares why, and this repository passes
+#   node_modules (slice B)      mj_npm_modules_ensure installs through `mesh build-cache ensure`:
+#                               a cold install runs `npm ci` once and is saved, a second is in
+#                               place, a removed one is restored without npm; a person's own,
+#                               a borrowed link, off, a GitHub runner, a cold node and an older
+#                               executable are left as they were; scripts/cockpit-assets and
+#                               scripts/site-build install through it before their own check
+#   the gate, widened           refuses every compiling cargo subcommand (with +toolchain or
+#                               leading flags), npm's install spellings, npx, yarn and pnpm
+#                               installs; passes questions, `npx --no`, the command an ensure
+#                               runs and a recipe line that starts the cache first
 #
-# Skips itself when there is no python3 to stub the store.
+# Stand-ins for node, npm and an older majordomus; no network. Skips itself when there is no
+# python3 to stub the store.
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -172,3 +183,118 @@ done
 "$G" >"$S/gate.out" 2>&1 || { echo "    this repository has an undeclared bypass: $(cat "$S/gate.out")"; exit 1; }
 grep -q 'id: build-cache-check' "$ROOT/.ai/repo/ci/gates.yaml" || { echo "    the gate is not in gates.yaml"; exit 1; }
 echo "    the gate refuses npm ci, cargo build and mix deps.get around the choke point, passes a declared reason, and the repository passes"
+
+# ---------------------------------------------------------------- 7. node_modules through ensure
+mkdir -p "$S/nbin" "$S/home" "$S/repo"
+printf '#!/bin/sh\necho v24.0.0\n' > "$S/nbin/node"
+# an npm that installs a tailwindcss and counts its installs; NPM_FAIL makes the install fail
+cat > "$S/nbin/npm" <<NPM_STUB
+#!/bin/sh
+case "\$1" in
+  --version) echo 11.0.0 ;;
+  ci) echo "\$*" >> "$S/npm.log"
+      [ -z "\${NPM_FAIL:-}" ] || exit 3
+      mkdir -p node_modules/tailwindcss && echo stub > node_modules/tailwindcss/index.js ;;
+  *) exit 1 ;;
+esac
+NPM_STUB
+# an executable from before `mesh build-cache ensure` existed
+printf '#!/bin/sh\necho "error: unrecognized subcommand '"'"'build-cache'"'"'" >&2\nexit 2\n' > "$S/nbin/old-majordomus"
+chmod +x "$S/nbin/"*
+R="$S/repo"
+( cd "$R" && git init -q . && git config user.email t@example.com && git config user.name t \
+  && "$MJ" init >/dev/null && printf '{"lockfileVersion":3}\n' > package-lock.json \
+  && printf 'node_modules/\n' > .gitignore && git add -A >/dev/null && git commit -qm fixture ) \
+  || { echo "    the fixture repository could not be made"; exit 1; }
+npm_runs() { if [ -f "$S/npm.log" ]; then wc -l < "$S/npm.log" | tr -d ' '; else echo 0; fi; }
+MARK="$R/node_modules/.majordomus-build-cache-key"
+# one build's call of the npm choke point; stderr to $S/nerr
+nensure() { # [env assignments...]
+  env -u XDG_CACHE_HOME -u XDG_CONFIG_HOME -u GITHUB_ACTIONS -u MAJORDOMUS_BUILD_CACHE \
+    HOME="$S/home" PATH="$S/nbin:$PATH" MAJORDOMUS_MIN_FREE_MB=0 MAJORDOMUS_BIN="${MJBIN:-$RB}" "$@" \
+    sh -c ". '$ROOT/lib/rust_bin.sh'; mj_npm_modules_ensure '$R' fixture" >"$S/nout" 2>"$S/nerr"
+}
+nensure || { echo "    the npm choke point failed a cold install"; cat "$S/nerr"; exit 1; }
+[ "$(npm_runs)" = 1 ] && [ -f "$R/node_modules/tailwindcss/index.js" ] && [ -f "$MARK" ] \
+  || { echo "    a cold install did not run npm ci once through ensure: $(npm_runs) $(cat "$S/nerr")"; exit 1; }
+grep -qx 'ci --no-audit --no-fund' "$S/npm.log" || { echo "    npm was not asked for npm ci --no-audit --no-fund: $(cat "$S/npm.log")"; exit 1; }
+[ ! -s "$S/nout" ] || { echo "    the ensure wrote to the caller's stdout: $(cat "$S/nout")"; exit 1; }
+[ -f "$S/home/.cache/majordomus/build-cache/$(cat "$MARK").tar.gz" ] || { echo "    the install was not saved to the local level"; exit 1; }
+echo "    a cold node_modules is installed by npm ci through ensure, once, and saved to the local level"
+nensure && [ "$(npm_runs)" = 1 ] || { echo "    an install already in place ran npm again"; exit 1; }
+rm -rf "$R/node_modules"
+nensure && [ "$(npm_runs)" = 1 ] && [ -f "$R/node_modules/tailwindcss/index.js" ] && [ -f "$MARK" ] \
+  || { echo "    a removed node_modules was not restored without npm: $(npm_runs) $(cat "$S/nerr")"; exit 1; }
+echo "    an install in place runs nothing, and a removed one is restored without npm"
+
+# a node_modules of a person's own, a borrowed link, off and a GitHub runner are left as they were
+rm -rf "$R/node_modules"; mkdir -p "$R/node_modules/own"
+nensure && [ "$(npm_runs)" = 1 ] && [ -d "$R/node_modules/own" ] && [ ! -e "$MARK" ] && [ ! -s "$S/nerr" ] \
+  || { echo "    a person's own node_modules was touched or announced"; exit 1; }
+mv "$R/node_modules" "$S/borrowed"; ln -s "$S/borrowed" "$R/node_modules"
+nensure && [ "$(npm_runs)" = 1 ] && [ -L "$R/node_modules" ] && [ ! -e "$S/borrowed/.majordomus-build-cache-key" ] \
+  || { echo "    a borrowed node_modules link was replaced or written through"; exit 1; }
+rm -f "$R/node_modules"
+for e in MAJORDOMUS_BUILD_CACHE=off GITHUB_ACTIONS=true; do
+  nensure "$e" && [ "$(npm_runs)" = 1 ] && [ ! -e "$R/node_modules" ] \
+    || { echo "    $e installed something"; exit 1; }
+done
+echo "    a person's own node_modules, a borrowed link, MAJORDOMUS_BUILD_CACHE=off and a GitHub runner are left as they were"
+
+# a cold node, an older executable and a failed install: the caller's own check decides
+MJBIN="$S/no-such-majordomus" nensure && [ "$(npm_runs)" = 1 ] && [ ! -e "$R/node_modules" ] \
+  && grep -q 'no majordomus executable yet' "$S/nerr" \
+  || { echo "    a cold node did not build as before: $(cat "$S/nerr")"; exit 1; }
+MJBIN="$S/nbin/old-majordomus" nensure && [ "$(npm_runs)" = 1 ] && [ ! -e "$R/node_modules" ] \
+  && grep -q 'ensure npm-modules exited 2' "$S/nerr" \
+  || { echo "    an older executable did not leave the build as before: $(cat "$S/nerr")"; exit 1; }
+rm -rf "$S/home/.cache/majordomus/build-cache"   # a miss everywhere, so the install runs
+nensure NPM_FAIL=1 && [ "$(npm_runs)" = 2 ] && [ ! -e "$MARK" ] && grep -q 'ensure npm-modules exited 3' "$S/nerr" \
+  || { echo "    a failed install was not said, or was marked: $(cat "$S/nerr")"; exit 1; }
+rm -rf "$R/node_modules"
+echo "    a cold node, an older executable and a failed npm ci return to the caller's own check, with one line"
+
+# the consumers: scripts/cockpit-assets installs through it and then judges what is there;
+# scripts/site-build calls it before its own check (its earlier steps need the whole tree)
+mkdir -p "$R/scripts" && cp "$ROOT/scripts/cockpit-assets" "$R/scripts/" && cp -R "$ROOT/lib" "$R/lib"
+CA() { env -u XDG_CACHE_HOME -u XDG_CONFIG_HOME -u GITHUB_ACTIONS -u MAJORDOMUS_BUILD_CACHE \
+  HOME="$S/home" PATH="$S/nbin:$PATH" MAJORDOMUS_MIN_FREE_MB=0 MAJORDOMUS_BIN="${MJBIN:-$RB}" \
+  "$R/scripts/cockpit-assets" --check >"$S/ca.out" 2>&1; }
+rc=0; MJBIN="$S/no-such-majordomus" CA || rc=$?
+[ "$rc" = 12 ] && grep -q 'cockpit-assets: node_modules absent; run: npm ci' "$S/ca.out" && [ ! -e "$R/node_modules" ] \
+  || { echo "    cockpit-assets on a cold node did not refuse as before (exit $rc): $(cat "$S/ca.out")"; exit 1; }
+rc=0; CA || rc=$?
+[ -f "$R/node_modules/tailwindcss/index.js" ] && [ -f "$MARK" ] && [ "$(npm_runs)" = 3 ] \
+  && ! grep -q 'node_modules absent' "$S/ca.out" && grep -q 'tailwindcss/theme.css absent' "$S/ca.out" \
+  || { echo "    cockpit-assets did not install through the cache (exit $rc, npm $(npm_runs)): $(cat "$S/ca.out")"; exit 1; }
+rm -rf "$R/node_modules"
+SB="$ROOT/scripts/site-build"
+ens="$(grep -n 'mj_npm_modules_ensure "\$ROOT" site-build' "$SB" | head -n 1 | cut -d: -f1)"
+chk="$(grep -n 'site-build: node_modules absent; run: npm ci' "$SB" | head -n 1 | cut -d: -f1)"
+[ -n "$ens" ] && [ -n "$chk" ] && [ "$ens" -lt "$chk" ] \
+  || { echo "    scripts/site-build does not install through mj_npm_modules_ensure before its check"; exit 1; }
+echo "    cockpit-assets installs node_modules through the cache (and refuses as before on a cold node); site-build calls it before its check"
+
+# ---------------------------------------------------------------- 8. the gate, widened
+# Each fixture is one quoted argument, so that no gate reading this case takes it for a command.
+judge() { # <expected exit> <fixture line>
+  printf '#!/bin/sh\n%s\n' "$2" > "$S/fx/widened.sh"
+  rc=0; "$G" "$S/fx/widened.sh" >"$S/gate.out" 2>&1 || rc=$?
+  [ "$rc" = "$1" ] || { echo "    the gate answered $rc, not $1, to: $2: $(cat "$S/gate.out")"; exit 1; }
+}
+n=0
+for l in 'cargo +nightly build --locked' 'cargo --locked check' 'cargo clippy --all-targets' \
+  "RUSTFLAGS='' cargo bench --no-run" 'cd app && cargo llvm-cov --json' 'cargo doc --no-deps' \
+  'cargo nextest run' 'npm --prefix site ci' 'npm i' 'npm install-clean' \
+  'x=1; npx --yes tailwindcss -i in.css' 'pnpm install --frozen-lockfile' 'yarn install' \
+  'mj_build_cache_start "$R" && npm ci' 'cargo() { command cargo "$@"; }; cargo build'; do
+  judge 10 "$l"; n=$((n + 1))
+done
+for l in 'cargo llvm-cov --version >/dev/null 2>&1 || exit 12' 'npx --no tailwindcss -i in.css' \
+  "mj_build_cache_start \"\$R\" && RUSTFLAGS='' cargo"' build --locked' \
+  '"$RB" mesh build-cache ensure npm-modules --dir . -- npm ci --no-audit --no-fund' \
+  "BUILDERS='(cargo|npm|pnpm|yarn|docker)([[:space:]]|\$)'" \
+  'echo "run npx playwright install, then cargo bench"' 'cargo metadata --format-version 1 --no-deps'; do
+  judge 0 "$l"
+done
+echo "    the gate refuses $n more spellings of a build or an install, and passes questions, npx --no, an ensure's command and a recipe that starts the cache first"

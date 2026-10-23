@@ -46,6 +46,11 @@ share/cockpit/socket.js share/ui/socket.js"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1
 
+# the install goes through the mesh build cache (lib/rust_bin.sh, I3953): restored when the
+# lockfile's key is held, else `npm ci` and saved; a node_modules of a person's own is theirs
+# shellcheck source=../lib/rust_bin.sh
+. "$ROOT/lib/rust_bin.sh"
+mj_npm_modules_ensure "$ROOT" cockpit-assets
 [ -d "$ROOT/node_modules/tailwindcss" ] || {
   echo "cockpit-assets: node_modules absent; run: npm ci" >&2
   exit 12

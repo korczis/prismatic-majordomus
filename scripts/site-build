@@ -220,6 +220,11 @@ mkdir -p "$SITE/static/images" "$SITE/static/js"
 # card is a raster the generator does not write, copied from the same canonical directory
 cp "$ROOT/share/design/brand/social-card.png" "$SITE/static/images/social-card.png"
 if [ "$NOCSS" = 0 ]; then
+  # the install goes through the mesh build cache (lib/rust_bin.sh, I3953): restored when the
+  # lockfile's key is held, else `npm ci` and saved; a node_modules of a person's own is theirs
+  # shellcheck source=../lib/rust_bin.sh
+  . "$ROOT/lib/rust_bin.sh"
+  mj_npm_modules_ensure "$ROOT" site-build
   [ -d "$ROOT/node_modules/tailwindcss" ] || { echo "site-build: node_modules absent; run: npm ci" >&2; exit 12; }
   cp "$ROOT/node_modules/alpinejs/dist/cdn.min.js" "$SITE/static/js/alpine.min.js"
   cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"

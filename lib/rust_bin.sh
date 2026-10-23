@@ -1248,6 +1248,52 @@ mj_build_cache_start() {
   return 0
 }
 
+# mj_npm_modules_ensure <tree-root> <who>
+#
+# The tree's node_modules, installed through the mesh build cache (I3953 slice B, ADR 0157):
+# `majordomus mesh build-cache ensure npm-modules --dir . -- npm ci --no-audit --no-fund`
+# restores the install the lockfile's key names from this machine's local level or the node's
+# store, or runs `npm ci` and saves what it left. A node_modules the cache wrote carries its
+# key (.majordomus-build-cache-key) and is brought to the lockfile's; a lockfile already in
+# place costs two `--version` questions and nothing else.
+#
+# Left exactly as it was, and asked nothing:
+#   - a node_modules the cache did not write (no key inside it): a person's own `npm ci`, the
+#     GitHub runner's behind actions/cache, or a link a case or a clone borrowed from another
+#     checkout, which a restore would replace through the link;
+#   - a GitHub runner (GITHUB_ACTIONS=true), which cannot reach the store: a declared exemption;
+#   - MAJORDOMUS_BUILD_CACHE=off; no package-lock.json; no npm;
+#   - a cold node with no majordomus executable yet, and an older one without the command: one
+#     line says so and the caller's own check (`node_modules absent; run: npm ci`) decides, as
+#     it always did.
+# The ensure's own report goes to stderr, so a caller's stdout stays its own. This never fails
+# its caller: it returns 0, and whether the install is there is the caller's to judge.
+mj_npm_modules_ensure() {
+  mj_ne_root="$1"; mj_ne_who="${2:-build}"
+  [ "${MAJORDOMUS_BUILD_CACHE:-}" = off ] && return 0
+  [ "${GITHUB_ACTIONS:-}" = true ] && return 0
+  [ -f "$mj_ne_root/package-lock.json" ] || return 0
+  [ -L "$mj_ne_root/node_modules" ] && return 0
+  if [ -d "$mj_ne_root/node_modules" ] \
+     && [ ! -f "$mj_ne_root/node_modules/.majordomus-build-cache-key" ]; then
+    return 0
+  fi
+  command -v npm >/dev/null 2>&1 || return 0
+  mj_ne_bin="$(mj_rust_bin "$mj_ne_root" 2>/dev/null || true)"
+  if [ ! -x "$mj_ne_bin" ]; then
+    printf 'majordomus: build cache: %s: no majordomus executable yet, node_modules is not installed (a cold node builds as before)\n' \
+      "$mj_ne_who" >&2
+    return 0
+  fi
+  mj_ne_rc=0
+  "$mj_ne_bin" mesh build-cache ensure --repo "$mj_ne_root" npm-modules --dir . \
+    -- npm ci --no-audit --no-fund >&2 || mj_ne_rc=$?
+  [ "$mj_ne_rc" = 0 ] \
+    || printf 'majordomus: build cache: %s: mesh build-cache ensure npm-modules exited %s\n' \
+      "$mj_ne_who" "$mj_ne_rc" >&2
+  return 0
+}
+
 # mj_cargo_bounded <tree-root> <cargo arguments...>
 #
 # Run cargo, and never wait in silence behind another build's lock

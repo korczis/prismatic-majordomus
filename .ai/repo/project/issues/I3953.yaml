@@ -13,7 +13,13 @@ scope:
   - "lib/rust_bin.sh"
   - "scripts/derive"
   - "scripts/site-build"
+  - "scripts/cockpit-assets"
+  - "scripts/rust-coverage"
+  - ".just/build.just"
+  - ".just/test.just"
   - "scripts/ci/build-cache-check"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
   - "apps/majordomus-cli/src/environment/"
   - ".ai/repo/rules/project/"
   - ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml"
@@ -40,4 +46,4 @@ serves:
   - "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
   - "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-23

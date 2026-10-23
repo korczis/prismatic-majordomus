@@ -189,8 +189,11 @@ if [ -z "$FROM" ]; then
   # bounded by the wall clock: a bound that is generous uninstrumented expires here, and the
   # run then reports a coverage failure for what is really a stopwatch. The tests read this
   # and stretch their own bounds rather than every bound being written for the slowest case.
+  # Not through the cache (scripts/ci/build-cache-check): an instrumented build in
+  # cargo-llvm-cov's own target directory, whose objects no other build reuses, and a cached
+  # object must never stand in for one this measurement compiled.
   ( cd "$CRATE" && RUSTFLAGS='' MAJORDOMUS_TEST_PATIENCE="${MAJORDOMUS_TEST_PATIENCE:-4}" \
-      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) > "$COV_OUT" || cov_status=$?
+      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) > "$COV_OUT" || cov_status=$? # build-cache: instrumented
   if [ "$cov_status" != 0 ]; then
     # Two things the harness leaves on stdout name a failure, and both are printed, capped
     # together at 400 lines (counted in awk rather than by `| head`, which under pipefail would

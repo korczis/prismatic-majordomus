@@ -67439,7 +67439,13 @@
             "lib/rust_bin.sh",
             "scripts/derive",
             "scripts/site-build",
+            "scripts/cockpit-assets",
+            "scripts/rust-coverage",
+            ".just/build.just",
+            ".just/test.just",
             "scripts/ci/build-cache-check",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/automation/inventory.jsonl",
             "apps/majordomus-cli/src/environment/",
             ".ai/repo/rules/project/",
             ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
@@ -67451,7 +67457,7 @@
             "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
           ],
           "slug": "every-build-path-goes-through-the-cache",
-          "updated_at": "2026-10-22",
+          "updated_at": "2026-10-23",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 3953_every_build_path_goes_through_the_cache"

@@ -2,18 +2,26 @@
 # build-cache-check — a local script may not build around the mesh build cache without saying why
 # (project.every-build-path-goes-through-the-cache, ADR 0157, I3953).
 #
-# The choke points are lib/rust_bin.sh (mj_cargo_bounded, which starts sccache with the store
-# as its second level) and `majordomus mesh build-cache ensure` (npm, mix). A script that runs
-# `cargo build|test|run`, `npm ci|install` or `mix deps.get` itself reuses nothing the mesh
-# built and adds nothing to it. This gate reads every tracked script and recipe and refuses such
-# a line unless it declares why, on the line or on the comment line before it:
+# The choke points are lib/rust_bin.sh's: mj_cargo_bounded and mj_build_cache_start, which start
+# sccache with the store as its second level, and mj_npm_modules_ensure, which installs
+# node_modules through `majordomus mesh build-cache ensure`. A script that compiles the crate
+# itself (`cargo build|test|run|bench|check|clippy|doc|rustc|llvm-cov|nextest`, with a
+# `+toolchain` or leading flags) or installs dependencies itself (`npm ci|install|i|it|add`,
+# `npx` that may install, `yarn install|add`, `pnpm install|i|add`, `mix deps.get`) reuses
+# nothing the mesh built and adds nothing to it. This gate reads every tracked script and recipe
+# and refuses such a line unless it declares why, on the line or on the comment line before it:
 #
 #     npm ci   # build-cache: <why this build cannot use the cache>
 #
+# Going through the cache, and so not a finding:
+#   - a bare `cargo` in a file that defines `cargo()` as mj_cargo_bounded (that function is
+#     the choke point);
+#   - a cargo command on a line that runs mj_build_cache_start before it (a `just` recipe,
+#     whose every line is a shell of its own);
+#   - the command a `mesh build-cache ensure` runs, after its `--`.
 # Not read: GitHub workflows (their runners cannot reach the store: a declared exemption),
-# prose, comments, and a bare `cargo` in a file that defines `cargo()` as mj_cargo_bounded
-# (that function is the choke point). Command position only: the words in an echoed message
-# are not commands.
+# prose, comments, `--version` and `--help` questions, and `npx --no` (which never installs).
+# Command position only: the words in an echoed message are not commands.
 #
 #   scripts/ci/build-cache-check [paths...]   default: every tracked script and recipe
 #
@@ -26,7 +34,16 @@ cd "$ROOT"
 
 # command position: line start, or after ; & | { ( $( then do else, past VAR=value prefixes
 CMD='(^|[;&|{]|\$\(|[[:space:]](then|do|else))[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=('"'"'[^'"'"']*'"'"'|"[^"]*"|[^[:space:]]*)[[:space:]]+)*((command|env)[[:space:]]+)?'
-BYPASS="${CMD}(cargo[[:space:]]+(build|test|run)|npm[[:space:]]+(ci|install)|mix[[:space:]]+deps\\.get)([[:space:]]|\$)"
+# a compilation of the crate: cargo [+toolchain] [flags] <subcommand>
+CARGO="${CMD}cargo([[:space:]]+\\+[^[:space:]]+)?([[:space:]]+--?[A-Za-z][-A-Za-z]*(=[^[:space:]]*)?)*[[:space:]]+(build|test|run|bench|check|clippy|doc|rustc|llvm-cov|nextest)([[:space:]]|\$)"
+# an install of dependencies: npm [options] <install>, npx (installs what is missing), yarn
+# install|add, pnpm install|i|add, mix deps.get
+NPM_OPT='([[:space:]]+(--prefix|-C|--workspace|-w)[[:space:]]+[^[:space:]]+|[[:space:]]+-[^[:space:]]+)*'
+END='([[:space:]]|[;&|)]|$)'
+DEPS="${CMD}(npm${NPM_OPT}[[:space:]]+(ci|install|i|it|install-clean|install-test|add)${END}|npx[[:space:]]|yarn[[:space:]]+(install|add)${END}|pnpm[[:space:]]+(install|i|add)${END}|mix[[:space:]]+deps\\.get${END})"
+BYPASS="${CARGO}|${DEPS}"
+# questions that build nothing, removed from a line before it is judged
+QUESTION='(cargo|npm|npx|yarn|pnpm)([[:space:]]+[^[:space:];&|]+)*[[:space:]]+(--version|-V|--help)([[:space:]]|$)|npx([[:space:]]+-[^[:space:]]+)*[[:space:]]+--no(-install)?([[:space:]]|$)'
 
 candidates() {
   if [ $# -gt 0 ]; then printf '%s\n' "$@"; return; fi
@@ -49,8 +66,15 @@ while IFS= read -r f; do
     first="${line#"${line%%[![:space:]]*}"}"
     case "$first" in '#'*) continue ;; esac
     if [ "$n" -gt 1 ] && sed -n "$((n - 1))p" "$f" | grep -qE '^[[:space:]]*#[[:space:]]*build-cache:[[:space:]]*[^[:space:]]'; then continue; fi
-    if [ "$chokes" = 1 ] && printf '%s\n' "$line" | grep -qE "${CMD}cargo[[:space:]]" \
-       && ! printf '%s\n' "$line" | grep -qE 'npm|mix'; then continue; fi
+    # what the line asks rather than builds is not judged; the rest of it is
+    judged="$(printf '%s\n' "$line" | sed -E "s/${QUESTION}/: /g")"
+    # the command a `mesh build-cache ensure` runs is the cache's own
+    case "$judged" in *"build-cache ensure"*) judged="${judged%%build-cache ensure*}" ;; esac
+    printf '%s\n' "$judged" | grep -qE "$BYPASS" || continue
+    if ! printf '%s\n' "$judged" | grep -qE "$DEPS"; then
+      [ "$chokes" = 1 ] && continue
+      case "$judged" in *mj_build_cache_start*cargo*) continue ;; esac
+    fi
     printf 'BYPASS %s:%s: %s\n' "$f" "$n" "$first"
     found=$((found + 1))
   done < <(grep -nE "$BYPASS" "$f" 2>/dev/null || true)
