@@ -111,6 +111,12 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 128
+        },
+        "session_ttl_seconds": {
+          "description": "Seconds a session holding an exclusive claim may make no progress (an MCP request other than ping, an announcement, a claim or a mesh beat) before its exclusive claims are suspended: still held, refusing nobody until it beats again; the session is not closed (I3990). Default 600; 0 turns the rule off; otherwise at least four heartbeats, at most 3600. An executable older than the key refuses a declaration that names it.",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600
         }
       }
     }

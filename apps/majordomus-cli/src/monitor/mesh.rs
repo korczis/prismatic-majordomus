@@ -224,15 +224,18 @@ impl Memory {
                 s.paths = scope;
                 s
             }
-            EventBody::ClaimReleased { claim } => {
+            EventBody::ClaimReleased { claim, reason } => {
                 let (st, session, _) = self.claims.remove(&claim)?;
                 let name = self.name_of(&st, &session);
+                // a release its runtime decided says why: a suspended claim another session
+                // took the scope of while its holder was silent (I3990)
+                let why = reason.map(|r| format!(": {r}")).unwrap_or_default();
                 let mut s = MonitorSignal::new(
                     event.at,
                     MonitorSource::Mesh,
                     "released",
                     MonitorSeverity::Info,
-                    &format!("{name} released claim {claim}"),
+                    &format!("{name} released claim {claim}{why}"),
                 );
                 s.session = Some(session);
                 s.actor = Some(name);
@@ -375,6 +378,10 @@ impl Memory {
             }
             // read raw above, before the body is typed: a withdrawal never reaches this match
             EventBody::ReviewWithdrawn { .. } => return None,
+            // a session beat is heartbeat noise: a working session says nothing new by it
+            // (I3990); a suspended claim is a reading of time, shown by mesh.state and the
+            // board, not an event this stream could carry
+            EventBody::SessionBeat { .. } => return None,
         };
         signal.machine = Some(machine);
         Some(signal)

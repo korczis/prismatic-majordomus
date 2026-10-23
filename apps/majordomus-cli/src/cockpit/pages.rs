@@ -3622,6 +3622,7 @@ pub fn mesh(ctx: &Context) -> Page {
                                         crate::mesh::state::ClaimState::Released => "released".to_string(),
                                         crate::mesh::state::ClaimState::Expired(why) => format!("expired: {why}"),
                                         crate::mesh::state::ClaimState::Conflicted(w) => format!("conflicted with {w}"),
+                                        crate::mesh::state::ClaimState::Suspended(why) => format!("suspended: {why}"),
                                     };
                                     format!("{} [{:?}, {st}]", c.scope.join(", "), c.mode).to_lowercase()
                                 })

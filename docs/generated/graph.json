@@ -997,6 +997,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.beat",
+        "kind": "capability",
+        "label": "mesh.beat",
+        "summary": "Say a session is making progress",
+        "route": "/cockpit/capabilities/mesh.beat",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.claim",
         "kind": "capability",
         "label": "mesh.claim",
@@ -7977,7 +7986,7 @@
             "file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md",
             "file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
             "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
-            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "file:docs/INTEGRATION.md",
             "file:docs/MESH.md",
             "file:docs/RELEASE.md",
@@ -11984,7 +11993,7 @@
           "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
           "implementation": "apps/majordomus-cli/src/mesh/state.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -12015,7 +12024,7 @@
           "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
           "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -12138,7 +12147,7 @@
           "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
           "implementation": "apps/majordomus-cli/src/mesh/repository.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -36185,7 +36194,7 @@
             "apps/majordomus-cli/src/mesh/cooperation.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs",
             "docs/MESH.md",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
           ],
           "slug": "a-hello-names-its-recipient",
           "started_at": "2026-10-17T12:01:16Z",
@@ -64026,6 +64035,75 @@
         }
       },
       {
+        "id": "majordomus://issue/I3990",
+        "kind": "issue",
+        "label": "I3990",
+        "summary": "An exclusive mesh claim lives by its holder's progress: a session stuck on a dialog, hung or crashed stops refusing others while its server beats on",
+        "route": "/cockpit/objects/issue/i3990",
+        "source": ".ai/repo/project/issues/I3990.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "evidence_required": [
+            "a_claim_lapses_when_its_session_stops_progressing"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Adding session_ttl_seconds to .ai/repo/mesh/majordomus.yaml: an older executable refuses a key it does not know",
+            "A new EVENT_VERSION: an older runtime stores and relays session_beat opaque and keeps the stream rule",
+            "Closing a silent session: an idle session holding nothing is healthy",
+            "Take-over or fencing of a suspended claim's resumed holder: waits for the epoch of I3174",
+            "The integration lease: I3991",
+            "A monitor signal for a suspension: it is a reading of time, not a journal event; mesh.state and the board show it"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/monitor/mesh.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_sync_bound.rs",
+            "apps/majordomus-cli/tests/mesh_trust_reload.rs",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+            "scripts/ci/mesh-check",
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+            "docs/MESH.md",
+            "docs/claims/mesh-liveness-expiry.md",
+            "docs/CLAIMS.yaml",
+            "site/content/guarantees/mesh-liveness-expiry.md",
+            ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            ".ai/repo/project/issues/I2132.yaml",
+            ".ai/repo/project/issues/I2703.yaml"
+          ],
+          "slug": "a-claim-lives-by-its-holders-progress",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh:: peers:: mcp::protocol monitor::mesh",
+            "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing 3051_an_unlisted_event_field_fails_the_mesh_check",
+            "bash scripts/ci/mesh-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -76276,12 +76354,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "rule",
-        "label": "project.mesh-cooperation-is-authenticated@1",
+        "label": "project.mesh-cooperation-is-authenticated@2",
         "summary": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
-        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
-        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-2",
+        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -77168,7 +77246,7 @@
             "project.integration-follows-the-current-master@3",
             "project.an-expedited-landing-is-the-owners-word@1",
             "project.work-is-claimed-before-it-is-built@1",
-            "project.mesh-cooperation-is-authenticated@1"
+            "project.mesh-cooperation-is-authenticated@2"
           ],
           "tags": [
             "process",
@@ -86587,6 +86665,13 @@
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+        "kind": "test",
+        "label": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+        "route": "/cockpit/objects/test/test-cases-3990-a-claim-lapses-when-its-session-stops-progressing-sh",
+        "source": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -92562,6 +92647,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.beat",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.claim",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -96183,7 +96283,7 @@
       },
       {
         "source": "majordomus://adr/adr-0067",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -97863,7 +97963,7 @@
       },
       {
         "source": "majordomus://adr/adr-0126",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -99128,7 +99228,7 @@
       },
       {
         "source": "majordomus://adr/adr-0167",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "put_in_force"
       },
       {
@@ -104608,7 +104708,7 @@
       },
       {
         "source": "majordomus://claim/mesh-claims-cross-runtime",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -104648,7 +104748,7 @@
       },
       {
         "source": "majordomus://claim/mesh-cooperation-links",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -104808,7 +104908,7 @@
       },
       {
         "source": "majordomus://claim/mesh-repository-isolation",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "defined_in"
       },
       {
@@ -123072,6 +123172,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3990",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3990",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -125932,12 +126042,12 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
         "kind": "depends_on"
       },
@@ -126388,7 +126498,7 @@
       },
       {
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
         "kind": "depends_on"
       },
       {
@@ -129183,6 +129293,11 @@
       },
       {
         "source": "majordomus://test/test/cases/391_skills_are_proven_capabilities.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -133768,6 +133883,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.beat",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.claim",
         "kind": "composes"
       },
@@ -134293,8 +134413,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3767,
-      "edges": 8710,
+      "nodes": 3770,
+      "edges": 8717,
       "acyclic": false,
       "truncated": false
     }

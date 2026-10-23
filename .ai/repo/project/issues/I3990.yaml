@@ -1,0 +1,71 @@
+id: I3990
+milestone: mcp-transports-are-reliable
+title: "An exclusive mesh claim lives by its holder's progress: a session stuck on a dialog, hung or crashed stops refusing others while its server beats on"
+slug: a-claim-lives-by-its-holders-progress
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Add a second layer of mesh liveness under the stream beat: a session that does real work (an MCP request other than ping and notifications/*, an announcement, a claim, or an explicit mesh.beat with the phase a long-running process is in) has a session_beat written for it carrying cooperation.session_ttl_seconds (default 600); every runtime ages the newest beat on its own clock and reads a held exclusive claim of a session silent past its ttl (plus the expiry on any runtime but the holder's) as suspended, refusing nobody, until the session beats again. Sessions are never closed for silence, advisory claims are untouched, and nothing is taken over or fenced (that waits for I3174's epoch). A session that never beat keeps the stream rule."
+why: "The owner ordered on 2026-10-22 that no work may stall because a peer waits on a permission dialog, crashed or hung. That day the executor of seat 5d held the integration lease, an exclusive mesh claim, for hours and never answered; the claim stayed live because a claim lived while its runtime beat, and the runtime beat on while the worker behind it waited on nobody. The stdio bridge pings every 20 s whatever its client is doing, so nothing a stalled client sends could tell the mesh it had stopped. The design — suspend claims, never close sessions; a typed beat with a phase for long-running processes; one rule for every transport; advisory-first — is the approved mesh review fc/p7 of 2026-10-23."
+current_state: "mesh::state::fold expires a claim only when it is released, its session closes, or its stream stops beating (ADR 0067 decisions 7 and 8, rule project.mesh-cooperation-is-authenticated version 1). A session's last MCP message, ping included, refreshes its place on the board and nothing else."
+desired_state: "An exclusive claim of a session whose worker stops making progress reads suspended within cooperation.session_ttl_seconds on its holder's runtime and within that ttl plus the expiry everywhere else, while its runtime keeps beating; the scope is admitted to the next claimant; mesh.state, mesh.peers (with each session's progress age and phase), the Cockpit and /ui/mesh say so; a process waiting on CI keeps its claim with majordomus mesh beat --phase; a command-line claim that never beats and a claim of an older runtime are judged exactly as before."
+scope:
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/mesh/state.rs"
+  - "apps/majordomus-cli/src/mesh/config.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/mesh/page.rs"
+  - "apps/majordomus-cli/src/mesh/doctor.rs"
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/mcp/protocol.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/cli/local.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "apps/majordomus-cli/src/monitor/mesh.rs"
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "apps/majordomus-cli/tests/mesh_sync_bound.rs"
+  - "apps/majordomus-cli/tests/mesh_trust_reload.rs"
+  - ".ai/repo/ci/mesh-event-fields.yaml"
+  - "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json"
+  - "scripts/ci/mesh-check"
+  - "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
+  - "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh"
+  - "docs/MESH.md"
+  - "docs/claims/mesh-liveness-expiry.md"
+  - "docs/CLAIMS.yaml"
+  - "site/content/guarantees/mesh-liveness-expiry.md"
+  - ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md"
+  - ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md"
+  - ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
+  - ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+  - ".ai/repo/project/issues/I2132.yaml"
+  - ".ai/repo/project/issues/I2703.yaml"
+non_scope:
+  - "Adding session_ttl_seconds to .ai/repo/mesh/majordomus.yaml: an older executable refuses a key it does not know"
+  - "A new EVENT_VERSION: an older runtime stores and relays session_beat opaque and keeps the stream rule"
+  - "Closing a silent session: an idle session holding nothing is healthy"
+  - "Take-over or fencing of a suspended claim's resumed holder: waits for the epoch of I3174"
+  - "The integration lease: I3991"
+  - "A monitor signal for a suspension: it is a reading of time, not a journal event; mesh.state and the board show it"
+depends_on: []
+acceptance_criteria:
+  - "A held exclusive claim of a session whose newest session beat is older than its ttl (plus the expiry on a foreign runtime) reads suspended while its runtime beats, its advisory claim and the session stay as they were, and admission no longer refuses on it (mesh::state tests a_silent_exclusive_claim_is_suspended_while_its_runtime_beats, a_silent_exclusive_claim_refuses_nobody)"
+  - "A beat within its ttl holds the claim, a session that never beat keeps the stream rule, and the digest of one silence is the same on every read (a_beat_within_its_ttl_holds_the_claim, a_session_that_never_beat_keeps_the_stream_rule, silence_reads_the_same_digest_twice)"
+  - "A session beat with its phase round-trips between journals and is aged on the reader's clock (mesh::journal a_session_beat_round_trips_and_is_aged_on_the_readers_clock)"
+  - "A ping and the notifications a client sends unattended are not progress; a tool call is (mcp::protocol a_ping_is_not_progress)"
+  - "A stalled board session's exclusive claim is suspended without any event written, its session stays open, a peer that only pings writes nothing, real work holds the claim again, and mesh.beat records a phase and refuses a dead pid (mesh::cooperation a_stalled_board_session_s_exclusive_claim_is_suspended_and_holds_again_on_progress)"
+  - "Only a session holding a live exclusive claim is beaten for, at most once a quarter of its ttl whatever its phase, and at most 8 x ceil(3600 s / (ttl / 4)) beats a rolling hour; past that beats are withheld (never a ttl-0 beat), a warning is logged once and mesh doctor's session_beats check fails (mesh::cooperation a_phase_changing_beater_writes_at_most_one_beat_a_quarter_of_the_ttl, an_advisory_only_session_writes_no_beats, a_runtime_past_its_beat_limit_withholds_beats_and_says_so)"
+  - "A holder that resumes after another session was admitted over its suspended exclusive claim releases that claim with the reason, instead of re-arming it, and must claim again through admission (mesh::cooperation a_resumed_holder_releases_a_claim_another_session_was_admitted_over)"
+  - "Over MCP mesh.beat speaks only for the calling session; the command line and plain HTTP name the session"
+  - "Against a served runtime over plain HTTP MCP: an exclusive claim holds while tool calls continue and reads suspended when only pings follow while the runtime's own stream stays alive, its advisory claim and session untouched and no session closed; a command-line claim that never beats holds; a second exclusive claimer is admitted; a claim kept by mesh beat --phase 'waiting on CI' holds, shows its phase in mesh peers, and is suspended once the beats stop (case 3990)"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh:: peers:: mcp::protocol monitor::mesh"
+  - "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing 3051_an_unlisted_event_field_fails_the_mesh_check"
+  - "bash scripts/ci/mesh-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_claim_lapses_when_its_session_stops_progressing"
+created_at: 2026-10-23
+updated_at: 2026-10-23

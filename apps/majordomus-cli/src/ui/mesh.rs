@@ -412,8 +412,17 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
             } else {
                 said.clone()
             };
+            // how long since the worker last showed progress, and what it said it was doing,
+            // beside its name: its exclusive claims exclude by the first (I3990)
+            let mut session = info("session");
+            if let Some(ms) = s.get("progress_ms").and_then(Value::as_u64) {
+                session.push_str(&format!(" · progress {} s ago", ms / 1000));
+            }
+            if let Some(phase) = s.get("phase").and_then(Value::as_str) {
+                session.push_str(&format!(" · {phase}"));
+            }
             el("tr")
-                .child(el("td").class("mj-ui-mono").text(info("session")))
+                .child(el("td").class("mj-ui-mono").text(session))
                 .child(
                     el("td").text(
                         format!("{} {}", info("worker"), info("client"))

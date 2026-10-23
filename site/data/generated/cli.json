@@ -22727,6 +22727,12 @@
           "route": "/docs/cli/mesh/release/"
         },
         {
+          "about": "Say a session is making progress, and what it is doing, so its exclusive claims keep excluding",
+          "command": "majordomus mesh beat",
+          "name": "beat",
+          "route": "/docs/cli/mesh/beat/"
+        },
+        {
           "about": "Open, update or close a session on the mesh",
           "command": "majordomus mesh session",
           "name": "session",
@@ -24266,6 +24272,20 @@
           "value_name": "NEWEST"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Include the session beats a working session's runtime writes, hidden by default",
+          "long": "beats",
+          "name": "beats",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "BEATS"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -24859,6 +24879,175 @@
       ],
       "route": "/docs/cli/mesh/release/",
       "usage": "majordomus mesh release [OPTIONS] <CLAIM>"
+    },
+    {
+      "about": "Say a session is making progress, and what it is doing, so its exclusive claims keep excluding",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The session making progress, as it was claimed under",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What it is doing, one line: `waiting on CI run 123`",
+          "long": "phase",
+          "name": "phase",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PHASE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The running process of this machine the beat speaks for",
+          "long": "pid",
+          "name": "pid",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh beat",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "beat",
+            "--session",
+            "lander",
+            "--phase",
+            "waiting on CI"
+          ],
+          "command": "majordomus mesh beat --session lander --phase 'waiting on CI'",
+          "description": "A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.",
+          "expectation": "exits 10",
+          "id": "mesh-beat",
+          "setup": [],
+          "title": "Keep a waiting session's exclusive claims excluding"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "beat",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "beat"
+      ],
+      "route": "/docs/cli/mesh/beat/",
+      "usage": "majordomus mesh beat [OPTIONS]"
     },
     {
       "about": "Open, update or close a session on the mesh",
@@ -38156,10 +38345,10 @@
     }
   ],
   "counts": {
-    "arguments": 1654,
-    "commands": 240,
-    "examples": 243,
-    "runnable": 210
+    "arguments": 1663,
+    "commands": 241,
+    "examples": 244,
+    "runnable": 211
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.6",

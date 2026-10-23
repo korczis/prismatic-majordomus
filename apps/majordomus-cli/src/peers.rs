@@ -225,6 +225,13 @@ pub struct Peer {
     pub connected_at: String,
     /// Seconds since its last message.
     pub last_seen_seconds_ago: u64,
+    /// Seconds since it last did real work — a request other than `ping`, or an
+    /// announcement — or absent when it has done none (I3990). `last_seen_seconds_ago`
+    /// counts a keep-alive ping as a message, so a session stuck on a permission dialog
+    /// behind a bridge that pings every 20 s looks seen forever; this is the number its
+    /// mesh claims live by.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progress_seconds_ago: Option<u64>,
     /// Whether the session is still attached. A peer that announced something and then
     /// went away is kept and listed with `attached: false`: what it said it was working on
     /// outlives the connection that said it, because the work does.
@@ -341,6 +348,8 @@ struct Slot {
     transport: Transport,
     connected_at: SystemTime,
     last_seen: Instant,
+    /// When it last did real work: see [`Peer::progress_seconds_ago`].
+    last_progress: Option<Instant>,
     departed: bool,
     /// The peer's claims, by [`claim_key`]. A `BTreeMap` rather than a `Vec` because
     /// announcing under a name a peer already used must replace that claim and not append
@@ -407,6 +416,7 @@ impl PeerBoard {
                 transport,
                 connected_at: SystemTime::now(),
                 last_seen: Instant::now(),
+                last_progress: None,
                 departed: false,
                 claims: BTreeMap::new(),
             },
@@ -427,6 +437,35 @@ impl PeerBoard {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.last_seen = Instant::now();
         }
+    }
+
+    /// This peer did real work: a request that is not a keep-alive (I3990). It is what the
+    /// peer's mesh claims live by, and it is never set by a `ping` — a bridge pings every
+    /// 20 s whether or not anybody is answering the dialog in front of its client.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let p = board.attach(Transport::Http);
+    /// board.touch(&p);
+    /// assert_eq!(board.get(&p).unwrap().progress_seconds_ago, None, "seen is not progress");
+    /// assert!(board.progressed_at(&p).is_none());
+    /// board.progress(&p);
+    /// assert_eq!(board.get(&p).unwrap().progress_seconds_ago, Some(0));
+    /// assert!(board.progressed_at(&p).is_some());
+    /// ```
+    pub fn progress(&self, id: &PeerId) {
+        if let Some(s) = self.lock().get_mut(&id.seq()) {
+            let now = Instant::now();
+            s.last_seen = now;
+            s.last_progress = Some(now);
+        }
+    }
+
+    /// When this peer last did real work, on this process's clock; `None` for a peer that
+    /// has done none, or is not on the board.
+    pub fn progressed_at(&self, id: &PeerId) -> Option<Instant> {
+        self.lock().get(&id.seq()).and_then(|s| s.last_progress)
     }
 
     /// Record a peer's unnamed claim, and answer with who else is on that ground.
@@ -491,6 +530,8 @@ impl PeerBoard {
         let key = claim_key(claim);
         let s = slots.get_mut(&id.seq())?;
         s.last_seen = Instant::now();
+        // saying what one is doing is doing something: an announcement is progress (I3990)
+        s.last_progress = Some(s.last_seen);
         s.departed = false;
         let released = s
             .claims
@@ -633,6 +674,7 @@ fn peer(seq: u64, s: &Slot) -> Peer {
         transport: s.transport,
         connected_at: rfc3339(s.connected_at),
         last_seen_seconds_ago: s.last_seen.elapsed().as_secs(),
+        progress_seconds_ago: s.last_progress.map(|t| t.elapsed().as_secs()),
         attached: !s.departed,
         claims: s.claims(),
         announcement: s.latest(),

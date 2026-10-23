@@ -163,6 +163,43 @@ pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
     )
 }
 
+/// The `session_beats` check (I3990): whether this runtime wrote every session beat its
+/// working exclusive holders were owed. A runtime withholds beats only when its limit per
+/// window is reached; a withheld beat is never silent, because a session that is not beaten
+/// for has its exclusive claims suspended — scopes freed that its worker still means to hold.
+/// It fails while a beat was withheld within the last window, and passes, naming the count,
+/// once the window has moved past the last one.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::SessionBeatTally;
+/// use majordomus_cli::mesh::doctor::session_beats_check;
+/// let quiet = SessionBeatTally { written: 12, limit: 192, window_seconds: 3600, ..Default::default() };
+/// assert!(session_beats_check(&quiet).ok);
+/// let biting = SessionBeatTally { withheld: 3, withheld_recently: true, ..quiet };
+/// let check = session_beats_check(&biting);
+/// assert!(!check.ok && check.detail.contains("3 session beat(s) withheld"), "{}", check.detail);
+/// ```
+pub fn session_beats_check(tally: &super::cooperation::SessionBeatTally) -> DoctorCheck {
+    if !tally.withheld_recently {
+        return DoctorCheck::pass(
+            "session_beats",
+            format!(
+                "{} session beat(s) written, {} withheld since start, none within the last {} s (limit {} per window)",
+                tally.written, tally.withheld, tally.window_seconds, tally.limit
+            ),
+        );
+    }
+    DoctorCheck::fail(
+        "session_beats",
+        format!(
+            "{} session beat(s) withheld since start, one within the last {} s: this runtime reached its limit of {} per window",
+            tally.withheld, tally.window_seconds, tally.limit
+        ),
+        "a working session this runtime could not beat for has its exclusive claims suspended: they refuse nobody, so another session may take a scope its worker still means to hold",
+        "fewer sessions holding exclusive claims on this runtime, or a longer cooperation.session_ttl_seconds (a beat is written at most once a quarter of it); the window moves on its own within the hour",
+    )
+}
+
 /// The `transport` check: how each declared rendezvous endpoint and seed would be reached —
 /// over TLS (`https://`), or in cleartext to an address that is loopback, private or an
 /// overlay's — and every one the client refuses to dial, because it would carry the mesh in

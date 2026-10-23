@@ -559,6 +559,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.beat",
+      "path": "/evidence/capabilities/mesh-beat/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.claim",
       "path": "/evidence/capabilities/mesh-claim/"
     },
@@ -2874,6 +2879,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh beat",
+      "path": "/evidence/commands/mesh-beat/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh claim",
       "path": "/evidence/commands/mesh-claim/"
     },
@@ -5124,6 +5134,16 @@
       "kind": "capability",
       "id": "mcp.projection",
       "page": "/evidence/capabilities/mcp-projection/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.beat": {
+      "kind": "capability",
+      "id": "mesh.beat",
+      "page": "/evidence/capabilities/mesh-beat/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -9400,7 +9420,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/state.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9446,7 +9466,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/cooperation.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9630,7 +9650,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
             "apps/majordomus-cli/src/mesh/repository.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -15574,6 +15594,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh beat": {
+      "kind": "command",
+      "id": "mesh beat",
+      "page": "/evidence/commands/mesh-beat/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh claim": {
       "kind": "command",
       "id": "mesh claim",
@@ -20752,6 +20791,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_mesh_beat": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_beat",
+      "alias_of": "capability:mesh.beat",
+      "programs": [],
+      "members": [
+        "capability:mesh.beat"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_mesh_claim": {
       "kind": "mcp",
       "id": "majordomus_mesh_claim",
@@ -25335,7 +25386,17 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/mesh_cooperation.rs",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3990_a_claim_lapses_when_its_session_stops_progressing",
+          "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
           ]
         }
       ],

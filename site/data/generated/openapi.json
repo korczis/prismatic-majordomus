@@ -100,6 +100,7 @@
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
     "op-mcp-projection": "docs/api/mcp/",
+    "op-mesh-beat": "docs/api/mesh/",
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
@@ -243,6 +244,7 @@
     "schema-AudienceView": "docs/api/why/",
     "schema-Backend": "docs/api/mesh/",
     "schema-Balance": "docs/api/lifecycle/",
+    "schema-BeatInput": "docs/api/mesh/",
     "schema-BenchmarkPolicy": "docs/api/capabilities/",
     "schema-BenchmarkPrecondition": "docs/api/capabilities/",
     "schema-BeneathLink": "docs/api/integration/",
@@ -1276,8 +1278,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 202,
-    "schemas": 1013,
+    "operations": 203,
+    "schemas": 1014,
     "tags": 58
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1469,6 +1471,7 @@
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
     "mcp.projection": "mcp",
+    "mesh.beat": "mesh",
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
@@ -1616,6 +1619,7 @@
     "AudienceView": "why",
     "Backend": "mesh",
     "Balance": "lifecycle",
+    "BeatInput": "mesh",
     "BenchmarkPolicy": "capabilities",
     "BenchmarkPrecondition": "capabilities",
     "BeneathLink": "integration",
@@ -3327,6 +3331,13 @@
           "type": "integer (uint64)"
         },
         {
+          "description": "Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by.",
+          "name": "progress_seconds_ago",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
           "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
           "name": "attached",
           "refs": [],
@@ -4653,6 +4664,42 @@
       "used_by_schemas": [
         "Recovery"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.beat`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "BeatInput",
+      "properties": [
+        {
+          "description": "The session making progress; the calling MCP session's own when omitted. It must be\na session this runtime opened (a claim opens one).",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere.",
+          "name": "phase",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The process the beat speaks for; refused unless it is running on this machine.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.beat"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -7567,12 +7614,12 @@
       "variants": []
     },
     {
-      "description": "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```",
+      "description": "A claim's standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "ClaimState",
       "properties": [],
-      "type": "one of 4 variants",
+      "type": "one of 5 variants",
       "used_by": [],
       "used_by_schemas": [
         "ClaimView"
@@ -7634,6 +7681,26 @@
               "refs": [],
               "required": true,
               "type": "\"conflicted\""
+            },
+            {
+              "description": "",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174).",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"suspended\""
             },
             {
               "description": "",
@@ -20100,6 +20167,7 @@
         "health.live",
         "mcp.projection",
         "mesh.status",
+        "mesh.beat",
         "mesh.claim",
         "mesh.release",
         "mesh.cooperation",
@@ -20360,7 +20428,7 @@
           "type": "integer (uint)"
         },
         {
-          "description": "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140).",
+          "description": "The `after` of the next page: the stamp of the last event this page read — carried,\nor a session beat it left out — or the `after` that was asked when it read none. A\npage never ends inside a run of equal stamps, so resuming after it misses nothing\n(I2140).",
           "name": "lamport",
           "refs": [],
           "required": true,
@@ -32456,7 +32524,7 @@
       "variants": []
     },
     {
-      "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```",
+      "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "MeshClaimBrief",
@@ -32523,7 +32591,7 @@
       "variants": []
     },
     {
-      "description": "Claims by standing: held, conflicted, released and expired. Held and conflicted are\nlive; the other two are history, counted rather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```",
+      "description": "Claims by standing: held, conflicted, suspended, released and expired. Held and\nconflicted are live; a suspended claim is an exclusive one whose holder stopped making\nprogress (I3990), not ended and refusing nobody; the other two are history, counted\nrather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "MeshClaimCounts",
@@ -32554,6 +32622,13 @@
           "name": "expired",
           "refs": [],
           "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Exclusive, its holder silent past its progress ttl: refusing nobody until it beats.",
+          "name": "suspended",
+          "refs": [],
+          "required": false,
           "type": "integer (uint)"
         }
       ],
@@ -32964,7 +33039,7 @@
       "variants": []
     },
     {
-      "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```",
+      "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "MeshRuntimeSummary",
@@ -33248,7 +33323,7 @@
       "variants": []
     },
     {
-      "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```",
+      "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "MeshSummary",
@@ -37427,6 +37502,13 @@
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
+        },
+        {
+          "description": "Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by.",
+          "name": "progress_seconds_ago",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
         },
         {
           "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does.",
@@ -52104,6 +52186,20 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age.",
+          "name": "progress_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990).",
+          "name": "phase",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -59227,6 +59323,7 @@
       ],
       "type": "object",
       "used_by": [
+        "mesh.beat",
         "mesh.claim",
         "mesh.release",
         "mesh.handover.publish",
@@ -66233,6 +66330,70 @@
           "benchmark_reason": "transient_state",
           "body_examples": [
             {
+              "case": "unknown",
+              "json": "{\"session\":\"none\",\"phase\":\"waiting on CI\"}"
+            }
+          ],
+          "body_schema": "BeatInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/beats\" -H \"content-type: application/json\" -d '{\"session\":\"none\",\"phase\":\"waiting on CI\"}'",
+          "description": "Record that a session of this runtime is making progress, with the phase it is in (`waiting on CI run 123`) and optionally the running process it speaks for. A session that has beaten lives by its beats: its exclusive claims are suspended — they refuse nobody — once no beat arrives within `cooperation.session_ttl_seconds`, and hold again at the next. A worker's MCP requests other than `ping` beat for it; this is the way for a long-running process that sends none. A beat within a quarter of the ttl with an unchanged phase writes nothing and answers the last one. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.beat",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_beat",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/beats",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Say a session is making progress: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Say a session is making progress"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
               "case": "exclusive",
               "json": "{\"session\":\"bench\",\"scope\":[\"docs\"]}"
             }
@@ -66242,7 +66403,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/claims\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"scope\":[\"docs\"]}'",
-          "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+          "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own; and an exclusive claim of a session that beats is suspended — refusing nobody — while its holder makes no progress within its ttl. Writes this runtime's journal only.",
           "home": "mesh",
           "id": "mesh.claim",
           "kind": "command",
@@ -66504,6 +66665,13 @@
               "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time.",
               "examples": [],
               "name": "newest",
+              "required": false,
+              "type": "boolean"
+            },
+            {
+              "description": "Include the `session_beat` events, which are left out by default: a working session's\nruntime writes one every few minutes to keep its claims alive (I3990), and a reader\nof the journal wants what sessions did rather than that they are still doing it.\nThe page's `lamport` counts the beats it left out, so paging misses nothing either way.",
+              "examples": [],
+              "name": "beats",
               "required": false,
               "type": "boolean"
             }

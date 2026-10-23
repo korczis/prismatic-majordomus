@@ -90,6 +90,9 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             if a.newest {
                 pairs.push("newest=true".to_string());
             }
+            if a.beats {
+                pairs.push("beats=true".to_string());
+            }
             if !pairs.is_empty() {
                 target = format!("{target}?{}", pairs.join("&"));
             }
@@ -123,6 +126,14 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             "POST",
             "/api/v1/mesh/claims/release",
             Some(json!({ "claim": a.claim })),
+            render_written,
+            never,
+        ),
+        MeshCommand::Beat(a) => ask(
+            &a.query,
+            "POST",
+            "/api/v1/mesh/beats",
+            Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
             render_written,
             never,
         ),

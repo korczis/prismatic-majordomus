@@ -260,3 +260,78 @@ The work is five slices of at most an hour each, one pull request each, in this 
    "Rotating a node key"). This slice goes last. Tests: `mesh::cooperation`
    `a_hello_carrying_a_succession_is_admitted_by_a_peer_that_missed_the_event`, and a
    `mesh::doctor` unit test for the warning.
+
+## Amendment, 2026-10-23: an exclusive claim also lives by its holder's progress (I3990)
+
+Decision 7 made liveness a runtime's beat, and decision 8 let a claim hold while its session
+was open and its stream alive. Both were right about runtimes and silent about workers. On
+2026-10-22 the executor of seat 5d held the integration lease — an exclusive claim — for hours
+and never answered: its server beat on while the worker behind it waited on nobody, and every
+other session that needed the lease waited behind a claim no rule could end. The owner ordered
+the same day that no work may stall because a peer waits on a permission dialog, crashed or
+hung. It is ADR 0039's finding again in another place: a presentation layer — here, a server
+that answers pings for a client that does nothing — had been made load-bearing for whether
+work was moving, and the four liveness rules of that ADR ask that execution state, not the
+appearance of it, decide. The design was settled in the mesh review of 2026-10-23 (fc/p7):
+suspend claims, never close sessions; let a long-running process beat with a phase; ask the
+same of every transport; stop the refusal and nothing more.
+
+A second layer of liveness, under the first:
+
+1. **Progress is real work.** An MCP request of any method but `ping` and `notifications/*` —
+   over stdio or plain HTTP, with no special case — a board announcement, a claim, or an
+   explicit `mesh.beat` (`majordomus mesh beat --session <id> --phase <text> [--pid <n>]`) is
+   progress. The bridge pings every 20 s whatever its client is doing, so a ping never is; a
+   `/events` socket proves presence and keeps nothing alive. A phase that names a wait
+   (`waiting on CI run 123`, `holding the build lock`) is progress: a process waiting on
+   something outside itself is working, and only one that waits on nobody is stalled.
+2. **A session beat carries it across the mesh.** `session_beat {session, ttl_seconds,
+   phase?}`. While a board session (`board-<peer>`) holds a live claim and works, its runtime
+   appends one at once when it claims, then at most once a quarter of the ttl and only after
+   new work (`Cooperation::beat_sessions`, each heartbeat); `mesh.beat` appends one with its
+   phase, redacted and one line, for any session of the runtime, and a pid it names must be a
+   running process of the machine. `cooperation.session_ttl_seconds` defaults to 600, is at
+   least four heartbeats and at most 3600, and 0 turns the rule off; the key is not written
+   into this repository's declaration, because an older executable refuses a key it does not
+   know. Only a session holding a live exclusive claim is beaten for — an advisory claim
+   refuses nobody and costs no beat — and at most once a quarter of the ttl whatever the
+   phase says (a newer phase is held and shown until the next beat carries it). A runtime
+   writes at most `8 × ceil(3600 s / (ttl / 4))` beats in a rolling hour; past that it
+   withholds them, the claims it cannot beat for suspend, and it warns once in its log and
+   fails `mesh doctor`'s `session_beats` check. The first version wrote a ttl-0 beat when a
+   per-run total ran out, which turned the rule off in silence: the review of 2026-10-23
+   found it (B1).
+3. **Every runtime ages the newest beat on its own clock**, from the moment it stored it, as it
+   ages a stream's beat — the holder against the ttl, every other runtime against the ttl plus
+   the expiry, since the beat reached it up to a round late. `mesh::state::fold_with(events,
+   liveness, progress)` reads a held **exclusive** claim of a silent session as
+   `ClaimState::Suspended("its holder stopped making progress: no beat for over <ttl>s")`, the
+   age left out so the digest of one silence is stable; `fold` is `fold_with` judging every
+   session unreported.
+4. **Suspension stops the refusal, and nothing else.** A suspended claim is not live: admission
+   does not refuse on it and the fold's exclusivity skips it, so the next claimant is admitted
+   everywhere. Nothing is written to suspend it; the session is not closed (an idle session
+   holding nothing is healthy, and one holding only advisory claims is untouched); and the
+   claim holds again at its session's next beat — unless another session holds a live
+   exclusive claim over its scope by then, admitted while it was silent: then that next beat
+   is preceded by `claim_released` with the reason `suspended while its holder made no
+   progress, and another session was admitted to its scope`, and the holder claims again
+   through admission, so two sessions never both hold one scope (N1 of the review). This
+   slice is advisory-first: there is no take-over and no fencing; refusing the writes of a
+   holder that goes on without beating waits for an epoch (I3174). The integration lease is
+   left to its own issue (I3991). Over MCP a beat speaks only for the calling session; the
+   command line and plain HTTP name the session (a long-running script is not an MCP
+   session), and a caller beyond loopback is refused every write (ADR 0126). A restarted
+   reader counts the beats it reloads as stored at the restart, as it counts a relearned
+   stream: a session silent before the restart reads as progressing for at most its ttl and
+   the expiry after it.
+5. **What never beat keeps the old rule.** A session that never wrote a session beat, or whose
+   newest beat carries ttl 0 — a `mesh claim --session` from the command line that never runs
+   `mesh beat`, every session of a runtime older than this amendment — is judged by its stream
+   alone. `EVENT_VERSION` stays 1: an older runtime stores and relays `session_beat` opaque.
+
+Rule `project.mesh-cooperation-is-authenticated` moves to version 2 to say so; `docs/MESH.md`
+("Presence, heartbeats and expiry", "Claims and leases", "Failure and recovery") and the
+guarantee `mesh-liveness-expiry` describe it, and
+`test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh` proves it against a
+served runtime.

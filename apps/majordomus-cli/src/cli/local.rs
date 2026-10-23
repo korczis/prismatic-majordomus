@@ -396,6 +396,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
     },
     LocalCommand {
+        command: "mesh beat",
+        reason: LocalReason::RendersCapability("mesh.beat"),
+        note: "runs mesh.beat on this checkout's running server, whose journal carries the session's beat to every linked runtime.",
+    },
+    LocalCommand {
         command: "mesh session open",
         reason: LocalReason::RendersCapability("mesh.session.open"),
         note: "runs mesh.session.open on this checkout's running server, whose journal replicates the session.",
