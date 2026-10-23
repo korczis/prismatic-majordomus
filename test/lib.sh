@@ -390,6 +390,11 @@ fixture_repo() {
   [ -e "$dst/docs/generated/registry.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/registry.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/cli.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/cli.json" "$dst/docs/generated/"; }
   [ -e "$dst/docs/generated/artifacts.json" ] || { mkdir -p "$dst/docs/generated"; cp "$ROOT/docs/generated/artifacts.json" "$dst/docs/generated/"; }
+  # The skills the editors projection writes under .claude/skills/: the generator reads each one
+  # its artifacts manifest names for the description in its front matter (ADR 0165). They are
+  # stage A's output, not canonical inputs, so `--inputs` does not list them and a fixture built
+  # from that list alone failed with "No such file" at the first skill (I3999).
+  [ -d "$ROOT/.claude/skills" ] && [ ! -e "$dst/.claude/skills" ] && { mkdir -p "$dst/.claude"; cp -R "$ROOT/.claude/skills" "$dst/.claude/skills"; }
   # Every file the templates load. `--inputs` names the site generator's own canonical
   # inputs, which is not the same set: site/data/registry/registry.json and
   # distribution.json are written by `majordomus generate`, so the generator does not call
