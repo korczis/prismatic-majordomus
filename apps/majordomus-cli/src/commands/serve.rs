@@ -112,7 +112,22 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     // the lease is kept young while the layer loads, so that a peer waiting on it never
     // mistakes a slow start for an abandoned one
     lease.keep_alive();
-    let app = App::load(&args.repo)?;
+    let mut app = App::load(&args.repo)?;
+    // The executions this server accepts outlive it (ADR 0225): written down as they
+    // happen and folded back here, before anything can start a new one.
+    match crate::execution::ExecutionJournal::at(repo.root().join(crate::execution::journal::DIR)) {
+        Ok(journal) => {
+            let mut context = (*app.context).clone();
+            context.executions = Arc::new(crate::execution::ExecutionEngine::journaled(
+                crate::execution::Limits::default(),
+                journal,
+            ));
+            app.context = Arc::new(context);
+        }
+        Err(e) => tracing::warn!(
+            "the executions journal cannot be opened, so this server's executions will not outlive it: {e}"
+        ),
+    }
     // The address: the local default, or the one a deployment object declares. The port is
     // never typed twice — the object states it once and the process and the image both
     // read that one.

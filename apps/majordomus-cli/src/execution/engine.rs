@@ -104,10 +104,29 @@ impl Default for ExecutionEngine {
 }
 
 impl ExecutionEngine {
-    /// An engine with these limits.
+    /// An engine with these limits, its store in memory only.
     pub fn new(limits: Limits) -> Self {
+        Self::over(ExecutionStore::new(limits))
+    }
+
+    /// An engine whose executions are written to `journal` and recovered from it: a
+    /// server's (ADR 0225). Its store answers every execution the journal held before the
+    /// engine accepts a new one, so nothing a reconnecting client asks about is missing.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ExecutionEngine, ExecutionJournal, Limits};
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let engine = ExecutionEngine::journaled(Limits::default(), ExecutionJournal::at(dir.path()).unwrap());
+    /// assert!(engine.store().journal().is_some());
+    /// assert!(engine.store().is_empty(), "an empty journal recovers nothing");
+    /// ```
+    pub fn journaled(limits: Limits, journal: crate::execution::ExecutionJournal) -> Self {
+        Self::over(ExecutionStore::journaled(limits, journal))
+    }
+
+    fn over(store: ExecutionStore) -> Self {
         ExecutionEngine {
-            store: Arc::new(ExecutionStore::new(limits)),
+            store: Arc::new(store),
             inner: Mutex::new(Inner {
                 queue: VecDeque::new(),
                 running: 0,
