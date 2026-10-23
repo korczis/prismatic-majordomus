@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "0f205a316ff8c4ab4f2e675431062a5d121892a3512a743eb657afa11e445152",
+    "fingerprint": "f5fd30ebd9abb2c1d315e76b74477aade9b274054661adc528f0fd1e81190950",
     "summary": {
-      "total": 3343,
+      "total": 3355,
       "builtin": 213,
-      "declarative": 3130,
+      "declarative": 3142,
       "by_kind": {
         "command": 36,
         "query": 177,
-        "resource": 3130
+        "resource": 3142
       },
       "by_stability": {
         "behaviorally_verified": 146,
         "experimental": 57,
-        "implemented": 3140
+        "implemented": 3152
       },
       "mcp_tools": 201,
-      "mcp_resources": 3185,
+      "mcp_resources": 3197,
       "http_routes": 206,
       "cli_commands": 114,
       "modules": 93,
@@ -89492,7 +89492,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 36,
+        "capabilities": 37,
         "capability_ids": []
       },
       {
@@ -89541,7 +89541,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 907,
+        "capabilities": 917,
         "capability_ids": []
       },
       {
@@ -89657,7 +89657,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 103,
+        "capabilities": 104,
         "capability_ids": []
       },
       {
@@ -90222,7 +90222,7 @@
     ]
   },
   "index": {
-    "fingerprint": "47ec904f5949aafbd356ba0bfef55bd76ec779f2ac8a32d1c3ffdb8296a868d0",
+    "fingerprint": "a66f9cc4a840dcf1b7766fa362091a2f1bae04fd59ef437138500c0a42ef2b78",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90261,11 +90261,11 @@
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 36,
-      "issue": 907,
+      "intent": 37,
+      "issue": 917,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 103,
+      "milestone": 104,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -97553,7 +97553,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 811583
+        "bytes": 846327
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -101084,6 +101084,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 3209
+      },
+      {
+        "uri": "majordomus://intent/a-session-proceeds-through-the-mesh",
+        "kind": "intent",
+        "identity": "a-session-proceeds-through-the-mesh",
+        "title": "Every supervised session realises intents by proceeding through the mesh, unasked, resumably and watched",
+        "description": "In any Majordomus-supervised repository, /intent states what must become true, /issue takes one piece of it as one pull request, /proceed realises the intent and /watchdog keeps every session honest. Each /proceed step derives the next work from intent_realization and the plan, routes model and effort from the profiles and measured history, claims it on the mesh (locally when there is no mesh), fans independent items out to subagents or lets other nodes pull them, reports, and schedules its own next step (/loop and /orchestrate are its two halves). A stuck, silent, leaking or dead session is detected from deadlines and events rather than polling, woken, handed over and resumed by another, and reaped only by its owner or a seat after assess-before-deleting. Heavy work shares the machine through one slot instead of starving on one lock. Each verb is one canonical declaration from which the command, the MCP tool, every provider's skill, hook, mod and agent definition are generated; the edges to the existing skills (evolve, implement, repo-review, report-verification-state, assess-before-deleting, mj-*) are declared once as data, and a hand-edited projection or an unclaimed finish is refused. It builds on the unpushed /proceed stack I2972-I2976 and I3040 and ADR 0177 rather than writing a second one.",
+        "path": ".ai/repo/project/intents/a-session-proceeds-through-the-mesh.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 4890
       },
       {
         "uri": "majordomus://intent/a-session-record-says-what-it-served",
@@ -111371,6 +111382,116 @@
         "bytes": 1924
       },
       {
+        "uri": "majordomus://issue/I4000",
+        "kind": "issue",
+        "identity": "I4000",
+        "title": "A repeated executions.start with the same key answers one execution",
+        "description": "Give executions.start an optional idempotency key; ExecutionStore::create returns the existing execution id for a key it has already seen instead of creating a second execution (Mission Control B1).",
+        "path": ".ai/repo/project/issues/I4000.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1653
+      },
+      {
+        "uri": "majordomus://issue/I4001",
+        "kind": "issue",
+        "identity": "I4001",
+        "title": "The execution state machine has Authorizing, Claimed, Verifying, Refused and UnknownOutcome",
+        "description": "Add Authorizing, Claimed, Verifying, Refused and UnknownOutcome to the execution state machine with may_move_to for each edge and a versioned event schema (Mission Control B3).",
+        "path": ".ai/repo/project/issues/I4001.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1827
+      },
+      {
+        "uri": "majordomus://issue/I4002",
+        "kind": "issue",
+        "identity": "I4002",
+        "title": "Worktree.create is a typed writing capability",
+        "description": "Declare worktree.create as a capability with a repository_mutation effect over the git calls integration/drain.rs already makes, so a worker creates a canonical worktree through the registry rather than a shell (Mission Control B5).",
+        "path": ".ai/repo/project/issues/I4002.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1754
+      },
+      {
+        "uri": "majordomus://issue/I4003",
+        "kind": "issue",
+        "identity": "I4003",
+        "title": "Devtask.implement runs readiness, preflight, claim, worktree and one execution",
+        "description": "devtask.implement: issue readiness and intents.preflight, then mesh.claim, worktree.create and an agent run through executions.start; it refuses an overlap or an invalid intent with a reason and answers pending when no worker is attached (Mission Control B4).",
+        "path": ".ai/repo/project/issues/I4003.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1861
+      },
+      {
+        "uri": "majordomus://issue/I4004",
+        "kind": "issue",
+        "identity": "I4004",
+        "title": "The executor takes the issue's mesh claim in the handler and releases it when the run ends",
+        "description": "The executor takes the issue's mesh claim in the handler of an execution and releases it when the run ends, however it ends; fencing is deferred to I3174 (Mission Control B6).",
+        "path": ".ai/repo/project/issues/I4004.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1686
+      },
+      {
+        "uri": "majordomus://issue/I4005",
+        "kind": "issue",
+        "identity": "I4005",
+        "title": "Proceed.step answers one idempotent work order",
+        "description": "proceed.step derives one step from intent_realization and the claim-aware plan.next into a work order (do, fan_out, report, next_due_at); the /proceed skill is generated from its .skill() declaration. It builds on the pushed stack feature/proceed-names-the-next-admissible-work (I2972-I2976, I3040, ADR 0177) and writes no second body.",
+        "path": ".ai/repo/project/issues/I4005.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1941
+      },
+      {
+        "uri": "majordomus://issue/I4006",
+        "kind": "issue",
+        "identity": "I4006",
+        "title": "Machine.slot is a counting machine-wide slot for heavy work",
+        "description": "machine.slot: a counting slot, N and the disk floor read from rule data, taken by pre-push, coverage and builds; a full queue answers a bounded wait naming its holders.",
+        "path": ".ai/repo/project/issues/I4006.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1555
+      },
+      {
+        "uri": "majordomus://issue/I4007",
+        "kind": "issue",
+        "identity": "I4007",
+        "title": "An idle serve exits by itself after a bound",
+        "description": "An idle serve that holds no lease, has no peers and no executions exits by itself after a bound read from policy.",
+        "path": ".ai/repo/project/issues/I4007.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1326
+      },
+      {
+        "uri": "majordomus://issue/I4008",
+        "kind": "issue",
+        "identity": "I4008",
+        "title": "A push that only deletes refs runs no plan in the pre-push hook",
+        "description": "A push whose every ref is a deletion runs no plan in the pre-push hook, by the reasoning of the refs/majordomus/* exemption: no source travels.",
+        "path": ".ai/repo/project/issues/I4008.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1460
+      },
+      {
+        "uri": "majordomus://issue/I4009",
+        "kind": "issue",
+        "identity": "I4009",
+        "title": "/watchdog reads liveness and runs wake, handover, reap",
+        "description": "/watchdog: the session-side verb that reads the liveness signals of I3990-I3994 (suspended claims, phase beats, overdue) and runs wake, then handover, then reap; reap only by the owner or a seat and only after assess-before-deleting.",
+        "path": ".ai/repo/project/issues/I4009.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1843
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -112495,6 +112616,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 3169
+      },
+      {
+        "uri": "majordomus://milestone/a-session-proceeds-through-the-mesh",
+        "kind": "milestone",
+        "identity": "a-session-proceeds-through-the-mesh",
+        "title": "A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met",
+        "description": "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot.",
+        "path": ".ai/repo/project/milestones/a-session-proceeds-through-the-mesh.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3584
       },
       {
         "uri": "majordomus://milestone/a-stranger-adopts-it-unaided",
@@ -124385,7 +124517,7 @@
       "identity": [
         "id"
       ],
-      "objects": 36
+      "objects": 37
     },
     {
       "name": "issue",
@@ -124395,7 +124527,7 @@
       "identity": [
         "id"
       ],
-      "objects": 907
+      "objects": 917
     },
     {
       "name": "knowledge",
@@ -124425,7 +124557,7 @@
       "identity": [
         "id"
       ],
-      "objects": 103
+      "objects": 104
     },
     {
       "name": "moment",
