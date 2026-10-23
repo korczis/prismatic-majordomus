@@ -592,7 +592,10 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # the setup script prepares the repository, with the same helpers the test suite gives it
   local setup_out="$tmp/setup.out"
   # the helpers the setup scripts use (pj_* for a plan model) come from the tool's test
-  # library, which the distribution ships beside the fixtures. The library loads only in
+  # library, which the distribution ships beside the fixtures. ROOT names that fixture
+  # source, not the managed repository: a nested scenario manages a disposable adopter
+  # that has no tool libraries. An adopter supplying its own fixtures keeps its own root.
+  # The library loads only in
   # a fixture, the directory named by T that the caller stands in, and the scenario's
   # repository is that fixture here, as a case's $T is under test/run.sh.
   local helpers="$fix/../../lib.sh"
@@ -604,7 +607,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # `wired`; and that difference reached the committed evidence, which is the one thing
   # derivation may not do. The tool being exercised is the one the hook should find.
   case ":$PATH:" in *":$MJ_BIN_DIR:"*) ;; *) PATH="$MJ_BIN_DIR:$PATH"; export PATH ;; esac
-  ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$MJ_ROOT" T="$W" && export MJ FIXTURE_SETUP ROOT T \
+  ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$(cd "$fix/../../.." && pwd -P)" T="$W" && export MJ FIXTURE_SETUP ROOT T \
       && if [ -f "$helpers" ]; then # shellcheck disable=SC1090
         . "$helpers"; fi \
       && { # shellcheck disable=SC1090

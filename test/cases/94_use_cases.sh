@@ -365,4 +365,7 @@ done
 #     the repository's own use cases against its own tool (dogfooding), one of them at least
 ( cd "$ROOT" && expect_exit 0 "$MJ" usecase validate && expect_grep 'usecase validate: 0 failure' ) || exit 1
 ( cd "$ROOT" && expect_exit 0 "$MJ" usecase run know-which-tool-is-running && expect_grep '^know-which-tool-is-running +pass' ) || exit 1
+# A scaffolded scenario is run from inside another scenario. Its setup must load helpers
+# from the selected fixture source, not seek lib/sha256.sh in the disposable adopter.
+( cd "$ROOT" && expect_exit 0 "$MJ" usecase run add-a-use-case-and-prove-it && expect_grep '^add-a-use-case-and-prove-it +pass' ) || exit 1
 ( cd "$ROOT" && expect_exit 0 "$MJ" usecase coverage --check ) || exit 1
