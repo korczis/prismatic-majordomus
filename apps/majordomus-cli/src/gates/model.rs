@@ -918,6 +918,30 @@ classes:
     }
 
     #[test]
+    fn a_model_whose_subsumption_cannot_be_applied_is_not_loaded() {
+        let root = tempfile::tempdir().expect("a directory");
+        let path = root.path().join(MODEL_PATH);
+        std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+        // `build` names a subsumer that no gate declares: the model parses and is refused
+        let text = MODEL.replace(
+            "    implies: [registry]\n",
+            "    implies: [registry]\n    subsumed-by: no-such-gate\n",
+        );
+        assert_ne!(text, MODEL, "the fixture gained the field");
+        std::fs::write(&path, &text).expect("a model");
+        let err = GateModel::load(root.path()).expect_err("the subsumption is refused");
+        assert_eq!(
+            err,
+            format!(
+                "{MODEL_PATH}: gate build is subsumed by a gate that does not exist: no-such-gate"
+            )
+        );
+        // without the field the same model loads
+        std::fs::write(&path, MODEL).expect("a model");
+        assert!(GateModel::load(root.path()).is_ok());
+    }
+
+    #[test]
     fn an_always_gate_is_invalidated_by_anything_and_a_class_gate_by_its_class() {
         let m = model();
         assert_eq!(m.inputs_of("lint"), vec!["*".to_string()]);

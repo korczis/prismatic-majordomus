@@ -339,4 +339,72 @@ mod tests {
             .as_deref()
             .is_some_and(|r| r.contains("could not be read")));
     }
+
+    #[test]
+    fn a_job_median_without_a_name_is_unnamed_and_one_without_a_median_comes_last() {
+        let report = parse(
+            r#"{"schema":"trends/v1","job_medians":[
+                {"name":"nomedian","runs":2},
+                {"median_run_s":10.4},
+                {"name":"slow","median_run_s":90}]}"#,
+        );
+        let names: Vec<&str> = report.job_medians.iter().map(|m| m.name.as_str()).collect();
+        assert_eq!(names, ["slow", "unnamed", "nomedian"]);
+        assert_eq!(report.job_medians[2].median_run_seconds, None);
+        assert_eq!(report.job_medians[2].runs, Some(2));
+        assert_eq!(report.job_medians[1].median_run_seconds, Some(10.4));
+    }
+
+    #[test]
+    fn a_run_and_a_job_without_an_id_or_a_name_are_unknown_and_unnamed() {
+        let report = parse(
+            r#"{"schema":"trends/v1","generated_from":["a-run",12],
+                "runs":[{"jobs":[{"queued_s":-1,"run_s":3},{"name":"","conclusion":"failure"}]}]}"#,
+        );
+        // an id written as text stays as it is, one written as a number is its digits
+        assert_eq!(report.generated_from, ["a-run", "12"]);
+        let run = &report.runs[0];
+        assert_eq!(run.run_id, "unknown");
+        assert_eq!(run.jobs.len(), 2);
+        assert_eq!(run.jobs[0].name, "unnamed");
+        assert_eq!(
+            run.jobs[0].queued_seconds, None,
+            "a negative wait is no figure"
+        );
+        assert_eq!(run.jobs[0].run_seconds, Some(3.0));
+        assert_eq!(run.jobs[1].name, "unnamed", "an empty name is no name");
+        assert_eq!(run.jobs[1].conclusion.as_deref(), Some("failure"));
+        assert_eq!(run.coverage, None);
+        // a run whose id is text keeps it
+        let text = parse(r#"{"schema":"trends/v1","runs":[{"run_id":"r-7"}]}"#);
+        assert_eq!(text.runs[0].run_id, "r-7");
+    }
+
+    #[test]
+    fn a_coverage_figure_missing_a_part_or_of_another_type_is_none() {
+        let report = parse(
+            r#"{"schema":"trends/v1","runs":[{"run_id":1,"coverage":{
+                "lines":{"total":10},
+                "functions":{"covered":"3","total":4},
+                "regions":{"covered":3,"total":"4"}}},
+                {"run_id":2,"coverage":{"lines":{"covered":1,"total":4}}},
+                {"run_id":3,"coverage":[]}]}"#,
+        );
+        let none = report.runs[0].coverage.as_ref().expect("an object");
+        assert_eq!(none.lines, None, "no covered count");
+        assert_eq!(none.functions, None, "a covered count that is text");
+        assert_eq!(none.regions, None, "a total that is text");
+        let some = report.runs[1].coverage.as_ref().expect("an object");
+        assert_eq!(some.lines.as_ref().and_then(|l| l.percent), Some(25.0));
+        assert_eq!(some.functions, None, "a kind the run does not carry");
+        assert_eq!(report.runs[2].coverage, None, "coverage that is no object");
+    }
+
+    #[test]
+    fn a_series_that_holds_no_run_is_recorded_and_empty() {
+        let report = parse(r#"{"schema":"trends/v1"}"#);
+        assert!(report.recorded && report.reason.is_none());
+        assert!(report.runs.is_empty() && report.job_medians.is_empty());
+        assert!(report.generated_from.is_empty());
+    }
 }

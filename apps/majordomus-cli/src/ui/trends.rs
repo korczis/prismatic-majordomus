@@ -121,20 +121,22 @@ fn chart(label: &str, unit: &str, lines: &[Line], runs: &[Value], ceiling: Optio
                     .text(caption),
             );
     }
-    if let (Some(first), Some(last)) = (runs.first(), runs.last()) {
-        for (i, run, anchor) in [(0, first, "start"), (n - 1, last, "end")] {
-            if i == 0 && n > 1 || i == n - 1 {
-                svg = svg.child(
-                    el("text")
-                        .attr("x", format!("{:.1}", x(i)))
-                        .attr("y", format!("{:.1}", HEIGHT - 8.0))
-                        .attr("text-anchor", if n < 2 { "middle" } else { anchor })
-                        .attr("font-size", "11")
-                        .attr("fill", "currentColor")
-                        .text(day(run)),
-                );
-            }
-        }
+    // one run is captioned once, centred under its point; more runs at both ends of the axis
+    let captions = match (runs.first(), runs.last()) {
+        (Some(only), _) if n == 1 => vec![(0, only, "middle")],
+        (Some(first), Some(last)) => vec![(0, first, "start"), (n - 1, last, "end")],
+        _ => Vec::new(),
+    };
+    for (i, run, anchor) in captions {
+        svg = svg.child(
+            el("text")
+                .attr("x", format!("{:.1}", x(i)))
+                .attr("y", format!("{:.1}", HEIGHT - 8.0))
+                .attr("text-anchor", anchor)
+                .attr("font-size", "11")
+                .attr("fill", "currentColor")
+                .text(day(run)),
+        );
     }
     for line in lines {
         // a path per unbroken stretch; a stretch of one run is its point alone
@@ -547,5 +549,92 @@ mod tests {
         assert!(html.contains("No run recorded coverage."), "{html}");
         assert!(html.contains("10.0 min"), "{html}");
         assert!(html.contains("The series gives no job median."), "{html}");
+    }
+
+    /// A figure the file does not give reads `unknown` wherever it would have been a number:
+    /// a run without a start or a conclusion, a kind without a percentage, a median without
+    /// seconds or a run count.
+    #[test]
+    fn a_figure_the_file_does_not_give_reads_unknown() {
+        let (status, html) = get(&repository(Some(
+            r#"{"schema":"trends/v1","runs":[
+                {"run_id":1,"coverage":{"lines":{"covered":1,"total":0},"functions":{"covered":1,"total":2}}}],
+               "job_medians":[{"name":"bare"}]}"#,
+        )));
+        assert_eq!(status, 200);
+        // the run row: no sha, no day, no conclusion, no times; lines have no percentage
+        assert!(
+            html.contains(">unknown · 50.0% · unknown<"),
+            "no coverage cell: {html}"
+        );
+        assert!(html.matches(">unknown<").count() >= 8, "{html}");
+        // the median row: name only, three unknown cells
+        let row = html
+            .split(">bare<")
+            .nth(1)
+            .and_then(|r| r.split("</tr>").next())
+            .expect("the median row");
+        assert_eq!(row.matches(">unknown<").count(), 3, "{row}");
+        assert!(!html.contains("NaN"), "{html}");
+    }
+
+    /// A chart handed values and no run draws its lines and no day captions.
+    #[test]
+    fn a_chart_of_values_without_runs_draws_no_day_caption() {
+        let lines = [Line {
+            name: "Lines",
+            tone: "blue",
+            values: vec![Some(50.0)],
+        }];
+        let html = chart("coverage", "%", &lines, &[], Some(100.0)).render();
+        assert!(html.contains("<circle"), "{html}");
+        assert!(html.contains("50.0% latest"), "{html}");
+        assert!(!html.contains("text-anchor=\"start\""), "{html}");
+        assert!(!html.contains("text-anchor=\"middle\""), "{html}");
+        // a line without any value is named, and never drawn
+        let empty = [Line {
+            name: "Lines",
+            tone: "blue",
+            values: vec![],
+        }];
+        assert!(chart("coverage", "%", &empty, &[], None)
+            .render()
+            .contains("No run recorded coverage."));
+    }
+
+    #[test]
+    fn one_run_is_captioned_once_and_more_runs_at_both_ends() {
+        let one = [Line {
+            name: "Lines",
+            tone: "blue",
+            values: vec![Some(50.0)],
+        }];
+        let run = |day: &str| serde_json::json!({ "started_at": format!("{day}T10:00:00Z") });
+        let only = run("2026-10-20");
+        let html = chart(
+            "coverage",
+            "%",
+            &one,
+            std::slice::from_ref(&only),
+            Some(100.0),
+        )
+        .render();
+        // the caption the chart draws is day(run); one run must carry it exactly once
+        assert_eq!(
+            html.matches(&format!(">{}<", day(&only))).count(),
+            1,
+            "{html}"
+        );
+        assert_eq!(html.matches("text-anchor=\"middle\"").count(), 1, "{html}");
+        assert!(!html.contains("text-anchor=\"start\""), "{html}");
+        let two = [Line {
+            name: "Lines",
+            tone: "blue",
+            values: vec![Some(40.0), Some(50.0)],
+        }];
+        let runs = [run("2026-10-20"), run("2026-10-22")];
+        let html = chart("coverage", "%", &two, &runs, Some(100.0)).render();
+        assert_eq!(html.matches("text-anchor=\"start\"").count(), 1, "{html}");
+        assert!(!html.contains("text-anchor=\"middle\""), "{html}");
     }
 }
