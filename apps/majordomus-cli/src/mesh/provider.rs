@@ -162,12 +162,28 @@ impl Beacon {
         &self.runtime
     }
 
-    /// The `host:port` authorities this beacon put into the last advertisement it signed.
+    /// The `host:port` authorities the next advertisement this beacon signs will carry.
     /// One beacon signs for every transport, so every transport announces the same
     /// reachability and a listener never has to reconcile two accounts of where one node
     /// answers; [`Beacon::follow`] lets that one account move with the machine.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::provider::Beacon;
+    ///
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// let beacon = Beacon::new(identity, vec!["10.0.0.1:1".into()], vec![], vec![], "docs");
+    /// assert_eq!(beacon.endpoints(), ["10.0.0.1:1"]);
+    /// beacon.follow(Arc::new(|| vec!["10.0.0.2:1".to_string()]));
+    /// assert_eq!(beacon.endpoints(), ["10.0.0.2:1"], "what the next envelope carries");
+    /// ```
     pub fn endpoints(&self) -> Vec<String> {
-        self.endpoints.lock().expect("beacon endpoints").clone()
+        let source = self.source.lock().expect("beacon source").clone();
+        source
+            .map(|read| read())
+            .filter(|e| !e.is_empty())
+            .unwrap_or_else(|| self.endpoints.lock().expect("beacon endpoints").clone())
     }
 }
 
