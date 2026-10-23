@@ -176,7 +176,7 @@ Output: `ReportAnswer`.
 
 ## `executions.start` — Start a capability as an execution
 
-Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.
+Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.
 
 | | |
 |---|---|
@@ -200,6 +200,13 @@ nothing new runs; sent again with another input, it is refused 409 `conflict`,
 naming that execution. 1 to 128 characters of `A-Z a-z 0-9 . _ : -`, scoped to this
 repository and the capability, and held for as long as the server holds the
 execution it started. Without one, every start starts an execution. |
+| `issue` | string or null | no | The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is
+entered the execution takes the issue's exclusive mesh claim — the issue record's
+`scope`, or `issue/<id>` when it declares none — as the mesh session
+`execution-<id>`, and moves `queued -> claimed -> running`; a claim another session
+holds refuses it (`refused`, the holder named) and nothing runs. The claim is given
+back at the final state and kept for an outcome that is not known. With no mesh in
+the serving process it runs unclaimed and its `execution.issue_claim` event says so. |
 
 Output: `StartedExecution`.
 

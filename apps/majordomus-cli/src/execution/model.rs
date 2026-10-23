@@ -148,6 +148,151 @@ impl std::fmt::Display for IdempotencyKey {
     }
 }
 
+/// The longest issue id a start accepts, in characters.
+pub const MAX_ISSUE_ID: usize = 64;
+
+/// Parse the issue a start names (I4004): `I4004`, `#184`. One to [`MAX_ISSUE_ID`]
+/// characters of `A-Z a-z 0-9 # . _ -`, compared byte for byte; anything else is refused
+/// with the character named, because the id becomes part of a mesh scope (`issue/<id>`)
+/// and a `/` or a space would make that scope mean something else.
+///
+/// ```
+/// use majordomus_cli::execution::model::parse_issue;
+/// assert_eq!(parse_issue("I4004").unwrap(), "I4004");
+/// assert_eq!(parse_issue("#184").unwrap(), "#184");
+/// assert!(parse_issue("").is_err());
+/// assert!(parse_issue("I1/../x").unwrap_err().contains("'/'"));
+/// ```
+pub fn parse_issue(text: &str) -> Result<String, String> {
+    let length = text.chars().count();
+    if length == 0 || length > MAX_ISSUE_ID {
+        return Err(format!(
+            "an issue id is 1 to {MAX_ISSUE_ID} characters; this one has {length}"
+        ));
+    }
+    if let Some(bad) = text
+        .chars()
+        .find(|c| !(c.is_ascii_alphanumeric() || matches!(c, '#' | '.' | '_' | '-')))
+    {
+        return Err(format!(
+            "an issue id is made of A-Z a-z 0-9 # . _ - only, and {bad:?} is not"
+        ));
+    }
+    Ok(text.to_string())
+}
+
+/// Where the mesh claim of an execution started for an issue stands (I4004).
+///
+/// ```text
+///   wanted ──► held ──► released            the run reached a final state
+///                  └──► kept                its outcome is not known: the claim stays
+///          ──► unclaimed                    no mesh runs here: it ran without a claim
+///          ──► refused                      another session holds the scope: nothing ran
+/// ```
+///
+/// ```
+/// use majordomus_cli::execution::ClaimStanding;
+/// let word = serde_json::to_value(ClaimStanding::Kept).unwrap();
+/// assert_eq!(word, "kept");
+/// let back: ClaimStanding = serde_json::from_value("unclaimed".into()).unwrap();
+/// assert_eq!(back, ClaimStanding::Unclaimed);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ClaimStanding {
+    /// Started for an issue; the claim is taken when a worker picks it up.
+    Wanted,
+    /// The exclusive claim is held, and the handler runs under it.
+    Held,
+    /// The claim was given back when the execution reached its final state.
+    Released,
+    /// The outcome is not known, so the claim is kept: whether the work happened is still
+    /// to be read, and the scope is not free until it has been.
+    Kept,
+    /// No mesh cooperation runs in this process, so it ran without a claim. Said, never a
+    /// failure.
+    Unclaimed,
+    /// Another session holds an exclusive claim on the scope; the execution was refused and
+    /// nothing ran.
+    Refused,
+}
+
+impl ClaimStanding {
+    /// The word serde writes for it, for a line a terminal prints without serialising: the
+    /// same word on the wire, in the snapshot and in `majordomus run --follow`.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::ClaimStanding;
+    /// assert_eq!(ClaimStanding::Unclaimed.as_str(), "unclaimed");
+    /// assert_eq!(serde_json::to_value(ClaimStanding::Held).unwrap(), ClaimStanding::Held.as_str());
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ClaimStanding::Wanted => "wanted",
+            ClaimStanding::Held => "held",
+            ClaimStanding::Released => "released",
+            ClaimStanding::Kept => "kept",
+            ClaimStanding::Unclaimed => "unclaimed",
+            ClaimStanding::Refused => "refused",
+        }
+    }
+}
+
+/// The issue an execution works for and the mesh claim it holds for it (I4004): the issue,
+/// the scope claimed, the claim's key while there is one, and where it stands.
+///
+/// ```
+/// use majordomus_cli::execution::{ClaimStanding, IssueClaim};
+/// let wanted = IssueClaim::wanted("I4004");
+/// assert_eq!(wanted.standing, ClaimStanding::Wanted);
+/// assert!(wanted.scope.is_empty() && wanted.key.is_none());
+/// let json = serde_json::to_value(&wanted).unwrap();
+/// assert_eq!(json, serde_json::json!({ "issue": "I4004", "standing": "wanted" }));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IssueClaim {
+    /// The issue, as the start named it.
+    pub issue: String,
+    /// Where the claim stands.
+    pub standing: ClaimStanding,
+    /// The repository paths claimed: the issue record's `scope`, or `issue/<id>` when the
+    /// record declares none or is not in this checkout.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub scope: Vec<String>,
+    /// The mesh claim's key, `<stream>/<claim>`, once one was taken.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub key: Option<String>,
+    /// The mesh session the claim belongs to, once one was opened: `execution-<id>`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// What there is to say: why it ran unclaimed, who holds the scope it was refused, why
+    /// the claim is kept, or that a release did not go through.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+impl IssueClaim {
+    /// The claim of an execution just started for `issue`, before a worker has taken it:
+    /// no scope, key or session yet.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{ClaimStanding, IssueClaim};
+    /// let c = IssueClaim::wanted("#184");
+    /// assert_eq!((c.issue.as_str(), c.standing), ("#184", ClaimStanding::Wanted));
+    /// assert!(c.session.is_none() && c.detail.is_none());
+    /// ```
+    pub fn wanted(issue: &str) -> Self {
+        IssueClaim {
+            issue: issue.to_string(),
+            standing: ClaimStanding::Wanted,
+            scope: Vec::new(),
+            key: None,
+            session: None,
+            detail: None,
+        }
+    }
+}
+
 /// `YYYYMMDDTHHMMSSZ` in UTC from a Unix second, the compact form of the layer's own
 /// timestamps.
 ///
@@ -616,6 +761,10 @@ pub struct Execution {
     /// start with this key answers this execution instead of starting another (I4000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub idempotency_key: Option<String>,
+    /// The issue it was started for, and the mesh claim it takes for it, when it was
+    /// started for one (I4004).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub issue_claim: Option<IssueClaim>,
 }
 
 impl Execution {

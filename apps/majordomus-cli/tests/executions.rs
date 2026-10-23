@@ -757,9 +757,10 @@ fn nothing_here_runs_anything_the_registry_does_not_declare() {
         Some(vec![
             "capability".to_string(),
             "input".to_string(),
-            "idempotency_key".to_string()
+            "idempotency_key".to_string(),
+            "issue".to_string()
         ]),
-        "the only things a client may send: a capability, its input, and the key that makes a repeated start one execution"
+        "the only things a client may send: a capability, its input, the key that makes a repeated start one execution, and the issue whose mesh claim it holds"
     );
 }
 

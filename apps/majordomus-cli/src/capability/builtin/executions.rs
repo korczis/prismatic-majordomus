@@ -26,7 +26,8 @@ use crate::capability::CanonicalSchema;
 use crate::execution::engine::repository_of;
 use crate::execution::{
     redact, Actor, ActorKind, CancelOutcome, Execution, ExecutionEvent, ExecutionId,
-    ExecutionState, IdempotencyKey, Seed, SubmitError, PROTOCOL_VERSION, REPORT_SILENCE,
+    ExecutionState, IdempotencyKey, Seed, StartOptions, SubmitError, PROTOCOL_VERSION,
+    REPORT_SILENCE,
 };
 use crate::{capability, module};
 
@@ -143,6 +144,16 @@ pub struct StartInput {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     #[schemars(length(min = 1, max = 128), regex(pattern = r"^[A-Za-z0-9._:-]+$"))]
     pub idempotency_key: Option<String>,
+    /// The issue the execution works for (I4004): `I4004`, `#184`. Before the handler is
+    /// entered the execution takes the issue's exclusive mesh claim — the issue record's
+    /// `scope`, or `issue/<id>` when it declares none — as the mesh session
+    /// `execution-<id>`, and moves `queued -> claimed -> running`; a claim another session
+    /// holds refuses it (`refused`, the holder named) and nothing runs. The claim is given
+    /// back at the final state and kept for an outcome that is not known. With no mesh in
+    /// the serving process it runs unclaimed and its `execution.issue_claim` event says so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(length(min = 1, max = 64), regex(pattern = r"^[A-Za-z0-9#._-]+$"))]
+    pub issue: Option<String>,
 }
 
 impl BenchmarkCases for StartInput {
@@ -153,6 +164,7 @@ impl BenchmarkCases for StartInput {
                 capability: "executions.demonstrate".into(),
                 input: Some(serde_json::json!({ "steps": 1, "delay_ms": 0 })),
                 idempotency_key: None,
+                issue: None,
             },
         )]
     }
@@ -198,9 +210,13 @@ fn executions_start(ctx: &Context, input: StartInput) -> Result<StartedExecution
         .transpose()
         .map_err(CapabilityError::InvalidInput)?;
     let payload = input.input.unwrap_or_else(|| serde_json::json!({}));
+    let options = StartOptions {
+        idempotency_key: key,
+        issue: input.issue,
+    };
     match ctx
         .executions
-        .submit_once(ctx, &input.capability, payload, actor(ctx), key)
+        .submit_with(ctx, &input.capability, payload, actor(ctx), options)
     {
         Ok(started) => Ok(StartedExecution {
             view: ExecutionView::of(ctx, started.execution),
@@ -780,7 +796,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "executions.start",
                 kind: CapabilityKind::Command,
                 title: "Start a capability as an execution",
-                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
+                description: "Run any executable capability of this registry as an execution: the input is checked against that capability's own input schema, the work is queued, and this answers at once with the execution's id and the links to follow it. Nothing waits for the handler. With an idempotency_key, a repeated start is one execution: the same key with the same capability and input is answered the execution it started (deduplicated) and nothing new runs, and the same key with another input is refused as a conflict naming that execution. With an issue, the execution holds that issue's exclusive mesh claim while it runs: taken before the handler is entered (queued, claimed, running), refused with the holder named when another session holds the scope so that nothing runs, given back at the final state, and kept for an outcome that is not known; with no mesh in the serving process it runs unclaimed and says so. The capability runs through the same executor every other interface calls, so there is no second implementation of anything. On the command line (`majordomus run`) it runs in that process and is reported to the server serving the checkout, when one is, through executions.report; a run never starts a server.",
                 input: StartInput,
                 output: StartedExecution,
                 stability: Stability::BehaviorallyVerified,
@@ -1048,7 +1064,7 @@ mod tests {
         assert!(events.contains(&"execution.progress".to_string()));
         assert_eq!(
             events.len(),
-            17,
+            18,
             "every payload variant is described: {events:?}"
         );
         for new in [
@@ -1057,6 +1073,7 @@ mod tests {
             "execution.verifying",
             "execution.refused",
             "execution.unknown_outcome",
+            "execution.issue_claim",
         ] {
             assert!(events.contains(&new.to_string()), "{new}: {events:?}");
         }
@@ -1263,6 +1280,7 @@ mod tests {
                     capability: "executions.demonstrate".into(),
                     input: Some(serde_json::json!({ "steps": steps, "delay_ms": 0 })),
                     idempotency_key: Some(key.into()),
+                    issue: None,
                 },
             )
         };

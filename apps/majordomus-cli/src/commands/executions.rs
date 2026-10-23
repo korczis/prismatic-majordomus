@@ -418,6 +418,21 @@ fn describe(event: &crate::execution::ExecutionEvent) -> Option<String> {
         Completed { .. } => "---  completed".to_string(),
         Failed { error } => format!("FAIL {}: {}", error.code, error.message),
         Claimed { holder } => format!("---  held by {holder}"),
+        IssueClaim(claim) => format!(
+            "---  {} mesh claim {}{}{}",
+            claim.issue,
+            claim.standing.as_str(),
+            claim
+                .key
+                .as_ref()
+                .map(|k| format!(" {k}"))
+                .unwrap_or_default(),
+            claim
+                .detail
+                .as_ref()
+                .map(|d| format!(" — {d}"))
+                .unwrap_or_default()
+        ),
         Verifying => "---  checking what it produced".to_string(),
         Refused { error, policy } => format!(
             "REFUSED {}: {}{}",
@@ -776,6 +791,7 @@ mod tests {
                 detail: None,
                 suggestion: None,
             }),
+            EventPayload::IssueClaim(crate::execution::IssueClaim::wanted("I4004")),
             EventPayload::Cancelling {
                 by: "client".into(),
             },

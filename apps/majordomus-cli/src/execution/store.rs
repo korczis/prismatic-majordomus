@@ -855,6 +855,7 @@ impl ExecutionStore {
             repository,
             correlation_id: id.to_string(),
             idempotency_key: idempotency.map(|i| i.key.to_string()),
+            issue_claim: None,
         };
         let created = EventPayload::Created {
             capability: capability.to_string(),
@@ -1249,6 +1250,9 @@ fn apply(record: &mut Record, payload: &EventPayload, sequence: u64, limits: Lim
             if s.diagnostics.len() < limits.max_events.min(200) {
                 s.diagnostics.push(d.clone());
             }
+        }
+        EventPayload::IssueClaim(claim) => {
+            s.issue_claim = Some(claim.clone());
         }
         EventPayload::Completed { output } => {
             s.output = Some(output.clone());
