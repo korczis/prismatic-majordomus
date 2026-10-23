@@ -2815,5 +2815,13 @@ mod tests {
             "plan": { "changes": 0, "unobservable": 0 }, "apply": null }));
         assert!(planned.ends_with("verdict     ok"), "{planned}");
         assert!(!planned.contains("refused"), "{planned}");
+        let applied = render_provision(&json!({ "mode": "apply", "root": "/r", "ok": true,
+            "plan": { "changes": 0, "unobservable": 0 },
+            "apply": { "refused": null, "written": ["env"], "ran": [], "skipped": [] } }));
+        assert!(applied.contains("written     env"), "{applied}");
+        assert!(
+            !applied.contains("refused"),
+            "an apply that was not refused says nothing of a refusal: {applied}"
+        );
     }
 }

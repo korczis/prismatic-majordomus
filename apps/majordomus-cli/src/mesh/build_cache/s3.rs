@@ -296,11 +296,18 @@ impl Endpoint {
 
     fn connect(&self, budget: Duration) -> io::Result<TcpStream> {
         let stream = TcpStream::connect_timeout(&self.address()?, budget)?;
-        stream.set_read_timeout(Some(budget))?;
-        stream.set_write_timeout(Some(budget))?;
-        stream.set_nodelay(true)?;
-        Ok(stream)
+        bounded(stream, budget)
     }
+}
+
+/// `stream` with every read and write bounded by `budget`, and no delay on small writes; the
+/// first setting refused is the error (a zero budget is the one a timeout refuses).
+fn bounded(stream: TcpStream, budget: Duration) -> io::Result<TcpStream> {
+    stream
+        .set_read_timeout(Some(budget))
+        .and_then(|()| stream.set_write_timeout(Some(budget)))
+        .and_then(|()| stream.set_nodelay(true))
+        .map(|()| stream)
 }
 
 /// The first address a name resolved to; a name that resolved to none is not found.
@@ -461,8 +468,8 @@ impl Store {
 
     /// Store `source` under `key`. The body is streamed; its hash is not signed.
     pub(crate) fn put(&self, key: &str, source: &Path) -> io::Result<()> {
-        let mut file = File::open(source)?;
-        let length = file.metadata()?.len();
+        let (mut file, length) =
+            File::open(source).and_then(|f| f.metadata().map(|m| (f, m.len())))?;
         let mut stream = self.endpoint.connect(self.budget)?;
         stream.write_all(
             self.request(
@@ -474,8 +481,8 @@ impl Store {
             )
             .as_bytes(),
         )?;
+        // a TcpStream writes through: there is nothing to flush before the answer is read
         io::copy(&mut file, &mut stream)?;
-        stream.flush()?;
         let head = read_head(&mut BufReader::new(stream))?;
         match head.status {
             200 => Ok(()),
@@ -497,14 +504,16 @@ fn refused(status: u16) -> io::Error {
 pub(crate) fn probe(endpoint: &Endpoint, budget: Duration) -> Probe {
     let started = Instant::now();
     let answer = endpoint.connect(budget).and_then(|mut stream| {
-        stream.write_all(
-            format!(
-                "GET /minio/health/live HTTP/1.1\r\nhost: {}\r\nconnection: close\r\n\r\n",
-                endpoint.host
+        stream
+            .write_all(
+                format!(
+                    "GET /minio/health/live HTTP/1.1\r\nhost: {}\r\nconnection: close\r\n\r\n",
+                    endpoint.host
+                )
+                .as_bytes(),
             )
-            .as_bytes(),
-        )?;
-        Ok(read_head(&mut BufReader::new(stream))?.status)
+            .and_then(|()| read_head(&mut BufReader::new(stream)))
+            .map(|head| head.status)
     });
     match answer {
         Ok(200) => Probe::Healthy(u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)),
@@ -995,5 +1004,20 @@ mod tests {
         assert!(s.get("k", &nowhere).is_err());
         assert!(!nowhere.exists());
         std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_stream_is_bounded_by_its_budget_and_a_zero_budget_is_refused() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let at = listener.local_addr().unwrap();
+        let stream = bounded(TcpStream::connect(at).unwrap(), Duration::from_secs(3)).unwrap();
+        assert_eq!(stream.read_timeout().unwrap(), Some(Duration::from_secs(3)));
+        assert_eq!(
+            stream.write_timeout().unwrap(),
+            Some(Duration::from_secs(3))
+        );
+        assert!(stream.nodelay().unwrap());
+        let zero = bounded(TcpStream::connect(at).unwrap(), Duration::ZERO);
+        assert_eq!(zero.unwrap_err().kind(), io::ErrorKind::InvalidInput);
     }
 }

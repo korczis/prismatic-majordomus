@@ -300,8 +300,10 @@ fn credentials_problem(path: &Path) -> Option<String> {
 
 /// A port nothing listens on, for a throwaway server.
 fn private_port() -> Option<u16> {
-    let l = std::net::TcpListener::bind(("127.0.0.1", 0)).ok()?;
-    Some(l.local_addr().ok()?.port())
+    std::net::TcpListener::bind(("127.0.0.1", 0))
+        .and_then(|l| l.local_addr())
+        .map(|a| a.port())
+        .ok()
 }
 
 /// A private directory under the temporary directory, removed when it goes out of scope.
@@ -344,12 +346,17 @@ fn sccache_version(program: &str) -> Option<String> {
 /// start and names the level; one that does not ignores the variable and starts, and that
 /// throwaway server is stopped again. `None` when the question could not be put.
 fn measure_multilevel(program: &str) -> (Option<bool>, String) {
-    measure_multilevel_under(program, &std::env::temp_dir())
+    measure_multilevel_under(program, &std::env::temp_dir(), private_port())
 }
 
-/// [`measure_multilevel`], with the private home made under `scratch`.
-fn measure_multilevel_under(program: &str, scratch: &Path) -> (Option<bool>, String) {
-    let Some(port) = private_port() else {
+/// [`measure_multilevel`], with the private home made under `scratch` and the server put on
+/// `port`, `None` when no private port could be had.
+fn measure_multilevel_under(
+    program: &str,
+    scratch: &Path,
+    port: Option<u16>,
+) -> (Option<bool>, String) {
+    let Some(port) = port else {
         return (None, "no private port to measure on".into());
     };
     let Some(home) = ScratchDir::under(scratch) else {
@@ -1109,9 +1116,12 @@ mod tests {
         assert_eq!(answer, None, "a server that never started proves nothing");
         assert!(detail.contains("did not answer"), "{detail}");
         let (answer, detail) =
-            measure_multilevel_under(&capable(d.path()), &d.path().join("no-such-dir"));
+            measure_multilevel_under(&capable(d.path()), &d.path().join("no-such-dir"), Some(1));
         assert_eq!(answer, None);
         assert_eq!(detail, "no scratch directory to measure in");
+        let (answer, detail) = measure_multilevel_under(&capable(d.path()), d.path(), None);
+        assert_eq!(answer, None, "without a private port nothing is asked");
+        assert_eq!(detail, "no private port to measure on");
         assert!(
             !d.path().join("capable.log").exists(),
             "no server was started without a private home"

@@ -86,6 +86,19 @@ pub enum Health {
     Unknown,
 }
 
+impl Health {
+    /// Why a store in this state is not used, in the fixed vocabulary an offer's withdrawal
+    /// carries; `None` for a healthy one.
+    pub(crate) fn refusal(self) -> Option<&'static str> {
+        match self {
+            Health::Healthy => None,
+            Health::Degraded => Some("its own probe says degraded"),
+            Health::Unhealthy => Some("its own probe says unhealthy"),
+            Health::Unknown => Some("its own probe could not say"),
+        }
+    }
+}
+
 /// One node's offer. Carries no credential and no secret of any kind.
 ///
 /// # Example
@@ -233,11 +246,8 @@ fn refusal(offer: &Offer, policy: &Policy) -> Option<String> {
             offer.node
         ));
     }
-    match offer.health {
-        Health::Healthy => {}
-        Health::Degraded => return Some("its own probe says degraded".into()),
-        Health::Unhealthy => return Some("its own probe says unhealthy".into()),
-        Health::Unknown => return Some("its own probe could not say".into()),
+    if let Some(why) = offer.health.refusal() {
+        return Some(why.into());
     }
     if offer.age_seconds > policy.max_age_seconds {
         return Some(format!(
@@ -1066,6 +1076,22 @@ mod tests {
             headroom_gib(Path::new("/no/such/path/for/build-cache")),
             None
         );
+    }
+
+    #[test]
+    fn every_health_but_healthy_carries_the_one_refusal_selection_and_offering_share() {
+        assert_eq!(Health::Healthy.refusal(), None);
+        for (health, word) in [
+            (Health::Degraded, "degraded"),
+            (Health::Unhealthy, "unhealthy"),
+            (Health::Unknown, "could not say"),
+        ] {
+            let why = health.refusal().unwrap();
+            assert!(
+                why.starts_with("its own probe ") && why.contains(word),
+                "{why}"
+            );
+        }
     }
 
     #[test]

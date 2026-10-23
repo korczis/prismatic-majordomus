@@ -151,11 +151,9 @@ pub(crate) fn check_listing(archive: &Path) -> Result<usize, String> {
 }
 
 /// Where a link at `link` (relative to the tree's root) with the relative target `to` lands,
-/// lexically; `None` when it leaves the tree.
+/// lexically; `None` when it leaves the tree. An absolute target starts with a root (or a
+/// prefix), and that component alone refuses it.
 pub(crate) fn resolve_inside(link: &Path, to: &Path) -> Option<PathBuf> {
-    if to.is_absolute() {
-        return None;
-    }
     let mut at: Vec<std::ffi::OsString> = link
         .parent()
         .map(|p| {
@@ -186,21 +184,14 @@ pub(crate) fn check_tree(root: &Path) -> Result<(), String> {
     let mut stack = vec![PathBuf::new()];
     while let Some(rel) = stack.pop() {
         let dir = root.join(&rel);
-        let entries = fs::read_dir(&dir).map_err(|e| format!("{}: {e}", rel.display()))?;
-        for entry in entries {
-            let entry = entry.map_err(|e| e.to_string())?;
+        let entries = listed(&dir).map_err(|e| format!("{}: {e}", rel.display()))?;
+        for (entry, kind) in entries {
             let rel_entry = rel.join(entry.file_name());
-            let kind = entry.file_type().map_err(|e| e.to_string())?;
             if kind.is_dir() {
                 stack.push(rel_entry);
             } else if kind.is_symlink() {
-                let to = fs::read_link(entry.path()).map_err(|e| e.to_string())?;
-                if resolve_inside(&rel_entry, &to).is_none() {
-                    return Err(format!(
-                        "the archive was refused: {} links to {}, outside its target",
-                        rel_entry.display(),
-                        to.display()
-                    ));
+                if let Some(why) = link_refusal(&entry.path(), &rel_entry) {
+                    return Err(why);
                 }
             } else if !kind.is_file() {
                 return Err(format!(
@@ -211,6 +202,20 @@ pub(crate) fn check_tree(root: &Path) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// Why the link at `path` (at `rel` in the tree) is refused: it leaves the tree, or it cannot
+/// be read; `None` when it stays inside.
+fn link_refusal(path: &Path, rel: &Path) -> Option<String> {
+    match fs::read_link(path) {
+        Ok(to) if resolve_inside(rel, &to).is_some() => None,
+        Ok(to) => Some(format!(
+            "the archive was refused: {} links to {}, outside its target",
+            rel.display(),
+            to.display()
+        )),
+        Err(e) => Some(e.to_string()),
+    }
 }
 
 /// Unpack `archive` into a fresh directory beside `target`, judged before and after. The
@@ -350,18 +355,23 @@ pub(crate) fn subdirectories(dir: &Path) -> Vec<String> {
     names.into_iter().collect()
 }
 
+/// Every entry of `dir` with its own type (a link is not followed), read in full: an entry
+/// or a type that cannot be read fails the listing as `dir` itself failing to open does.
+fn listed(dir: &Path) -> io::Result<Vec<(fs::DirEntry, fs::FileType)>> {
+    fs::read_dir(dir)?
+        .map(|entry| entry.and_then(|e| e.file_type().map(|kind| (e, kind))))
+        .collect()
+}
+
 /// Move every entry of `from` into `into`, renaming whole subtrees where `into` has none and
 /// descending where both have a directory; an entry `into` already has is kept as it is.
 pub(crate) fn merge_into(from: &Path, into: &Path) -> io::Result<()> {
     fs::create_dir_all(into)?;
-    for entry in fs::read_dir(from)? {
-        let entry = entry?;
+    for (entry, kind) in listed(from)? {
         let dest = into.join(entry.file_name());
         match dest.symlink_metadata() {
             Err(_) => fs::rename(entry.path(), &dest)?,
-            Ok(meta) if meta.is_dir() && entry.file_type()?.is_dir() => {
-                merge_into(&entry.path(), &dest)?
-            }
+            Ok(meta) if meta.is_dir() && kind.is_dir() => merge_into(&entry.path(), &dest)?,
             Ok(_) => {}
         }
     }
@@ -890,5 +900,40 @@ mod tests {
         std::os::unix::fs::symlink("a/b", dir.path().join("link")).unwrap();
         assert_eq!(tree_bytes(dir.path()), 8, "a link adds nothing");
         assert_eq!(tree_bytes(&dir.path().join("absent")), 0);
+    }
+
+    #[test]
+    fn a_link_is_refused_when_it_leaves_the_tree_or_cannot_be_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let inside = dir.path().join("inside");
+        std::os::unix::fs::symlink("b", &inside).unwrap();
+        assert_eq!(link_refusal(&inside, Path::new("a/inside")), None);
+        let outside = dir.path().join("outside");
+        std::os::unix::fs::symlink("../../x", &outside).unwrap();
+        let why = link_refusal(&outside, Path::new("a/outside")).unwrap();
+        assert!(why.contains("a/outside links to ../../x"), "{why}");
+        // a path that is not a link: the read itself fails, and that is the reason given
+        let unread = link_refusal(&dir.path().join("absent"), Path::new("absent")).unwrap();
+        assert!(!unread.contains("archive was refused"), "{unread}");
+    }
+
+    #[test]
+    fn a_listing_carries_each_entry_with_its_own_type_and_fails_on_a_missing_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("f"), "x").unwrap();
+        fs::create_dir(dir.path().join("d")).unwrap();
+        std::os::unix::fs::symlink("d", dir.path().join("l")).unwrap();
+        let kinds: std::collections::BTreeMap<String, (bool, bool, bool)> = listed(dir.path())
+            .unwrap()
+            .into_iter()
+            .map(|(e, k)| {
+                let name = e.file_name().to_string_lossy().into_owned();
+                (name, (k.is_file(), k.is_dir(), k.is_symlink()))
+            })
+            .collect();
+        assert_eq!(kinds["f"], (true, false, false));
+        assert_eq!(kinds["d"], (false, true, false));
+        assert_eq!(kinds["l"], (false, false, true), "a link is not followed");
+        assert!(listed(&dir.path().join("absent")).is_err());
     }
 }

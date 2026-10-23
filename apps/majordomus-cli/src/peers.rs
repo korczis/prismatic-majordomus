@@ -528,12 +528,10 @@ pub fn with_address(message: &mut serde_json::Value, address: &PeerAddress) {
     let meta = params
         .entry("_meta")
         .or_insert_with(|| serde_json::Value::Object(Default::default()));
-    if let Some(meta) = meta.as_object_mut() {
-        if !meta.contains_key(ADDRESS_META) {
-            if let Ok(v) = serde_json::to_value(address) {
-                meta.insert(ADDRESS_META.to_string(), v);
-            }
-        }
+    // an address always serialises (string keys, plain values); a `_meta` that is not an
+    // object is left as the client sent it
+    if let (Some(meta), Ok(v)) = (meta.as_object_mut(), serde_json::to_value(address)) {
+        meta.entry(ADDRESS_META).or_insert(v);
     }
 }
 
@@ -649,6 +647,14 @@ impl PeerBoard {
     pub fn locate(&self, id: &PeerId, address: PeerAddress) {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.address = Some(address);
+        }
+    }
+
+    /// [`PeerBoard::locate`] when there is an address: a process whose machine has no name
+    /// ([`PeerAddress::of_this_process`] answers `None`) leaves the row as it is.
+    pub(crate) fn locate_known(&self, id: &PeerId, address: Option<PeerAddress>) {
+        if let Some(address) = address {
+            self.locate(id, address);
         }
     }
 
@@ -1213,6 +1219,20 @@ mod tests {
         assert_eq!(gone.address.as_ref(), Some(&address));
         let back: Peer = serde_json::from_str(&serde_json::to_string(gone).unwrap()).unwrap();
         assert_eq!(&back, gone);
+    }
+
+    /// A process that has no address (its machine has no name) leaves its row unlocated; one
+    /// that has one is located as `locate` would.
+    #[test]
+    fn locating_with_no_address_leaves_the_row_as_it_is() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Stdio);
+        board.locate_known(&peer, None);
+        assert!(board.list()[0].address.is_none());
+        let address = PeerAddress::from_env(|_| None, Some(9), "mac").unwrap();
+        board.locate_known(&peer, Some(address.clone()));
+        assert_eq!(board.list()[0].address.as_ref(), Some(&address));
+        assert_eq!(PeerAddress::from_env(|_| None, Some(9), "  "), None);
     }
 
     /// The address a bridge carries is put into `initialize` params once: a client that

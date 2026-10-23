@@ -297,28 +297,28 @@ fn write_marker(target: &Path, key: &str, notes: &mut Vec<String>) {
     }
 }
 
-/// Free bytes on the filesystem holding `path` or its nearest existing ancestor.
+/// Free bytes on the filesystem holding `path` or its nearest ancestor that can be measured:
+/// a path that does not exist (yet) is measured where it would be made.
 pub(crate) fn free_bytes(path: &Path) -> Option<u64> {
+    path.ancestors().find_map(statvfs_free)
+}
+
+/// Free bytes on the filesystem holding `p`, which must exist; `None` when it cannot be
+/// measured (it does not exist, or its name holds a NUL).
+fn statvfs_free(p: &Path) -> Option<u64> {
     use std::os::unix::ffi::OsStrExt;
-    let mut at = Some(path);
-    while let Some(p) = at {
-        if p.exists() {
-            let c = std::ffi::CString::new(p.as_os_str().as_bytes()).ok()?;
-            let mut st = std::mem::MaybeUninit::<libc::statvfs>::zeroed();
-            // SAFETY: `c` is a valid NUL-terminated path and `st` a writable statvfs, read
-            // only when the call reports success.
-            if unsafe { libc::statvfs(c.as_ptr(), st.as_mut_ptr()) } != 0 {
-                return None;
-            }
-            // SAFETY: statvfs returned 0, so the struct is initialised.
-            let st = unsafe { st.assume_init() };
-            // 32 bits on macOS and 64 on Linux: a widening on one, a no-op on the other
-            #[allow(clippy::useless_conversion)]
-            return Some(u64::from(st.f_bavail).saturating_mul(u64::from(st.f_frsize)));
-        }
-        at = p.parent();
+    let c = std::ffi::CString::new(p.as_os_str().as_bytes()).ok()?;
+    let mut st = std::mem::MaybeUninit::<libc::statvfs>::zeroed();
+    // SAFETY: `c` is a valid NUL-terminated path and `st` a writable statvfs, read only when
+    // the call reports success.
+    if unsafe { libc::statvfs(c.as_ptr(), st.as_mut_ptr()) } != 0 {
+        return None;
     }
-    None
+    // SAFETY: statvfs returned 0, so the struct is initialised.
+    let st = unsafe { st.assume_init() };
+    // 32 bits on macOS and 64 on Linux: a widening on one, a no-op on the other
+    #[allow(clippy::useless_conversion)]
+    Some(u64::from(st.f_bavail).saturating_mul(u64::from(st.f_frsize)))
 }
 
 /// Why nothing may be written beside `path` now, or `None` when it may: the build's own
@@ -598,6 +598,15 @@ fn save(
 /// Every archive of the local level: `(modified, archive, bytes with its digest)`, in age
 /// order; a scratch directory (a name starting with `.`) is not an entry.
 fn entries(dir: &Path) -> std::collections::BTreeMap<(SystemTime, PathBuf), u64> {
+    entries_with(dir, fs::DirEntry::metadata)
+}
+
+/// [`entries`], with each archive's metadata read by `metadata`: an archive whose metadata
+/// cannot be read (it went away since the listing) is not an entry.
+fn entries_with(
+    dir: &Path,
+    metadata: impl Fn(&fs::DirEntry) -> io::Result<fs::Metadata>,
+) -> std::collections::BTreeMap<(SystemTime, PathBuf), u64> {
     let mut out = std::collections::BTreeMap::new();
     let mut stack = vec![dir.to_path_buf()];
     while let Some(d) = stack.pop() {
@@ -610,7 +619,7 @@ fn entries(dir: &Path) -> std::collections::BTreeMap<(SystemTime, PathBuf), u64>
             match e.file_type() {
                 Ok(t) if t.is_dir() => stack.push(e.path()),
                 Ok(t) if t.is_file() && name.ends_with(".tar.gz") => {
-                    let Ok(meta) = e.metadata() else { continue };
+                    let Ok(meta) = metadata(&e) else { continue };
                     let sum = e
                         .path()
                         .with_file_name(format!("{}.sha256", name.trim_end_matches(".tar.gz")));
@@ -673,11 +682,13 @@ fn run(argv: &[String], cwd: &Path, notes: &mut Vec<String>) -> Option<CommandRu
 
 fn io_stderr() -> Stdio {
     use std::os::fd::AsFd;
-    io::stderr()
-        .as_fd()
-        .try_clone_to_owned()
-        .map(Stdio::from)
-        .unwrap_or_else(|_| Stdio::inherit())
+    stdio_or_inherit(io::stderr().as_fd().try_clone_to_owned())
+}
+
+/// A cloned descriptor as a child's stream, or the parent's own stream when it could not be
+/// cloned.
+fn stdio_or_inherit(cloned: io::Result<std::os::fd::OwnedFd>) -> Stdio {
+    cloned.map(Stdio::from).unwrap_or_else(|_| Stdio::inherit())
 }
 
 /// Ensure one instance: the whole flow of the module header, for a key already derived.
@@ -1781,5 +1792,62 @@ mod tests {
         assert_eq!(r.source, Source::Nothing);
         assert_eq!(r.command, None);
         assert!(r.saved.is_empty());
+    }
+
+    #[test]
+    fn an_archive_whose_metadata_cannot_be_read_is_not_an_entry() {
+        let dir = tempfile::tempdir().unwrap();
+        let level = dir.path().join("v1/k");
+        fs::create_dir_all(&level).unwrap();
+        fs::write(level.join("a.tar.gz"), "aaaa").unwrap();
+        fs::write(level.join("b.tar.gz"), "bb").unwrap();
+        let all = entries(dir.path());
+        assert_eq!(all.len(), 2, "{all:?}");
+        let gone = entries_with(dir.path(), |e| {
+            if e.file_name() == "a.tar.gz" {
+                Err(io::Error::from(io::ErrorKind::NotFound))
+            } else {
+                e.metadata()
+            }
+        });
+        let names: Vec<_> = gone
+            .keys()
+            .map(|(_, p)| p.file_name().unwrap().to_owned())
+            .collect();
+        assert_eq!(
+            names,
+            ["b.tar.gz"],
+            "the vanished archive is skipped, not counted"
+        );
+    }
+
+    #[test]
+    fn a_stderr_that_cannot_be_cloned_leaves_the_child_the_parents_stream() {
+        // the child then writes to the parent's own stderr: it still runs, its output kept
+        let inherit = stdio_or_inherit(Err(io::Error::other("no descriptor")));
+        let status = Command::new("true").stdout(inherit).status().unwrap();
+        assert!(status.success());
+        let cloned = stdio_or_inherit(Ok(std::os::fd::OwnedFd::from(
+            tempfile::tempfile().unwrap(),
+        )));
+        assert!(Command::new("true")
+            .stdout(cloned)
+            .status()
+            .unwrap()
+            .success());
+    }
+
+    #[test]
+    fn free_space_is_measured_at_the_nearest_ancestor_that_exists() {
+        let dir = tempfile::tempdir().unwrap();
+        let here = free_bytes(dir.path()).expect("an existing directory is measured");
+        assert!(free_bytes(&dir.path().join("not/yet/made")).is_some());
+        assert!(here > 0);
+        assert_eq!(statvfs_free(&dir.path().join("absent")), None);
+        assert_eq!(
+            statvfs_free(Path::new("a\0b")),
+            None,
+            "a NUL cannot name a path"
+        );
     }
 }

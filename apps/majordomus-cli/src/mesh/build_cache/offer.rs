@@ -271,11 +271,8 @@ pub(crate) fn current(
         }
     };
     let offer = local_offer(&provider, node, budget);
-    match offer.health {
-        Health::Healthy => {}
-        Health::Degraded => return Err("its own probe says degraded".into()),
-        Health::Unhealthy => return Err("its own probe says unhealthy".into()),
-        Health::Unknown => return Err("its own probe could not say".into()),
+    if let Some(why) = offer.health.refusal() {
+        return Err(why.into());
     }
     let endpoint = if offer.endpoint.contains("://") {
         offer.endpoint

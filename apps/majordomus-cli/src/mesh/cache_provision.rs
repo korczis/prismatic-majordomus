@@ -600,29 +600,28 @@ fn is_root() -> bool {
 
 fn write_file(path: &Path, bytes: &[u8], mode: u32) -> std::io::Result<()> {
     use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
-    if let Some(dir) = path.parent() {
-        std::fs::create_dir_all(dir)?;
-    }
+    // a path without a parent (`/`, or an empty one) has nothing to make: "" is made already
+    std::fs::create_dir_all(path.parent().unwrap_or(Path::new("")))?;
     let tmp = path.with_extension(format!("mj-tmp-{}", std::process::id()));
-    {
-        let mut f = std::fs::OpenOptions::new()
-            .write(true)
-            .create(true)
-            .truncate(true)
-            .mode(mode)
-            .open(&tmp)?;
-        f.write_all(bytes)?;
-    }
-    std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(mode))?;
-    std::fs::rename(&tmp, path)
+    std::fs::OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .mode(mode)
+        .open(&tmp)
+        .and_then(|mut f| f.write_all(bytes))?;
+    std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(mode))
+        .and_then(|()| std::fs::rename(&tmp, path))
 }
 
 fn secret_hex() -> Result<String, String> {
-    secret_from(|b| getrandom::getrandom(b).map_err(|e| e.to_string()))
+    secret_from(getrandom::getrandom)
 }
 
 /// 24 bytes from `fill` as 48 hex digits; a refusal to fill is "no entropy".
-fn secret_from(fill: impl FnOnce(&mut [u8]) -> Result<(), String>) -> Result<String, String> {
+fn secret_from<E: std::fmt::Display>(
+    fill: impl FnOnce(&mut [u8]) -> Result<(), E>,
+) -> Result<String, String> {
     let mut b = [0u8; 24];
     fill(&mut b).map_err(|e| format!("no entropy: {e}"))?;
     Ok(b.iter().map(|x| format!("{x:02x}")).collect())
@@ -1288,13 +1287,13 @@ mod tests {
         assert_eq!(
             secret_from(|b| {
                 b.fill(0xab);
-                Ok(())
+                Ok::<(), String>(())
             })
             .unwrap(),
             "ab".repeat(24)
         );
         assert_eq!(
-            secret_from(|_| Err("device gone".into())),
+            secret_from(|_| Err("device gone")),
             Err("no entropy: device gone".into())
         );
     }
