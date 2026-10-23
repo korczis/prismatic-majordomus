@@ -63,9 +63,16 @@ fn expand_home(path: &str) -> String {
 }
 
 impl Remote {
-    /// This machine, as a host: the script runs under `sh` here. What the tests use as a
-    /// host, with real processes standing for the waiters.
-    #[cfg(test)]
+    /// This machine, as a host: the script runs under `sh` here. What `mesh who` reads a
+    /// local process through, and what the tests use as a host, with real processes
+    /// standing for the waiters.
+    ///
+    /// ```
+    /// use majordomus_cli::offload::remote::Remote;
+    /// let out = Remote::local().run("echo \"$1\"", &["here"], None).unwrap();
+    /// assert!(out.ok());
+    /// assert_eq!(out.stdout, "here\n");
+    /// ```
     pub fn local() -> Remote {
         Remote {
             prefix: Vec::new(),
