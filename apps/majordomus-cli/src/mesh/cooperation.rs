@@ -1241,7 +1241,7 @@ struct BeatWindow {
 
 /// What `mesh doctor` reads of a runtime's session beats (I3990).
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-pub struct SessionBeatTally {
+pub(crate) struct SessionBeatTally {
     /// Session beats written since the runtime started.
     pub written: u64,
     /// Session beats withheld since it started because the window's limit was reached.
@@ -1686,7 +1686,7 @@ impl Cooperation {
     }
 
     /// The session beats this runtime wrote and withheld, for `mesh doctor` (I3990).
-    pub fn session_beat_tally(&self) -> SessionBeatTally {
+    pub(crate) fn session_beat_tally(&self) -> SessionBeatTally {
         let window = self.beat_window.lock().expect("cooperation beat window");
         SessionBeatTally {
             written: window.written,
@@ -1703,7 +1703,7 @@ impl Cooperation {
 
     /// What a session of this runtime last said it was doing, as this runtime holds it —
     /// newer than its last beat when a beat inside the interval changed it (I3990).
-    pub fn session_phase(&self, key: &str) -> Option<String> {
+    pub(crate) fn session_phase(&self, key: &str) -> Option<String> {
         let local = key.strip_prefix(&format!("{}/", self.journal.own_stream()))?;
         self.beats
             .lock()

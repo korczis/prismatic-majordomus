@@ -9420,7 +9420,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
             "apps/majordomus-cli/src/mesh/state.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9466,7 +9466,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
             "apps/majordomus-cli/src/mesh/cooperation.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -9650,7 +9650,7 @@
           "path": "apps/majordomus-cli/tests/mesh_cooperation.rs",
           "category": "integration",
           "inputs": [
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
             "apps/majordomus-cli/src/mesh/repository.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs"
           ]
@@ -23905,6 +23905,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.an-exclusive-claim-lives-by-its-holders-progress": {
+      "kind": "rule",
+      "id": "project.an-exclusive-claim-lives-by-its-holders-progress",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3990_a_claim_lapses_when_its_session_stops_progressing",
+          "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/mesh-check"
+      ],
+      "findings": []
+    },
     "rule:project.an-expedited-landing-is-the-owners-word": {
       "kind": "rule",
       "id": "project.an-expedited-landing-is-the-owners-word",
@@ -25386,17 +25409,7 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/mesh_cooperation.rs",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
-          ]
-        },
-        {
-          "via": "rule",
-          "test": "suite:3990_a_claim_lapses_when_its_session_stops_progressing",
-          "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ]
         }
       ],

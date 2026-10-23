@@ -11,7 +11,8 @@
 #
 #   1. an exclusive claim taken over MCP holds while the session keeps making tool calls, and
 #      a command-line claim kept by `mesh beat --phase "waiting on CI"` holds with it, its
-#      phase shown by `mesh peers`;
+#      phase shown by `mesh peers`; over MCP a client beats for itself and is refused
+#      (`not_own`) when it names another session;
 #   2. when the session only pings, its exclusive claim reads `suspended` (refusing nobody)
 #      while the runtime's own stream stays alive; its advisory claim and its session are
 #      untouched, nothing was closed, and the beating claim still holds;
@@ -85,6 +86,15 @@ C="$(claims_over lib)"
 jq -e 'length == 1 and .[0].state == "held" and (.[0].session | test("/board-p[0-9]+$"))' <<<"$C" >/dev/null \
   || { echo "    the board session does not hold lib: $C"; state | head -60; exit 1; }
 session="$(jq -r '.[0].session' <<<"$C")"
+
+# a client beats for itself over MCP, and never for another session
+mcp 5 tools/call '{"name":"majordomus_mesh_beat","arguments":{"phase":"reading the lease"}}' \
+  -H "mcp-session-id: $sid" > "$T/beat.out" || { echo "    the MCP beat failed"; cat "$T/beat.out"; exit 1; }
+grep -q '"isError":true' "$T/beat.out" && { echo "    the MCP beat was refused:"; cat "$T/beat.out"; exit 1; }
+mcp 6 tools/call '{"name":"majordomus_mesh_beat","arguments":{"session":"legacy","phase":"not mine"}}' \
+  -H "mcp-session-id: $sid" > "$T/beat-other.out" || true
+grep -q 'not_own' "$T/beat-other.out" \
+  || { echo "    an MCP client beat for another session:"; cat "$T/beat-other.out"; exit 1; }
 
 # a command-line claim whose session never beats, and one a long-running process keeps
 expect_exit 0 "$RB" mesh claim tools --session legacy

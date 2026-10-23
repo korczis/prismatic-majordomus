@@ -1403,7 +1403,7 @@ pub enum SessionProgress {
 
 impl SessionProgress {
     /// Whether the session's claims still hold as far as progress goes.
-    pub fn holds(self) -> bool {
+    pub(crate) fn holds(self) -> bool {
         !matches!(self, SessionProgress::Silent { .. })
     }
 }

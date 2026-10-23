@@ -24383,7 +24383,7 @@
         "apps/majordomus-cli/src/mesh/cooperation.rs",
         "apps/majordomus-cli/tests/mesh_cooperation.rs",
         "docs/MESH.md",
-        ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
+        ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
       ],
       "non_scope": [],
       "objective": "Bind each link hello to its intended recipient inside the signed bytes, refuse a hello addressed elsewhere, and make the documented check order the one the code runs.",
@@ -31590,7 +31590,7 @@
       ],
       "objective": "Bring rule project.mesh-cooperation-is-authenticated to the check order accept_hello runs, with the nonce cache last and the recipient check before it, as a new version of the blocking rule, and hold the code to it with a test.",
       "why": "Split from I2132 on 2026-10-14. I2132 bound each hello to its recipient and made docs/MESH.md state the order the code checks in, and its desired_state said 'Not done here' of the rule, which still lists the nonce fourth; correcting it is a version bump of a blocking rule that scripts/ci/mesh-check and case 301 name by file. Its acceptance criteria still required rule and code to agree, so it could never close. Baseline audit of 2026-10-09 at master 1fb8d6be44, mesh drift 1.",
-      "current_state": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md says the answerer verifies 'in order' signature, timestamp, nonce, protocol, self, repository, trust, and has no recipient check. docs/MESH.md lists the ten checks in the code's order, with the recipient (misaddressed) seventh and the nonce cache last, while its diagram still reads 'signature · freshness · nonce · protocol · self · repository · trust'. scripts/ci/mesh-check and test/cases/301_the_mesh_stays_one_subsystem.sh name the v1 rule file. No test names the order Cooperation::accept_hello (apps/majordomus-cli/src/mesh/cooperation.rs) checks in.",
+      "current_state": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md says the answerer verifies 'in order' signature, timestamp, nonce, protocol, self, repository, trust, and has no recipient check. docs/MESH.md lists the ten checks in the code's order, with the recipient (misaddressed) seventh and the nonce cache last, while its diagram still reads 'signature · freshness · nonce · protocol · self · repository · trust'. scripts/ci/mesh-check and test/cases/301_the_mesh_stays_one_subsystem.sh name the v1 rule file. No test names the order Cooperation::accept_hello (apps/majordomus-cli/src/mesh/cooperation.rs) checks in.",
       "desired_state": "A new version of the rule states the order accept_hello checks in, the recipient check included and the nonce cache last with its reason; scripts/ci/mesh-check, case 301 and the docs/MESH.md diagram follow the new version; a test sends hellos that fail two checks at once and asserts the refusal of the earlier one, for each adjacent pair the rule orders.",
       "acceptance_criteria": [
         "The rule's check order and the code's check order are the same, and a test names the order"
@@ -58592,14 +58592,10 @@
         "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
         "docs/MESH.md",
         "docs/claims/mesh-liveness-expiry.md",
-        "docs/CLAIMS.yaml",
         "site/content/guarantees/mesh-liveness-expiry.md",
         ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
-        ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
-        ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
-        ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
-        ".ai/repo/project/issues/I2132.yaml",
-        ".ai/repo/project/issues/I2703.yaml"
+        ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+        ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
       ],
       "non_scope": [
         "Adding session_ttl_seconds to .ai/repo/mesh/majordomus.yaml: an older executable refuses a key it does not know",
@@ -77151,7 +77147,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2901",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -77889,7 +77885,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2902",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -78609,7 +78605,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2903",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -79323,7 +79319,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2904",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -80043,7 +80039,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2908",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -80745,7 +80741,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2909",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -81447,7 +81443,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2910",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -82137,7 +82133,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2911",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -82833,7 +82829,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2912",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -83511,7 +83507,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2913",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -84183,7 +84179,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2914",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -84849,7 +84845,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2918",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -85509,7 +85505,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2919",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -86163,7 +86159,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3002",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -86811,7 +86807,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3003",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -87453,7 +87449,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3004",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -88089,7 +88085,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3005",
-      "message": "shares .ai/repo/project with I3990; they may not run concurrently"
+      "message": "shares docs with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90062,12 +90058,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3113",
-      "message": "shares docs/CLAIMS.yaml with I3990; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3115",
       "message": "shares scripts/generate-site-data with I3116; they may not run concurrently"
     },
@@ -90388,12 +90378,6 @@
       "code": "scope_conflict",
       "subject": "I3120",
       "message": "shares docs/CLAIMS.yaml with I3829; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
-      "subject": "I3120",
-      "message": "shares docs/CLAIMS.yaml with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -90939,7 +90923,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3163",
-      "message": "shares docs/CLAIMS.yaml with I3990; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/cockpit with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -92456,12 +92440,6 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "subject": "I3373",
-      "message": "shares .ai/repo/project/issues with I3990; they may not run concurrently"
-    },
-    {
-      "level": "WARN",
-      "code": "scope_conflict",
       "subject": "I3376",
       "message": "shares docs/ECONOMICS.md with I3820; they may not run concurrently"
     },
@@ -93801,7 +93779,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3829",
-      "message": "shares docs/CLAIMS.yaml with I3990; they may not run concurrently"
+      "message": "shares docs/claims with I3990; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -93952,7 +93930,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 5149,
+      "count": 5146,
       "examples": [
         {
           "level": "WARN",

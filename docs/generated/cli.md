@@ -4806,7 +4806,7 @@ Examples:
 - **Keep a waiting session's exclusive claims excluding** — A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.
 
   ```console
-  $ majordomus mesh beat --session lander --phase 'waiting on CI'
+  $ majordomus mesh beat --session lander --phase waiting-on-ci
   ```
 
   Verified: exits 10.

@@ -7986,7 +7986,7 @@
             "file:.ai/repo/rules/project/integration-follows-the-current-master.v3.md",
             "file:.ai/repo/rules/project/an-expedited-landing-is-the-owners-word.v1.md",
             "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
-            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+            "file:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
             "file:docs/INTEGRATION.md",
             "file:docs/MESH.md",
             "file:docs/RELEASE.md",
@@ -11993,7 +11993,7 @@
           "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
           "implementation": "apps/majordomus-cli/src/mesh/state.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -12024,7 +12024,7 @@
           "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
           "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -12147,7 +12147,7 @@
           "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
           "implementation": "apps/majordomus-cli/src/mesh/repository.rs",
           "responsibility": "none",
-          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
@@ -36194,7 +36194,7 @@
             "apps/majordomus-cli/src/mesh/cooperation.rs",
             "apps/majordomus-cli/tests/mesh_cooperation.rs",
             "docs/MESH.md",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md"
+            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
           ],
           "slug": "a-hello-names-its-recipient",
           "started_at": "2026-10-17T12:01:16Z",
@@ -64084,14 +64084,10 @@
             "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
             "docs/MESH.md",
             "docs/claims/mesh-liveness-expiry.md",
-            "docs/CLAIMS.yaml",
             "site/content/guarantees/mesh-liveness-expiry.md",
             ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
-            ".ai/repo/adrs/0167-work-moves-through-seats-on-the-mesh-and-lands-in-combined-tops.md",
-            ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
-            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
-            ".ai/repo/project/issues/I2132.yaml",
-            ".ai/repo/project/issues/I2703.yaml"
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ],
           "slug": "a-claim-lives-by-its-holders-progress",
           "updated_at": "2026-10-23",
@@ -75493,6 +75489,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "rule",
+        "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "summary": "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat",
+        "route": "/cockpit/objects/rule/project-an-exclusive-claim-lives-by-its-holders-progress-1",
+        "source": ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.mesh-cooperation-is-authenticated@1"
+          ],
+          "tags": [
+            "mesh",
+            "cooperation",
+            "liveness",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "rule",
         "label": "project.an-expedited-landing-is-the-owners-word@1",
@@ -76354,12 +76371,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "rule",
-        "label": "project.mesh-cooperation-is-authenticated@2",
+        "label": "project.mesh-cooperation-is-authenticated@1",
         "summary": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
-        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-2",
-        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
+        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -77246,7 +77263,8 @@
             "project.integration-follows-the-current-master@3",
             "project.an-expedited-landing-is-the-owners-word@1",
             "project.work-is-claimed-before-it-is-built@1",
-            "project.mesh-cooperation-is-authenticated@2"
+            "project.mesh-cooperation-is-authenticated@1",
+            "project.an-exclusive-claim-lives-by-its-holders-progress@1"
           ],
           "tags": [
             "process",
@@ -96283,7 +96301,7 @@
       },
       {
         "source": "majordomus://adr/adr-0067",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "put_in_force"
       },
       {
@@ -97963,7 +97981,7 @@
       },
       {
         "source": "majordomus://adr/adr-0126",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "put_in_force"
       },
       {
@@ -99228,7 +99246,7 @@
       },
       {
         "source": "majordomus://adr/adr-0167",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "put_in_force"
       },
       {
@@ -104708,7 +104726,7 @@
       },
       {
         "source": "majordomus://claim/mesh-claims-cross-runtime",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
       },
       {
@@ -104748,7 +104766,7 @@
       },
       {
         "source": "majordomus://claim/mesh-cooperation-links",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
       },
       {
@@ -104908,7 +104926,7 @@
       },
       {
         "source": "majordomus://claim/mesh-repository-isolation",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
       },
       {
@@ -125497,6 +125515,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -126042,12 +126070,12 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
         "kind": "depends_on"
       },
@@ -126488,6 +126516,11 @@
       },
       {
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "target": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "depends_on"
       },
@@ -126498,7 +126531,7 @@
       },
       {
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
-        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "depends_on"
       },
       {
@@ -134413,8 +134446,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3770,
-      "edges": 8717,
+      "nodes": 3771,
+      "edges": 8720,
       "acyclic": false,
       "truncated": false
     }

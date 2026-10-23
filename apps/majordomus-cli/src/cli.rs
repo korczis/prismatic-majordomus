@@ -7538,7 +7538,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
             id: "mesh-beat",
             title: "Keep a waiting session's exclusive claims excluding",
             description: "A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.",
-            argv: &["mesh", "beat", "--session", "lander", "--phase", "waiting on CI"],
+            argv: &["mesh", "beat", "--session", "lander", "--phase", "waiting-on-ci"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

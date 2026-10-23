@@ -916,7 +916,7 @@ majordomus mesh verify            # a live round with every dialed peer, converg
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
 majordomus mesh release <claim-key>
-majordomus mesh beat --session s1 --phase 'waiting on CI run 123'   # keep s1's exclusive claims excluding while it waits
+majordomus mesh beat --session lander --phase waiting-on-ci   # keep lander's exclusive claims excluding while it waits
 majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>

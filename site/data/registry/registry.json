@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "4a752b02dbbbdb281008744a6f4f156a50f29394526d7dcac4ceaa388b90decb",
+    "fingerprint": "140f1b5383e5c31f422af1f109bbbc74290989e413b95ff5da817e255b2db473",
     "summary": {
-      "total": 3316,
+      "total": 3317,
       "builtin": 209,
-      "declarative": 3107,
+      "declarative": 3108,
       "by_kind": {
         "command": 33,
         "query": 176,
-        "resource": 3107
+        "resource": 3108
       },
       "by_stability": {
         "behaviorally_verified": 143,
         "experimental": 56,
-        "implemented": 3117
+        "implemented": 3118
       },
       "mcp_tools": 198,
-      "mcp_resources": 3162,
+      "mcp_resources": 3163,
       "http_routes": 203,
       "cli_commands": 112,
       "modules": 92,
@@ -86905,7 +86905,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 189,
+        "capabilities": 190,
         "capability_ids": []
       },
       {
@@ -87141,7 +87141,7 @@
     ]
   },
   "index": {
-    "fingerprint": "31c8fb8d1d01826fb5c1bcc308043c14dc4a624fd9e0cdf95df1be0f307aebab",
+    "fingerprint": "551db3a28fdcc75eaa2cd949ccda8396abacbf09cf8b197d98d04018c1937ba0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -87190,7 +87190,7 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 35,
-      "rule": 189,
+      "rule": 190,
       "scope": 1,
       "session": 91,
       "skill": 8,
@@ -88166,7 +88166,7 @@
         "path": ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 24631,
+        "bytes": 24625,
         "tags": [
           "mesh",
           "cooperation",
@@ -94361,7 +94361,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 77494
+        "bytes": 77492
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -94433,7 +94433,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 804205
+        "bytes": 803686
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -108149,7 +108149,7 @@
         "path": ".ai/repo/project/issues/I3990.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 8015
+        "bytes": 7833
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -112515,6 +112515,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "rule",
+        "identity": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "title": "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat",
+        "description": "A session that does real work has a session beat written for it; an exclusive claim whose session stopped beating is suspended and refuses nobody, even while its runtime beats on, so no work waits on a holder stuck on a dialog, hung or crashed (I3990).",
+        "path": ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 5103,
+        "tags": [
+          "mesh",
+          "cooperation",
+          "liveness",
+          "doctrine"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "rule",
         "identity": "project.an-expedited-landing-is-the-owners-word@1",
@@ -113180,15 +113197,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.mesh-cooperation-is-authenticated@2",
+        "uri": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "rule",
-        "identity": "project.mesh-cooperation-is-authenticated@2",
+        "identity": "project.mesh-cooperation-is-authenticated@1",
         "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
-        "description": "A runtime cooperates only over a link whose handshake proved the peer's key live, its repository identical, its protocol compatible and its key trusted; everything cooperative travels as signed events of the one journal, folds into one state, and reaches the CLI, HTTP, OpenAPI, MCP and the Cockpit through the mesh capability module alone. Version 2, 2026-10-23 - an exclusive claim is suspended while its session makes no progress (I3990).",
-        "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v2.md",
+        "description": "A runtime cooperates only over a link whose handshake proved the peer's key live, its repository identical, its protocol compatible and its key trusted; everything cooperative travels as signed events of the one journal, folds into one state, and reaches the CLI, HTTP, OpenAPI, MCP and the Cockpit through the mesh capability module alone.",
+        "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8401,
+        "bytes": 5479,
         "tags": [
           "mesh",
           "security",
@@ -113894,7 +113911,7 @@
         "path": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 13599,
+        "bytes": 13664,
         "tags": [
           "process",
           "integration",
@@ -118399,7 +118416,7 @@
         "identity": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "source_class": "case",
-        "bytes": 9592
+        "bytes": 10374
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -121173,7 +121190,7 @@
         "id",
         "version"
       ],
-      "objects": 189
+      "objects": 190
     },
     {
       "name": "scope",
@@ -142814,9 +142831,9 @@
                   "--session",
                   "lander",
                   "--phase",
-                  "waiting on CI"
+                  "waiting-on-ci"
                 ],
-                "command": "majordomus mesh beat --session lander --phase 'waiting on CI'",
+                "command": "majordomus mesh beat --session lander --phase waiting-on-ci",
                 "setup": [],
                 "expectation": "exits 10"
               }
