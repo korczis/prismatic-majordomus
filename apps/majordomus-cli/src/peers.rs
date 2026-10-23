@@ -1380,12 +1380,28 @@ mod tests {
             }
         }
         let line = board.summary();
-        assert!(!line.contains(&named), "a claim name is cut, never carried whole: {line}");
+        assert!(
+            !line.contains(&named),
+            "a claim name is cut, never carried whole: {line}"
+        );
         let room = SUMMARY_LINE + "; 12 more peer(s), every claim in full: majordomus_peers".len();
-        assert!(line.chars().count() <= room, "{} chars: {line}", line.chars().count());
+        assert!(
+            line.chars().count() <= room,
+            "{} chars: {line}",
+            line.chars().count()
+        );
         assert!(line.starts_with("p1 "), "the first peer is named: {line}");
-        assert!(line.contains("2 more |") || line.contains("2 more)"), "{line}");
-        assert!(line.contains("more peer(s), every claim in full: majordomus_peers"), "{line}");
-        assert!(!line.contains(&long), "an intent is cut, never carried whole: {line}");
+        assert!(
+            line.contains("2 more |") || line.contains("2 more)"),
+            "{line}"
+        );
+        assert!(
+            line.contains("more peer(s), every claim in full: majordomus_peers"),
+            "{line}"
+        );
+        assert!(
+            !line.contains(&long),
+            "an intent is cut, never carried whole: {line}"
+        );
     }
 }

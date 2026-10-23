@@ -119,7 +119,10 @@ fn listed_in_summary(board: &BoardView) -> bool {
     board.checkout.this_checkout
         || board.attached > 0
         || board.reason.is_some()
-        || !matches!(board.standing, ServerStanding::Absent | ServerStanding::Stale)
+        || !matches!(
+            board.standing,
+            ServerStanding::Absent | ServerStanding::Stale
+        )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -484,7 +487,11 @@ mod tests {
         let narrow: PeerListInput =
             serde_json::from_str(r#"{"checkouts":"this"}"#).expect("the narrow word");
         assert_eq!(narrow.checkouts, Checkouts::This);
-        assert_eq!(asked_nothing.view, PeerListView::Summary, "the summary is the default");
+        assert_eq!(
+            asked_nothing.view,
+            PeerListView::Summary,
+            "the summary is the default"
+        );
         let full: PeerListInput = serde_json::from_str(r#"{"view":"full"}"#).expect("full");
         assert_eq!(full.view, PeerListView::Full);
         assert!(serde_json::from_str::<PeerListInput>(r#"{"view":"everything"}"#).is_err());
@@ -518,7 +525,13 @@ mod tests {
             board("gone", false, ServerStanding::Stale, 0, None),
             board("serving", false, ServerStanding::Ready, 0, None),
             board("old", false, ServerStanding::Outdated, 2, None),
-            board("binding", false, ServerStanding::Starting, 0, Some("starting")),
+            board(
+                "binding",
+                false,
+                ServerStanding::Starting,
+                0,
+                Some("starting"),
+            ),
         ];
         let omitted = summarise(&mut boards);
         let listed: Vec<&str> = boards.iter().map(|b| b.checkout.id.as_str()).collect();
@@ -531,7 +544,13 @@ mod tests {
             "every covered checkout is listed or counted, never neither"
         );
         // a board that could not be read is listed whatever its standing says
-        let mut unread = vec![board("x", false, ServerStanding::Absent, 0, Some("no answer"))];
+        let mut unread = vec![board(
+            "x",
+            false,
+            ServerStanding::Absent,
+            0,
+            Some("no answer"),
+        )];
         assert!(summarise(&mut unread).is_empty());
         assert_eq!(unread.len(), 1);
     }
