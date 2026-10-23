@@ -1,0 +1,35 @@
+id: I4185
+milestone: failure-is-visible
+title: "A saturated server answers its probe at once and refuses excess work with a timely 503"
+slug: saturated-server-answers-its-probe
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Keep the liveness probe off the handler pool that slow handlers and an asset burst saturate, and answer excess work with a 503 at once, counted in perf.counters. The code is apps/majordomus-cli/src/http/deadline.rs (refused_busy counts 503s today), apps/majordomus-cli/src/http/server.rs and apps/majordomus-cli/src/http/router.rs."
+why: "The owner handed over an ask in campaigns/majordomus-performance-rescue-2026-10-23 (prompt 07) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: http/deadline.rs holds ConnectionCounts with refused_busy, documented as requests answered 503 because every handler was busy; I2156 covers slow clients, I2700 a cheap liveness route and I2488 measures stacks."
+desired_state: "With N slow handlers and an asset burst, /health answers within budget, the excess is refused with a timely 503, and the 503 count appears in perf.counters."
+scope:
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/perf.rs"
+  - "test/cases/4185_a_saturated_server_still_answers_its_probe.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4185.yaml"
+non_scope:
+  - "Slow-client deadlines, which I2156 covers"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "With N slow handlers plus an asset burst, /health answers within its budget"
+  - "Excess work is refused with a 503 within a declared time"
+  - "The 503 count is visible in perf.counters"
+validation:
+  - "bash test/run.sh 4185_a_saturated_server_still_answers_its_probe"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::"
+  - "majordomus bench --check"
+evidence_required:
+  - probe_under_saturation
+  - timely_503
+  - counter_in_perf
+created_at: 2026-10-23
+updated_at: 2026-10-23

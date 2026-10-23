@@ -1,0 +1,41 @@
+id: I2569
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "The bench reads a screen from 1, 20 and 100 readers at once, and a hundred readers of an unread source run its handler once"
+slug: the-bench-reads-a-screen-from-many-readers
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Give the bench a concurrency dimension for the UI's targets and record the result as a tracked baseline, and prove that a hundred simultaneous readers of a source never read before cause one handler run."
+why: "campaigns/majordomus-ui-speed-prompt-pack/01-AUDIT.md asks for a machine-readable baseline at 1, 20 and 100 concurrency, and 03-CACHE.md asks to prove that 100 concurrent misses compute once. The bench times each screen with one reader at a time; I2488 adds idle subscribers and I2489 adds the request after a move, and neither adds concurrent readers. The server answers at most 64 requests at once (http/server.rs MAX_HANDLERS), so what the hundredth reader waits is unmeasured."
+current_state: "apps/majordomus-cli/src/bench/projection.rs derives system.http.ui.<route> and system.http.live.ui.<route> from SCREENS and PANELS, each sampled serially. No file under src/bench mentions concurrency. tests/executor.rs proves one handler run for concurrent execute misses on one key and one worker per source in the readings store, with a handful of callers."
+desired_state: "The bench accepts a list of reader counts for the system.http targets and records p50, p95 and p99 per count in the results it already writes under .ai/repo/benchmarks/rust, with the count as part of the target's key so an existing baseline stays comparable. The default profile runs 1; a named profile runs 1, 20 and 100. A test starts one hundred readers of one unread source through Context::read and asserts one handler run and one hundred equal readings."
+scope:
+  - "apps/majordomus-cli/src/bench/projection.rs"
+  - "apps/majordomus-cli/src/bench/runner.rs"
+  - "apps/majordomus-cli/src/bench/system.rs"
+  - "apps/majordomus-cli/src/bench/results.rs"
+  - "apps/majordomus-cli/tests/executor.rs"
+  - "apps/majordomus-cli/tests/bench.rs"
+  - ".ai/repo/benchmarks/rust"
+  - "docs/PERFORMANCE.md"
+  - ".ai/repo/project/issues/I2569.yaml"
+non_scope:
+  - "A budget or a gate over the concurrent numbers: I2489 owns the gate and may adopt them"
+  - "Raising MAX_HANDLERS or changing the HTTP stack: I2488 decides that from its own measurement"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "A bench run with reader counts 1, 20 and 100 writes one result per screen and count, each with p50, p95, p99 and the count in its key"
+  - "A baseline recorded before this change still compares against the count-1 results without a rename"
+  - "One hundred simultaneous readers of an unread source cause exactly one handler run and receive equal readings"
+  - "The quick profile's run time does not grow: it samples one reader only"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test bench"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "bin/majordomus bench system.http --profile quick --no-write"
+evidence_required:
+  - "ui_concurrency_bench_results"
+  - "hundred_readers_one_handler_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

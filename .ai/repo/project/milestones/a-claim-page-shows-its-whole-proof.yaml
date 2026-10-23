@@ -1,0 +1,48 @@
+id: a-claim-page-shows-its-whole-proof
+title: "A claim's public page shows every link from the statement to its proof, and the verdict reads the same on every surface"
+slug: a-claim-page-shows-its-whole-proof
+order: 351
+priority: p2
+problem: "The evidence join already knows more than the site shows. ProofState (apps/majordomus-cli/src/evidence/mod.rs:837) has seven states, and ClaimProof (:1061) carries the execution, the inputs changed since it, a detail sentence and the command that reruns the test. The site keeps four fields of that per claim: apps/majordomus-cli/src/site.rs claim_evidence (around :1050-1125) writes status, state, label and supported into site/data/registry/product.json, and site/templates/claim.html:19 picks one of four fixed sentences from `supported`, so a stale claim and a failing one read alike and the run's date, commit and changed files never reach the reader. The chain on the claim page stops one link short by its own account: claim.html:24-28 says no step names a CI gate because no dataset joins a claim to the gate that runs its test, while claim.html:103 and the meaning of `guaranteed` in docs/CLAIMS.yaml say a guaranteed claim is blocking."
+outcome: "A reader clicks from a public claim to its implementation, its test, the gate that runs the test, the recorded run with its commit and date, what changed since and the command that reproduces it, each read from the join that decides it. A failing or stale run reads as failing or stale on the command line, the claim page, the feature page and the homepage band alike, and a guaranteed claim whose test no blocking gate runs is refused."
+current_state: "Measured at master 890e112d04. The derive-infer-enforce pack is mostly paid on master or planned elsewhere, as the non_scope entries below record item by item; the two gaps this milestone plans are the verdict detail and cross-surface agreement of a claim (I2422) and the claim-to-gate join (I2423). Cases 124 and 502 prove the states in the executable; case 341 proves a claim reaches the reader with its test; case 544 holds the homepage's declared and supported figures apart; no case asserts that the built pages show the state the executable derived, and no dataset names a claim's gate."
+desired_state: "product.json carries, per claim, what ClaimProof already says, recomputing nothing; the claim page draws the gate step and the verdict step with commit, date, changed inputs, detail and rerun command; a fixture case with one failing and one stale guaranteed claim finds the same state on every surface that shows it; claim-proof-check fails a guaranteed claim no blocking gate runs, naming the claim and its test."
+scope:
+  - "apps/majordomus-cli/src/site.rs"
+  - "apps/majordomus-cli/src/evidence/subject.rs"
+  - "apps/majordomus-cli/src/evidence/mod.rs"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "site/templates/claim.html"
+  - "site/templates/feature.html"
+  - "scripts/ci/claim-proof-check"
+  - "scripts/site-check"
+  - "scripts/ci/homepage-check"
+  - "docs/EVIDENCE.md"
+  - "docs/CI.md"
+non_scope:
+  - "Changing the seven proof states or how the join decides them: the states are right, the site drops them."
+  - "Derive pack 00 and 01, the fact inventory: docs/HARDCODING_LEDGER.yaml is that register (22 rows, 8 fixed, 14 open at 890e112d04) and I2226 (owner packs, unmerged) makes a test read it. The version-drift hypothesis does not reproduce in source: every version field under site/data/registry and site/data/generated is 0.20.0 at 890e112d04; the navbar's second derivation of the latest release is b2 I2372 and the deploy's version check b2 I2373 (unmerged). Not repeated."
+  - "Derive pack 02, one truth derived everywhere: case 97_product_features proves a feature file reaches the index, the command line, JSON, MCP and the site projection with no other edit; an object reaching four surfaces is I2227, single declarations I2228, I2229 and I2152, transport parity I2150, Cockpit page declarations I2230 (owner packs, unmerged); incremental derive and its equality under reordering are b2 I2341-I2346 (unmerged). Not repeated."
+  - "Derive pack 03 beyond the site: a new guaranteed claim refused without a recorded run is I2259, forged, stale or wrong-target evidence I2223, a rule proven only by a run I2160 (owner packs, unmerged); the age of every shown fact is b2 I2362 (unmerged). Not repeated."
+  - "Derive pack 04, invariants A to G: A, B and D are the rules derived-once, derived-files-regenerated, product-surface-derived and interfaces-are-projections on master with the generation-converges gate; C is no-claim-without-test plus I2259 and the gate half planned here as I2423; E is release-is-a-projection with b2 I2372 and I2373; F is b2 I2357; G is runtime trust I2261 and b2 I2334 and I2339; wiring in both directions I2248 and I2249; the installed external fixture I2162, I2255 and b2 I2368 (all unmerged). Not repeated."
+  - "Derive pack 05 beyond the claim page: copy checked against claims b2 I2375, first screen b2 I2376, Cockpit pages I2155 and its confirmation I2153 (unmerged). Not repeated."
+  - "Derive pack 06, CI, release and dogfood: b2's convergence and autopilot milestones (I2310-I2371), the release follow-through I2279-I2281, the CI budget work announced as I2396 and I2397 and the release-in-15-minutes pack (I2303). Not repeated."
+acceptance_criteria:
+  - "A stale guaranteed claim and a failing one read differently on their claim pages, each with its run's commit, date and, for the stale one, the changed inputs"
+  - "In one fixture, the state of each claim on the command line, in product.json, on the claim page, on the feature page and in the homepage band is the same, and none draws an unsupported claim as supported"
+  - "Each claim with a runnable test names the gates of the gate model that run it, and the claim page draws that step"
+  - "A guaranteed claim whose test no blocking gate runs fails scripts/ci/claim-proof-check, naming the claim and its test"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/claim-proof-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 124_evidence 341_a_claim_shows_the_test_that_settles_it 507_evidence_subjects_are_derived"
+evidence_required:
+  - "verdict_reads_alike_on_every_surface"
+  - "guaranteed_claim_without_gate_refused"
+risks:
+  - "Shipping the run's detail onto public pages can carry what a ledger line holds, a machine path or a host name; site-check section 12 must see the new fields and a case must prove it refuses one."
+  - "A claim-to-gate join written as a list in the template or the check would be the duplicate inventory this milestone exists to avoid; the join is read from the gate model."
+depends_on:
+  - "test-evidence"
+created_at: 2026-10-11
+updated_at: 2026-10-11

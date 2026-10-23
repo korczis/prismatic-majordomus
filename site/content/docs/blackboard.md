@@ -1,7 +1,7 @@
 +++
 title = "The peer blackboard"
 description = "the peer blackboard: who works on what across every checkout's board and every linked machine, one projection of the board, the mesh journal and the monitor — workers keyed by explicit identifiers, the claims that meet, the reviews and handovers that wait, and what could not be read"
-weight = 67
+weight = 68
 [extra]
 source = "docs/BLACKBOARD.md"
 +++

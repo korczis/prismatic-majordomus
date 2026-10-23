@@ -1,0 +1,62 @@
+id: the-ui-starts-work-through-the-executor
+title: "The UI starts work through the executor, and shows the execution it started"
+slug: the-ui-starts-work-through-the-executor
+order: 520
+priority: p1
+problem: "campaigns/majordomus-intent-driven-ui-prompt-pack/02-ACTION-PLANE.md asks for a typed, policy-enforced action plane, so that majordomus ui can run every authorised capability without a second implementation, and campaigns/majordomus-intent-driven-ui-prompt-pack/04-UI-PROJECTIONS.md and 05-LIVE-MESH.md ask for executions, capability forms and mesh actions on the UI. Most of the plane exists: an execution is a watched call of a registered capability (ADR 0033, docs/EXECUTIONS.md), executions.start is served over the command line, HTTP and MCP, and the Cockpit's capability page has a form generated from the input schema (runner_form in apps/majordomus-cli/src/cockpit/pages.rs) and the Cockpit's issue page starts plan.transition as an execution (apps/majordomus-cli/src/cockpit/plan.rs). The primary surface has none of it: /ui answers 405 to anything but GET (apps/majordomus-cli/src/ui/mod.rs), the Command screen lists executions as text with no page for one, and docs/MAJORDOMUS_UI.md says that nothing on the UI starts work yet. A person who reads the delivery on /ui has to leave it for the Cockpit or a terminal to act on what they read, and a repeated click or a retried request starts a second execution because executions.start takes no key."
+outcome: "A person on /ui opens a capability, an issue or a mesh node, starts the work that page names as an execution of the capability that owns it, and lands on that execution's page on the UI, where its state, steps, log and outcome are read from the execution engine. Every control is a projection of a capability's own declaration, a control that cannot be used says why, and a request repeated under one key starts one execution."
+current_state: "Measured at 3491f35cab. The UI's screens are SCREENS in apps/majordomus-cli/src/ui/mod.rs; none of them reads executions.get or executions.events, and the only execution source on the UI is executions.list on /ui/command. No file under apps/majordomus-cli/src/ui or share/ui posts anything: share/ui/ui.js only fetches fragments. The generated runner form and the confirmation on a changing effect live in the Cockpit only (cockpit/pages.rs, share/cockpit/runner.js). StartInput in capability/builtin/executions.rs has two fields, capability and input. apps/majordomus-cli/src/ui/mesh.rs states that the inspector offers no action, and apps/majordomus-cli/src/ui/issues.rs offers no move."
+desired_state: "The UI's routes still answer reads only. A control on a UI page posts to the route the registry declares for executions.start, exactly as the Cockpit's does, from one form builder both surfaces import. /ui/command opens one execution by id. The capability inspector, the issue inspector and the mesh inspector each offer the executions their capabilities declare. executions.start accepts a caller's key and answers the first execution for a repeat."
+scope:
+  - ".ai/repo/project"
+  - ".ai/repo/features"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/tests"
+  - "share/ui"
+  - "share/cockpit"
+  - "docs"
+  - "test/cases"
+
+non_scope:
+  - "A second way to change the repository: a UI page calls no handler and writes nothing; the execution engine and the capability's declared effect decide what runs (ADR 0033, ADR 0142)"
+  - "An execution that outlives the process that accepted it, a durable queue, retries or a scheduler: docs/EXECUTIONS.md states these are not implemented by decision, and the durable record of a mutation is I1505"
+  - "The stream that tells an open page which readings changed: I2487; until it lands a page of a running execution is read again by the refresh the UI already has"
+  - "Starting worker sessions, assigning work to machines or merging pull requests from the UI: planned with the autonomous delivery pack, not here"
+  - "Authentication of callers beyond loopback: I2123 and ADR 0126"
+
+acceptance_criteria:
+  - "An execution has a page on the UI at a stable address that shows its state, steps, diagnostics, log, input and outcome from executions.get and executions.events, and an unknown id reads as not answered, never as empty"
+  - "A capability's inspector on the UI offers a form generated from its input schema, and submitting it starts an execution through the route the registry declares for executions.start and leads to that execution's page"
+  - "A capability that cannot be started from the page says why in the capability's own words, and no control is drawn that does nothing"
+  - "The UI and the Cockpit build the form from one function, and a capability added to the registry gains a working form on both with no other edit"
+  - "Two executions.start requests that carry one key and one input answer one execution id, and one key with a different input is refused"
+  - "An issue's inspector offers the moves plan.transition takes, and a mesh node's inspector offers the mesh's command capabilities, each as an execution"
+  - "POST to any route under /ui still answers 405, and the published snapshot draws no control"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executions"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 100_execution_plane 1088_the_command_and_capability_screens_answer 1091_no_link_on_the_ui_is_dead"
+  - "majordomus generate --check"
+
+evidence_required:
+  - "execution_page_on_the_ui"
+  - "capability_started_from_the_ui"
+  - "one_form_builder_two_surfaces"
+  - "repeated_start_is_one_execution"
+  - "issue_move_from_the_ui"
+  - "mesh_action_from_the_ui"
+  - "ui_routes_answer_reads_only"
+
+risks:
+  - "A form on the primary surface makes a repository write one click away. The confirmation on a changing effect and the refusal of a remote caller (case 1086) must be proven on the UI's form, not assumed from the Cockpit's."
+  - "Two form builders would drift. The Cockpit's is moved, not copied."
+  - "An execution is forgotten when its process stops. A page that opens a forgotten id must say so, and nothing on the UI may present the list as a history."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

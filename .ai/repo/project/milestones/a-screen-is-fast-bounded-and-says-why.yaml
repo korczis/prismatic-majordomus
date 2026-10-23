@@ -1,0 +1,62 @@
+id: a-screen-is-fast-bounded-and-says-why
+title: "A screen is fast, bounded and able to say why: what the UI speed brief still asks for after the readings"
+slug: a-screen-is-fast-bounded-and-says-why
+order: 540
+priority: p1
+problem: "The owner's brief of 2026-10-11, campaigns/majordomus-ui-speed-prompt-pack/ (00-MASTER.md and the phases 01-AUDIT.md to 06-ENFORCE-RELEASE.md), asks for majordomus ui as a fast derived projection runtime: a measured baseline, no computation on a request, caching that is correct and explainable, conditional requests, preloading, bounded lists and graphs, a live mesh, and budgets a gate enforces. ADR 0142 and I2486 answered its centre on 2026-10-12 (a screen is drawn from the latest readings and never waits for a source), and I2487, I2488 and I2489 plan the stream, the HTTP stack and the budget gate. What the brief asks for beyond those four has no record: a screen is rendered again on every request because it carries no validator; a first reading of an inspector is waited for whole; a graph and the issue list are drawn with every element they hold; nothing explains a reading's standing outside the page that shows it; every move of the repository reads every remembered source again; the bench has no concurrent reader; and the Cockpit still computes on the request."
+outcome: "Every screen of majordomus ui answers a conditional request without rendering, has the readings of a link taken before it is opened, draws no more rows or nodes than a stated bound, and explains each of its readings over a capability and a response header. A move of the repository reads again only the sources that read what moved, the bench measures 1, 20 and 100 readers at once, and the Cockpit's pages are drawn from readings as the UI's are."
+current_state: "Measured at 3491f35cab (0.22.0). Built: capability/readings.rs keeps the latest reading per source and input (REVALIDATE 1 s, WORKERS 4), ui/source.rs asks for readings, and case 1096_no_screen_waits_for_a_source and tests/executor.rs prove it; the executor has a single flight (tests/executor.rs concurrent_misses_on_one_key_run_the_handler_once); cockpit/assets.rs serves assets by digest with ETag, 304 and an immutable Cache-Control; SCREENS and PANELS in ui/mod.rs are the one route list and a test compares them with the dispatcher; Cytoscape is loaded only by a page that draws a graph (share/ui/ui.js); the bench derives system.http.ui.* targets from that list (bench/projection.rs); perf.counters answers the once-only work counters. Planned and open: I2487 (streamed screen, one stream of changed readings), I2488 (tiny_http against axum), I2489 (budgets as policy and a gate), I2481 and I2482 (every entity linked, every link answered). Absent: ui/mod.rs answers every screen with Cache-Control no-cache and no ETag; ui.js has no prefetch; ui/view.rs graph() and ui/issues.rs draw every node and every admitted issue (338 issue records today); no capability lists the readings and no response carries Server-Timing; readings read every remembered source again on any move; no bench target has a concurrent reader; cockpit/pages.rs calls ctx.execute on the request."
+desired_state: "A screen's response carries a validator derived from the readings it was drawn from and a matching request is answered 304 before any rendering. Pointing at or focusing a link takes that link's readings on the server. graph() and the issue list hold a declared bound, say how much is left out and reach the rest through the URL. perf.readings lists every remembered reading with its age, standing, cost and the reason it was last read again, and a screen's response says the same in a Server-Timing header. A move of the repository leaves a source that reads nothing that moved untouched. The bench runs each UI target from 1, 20 and 100 readers at once and records it. The Cockpit's pages ask for readings."
+scope:
+  - ".ai/repo/project"
+  - ".ai/repo/rules/project"
+  - ".ai/repo/benchmarks/rust"
+  - "apps/majordomus-cli/src/ui"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/bench"
+  - "apps/majordomus-cli/src/perf.rs"
+  - "apps/majordomus-cli/tests"
+  - "share/ui"
+  - "test/cases"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/PERFORMANCE.md"
+
+non_scope:
+  - "The readings store itself, the streamed page, the HTTP stack and the budget gate: I2486, I2487, I2488 and I2489 hold them"
+  - "A page or fragment cache that answers from another state of the repository: project.cache-is-invisible and ADR 0142 refuse it"
+  - "A change of template engine or web framework ahead of the measurement I2488 owes"
+  - "A client-side router or application state: ADR 0012 keeps the page a projection"
+  - "Authorization-scoped cache keys: the server has one reader class today, and the remote-caller guard of case 1086 decides writes"
+
+acceptance_criteria:
+  - "A request for a screen that names the validator of an unchanged screen is answered 304 with no body and without rendering the screen"
+  - "A link to an inspector that a reader pointed at is opened without waiting for a first reading"
+  - "A graph given ten thousand nodes and the issue list given ten thousand issues each emit no more than their bound and say how many they left out"
+  - "perf.readings answers every remembered reading, and a screen's response names each source's standing and the render time in Server-Timing"
+  - "A commit that touches nothing a source reads does not run that source's handler"
+  - "The bench records each UI target at 1, 20 and 100 concurrent readers"
+  - "No page under src/cockpit calls a handler on the request"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executor"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source 1091_no_link_on_the_ui_is_dead"
+
+evidence_required:
+  - "screen_conditional_request_tests"
+  - "bounded_graph_and_list_tests"
+  - "readings_explained"
+  - "scoped_rereading_handler_counts"
+  - "ui_concurrency_bench_results"
+  - "cockpit_reads_readings"
+
+risks:
+  - "A validator that covers less than the page shows would answer 304 for a page that should have changed; it must be derived from every reading the screen asked for and from the build that rendered it."
+  - "Scoped re-reading needs each capability to say what it reads; a declaration that is too narrow leaves a stale reading drawn as current, which is the defect ADR 0142 exists to prevent."
+  - "The brief's latency targets (10 ms, 20 ms, 50 ms) are the brief's; the budgets that bind are the keys I2489 puts in the policy after measuring."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

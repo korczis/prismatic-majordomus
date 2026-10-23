@@ -1,0 +1,42 @@
+id: I2550
+milestone: automation-is-scripted-capabilities
+title: "shell check states the baseline: units and lines by directory and disposition, the units nothing in shell calls any more, and a head with more exempt shell than its base is refused"
+slug: shell-check-states-the-baseline
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Extend the shell.check capability so that its answer carries the measured totals the migration is judged by and an order to migrate in, both derived from the tree and the inventory on every call, and add a comparison with a base revision that refuses growth."
+why: "campaigns/majordomus-shellfall-prompt-pack/00-audit-baseline.md asks for a quantified baseline (shell files, lines, entry points), a classification of every unit and a migration graph ordered by dependencies, built from discovery and not curated by hand; 07-enforcement-rollout.md asks for a counted report of the remaining shell. The classification exists as .ai/repo/automation/inventory.jsonl. The numbers do not: ShellReport (apps/majordomus-cli/src/automation/mod.rs) lists units and findings and a count of exemptions per disposition, and no lines, no totals per directory and no order. Producing the figures in this record took a hand-written loop over git ls-files. The inventory's README says the list only shrinks, and nothing checks that: a pull request that adds a shell file together with a record and an exemption passes shell check."
+current_state: "146 governed units and 46,960 lines today (lib 42 and 22,704; scripts 92 and 22,973; share 1 and 830; bin 4 and 342; .githooks 3 and 43; .claude/hooks 4 and 68), known only by counting outside the tool. Each record's facts.callers names who calls the unit, and no command reads it. shell.check has no notion of a base revision."
+desired_state: "majordomus shell check prints, and returns as JSON, units and lines per governed directory and per disposition, and for each exempt unit whether any other shell unit still calls it according to the tree, so the units that can leave first are listed first. majordomus shell check --against <revision> reads the same measurement at that revision from git objects, without a checkout, and exits 10 when the head has more exempt units than it. No count is written to a tracked file. The shell-inventory gate passes the merge base on a pull request."
+scope:
+  - "apps/majordomus-cli/src/automation/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/shell.rs"
+  - "apps/majordomus-cli/src/commands/shell.rs"
+  - ".ai/repo/ci/gates.yaml"
+  - "docs/SHELL.md"
+  - ".ai/repo/automation/README.md"
+  - "test/cases/366_automation_inventory_agrees_with_the_tree.sh"
+  - ".ai/repo/project/issues/I2550.yaml"
+non_scope:
+  - "Recording a line count or a ceiling in the inventory or beside it: a recorded number goes stale, which is why the README forbids it"
+  - "Judging shell embedded in Rust sources, workflows and recipes, which is I2559"
+  - "Timing the suite or CI: majordomus bench and .ai/repo/ci/suite-durations.tsv already hold those baselines"
+depends_on: []
+acceptance_criteria:
+  - "The totals shell check prints for the tree equal a count taken independently in the case with git ls-files and wc"
+  - "In a fixture repository, adding a shell file with a complete record and exemption passes the plain check and fails --against the previous commit with exit 10, naming the unit"
+  - "Deleting a unit and its record passes --against the previous commit"
+  - "--against reads a revision without changing HEAD, the index or the work tree, which the case proves by comparing git status before and after"
+  - "A unit that no other shell unit sources or executes is listed as callable-by-none, and one that is sourced by another is not"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 365_new_shell_is_refused 366_automation_inventory_agrees_with_the_tree"
+  - "bin/majordomus-cli generate --check"
+evidence_required:
+  - "shell_counts_match_independent_count"
+  - "growth_against_base_refused"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,44 @@
+id: I2539
+milestone: the-ui-starts-work-through-the-executor
+title: "An issue's moves are offered where the issue is read: start, verify and done from the UI's inspector"
+slug: an-issues-moves-are-offered-on-the-ui
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Offer on the UI's issue inspector the moves an issue can make, each started as an execution of plan.transition, so that a person who reads that an issue is ready can start it from the page that told them."
+why: "campaigns/majordomus-intent-driven-ui-prompt-pack/README.md describes the expected experience as authorising execution of ready work through existing capabilities, and campaigns/majordomus-intent-driven-ui-prompt-pack/04-UI-PROJECTIONS.md asks that every actionable control call a typed server capability and show its preflight diagnostics and outcome. The capability exists: plan.transition, a command that declares it writes the repository (apps/majordomus-cli/src/capability/builtin/plan.rs). The Cockpit's issue page already starts it as an execution (the function moves in apps/majordomus-cli/src/cockpit/plan.rs). The UI's issue inspector, which ADR 0135 makes the page a person reads first, offers nothing."
+current_state: "apps/majordomus-cli/src/ui/issues.rs draws an issue from plan.issues and plan.status and names no move and no capability that would make one. The moves, their buttons and the command line beside each exist only on /cockpit/plan/<id>."
+desired_state: "The inspector of an issue on /ui/issues lists the moves plan.transition takes, read from capabilities.describe, each with the command line that makes the same move and a control that starts it through the shared runner of I2537. Whether a move is allowed is the capability's answer when asked, never the page's guess. After the execution is final the inspector is read again and shows the record's new stamps. The Cockpit's page and the UI's inspector build the moves from one function."
+scope:
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/cockpit/plan.rs"
+  - "apps/majordomus-cli/src/cockpit/runner.rs"
+  - "share/ui/ui.js"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "apps/majordomus-cli/tests/cockpit_plan.rs"
+  - "test/cases/1080_the_issues_are_browsed.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - ".ai/repo/project/issues/I2539.yaml"
+non_scope:
+  - "A status the page stores or computes: the plan derives it from the record's stamps"
+  - "Starting a worker session for the issue: this records a transition and launches nothing"
+  - "Moves on a milestone: a milestone has no transition capability"
+depends_on:
+  - I2537
+acceptance_criteria:
+  - "The moves the UI's inspector lists are exactly the values the input schema of plan.transition declares, and a value added to that schema appears with no edit to the UI"
+  - "Through a served fixture, starting the start move of a ready issue from the UI's control stamps started_at on that issue's record and the inspector shows the plan's new status after a reload"
+  - "A move the capability refuses leaves the record unchanged and the execution's inspector shows the capability's refusal"
+  - "Each move shows the command line that makes it from a terminal"
+  - "The Cockpit's issue page and the UI's inspector call one function for the moves, and tests/cockpit_plan.rs passes unchanged"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::issues"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test cockpit_plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1080_the_issues_are_browsed 1091_no_link_on_the_ui_is_dead"
+evidence_required:
+  - "issue_move_from_the_ui"
+  - "refused_move_changes_nothing"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,37 @@
+id: I4175
+milestone: the-ui-runs-and-explains
+title: "Choosing Implement on an issue in /ui creates one authorised execution that a local worker runs in an isolated worktree, and a repeated click returns the same execution id"
+slug: implement-from-the-ui-is-idempotent
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "An Implement action on an issue page (apps/majordomus-cli/src/ui/issues.rs) starts one authorised execution through apps/majordomus-cli/src/execution that a local worker runs in a worktree created by the worktree topology; an idempotency key derived from the issue and actor makes a double click, reload or retry return the same execution id, and with no worker enabled the page states the waiting reason."
+why: "The ask is in campaigns/majordomus-mission-control-pack-2026-10-22 (E2E-01, 02, 06; on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: I3225 runs a capability from a form and I2781 moves plan markers; apps/majordomus-cli/src/ui/issues.rs and src/execution exist; no action starts a worker execution from /ui."
+desired_state: "One click on an issue produces exactly one execution, one worktree and one claim."
+scope:
+  - ".ai/repo/project/issues/I4175.yaml"
+  - "apps/majordomus-cli/src/ui/issues.rs"
+  - "apps/majordomus-cli/src/execution"
+  - "share/ui"
+  - "test/cases/4175_implement_from_the_ui_is_idempotent.sh"
+  - "docs"
+non_scope:
+  - "Model choice for the worker"
+  - "Merge and release (I4172)"
+depends_on:
+  - "I4169"
+serves: []
+acceptance_criteria:
+  - "A real-browser test double-clicks and reloads and shows one execution, one worktree and one claim"
+  - "With no worker enabled the page shows a waiting reason"
+  - "An unauthorised caller is refused"
+validation:
+  - "bash test/run.sh 4175_implement_from_the_ui_is_idempotent"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+evidence_required:
+  - "double_click_one_execution"
+  - "waiting_reason_shown"
+  - "unauthorised_refused"
+created_at: 2026-10-23
+updated_at: 2026-10-23

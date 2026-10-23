@@ -1,0 +1,46 @@
+id: I2545
+milestone: an-intent-is-carried-from-a-sentence-to-a-verdict
+title: "One intent is carried from a sentence to a derived verdict in a disposable repository, through capabilities only"
+slug: a-sentence-reaches-a-verdict-through-capabilities
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Prove the whole path once, outside this repository's own plan: a case creates a repository, proposes an intent from a sentence, plans it, proposes a milestone and an issue that serve its criterion, moves the issue through an execution, and reads the intent's stage and verdict, calling capabilities and editing no record by hand."
+why: "campaigns/majordomus-intent-driven-ui-prompt-pack/03-INTENT-VERTICAL.md asks for one realistic dogfood intent that runs in a disposable fixture and proves capture, plan, one work item, one execution and evidence-based satisfaction or an explicit truthful blocked result, and campaigns/majordomus-intent-driven-ui-prompt-pack/08-ROLLOUT-CLOSURE.md asks for a reproducible end-to-end demonstration with a typed demo intent in a disposable repository. Each step has, or will have after I2542 and I2543, a capability and a case of its own (2978 for the proposal, 367 and 890 for satisfaction by evidence). No case joins them, so a break between two steps, such as a planned intent the preflight refuses to bind an issue to, would pass every existing case."
+current_state: "test/cases/2978_an_intent_is_proposed_by_a_capability.sh ends at the proposal. test/cases/367_an_intent_is_satisfied_only_by_evidence.sh and 890 start from intent records written into the fixture as files. No case or integration test calls a writer for each step in sequence, and two of the writers the sequence needs do not exist yet."
+desired_state: "One case, in a temporary repository created by init, runs the sequence against the built executable: intents.propose, intents.plan, plan.propose for a milestone and for an issue that serves the criterion, intents.preflight for that issue, executions.start of plan.transition with a key and its repeat, then intents.list and intent_realization.explain. It asserts the derived stage after each step, that the verdict is not met while the criterion's evidence is absent, and that the verdict's stated reason names that evidence. It asserts that no step wrote a file other than the one its capability declares."
+scope:
+  - "test/cases"
+  - "test/lib.sh"
+  - "apps/majordomus-cli/tests/intent_realization.rs"
+  - "docs/PLANNING.md"
+  - "docs/CLAIMS.yaml"
+  - "docs/claims"
+  - ".ai/repo/project/issues/I2545.yaml"
+non_scope:
+  - "A browser: the UI's screens over the same records are covered by their own cases, and the browser flows of the pack are the UI audit's"
+  - "A worker or a model in the loop: every input in the case is literal"
+  - "Reaching satisfied by forging evidence: the case stops at the truthful verdict the fixture can earn"
+  - "GitHub, a release or a deployment"
+depends_on:
+  - I2538
+  - I2542
+  - I2543
+acceptance_criteria:
+  - "The case passes against a release build of the executable with no network and no server left running after it"
+  - "After each writing step, git status in the fixture lists exactly the one path that step's capability declares"
+  - "The intent's stage reads declared after the proposal and the planned stage after the plan, each from intents.list"
+  - "The repeated executions.start under one key answers the first execution's id and the issue carries one started_at"
+  - "The verdict of the criterion is not met while its evidence is absent, and intent_realization.explain names the missing evidence"
+  - "Removing any one step from the case makes a later assertion fail, shown once in the pull request by running the case with that step skipped"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 2978_an_intent_is_proposed_by_a_capability 367_an_intent_is_satisfied_only_by_evidence 890_an_intent_criterion_is_met_only_by_current_evidence 100_execution_plane"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent_realization"
+evidence_required:
+  - "sentence_to_verdict_case"
+  - "each_step_writes_one_declared_path"
+created_at: 2026-10-13
+updated_at: 2026-10-23
+cancelled: true
+completion: "Cancelled 2026-10-23 when origin/chore/seven-owner-packs-are-tracked-and-planned (689021d6ce2) was merged as records: this plan never landed, and master planned it again as I3260, which revives it: one intent carried from a sentence to a verdict in a disposable repository. I3260 is the record to work from; this one is kept so that the 'Revive I2545' citation in I3260 resolves."

@@ -1,0 +1,2 @@
+# Wave 2: Provenance and release gates
+Reuse existing workflows to connect commit SHA, build artifacts, test/security evidence, Pages publish and Gigalixir deployment. Detect SHA drift and stale tests. Make failure actionable. Add contract tests and ensure no deployment bypasses required checks. Keep credentials masked, logs safe and rollback documented. Prefer deleting redundant workflows over adding another release framework.

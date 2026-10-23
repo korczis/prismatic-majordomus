@@ -1,0 +1,35 @@
+id: I4196
+milestone: development-runtime
+title: "A change invalidates exactly the UI readings that depend on it, and an unrelated change keeps them warm"
+slug: ui-readings-keyed-by-dependency
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Give each reading in apps/majordomus-cli/src/capability/readings.rs a dependency key naming the files and records it read, so a change invalidates the readings that depend on it and keeps the others warm."
+why: "The owner handed over an ask in campaigns/majordomus-ui-speed-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: capability/readings.rs holds the readings, revalidated behind the reader since I2486; no dependency key was found."
+desired_state: "A relevant change invalidates its readings and an irrelevant change keeps them hot, each shown by a case."
+scope:
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/src/ui"
+  - "test/cases/4196_a_change_invalidates_only_its_readings.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4196.yaml"
+non_scope:
+  - "Per-checkout keys, which are I4186"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A change to a file a reading read invalidates that reading"
+  - "A change to an unrelated file leaves the reading hot"
+  - "Each reading declares what it depends on"
+validation:
+  - "bash test/run.sh 4196_a_change_invalidates_only_its_readings"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::"
+  - "majordomus bench --check"
+evidence_required:
+  - relevant_change_invalidates
+  - irrelevant_change_keeps_hot
+  - dependencies_declared
+created_at: 2026-10-23
+updated_at: 2026-10-23

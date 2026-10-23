@@ -1,0 +1,35 @@
+id: I4163
+milestone: every-sessions-usage-is-observed
+title: "Reported usage is rolled up from issue to milestone and intent, and to the mesh peer that spent it, with the unattributed remainder shown beside every roll-up"
+slug: usage-rolls-up-with-its-remainder
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Usage already attributed to session, task and issue by apps/majordomus-cli/src/economics is summed per milestone, per intent and per mesh peer, and each roll-up reports the unattributed remainder next to its total."
+why: "The ask is in campaigns/prismatic-majordomus-tokenomics-prompt-pack-20261019, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/economics/usage.rs sums usage per session and run (session_totals, totals, add); the audit finds attribution only to session, task and issue (I3293) and views by provider, model, session, task and issue (I3294), with no roll-up to milestone, intent or peer."
+desired_state: "Spend reads at issue, milestone, intent and peer level, and at every level attributed plus unattributed equals the total."
+scope:
+  - ".ai/repo/project/issues/I4163.yaml"
+  - "apps/majordomus-cli/src/economics"
+  - "apps/majordomus-cli/src/capability/builtin/economics.rs"
+  - "test/cases/4163_usage_rolls_up_with_its_remainder.sh"
+  - "docs"
+non_scope:
+  - "Pricing the usage"
+  - "Attribution of usage that carries no task"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "At each level the total equals attributed plus unattributed"
+  - "A two-peer fixture shows each peer's share"
+  - "The unattributed remainder is printed beside every roll-up"
+validation:
+  - "bash test/run.sh 4163_usage_rolls_up_with_its_remainder"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+evidence_required:
+  - "rollup_totals_balance"
+  - "two_peer_fixture"
+  - "remainder_shown"
+created_at: 2026-10-23
+updated_at: 2026-10-23

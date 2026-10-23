@@ -1,0 +1,45 @@
+id: I2538
+milestone: the-ui-starts-work-through-the-executor
+title: "A start repeated under one key is one execution"
+slug: a-start-repeated-under-one-key-is-one-execution
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Let a caller of executions.start name a key, and make a second start under the same key answer the execution the first one created instead of creating another, so that a double click, a retried request or a resent MCP call cannot run a writing capability twice."
+why: "campaigns/majordomus-intent-driven-ui-prompt-pack/02-ACTION-PLANE.md asks that idempotency prevent duplicate operations on repeated clicks and network retries, and names retrying with the same idempotency key as an acceptance proof. The execution plane has no such key. The need grows with this milestone, which puts a start control on the primary surface for capabilities that write the repository (plan.transition, intents.propose)."
+current_state: "StartInput in apps/majordomus-cli/src/capability/builtin/executions.rs has two fields, capability and input. Every accepted start creates a new execution with a new id (apps/majordomus-cli/src/execution/engine.rs, execution/store.rs). A command capability is serial, so a duplicate start does not overlap the first, and it does run after it."
+desired_state: "StartInput takes an optional key. The store remembers the key with the execution for as long as it remembers the execution. A start whose key is already held answers that execution, marked as a repeat, when the capability and the stored input are the same, and is refused as invalid input when they differ. A start without a key behaves as today. The Cockpit's and the UI's forms send a key made once per rendered form. docs/EXECUTIONS.md states the bound: a key is forgotten with its execution."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "apps/majordomus-cli/src/execution/engine.rs"
+  - "apps/majordomus-cli/src/execution/store.rs"
+  - "apps/majordomus-cli/src/execution/model.rs"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "share/cockpit/runner.js"
+  - "docs/EXECUTIONS.md"
+  - "docs/generated"
+  - "test/cases/100_execution_plane.sh"
+  - ".ai/repo/project/issues/I2538.yaml"
+non_scope:
+  - "A key that survives a restart: the store is in memory by decision, and a durable record of a mutation is I1505"
+  - "Deduplication of a capability called directly rather than through executions.start"
+  - "A guarantee about effects outside this process"
+depends_on: []
+acceptance_criteria:
+  - "Two concurrent executions.start requests with one key, one capability and one input answer the same execution id, and executions.list counts one execution"
+  - "The second answer says it is a repeat, and the handler ran once"
+  - "The same key with another capability or another input is refused as invalid input and starts nothing"
+  - "A key is compared after redaction of sensitive input, and no answer, event or listing carries a sensitive value because of the key"
+  - "A start without a key creates a new execution every time"
+  - "The input schema of executions.start in the generated OpenAPI document and the MCP tool carries the key, and majordomus generate --check passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test executions"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 100_execution_plane"
+  - "majordomus generate --check"
+evidence_required:
+  - "repeated_start_is_one_execution"
+  - "conflicting_repeat_is_refused"
+created_at: 2026-10-13
+updated_at: 2026-10-13

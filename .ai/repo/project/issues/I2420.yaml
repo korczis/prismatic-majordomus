@@ -1,0 +1,43 @@
+id: I2420
+milestone: a-visitor-finds-any-public-object
+title: "The built site carries one search index holding exactly the routes its sitemap lists, derived, budgeted and fetched on demand"
+slug: the-site-has-a-search-index
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive one static search index of the public site at build time from the indexing test base.html, sitemap.xml and homepage-check already share, hold it to the leak scan, a declared size budget and byte stability, and prove a newly added feature is found with no edit outside its own file."
+why: "Atomic pack A10 (public-safe search: a small deterministic static index from public canonical pages and selected entity metadata, existing built-in search where possible, no remote backend or private data, budgets respected; acceptance: private-data regression fixtures, results resolve, ranking deterministic, no index drift) and the search half of A15 (one synthetic feature through discovery, product, site, search and links). At master 890e112d04 site/config.toml:8 sets build_search_index = false and no other index exists; the section filters (entities-section.html:26, skills-section.html:18) narrow one list; objects.search serves only the Cockpit over a running server. The indexing test is declared once (base.html:34-41 with site/data/nav.toml:143-144) and homepage-check:467-494 holds the sitemap to it, so the index has a test to read rather than one to write. Zola's built-in index would index every page body of every section unless each is marked in_search_index = false, which cannot express the unlisted-subtree rule; whether it or a derived index is used is decided by measured size."
+current_state: "No search index is built; nothing ties any future index to the sitemap, the leak scan or a budget."
+desired_state: "The build writes one index file under the published root: one entry per route sitemap.xml lists (route, title, description, kind), sorted by route, nothing for a noindex page or an unlisted section. scripts/site-check reads it as a published file (section 12 leak scan, link resolution of every entry) and fails when its route set differs from the sitemap's, naming the route. scripts/ci/homepage-check reports its size against a budget declared beside assets_bytes in site/data/homepage.toml and fails when the homepage references it. docs/GITHUB_PAGES_ARCHITECTURE.md records the choice between Zola's index and the derived one with the measured size of both. Case 97_product_features finds its fixture feature in the index after adding the file and not after removing it."
+scope:
+  - "site/config.toml"
+  - "apps/majordomus-cli/src/site.rs"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "scripts/ci/homepage-check"
+  - "site/data/homepage.toml"
+  - "docs/GITHUB_PAGES_ARCHITECTURE.md"
+  - "test/cases/12_site_build.sh"
+  - "test/cases/97_product_features.sh"
+non_scope:
+  - "The dialog that reads the index: I2421"
+  - "A second indexing test: the index reads the one base.html, sitemap.xml and homepage-check share"
+  - "A remote search service or a request leaving the site's origin"
+  - "A new shell script to build the index: new automation is a typed or scripted capability (ADR 0069); the existing generator or build step writes it"
+depends_on: []
+acceptance_criteria:
+  - "The index's route set equals the route set of sitemap.xml on the built site, and site-check fails naming the first route that differs when a fixture breaks that"
+  - "A fixture page with noindex front matter and one under an unlisted section are absent from the index, and a planted machine path in a fixture page's title is refused by site-check section 12 over the index file"
+  - "Two builds of one tree write the index byte for byte"
+  - "homepage-check prints the index's size against its declared budget, fails over budget, and fails when the homepage references the index"
+  - "Case 97_product_features finds the fixture feature in the index after adding its file and not after removing it, with no other edit"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/site-build"
+  - "scripts/site-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 12_site_build 97_product_features"
+evidence_required:
+  - "search_index_matches_sitemap"
+  - "search_index_private_fixture_refused"
+created_at: 2026-10-11
+updated_at: 2026-10-11

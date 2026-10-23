@@ -1,0 +1,35 @@
+id: I4167
+milestone: test-evidence
+title: "A supported pure function's refactoring is compared against its base on the same inputs inside the existing isolated runner, and the result is recorded in the evidence ledger"
+slug: a-refactor-is-compared-with-its-base
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A differential check runs a supported pure Rust function at the base revision and at the working tree on the same inputs inside the existing isolated runner, and records the outcome (found, not found, unsupported, timeout or not_run) in the evidence ledger (apps/majordomus-cli/src/evidence, apps/majordomus-cli/src/ledger.rs)."
+why: "The ask is in campaigns/majordomus-gap-closure-2026-10-22 (on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master) W04, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/evidence and src/ledger.rs exist; the audit finds only shell parity (I3159) and the coverage-differential gates, no differential of a refactored function against its base."
+desired_state: "A refactor that changes the behaviour of a supported pure function fails a case, and every other outcome is recorded by name."
+scope:
+  - ".ai/repo/project/issues/I4167.yaml"
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-cli/src/ledger.rs"
+  - "test/cases/4167_a_refactor_is_compared_with_its_base.sh"
+  - "docs"
+non_scope:
+  - "Impure functions or I/O"
+  - "Property-based input generation"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A swapped-endpoint mutation of a supported function fails the case"
+  - "The recorded outcome is one of found, not found, unsupported, timeout or not_run"
+  - "The result appears in the evidence ledger with the base and head revisions"
+validation:
+  - "bash test/run.sh 4167_a_refactor_is_compared_with_its_base"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib evidence::"
+evidence_required:
+  - "mutation_fails"
+  - "outcome_vocabulary"
+  - "ledger_entry"
+created_at: 2026-10-23
+updated_at: 2026-10-23

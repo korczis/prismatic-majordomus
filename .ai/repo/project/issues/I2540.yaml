@@ -1,0 +1,44 @@
+id: I2540
+milestone: the-ui-starts-work-through-the-executor
+title: "A mesh node's inspector offers the cooperation the mesh declares, each as an execution"
+slug: a-mesh-node-offers-what-the-mesh-declares
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Offer on the inspector of one machine of the mesh the command capabilities the mesh module declares that can be addressed to a runtime, such as asking it for a review or publishing a handover, each started through the shared runner with the node's runtime filled in."
+why: "campaigns/majordomus-intent-driven-ui-prompt-pack/05-LIVE-MESH.md asks that mesh nodes be clickable with identity, workload and supported actions, and that interaction go through authorised capability invocation. The first half is done: /ui/mesh draws the graph and a node opens its inspector (I2462, apps/majordomus-cli/src/ui/mesh.rs). The second is stated as absent: the module's header says the inspector offers no action the executor would not authorise, the inspector's text says what a node may run is the executor's decision, and docs/MAJORDOMUS_UI.md lists an action on a mesh node as not done yet. The capabilities exist with HTTP exposure: mesh.review.request, mesh.handover.publish, mesh.claim and mesh.release in apps/majordomus-cli/src/capability/builtin/mesh.rs."
+current_state: "apps/majordomus-cli/src/ui/mesh.rs reads mesh.peers and mesh.events and draws, for one node, its runtimes, their sessions with claim counts, and the events the journal holds from it. It names no capability a person could call and links to none."
+desired_state: "The node inspector has a panel of what can be asked of this node. Its rows are the mesh module's capabilities of kind command, read from capabilities.list, limited to those whose input schema takes a runtime or a session, each a link to that capability's run form on the UI with the node's runtime id carried in the address and filled into the form. A node that does not carry the feature a capability needs shows the mesh's own refusal on the execution, not a hidden row decided by the page. When this checkout runs no mesh, the panel reads not answered with the mesh's reason."
+scope:
+  - "apps/majordomus-cli/src/ui/mesh.rs"
+  - "apps/majordomus-cli/src/ui/capabilities.rs"
+  - "apps/majordomus-cli/src/cockpit/runner.rs"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "test/cases/1089_the_work_and_mesh_screens_answer.sh"
+  - "docs/MAJORDOMUS_UI.md"
+  - "docs/MESH.md"
+  - ".ai/repo/project/issues/I2540.yaml"
+non_scope:
+  - "Running anything on another machine: a mesh capability writes this runtime's journal and the mesh replicates it"
+  - "Streaming a remote node's logs: no capability answers them"
+  - "A new mesh capability, or a change to trust or link authentication (milestone runtime-trust)"
+  - "Assigning issues to nodes or reassigning work: planned with the autonomous delivery pack"
+depends_on:
+  - I2537
+acceptance_criteria:
+  - "The rows of the panel are derived from capabilities.list, and a command capability added to the mesh module whose input takes a runtime appears with no edit to the UI"
+  - "A row's link opens the capability's run form with the node's runtime id filled in, and a runtime id that is not one by shape is dropped from the address and not echoed"
+  - "Through a served fixture with two linked runtimes, a review requested from the node's inspector appears in mesh.events of the other runtime"
+  - "Asking a node without the reviews feature answers the mesh's feature_unsupported refusal on the execution's inspector"
+  - "With the mesh disabled the panel says not answered and draws no control"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::mesh"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1089_the_work_and_mesh_screens_answer 1091_no_link_on_the_ui_is_dead"
+evidence_required:
+  - "mesh_action_from_the_ui"
+  - "mesh_rows_are_derived"
+created_at: 2026-10-13
+updated_at: 2026-10-13

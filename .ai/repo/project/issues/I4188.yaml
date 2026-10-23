@@ -1,0 +1,36 @@
+id: I4188
+milestone: the-ui-works-on-a-phone
+title: "A browser's first and largest paint of /ui and /cockpit is under a declared budget"
+slug: ui-paint-budget
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make the browser audit scripts/ui record first and largest contentful paint for every discovered /ui and /cockpit route and make bench --check hold them to a declared budget. The audit script is scripts/ui; the budgets live with the benchmark records (apps/majordomus-cli/src/bench)."
+why: "The owner handed over an ask in campaigns/majordomus-performance-rescue-2026-10-23 (prompt 09) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: scripts/ui exists; I1021 and I3216 are width audits; no first or largest paint budget was found outside the mesh page."
+desired_state: "Every discovered /ui and /cockpit route has a recorded FCP and LCP and a declared budget that bench --check holds."
+scope:
+  - "scripts/ui"
+  - "apps/majordomus-cli/src/bench"
+  - ".ai/repo/benchmarks"
+  - "test/cases/4188_every_route_paints_within_its_budget.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4188.yaml"
+non_scope:
+  - "Making slow routes fast; each breach gets its own issue"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "scripts/ui records FCP and LCP per discovered route"
+  - "bench --check fails when a route exceeds its declared budget"
+  - "The routes come from discovery, with no hand list"
+validation:
+  - "bash test/run.sh 4188_every_route_paints_within_its_budget"
+  - "majordomus bench --check"
+  - "majordomus plan validate"
+evidence_required:
+  - fcp_lcp_recorded
+  - budget_held
+  - routes_discovered
+created_at: 2026-10-23
+updated_at: 2026-10-23

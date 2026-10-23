@@ -1,0 +1,161 @@
+{
+  "schema": "majordomus-performance-rescue/execution-plan/v1",
+  "mode": "sequential_with_scoped_parallel_investigations",
+  "integration_owner": "required",
+  "base": "actual current checkout; resolve HEAD at runtime",
+  "canonical_context": [
+    "AGENTS.md",
+    ".ai/README.md",
+    ".ai/repo/workflows/task-lifecycle.md"
+  ],
+  "phases": [
+    {
+      "order": 0,
+      "prompt": "prompts/00-governance-and-freeze.md",
+      "title": "Governance, source truth, and scope freeze",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 1,
+      "prompt": "prompts/01-reproduce-and-baseline.md",
+      "title": "Reproduce end-to-end latency and build the baseline",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 2,
+      "prompt": "prompts/02-cli-and-direnv-entry.md",
+      "title": "Eliminate CLI and direnv entry overhead",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 3,
+      "prompt": "prompts/03-shared-runtime-startup.md",
+      "title": "Bound shared runtime startup, readiness and lease convergence",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 4,
+      "prompt": "prompts/04-ui-cold-readings-first-paint.md",
+      "title": "Fix cold /ui first reading without lying about freshness",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 5,
+      "prompt": "prompts/05-cockpit-route-and-navigation.md",
+      "title": "Remove expensive /cockpit SSR, nav and overview work",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 6,
+      "prompt": "prompts/06-expensive-capabilities-and-git.md",
+      "title": "Stop repeated multi-second plan and Git derivations",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 7,
+      "prompt": "prompts/07-http-concurrency-backpressure.md",
+      "title": "Fix resource contention without rewriting the HTTP stack",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 8,
+      "prompt": "prompts/08-realtime-revalidate-and-offline.md",
+      "title": "Make live refresh reliable without repeated full reads",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 9,
+      "prompt": "prompts/09-browser-waterfall-and-responsive.md",
+      "title": "Measure and repair real browser experience",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 10,
+      "prompt": "prompts/10-cache-freshness-and-equivalence.md",
+      "title": "Make caching correct, typed, bounded and observable",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 11,
+      "prompt": "prompts/11-request-tracing-server-timing.md",
+      "title": "Implement I3226 request-scoped causal timings",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 12,
+      "prompt": "prompts/12-bench-policy-and-hard-gates.md",
+      "title": "Enforce user-visible SLOs through existing benchmark policy",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 13,
+      "prompt": "prompts/13-mesh-and-external-dependency-isolation.md",
+      "title": "Keep mesh, forge and model/provider outages off read hot paths",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 14,
+      "prompt": "prompts/14-integration-release-train.md",
+      "title": "Integrate measured repairs as one release train",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 15,
+      "prompt": "prompts/15-production-and-browser-delivery.md",
+      "title": "Validate exact deployed bits on hosted dynamic and static surfaces",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 16,
+      "prompt": "prompts/16-chaos-scalability-and-soak.md",
+      "title": "Prove cold, churn, load and failure resilience",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 17,
+      "prompt": "prompts/17-derived-docs-and-observability.md",
+      "title": "Project verified performance truth everywhere it belongs",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    },
+    {
+      "order": 18,
+      "prompt": "prompts/18-final-adversarial-acceptance.md",
+      "title": "Close only with demonstrated user-visible speed",
+      "evidence_required": true,
+      "status": "NOT_RUN"
+    }
+  ],
+  "completion": {
+    "required_passes": [
+      "cli",
+      "ui_cold",
+      "ui_warm",
+      "cockpit_cold",
+      "cockpit_warm",
+      "browser",
+      "correctness",
+      "security",
+      "gates"
+    ],
+    "deployed": "verify if authorized and available, else BLOCKED",
+    "no_skip_as_pass": true
+  }
+}

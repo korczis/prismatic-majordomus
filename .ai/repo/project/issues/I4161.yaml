@@ -1,0 +1,34 @@
+id: I4161
+milestone: development-runtime
+title: "A kiosk is installed and recovered from a runbook that names its prerequisites, authorisation, privacy checks and measured resource budgets"
+slug: a-kiosk-has-an-installation-runbook
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "docs/MAJORDOMUS_UI.md gains a kiosk runbook for a Linux systemd and Chromium display and for a macOS display, each step a command that a case under test/cases runs against /ui/kiosk, with privacy checks and resource budgets that name their hardware and revision."
+why: "The ask is in campaigns/majordomus-observatory-ultimate-prompt-pack/contracts/06-INSTALLATION-OPERATIONS.md, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: docs/MAJORDOMUS_UI.md documents /ui/kiosk (line 309) and mentions headless Chromium once, at line 552, as the source of a frame rate; it holds no installation, recovery or privacy section for a display left running."
+desired_state: "A person can install a kiosk, authorise it, check what it exposes and recover it from the runbook, and every figure in it was measured and names its hardware and revision."
+scope:
+  - ".ai/repo/project/issues/I4161.yaml"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/4161_a_kiosk_has_an_installation_runbook.sh"
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+non_scope:
+  - "Endurance of the Observatory over days"
+  - "Support for displays other than systemd/Chromium and macOS"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A runbook section names prerequisites, authorisation, privacy checks and resource budgets"
+  - "Every command in the section is run by a case"
+  - "Every figure names the hardware and the revision it was measured on"
+validation:
+  - "bash test/run.sh 4161_a_kiosk_has_an_installation_runbook"
+  - "majordomus plan validate"
+evidence_required:
+  - "runbook_commands_run"
+  - "budgets_measured"
+  - "privacy_checks_listed"
+created_at: 2026-10-23
+updated_at: 2026-10-23

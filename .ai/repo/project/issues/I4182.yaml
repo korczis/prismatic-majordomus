@@ -1,0 +1,36 @@
+id: I4182
+milestone: runtime-adapters
+title: "Every profile axis reads as requested, resolved, attempted, observed, verified, unobservable or denied"
+slug: profile-axis-states
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Give each profile axis one state from requested, resolved, attempted, observed, verified, unobservable and denied, held in the execution record (apps/majordomus-cli/src/execution/model.rs) and set by the provider adapters (apps/majordomus-cli/src/providers.rs), so an axis the runtime cannot observe never reads verified."
+why: "The owner handed over an ask in campaigns/majordomus-profile-system-v2-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: I0201 to I0206 derive runtime limits from profile axes and I0204 is the related record; apps/majordomus-cli/src/execution/model.rs and providers.rs exist; no per-axis state vocabulary was found by reading them."
+desired_state: "A run through an adapter with no observation for an axis reports that axis as unobservable, and no axis reads verified without an observation."
+scope:
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/providers.rs"
+  - "share/schemas"
+  - "test/cases/4182_an_unobserved_axis_never_reads_verified.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4182.yaml"
+non_scope:
+  - "Adding new profile axes"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Each axis of a run carries exactly one of the seven states"
+  - "An axis the adapter cannot observe reads unobservable and never verified"
+  - "A denied axis names the policy that denied it"
+validation:
+  - "bash test/run.sh 4182_an_unobserved_axis_never_reads_verified"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+  - "majordomus plan validate"
+evidence_required:
+  - axis_states_recorded
+  - unobservable_never_verified
+  - denied_names_policy
+created_at: 2026-10-23
+updated_at: 2026-10-23

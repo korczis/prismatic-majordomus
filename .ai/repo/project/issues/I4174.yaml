@@ -1,0 +1,35 @@
+id: I4174
+milestone: a-version-follows-the-work
+title: "A delivery move is offered on /ui/delivery only when policy admits it, runs through the existing capability with its stage and observed outcome shown, and a refused move names the policy"
+slug: delivery-moves-are-offered-by-policy
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "apps/majordomus-cli/src/ui/delivery.rs (route /ui/delivery) offers a move such as open pull request, drain or release only when the policy admits it, runs it through the existing capability as an execution, and shows its stage and observed outcome; a refused move names the deciding policy."
+why: "The ask is in campaigns/majordomus-intent-driven-ui-prompt-pack, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/ui/delivery.rs defines ROUTE /ui/delivery and renders gate links; I3071 plans the page as a read-only view."
+desired_state: "/ui/delivery moves the work forward where policy allows and explains where it does not."
+scope:
+  - ".ai/repo/project/issues/I4174.yaml"
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+  - "apps/majordomus-cli/src/execution"
+  - "test/cases/4174_delivery_moves_are_offered_by_policy.sh"
+  - "docs"
+non_scope:
+  - "Changing the policies themselves"
+  - "Deploy to a provider"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A browser case shows one admitted and one refused move"
+  - "Each move records an execution id and the deciding policy"
+  - "The outcome shown is the observed one, not the requested one"
+validation:
+  - "bash test/run.sh 4174_delivery_moves_are_offered_by_policy"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::delivery::"
+evidence_required:
+  - "admitted_move_case"
+  - "refused_move_names_policy"
+  - "execution_id_recorded"
+created_at: 2026-10-23
+updated_at: 2026-10-23

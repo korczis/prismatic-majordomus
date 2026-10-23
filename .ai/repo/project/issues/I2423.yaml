@@ -1,0 +1,42 @@
+id: I2423
+milestone: a-claim-page-shows-its-whole-proof
+title: "A claim names the gates that run its test, read from the gate model, and a guaranteed claim no blocking gate runs is refused"
+slug: a-claim-names-its-gate
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Join each claim's test to the gates of .ai/repo/ci/gates.yaml whose runner executes it, through the existing gate model and evidence subject index, draw that step on the claim page, and make claim-proof-check refuse a guaranteed claim whose test no blocking gate runs."
+why: "Derive-infer-enforce pack 04 invariant C (all public guarantees map to executable tests and fresh evidence) and D (every surface generated from or validated against its authoritative model), 03 (claim to implementation to executable test to recorded run), 05 (claim to criterion to test to run evidence to implementation), and atomic A08 (problem to feature to surface to guarantee to rule or test to source; clear advisory against enforced). At master 890e112d04 site/templates/claim.html:24-28 records that no step names a CI gate because no dataset joins a claim to the gate that runs its test; claim.html:103 says a claim reaches guaranteed when an implementation, a behavioural test and a blocking CI job exist, and docs/CLAIMS.yaml defines guaranteed as declared deterministic and blocking. What is checked: scripts/generate-site-data refuses a guaranteed claim with no test path, scripts/ci/claim-proof-check that the test names the claim back, and ProofState::Unrunnable a test no runner drives. Nothing checks the blocking half. Today the shell-suite gate (.ai/repo/ci/gates.yaml:165-167) runs every case, so the join is trivial for test/cases claims; it stops being trivial when cases are selected per change (b2 I2348, unmerged) and for claims proved by Rust tests, whose gates differ."
+current_state: "No dataset names a claim's gate; the claim page's chain stops at the test; a guaranteed claim's blocking job is a sentence, not a check."
+desired_state: "The evidence subject index (apps/majordomus-cli/src/evidence/subject.rs, the index case 507 proves is derived) gives each claim with a runnable test the ids of the gates whose runner executes it, read from the gate model (apps/majordomus-cli/src/gates/model.rs) and from no list written elsewhere. evidence show and product.json carry them; the claim page draws a gate step linking the CI documentation, or says in words that no gate runs the test. scripts/ci/claim-proof-check fails a guaranteed claim whose gate list is empty or holds no blocking gate, naming the claim, its test and the runner. docs/EVIDENCE.md and docs/CI.md state the join."
+scope:
+  - "apps/majordomus-cli/src/evidence/subject.rs"
+  - "apps/majordomus-cli/src/evidence/mod.rs"
+  - "apps/majordomus-cli/src/gates/model.rs"
+  - "apps/majordomus-cli/src/site.rs"
+  - "site/templates/claim.html"
+  - "scripts/ci/claim-proof-check"
+  - "test/cases/507_evidence_subjects_are_derived.sh"
+  - "test/cases/341_a_claim_shows_the_test_that_settles_it.sh"
+  - "docs/EVIDENCE.md"
+  - "docs/CI.md"
+non_scope:
+  - "Selecting cases per change: b2 I2348 (unmerged); this join reads whatever selection the gate model declares"
+  - "Proving the gate ran on a given commit: CI records evidence (case 357), and the verdict is I2422's"
+  - "Making a gate required on GitHub: a repository setting and the operator's decision"
+  - "Editing .ai/repo/ci/gates.yaml: the join reads it"
+depends_on: []
+acceptance_criteria:
+  - "evidence show names, for each claim with a runnable test, the gate ids that run it, and each id is a gate the gate model declares"
+  - "In a fixture whose gate model has no gate running test/cases, every guaranteed claim proved by a case fails claim-proof-check, each named with its test"
+  - "The claim page draws the gate step for a claim with a gate and says no gate runs the test for one without"
+  - "No gate id is written in site.rs, claim.html or claim-proof-check"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/claim-proof-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 507_evidence_subjects_are_derived 341_a_claim_shows_the_test_that_settles_it"
+evidence_required:
+  - "claim_gate_join_derived"
+  - "guaranteed_claim_without_gate_refused"
+created_at: 2026-10-11
+updated_at: 2026-10-11

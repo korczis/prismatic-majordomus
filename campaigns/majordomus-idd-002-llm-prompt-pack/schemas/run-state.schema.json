@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "$id": "https://majordomus.dev/schemas/mj-idd-002/run-state.schema.json",
+  "required": [
+    "pack_id",
+    "baseline_sha",
+    "owner",
+    "missions"
+  ],
+  "properties": {
+    "pack_id": {
+      "type": "string",
+      "const": "mj-idd-002"
+    },
+    "baseline_sha": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    },
+    "missions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "status",
+          "updated_at"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "running",
+              "blocked",
+              "verified"
+            ]
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "lease_owner": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "current_release": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

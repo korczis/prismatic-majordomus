@@ -1,0 +1,46 @@
+id: I2543
+milestone: an-intent-is-carried-from-a-sentence-to-a-verdict
+title: "A milestone or an issue is proposed by a capability, validated against the graph before it exists"
+slug: a-plan-record-is-proposed-by-a-capability
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add one command capability that writes one new milestone or issue record of the project model, validated against the whole plan before the file appears, with a preview that answers the same verdict and writes nothing, so that a plan can be extended through the registry instead of by typing YAML."
+why: "campaigns/majordomus-intent-driven-ui-prompt-pack/03-INTENT-VERTICAL.md asks for a typed plan whose milestones and issues serve acceptance criteria, with an acyclic and explainable dependency graph, and for a preview of the changes before a write is authorised. campaigns/majordomus-intent-driven-ui-prompt-pack/README.md lists deriving milestones, issues and dependencies as a step of the expected experience. The reading half exists (plan.model, plan.status, plan.issues, plan.waves, plan.next, plan.roadmap, plan.validate, plan.record), and one writer moves an existing issue (plan.transition). Nothing creates a record: ADR 0144 notes that lib/plan.sh has no create subcommand, and the records of this very milestone were written by hand."
+current_state: "apps/majordomus-cli/src/capability/builtin/plan.rs declares nine capabilities, of which plan.transition alone declares that it writes the repository. A new issue or milestone is a file a person writes under .ai/repo/project and learns the verdict on afterwards from majordomus plan validate. The YAML these records may use is a restricted subset that a hand-written file can leave without a parser saying so at the time of writing."
+desired_state: "plan.propose is a command that declares it writes the repository. Its input names the kind (milestone or issue) and the record's fields as the project model defines them. It refuses an id that exists, a milestone an issue names that does not exist, a depends_on edge that does not resolve, a cycle, a field the model requires and the caller left out, and a serves entry the intent preflight refuses. It writes the file in the subset the shell engine reads, whole or not at all, with created_at and updated_at and no lifecycle stamp. With its preview flag it answers the text it would write and the findings of plan.validate over the plan with that record added. The id is the caller's: the capability allocates none."
+scope:
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/tests"
+  - "lib/project.sh"
+  - "test/cases"
+  - "docs/PLANNING.md"
+  - "docs/generated"
+  - ".ai/repo/project/README.md"
+  - ".ai/repo/project/issues/I2543.yaml"
+non_scope:
+  - "Editing or deleting an existing record"
+  - "Allocating an issue id or claiming it on the board (project.work-is-claimed-before-it-is-built stays the caller's duty)"
+  - "Projecting the new record to GitHub: scripts/github-sync, run deliberately"
+  - "Composing a plan from an intent: the capability accepts the records its caller supplies"
+depends_on: []
+acceptance_criteria:
+  - "In a fixture repository, plan.propose of an issue under an existing milestone writes a file that bin/majordomus plan validate accepts and that plan.issues answers with a derived status"
+  - "An existing id, an unknown milestone, an unresolved dependency and a dependency that would close a cycle are each refused with a typed error that names the offending value, and no file is written"
+  - "A string that holds a colon, a hash or a backtick is written quoted, and the shell engine and the Rust executable read the written record to the same fields"
+  - "The preview answers the text and the findings and leaves git status unchanged"
+  - "The written record carries no started_at, verified_at, completed_at or status"
+  - "The capability is projected from one declaration to the command line, MCP, HTTP and OpenAPI, and case 1086 still refuses a remote caller"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 386_a_plan_is_held_to_its_intent 1086_a_remote_caller_cannot_write"
+  - "majordomus generate --check"
+evidence_required:
+  - "plan_record_proposed_by_a_capability"
+  - "invalid_record_is_refused_unwritten"
+  - "both_engines_read_the_written_record"
+created_at: 2026-10-13
+updated_at: 2026-10-13

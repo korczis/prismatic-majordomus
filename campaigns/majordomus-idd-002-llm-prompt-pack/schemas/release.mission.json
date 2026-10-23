@@ -1,0 +1,42 @@
+{
+  "id": "release",
+  "title": "Release validation",
+  "objective": "Progressive safe releases",
+  "dependencies": [
+    "ui",
+    "mesh",
+    "evidence",
+    "governance",
+    "economics"
+  ],
+  "inputs": [
+    "actual repository source",
+    "active .ai rules and ADRs",
+    "current tests and deployment evidence"
+  ],
+  "deliverables": [
+    "Progressive safe releases",
+    "documented contract and source references",
+    "tests, governance review and evidence report"
+  ],
+  "acceptance": [
+    "reuse existing canonical sources whenever present",
+    "no second ungoverned behavior implementation",
+    "machine-testable proof of stated capability"
+  ],
+  "gates": [
+    "source-lineage",
+    "unit-integration-e2e",
+    "governance-mutation-test",
+    "derived-drift"
+  ],
+  "rollback": "Revert isolated slice or disable new capability behind existing feature gating without damaging persisted canonical state.",
+  "risk": "high",
+  "surface": [
+    "CLI",
+    "MCP",
+    "API",
+    "UI",
+    "docs"
+  ]
+}

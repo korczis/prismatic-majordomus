@@ -1,0 +1,37 @@
+id: I4183
+milestone: development-runtime
+title: "A cold /ui answers its first paint within its budget, whatever its slowest source is doing"
+slug: cold-ui-first-paint-budget
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make bench --check record a fresh-process first request for each /ui screen and fail when the shell is answered later than its declared budget while one source stalls. The code is apps/majordomus-cli/src/bench (runner.rs, baseline.rs, results.rs) and the first answer of apps/majordomus-cli/src/ui/mod.rs."
+why: "The owner handed over an ask in campaigns/majordomus-performance-rescue-2026-10-23 (prompt 04, a peer pack recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) and campaigns/majordomus-ui-speed-prompt-pack that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: I2486 (done) shows the latest reading with its age and I2485 measures the first request after a move, not a cold process; apps/majordomus-cli/src/bench holds runner.rs, baseline.rs and results.rs; ui/mod.rs holds warm_once."
+desired_state: "Each /ui screen has a declared cold-process budget for its first answer, bench --check records it, and a stalled source cannot make the shell late."
+scope:
+  - "apps/majordomus-cli/src/bench"
+  - "apps/majordomus-cli/src/ui"
+  - ".ai/repo/benchmarks"
+  - "test/cases/4183_a_cold_ui_answers_within_its_budget.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4183.yaml"
+non_scope:
+  - "The speculative warm-up, which is I4184"
+  - "Browser paint budgets, which are I4188"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "bench --check records a fresh-process first request per screen"
+  - "A fixture with one stalled source still answers the shell within the declared budget"
+  - "The check fails when the shell is answered later than its budget"
+validation:
+  - "majordomus bench --check"
+  - "bash test/run.sh 4183_a_cold_ui_answers_within_its_budget"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib bench::"
+evidence_required:
+  - cold_first_request_recorded
+  - stalled_source_within_budget
+  - budget_breach_fails
+created_at: 2026-10-23
+updated_at: 2026-10-23

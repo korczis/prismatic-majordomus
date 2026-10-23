@@ -1,0 +1,76 @@
+id: automation-is-scripted-capabilities
+title: "A capability may be scripted on master: the decision, the sandbox, a typed way to run a program, and the first shell that leaves through them"
+slug: automation-is-scripted-capabilities
+order: 530
+priority: p1
+problem: "campaigns/majordomus-shellfall-prompt-pack/README.md and its phases 00 to 03 (00-audit-baseline.md, 01-canonical-workflow-contract.md, 02-rhai-runtime.md, 03-derived-just.md) ask for a measured shell baseline, one execution contract every surface shares, an embedded Rhai runtime over it, and a justfile that is a projection of the command graph. The repository decided the same direction on 2026-09-15 as ADR 0069, and only one fifth of that decision reached master. Measured at 3491f35cab: seven tracked files cite ADR 0069 (CLAUDE.md, AGENTS.md, docs/SHELL.md, .ai/repo/automation/README.md, .ai/repo/ci/gates.yaml, issue I1954, milestone test-evidence) and no file under .ai/repo/adrs carries that number; no Cargo manifest names rhai and the tree has no .rhai file; the ADR, the 231-line engine (apps/majordomus-cli/src/script/mod.rs), the milestone automation and the issues I1800 to I1804 exist only as commit 2a03bb06e4 on origin/feature/automation-is-rhai-over-typed-capabilities, which is one commit ahead of and 1860 commits behind this tree, and the scripted-capability kind (capability/scripted.rs, 882 lines, share/capabilities/repository-brief.rhai, case 383) exists only in refs/rescue/consolidation-20261010T0845Z/dirty/feature/automation-is-rhai-over-typed-capabilities. What did land is the refusal of new shell: majordomus shell check, the inventory of 230 records and cases 365 and 366. So the inventory tells 21 orchestration units to become scripted capabilities (the removal text of their exemptions) and nothing on master can run one."
+outcome: "ADR 0069 is a record on master and says what the tree measures today; the sandboxed engine and the scripted-capability kind are part of the executable and reach the command line, HTTP, OpenAPI, MCP and the generated reference through the one registry; a program is run by one typed capability that takes an argument list and never a command string; majordomus shell check prints the counts the migration is judged by and refuses a head that has more exempt shell than its base; the first scripts/ci gates and the hand-written recipe bodies have left shell through that path, each with its inventory record deleted in the same change."
+current_state: "Governed shell on master is 146 units and 46,960 lines: lib 42 units and 22,704 lines, scripts 92 units and 22,973 lines, share 1 unit and 830 lines, bin 4 units and 342 lines, .githooks 3 units and 43 lines, .claude/hooks 4 units and 68 lines. The inventory holds 230 records (A 109, B 30, C 32, D 1, E 13, F 45), 146 of them with an exemption (A 92, B 21, C 13, D 1, E 5, F 14) and 38 about shell embedded in another file. shell.check reports units and findings and no totals, and nothing compares a head with its base, so an exemption added with its file passes. The justfile is 64 lines with five imports of 270 lines; apps/majordomus-cli/src/command_graph/bridge.rs already writes every command of both programs as a recipe into the untracked .ai/local/cache/command-graph/bridge.just, recipes run under bash by set shell, and nine inventory records name shell inside hand-written recipes. The executable spawns sh -c in economics/runner.rs, offload/remote.rs and environment/shell.rs."
+desired_state: "One decision record, one engine constructor, one kind and one process capability are on master, each held by tests; shell check answers how many units and lines remain per directory and disposition and which units nothing in shell calls any more; at least three scripts/ci gates run as scripted capabilities over one typed ratchet capability; no hand-written recipe carries a shell body the inventory has to describe."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/automation"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/project"
+  - ".ai/repo/rules/project"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "apps/majordomus-cli/src/script"
+  - "apps/majordomus-cli/src/automation"
+  - "apps/majordomus-cli/src/capability"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/src/command_graph"
+  - "apps/majordomus-cli/tests"
+  - "share/kinds.yaml"
+  - "share/schemas/majordomus"
+  - "share/capabilities"
+  - "scripts/ci"
+  - "justfile"
+  - ".just"
+  - "docs"
+  - "test/cases"
+  - "SECURITY.md"
+
+non_scope:
+  - "A workflow registry, a workflow manifest or a second executor beside the capability registry and the execution plane: ADR 0069 adds a scripted capability and nothing else"
+  - "Transliterating shell into Rhai: domain logic becomes a typed Rust capability, and a script only orchestrates capabilities"
+  - "A capability or a script function that takes a shell command string"
+  - "Compiling a script from text a caller, the mesh or the UI supplied: a script is a tracked file"
+  - "A persistent cache of compiled scripts across processes"
+  - "Porting the behavioural cases and removing the lifecycle units, which is milestone shell-shrinks-to-its-bootstrap"
+
+acceptance_criteria:
+  - "Every ADR number cited in tracked prose outside records resolves to a file under .ai/repo/adrs, and a citation of a missing one fails a gate"
+  - "A Rhai script runs only inside the one engine constructor, with eval disabled, no clock, no import from the filesystem, bounded work and cancellation, each guarantee a unit test"
+  - "A scripted capability declared in the layer appears in capabilities list, OpenAPI, MCP and the generated reference with no edit anywhere else, and a call to a capability above its declared effect is refused at run time"
+  - "An argument containing a space, a quote, a leading dash, a dollar-parenthesis, a semicolon and a newline reaches the program run by the process capability as the one argument it was given"
+  - "majordomus shell check prints units and lines per governed directory and per disposition, and --against a revision exits 10 when the head has more exempt units than that revision"
+  - "At least three scripts/ci gates are scripted capabilities, their files and inventory records are gone, and the gates.yaml entries run the executable"
+  - "No record of the inventory names a recipe of justfile or .just, and every recipe body is one call"
+
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "bin/majordomus-cli capabilities validate"
+  - "bin/majordomus-cli generate --check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 365_new_shell_is_refused 366_automation_inventory_agrees_with_the_tree 101_command_graph"
+
+evidence_required:
+  - "adr_0069_on_master"
+  - "sandbox_engine_proved"
+  - "scripted_capability_projected_everywhere"
+  - "effect_ceiling_enforced"
+  - "argv_reaches_program_literally"
+  - "shell_counts_and_base_comparison"
+  - "first_gates_scripted"
+  - "recipes_carry_no_shell_body"
+
+risks:
+  - "The branch that holds the engine is 1860 commits behind. Merging it is not an option; its files are re-landed on the current tree one slice at a time and re-derived, and what the rescue reference holds is read as a draft, not as reviewed code."
+  - "Linking an interpreter is the declared exception to project.no-network-no-eval. It holds only while exactly one place builds an engine; a second constructor anywhere is the defect the exception does not cover."
+  - "A scripted capability that reimplements parsing in Rhai is the shell defect in another syntax. Review asks of every script which typed capability it should have called instead."
+  - "Rhai's operation limit is not a wall-clock bound. A program a script starts is bounded and killed by the process capability, outside the engine."
+
+created_at: 2026-10-13
+updated_at: 2026-10-13

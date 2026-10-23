@@ -1,0 +1,46 @@
+id: I2551
+milestone: automation-is-scripted-capabilities
+title: "The sandboxed engine a scripted capability runs in is part of the executable"
+slug: the-sandboxed-engine-is-part-of-the-executable
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Embed Rhai in the Rust executable as one engine constructor under apps/majordomus-cli/src/script: eval disabled, no clock, no module resolved from the filesystem, limits on operations, call depth, expression depth and the sizes of strings, arrays and maps, a cancel predicate asked on every operation, and print and debug routed nowhere until a caller routes them."
+why: "campaigns/majordomus-shellfall-prompt-pack/02-rhai-runtime.md asks for a hardened embedded Rhai runtime with restricted operations, depth, sizes and imports, with no privilege reached through eval or raw OS access, and with the version and features taken from what the repository pins rather than guessed. ADR 0069 fixes them: rhai 1.26 with std, sync, serde, metadata and no_time, and unchecked, internals and debugging off. An engine of that shape was written on 2026-09-15 (231 lines, each guarantee a unit test) and never merged: no Cargo manifest on master names rhai. Nothing on master can evaluate a script, so no orchestration unit can leave shell the way its exemption says it will."
+current_state: "grep finds rhai in no Cargo.toml and no .rhai file is tracked. apps/majordomus-cli/src has no script module. The crate declares rust-version 1.85 and edition 2021. The engine source is readable at origin/feature/automation-is-rhai-over-typed-capabilities, on a base 1860 commits old."
+desired_state: "apps/majordomus-cli/src/script/mod.rs is the only place in the crate that constructs a rhai Engine, and a test fails when a second one appears. The dependency is pinned in Cargo.lock with the feature set of ADR 0069, and the pull request states the measured change in the release executable's size and in a cold build. The limits are constants with a doc comment each, and every one has a unit test that reaches it."
+scope:
+  - "apps/majordomus-cli/Cargo.toml"
+  - "apps/majordomus-cli/Cargo.lock"
+  - "apps/majordomus-cli/src/script/mod.rs"
+  - "apps/majordomus-cli/src/lib.rs"
+  - "apps/majordomus-cli/src/generate.rs"
+  - "test/cases/08_no_forbidden_constructs.sh"
+  - ".ai/repo/project/issues/I2551.yaml"
+non_scope:
+  - "Any way to reach the engine from a surface: the kind, the registry entry and majordomus run are I2552"
+  - "A wall-clock bound inside the engine: the operation limit is not one, and a program a script starts is bounded by the process capability of I2553"
+  - "Compiling a script from a string a caller supplied, and a persistent cache of compiled scripts"
+  - "A separate crate for the engine: the capability registry it serves lives in this one"
+depends_on:
+  - "I2549"
+acceptance_criteria:
+  - "A script that calls eval does not compile, and one that imports a module is refused, each asserted by a unit test"
+  - "A runaway loop ends with the operation-limit error, and a script that grows a string, an array or a map past its limit ends with the size error"
+  - "A cancel predicate that turns true stops a running script on its next operation"
+  - "A script that prints writes nothing to standard output, which a test over a captured stream asserts, because the shared server speaks MCP there"
+  - "A test over the crate's sources finds exactly one construction of a rhai Engine"
+  - "cargo clippy --all-targets is clean with the dependency linked"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib script"
+  - "cargo clippy --manifest-path apps/majordomus-cli/Cargo.toml --all-targets"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 08_no_forbidden_constructs"
+evidence_required:
+  - "sandbox_engine_proved"
+  - "one_engine_constructor"
+  - "binary_size_measured"
+created_at: 2026-10-13
+updated_at: 2026-10-23
+cancelled: true
+completion: "Cancelled 2026-10-23 when origin/chore/seven-owner-packs-are-tracked-and-planned (689021d6ce2) was merged as records, as a duplicate of I1800. The same engine was planned on master as I1800 (milestone automation, 2026-09-15), which is DONE (completed 2026-10-16): the sandboxed Rhai engine a scripted capability runs in. I1800 is the record to work from."

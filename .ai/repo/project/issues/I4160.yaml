@@ -1,0 +1,36 @@
+id: I4160
+milestone: development-runtime
+title: "Every mark of the Observatory carries the record ids, transform and class it was drawn from, and a signal without lineage draws nothing and says why"
+slug: an-observatory-mark-carries-its-lineage
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Each mark that apps/majordomus-cli/src/ui/observatory.rs projects (event_marks, project_from) gains a lineage record of source record ids, transform and a class of observed, derived, inferred or estimated, drawn by share/ui/observatory.js; a signal without lineage draws no mark and the page shows a diagnostic naming the missing part."
+why: "The ask is in campaigns/majordomus-observatory-ultimate-prompt-pack/contracts/01-EVIDENCE-LINEAGE-AND-TRUTH.md and campaigns/majordomus-observatory-ultimate-prompt-pack/contracts/05-REAL-DATA-ADMISSIBILITY.md, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/ui/observatory.rs defines SCENES and REDIRECTS and the functions project, project_from and event_marks; docs/MAJORDOMUS_UI.md describes fifteen scenes; case 3011 asserts the Observatory draws nothing it did not read, but no case reads a per-signal lineage or a class vocabulary."
+desired_state: "Every drawn mark can be traced to the record ids and transform it came from and states its class; a signal without lineage is refused with a visible reason."
+scope:
+  - ".ai/repo/project/issues/I4160.yaml"
+  - "apps/majordomus-cli/src/ui/observatory.rs"
+  - "share/ui/observatory.js"
+  - "share/ui/observatory-kiosk.js"
+  - "test/cases/4160_an_observatory_mark_carries_its_lineage.sh"
+  - "docs"
+non_scope:
+  - "Changing which sources the scenes read"
+  - "Kiosk installation and endurance"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "A case injects a signal with missing lineage and the page shows a diagnostic and no mark for it"
+  - "A real journal event is found by its record id in an inspector view"
+  - "Each mark names its class as one of observed, derived, inferred or estimated"
+validation:
+  - "bash test/run.sh 4160_an_observatory_mark_carries_its_lineage 3011_the_observatory_draws_nothing_it_did_not_read"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::observatory::"
+evidence_required:
+  - "lineage_inspector_case"
+  - "missing_lineage_refused"
+  - "class_vocabulary_tested"
+created_at: 2026-10-23
+updated_at: 2026-10-23

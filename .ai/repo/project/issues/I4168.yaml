@@ -1,0 +1,35 @@
+id: I4168
+milestone: a-registered-corpus-judges-majordomus
+title: "The context-selection benefit is measured over four registered arms with failures counted in cost, and an unrun arm reads not_run"
+slug: context-benefit-has-four-arms
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "The economics summary (apps/majordomus-cli/src/economics, report.rs and claims.rs) gains a four-arm comparison of base, structure, context and both over one registered corpus, counting failed attempts in cost; an arm that was not run reads not_run and an arm without a baseline is refused."
+why: "The ask is in campaigns/majordomus-gap-closure-2026-10-22 (on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master) W09, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/economics holds claims.rs, context.rs, report.rs and runner.rs; the audit finds I3298 with one arm per mechanism and no four-arm factorial."
+desired_state: "The benefit of selected context is a number over four arms with their baseline, or an explicit not_run."
+scope:
+  - ".ai/repo/project/issues/I4168.yaml"
+  - "apps/majordomus-cli/src/economics"
+  - "share"
+  - "test/cases/4168_context_benefit_has_four_arms.sh"
+  - "docs"
+non_scope:
+  - "Running paid model calls in CI"
+  - "Changing the existing per-mechanism arms of I3298"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "The economics summary lists the four arms with their baseline"
+  - "An arm without a baseline is refused and an unrun arm reads not_run"
+  - "Failed attempts are counted in each arm's cost"
+validation:
+  - "bash test/run.sh 4168_context_benefit_has_four_arms 431_economics_claims_gated"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+evidence_required:
+  - "four_arm_summary"
+  - "baseline_required"
+  - "not_run_reported"
+created_at: 2026-10-23
+updated_at: 2026-10-23

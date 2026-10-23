@@ -1,0 +1,36 @@
+id: I4190
+milestone: a-provider-carries-the-contract-natively
+title: "One MCP response over a declared byte budget is bounded and says what it left out"
+slug: mcp-response-byte-budget
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bound the payload of the one MCP capability the pack names to a declared byte budget in apps/majordomus-cli/src/mcp (bridge.rs, surface.rs), with a statement of what was left out, and add a gate that fails when a measured payload exceeds it."
+why: "The owner handed over an ask in campaigns/majordomus-native-acceleration-2026-10-22 (P07) (a peer pack, recorded on branch chore/the-packs-of-10-22-and-10-23-are-recorded) that no plan record covered when the plans were audited on 2026-10-23. The owner's order of 2026-10-23 makes every unfinished prompt pack part of the mesh's zero goal, so the ask is recorded here."
+current_state: "Measured on master 575d39f8d24: mcp/bridge.rs and mcp/surface.rs exist; I3307 bounds tools/list and I2147 bounds MCP input; the capability the pack names must be found in campaigns/majordomus-native-acceleration-2026-10-22 before work starts."
+desired_state: "The named capability's measured MCP payload is under its budget, says what it omitted, and a gate fails when it exceeds the budget."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/capability"
+  - "share/commands.yaml"
+  - "test/cases/4190_an_mcp_response_over_budget_is_bounded.sh"
+  - "docs"
+  - ".ai/repo/project/issues/I4190.yaml"
+non_scope:
+  - "Bounding tools/list, which I3307 did"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "The named capability's measured MCP payload is under the declared byte budget"
+  - "A truncated response says what it left out"
+  - "A gate fails when the payload exceeds the budget"
+validation:
+  - "bash test/run.sh 4190_an_mcp_response_over_budget_is_bounded"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mcp::"
+  - "majordomus generate --check"
+evidence_required:
+  - payload_under_budget
+  - omission_stated
+  - gate_fails_over_budget
+created_at: 2026-10-23
+updated_at: 2026-10-23

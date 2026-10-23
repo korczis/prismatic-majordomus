@@ -1,0 +1,35 @@
+id: I4165
+milestone: development-runtime
+title: "A retrieval query returns hits with source, span, reason and score parts, bounded and deterministic, and a gold set on a frozen revision measures its relevance"
+slug: retrieval-is-measured-on-a-gold-set
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "devcontext selection (apps/majordomus-cli/src/devcontext/select.rs, select and offer) returns each hit with source, span, reason and the parts of its score, in a bounded and deterministic order, and a committed gold set on a frozen revision yields a recall figure; an unanswerable query returns an honest absence."
+why: "The ask is in campaigns/majordomus-gap-closure-2026-10-22 (on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master) W02, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/devcontext/select.rs defines select, offer and intent_terms and tier and edge policies; budget.rs bounds the selection; no gold set or recall measure was found under test/cases or share."
+desired_state: "The relevance of retrieval is a measured recall on a registered gold set, and each hit explains itself."
+scope:
+  - ".ai/repo/project/issues/I4165.yaml"
+  - "apps/majordomus-cli/src/devcontext"
+  - "share"
+  - "test/cases/4165_retrieval_is_measured_on_a_gold_set.sh"
+  - "docs"
+non_scope:
+  - "Building the reference graph (I4164)"
+  - "Learned rankers"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "One case reports recall on the gold set for the frozen revision"
+  - "An unanswerable query returns an explicit absence, not a weak hit"
+  - "Output is identical across runs and bounded in size"
+validation:
+  - "bash test/run.sh 4165_retrieval_is_measured_on_a_gold_set"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::select::"
+evidence_required:
+  - "gold_set_recall"
+  - "honest_absence_case"
+  - "deterministic_output"
+created_at: 2026-10-23
+updated_at: 2026-10-23

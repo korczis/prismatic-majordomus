@@ -1,0 +1,35 @@
+id: I4164
+milestone: development-runtime
+title: "A Rust file's references and imports are read as typed, directed edges with unresolved ones kept explicit, and a changed import target removes the old edge"
+slug: rust-references-are-typed-edges
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "The source outline that I3171 added is extended with a reference graph: imports and references of a Rust file become typed, directed edges, an unresolved reference stays as an explicit unresolved edge, and a rebuild after an edit removes edges whose target changed. The module that holds the outline (apps/majordomus-cli/src/ui/source.rs and apps/majordomus-cli/src/devcontext were read; the I3171 outline module must be found first) owns the change."
+why: "The ask is in campaigns/majordomus-gap-closure-2026-10-22 (on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master) W01, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/devcontext holds budget.rs, mod.rs, model.rs and select.rs and no source.rs; src/ui/source.rs and src/quality/source.rs exist; no module found builds a reference graph between files."
+desired_state: "Edges between Rust files are data with a type, a direction and a resolution state, and an incremental update equals a full rebuild."
+scope:
+  - ".ai/repo/project/issues/I4164.yaml"
+  - "apps/majordomus-cli/src/devcontext"
+  - "test/cases/4164_rust_references_are_typed_edges.sh"
+  - "docs"
+non_scope:
+  - "Languages other than Rust"
+  - "Ranking of retrieval results"
+depends_on:
+  - "I3171"
+serves: []
+acceptance_criteria:
+  - "A hand-checked fixture with a homonym, a cycle and invalid syntax gives the expected edges"
+  - "An unresolved reference is an explicit edge, not a dropped one"
+  - "Incremental equals full rebuild after add, edit, delete and rename"
+validation:
+  - "bash test/run.sh 4164_rust_references_are_typed_edges"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::"
+evidence_required:
+  - "fixture_edges_match"
+  - "incremental_equals_full"
+  - "unresolved_edges_explicit"
+created_at: 2026-10-23
+updated_at: 2026-10-23

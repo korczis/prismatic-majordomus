@@ -1,0 +1,43 @@
+id: I2563
+milestone: a-screen-is-fast-bounded-and-says-why
+title: "A screen answers a conditional request: its validator is derived from its readings, and an unchanged screen is a 304 that renders nothing"
+slug: a-screen-answers-a-conditional-request
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give every screen and panel of majordomus ui an ETag derived from the readings it was drawn from, and answer a request whose If-None-Match names it with 304 Not Modified before the screen is rendered."
+why: "campaigns/majordomus-ui-speed-prompt-pack/03-CACHE.md and 04-ROUTES-PRELOAD.md ask for HTTP ETag and 304 and say that conditional requests must avoid unnecessary HTML recompute; 00-MASTER.md lists ETags and 304 in its proof matrix. Only the assets have them (cockpit/assets.rs). ui/mod.rs answers every screen with Cache-Control no-cache and no validator, so the script's refresh, a reload and the browser's Back each render and send the whole page again when nothing was read anew."
+current_state: "Ui::answer in apps/majordomus-cli/src/ui/mod.rs renders the screen, then sets Cache-Control no-cache, the CSP, nosniff and the referrer policy. No ETag is set and If-None-Match is not read for a screen. A reading (capability/readings.rs Latest) carries its value, when it was read and its freshness, and no digest of its value."
+desired_state: "A reading carries a digest of its value. A screen declares the sources it asks for before it is rendered, and its validator is a digest of the route, the normalised query, each of those readings' digest and freshness, the generation it is drawn from and the build's version. A request naming that validator is answered 304 with the validator and no body, and the screen's render function is not called. A screen with a reading that is stale, pending or catching up carries no validator. The age a source line shows is taken from a timestamp attribute by the script, so a 304 does not freeze it; without the script the page says when it was rendered, as it does today."
+scope:
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/source.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/capability/readings.rs"
+  - "apps/majordomus-cli/tests/ui_surface.rs"
+  - "share/ui/ui.js"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2563.yaml"
+non_scope:
+  - "A max-age on a screen: a screen is always revalidated, never answered by the browser alone"
+  - "Keeping a rendered page on the server: the readings are the only thing kept"
+  - "The assets, which cockpit/assets.rs already answers by digest"
+depends_on:
+  - I2486
+acceptance_criteria:
+  - "Two requests for a screen whose readings did not change carry the same ETag, and the second, sent with If-None-Match, is answered 304 with no body"
+  - "A 304 is answered without calling the screen's render function, proven by a counter and not by timing"
+  - "A reading whose value changed, a changed query, a move of the repository and a different build each change the ETag"
+  - "A screen with a stale, pending or failed reading carries no ETag and is never answered 304"
+  - "The weak comparison and the list form of If-None-Match are honoured as cockpit/assets.rs honours them, by the same function"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source"
+evidence_required:
+  - "screen_etag_unit_tests"
+  - "screen_304_renders_nothing_test"
+created_at: 2026-10-13
+updated_at: 2026-10-13

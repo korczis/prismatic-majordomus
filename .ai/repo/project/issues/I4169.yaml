@@ -1,0 +1,39 @@
+id: I4169
+milestone: intent-lifecycle
+title: "An intent carries an autonomy policy that names the effects a launch may take, and an effect outside it waits for the owner as a recorded awaiting-approval state"
+slug: an-intent-carries-an-autonomy-policy
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "The intent record (apps/majordomus-cli/src/intent.rs, share/kinds.yaml, share/schemas) gains an autonomy policy naming the effects a launch may take, such as open a pull request, merge, release or deploy; the execution engine (apps/majordomus-cli/src/execution) stops before an effect outside the policy and records awaiting_approval, shown by the CLI, the API and /ui."
+why: "The ask is in campaigns/majordomus-autonomous-idd-maximal-opus-fable (01_INTENT_PLANNING.md, 04_RELEASE_DEPLOY_EVIDENCE.md), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/intent.rs and src/execution/model.rs exist; I2123 (non-loopback authorisation) is done; no intent record field or execution state of the name awaiting_approval was found in the files read."
+desired_state: "A person states per intent which effects may happen unattended, and anything else waits visibly for them."
+scope:
+  - ".ai/repo/project/issues/I4169.yaml"
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/execution"
+  - "apps/majordomus-cli/src/ui/intent.rs"
+  - "share/schemas"
+  - "share/kinds.yaml"
+  - "test/cases/4169_an_intent_carries_an_autonomy_policy.sh"
+  - "docs"
+non_scope:
+  - "Authorising a caller (I2123)"
+  - "Scheduling of ready issues (I4170)"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "With a policy excluding merge, a launched run reaches a pull request and then shows awaiting_approval in the CLI, the API and /ui"
+  - "No merge occurs while the state is awaiting_approval"
+  - "An intent without a policy takes no effect beyond a read"
+validation:
+  - "bash test/run.sh 4169_an_intent_carries_an_autonomy_policy"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib execution::"
+  - "majordomus plan validate"
+evidence_required:
+  - "policy_excludes_merge"
+  - "awaiting_approval_shown"
+  - "no_effect_without_policy"
+created_at: 2026-10-23
+updated_at: 2026-10-23

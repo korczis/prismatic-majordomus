@@ -1,0 +1,47 @@
+id: I2506
+milestone: an-intent-is-followed-to-the-deployment-that-carries-it
+title: "A criterion can be settled by an observed deployment, and a failed or unobserved one leaves it unmet"
+slug: a-criterion-is-settled-by-an-observed-deployment
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add deployment as an evidence kind of an intent criterion: its reference names an environment, and its state is derived from the recorded forge observation, so that an intent can require that its work is deployed and read satisfied only when the observation says so."
+why: "campaigns/majordomus-autonomous-idd-maximal-opus-fable/04_RELEASE_DEPLOY_EVIDENCE.md asks that merged, released, deployed and satisfied are distinct, that a deployment counts only after it was observed, and that an unsuccessful deployment leaves the intent unsatisfied; campaigns/majordomus-autonomous-idd-maximal-opus-fable/19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-018, AC-019) asks the same of the observed target. ADR 0070 derives satisfaction from evidence, and the evidence kinds stop at the repository: a criterion that says the change is live cannot be written, so an intent about a delivered outcome reads satisfied on a passing test while nothing was deployed."
+current_state: "A criterion's evidence is test, claim or command (apps/majordomus-cli/src/intent.rs); of the seventeen criteria under .ai/repo/project/intents sixteen name a test and one a command. apps/majordomus-cli/src/deploy/observed.rs records each deployment the forge reported with its environment, commit and latest status, written by majordomus prs refresh, and no intent code reads it."
+desired_state: "A criterion may declare evidence deployment with ref naming an environment. Its state is current when the newest recorded deployment to that environment succeeded at a commit that contains the latest commit of the issues serving the criterion, stale when a later such commit exists, failing when the newest deployment did not succeed, and not derivable, with the reason, when no observation is recorded or the environment was never deployed to. intent validate refuses a ref that names no environment form."
+scope:
+  - "apps/majordomus-cli/src/intent.rs"
+  - "apps/majordomus-cli/src/deploy/observed.rs"
+  - "apps/majordomus-cli/src/evidence/freshness.rs"
+  - "apps/majordomus-cli/src/capability/builtin/intents.rs"
+  - "apps/majordomus-cli/tests/intent.rs"
+  - "test/cases"
+  - "docs/EVIDENCE.md"
+  - "docs/PLANNING.md"
+  - ".ai/repo/adrs"
+  - ".ai/repo/project/issues/I2506.yaml"
+non_scope:
+  - "Asking the forge: the reader uses the recorded observation and says how old it is"
+  - "A smoke probe of the deployed target, which scripts/pages verify performs for the site and the pages-live gate records"
+  - "Rollback or promotion"
+  - "Changing any existing criterion to the new kind"
+depends_on: []
+acceptance_criteria:
+  - "With a fixture observation holding a successful deployment that contains the serving commit, the criterion reads met and the intent satisfied when its other criteria are"
+  - "With the newest deployment to the environment failed, the criterion reads unmet although an older one succeeded"
+  - "With a serving commit newer than the deployed commit, the criterion reads stale and names both commits"
+  - "With no recorded observation the criterion reads not derivable and says that nothing was observed, and the intent does not read satisfied"
+  - "The state is identical from intents.record on the command line, HTTP and MCP, and the answer carries the time of the observation"
+  - "intent validate fails a deployment criterion whose ref is empty"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence 890_an_intent_criterion_is_met_only_by_current_evidence"
+  - "majordomus intent validate"
+evidence_required:
+  - "deployment_evidence_kind"
+  - "unobserved_is_not_derivable"
+created_at: 2026-10-13
+updated_at: 2026-10-23
+cancelled: true
+completion: "Cancelled 2026-10-23 when origin/chore/seven-owner-packs-are-tracked-and-planned (689021d6ce2) was merged as records: this plan never landed, and master planned it again as I3256, which revives I2221 together with I2506. I3256 is the record to work from; this one is kept so that the 'Revive I2506' citation in I3256 resolves."

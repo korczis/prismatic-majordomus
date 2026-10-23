@@ -1,0 +1,37 @@
+id: I4170
+milestone: mesh-peers-execute-assigned-work
+title: "Ready issues of an approved intent are scheduled to local and mesh workers under a declared bound on concurrent work, and a blocked or conflicting issue is never scheduled"
+slug: ready-issues-are-scheduled-under-a-bound
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "A scheduler reads the ready issues of an approved intent (apps/majordomus-cli/src/plan, src/intent_plan.rs) and assigns them through the lease of I3198 and I3199 to local and mesh workers (apps/majordomus-cli/src/mesh), keeping at most k running and queueing an issue whose scope conflicts or whose dependency is open, with a reason."
+why: "The ask is in campaigns/majordomus-autonomous-idd-maximal-opus-fable (02_ORCHESTRATOR_MESH.md), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: I3198 offers one assignment under a fenced lease; apps/majordomus-cli/src/intent_plan.rs and src/mesh exist; no scheduler that launches ready issues unattended was found."
+desired_state: "Ready work starts by itself within a declared bound and never over a conflict."
+scope:
+  - ".ai/repo/project/issues/I4170.yaml"
+  - "apps/majordomus-cli/src/plan"
+  - "apps/majordomus-cli/src/intent_plan.rs"
+  - "apps/majordomus-cli/src/mesh"
+  - "test/cases/4170_ready_issues_are_scheduled_under_a_bound.sh"
+  - "docs"
+non_scope:
+  - "Choosing which intent to approve"
+  - "Remote machine provisioning"
+depends_on:
+  - "I4169"
+serves: []
+acceptance_criteria:
+  - "With N ready issues, a bound k and one scope conflict, at most k run and the conflicting one is queued with a reason"
+  - "A blocked issue is never scheduled"
+  - "The bound is declared in a record, not hard-coded"
+validation:
+  - "bash test/run.sh 4170_ready_issues_are_scheduled_under_a_bound"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+evidence_required:
+  - "bound_respected"
+  - "conflict_queued_with_reason"
+  - "blocked_not_scheduled"
+created_at: 2026-10-23
+updated_at: 2026-10-23

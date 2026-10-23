@@ -1,0 +1,35 @@
+id: I4172
+milestone: the-intent-loop-is-proved-end-to-end
+title: "One guarded scenario on this repository takes a small intent through merge, release and a served commit under an owner-recorded authorisation, and its recovery from a killed worker is shown"
+slug: the-intent-loop-runs-on-this-repository
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "A guarded scenario under test/cases takes one small intent of this repository from approval to a pull request, a merge, a release and a served commit under an authorisation the owner recorded, and kills the worker once to show recovery; a stage that cannot run records BLOCKED naming the stage instead of passing."
+why: "The ask is in campaigns/majordomus-autonomous-idd-maximal-opus-fable (04_RELEASE_DEPLOY_EVIDENCE.md), which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: I3260 and I3261 prove the intent loop on fixtures; the audit finds no run on the real repository."
+desired_state: "The loop is shown once on the real repository with evidence per stage, or the blocked stage is named."
+scope:
+  - ".ai/repo/project/issues/I4172.yaml"
+  - "test/cases/4172_the_intent_loop_runs_on_this_repository.sh"
+  - "apps/majordomus-cli/src/execution"
+  - "docs"
+non_scope:
+  - "Making the scenario part of every CI run"
+  - "Deploying to a provider the owner has not authorised"
+depends_on:
+  - "I4169"
+serves: []
+acceptance_criteria:
+  - "Committed evidence exists for each stage, or an explicit BLOCKED record names the stage"
+  - "The killed worker is recovered without a second effect"
+  - "The authorisation used is the owner's recorded one"
+validation:
+  - "bash test/run.sh 4172_the_intent_loop_runs_on_this_repository"
+  - "majordomus plan validate"
+evidence_required:
+  - "stage_evidence"
+  - "recovery_after_kill"
+  - "owner_authorisation"
+created_at: 2026-10-23
+updated_at: 2026-10-23

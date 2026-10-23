@@ -1,0 +1,48 @@
+id: I2505
+milestone: started-work-is-explained-bounded-and-survives-a-restart
+title: "The policy names the highest effect each transport may cause, and a capability above it is refused the same way everywhere"
+slug: the-policy-names-an-effect-ceiling
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add one policy key that states, per transport, the highest declared effect a call may cause, and enforce it in the one dispatcher every transport already goes through, so that a capability above the ceiling is refused with one typed error before its handler runs."
+why: "campaigns/majordomus-autonomous-idd-maximal-opus-fable/13_SECURITY_AUTH_POLICY.md asks that query and effect capabilities are distinctly permissioned, that the tiers observe, propose and execute have defined semantics, that policy is evaluated immediately before an effect, and that a forged request is denied by the server whatever a surface showed; campaigns/majordomus-autonomous-idd-maximal-opus-fable/19_ACCEPTANCE_TRACEABILITY_MATRIX.md (AC-022) asks that an unauthorized effect is denied across all transports. Today the declared effect is published and not held against any project policy: ADR 0126 refuses a write from a caller beyond loopback, and a loopback caller, which every attached MCP client is, may call plan.transition and intents.propose in any repository."
+current_state: "Effect has Read, ProcessState and RepositoryMutation (apps/majordomus-cli/src/capability/model.rs). A grep for autonomy and approval in .ai/repo/policy.yaml finds no key. The exposure of a writing capability is narrowed by writes_repository in its declaration, the same for every repository."
+desired_state: "policy.yaml may declare an effect ceiling for each of the command line, HTTP and MCP. The dispatcher compares a capability's declared effect with the ceiling of the transport the call arrived on, reading the policy at the call, and answers policy_denied naming the key, the ceiling and the effect. capabilities.list says of each capability whether the present policy admits it on each transport. An absent key admits what is admitted today."
+scope:
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/capability/model.rs"
+  - "apps/majordomus-cli/src/capability/handler.rs"
+  - "apps/majordomus-cli/src/capability/builtin/capabilities.rs"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - ".ai/repo/policy.yaml"
+  - ".ai/repo/adrs"
+  - ".ai/repo/rules/project"
+  - "docs/CAPABILITIES.md"
+  - ".ai/repo/project/issues/I2505.yaml"
+non_scope:
+  - "Who the caller is: sign-in and identity are the web-sign-in milestone, and remote callers are ADR 0126"
+  - "Per-path, per-branch or time-bound grants and approval records"
+  - "The shell tool's commands, whose effect classes I1981 declares"
+  - "Effects on a forge: no capability merges, tags or deploys, and majordomus prs is governed by its own policy"
+depends_on: []
+acceptance_criteria:
+  - "With the MCP ceiling set to read, majordomus_plan_transition is refused with policy_denied and the issue record is byte-identical afterwards"
+  - "The same call over HTTP and from the command line is refused or admitted according to that transport's own ceiling, with the same error code and fields"
+  - "The handler of a refused capability is not entered, proved by a capability whose handler records its call"
+  - "Editing the ceiling between two calls changes the second answer without restarting the server"
+  - "capabilities.list reports each capability's admission per transport, and it agrees with what a call then does for every capability of the registry"
+  - "A policy without the key passes every existing transport test unchanged, and a ceiling naming an unknown effect fails policy validation"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers --test mcp_conformance"
+  - "majordomus generate --check"
+evidence_required:
+  - "effect_ceiling_refused_on_every_transport"
+  - "absent_key_changes_nothing"
+created_at: 2026-10-13
+updated_at: 2026-10-13

@@ -1,0 +1,46 @@
+id: I2554
+milestone: automation-is-scripted-capabilities
+title: "The ratchet is one typed capability, and the first scripts/ci gates that are only a ratchet become scripted capabilities"
+slug: the-ratchet-is-one-typed-capability
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Move the count-against-a-recorded-baseline logic that scripts/ci gates each carry into one typed Rust capability, and replace at least three gates whose remaining logic is a call to an existing capability with scripted capabilities over it, deleting each file and its inventory record in the same change."
+why: "campaigns/majordomus-shellfall-prompt-pack/00-audit-baseline.md asks that a minimal vertical slice in the quality and check family be nominated with measurable goals before anything broad is attempted, and 05-remove-shell-legacy.md asks for a strangler migration, one capability family per pull request, with the old implementation removed once the new one is routed. The family with the most repetition is the ratchet: 13 files under scripts/ci contain the word and 22 name a baseline. It is also where this repository's recorded shell defects cluster (a count lost in a pipeline subshell, a gate that could not read its own pattern and reported clean). The inventory classifies 39 scripts/ci units as disposition A and 7 as B, all with the removal text that a capability replaces them, and no unit has yet left that way."
+current_state: "scripts/ci holds 57 files. argv-limit-check, claim-proof-check, commit-policy, diagram-check, doc-command-check, github-check, lease-reader-check, mcp-tool-run-check, order-check, pipefail-check, rule-proof-check, rust-command-check and source-pin-check each implement a ratchet in bash. .ai/repo/ci/gates.yaml runs each gate by its script path. No scripted capability exists to move one to."
+desired_state: "One capability takes a measured count, the baseline it is compared with and the direction, and answers pass, improved or regressed with the remedy text; its unit tests include the two recorded defects as fixtures. At least three of the thirteen gates are definitions and scripts in the layer, run by gates.yaml through the executable, with their shell files and records gone and shell check clean. The pull request names which three and why the other ten were not ready."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/gates.rs"
+  - "apps/majordomus-cli/src/gates"
+  - "share/capabilities"
+  - "scripts/ci"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "test/cases"
+  - "docs/AUTOMATION.md"
+  - ".ai/repo/project/issues/I2554.yaml"
+non_scope:
+  - "Migrating all thirteen in one change"
+  - "A gate whose measurement is itself shell text processing: that measurement becomes a typed capability first, in its own issue"
+  - "Changing what any gate decides or its baseline value"
+depends_on:
+  - "I1801"
+  - "I2553"
+acceptance_criteria:
+  - "The ratchet capability returns regressed for a count above its baseline, improved for one below, and an error rather than pass when the measured input is absent or not a number"
+  - "For each migrated gate, a fixture that made the shell gate fail makes the scripted capability fail with the same exit code"
+  - "bin/majordomus-cli shell check passes, and the count of exempt units printed for scripts is lower than at the base by the number of gates migrated"
+  - "No file under .github/workflows or .ai/repo/ci names a deleted script"
+  - "The migrated gates run on a machine with no bash on PATH, which a case proves by running them with PATH reduced to the executable's directory"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "bin/majordomus-cli capabilities validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 94_ci_plan 365_new_shell_is_refused"
+evidence_required:
+  - "ratchet_capability"
+  - "first_gates_scripted"
+  - "gate_runs_without_bash"
+created_at: 2026-10-13
+updated_at: 2026-10-23

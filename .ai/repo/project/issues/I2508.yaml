@@ -1,0 +1,38 @@
+id: I2508
+milestone: an-intent-is-followed-to-the-deployment-that-carries-it
+title: "How long merged work waits to be deployed is measured from the trail and the recorded observation"
+slug: merge-to-deployment-wait-is-measured
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Fold one more fact into the integrator's metrics: per merge in the window, the time from the merge to the first observed successful deployment that contains it, answered as a median with its sample size, and the merges still waiting counted apart."
+why: "campaigns/majordomus-autonomous-idd-maximal-opus-fable/17_OBSERVABILITY_SLOS_COST.md asks for the merged-to-deployed lead time, derived from execution events or authoritative external receipts, with the sample size, environment and window beside every published number, and for a baseline before any objective is set. The integrator measures how fast work reaches master and stops there; whether a merge then took minutes or a day to reach the site is not a number anyone can read."
+current_state: "apps/majordomus-cli/src/integration/metrics.rs folds five facts from the audit trail: merges and merges per day, actionable to merged, CI rounds per merge, cycle and failures by kind. A grep for lead time or a merge-to-deployment measure over apps/majordomus-cli/src finds none. The recorded observation holds the newest fifty deployments with commit, environment and status (deploy::observed, WINDOW)."
+desired_state: "The metrics answer carries, per environment, the median wait from merge to the first successful deployment containing the merge commit, the number of merges measured, the number waiting and the number older than the observation's window, which are unmeasured. With no observation the fact is absent with its reason. The delivery screen of the UI shows it with the sample size."
+scope:
+  - "apps/majordomus-cli/src/integration/metrics.rs"
+  - "apps/majordomus-cli/src/deploy/observed.rs"
+  - "apps/majordomus-cli/src/capability/builtin/integration.rs"
+  - "apps/majordomus-cli/src/ui/delivery.rs"
+  - "apps/majordomus-cli/tests/integration_trail.rs"
+  - "docs/DELIVERY.md"
+  - ".ai/repo/project/issues/I2508.yaml"
+non_scope:
+  - "An objective, an alert or a budget on the number"
+  - "Intent lead times, which need a recorded time of proposal that only intents created through intents.propose carry"
+  - "A history beyond the trail and the observation's window"
+depends_on: []
+acceptance_criteria:
+  - "With a fixture trail of four merges and an observation containing three of them, the answer is the median of three, measured three, waiting one"
+  - "A merge older than the oldest deployment in the observation is counted unmeasured, not as a wait"
+  - "A failed deployment that contains a merge does not end its wait"
+  - "With no recorded observation the fact is reported absent with the reason and no zero appears"
+  - "The delivery screen shows the median with its sample size and environment, and none where the fact is absent"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::metrics"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_surface"
+evidence_required:
+  - "merge_to_deployment_wait_measured"
+created_at: 2026-10-13
+updated_at: 2026-10-13

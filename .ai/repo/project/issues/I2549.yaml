@@ -1,0 +1,38 @@
+id: I2549
+milestone: automation-is-scripted-capabilities
+title: "ADR 0069 is a record on master, and an ADR number cited with no record behind it fails a gate"
+slug: adr-0069-is-a-record-on-master
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Land the decision that a capability may be scripted as .ai/repo/adrs/0069-a-capability-may-be-scripted.md on the current tree, with its context rewritten to what the tree measures today, and make a citation of an ADR number that has no record a finding."
+why: "campaigns/majordomus-shellfall-prompt-pack/01-canonical-workflow-contract.md and 02-rhai-runtime.md ask for one execution contract and a Rhai front end over it, and tell the worker to reuse the existing decision rather than write a second one. That decision is ADR 0069, and it is not on master: CLAUDE.md, AGENTS.md, docs/SHELL.md, .ai/repo/automation/README.md, .ai/repo/ci/gates.yaml, issue I1954 and milestone test-evidence all cite it, and no file under .ai/repo/adrs carries the number. The text exists only in commit 2a03bb06e4 on origin/feature/automation-is-rhai-over-typed-capabilities, status proposed, with counts of 2026-09-15 (223 units, 216 cases) that are no longer true. Every other issue of this milestone implements a decision a reader cannot open."
+current_state: "ls .ai/repo/adrs shows 0068 and 0070 and nothing between. scripts/ci/reference-check exempts records and checks schema and kind references, not ADR numbers cited in prose. The provider bootstrap tells every worker that ADR 0069 governs new automation."
+desired_state: "The ADR is a tracked record whose context states the measured tree (146 governed shell units, 46,960 lines, 458 cases, 230 inventory records), whose decision is unchanged, and whose status says what has landed. SECURITY.md and rule project.no-network-no-eval state the interpreter as a declared exception. A gate reads every ADR NNNN citation in tracked prose outside records and fails on a number with no file."
+scope:
+  - ".ai/repo/adrs"
+  - ".ai/repo/rules/project/no-network-no-eval.v1.md"
+  - "SECURITY.md"
+  - "scripts/ci/reference-check"
+  - "test/cases"
+  - ".ai/repo/project/issues/I2549.yaml"
+non_scope:
+  - "Adding the rhai dependency or any code that builds an engine, which is I2551"
+  - "Re-creating the records I1800 to I1804 or the milestone automation from the old branch: this milestone replaces them"
+  - "Changing the decision: a disagreement with ADR 0069 is a new ADR that supersedes it"
+depends_on: []
+acceptance_criteria:
+  - "bin/majordomus adr check passes with a record numbered 0069 whose title is the one the branch gave it"
+  - "The context of the record names no count that a command printed in the pull request does not reproduce"
+  - "A fixture document that cites an ADR number with no record makes the gate exit non-zero and name the file and the number"
+  - "The gate passes on the tree, which means every number cited today resolves"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus adr check"
+  - "scripts/ci/reference-check"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 08_no_forbidden_constructs"
+evidence_required:
+  - "adr_0069_on_master"
+  - "cited_adr_resolves_gate"
+created_at: 2026-10-13
+updated_at: 2026-10-13

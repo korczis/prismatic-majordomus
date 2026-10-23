@@ -1,0 +1,44 @@
+id: I2559
+milestone: shell-shrinks-to-its-bootstrap
+title: "Embedded shell is judged, not described: a sh -c spawn in Rust, a multi-line workflow step and a record whose anchor is gone are findings of shell check"
+slug: embedded-shell-is-judged
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Extend shell check from shell files to shell embedded in other files: find every spawn of sh, bash or zsh with -c in the crate's Rust sources and every run step of a GitHub workflow that is more than one command, require an inventory record with an anchor for each, and refuse a record whose anchor the file no longer contains."
+why: "campaigns/majordomus-shellfall-prompt-pack/07-enforcement-rollout.md asks that shell not be smuggled through recipe blocks, GitHub Actions run steps or inline Command::new with sh -c, that the check parse those surfaces rather than grep them, and that narrowed adapters be allowed. The inventory already describes embedded shell in 38 records with an anchor (21 workflow steps, 9 recipes, 6 places the executable spawns a shell), and docs/SHELL.md says shell check governs files under six directories only. So those 38 records are prose: the six .github/workflows files contain 128 run keys against 21 records, and two sh -c spawns exist with no record at all, apps/majordomus-cli/src/economics/runner.rs line 745 and apps/majordomus-cli/src/offload/remote.rs line 112, the second of which builds a script and passes it to a shell on another machine."
+current_state: "shell.check reads git's index and the first bytes of each file under bin, lib, scripts, share, .githooks and .claude/hooks. An anchor is refused only when it carries an exemption (shell.exemption_not_shell). Nothing compares an anchor with the file it names, and nothing reads .rs or .yml files."
+desired_state: "Two more surfaces are measured from the tree: Rust sources under apps/majordomus-cli/src, parsed for a process spawn whose program is a shell and whose arguments include -c, and workflow files, parsed as YAML for run values with more than one command line. Each occurrence needs a record with the unit and an anchor; an occurrence with none is shell.undeclared and a record whose anchor matches nothing is shell.stale. The two unrecorded spawns get records that say why a shell is required there and when it stops being. Recipes are covered by I2555 and their records are gone."
+scope:
+  - "apps/majordomus-cli/src/automation/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/shell.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+  - ".ai/repo/automation/README.md"
+  - ".ai/repo/ci/gates.yaml"
+  - "docs/SHELL.md"
+  - "test/cases/365_new_shell_is_refused.sh"
+  - ".ai/repo/project/issues/I2559.yaml"
+non_scope:
+  - "Rewriting the workflows or the two spawns: this issue makes them declared and counted, and each is replaced with the feature it belongs to"
+  - "Dockerfiles and shell quoted in Markdown: neither is run by this repository's automation unreviewed, and a later issue may add them"
+  - "A text search for the letters sh: a spawn is recognised from the parsed call, so a comment or a test fixture is not a finding"
+  - "The dialect text the executable generates for completion and direnv (command_graph/shell.rs, environment/shell.rs), which is recorded as generated and stays"
+depends_on:
+  - "I2550"
+acceptance_criteria:
+  - "A fixture Rust file that spawns sh with -c and has no record fails shell check with shell.undeclared naming the file and the line"
+  - "The same call written in a comment or a string literal that is never spawned is not a finding"
+  - "A fixture workflow whose run value has three command lines and no record fails, and a single-command run passes"
+  - "A record whose anchor names a workflow step that no longer exists fails with shell.stale"
+  - "On the tree the check passes with records for economics/runner.rs and offload/remote.rs present, and the report prints the count of embedded occurrences per surface"
+  - "The shell-inventory gate is selected by a change under .github/workflows and under apps/majordomus-cli/src"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli shell check"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib automation"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 365_new_shell_is_refused 366_automation_inventory_agrees_with_the_tree"
+evidence_required:
+  - "embedded_shell_judged"
+  - "unrecorded_spawns_declared"
+created_at: 2026-10-13
+updated_at: 2026-10-13

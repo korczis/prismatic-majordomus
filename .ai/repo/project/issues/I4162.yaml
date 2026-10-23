@@ -1,0 +1,33 @@
+id: I4162
+milestone: every-sessions-usage-is-observed
+title: "A usage estimate names the price-list version, currency and tier effective at the time of the usage, and an unknown price reads unknown"
+slug: an-estimate-names-its-price-list
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "The estimate in apps/majordomus-cli/src/economics (model.rs, usage.rs, runner.rs) is computed from a dated price list whose version, currency and tier are recorded with the estimate; a model absent from the list yields unknown, never zero."
+why: "The ask is in campaigns/prismatic-majordomus-tokenomics-prompt-pack-20261019, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: apps/majordomus-cli/src/economics/model.rs carries costUSD in millionths of a dollar as the harness's own projection, and usage.rs builds anthropic_request and openai_request from reported usage; I3292 separates reported, estimated and billed amounts, and none of these names a price-list version or currency."
+desired_state: "Every estimate states which price list, currency and tier produced it, and an unlisted model reads unknown."
+scope:
+  - ".ai/repo/project/issues/I4162.yaml"
+  - "apps/majordomus-cli/src/economics"
+  - "share"
+  - "test/cases/4162_an_estimate_names_its_price_list.sh"
+  - "docs"
+non_scope:
+  - "Billed amounts from a provider invoice"
+  - "Changing the reported-token fields"
+depends_on: []
+serves: []
+acceptance_criteria:
+  - "Two fixtures at different price dates give different estimates, each naming its list version and currency"
+  - "A model missing from the list reads unknown and never 0"
+validation:
+  - "bash test/run.sh 4162_an_estimate_names_its_price_list 430_economics"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::"
+evidence_required:
+  - "two_price_dates_differ"
+  - "unknown_price_reads_unknown"
+created_at: 2026-10-23
+updated_at: 2026-10-23

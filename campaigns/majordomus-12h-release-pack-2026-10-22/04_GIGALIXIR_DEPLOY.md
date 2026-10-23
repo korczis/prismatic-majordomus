@@ -1,0 +1,2 @@
+# Wave 4: Gigalixir production
+Discover actual Elixir/Phoenix/Gigalixir app layout and documented deploy procedure. Validate secrets are configured without exposing them; check build, migrations, runtime config, health, TLS, routing, telemetry and rollback. Deploy only through authorized existing gates; stop when permissions or approvals are missing. Verify release SHA and endpoints from outside, record timestamps and evidence. Do not confuse a green build with a healthy production instance.

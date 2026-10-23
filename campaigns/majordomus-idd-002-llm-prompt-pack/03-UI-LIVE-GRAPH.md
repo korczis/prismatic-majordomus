@@ -1,0 +1,13 @@
+# MISSION 03 — ACTIONABLE LIVE `/ui` AND GRAPH
+
+Audit `/ui`, `/cockpit`, UI routing/templates/assets, `socket.js` or equivalent, existing `/events` WebSocket, pages for executions/mesh/issues/roadmap/delivery, visualization libs and design tokens. Avoid introducing a new SPA framework if server-rendered pages and small Alpine/Cytoscape/ECharts islands already work. Reuse existing components; keep one coherent look across routes.
+
+Build an actionable intent composer, roadmap/issue controls, live execution inspector, mesh activity view and interactive correlated graph. Capability descriptors/schema generate parameter forms, effect confirmation and permission-derived buttons. Every mutation invokes shared executor; the UI does not own workflow state. Server renders meaningful initial HTML, then reconciles incremental events.
+
+Graph schema: typed nodes for intents, plan revisions, milestones, issues, execution attempts, peer/session, test/evidence, PR, release/deploy; typed causal/dependency/assigned-to/executed-by/verified-by edges. Edge certainty/provenance must distinguish observed vs inferred. Stable node IDs, server-side pagination/aggregation and incremental client updates. Node click opens inspectable URL and useful actions, logs, evidence and relationship explanation. Support zoom/pan/focus, search/filters, keyboard controls, mobile detail drawer, accessible textual alternative, performance-friendly clustering. Avoid full graph regeneration per event.
+
+Event contract: discover actual version, sequence scope and retention; replay/resume from cursor with explicit snapshot boundary; reject or reconcile gaps; deduplicate retries, out-of-order and duplicate events; backpressure/lag diagnostics; bounded log retention; heartbeat/connection indicator; graceful fallback when disconnected. Cross-peer clocks must never be assumed globally ordered. Don't render untrusted logs with innerHTML. Protect SSE/WebSocket origin/auth, CSRF and any mutation endpoints according to current security model.
+
+Tests: SSR baseline with JS disabled; browser UI forms, approval, issue launch, node drill-down and navigation; reconnect/replay/gap; duplicate event; permissions; XSS; disconnected peer; rendering of unknown/unavailable state; mobile 360px; keyboard and reduced-motion; p95 updates and large-graph stress. Screenshots do not prove backend execution. Demonstrate exact execution ID from UI to shared executor and corresponding event sequence.
+
+Success: from `/ui`, user can launch an authorized existing capability, observe live status, inspect underlying event history and correlate work with graph nodes; UI state survives reconnection.

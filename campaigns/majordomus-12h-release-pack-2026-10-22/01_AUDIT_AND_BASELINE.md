@@ -1,0 +1,2 @@
+# Wave 1: Ground truth
+Inspect repository, remote GitHub PRs/actions, Pages publication and Gigalixir deployment. Record exact SHA, run IDs, timestamps, environment, URLs, health and evidence for every claim. Produce a gap matrix (observed/inferred/planned/blocked) and a critical path ranked by impact, risk and time. Read canonical project governance first. Do not change code before establishing baseline. Prefer machine-readable evidence stored using existing repository conventions.

@@ -1,0 +1,36 @@
+id: I4166
+milestone: an-entity-says-how-it-is-known-and-what-it-affects
+title: "A changed symbol names the dependents and tests it reaches with the path and provenance of each edge, and an unsupported area reports partial instead of no impact"
+slug: a-symbol-change-names-its-dependents
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Impact analysis moves from layer level to symbol level: a changed Rust symbol lists the dependents and tests reachable over the reference graph of I4164 with the path and provenance of every edge, reports partial with the full-test fallback where the graph cannot see, and never releases a mandatory gate by recommendation. The owning impact module must be found among the layer-level code of I3407, I3412 and I3238."
+why: "The ask is in campaigns/majordomus-gap-closure-2026-10-22 (on branch chore/the-packs-of-10-22-and-10-23-are-recorded, not yet on master) W03, which the owner handed over; no plan record covered it when the packs were audited on 2026-10-23. The owner ordered on 2026-10-23 that every unfinished pack is part of the mesh's zero goal."
+current_state: "Measured on master 575d39f8d24: layer-level impact is delivered by I3407, I3412 and I3238; the audit finds nothing at symbol level, and the reference graph it needs is I4164."
+desired_state: "A change reports what it reaches, how it knows, and where it cannot know."
+scope:
+  - ".ai/repo/project/issues/I4166.yaml"
+  - "apps/majordomus-cli/src/devcontext"
+  - "apps/majordomus-cli/src/gates"
+  - "test/cases/4166_a_symbol_change_names_its_dependents.sh"
+  - "docs"
+non_scope:
+  - "Dynamic dispatch resolution"
+  - "Changing which gates are mandatory"
+depends_on:
+  - "I4164"
+serves: []
+acceptance_criteria:
+  - "Changing a shared function lists its consumers and tests with the path of each edge"
+  - "An unsupported dynamic call yields partial and the full test fallback"
+  - "A recommendation never releases a mandatory gate"
+validation:
+  - "bash test/run.sh 4166_a_symbol_change_names_its_dependents"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib gates::"
+evidence_required:
+  - "consumers_listed"
+  - "partial_on_unsupported"
+  - "mandatory_gate_kept"
+created_at: 2026-10-23
+updated_at: 2026-10-23
