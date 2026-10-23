@@ -179,7 +179,7 @@ pub fn journal_check(tallies: &super::journal::JournalTallies) -> DoctorCheck {
 /// let check = session_beats_check(&biting);
 /// assert!(!check.ok && check.detail.contains("3 session beat(s) withheld"), "{}", check.detail);
 /// ```
-pub(crate) fn session_beats_check(tally: &super::cooperation::SessionBeatTally) -> DoctorCheck {
+pub fn session_beats_check(tally: &super::cooperation::SessionBeatTally) -> DoctorCheck {
     if !tally.withheld_recently {
         return DoctorCheck::pass(
             "session_beats",

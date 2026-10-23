@@ -1403,7 +1403,16 @@ pub enum SessionProgress {
 
 impl SessionProgress {
     /// Whether the session's claims still hold as far as progress goes.
-    pub(crate) fn holds(self) -> bool {
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::journal::SessionProgress;
+    ///
+    /// assert!(SessionProgress::Within.holds());
+    /// let silent = SessionProgress::Silent { ttl_seconds: 8, age: Duration::from_secs(9) };
+    /// assert!(!silent.holds());
+    /// ```
+    pub fn holds(self) -> bool {
         !matches!(self, SessionProgress::Silent { .. })
     }
 }
