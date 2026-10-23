@@ -2,7 +2,7 @@
 //!
 //! **Derived, never typed.** [`report`] answers what a compiler cache client on this machine
 //! should be configured with *now*: the local disk as the first level and, only when every
-//! condition below holds, the store [`select`](super::select) chose as the second. Nothing is
+//! condition below holds, the store [`select`] chose as the second. Nothing is
 //! written anywhere; the answer is variables for the environment of the process that starts
 //! the sccache server, and `~/.cargo/config.toml` is never touched (ADR 0157, alternatives).
 //!
@@ -13,7 +13,7 @@
 //! the answer says which one did not when it is not:
 //!
 //! 1. `sccache` answers `--version`;
-//! 2. the node file (outside the repository) offers or knows a store, and [`select`](super::select)
+//! 2. the node file (outside the repository) offers or knows a store, and [`select`]
 //!    chooses one: the store answered its readiness route within the budget, so an unknown is
 //!    never taken for healthy;
 //! 3. a credential file exists, is a regular file readable by its owner alone, and holds the
