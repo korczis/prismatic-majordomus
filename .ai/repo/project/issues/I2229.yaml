@@ -1,0 +1,41 @@
+id: I2229
+milestone: a-fact-is-written-once
+title: "The site's command list and exit codes are read from the command registry, not parsed out of help text"
+slug: the-site-reads-the-command-registry
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make scripts/generate-site-data build the product data's commands and exit codes from share/commands.yaml, and make the exit-code meanings one declaration that the usage text, docs/CLI.md and lib/common.sh are checked against."
+why: "scripts/generate-site-data:285-287 builds COMMANDS by sed-parsing the usage block of bin/majordomus, and :288 builds EXIT_CODES by parsing its 'exit codes:' line. Yet the same script builds commands.json from share/commands.yaml (:531-536), and share/commands.yaml:1-30 calls itself the authority for each command's summary, class and exit codes. The rendered product data is therefore a parse of a help message, as ledger row command-surface-has-no-owner says. The exit-code meanings are written in bin/majordomus usage, docs/CLI.md:20-27 and lib/common.sh:7-8, and no declaration owns them (ledger row exit-code-table-in-prose)."
+current_state: "share/commands.yaml exists and feeds commands.json. The product data still parses usage text. Exit-code meanings have no declaration."
+desired_state: "share/commands.yaml declares the exit codes (code, name, meaning) once. generate-site-data reads public commands and exit codes from it. The usage text's command lines and exit-code line, the docs/CLI.md table and the MJ_EX_* constants are compared with it by the doctrine that already reconciles the registry with the dispatcher (lib/commands.sh:5-9, run by doctor and watch). Both ledger rows are fixed."
+scope:
+  - "scripts/generate-site-data"
+  - "share/commands.yaml"
+  - "bin/majordomus"
+  - "docs/CLI.md"
+  - "lib/common.sh"
+  - "lib/commands.sh"
+  - "docs/HARDCODING_LEDGER.yaml"
+  - "site/data/generated"
+  - "test/cases"
+non_scope:
+  - "Generating bin/majordomus usage text from the registry; the dispatch table stays authority for what executes."
+  - "The Rust clap tree, which is a measured second declaration (surfaces-never-disagree non_scope)."
+depends_on:
+  - "I2226"
+acceptance_criteria:
+  - "scripts/generate-site-data contains no sed or grep over bin/majordomus usage text"
+  - "An exit code whose meaning differs between share/commands.yaml and docs/CLI.md or bin/majordomus fails a check that names both"
+  - "scripts/generate-site-data --check passes and the product data's commands equal the public commands of share/commands.yaml"
+  - "The ledger test passes with command-surface-has-no-owner and exit-code-table-in-prose fixed"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/generate-site-data --check"
+  - "cargo test --test hardcoding_ledger"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 28_no_hardcoded_values <the case this issue adds>"
+evidence_required:
+  - "product_data_from_registry"
+  - "exit_code_drift_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

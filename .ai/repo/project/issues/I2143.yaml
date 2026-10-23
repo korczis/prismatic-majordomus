@@ -1,0 +1,37 @@
+id: I2143
+milestone: work-is-coordinated
+title: "A task or claim whose worker is gone ends, or is reported orphaned, within a declared time"
+slug: zombie-tasks-and-claims-end
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Give recover a tasks subject, bind a named mesh session to the peer that opened it, age departed peers' claims off the local board by time, and make doctor and recover agree on when an episode is stale."
+why: "An active task never expires: lib/recover.sh:63-70 has no tasks subject, so a worker that dies leaves current.yaml active and its scope claimed. A mesh claim taken in an explicitly named session auto-opens that session (apps/majordomus-cli/src/mesh/cooperation.rs:3319-3321) and outlives the worker while the runtime beats, because the board-detach close (apps/majordomus-cli/src/mesh/cooperation.rs:1420-1430) closes only board-projected sessions; docs/MESH.md:18-24 implies a claim dies with its worker. The local peer board keeps a departed peer's claims by count (32), not by time (apps/majordomus-cli/src/peers.rs:363-367, 558-576), while docs/MESH.md:309-313 says a detached peer's claims are released. Two thresholds disagree on when an episode is stale: session.stranded_after 12h (.ai/repo/policy.yaml:120), used by recover, and freshness stale_minutes 48h (.ai/repo/policy.yaml:128-130, lib/doctor.sh:736-752), used by doctor. Baseline audit of 2026-10-09 at master 1fb8d6be44, coordination gap 3, catalogue 17, drift c-9 and c-10."
+current_state: "A dead worker's task stays active, its named-session claims stay held, and the local board keeps its claims until 32 others push them out."
+desired_state: "recover tasks reports, and on request closes, an active task with no open episode past session.stranded_after; a named mesh session is bound to the peer that opened it, so its detach releases its claims; the local board drops a departed peer's claims after a declared time; doctor reads the threshold recover uses."
+scope:
+  - "lib/recover.sh"
+  - "lib/doctor.sh"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/src/peers.rs"
+  - ".ai/repo/policy.yaml"
+  - "apps/majordomus-cli/tests/peer_claims.rs"
+  - "apps/majordomus-cli/tests/mesh_cooperation.rs"
+  - "test/cases"
+  - "docs/MESH.md"
+depends_on: []
+acceptance_criteria:
+  - "A task whose worker's episode closed longer ago than the declared time is listed by recover tasks and closed by it on request"
+  - "Killing an MCP client that took a claim in a named session releases the claim on every linked runtime within one expiry"
+  - "A departed peer's claims leave the local board after the declared time whatever their count"
+  - "doctor and recover call an episode stale at the same age"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test peer_claims --test mesh_cooperation"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "recover_tasks_case"
+  - "named_session_claim_released_test"
+  - "board_claims_age_out_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

@@ -1,0 +1,38 @@
+id: I2141
+milestone: work-is-coordinated
+title: "Starting, checking and finishing a task are capabilities every surface can reach"
+slug: the-task-lifecycle-is-a-capability
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Declare task.start, task.check, task.finish and task.handover as capabilities whose handlers run the existing shell implementation, so the task lifecycle has CLI, HTTP, MCP and OpenAPI projections and the accepted debt for it is retired."
+why: "start, check, finish, handover, session, checkpoint and decision run only as shell (bin/majordomus:150, lib/start.sh, lib/check.sh, lib/finish.sh), recorded as accepted debt in .ai/repo/development-semantics-baseline.txt:19-33 under ADR 0040. The task lifecycle therefore has no HTTP, MCP or Cockpit path: a worker with only MCP tools cannot start a task and the Cockpit cannot show one. The task id t-... is minted in lib/start.sh:130 and lives in .ai/local/state/current.yaml; the Rust DevTask (apps/majordomus-cli/src/devtask/task.rs:277) is an issue viewed as work, another thing under the same name. I1504 (development-runtime) set the pattern with plan.transition; this extends it to the task. Baseline audit of 2026-10-09 at master 1fb8d6be44, coordination gap 1."
+current_state: "The task lifecycle is fifteen mutating shell commands with no typed capability."
+desired_state: "task.start, task.check, task.finish and task.handover are capability! declarations whose handlers call the shell implementation the way apps/majordomus-cli/src/continuity/local.rs:302 already reads the task, each declares its effect, each is projected to CLI, HTTP, MCP and OpenAPI by the registry, and the matching baseline entries are removed."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/continuity/local.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "lib/start.sh"
+  - "lib/check.sh"
+  - "lib/finish.sh"
+  - "lib/handover.sh"
+  - ".ai/repo/development-semantics-baseline.txt"
+  - "docs/CLI.md"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "A task started over MCP is the task majordomus check reports in the same checkout"
+  - "check and finish answer over HTTP with the same verdict and exit class as the shell commands"
+  - "The baseline entries for the four commands are removed and the gate that reads the baseline passes"
+  - "Each writer among them declares repository_mutation"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli capabilities validate"
+  - "bin/majordomus-cli generate --check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "task_lifecycle_over_mcp_case"
+  - "baseline_entries_retired"
+created_at: 2026-10-09
+updated_at: 2026-10-09

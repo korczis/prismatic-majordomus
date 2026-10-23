@@ -1,0 +1,35 @@
+id: I2259
+milestone: test-evidence
+title: "A new guaranteed claim arrives with a recorded passing run of its test, or is refused"
+slug: a-new-guarantee-arrives-with-its-run
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Change evidence-check so a claim promoted to or added as guaranteed in a pull request is supported by a passing run of its named test recorded by that pull request's own CI run, and is refused otherwise; record the design change with majordomus reasoning."
+why: "scripts/evidence-check:45-53 deliberately reports and does not refuse a new guarantee without a run, because a branch cannot rewrite the trunk's baseline; the result at master 3d92c25c12 is 219 guaranteed claims in docs/CLAIMS.yaml, 0 supported lines in .ai/repo/evidence-baseline.txt and the newest ledger execution dated 2026-09-17. The critique ratchet-acceptance-unowned found no issue carrying the pack's M10-I04 'adding unsupported new guarantee fails'."
+current_state: "New unsupported guarantees are reported and admitted."
+desired_state: "A pull request adding a guarantee must show its test passing in the same CI run; the trunk's baseline stops growing."
+scope:
+  - "scripts/evidence-check"
+  - "scripts/ci/evidence-collect"
+  - "apps/majordomus-cli/src/evidence"
+  - "docs/EVIDENCE.md"
+  - ".ai/repo/ci"
+  - "test/cases"
+non_scope:
+  - "Paying the existing 158-line debt; that is test-evidence's recording work (I1949, I1954)"
+  - "Tamper-proofing (refused, docs/EVIDENCE.md:816)"
+depends_on:
+  - "I1949"
+  - "I1954"
+acceptance_criteria:
+  - "A fixture pull request adding a guaranteed claim whose test did not run in its CI run is refused by evidence-check"
+  - "The same with the test passing in the run is accepted"
+  - "The baseline file cannot gain an unsupported line in a pull request; a case shows it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 357_ci_records_evidence <the case this issue adds>"
+evidence_required:
+  - "new_guarantee_needs_a_run_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

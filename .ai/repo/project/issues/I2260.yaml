@@ -1,0 +1,34 @@
+id: I2260
+milestone: work-is-coordinated
+title: "Every writer of a lifecycle record is listed, and a record with two writers gets one owner"
+slug: every-lifecycle-record-has-one-writer
+priority: p2
+profile: deep-work
+parallel_safe: true
+objective: "Derive a table of every lifecycle record (current.yaml, ledger.jsonl, handovers, decisions, checkpoints, session records, leases) and every code path that writes it (shell lib, Rust command, capability, hook), and give each record with two writers a single owner the other calls."
+why: "Finding F10: start, check, finish and handover are shell writers (bin/majordomus:158), while Rust `continuity resume` also writes the checkout's handovers and decision log (apps/majordomus-cli/src/continuity/mod.rs:8-9). I2141 adds task.* capabilities over the shell implementation and does not address the second handover writer. Pack M08-I01/I05."
+current_state: "No table of writers exists; handovers have two writers."
+desired_state: "A generated table lists record, writer and owner; continuity resume writes handovers through the owner's interface; a gate fails a new writer of an owned record."
+scope:
+  - "lib/handover.sh"
+  - "apps/majordomus-cli/src/continuity"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "Rewriting the shell lifecycle in Rust"
+  - "The YAML reader pair (I2243)"
+depends_on:
+  - "I2141"
+acceptance_criteria:
+  - "The table names every writer of each lifecycle record with path:line, generated, not hand-written"
+  - "A handover resumed by continuity resume is written by the same function as majordomus handover, shown by a case comparing the two files byte for byte"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib continuity"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "lifecycle_writer_table"
+  - "one_handover_writer_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

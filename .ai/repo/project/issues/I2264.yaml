@@ -1,0 +1,36 @@
+id: I2264
+milestone: first-runs-by-strangers-are-recorded
+title: "A first-run study protocol and a local capture command exist that a stranger can run and opt out of"
+slug: a-first-run-can-be-captured-with-consent
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Write the study protocol (10-15 minute task, consent, opt-out, fields, success measures, the owner's continue/pivot/retire criteria as proposals) and a capture capability that records OS, install result, files created, time to first accepted change, refusals and hook latency into one redacted local file the participant hands over."
+why: "Finding F14: no adopter is named and nothing exists to observe one (docs/ADOPTION_FIRST_RUN.md measures a fixture). The pack's M12-I01/I03 can be prepared in the repository; recruiting (M12-I02) is the owner's."
+current_state: "No protocol, no capture."
+desired_state: "docs carries the protocol; a typed capability writes the observation file; a case runs it in a fixture."
+scope:
+  - "docs"
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "share/schemas/majordomus"
+  - "docs/generated"
+  - "test/cases"
+non_scope:
+  - "Contacting anyone"
+  - "Sending data anywhere"
+  - "Simulated participants presented as real"
+depends_on:
+  - "I2255"
+acceptance_criteria:
+  - "The protocol states task, consent, opt-out, captured fields and success measures"
+  - "The capture run in a fixture records every declared field, redacts a seeded token and the home path, and writes only its output file"
+  - "Every fixture record carries fixture: true"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli capabilities validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "study_protocol"
+  - "first_run_capture_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

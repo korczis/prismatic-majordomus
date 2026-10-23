@@ -1,0 +1,41 @@
+id: I2231
+milestone: cockpit-control-center
+title: "majordomus ui opens this checkout's Cockpit, starting the shared server only when none serves it"
+slug: majordomus-ui-opens-the-cockpit
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add a CLI-only `majordomus ui` that converges on this checkout's served Cockpit through the same path as `serve ensure`, prints its URL, and opens a browser only when a person is at an interactive terminal and did not say --no-open."
+why: "Owner pack v1.1 prompts/03-INSTALL-AND-LAUNCH.md asks for `majordomus ui` with --host, --port, --no-open, --json, status and stop. There is no such command: the only Ui variant is `web report ui` (apps/majordomus-cli/src/cli.rs:2800-2805). The parts exist. `serve ensure`, `serve status` and `serve stop` converge on the shared server (apps/majordomus-cli/src/commands/serve.rs:60, :581). The default port is 8741 (apps/majordomus-cli/src/cli.rs:3301). A browser opening the server's root is redirected to /cockpit (docs/COCKPIT.md:33-41). The runtime pack put the decision in I2131, whose record must state 'whether an entry beyond serve ensure (the pack's majordomus ui) is needed' and which forbids adding one first. The owner's v1.1 pack, dated the same day, is the input that decision takes: it names the command as the primary entry."
+current_state: "A person reaches the Cockpit by running serve or serve ensure and reading the logged address. No command opens it."
+desired_state: "`majordomus ui` is declared once (clap tree and share/commands.yaml, reconciled by the existing closure check). It runs serve ensure's convergence, waits for readiness, and prints the Cockpit URL; --json prints {url, host, port, started}. It opens the URL with the platform opener only when stdout is a terminal, no SSH session is detected and --no-open is absent. `ui status` and `ui stop` are serve status and serve stop under another name, not a second implementation. It never binds beyond loopback unless --host or MAJORDOMUS_HTTP_HOST says so, as serve does."
+scope:
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "share/commands.yaml"
+  - "apps/majordomus-cli/tests"
+  - "test/cases"
+  - "docs/COCKPIT.md"
+  - "docs/CLI.md"
+non_scope:
+  - "A capability for ui; process lifecycle stays CLI-only, as serve ensure and serve stop are by stated design."
+  - "A second server, port policy or readiness probe; the stable derived address is I2131."
+  - "Opening a browser from a non-interactive run, a hook or an agent."
+depends_on:
+  - "I2131"
+  - "I2153"
+acceptance_criteria:
+  - "In a fixture repository with no server, majordomus ui --no-open --json starts one and prints a URL whose /cockpit answers 200"
+  - "Run again, it starts nothing and prints the same URL"
+  - "With stdout not a terminal it opens no browser, and a test observes that the opener was not called"
+  - "majordomus ui stop leaves serve status reporting no server"
+  - "The clap tree and share/commands.yaml agree on the command, and the closure check passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test http_serve"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "ui_converges_case"
+  - "no_browser_without_terminal_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

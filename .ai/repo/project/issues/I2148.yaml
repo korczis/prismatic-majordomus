@@ -1,0 +1,36 @@
+id: I2148
+milestone: mcp-transports-are-reliable
+title: "The client launch configurations are generated from the provider declaration and diagnosed by parsing them"
+slug: client-configs-are-generated-and-parsed
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Render .mcp.json, .gemini/settings.json and .codex/config.toml from share/providers.yaml, write them on init, and diagnose them by parsing the server entry rather than searching the text."
+why: ".mcp.json, .gemini/settings.json and .codex/config.toml were written by hand in one commit (d1f1efbfbe, 2026-09-05); nothing in lib/, bin/ or apps/majordomus-cli/src/ writes them, so a downstream init produces none. The diagnosis is text.contains('majordomus-mcp') (apps/majordomus-cli/src/capability/builtin/mcp.rs:394-399), and .codex/config.toml:2-3 names the launcher in a comment, so deleting its [mcp_servers] table would still read wired. Request timeouts differ by client (Gemini 120 s, Codex 120 s startup) against the bridge's 60 s. Pack M06 asks that declared integrations be discovered from canonical provider metadata, installed where supported and diagnosed if absent. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gap 13 and the provider-config row."
+current_state: "Three hand-written client configurations, a substring diagnosis, and none for an adopter."
+desired_state: "The diagnosis parses JSON and TOML and reads mcpServers.majordomus.command or mcp_servers.majordomus.command; the three files are rendered from share/providers.yaml client_config through the existing majordomus update projection; init writes them in an adopter repository; a timeout shorter than the bridge's is reported."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/mcp.rs"
+  - "share/providers.yaml"
+  - "lib/update.sh"
+  - "share/skeleton"
+  - ".mcp.json"
+  - ".gemini/settings.json"
+  - ".codex/config.toml"
+  - "apps/majordomus-cli/tests/providers_projection.rs"
+  - "test/cases"
+  - "docs/MCP.md"
+depends_on: []
+acceptance_criteria:
+  - "A .codex/config.toml whose server table is removed but whose comment names the launcher is reported not wired"
+  - "init in a fresh repository writes the three configurations, and majordomus update regenerates them from share/providers.yaml"
+  - "A configuration whose timeout is shorter than the bridge's request timeout is reported with both values"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test providers_projection"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "parsed_provider_diagnosis_test"
+  - "init_writes_client_configs_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

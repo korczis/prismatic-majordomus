@@ -1,0 +1,49 @@
+id: browsers-act-and-cooperate-under-policy
+title: "Paired browsers act only inside a declared origin policy, several of them answer one request, and what they read can be kept as evidence"
+slug: browsers-act-and-cooperate-under-policy
+order: 318
+priority: p3
+problem: "The first slice (a-browser-is-a-read-only-peer) gives one browser and one read of the active tab, approved one click at a time. The rest of the Bro-Net pack is missing: actions that change what a browser shows, a policy that decides which origins and capabilities a browser may serve without a click every time, more than one browser answering one request, and a reading that outlives the process. Executions live only while the process does (apps/majordomus-cli/src/execution/store.rs:1-7). No dispatch to several peers exists anywhere, because the mesh carries metadata only (.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md:57-59). The only policy primitives are input redaction (apps/majordomus-cli/src/execution/redact.rs:9-11) and the 'nothing leaves the machine' default (SECURITY.md:13)."
+outcome: "A repository declares which origins and which browser capabilities a paired browser may serve. A request outside that declaration is refused before it reaches the browser. Navigation and screenshots run only inside the declaration and stay visible to the person. One request can be answered by several paired browsers, and the answer is aggregated deterministically with each result's provenance and each failure kept. A reading can be recorded as revision-bound evidence."
+current_state: "Absent. It depends on the first slice, which is absent too. Unpairing is the only revocation the first slice provides."
+desired_state: "A browser section in .ai/repo/policy.yaml is read by one function that every browser capability consults. Revoking an origin or a capability takes effect on the next request with no restart. Cases cover a forged task, a replayed task, a revoked peer, an origin outside the policy and page text that carries instructions. browser.navigate and a screenshot capability exist behind the policy. A fan-out execution selects every online browser that advertises the capability, in a stable order, and aggregates the results. A reading can be written as evidence through the test-evidence ledger (ADR 0087)."
+scope:
+  - ".ai/repo/policy.yaml"
+  - "apps/majordomus-cli/src/policy.rs"
+  - "apps/majordomus-cli/src/browser"
+  - "apps/majordomus-cli/src/capability/builtin/browser.rs"
+  - "apps/majordomus-cli/src/evidence"
+  - "apps/majordomus-browser"
+  - "apps/majordomus-cli/tests/"
+  - "test/cases"
+  - "docs/BROWSER.md"
+non_scope:
+  - "Form filling, clicks and arbitrary script execution. These need their own decision once navigation has run under policy."
+  - "Browsers on another machine through the mesh. That needs an ADR that brings the remote-operation authorization ADR 0050 asks for (.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md:138-143)."
+  - "Heuristic or load-based routing. Selection is deterministic and explainable."
+  - "Everything the pack excludes: behavioural manipulation, telemetry, CAPTCHA solving, background or distributed compute."
+acceptance_criteria:
+  - "A request for an origin or capability outside the declared browser policy is refused with a typed reason and never reaches the browser"
+  - "A capability or origin removed from the policy is refused on the next request with no restart"
+  - "A replayed or forged task frame is refused by the host and counted"
+  - "browser.navigate runs only to a declared origin, and the extension shows that it is running"
+  - "A fan-out request to two browsers where one fails returns one result, one typed failure and a deterministic order"
+  - "A reading recorded as evidence names the revision, the browser peer and the content digest"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test browser_policy --test browser_fanout"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases this milestone adds>"
+evidence_required:
+  - "policy_refusal_cases"
+  - "replay_and_forgery_cases"
+  - "navigate_under_policy_case"
+  - "fanout_partial_failure_test"
+  - "browser_evidence_record_test"
+risks:
+  - "An origin policy committed to the repository is shared by every contributor, but browser trust is per person and per machine. The ADR from the first slice must decide which half lives where before this milestone writes policy."
+  - "Navigation makes the browser issue network requests on Majordomus's behalf, which relaxes the 'nothing leaves the machine' posture (SECURITY.md:13). SECURITY.md must say so in the same change."
+depends_on:
+  - "a-browser-is-a-read-only-peer"
+  - "test-evidence"
+created_at: 2026-10-09
+updated_at: 2026-10-09

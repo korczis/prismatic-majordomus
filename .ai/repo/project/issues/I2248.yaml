@@ -1,0 +1,29 @@
+id: I2248
+milestone: architecture-is-enforced
+title: "doctor reads a hook as wired only when the invocation can run and its exit is kept"
+slug: a-hook-is-wired-only-when-it-runs
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make doctor's git-hook wiring check refuse a hook whose invocation is commented out, follows an unconditional exit, or sits in a function nothing calls, in addition to the `|| true` and `|| exit 0` swallows it already refuses."
+why: "Finding F04, changed at master 3d92c25c12: lib/doctor.sh:160 refuses `|| true` and `|| exit 0` on the invoking line (test/cases/14_wiring_dispatcher.sh:38-42), but lib/doctor.sh:148 accepts any line in the hook that matches `<prog> <arg>`, so `# bin/majordomus doctor` or an `exit 0` before the line passes. The m00 findings reproduced an early `exit 0` in pre-commit with doctor reporting 0 failures."
+current_state: "A neutered hook passes doctor if the invoking text is still present anywhere in it."
+desired_state: "doctor accepts a hook only when the invoking line is not a comment, no unconditional exit, return or exec precedes it at top level, and its exit status reaches the hook's own; each refusal names the line."
+scope:
+  - "lib/doctor.sh"
+  - "test/cases"
+non_scope:
+  - "Behavioural proof by running the hook; that is the probe harness of I2160"
+  - "CI gate scripts neutered internally; case 138's mutation doctrine covers those"
+depends_on: []
+acceptance_criteria:
+  - "A pre-commit whose doctor line is commented out fails wiring naming the line"
+  - "A pre-commit with `exit 0` before the doctor line fails wiring naming both lines"
+  - "The repository's own .githooks still pass doctor"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 14_wiring_dispatcher 14c_wiring_from_a_linked_worktree 18_doctrine_wiring"
+evidence_required:
+  - "neutered_hook_refused_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

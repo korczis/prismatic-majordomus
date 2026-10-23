@@ -1,0 +1,32 @@
+id: I2257
+milestone: a-client-lists-only-the-tools-it-needs
+title: "A tools/list entry does not repeat a schema the client can fetch once"
+slug: tool-schemas-are-not-repeated
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Stop inlining outputSchema into every tools/list entry (serve it as a resource or on demand), deduplicate repeated input definitions, and prove the listing still validates in Claude Code and the conformance suite."
+why: "tool_json inlines t.output_schema for every tool (apps/majordomus-cli/src/mcp/protocol.rs:446-458). Output schemas are optional in MCP's tools/list; a client that needs one can read it elsewhere. The largest entry measured 62,994 bytes at 893a79be65."
+current_state: "Every listing carries every output schema."
+desired_state: "The listing carries input schemas only, each rooted at type object; output schemas are reachable; I2256's number drops and is re-baselined."
+scope:
+  - "apps/majordomus-cli/src/mcp"
+  - "apps/majordomus-cli/src/capability"
+  - "docs/MCP.md"
+  - ".ai/repo/benchmarks"
+  - "test/cases"
+non_scope:
+  - "Removing structuredContent from tool results"
+depends_on:
+  - "I2256"
+acceptance_criteria:
+  - "tools/list bytes fall by the measured amount, recorded in the bench baseline"
+  - "Every inputSchema in the listing has type object at its root (Claude Code rejects the whole list otherwise)"
+  - "The MCP conformance tests pass and a test reads a tool's output schema through its new route"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test mcp_conformance --test mcp_conformance_projection --test mcp_stdio"
+evidence_required:
+  - "schema_dedup_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

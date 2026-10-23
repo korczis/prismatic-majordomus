@@ -1,0 +1,32 @@
+id: I2252
+milestone: a-provider-hook-refuses-an-out-of-scope-edit
+title: "Codex refuses an out-of-scope edit where its hooks can, and the declaration says where they cannot"
+slug: codex-refuses-an-out-of-scope-edit
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Add a Codex adapter for the tool-call hook I2250 recorded as supported, reusing I2251's shim, and declare the tool kinds Codex cannot block."
+why: "share/providers.yaml:127-131 declares Codex unadapted although its hook system is documented there; the pack's M06-I03 asks for a Codex projection without invented capabilities."
+current_state: "Codex has no adapter of any kind."
+desired_state: "A Codex hook refuses the same out-of-scope write in a case built from its documented payload; unsupported kinds are listed in the declaration."
+scope:
+  - "lib/capture.sh"
+  - "share/providers.yaml"
+  - ".codex"
+  - "docs/generated"
+  - "test/cases"
+non_scope:
+  - "Gemini, Cursor, Copilot; each stays a sourced N/A until I2250 records a blocking hook"
+depends_on:
+  - "I2251"
+acceptance_criteria:
+  - "A documented Codex hook payload for an out-of-scope write is refused in a case, and an in-scope one allowed"
+  - "share/providers.yaml lists the Codex tool kinds the hook cannot block, with a source"
+validation:
+  - "bin/majordomus plan validate"
+  - "scripts/ci/providers-check"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "codex_hook_refusal_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

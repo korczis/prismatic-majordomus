@@ -1,0 +1,35 @@
+id: policy-and-scope-read-exactly
+title: "Every reader of a record reads the same values, and scope judges the change a task leaves"
+slug: policy-and-scope-read-exactly
+order: 314
+priority: p0
+problem: "Findings F05 and F06, re-measured at master 3d92c25c12. The shell YAML flattener accepts a duplicated key (lib/common.sh:568-630) that the Rust reader refuses (apps/majordomus-cli/src/metadata/yaml.rs:197-198), and its two shell readers then disagree on which value wins (mj_yget first, lib/common.sh:696; mj_yload last, lib/common.sh:673-679); flow lists split on every comma, inside quotes too (lib/common.sh:585). Scope reads every file any commit since the task head touched (lib/common.sh:368), so a file edited and reverted blocks finish. A hand-edited scope entry that fails normalisation is compared raw (lib/common.sh:536-537)."
+outcome: "Shell and Rust readers accept and refuse the same documents with the same values; scope judges the net change of the task and still refuses a final out-of-scope change; and a scope entry or path that escapes the repository, aliases by case or crosses a symlink is refused rather than compared raw."
+current_state: "Two readers of one format disagree; scope is history-based; normalisation failure falls back to the raw string."
+desired_state: "One differential corpus is read by both readers in a case; scope uses the net diff; path judgments are normalised or refused."
+scope:
+  - lib/common.sh
+  - lib/check.sh
+  - lib/start.sh
+  - apps/majordomus-cli/src/metadata/yaml.rs
+  - test/cases
+  - test/fixtures
+non_scope:
+  - Replacing the YAML subset with full YAML; the subset is the format (memory note the-yaml-subset-is-a-subset)
+  - Where the accepted scope lives; that is recovery-acceptance-contract
+acceptance_criteria:
+  - "A corpus of duplicate keys, quoted commas in flow lists, doubled quotes and trailing comments is read by the shell flattener and by metadata::yaml with identical accept/refuse verdicts and identical values"
+  - "Touching and reverting an out-of-scope file leaves check and finish exit 0; leaving it changed is refused with exit 10"
+  - "A hand-edited scope entry with ../, an absolute path or a case alias is refused by check with exit 10, never compared raw"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 00_yaml_flatten 93_scope_policy 108_scope_after_trunk_merge 108b_scope_after_trunk_fast_forward"
+evidence_required:
+  - yaml_reader_differential_case
+  - reverted_edit_scope_case
+  - scope_entry_escape_case
+risks:
+  - "Refusing duplicates in the shell reader may refuse records adopters already commit; doctor names each before any command refuses it"
+  - "Net-diff scope must not forgive a change merged in from the trunk that the task then edits; case 108 holds that"
+created_at: 2026-10-09
+updated_at: 2026-10-09

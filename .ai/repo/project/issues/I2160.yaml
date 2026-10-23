@@ -1,0 +1,34 @@
+id: I2160
+milestone: architecture-is-enforced
+title: "A rule is proven only by a run of its proof, not by the proof's existence"
+slug: a-rule-is-proven-by-a-run
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make rule-proof read recorded CI runs, report each rule as proven, not run or failing, and fix the rule whose named proof does not exercise it."
+why: "rule-proof (scripts/ci/rule-proof-check) calls a rule satisfied when its proof is named and present. Live tally on 2026-10-09: 163 rules, 137 blocking, 142 gated by mechanism, 133 not run, 3 recorded passing, 11 reviewed, 10 unproven (all vendored principles, exempt). Rule project.executions-carry-no-secret names apps/majordomus-cli/tests/executions.rs as its proof and no test there exercises redaction; the real unit test is apps/majordomus-cli/src/execution/redact.rs:118 (every_way_a_schema_can_say_sensitive_is_honoured), and no capability input declares x-majordomus-sensitive (the audit's grep found none outside redact.rs), so the mechanism has no subject. Milestone completion-is-proved (on a rescue branch) addresses a gate that never reported; this issue is the rule ledger. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gaps 11 and 13, drift 5."
+current_state: "Satisfied means named and present; most blocking rules have never been observed running."
+desired_state: "rule-proof-check reads CI-recorded runs (scripts/ci/evidence-collect) and reports a rule as proven only when its named proof ran and passed at a commit no older than the rule; the count of not-run blocking rules is printed and ratcheted; the token and credential inputs of continuity and mesh capabilities are marked x-majordomus-sensitive, and an end-to-end test in apps/majordomus-cli/tests/executions.rs proves they never reach the execution store."
+scope:
+  - "scripts/ci/rule-proof-check"
+  - "scripts/ci/evidence-collect"
+  - ".ai/repo/rules/project/executions-carry-no-secret.v1.md"
+  - "apps/majordomus-cli/src/execution/redact.rs"
+  - "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/tests/executions.rs"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "rule-proof reports each rule as proven, not run or failing from recorded runs, and prints the not-run count of blocking rules"
+  - "Rule project.executions-carry-no-secret names a test that fails when redaction is removed"
+  - "At least one capability input carries x-majordomus-sensitive and its value never reaches the execution store"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test executions"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "rule_proof_reads_runs_case"
+  - "sensitive_input_redacted_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

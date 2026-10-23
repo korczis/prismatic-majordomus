@@ -1,0 +1,35 @@
+id: I2249
+milestone: architecture-is-enforced
+title: "The wiring graph is read in both directions: every blocking rule reaches an entry point, and every entry point serves a rule"
+slug: the-wiring-graph-is-read-both-ways
+priority: p2
+profile: deep-work
+parallel_safe: true
+objective: "Derive one graph rule -> validator or gate -> dispatch -> entry point (hook, CI job, provider hook) -> case from the structured sources, report orphans in both directions, and serve it as a read capability."
+why: "The links exist in four places that are checked separately: policy wired_by (share/skeleton/policy.yaml:178-185), rule enforcement blocks checked by scripts/ci/rule-proof-check (header :10-14), CI gates in .ai/repo/ci/gates.yaml checked by test/cases/26_ci_wiring.sh, and provider hook settings in .claude/settings.json read by lib/capture.sh. A gate wired in CI that serves no rule, or a rule whose validator no entry point reaches, is not reported by any one of them."
+current_state: "Each link is checked; the chain is not."
+desired_state: "A capability lists the chain per blocking rule and every orphan, and a gate fails on a new orphan."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src"
+  - "scripts/ci"
+  - "docs"
+  - "test/cases"
+non_scope:
+  - "Whether a proof ran; that is I2160"
+  - "Mutation-testing every link; I2248 and case 18 do that per link"
+depends_on:
+  - "I2248"
+  - "I2160"
+acceptance_criteria:
+  - "Removing a gate from validate.yml that a blocking rule names makes the graph report the rule as unreached"
+  - "Adding a CI gate no rule names is reported as an orphan entry point"
+  - "The capability answers alike over CLI, HTTP and MCP"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus-cli capabilities validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "wiring_graph_orphans_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

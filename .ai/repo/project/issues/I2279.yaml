@@ -1,0 +1,45 @@
+id: I2279
+milestone: a-release-is-followed-to-its-users
+title: "release.status says which stage the declared and the newest tagged release are at, and what to run next"
+slug: a-release-reports-its-stage
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Declare release.status once with capability! in the release module. It answers for the version the manifest declares and for the newest v-tag, each walked through the stages declared, verdict, tagged, run, published, record proposed, record on master, served and smoke. Each stage has pass, pending, fail or unknown, a reason, an observed_at and the next command. Read the phases from .ai/repo/ci/release.yaml, local facts from git and .ai/repo/releases, and forge and site facts from a recorded observation, never from the network during a request. Add a CLI-only release refresh that fetches that observation, and name it in SECURITY.md."
+why: "The steps after a bump are a person's shell block (docs/DISTRIBUTION.md:158-186). The release module answers changelog, version and analysis only (apps/majordomus-cli/src/capability/builtin/release.rs:107-160). Sessions follow releases with scratch scripts. On 2026-10-04 one of them polled for four hours, printed nothing and never tagged. v0.7.0 published with no record for hours (scripts/ci/release-check:145-155 comment). The record pull requests of v0.15.0 and v0.16.0 sat with no check (docs/DISTRIBUTION.md:262-270). 0.5.0 was declared and never tagged, and release-check answers 'ok' for that state (scripts/ci/release-check:136-142). The 0.15.0 pack's 70_MEASURE_BUMP_AND_PUBLISH.md, 80_POST_RELEASE_EXTERNAL_VERIFICATION.md and 90_RELEASE_CLOSEOUT_AND_NEXT_WAVE.md asked an agent to establish each of these facts by hand. Every fact exists separately and nothing composes them."
+current_state: "Absent. The phases are declared in .ai/repo/ci/release.yaml:29-63. The forge is read only by prs refresh and prs drain, and requests render a recorded observation (apps/majordomus-cli/src/integration/forge.rs:1-8). served.verify judges a served build (apps/majordomus-cli/src/capability/builtin/served.rs:388-400)."
+desired_state: "release.status is a Query with effect Read, projected to the CLI, HTTP, OpenAPI and MCP. A stage whose observation is missing or older than a declared bound is unknown, never pass. A version declared on master for longer than a declared bound with no tag is fail with the next command. A tag with no record on master and a record branch on origin is pending with the branch named. The release-run stages come from the phases of .ai/repo/ci/release.yaml, so a phase added there appears with no code edit. release refresh writes the observation under .ai/local/state/ and is the only new network reader."
+scope:
+  - "apps/majordomus-cli/src/release"
+  - "apps/majordomus-cli/src/capability/builtin/release.rs"
+  - "apps/majordomus-cli/src/commands"
+  - "apps/majordomus-cli/tests/"
+  - "test/cases"
+  - "SECURITY.md"
+  - "docs/DISTRIBUTION.md"
+  - "docs/RELEASE.md"
+  - "docs/generated"
+non_scope:
+  - "Tagging, merging or re-running anything. The capability reads."
+  - "The before-release audit of documents, claims, coverage and debt (I2070)."
+  - "Release provenance (I2165) and installed-archive smoke (I2162)."
+depends_on: []
+acceptance_criteria:
+  - "On a fixture repository with a stubbed observation, release.status walks one release through every stage, and each stage's verdict matches the fixture"
+  - "A stage with no observation, or an observation older than the bound, is unknown and never pass"
+  - "A version declared on master and untagged beyond the bound is fail, and its next command is the tag step of docs/DISTRIBUTION.md"
+  - "Adding a phase to a copy of .ai/repo/ci/release.yaml adds a stage to release.status with no code change"
+  - "No HTTP or MCP call of release.status starts a process or opens a socket, proved by a test, and SECURITY.md names release refresh"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test release_status"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the release.status case this issue adds>"
+  - "scripts/derive-check"
+evidence_required:
+  - "release_status_stage_case"
+  - "unknown_is_never_pass_test"
+  - "declared_untagged_case"
+  - "stages_from_release_model_test"
+  - "no_network_in_request_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

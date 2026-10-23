@@ -240,6 +240,15 @@
       "summary": "The cooperation journal is durable, converges under any delivery order, and never lets a stale claim win"
     },
     {
+      "id": "work-is-coordinated",
+      "kind": "milestone",
+      "label": "work-is-coordinated",
+      "status": "PLANNED",
+      "route": "/plan/work-is-coordinated/",
+      "external": false,
+      "summary": "Work is allocated and enforced through one typed task model, not observed on a board"
+    },
+    {
       "id": "mcp-transports-are-reliable",
       "kind": "milestone",
       "label": "mcp-transports-are-reliable",
@@ -256,6 +265,15 @@
       "route": "/plan/surfaces-never-disagree/",
       "external": false,
       "summary": "Every surface projects the same state, says when it was observed, and keeps no list of its own"
+    },
+    {
+      "id": "cockpit-control-center",
+      "kind": "milestone",
+      "label": "cockpit-control-center",
+      "status": "PLANNED",
+      "route": "/plan/cockpit-control-center/",
+      "external": false,
+      "summary": "A person can follow and steer the coordination of work from the Cockpit, and every action asks before it writes"
     },
     {
       "id": "failure-is-visible",
@@ -636,6 +654,60 @@
       "summary": "A command or deployment criterion is met by a recorded run of exactly that command, or an observation of exactly that deployment, current at the presented revision"
     },
     {
+      "id": "a-fact-is-written-once",
+      "kind": "milestone",
+      "label": "a-fact-is-written-once",
+      "status": "PLANNED",
+      "route": "/plan/a-fact-is-written-once/",
+      "external": false,
+      "summary": "A fact is written once, the register of the copies that remain is checked, and an object added anywhere reaches every surface"
+    },
+    {
+      "id": "a-client-lists-only-the-tools-it-needs",
+      "kind": "milestone",
+      "label": "a-client-lists-only-the-tools-it-needs",
+      "status": "PLANNED",
+      "route": "/plan/a-client-lists-only-the-tools-it-needs/",
+      "external": false,
+      "summary": "What an MCP client reads before its first call is measured, budgeted, and proportional to the task"
+    },
+    {
+      "id": "adoption-is-light",
+      "kind": "milestone",
+      "label": "adoption-is-light",
+      "status": "PLANNED",
+      "route": "/plan/adoption-is-light/",
+      "external": false,
+      "summary": "A new repository adopts the lifecycle with few files, no default push, and a journey a test walks"
+    },
+    {
+      "id": "optional-subsystems-are-measured",
+      "kind": "milestone",
+      "label": "optional-subsystems-are-measured",
+      "status": "PLANNED",
+      "route": "/plan/optional-subsystems-are-measured/",
+      "external": false,
+      "summary": "Each optional subsystem has a measured cost, and the task lifecycle needs none of them"
+    },
+    {
+      "id": "policy-and-scope-read-exactly",
+      "kind": "milestone",
+      "label": "policy-and-scope-read-exactly",
+      "status": "PLANNED",
+      "route": "/plan/policy-and-scope-read-exactly/",
+      "external": false,
+      "summary": "Every reader of a record reads the same values, and scope judges the change a task leaves"
+    },
+    {
+      "id": "a-release-is-followed-to-its-users",
+      "kind": "milestone",
+      "label": "a-release-is-followed-to-its-users",
+      "status": "PLANNED",
+      "route": "/plan/a-release-is-followed-to-its-users/",
+      "external": false,
+      "summary": "Every surface can tell which stage a release is at, from the bump to the installer that serves it, and a release in flight is not reported as a lost one"
+    },
+    {
       "id": "the-mesh-works-out-of-the-box",
       "kind": "milestone",
       "label": "the-mesh-works-out-of-the-box",
@@ -888,6 +960,33 @@
       "summary": "Every inference a decision rests on names its model and source, stays inside a declared budget, counts independent sources rather than answers, and is never reached from a hook path"
     },
     {
+      "id": "a-provider-hook-refuses-an-out-of-scope-edit",
+      "kind": "milestone",
+      "label": "a-provider-hook-refuses-an-out-of-scope-edit",
+      "status": "BLOCKED",
+      "route": "/plan/a-provider-hook-refuses-an-out-of-scope-edit/",
+      "external": false,
+      "summary": "A provider that can refuse a tool call refuses an edit outside the task's scope before it is written"
+    },
+    {
+      "id": "first-runs-by-strangers-are-recorded",
+      "kind": "milestone",
+      "label": "first-runs-by-strangers-are-recorded",
+      "status": "BLOCKED",
+      "route": "/plan/first-runs-by-strangers-are-recorded/",
+      "external": false,
+      "summary": "A stranger's first run can be observed with consent, recorded, and summarised from the same records"
+    },
+    {
+      "id": "a-browser-is-a-read-only-peer",
+      "kind": "milestone",
+      "label": "a-browser-is-a-read-only-peer",
+      "status": "BLOCKED",
+      "route": "/plan/a-browser-is-a-read-only-peer/",
+      "external": false,
+      "summary": "One browser on this machine is a paired peer of the local runtime and answers one read-only request, with provenance, on every surface"
+    },
+    {
       "id": "execution-telemetry",
       "kind": "milestone",
       "label": "execution-telemetry",
@@ -931,6 +1030,15 @@
       "route": "/plan/knowledge-is-reconciled-before-it-is-reviewed/",
       "external": false,
       "summary": "What a session proposes as knowledge is reconciled with what the repository already knows before a person reviews it, and a promotion stands on evidence that resolves"
+    },
+    {
+      "id": "browsers-act-and-cooperate-under-policy",
+      "kind": "milestone",
+      "label": "browsers-act-and-cooperate-under-policy",
+      "status": "BLOCKED",
+      "route": "/plan/browsers-act-and-cooperate-under-policy/",
+      "external": false,
+      "summary": "Paired browsers act only inside a declared origin policy, several of them answer one request, and what they read can be kept as evidence"
     },
     {
       "id": "cost-per-accepted-outcome",
@@ -1105,6 +1213,21 @@
       "kind": "unblocks"
     },
     {
+      "source": "policy-and-scope-read-exactly",
+      "target": "a-provider-hook-refuses-an-out-of-scope-edit",
+      "kind": "unblocks"
+    },
+    {
+      "source": "adoption-is-light",
+      "target": "first-runs-by-strangers-are-recorded",
+      "kind": "unblocks"
+    },
+    {
+      "source": "runtime-trust",
+      "target": "a-browser-is-a-read-only-peer",
+      "kind": "unblocks"
+    },
+    {
       "source": "runtime-adapters",
       "target": "execution-telemetry",
       "kind": "unblocks"
@@ -1152,6 +1275,16 @@
     {
       "source": "an-entity-says-how-it-is-known-and-what-it-affects",
       "target": "knowledge-is-reconciled-before-it-is-reviewed",
+      "kind": "unblocks"
+    },
+    {
+      "source": "a-browser-is-a-read-only-peer",
+      "target": "browsers-act-and-cooperate-under-policy",
+      "kind": "unblocks"
+    },
+    {
+      "source": "test-evidence",
+      "target": "browsers-act-and-cooperate-under-policy",
       "kind": "unblocks"
     },
     {

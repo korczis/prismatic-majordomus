@@ -1,0 +1,33 @@
+id: I2149
+milestone: surfaces-never-disagree
+title: "Every answer that reports state says when it was observed, and a server says how far it is behind its checkout"
+slug: every-answer-says-when-it-was-observed
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Carry the existing observation (observed_at, source, stale) on every capability output that reports state, re-take a stale git observation instead of waiting for a stamp to move, and report the commit a server serves beside its checkout's HEAD."
+why: "On the live server of 2026-10-09, dashboard/overview, episodes, lifecycle/runtime, plan/status, served and mesh carried no observed_at and peers carried only last_seen_seconds_ago; peers, worktrees, continuity, plan, intents, the dashboard, episodes and the mesh lack the observation health and repository.info carry, and case 545_every_answer_says_when_it_was_observed.sh covers only those. The overview badge is permanently stale on an idle repository: the window is 120 s (apps/majordomus-cli/src/index.rs:44) and the index rebuilds only when the stamp moves (apps/majordomus-cli/src/live.rs:250-252). GET / reported stale: null while serving commit 893a79be6577, 12 commits behind HEAD; stale there is serving_replaced_code() (apps/majordomus-cli/src/http/router.rs:689), which knows nothing of HEAD. Pack invariant 7 forbids optimistic health and asks for timestamps, provenance and staleness on all UI state. I1502 (development-runtime) makes a server whose executable was replaced say so; this issue is the age of every answer and the distance from HEAD. Baseline audit of 2026-10-09 at master 1fb8d6be44, projections gap 5 and drift c-19."
+current_state: "Two capability families carry an observation; the rest report state with no time; the overview is stale whenever nothing changes."
+desired_state: "The existing AnswerObservation and view::as_of (apps/majordomus-cli/src/cockpit/view.rs:524-542) are carried by every capability output that reports state, enforced by a test over the registry; live.rs re-takes the git observation when it is stale; GET / and server.status report the commit served and the checkout's HEAD when they differ."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/cockpit/view.rs"
+  - "apps/majordomus-cli/src/live.rs"
+  - "apps/majordomus-cli/src/index.rs"
+  - "apps/majordomus-cli/src/http/router.rs"
+  - "test/cases/545_every_answer_says_when_it_was_observed.sh"
+  - "docs/SURFACES.md"
+depends_on: []
+acceptance_criteria:
+  - "A test over the registry fails when a capability whose output reports state answers without observed_at and source"
+  - "The overview badge on an idle repository is fresh after a request that re-observed it"
+  - "A server built from an older commit than its checkout's HEAD reports both commits on GET / and server.status"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test properties --test dashboard"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 545_every_answer_says_when_it_was_observed"
+evidence_required:
+  - "every_state_answer_carries_observation_test"
+  - "server_reports_head_distance_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

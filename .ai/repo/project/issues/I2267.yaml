@@ -1,0 +1,29 @@
+id: I2267
+milestone: optional-subsystems-are-measured
+title: "The task lifecycle runs in a fresh repository with no optional subsystem started"
+slug: the-lifecycle-needs-no-optional-subsystem
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add a case proving start, check and finish complete in a fresh repository with no listening socket, no server lease, no mesh and no optional registry read, and fix whatever it finds."
+why: "The skeleton starts a shared server on session start (share/skeleton/policy.yaml:101 ensure_server_on_start: true) and the shell lifecycle calls the Rust executable for intent binding (m00 findings F07 note: lib/start.sh:43). Whether the lifecycle needs any optional subsystem has never been asserted (pack M13-I02)."
+current_state: "Unknown; untested."
+desired_state: "The case passes; any dependency found is removed or declared."
+scope:
+  - "lib"
+  - "test/cases"
+  - "docs/ADOPTION.md"
+non_scope:
+  - "Cargo features; only if the case shows a need"
+depends_on:
+  - "I2266"
+acceptance_criteria:
+  - "The case asserts no listening socket was opened and no lease file written during start, check and finish"
+  - "The case asserts no optional registry file was read (by an strace-free method: a sandboxed HOME and a missing optional tree)"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "lifecycle_without_optional_subsystems_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

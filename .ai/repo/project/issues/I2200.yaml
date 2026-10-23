@@ -1,0 +1,34 @@
+id: I2200
+milestone: intent-bound-work
+title: "check says when what the task is bound to has moved since it started"
+slug: check-reports-binding-drift
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-bound-work#resume-detects-drift
+objective: "Make majordomus check ask intents.binding for the active task's named request, compare the plan_revision and evidence_standing pins the task record holds with the answer, and print a drift line naming which moved, as context already does, without refusing anything."
+why: "The drift of a binding is told at context (lib/context.sh:216-218) and at handover --resolve (lib/handover.sh:112-119), and not at check, which a worker runs before claiming progress. lib/check.sh (312 lines) reads no binding. A worker can check green for an hour after the intent's criteria or critique changed under it. Owner packs: closure 10_SESSION_INTENT_BINDING.md section 6, tight-integration 90_REASSESSMENT_AND_CLOSED_LOOP.md 'Trigger points: check'."
+current_state: "check judges scope, obligations and gates; it does not read what the task serves."
+desired_state: "check prints the drift word BindingDrift already derives (plan_changed, evidence_moved or unchanged, apps/majordomus-cli/src/intent_binding.rs:387-420) with the command that re-reads the binding when a pin moved, and nothing when the task named nothing; the JSON form of check carries the drift word."
+scope:
+  - lib/check.sh
+  - lib/intent_binding.sh
+  - test/cases
+  - docs
+non_scope:
+  - "Refusing a check on drift; drift is information, the finish decides"
+  - "Changing what the pins hash"
+depends_on: []
+acceptance_criteria:
+  - "After the served intent's criterion is edited, check on the bound task reports plan_changed"
+  - "After a served criterion's evidence changes state, check reports evidence_moved"
+  - "A task that named nothing, or a repository whose policy is off, checks exactly as before"
+validation:
+  - majordomus intent validate
+  - "bash test/run.sh <the case this issue adds>"
+  - bash test/run.sh 961_a_resumed_task_is_told_its_intent_moved
+evidence_required:
+  - check_reports_binding_drift_case
+created_at: 2026-10-09
+updated_at: 2026-10-09

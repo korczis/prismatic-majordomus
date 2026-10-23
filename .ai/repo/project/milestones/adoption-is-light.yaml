@@ -1,0 +1,36 @@
+id: adoption-is-light
+title: "A new repository adopts the lifecycle with few files, no default push, and a journey a test walks"
+slug: adoption-is-light
+order: 311
+priority: p1
+problem: "Finding F09, re-measured at master 3d92c25c12 by source: init copies the skeleton (41 files under share/skeleton) and the whole rule package (60 files under share/standard, lib/init.sh:63-65) into .ai; the skeleton commits and pushes session records on session end by default (share/skeleton/policy.yaml:85-86); the commit hook runs the full doctor (.githooks/pre-commit:3, share/skeleton/policy.yaml:178-181) budgeted at 20000 ms from a measured 13.7 s (share/skeleton/policy.yaml:150-161). No case walks a stranger's first change from init to an accepted finish in a fresh repository."
+outcome: "A repository can adopt with a minimal layer that references the rule package instead of copying it, records are pushed only where the adopter says so, and a case CI runs walks init, start, an out-of-scope edit refused, repair and finish in a fresh repository, recording the file count and the time of each step."
+current_state: "Adoption copies about a hundred files, pushes by default and has no end-to-end journey case."
+desired_state: "A minimal adoption has a measured, stated file count; push is opt-in; the journey is a case."
+scope:
+  - lib/init.sh
+  - share/skeleton
+  - share/standard
+  - docs/ADOPTION.md
+  - test/cases
+non_scope:
+  - The footprint outside .ai and the reconciler; that is two-folder-integration (I1101-I1112)
+  - Making doctor itself fast; that is I0828 (M004)
+  - This repository's own policy, which keeps committing and pushing its records
+acceptance_criteria:
+  - "A fresh repository's session end commits its record and does not push it unless the policy says push_record_on_end: true"
+  - "init --minimal creates a stated number of files, counted by the case, and doctor and the first hooked commit pass in that repository"
+  - "The journey case refuses the out-of-scope edit at check with exit 10, accepts the repaired finish, and prints the count and the seconds of each step"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the cases these issues add>"
+evidence_required:
+  - push_is_opt_in_case
+  - minimal_init_count_case
+  - stranger_journey_case
+risks:
+  - "A referenced rule package must still be pinned to a version; adopter-upgrades (I1980) decides how a layer names its tool version"
+  - "Changing a skeleton default changes every new adopter; the change is announced in the release notes"
+depends_on: []
+created_at: 2026-10-09
+updated_at: 2026-10-09

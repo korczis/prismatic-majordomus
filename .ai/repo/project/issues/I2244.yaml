@@ -1,0 +1,29 @@
+id: I2244
+milestone: policy-and-scope-read-exactly
+title: "A scope entry or a path that escapes, aliases or fails normalisation is refused, never compared raw"
+slug: a-scope-entry-is-normalised-or-refused
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make mj_path_contains refuse rather than fall back to the raw string, and cover ../, absolute, case-alias and symlinked entries with fixtures."
+why: "lib/start.sh:83 refuses an empty, absolute or escaping scope at start, but mj_path_contains (lib/common.sh:534-539) falls back to the raw value when mj_norm_path_into (lib/common.sh:517-524) refuses it, so a hand-edited entry is compared as typed. Case differences (macOS is case-insensitive) and symlinked directories are not tested anywhere."
+current_state: "Normalisation failure degrades to raw comparison; no adversarial fixtures exist."
+desired_state: "check refuses a contract entry that does not normalise, compares case exactly with a warning on a case alias, and judges a symlink by its tracked path."
+scope:
+  - "lib/common.sh"
+  - "lib/check.sh"
+  - "test/cases"
+non_scope:
+  - "Repository read scope (apps/majordomus-cli/src/scope.rs)"
+depends_on: []
+acceptance_criteria:
+  - "A current.yaml scope entry of ../x, /abs or empty makes check exit 10 naming the entry"
+  - "A touched path differing from a scope entry only by case is refused and named as a case alias"
+  - "A file reached through an in-scope symlink to an out-of-scope directory is judged by the path git reports"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 93_scope_policy <the case this issue adds>"
+evidence_required:
+  - "scope_entry_escape_case"
+created_at: 2026-10-09
+updated_at: 2026-10-09

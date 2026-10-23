@@ -1,0 +1,33 @@
+id: I2164
+milestone: safe-self-update
+title: "A change to the mesh wire, the lease schema or a journal event is priced by the version gate"
+slug: wire-changes-need-a-version
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Add the discovery and link protocol ranges, the lease schema and the journal event schema to the release surface, and prove the reader of the oldest accepted discovery version with a recorded fixture."
+why: "version-surface (scripts/ci/version-matches-surface, apps/majordomus-cli/src/release/surface.rs:65, apps/majordomus-cli/src/release/compat.rs) covers capabilities, routes, tools, commands and schemas only. The discovery PROTOCOL_VERSION 2 with MIN 1 (apps/majordomus-cli/src/mesh/protocol.rs:36-40), the link protocol LINK_PROTOCOL_MIN and MAX 1 (apps/majordomus-cli/src/mesh/link.rs:50-53), the lease schema majordomus-mcp-lease/v1 (apps/majordomus-cli/src/lease.rs:34,37) and the EventBody schema are outside it, so a wire change can ship under a patch release. No test parses a real v1 advertisement, so 'a version-2 reader reads both' (apps/majordomus-cli/src/mesh/protocol.rs:33-35) is unverified. I2132 and I2138 change the wire and need this. Baseline audit of 2026-10-09 at master 1fb8d6be44, failure gap 8 and drift 4."
+current_state: "Wire and on-disk schemas can change with no version bump and no gate notices."
+desired_state: "release::surface includes the two protocol ranges, the lease schema and the EventBody JSON schema, so compat.rs prices a change; a committed v1 advertisement fixture is parsed by a test."
+scope:
+  - "apps/majordomus-cli/src/release/surface.rs"
+  - "apps/majordomus-cli/src/release/compat.rs"
+  - "apps/majordomus-cli/src/mesh/protocol.rs"
+  - "apps/majordomus-cli/src/mesh/link.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "scripts/ci/version-matches-surface"
+  - "test/fixtures"
+  - "test/cases"
+depends_on: []
+acceptance_criteria:
+  - "Changing LINK_PROTOCOL_MAX or an EventBody field without a version bump fails version-surface"
+  - "A recorded v1 advertisement parses under the current reader, proved by a fixture test"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 743_release_version_answers_with_the_contract"
+  - "cargo test --lib mesh::protocol"
+evidence_required:
+  - "wire_change_needs_bump_case"
+  - "v1_advertisement_fixture_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

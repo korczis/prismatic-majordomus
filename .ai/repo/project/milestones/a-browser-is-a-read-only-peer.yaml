@@ -1,0 +1,59 @@
+id: a-browser-is-a-read-only-peer
+title: "One browser on this machine is a paired peer of the local runtime and answers one read-only request, with provenance, on every surface"
+slug: a-browser-is-a-read-only-peer
+order: 316
+priority: p2
+problem: "The owner's Bro-Net pack of 2026-09-24 asks for a browser that is a first-class Majordomus peer. Nothing of it exists on master: no browser-peer code, ADR, document, issue or branch. The pack's model does not fit the code either. It puts the browser in the mesh and routes tasks to it, but a mesh node is a repository runtime keyed by an Ed25519 node key (docs/MESH.md:66-76), the mesh 'is not ... a remote execution facility (nothing a peer sends runs anything)' (docs/MESH.md:26-29), and ADR 0050 leaves remote operations to whoever 'must bring their own authorization decision' (.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md:138-143). A browser also cannot reach the server directly: a state-changing request or WebSocket from any origin but the server's own is refused (apps/majordomus-cli/src/http/router.rs:714-744, apps/majordomus-cli/src/http/events.rs:152-167). The pieces a browser peer would be built from do exist: the peer board of attached clients (apps/majordomus-cli/src/peers.rs:1-5), executions as watched capability calls (docs/EXECUTIONS.md:13-27, ADR 0033), the capability registry every surface projects, and a stdio bridge to the shared server (apps/majordomus-cli/src/mcp/bridge.rs:1-7)."
+outcome: "A person pairs one browser with one checkout. The browser is listed on the peer board with the read-only capabilities it advertises. A capability call from the CLI, HTTP or MCP asks it for the active tab's page and runs only after the person clicks to approve. The answer is a page reading that names the browser, the origin, the time, the execution and a digest of what was read. Unpairing ends it."
+current_state: "Absent. The peer board knows two transports, Stdio and Http (apps/majordomus-cli/src/peers.rs:132-141), and a client identity that is whatever initialize sent (apps/majordomus-cli/src/peers.rs:91-129). An execution records who asked and nothing about who performed it (apps/majordomus-cli/src/execution/model.rs:305-321, 357-410). Caller authentication beyond the Origin check is on a branch only: origin/fix/a-remote-caller-cannot-write (I2123, ADR 0126 proposed, milestone runtime-trust). Refuted premises of the pack: the browser is not a mesh node and there is no mesh task routing to reuse (.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md:57-59); registering through mesh.register grants nothing (apps/majordomus-cli/src/capability/builtin/mesh.rs:1162-1166)."
+desired_state: "An accepted ADR names the local runtime as the owner of browser peers and records the threat model. A native-messaging host, a CLI-only command, carries frames between one MV3 extension and the checkout's shared server under a pairing key that unpairing revokes. The peer board lists a browser peer with its extension version, protocol version and advertised capabilities. One read capability, declared once with capability!, is projected to the CLI, HTTP, OpenAPI and MCP and runs as an execution that waits for the person's approval. The Cockpit peers page shows the browser from peers.list. docs/BROWSER.md says what is implemented, what is planned and what is out of scope. A real-Chrome case proves pairing, approval, the reading and revocation."
+scope:
+  - ".ai/repo/adrs"
+  - "docs/BROWSER.md"
+  - "docs/MESH.md"
+  - "docs/CLAIMS.yaml"
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/browser"
+  - "apps/majordomus-cli/src/commands/browser.rs"
+  - "apps/majordomus-cli/src/capability/builtin/browser.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/http"
+  - "apps/majordomus-cli/src/cockpit"
+  - "apps/majordomus-browser"
+  - "apps/majordomus-cli/tests/"
+  - "test/cases"
+  - ".ai/repo/ci/gates.yaml"
+non_scope:
+  - "Navigation, clicks, form filling, script injection, screenshots and cookie or storage access. These are browsers-act-and-cooperate-under-policy."
+  - "More than one browser peer per checkout and fan-out across browsers. These are browsers-act-and-cooperate-under-policy."
+  - "A browser reached through the mesh from another machine. That needs the remote-operation authorization ADR 0050 asks for and is not planned here."
+  - "Persisting a page reading as evidence beyond the execution store."
+  - "Firefox and Safari. The first slice targets Chromium-based browsers with Manifest V3 native messaging."
+  - "Everything the pack excludes: behavioural manipulation, browsing-history or telemetry collection, CAPTCHA solving, background or distributed compute, a public compute marketplace."
+acceptance_criteria:
+  - "An accepted ADR names the local runtime's peer board, not the mesh, as the owner of browser peers and records the threat model"
+  - "After pairing, peers.list on the CLI, HTTP and MCP lists the browser with its extension version, protocol version and advertised capabilities"
+  - "A request to read the active page fails with a typed reason when no browser is paired, when the paired browser is offline and when the person does not approve within the timeout"
+  - "An approved request returns the origin, the title, sanitized bounded text and a SHA-256 of that text, with the browser peer and the execution id"
+  - "After unpairing, the host is refused by the server and the extension shows that it is disconnected"
+  - "A real-Chrome case loads the built extension, pairs it, approves one reading and revokes the pairing"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test browser_peer --test browser_page"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the browser cases this milestone adds>"
+  - "node --test apps/majordomus-browser/test/"
+evidence_required:
+  - "accepted_browser_peer_adr"
+  - "browser_peer_listed_on_every_surface"
+  - "read_only_request_with_provenance"
+  - "revocation_case"
+  - "real_chrome_case"
+risks:
+  - "Chrome's native messaging finds per-user hosts in a fixed per-platform directory. A test that uses a scratch profile must prove the host is found there, or the real-Chrome case will skip on CI and a skip is not a pass."
+  - "A browser channel that holds one of the server's four request workers (apps/majordomus-cli/src/http/server.rs:23) starves every other client. The channel must run on its own thread, as the WebSocket does (apps/majordomus-cli/src/http/server.rs:198-205), and this must stay consistent with I2156."
+  - "Page text is untrusted input to an agent. If the read capability's output is ever treated as instructions, prompt injection becomes possible. The ADR must say that it is data, and a case must hold that."
+  - "The pairing key and the trust decision overlap runtime-trust (I2123, I2132-I2136). Building a second authentication scheme would be a parallel system."
+depends_on:
+  - "runtime-trust"
+created_at: 2026-10-09
+updated_at: 2026-10-09

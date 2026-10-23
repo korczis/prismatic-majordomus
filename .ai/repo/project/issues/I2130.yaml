@@ -1,0 +1,38 @@
+id: I2130
+milestone: runtime-lifecycle
+title: "A server's lifecycle is one typed state the server owns, reports and records"
+slug: server-lifecycle-is-one-typed-state
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Extend the one standing decision with degraded, stopping and failed, have the server publish the facts it is decided from, log every transition to a log that belongs to the current server, and make the documents say what the server writes and when it ends."
+why: "ServerStanding {absent, starting, ready, outdated, stale} (apps/majordomus-cli/src/capability/builtin/server.rs:163-177, decided in standing_of :362-425) is an observer's reading of the lease file, not a state the server holds; there is no degraded, stopping or failed. Degraded exists only as a client mode, Backend::Alone (apps/majordomus-cli/src/commands/mcp.rs:154-164), which no other surface sees, and the word has two more meanings: index::State::Degraded (apps/majordomus-cli/src/index.rs:34) and LinkState::Degraded (apps/majordomus-cli/src/mesh/cooperation.rs:265). A lost-lease server reports nothing beyond leaseholder:false. spawn_server sets MAJORDOMUS_LOG=info only when the variable is unset (apps/majordomus-cli/src/commands/serve.rs:727-729): the live server of 2026-10-09 (pid 14390) inherited MAJORDOMUS_LOG=error and had logged nothing for eight hours, while .ai/local/state/mcp/server.log held the previous server's lines, is never rotated, and repeats a mesh self_link WARN about every 31 s. The documents describe another server: docs/MCP.md:33-36, apps/majordomus-cli/src/lease.rs:9-11 and README.md:542-543 say it writes one file, the lease, while it writes the mesh journal (apps/majordomus-cli/src/shared.rs:119), server.log, episodes and executions, and six tools write the tracked tree; README.md:405-408,539 say read-only, one server per repository, ending when its last client leaves, while it is one per checkout (apps/majordomus-cli/src/lease.rs:13-16, ADR 0044) and a serve ensure server lives 900 s with no client. Baseline audit of 2026-10-09 at master 1fb8d6be44, lifecycle gaps 8 and 10, drift 2 and 3; pack M01 asks for stopped, starting, ready, degraded, stopping and failed."
+current_state: "Standing is decided by an outside reader of the lease. No surface reports degraded, stopping or failed. A spawned server's log level follows its parent's environment."
+desired_state: "ServerStanding gains degraded, stopping and failed, each decided in standing_of from facts the server publishes: a lease field for stopping, the spawn claim's pid and log tail for failed, a client serving alone for degraded. A spawned server logs at info whatever its parent had, starts a fresh log, and records listening, takeover, lease lost and stopping; the self_link warning is logged once per endpoint. docs/MCP.md and README.md say what the server writes, that it is one per checkout, and when it ends."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/server.rs"
+  - "apps/majordomus-cli/src/commands/serve.rs"
+  - "apps/majordomus-cli/src/commands/mcp.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - "apps/majordomus-cli/src/lease.rs"
+  - "apps/majordomus-cli/src/mesh/cooperation.rs"
+  - "apps/majordomus-cli/tests/server_status.rs"
+  - "apps/majordomus-cli/tests/serve_lifecycle.rs"
+  - "docs/MCP.md"
+  - "README.md"
+depends_on:
+  - "I2128"
+acceptance_criteria:
+  - "server.status answers stopping while an ordered stop runs and failed when a spawned server exited before publishing, each proved by a test"
+  - "A client serving alone is visible as degraded through server.status read from another process"
+  - "A server spawned with MAJORDOMUS_LOG=error in its parent's environment writes its listening line to server.log"
+  - "After a restart server.log holds only the current server's lines, and a repeated self_link refusal is logged once per endpoint"
+  - "No sentence in docs/MCP.md or README.md says the server writes only the lease, is one per repository or is read-only"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --test server_status --test serve_lifecycle"
+evidence_required:
+  - "standing_stopping_failed_degraded_test"
+  - "spawned_server_logs_its_lifecycle_test"
+created_at: 2026-10-09
+updated_at: 2026-10-09

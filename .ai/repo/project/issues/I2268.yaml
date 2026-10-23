@@ -1,0 +1,29 @@
+id: I2268
+milestone: optional-subsystems-are-measured
+title: "A proposed ADR states retain, isolate or retire for each optional subsystem from measured cost and observed use"
+slug: a-decision-per-optional-subsystem-is-proposed
+priority: p3
+profile: deep-work
+parallel_safe: true
+objective: "Write a proposed ADR that cites the cost table and the first-run observations and recommends retain, isolate or retire per subsystem, with migration cost; the owner accepts it."
+why: "Pack M13-I05: no ideological deletion; decisions from evidence. Neither the cost table nor observations exist yet."
+current_state: "No decision record."
+desired_state: "A proposed ADR with per-subsystem recommendations and their evidence."
+scope:
+  - ".ai/repo/adrs"
+  - "docs"
+non_scope:
+  - "Executing any retirement before the owner accepts the ADR"
+depends_on:
+  - "I2266"
+  - "I2265"
+acceptance_criteria:
+  - "Each recommendation cites a row of the cost table and the observations, or states that observations are absent"
+  - "The ADR's status is proposed"
+validation:
+  - "bin/majordomus plan validate"
+  - "bin/majordomus adr check"
+evidence_required:
+  - "subsystem_decision_adr"
+created_at: 2026-10-09
+updated_at: 2026-10-09
