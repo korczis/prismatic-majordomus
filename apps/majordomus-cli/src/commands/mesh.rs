@@ -46,6 +46,9 @@ pub fn run(args: MeshArgs) -> Result<u8> {
         MeshCommand::Identity(q) => {
             in_process(q, &["mesh", "identity"], json!({}), render_identity, never)
         }
+        MeshCommand::Enrol(q) => {
+            in_process(q, &["mesh", "enrol"], json!({}), render_enrolment, never)
+        }
         MeshCommand::Doctor(q) => doctor(q),
         // The host firewall is a fact of this machine, like the identity: answered in
         // this process. `apply` runs a privileged host tool and is offered nowhere else.
@@ -80,23 +83,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             ask(&v.query, "GET", &target, None, render_state, never)
         }
         MeshCommand::Events(a) => {
-            let mut target = "/api/v1/mesh/events".to_string();
-            let mut pairs = Vec::new();
-            if let Some(after) = a.after {
-                pairs.push(format!("after={after}"));
-            }
-            if let Some(limit) = a.limit {
-                pairs.push(format!("limit={limit}"));
-            }
-            if a.newest {
-                pairs.push("newest=true".to_string());
-            }
-            if a.beats {
-                pairs.push("beats=true".to_string());
-            }
-            if !pairs.is_empty() {
-                target = format!("{target}?{}", pairs.join("&"));
-            }
+            let target = events_target(&a);
             ask(&a.query, "GET", &target, None, render_events, never)
         }
         MeshCommand::Verify(q) => ask(
@@ -142,24 +129,37 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             ),
         },
         MeshCommand::Session(s) => match s.command {
-            MeshSessionCommand::Open(a) => ask(
-                &a.query,
-                "POST",
-                "/api/v1/mesh/sessions",
-                Some(json!({
-                    "session": a.session,
-                    "client": a.client,
-                    "worker": a.worker,
-                    "intent": a.intent,
-                    "task": a.task,
-                    "issue": a.issue,
-                    "milestone": a.milestone,
-                    "branch": a.branch,
-                    "head": a.head,
-                })),
-                render_written,
-                never,
-            ),
+            MeshSessionCommand::Open(a) => {
+                // read here, in the process the client started, and not by the server: the
+                // client is this executable's ancestor, and the server's is somebody else
+                let client = a.client_pid.as_deref().and_then(|pid| match pid {
+                    "auto" => crate::mesh::cooperation::client_process(),
+                    pid => pid.parse::<u32>().ok().and_then(|pid| {
+                        crate::mesh::cooperation::process_facts(pid).map(|p| (pid, p.started))
+                    }),
+                });
+                let (client_pid, client_started) = client.unzip();
+                ask(
+                    &a.query,
+                    "POST",
+                    "/api/v1/mesh/sessions",
+                    Some(json!({
+                        "session": a.session,
+                        "client": a.client,
+                        "worker": a.worker,
+                        "intent": a.intent,
+                        "task": a.task,
+                        "issue": a.issue,
+                        "milestone": a.milestone,
+                        "branch": a.branch,
+                        "head": a.head,
+                        "client_pid": client_pid,
+                        "client_started": client_started,
+                    })),
+                    render_written,
+                    never,
+                )
+            }
             MeshSessionCommand::Close(a) => ask(
                 &a.query,
                 "POST",
@@ -655,6 +655,20 @@ fn render_nodes(v: &Value) -> String {
     out.trim_end().to_string()
 }
 
+fn render_enrolment(v: &Value) -> String {
+    format!(
+        "{}   {}\nkey        {}\nnext       {}",
+        if v["added"] == json!(true) {
+            "enrolled"
+        } else {
+            "listed  "
+        },
+        v["path"].as_str().unwrap_or_default(),
+        v["key"].as_str().unwrap_or_default(),
+        v["next"].as_str().unwrap_or_default()
+    )
+}
+
 fn render_identity(v: &Value) -> String {
     let mut out = String::new();
     out.push_str(&format!("present    {}\n", v["present"]));
@@ -988,6 +1002,33 @@ fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
     }
 }
 
+/// The `mesh.events` route `mesh events` asks: each flag given becomes one query pair, and
+/// no flag is the bare route under the server's own default page.
+fn events_target(a: &crate::cli::MeshEventsArgs) -> String {
+    let mut pairs = Vec::new();
+    if let Some(after) = a.after {
+        pairs.push(format!("after={after}"));
+    }
+    if let Some(cursor) = &a.cursor {
+        pairs.push(format!("cursor={}", encode(cursor)));
+    }
+    if let Some(limit) = a.limit {
+        pairs.push(format!("limit={limit}"));
+    }
+    if a.newest {
+        pairs.push("newest=true".to_string());
+    }
+    if a.beats {
+        pairs.push("beats=true".to_string());
+    }
+    let target = "/api/v1/mesh/events";
+    if pairs.is_empty() {
+        target.to_string()
+    } else {
+        format!("{target}?{}", pairs.join("&"))
+    }
+}
+
 /// The summary view of `mesh.state`: the totals, then each runtime, the open reviews and
 /// the untaken handovers, each list followed by how many it did not show.
 fn render_summary(sm: &Value) -> String {
@@ -1139,6 +1180,9 @@ fn render_events(v: &Value) -> String {
         "events     {} (lamport {})",
         v["count"], v["lamport"]
     ));
+    if let Some(cursor) = v["cursor"].as_str() {
+        out.push_str(&format!("\nnext       --cursor {cursor}"));
+    }
     out
 }
 
@@ -1234,6 +1278,41 @@ fn map(e: CapabilityError) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `mesh events` asks for what its flags say and nothing else: no flag is the bare
+    /// route, and `--beats` asks for the session beats the journal hides by default (I3990).
+    #[test]
+    fn the_events_flags_are_the_query_the_server_is_asked() {
+        use clap::Parser;
+        let target = |args: &[&str]| {
+            let cli = crate::cli::Cli::try_parse_from(
+                ["majordomus", "mesh", "events"].iter().chain(args),
+            )
+            .unwrap();
+            let crate::cli::Command::Mesh(mesh) = cli.command else {
+                panic!("expected `mesh`")
+            };
+            let MeshCommand::Events(events) = mesh.command else {
+                panic!("expected `events`")
+            };
+            events_target(&events)
+        };
+        assert_eq!(target(&[]), "/api/v1/mesh/events");
+        assert_eq!(
+            target(&["--beats"]),
+            "/api/v1/mesh/events?beats=true",
+            "beats are asked for by name"
+        );
+        assert_eq!(
+            target(&["--after", "42", "--limit", "10", "--newest", "--beats"]),
+            "/api/v1/mesh/events?after=42&limit=10&newest=true&beats=true"
+        );
+        assert_eq!(
+            target(&["--cursor", "00000000000000aa:7", "--beats"]),
+            "/api/v1/mesh/events?cursor=00000000000000aa%3A7&beats=true",
+            "a cursor resumes the walk, encoded, beside the beats"
+        );
+    }
 
     /// One entry of `server.status`'s `servers`, as `checkouts_of` writes it.
     fn server(worktree: &str, primary: bool, this: bool, standing: &str, port: u16) -> Value {
@@ -1406,6 +1485,21 @@ mod tests {
             doctor.to_string().contains("/api/v1/mesh/doctor"),
             "{doctor}"
         );
+    }
+
+    #[test]
+    fn an_enrolment_says_whether_it_changed_the_declaration_and_what_is_next() {
+        let added = render_enrolment(&json!({
+            "path": ".ai/repo/mesh/mesh.yaml", "key": "ab", "added": true, "next": "commit it",
+        }));
+        assert_eq!(
+            added,
+            "enrolled   .ai/repo/mesh/mesh.yaml\nkey        ab\nnext       commit it"
+        );
+        let listed = render_enrolment(&json!({
+            "path": "p", "key": "ab", "added": false, "next": "nothing",
+        }));
+        assert!(listed.starts_with("listed     p\n"), "{listed}");
     }
 
     /// A 32-hex node key, as `<node>-<runtime>` carries it.
@@ -1890,6 +1984,20 @@ mod tests {
         assert!(
             text.ends_with("events     3 (lamport 12)"),
             "the watermark is the `after` of the next page:\n{text}"
+        );
+    }
+
+    /// A page of a walk by cursor ends with the cursor to pass back, written as the flag
+    /// that resumes the walk exactly after this page.
+    #[test]
+    fn a_cursor_page_ends_with_the_flag_that_resumes_the_walk() {
+        let text = render_events(&json!({
+            "active": true, "count": 0, "lamport": 3, "cursor": "00000000000000aa:7",
+            "events": [],
+        }));
+        assert!(
+            text.ends_with("events     0 (lamport 3)\nnext       --cursor 00000000000000aa:7"),
+            "{text}"
         );
     }
 

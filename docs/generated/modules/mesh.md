@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 25.
+Stability: experimental. Capabilities: 26.
 
 ## `mesh.beat` — Say a session is making progress
 
@@ -100,9 +100,29 @@ Input: none.
 
 Output: `MeshDoctorReport`.
 
+## `mesh.enrol` — Enrol this machine in the mesh
+
+Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_enrol` |
+| HTTP | `POST /api/v1/mesh/enrol` |
+| CLI | `majordomus mesh enrol` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, identity, trust |
+
+Input: none.
+
+Output: `MeshEnrolment`.
+
 ## `mesh.events` — The cooperation journal
 
-The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.
+The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp.
 
 | | |
 |---|---|
@@ -117,7 +137,13 @@ The journal's events above a Lamport stamp, in Lamport order, at most a page: ea
 
 | input | type | required | description |
 |---|---|---|---|
-| `after` | integer or null | no | Only events whose Lamport stamp is above this. |
+| `after` | integer or null | no | Only events whose Lamport stamp is above this: a walk by stamp, which never returns
+an event a partitioned runtime stamped at or below it and delivered later. Prefer
+`cursor`, which returns those too. |
+| `cursor` | string or null | no | The `cursor` the previous page answered: the next page is what this run of the
+runtime applied after it, every event exactly once across the whole walk, a late one
+from a healed partition included (I2733). A cursor another run issued is refused as
+`stale_cursor`. Without `cursor` and `after` the walk starts at the beginning. |
 | `limit` | integer or null | no | At most this many (default 100, at most 1000). |
 | `newest` | boolean or null | no | The newest `limit` events above `after` instead of the first ones: what a reader who
 wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
@@ -126,7 +152,9 @@ next. Without it the journal is read forward from `after`, a page at a time. |
 | `beats` | boolean or null | no | Include the `session_beat` events, which are left out by default: a working session's
 runtime writes one every few minutes to keep its claims alive (I3990), and a reader
 of the journal wants what sessions did rather than that they are still doing it.
-The page's `lamport` counts the beats it left out, so paging misses nothing either way. |
+A walk by `after` cuts its page before the beats leave it, so its `lamport` resumes
+after them; a walk by `cursor` passes them over without counting them toward `limit`.
+Paging misses nothing either way. |
 
 Output: `EventList`.
 
@@ -528,6 +556,9 @@ Say what a session of this runtime is: its client, worker, intent, task, issue, 
 | `head` | string or null | no | The head. |
 | `dirty` | boolean or null | no | Whether the working tree is dirty. |
 | `context` | string or null | no | The context revision it works from. |
+| `client_pid` | integer or null | no | The client process the session belongs to, on this machine: the runtime closes the
+session once that process has ended (I3810). |
+| `client_started` | string or null | no | When that process started, as this machine's process table reports it. |
 
 Output: `Written`.
 

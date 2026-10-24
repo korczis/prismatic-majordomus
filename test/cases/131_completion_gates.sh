@@ -194,19 +194,53 @@ expect_exit 0 "$MJ" check
 expect_grep 'declares no CI model'
 
 # ---------------------------------------------------------------- one declaration, two readers
-# The executable's plan and scripts/ci-plan read the same file and must select the same set.
+# The executable's plan and scripts/ci-plan read the same file and must select the same set,
+# and give each gate, and the plan, the same mode and reason in the same words: ci-plan's,
+# which case 94 and the CI logs read, and which `gates done` and `finish` print.
 # Over this repository's own model, for paths that fall in one class, several, and none.
+tab="$(printf '\t')"
 for paths in 'apps/majordomus-cli/src/lib.rs' 'docs/CLI.md' 'site/templates/index.html lib/check.sh' \
              'share/obligations.yaml' 'nowhere/declared.txt' '.ai/repo/ci/gates.yaml'; do
-  sh_set="$(printf '%s\n' $paths | (cd "$ROOT" && scripts/ci-plan --files - --format json) \
-    | jq -r '.gates[] | select(.selected) | .id' | LC_ALL=C sort | tr '\n' ' ')"
+  sh_plan="$(printf '%s\n' $paths | (cd "$ROOT" && scripts/ci-plan --files - --format json))"
+  sh_set="$(printf '%s' "$sh_plan" | jq -r '.gates[] | select(.selected) | .id' | LC_ALL=C sort | tr '\n' ' ')"
   input="$(printf '%s\n' $paths | jq -R . | jq -sc '{changed: .}')"
-  rs_set="$("$BIN" run gates.completion --input "$input" --quiet --format json --repo "$ROOT" 2>/dev/null \
-    | jq -r '.output.plan.selected | keys[]' | LC_ALL=C sort | tr '\n' ' ')"
+  rs_plan="$("$BIN" run gates.completion --input "$input" --quiet --format json --repo "$ROOT" 2>/dev/null \
+    | jq -c '.output.plan')"
+  rs_set="$(printf '%s' "$rs_plan" | jq -r '.selected | keys[]' | LC_ALL=C sort | tr '\n' ' ')"
   [ -n "$rs_set" ] && [ "$sh_set" = "$rs_set" ] || {
     echo "    the two readers of gates.yaml disagree for: $paths"
     echo "      ci-plan:    $sh_set"
     echo "      executable: $rs_set"
+    exit 1
+  }
+  # The reasons. A plan ci-plan narrowed by a shape is set aside: the executable applies no
+  # shape, by design (the model's header says so), so its plan of a shape-only change is the
+  # union of the classes, and its reasons are the classes' rather than the shape's. That is a
+  # declared difference, not a disagreement. A shape ci-plan only tried leaves a parenthesised
+  # note on the plan's reason, the one part of a reason the executable cannot give; that note,
+  # and nothing else, is taken off before the comparison.
+  [ "$(printf '%s' "$sh_plan" | jq -r '.shape')" = null ] || continue
+  printf '%s' "$sh_plan" | jq -r '
+    "(plan)\t\(.mode)\t\(.reason | sub(" \\((not the shape |the head |git could not read the attributes ).*\\)$"; ""))",
+    (.gates[] | "\(.id)\t\(if .selected then "run" else "skip" end)\t\(.reason)")' > "$S/sh.why"
+  printf '%s' "$rs_plan" | jq -r '
+    "(plan)\t\(.mode)\t\(.reason)",
+    (.selected | to_entries[] | "\(.key)\trun\t\(.value)"),
+    (.excluded | to_entries[] | "\(.key)\tskip\t\(.value)")' > "$S/rs.why"
+  differ="$(awk -F"$tab" '
+    NR == FNR { sh[$1] = $2 ": " $3; next }
+    { rs[$1] = $2 ": " $3 }
+    END {
+      for (g in sh) if (!(g in rs) || sh[g] != rs[g]) print g "\t" sh[g] "\t" (g in rs ? rs[g] : "(absent)")
+      for (g in rs) if (!(g in sh)) print g "\t(absent)\t" rs[g]
+    }' "$S/sh.why" "$S/rs.why" | LC_ALL=C sort)"
+  [ -z "$differ" ] || {
+    echo "    the two readers of gates.yaml give different reasons for: $paths"
+    printf '%s\n' "$differ" | while IFS="$tab" read -r g sh rs; do
+      echo "      $g"
+      echo "        ci-plan:    $sh"
+      echo "        executable: $rs"
+    done
     exit 1
   }
 done

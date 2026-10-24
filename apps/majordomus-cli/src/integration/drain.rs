@@ -17,6 +17,16 @@
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
 //!
+//! # How it lands
+//!
+//! A ready head that contains master lands by a non-forced fast-forward of the base to that
+//! head ([`FAST_FORWARD`], owner decision of 2026-10-22, I3910): master becomes exactly the
+//! tree its checks judged, and the forge refuses the update when master moved since the
+//! decision, so two executors can never both land. That refusal is a stale decision, not an
+//! unverified landing: the drain observes again and decides from the new master. Only a head
+//! that does not contain master and still yields its own tree (`carries_master`) is landed by
+//! the repository's merge commit ([`landing_method`]).
+//!
 //! # The one pull request it reopens
 //!
 //! A release proposes its record as `release/record-<tag>`, opened with the workflow's own
@@ -57,6 +67,37 @@ pub const LEASE_STALE_AFTER: Duration = Duration::from_secs(1800);
 
 /// How long a merge is given to show as merged on the forge before verification fails.
 pub const MERGE_VISIBLE_WITHIN: Duration = Duration::from_secs(60);
+
+/// The landing method of a head that contains master: the base ref moved to the head itself,
+/// never forced, so the forge accepts it only while the base is still an ancestor of the head.
+pub const FAST_FORWARD: &str = "fast-forward";
+
+/// How a ready pull request lands: [`FAST_FORWARD`] when its head contains master
+/// (`up_to_date`), and otherwise the repository's merge method, which only a head that carries
+/// master without containing it is landed by (a stacked head whose base landed as a merge).
+pub fn landing_method<'a>(relation: &super::RelationToMaster, merge_method: &'a str) -> &'a str {
+    match relation {
+        super::RelationToMaster::UpToDate { .. } => FAST_FORWARD,
+        _ => merge_method,
+    }
+}
+
+/// The forge request that fast-forwards `base` of `repository` (`owner/name`) to `head`: a
+/// ref update with `force=false`, which the forge refuses (HTTP 422, "Update is not a fast
+/// forward") unless the base is an ancestor of the head. Never `--admin`, never forced.
+pub fn fast_forward_args(repository: &str, base: &str, head: &str) -> Vec<String> {
+    [
+        "api".to_string(),
+        "-X".into(),
+        "PATCH".into(),
+        format!("repos/{repository}/git/refs/heads/{base}"),
+        "-f".into(),
+        format!("sha={head}"),
+        "-F".into(),
+        "force=false".into(),
+    ]
+    .to_vec()
+}
 
 /// How long a required check that has not reported (`missing`) on a head the executor pushed
 /// still holds the refresh pipeline, counted from the `refreshed` event. A forge creates no
@@ -810,7 +851,12 @@ impl FailureClass {
             FailureClass::Transient
         } else if r.contains("conflict") {
             FailureClass::Conflict
-        } else if r.contains("head branch was modified") || r.contains("head sha") {
+        } else if r.contains("head branch was modified")
+            || r.contains("head sha")
+            || r.contains("not a fast forward")
+        {
+            // a fast-forward the forge refused because master moved since the decision: the
+            // drain observes again and decides from the new master (I3910)
             FailureClass::Stale
         } else if r.contains("review") {
             FailureClass::ReviewRevoked
@@ -877,7 +923,8 @@ pub struct IntegrationEvent {
     /// On a failure: its class, once one is decided.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub class: Option<FailureClass>,
-    /// On `merge_succeeded`: the merge commit, once it is read.
+    /// On `merge_succeeded`: the merge commit, once it is read; the head itself after a
+    /// fast-forward.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merge_commit: Option<String>,
 }
@@ -1170,7 +1217,8 @@ pub struct Landed {
     /// The base branch's tip after the merge, fetched.
     pub master_after: String,
     /// The commit that is this merge — the first-parent successor of the master the
-    /// decision was taken against. `None` for a rebase merge, which has no such commit.
+    /// decision was taken against, and the head itself for a fast-forward. `None` for a
+    /// rebase merge, which has no such commit.
     pub merge_commit: Option<String>,
 }
 
@@ -1388,6 +1436,7 @@ pub fn step(
             what,
         });
     };
+    let method = landing_method(&candidate.relation, &method).to_string();
     // the claim may have been suspended and another executor admitted while this one was idle:
     // asked again now, before anything reaches the forge
     if let Some(lost) = unless_held(root, integrator, &candidate, "merging")? {
@@ -2345,8 +2394,9 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
 /// that master and, for a merge commit, its second parent the head that was decided on. A
 /// merge that landed after another one, onto a master nobody tested together with it, is
 /// refused by name: it is the one thing a merge-after-decision can do wrong that the forge
-/// would still call merged. The merge commit, or `None` for a rebase merge, which leaves no
-/// single commit to name.
+/// would still call merged. A [`FAST_FORWARD`] is proved when master contains the decision's
+/// master and is the decided head itself. The merge commit (the head itself for a
+/// fast-forward), or `None` for a rebase merge, which leaves no single commit to name.
 pub(crate) fn landing(
     root: &Path,
     at: &EvaluatedAgainst,
@@ -2376,6 +2426,17 @@ pub(crate) fn landing(
             "master {master} does not contain {}, the master the merge was decided against",
             at.master_sha
         ));
+    }
+    if method == FAST_FORWARD {
+        // a fast-forward makes no commit of its own: master is the head the checks judged, or
+        // something else landed instead of it
+        return (master == at.head_sha)
+            .then(|| Some(master.to_string()))
+            .ok_or(format!(
+                "unexpected_master: master is {master}, not {}, the head it was fast-forwarded \
+                 to: another change landed between the decision and the fast-forward",
+                at.head_sha
+            ));
     }
     if method == "rebase" {
         // a rebase leaves copies of the head's commits, not the head and not one commit
@@ -2488,16 +2549,24 @@ impl Integrator for ForgeIntegrator<'_> {
         // Never retried either: a merge that timed out may have landed, and asking again
         // would be a second merge request; the verification after it finds out
         // (retry::forge there).
+        let args = if method == FAST_FORWARD {
+            // the repository and base the decision was observed on, which step just recorded
+            let obs = super::load_observation(self.root)?.ok_or("no observation to land on")?;
+            fast_forward_args(&obs.repository, &obs.base, head_sha)
+        } else {
+            [
+                "pr".to_string(),
+                "merge".into(),
+                pr.to_string(),
+                format!("--{method}"),
+                "--match-head-commit".into(),
+                head_sha.into(),
+            ]
+            .to_vec()
+        };
         gh(
             self.root,
-            &[
-                "pr",
-                "merge",
-                &pr.to_string(),
-                &format!("--{method}"),
-                "--match-head-commit",
-                head_sha,
-            ],
+            &args.iter().map(String::as_str).collect::<Vec<_>>(),
         )
         .map(|_| ())
     }
@@ -3547,5 +3616,135 @@ mod rollout_tests {
             continuous_refused(&lost).is_some(),
             "a failure after the record ends it"
         );
+    }
+}
+
+#[cfg(test)]
+mod fast_forward_tests {
+    //! The landing act of I3910: a head that contains master is fast-forwarded to, never
+    //! merged; a refusal because master moved is a stale decision; and what landed is proved
+    //! to be the decided head itself.
+
+    use super::*;
+    use crate::integration::RelationToMaster;
+
+    /// The fast-forward is a non-forced update of the base ref to the decided head, of the
+    /// repository the observation names, and never anything with `--admin` in it.
+    #[test]
+    fn the_fast_forward_moves_the_base_ref_to_the_head_and_never_forces() {
+        let args = fast_forward_args("o/r", "master", "abc123");
+        assert_eq!(
+            args,
+            [
+                "api",
+                "-X",
+                "PATCH",
+                "repos/o/r/git/refs/heads/master",
+                "-f",
+                "sha=abc123",
+                "-F",
+                "force=false"
+            ]
+        );
+        assert!(!args
+            .iter()
+            .any(|a| a.contains("admin") || a == "force=true"));
+    }
+
+    /// A head that contains master is fast-forwarded to; only one that carries master without
+    /// containing it lands by the repository's merge commit.
+    #[test]
+    fn a_head_that_contains_master_is_fast_forwarded_and_only_a_carrier_is_merged() {
+        let up_to_date = RelationToMaster::UpToDate {
+            authored: Vec::new(),
+            owes_version: None,
+        };
+        let carries = RelationToMaster::CarriesMaster {
+            behind: 1,
+            authored: Vec::new(),
+        };
+        assert_eq!(landing_method(&up_to_date, "merge"), FAST_FORWARD);
+        assert_eq!(landing_method(&carries, "merge"), "merge");
+    }
+
+    /// The forge's refusal of a fast-forward onto a master that moved is a stale decision:
+    /// the candidate's own, so the drain goes on and decides again, never a halt.
+    #[test]
+    fn a_fast_forward_refused_because_master_moved_is_stale_and_the_drain_goes_on() {
+        let reason = "gh: Update is not a fast forward (HTTP 422)";
+        let class = FailureClass::of_merge_refusal(reason);
+        assert_eq!(class, FailureClass::Stale);
+        assert!(class.recoverable());
+        let refused = DrainStepOutcome::MergeRefused {
+            pr: 1,
+            reason: reason.into(),
+            class,
+        };
+        assert_eq!(ends_drain(&refused), None);
+    }
+
+    /// A fast-forward with no readable observation to name the repository and base asks the
+    /// forge nothing: the act fails before it, and nothing lands.
+    #[test]
+    fn a_fast_forward_without_a_readable_observation_asks_the_forge_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut forge = ForgeIntegrator {
+            root: dir.path(),
+            lease: None,
+        };
+        let none = forge.merge(1, "h", FAST_FORWARD).unwrap_err();
+        assert!(none.contains("no observation"), "{none}");
+        let path = crate::integration::state_path(dir.path(), crate::integration::OBSERVATION_FILE);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, "not an observation").unwrap();
+        let unreadable = forge.merge(1, "h", FAST_FORWARD).unwrap_err();
+        assert!(unreadable.contains("observation.json"), "{unreadable}");
+    }
+
+    /// A fast-forward is proved when master is the decided head and contains the decided
+    /// master; any other master is `unexpected_master`, and the landed commit is the head.
+    #[test]
+    fn a_fast_forward_is_proved_only_when_master_is_the_decided_head() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let git = |args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(root)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "master"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        let base = git(&["rev-parse", "HEAD"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "head"]);
+        let head = git(&["rev-parse", "HEAD"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "another"]);
+        let another = git(&["rev-parse", "HEAD"]);
+        let at = EvaluatedAgainst {
+            master_sha: base.clone(),
+            head_sha: head.clone(),
+            ..Default::default()
+        };
+        assert_eq!(
+            landing(root, &at, FAST_FORWARD, &head),
+            Ok(Some(head.clone()))
+        );
+        let err = landing(root, &at, FAST_FORWARD, &another).unwrap_err();
+        assert!(err.starts_with("unexpected_master"), "{err}");
+        // a master that does not hold the decided master is refused before anything else
+        let behind = EvaluatedAgainst {
+            master_sha: another,
+            head_sha: head.clone(),
+            ..Default::default()
+        };
+        assert!(landing(root, &behind, FAST_FORWARD, &head).is_err());
     }
 }

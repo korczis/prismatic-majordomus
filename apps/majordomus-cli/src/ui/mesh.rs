@@ -1015,6 +1015,53 @@ mod tests {
         );
     }
 
+    /// A session that beat says beside its name how long ago its worker last made progress
+    /// and what it said it was doing; one that never beat says neither (I3990).
+    #[test]
+    fn a_session_shows_its_progress_and_phase_beside_its_name() {
+        let all = answer(
+            PEERS,
+            Ok(serde_json::json!({
+                "active": true,
+                "machines": [{
+                    "node": "641bdb94aa",
+                    "name": "studio",
+                    "local": true,
+                    "runtimes": [{
+                        "runtime": "641bdb94aa-r1",
+                        "liveness": "own",
+                        "sessions": [
+                            {
+                                "key": "641bdb94aa-r1/board-p4",
+                                "info": { "session": "board-p4", "client": "claude-code" },
+                                "state": "active",
+                                "claims": [],
+                                "progress_ms": 12_400,
+                                "phase": "waiting on CI run 42"
+                            },
+                            {
+                                "key": "641bdb94aa-r1/lander",
+                                "info": { "session": "lander", "client": "cli" },
+                                "state": "active",
+                                "claims": []
+                            }
+                        ]
+                    }]
+                }]
+            })),
+        );
+        let machines = list(&all, "/machines");
+        let html = inspector("studio", &machines, &all, &events()).render();
+        assert!(
+            html.contains("board-p4 · progress 12 s ago · waiting on CI run 42"),
+            "{html}"
+        );
+        assert!(
+            html.contains(">lander<"),
+            "a silent name stands alone: {html}"
+        );
+    }
+
     /// A machine that says nothing about itself is shown with what is not known said so,
     /// never as a machine that runs nothing on purpose.
     #[test]

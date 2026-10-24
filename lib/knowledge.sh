@@ -193,11 +193,14 @@ EOF_EV
   mj_require_installed
   # The deriver selects an observation by its episode stamp, and the ledger stamps a line only
   # while an episode is open: an observation without one would be written and never derived.
-  [ -n "$(mj_open_session_id)" ] \
-    || mj_die "$MJ_EX_CONTRACT" "knowledge observe: no episode is open in this checkout, so the observation would never be derived; open one first: majordomus session start"
-  mj_load_current 2>/dev/null && [ "$(mj_cur outcome)" = active ] && task_id="$(mj_cur id)"
+  # Its task is the caller's or none (ADR 0164), never the checkout's active one by proximity.
+  mj_record_attribution
+  [ -n "$MJ_RECORD_SESSION" ] \
+    || mj_die "$MJ_EX_CONTRACT" "knowledge observe: no episode is open in this checkout for this caller, so the observation would never be derived; open one first: majordomus session start"
+  [ -n "$MJ_RECORD_TASK" ] && [ "$(mj_cur outcome)" = active ] && task_id="$MJ_RECORD_TASK"
   mj_ledger_append observation.recorded \
-    "\"task_id\":\"$task_id\",\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\",\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]"
+    "\"task_id\":\"$task_id\",\"kind\":\"$kind\",\"subject\":\"$(mj_json_esc "$subject")\",\"statement\":\"$(mj_json_esc "$statement")\",\"evidence\":[$ev_json]" \
+    "$MJ_RECORD_SESSION"
   printf 'observed: %s %s — %s\n' "$kind" "$subject" "$statement"
 }
 
