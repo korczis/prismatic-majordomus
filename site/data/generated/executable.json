@@ -3690,6 +3690,23 @@
       "tool": "majordomus_why_validate"
     },
     {
+      "api_anchor": "/docs/api/worktree/#op-worktree-create",
+      "claims": [],
+      "cli": "majordomus worktree ensure",
+      "id": "worktree.create",
+      "kind": "command",
+      "module": "worktree",
+      "module_route": "/registry/modules/worktree/",
+      "resource": null,
+      "route": "/registry/capabilities/worktree-create/",
+      "slug": "worktree-create",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/worktree.rs",
+      "tests": [],
+      "title": "The canonical worktree of a branch, made or found",
+      "tool": "majordomus_worktree_create"
+    },
+    {
       "api_anchor": "/docs/api/worktree/#op-worktree-inspect",
       "claims": [],
       "cli": "majordomus worktree inspect",
@@ -4428,7 +4445,7 @@
     ]
   },
   "counts": {
-    "capabilities": 213,
+    "capabilities": 214,
     "claims": 93,
     "modules": 60
   },
@@ -6152,6 +6169,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "worktree.create",
+          "route": "/registry/capabilities/worktree-create/",
+          "slug": "worktree-create"
+        },
         {
           "id": "worktree.inspect",
           "route": "/registry/capabilities/worktree-inspect/",

@@ -1933,6 +1933,15 @@
         "status": "query"
       },
       {
+        "id": "capability:worktree.create",
+        "kind": "capability",
+        "label": "worktree.create",
+        "summary": "The canonical worktree of a branch, made or found",
+        "route": "/cockpit/capabilities/worktree.create",
+        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:worktree.inspect",
         "kind": "capability",
         "label": "worktree.inspect",
@@ -90823,6 +90832,13 @@
         "source": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4002_a_worktree_is_created_by_one_capability.sh",
+        "kind": "test",
+        "label": "test/cases/4002_a_worktree_is_created_by_one_capability.sh",
+        "route": "/cockpit/objects/test/test-cases-4002-a-worktree-is-created-by-one-capability-sh",
+        "source": "test/cases/4002_a_worktree_is_created_by_one_capability.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -98556,6 +98572,26 @@
       },
       {
         "source": "capability:why.validate",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:worktree.create",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -134870,6 +134906,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4002_a_worktree_is_created_by_one_capability.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -139976,6 +140017,11 @@
       },
       {
         "source": "module:worktree",
+        "target": "capability:worktree.create",
+        "kind": "composes"
+      },
+      {
+        "source": "module:worktree",
         "target": "capability:worktree.inspect",
         "kind": "composes"
       },
@@ -140006,8 +140052,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3897,
-      "edges": 9002,
+      "nodes": 3899,
+      "edges": 9008,
       "acyclic": false,
       "truncated": false
     }

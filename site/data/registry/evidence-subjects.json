@@ -1079,6 +1079,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:worktree.create",
+      "path": "/evidence/capabilities/worktree-create/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:worktree.inspect",
       "path": "/evidence/capabilities/worktree-inspect/"
     },
@@ -6364,6 +6369,18 @@
       "programs": [],
       "members": [
         "command:why validate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:worktree.create": {
+      "kind": "capability",
+      "id": "worktree.create",
+      "page": "/evidence/capabilities/worktree-create/",
+      "programs": [],
+      "members": [
+        "command:worktree ensure"
       ],
       "routes": [],
       "mechanisms": [],
@@ -22277,6 +22294,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_worktree_create": {
+      "kind": "mcp",
+      "id": "majordomus_worktree_create",
+      "alias_of": "capability:worktree.create",
+      "programs": [],
+      "members": [
+        "capability:worktree.create"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_worktree_inspect": {
       "kind": "mcp",
       "id": "majordomus_worktree_inspect",
@@ -29206,6 +29235,7 @@
     "suite:3940_every_ui_visit_is_driven_by_exactly_one_shard",
     "suite:3943_a_second_gate_list_is_found",
     "suite:3963_a_merge_of_master_derives_in_one_go",
+    "suite:4002_a_worktree_is_created_by_one_capability",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",
     "suite:406_one_declaration_every_surface",

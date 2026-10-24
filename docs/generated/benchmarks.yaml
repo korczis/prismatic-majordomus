@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 1.0.0-alpha.8
 coverage:
   - scope: direct
-    required: 213
-    covered: 179
+    required: 214
+    covered: 180
     missing: 0
     waived: 34
     inapplicable: 0
   - scope: http
-    required: 207
-    covered: 179
+    required: 208
+    covered: 180
     missing: 0
     waived: 28
     inapplicable: 0
   - scope: mcp
-    required: 201
-    covered: 174
+    required: 202
+    covered: 175
     missing: 0
     waived: 27
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 635
-    covered: 546
+    required: 638
+    covered: 549
     missing: 0
     waived: 89
     inapplicable: 0
@@ -1939,6 +1939,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: worktree.create
+    module: worktree
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - refused-name
   - id: worktree.inspect
     module: worktree
     kind: query

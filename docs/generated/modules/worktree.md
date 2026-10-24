@@ -5,7 +5,33 @@
 
 Where every linked git worktree of this repository belongs and where each one is. The container is the primary checkout's sibling named with `-wt`, the path under it is the branch name with its hierarchy kept, and both are derived from git's own identity — the common directory, the registered worktrees, the branches — never from a registry, a configuration or the current directory. A worktree somewhere else is a typed diagnostic with a remedy; the migration that repairs it is a command-line operation of the same service.
 
-Stability: behaviorally_verified. Capabilities: 6.
+Stability: behaviorally_verified. Capabilities: 7.
+
+## `worktree.create` — The canonical worktree of a branch, made or found
+
+Make the worktree of a branch at its canonical path — the container beside the primary checkout, then the branch name with its hierarchy kept, derived and never given — or find it there. Idempotent: the canonical worktree already holding the branch is the answer (`existed: true`), with nothing created. Refused with the service's reason and nothing changed: the branch checked out somewhere else (`BranchAlreadyCheckedOut`, with the path it belongs at), the canonical path occupied by something else (`DestinationConflict`), a name git or the topology does not accept. A branch that does not exist here starts at `base` when given, else where the remote has it, else at the remote's trunk fetched now within a deadline, else the local trunk with how far behind it is (`start`). `git worktree add` runs under the worktree lock and a deadline, and is killed and refused when it passes it. The answer is the branch, the path, the `head` read back from the worktree, and whether it was created or existed; direnv's approval and the per-worktree hooks are carried to it as `worktree ensure` does, because this is that command.
+
+| | |
+|---|---|
+| kind | command |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_worktree_create` |
+| HTTP | `POST /api/v1/worktrees/create` |
+| CLI | `majordomus worktree ensure` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::worktree |
+| tags | worktree, git, topology, isolation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `branch` | string | yes | The branch, full name (`feature/improve-cli`). Checked out when it exists here,
+taken up from the remote when the remote has it, otherwise created at `base`. |
+| `base` | string or null | no | The commit or ref a new branch starts from, as given and never fetched. Default: the
+remote's trunk, fetched now within a deadline, then the local trunk, said in `start`.
+Ignored when the branch exists. |
+
+Output: `CreateReport`.
 
 ## `worktree.inspect` — One branch: where its worktree belongs and what is there
 

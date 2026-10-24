@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "9ea3f643f1a7a78910e5cc464e09ec16fff73a6f1de0b63426c55e2b165b6a2d",
+  "fingerprint": "d49ec98dae386955f9e45fae9797f641ca3e9fe58d5fa49929f5857f6ec67aa3",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 79,
         "moments": 17
       },
       "evidence": {
@@ -4774,6 +4774,15 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
           "capabilities": [
             {
+              "id": "worktree.create",
+              "title": "The canonical worktree of a branch, made or found",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_create",
+              "route": "POST /api/v1/worktrees/create",
+              "cli": "majordomus worktree ensure"
+            },
+            {
               "id": "worktree.inspect",
               "title": "One branch: where its worktree belongs and what is there",
               "kind": "query",
@@ -5193,11 +5202,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 18,
-        "mcp_tools": 18,
+        "capabilities": 19,
+        "mcp_tools": 19,
         "mcp_resources": 2,
-        "http_routes": 18,
-        "cli_paths": 12,
+        "http_routes": 19,
+        "cli_paths": 13,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -5292,6 +5301,15 @@
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
           "capabilities": [
+            {
+              "id": "worktree.create",
+              "title": "The canonical worktree of a branch, made or found",
+              "kind": "command",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_worktree_create",
+              "route": "POST /api/v1/worktrees/create",
+              "cli": "majordomus worktree ensure"
+            },
             {
               "id": "worktree.inspect",
               "title": "One branch: where its worktree belongs and what is there",
@@ -5468,11 +5486,11 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 8,
+        "mcp_tools": 8,
         "mcp_resources": 2,
-        "http_routes": 7,
-        "cli_paths": 7,
+        "http_routes": 8,
+        "cli_paths": 8,
         "commands": 0,
         "objects": 0,
         "rules": 2,
@@ -18493,17 +18511,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3437,
-    "builtin": 213,
-    "declarative": 3224,
+    "capabilities": 3439,
+    "builtin": 214,
+    "declarative": 3225,
     "modules": 60,
-    "mcp_tools": 201,
-    "mcp_resources": 3279,
-    "http_routes": 207,
+    "mcp_tools": 202,
+    "mcp_resources": 3280,
+    "http_routes": 208,
     "cli_commands": 214,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3224,
+    "objects": 3225,
     "by_kind": {
       "adr": 162,
       "application": 5,
@@ -18536,7 +18554,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 628,
+      "test": 629,
       "use-case": 49,
       "workspace": 1
     },
