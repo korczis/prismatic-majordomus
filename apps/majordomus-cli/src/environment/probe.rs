@@ -26,7 +26,7 @@ use super::ServiceAvailability;
 ///
 /// A program written a moment ago can still be open for writing in a child another thread
 /// forked meanwhile, and exec then fails with ETXTBSY; it is started through
-/// [`crate::process::retrying_busy`], as every other freshly written program is, rather than
+/// `crate::process::retrying_busy`, as every other freshly written program is, rather than
 /// reported as absent (#2501's coverage run: a stand-in sccache "does not answer --version").
 pub fn bounded_output(command: &mut Command, budget: Duration) -> Option<Output> {
     command
