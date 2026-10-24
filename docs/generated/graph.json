@@ -70368,6 +70368,52 @@
         }
       },
       {
+        "id": "majordomus://issue/I4200",
+        "kind": "issue",
+        "label": "I4200",
+        "summary": "A warm UI screen borrows what its sources answered and writes its page once, so a plan of any size is not copied per request",
+        "route": "/cockpit/objects/issue/i4200",
+        "source": ".ai/repo/project/issues/I4200.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The ui and cockpit::html unit tests pass unchanged, so every screen renders the same bytes",
+            "bench system.http.ui.idd and system.http.ui.issues warm p95 fall by at least a third against a build of the same commit without the change",
+            "ui-checks' warm-budget step passes on CI without a rerun"
+          ],
+          "created_at": "2026-10-24",
+          "depends_on": [],
+          "evidence_required": [
+            "warm_screens_copy_nothing",
+            "warm_budget_passes_on_ci"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Raising any warm budget",
+            "Paginating /ui/issues, which would change what the screen shows"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4200.yaml",
+            "apps/majordomus-cli/src/ui/issues.rs",
+            "apps/majordomus-cli/src/ui/idd.rs",
+            "apps/majordomus-cli/src/ui/intent.rs",
+            "apps/majordomus-cli/src/ui/shell.rs",
+            "apps/majordomus-cli/src/ui/mod.rs",
+            "apps/majordomus-cli/src/cockpit/html.rs"
+          ],
+          "serves": [],
+          "slug": "a-warm-screen-copies-nothing-per-request",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- cockpit::html ui::",
+            "majordomus bench system.http.ui.idd --transport system --profile ci --no-write",
+            "majordomus bench system.http.ui.issues --transport system --profile ci --no-write"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -132413,6 +132459,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4200",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4200",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -143999,8 +144055,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3997,
-      "edges": 9223,
+      "nodes": 3998,
+      "edges": 9225,
       "acyclic": false,
       "truncated": false
     }

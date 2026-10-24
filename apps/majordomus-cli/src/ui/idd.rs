@@ -27,7 +27,7 @@ use super::dashboard::milestone_row;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    command, graph, hero, hero_under, kpi, kpi_count, list, nothing, panel, panel_to, state,
+    command, graph, hero, hero_under, items, kpi, kpi_count, list, nothing, panel, panel_to, state,
     status_tone, table, text, unanswered, wide, GraphNode, Layout,
 };
 
@@ -153,7 +153,7 @@ fn chip(href: String, label: String) -> El {
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT, MOVES]);
     // the chosen intent in full, asked by its id, so the headline numbers are its own (I2907)
-    let record = chosen(query, &list(&answers[&INTENTS], "/intents"))
+    let record = chosen(query, items(&answers[&INTENTS], "/intents"))
         .map(|id| super::source::ask_input(ctx, RECORD, serde_json::json!({ "id": id })));
     render(
         ctx,
@@ -206,8 +206,8 @@ fn render(
     moves: &Answer,
     query: &[(String, String)],
 ) -> View {
-    let all = list(intents, "/intents");
-    let id = chosen(query, &all);
+    let all = items(intents, "/intents");
+    let id = chosen(query, all);
     let intent = id
         .as_deref()
         .and_then(|id| all.iter().find(|i| text(i, "id") == id));
@@ -290,7 +290,7 @@ fn render(
 /// it when the link named none.
 fn choice(intents: &Answer, open: Option<&str>) -> El {
     let body = unanswered(intents).unwrap_or_else(|| {
-        let rows = list(intents, "/intents")
+        let rows = items(intents, "/intents")
             .iter()
             .map(|i| {
                 let id = text(i, "id");
@@ -611,18 +611,20 @@ fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El
 fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, intent: &str) -> El {
     let ids: BTreeSet<String> = mine.iter().map(|x| text(x, "id")).collect();
     let body = unanswered(waves).unwrap_or_else(|| {
-        let rows = super::view::items(waves, "/waves")
+        // borrowed, never copied: the waves and the scope pairs cover the whole plan, and this
+        // panel keeps only the few that hold an issue of this intent (I4200)
+        let mine_id = |x: &Value| {
+            x.get("id")
+                .and_then(Value::as_str)
+                .is_some_and(|i| ids.contains(i))
+        };
+        let rows = items(waves, "/waves")
             .iter()
             .filter_map(|w| {
-                let members: Vec<Value> = w
+                let members: Vec<&Value> = w
                     .get("issues")
                     .and_then(Value::as_array)
-                    .map(|a| {
-                        a.iter()
-                            .filter(|x| ids.contains(&text(x, "id")))
-                            .cloned()
-                            .collect()
-                    })
+                    .map(|a| a.iter().filter(|x| mine_id(x)).collect())
                     .unwrap_or_default();
                 if members.is_empty() {
                     return None;
@@ -690,7 +692,11 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, inten
 fn shared_scope<'a>(waves: &'a Answer, ids: &BTreeSet<String>) -> Vec<&'a Value> {
     super::view::items(waves, "/serialised_by_scope")
         .iter()
-        .filter(|f| ids.contains(&text(f, "subject")))
+        .filter(|f| {
+            f.get("subject")
+                .and_then(Value::as_str)
+                .is_some_and(|s| ids.contains(s))
+        })
         .collect()
 }
 

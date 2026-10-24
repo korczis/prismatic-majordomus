@@ -12,7 +12,7 @@ use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
 use super::source::Answer;
-use super::view::{command, list, nothing, panel, state, table, text, unanswered};
+use super::view::{command, items, nothing, panel, state, table, text, unanswered};
 
 /// An intent id, as the repository writes them (`intent-bound-work`): letters, digits, `-`
 /// and `_`, and nothing a link could carry anything else in.
@@ -82,8 +82,8 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
     let body = unanswered(intents)
         .or_else(|| unanswered(issues))
         .unwrap_or_else(|| {
-            let Some(i) = list(intents, "/intents")
-                .into_iter()
+            let Some(i) = items(intents, "/intents")
+                .iter()
                 .find(|i| text(i, "id") == id)
             else {
                 return nothing(&format!("{id} is not an intent of this repository."));
@@ -158,12 +158,12 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                     el("div")
                         .class("mj-ui-detail-head")
                         .child(el("p").class("mj-ui-mono mj-ui-dim").text(id.to_string()))
-                        .child(el("h3").class("mj-ui-detail-title").text(text(&i, "title")))
+                        .child(el("h3").class("mj-ui-detail-title").text(text(i, "title")))
                         .child(
                             el("p")
                                 .class("mj-ui-badges")
-                                .child(state(&i, "stage"))
-                                .child(verdict(&i))
+                                .child(state(i, "stage"))
+                                .child(verdict(i))
                                 .child(
                                     el("span")
                                         .class("mj-ui-mono mj-ui-dim")
@@ -177,14 +177,14 @@ pub fn inspector_closing_to(intents: &Answer, issues: &Answer, id: &str, close: 
                                 ),
                         ),
                 )
-                .child(super::prose::paragraph(&text(&i, "statement"), &known))
+                .child(super::prose::paragraph(&text(i, "statement"), &known))
                 .child(
                     el("h4")
                         .class("mj-ui-panel-title")
                         .text("What does it hold the work to?"),
                 )
                 .child({
-                    let inv = strings(&i, "invariants");
+                    let inv = strings(i, "invariants");
                     if inv.is_empty() {
                         nothing("It declares no invariant.")
                     } else {

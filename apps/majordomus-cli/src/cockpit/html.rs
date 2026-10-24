@@ -8,8 +8,6 @@
 //! call site; this puts it in one place, and a page that wants raw markup has to say
 //! [`El::raw`] and be read for it.
 
-use std::fmt::Write as _;
-
 /// Escape text for an element body or an attribute value. The five characters that can
 /// leave either context are replaced; nothing else is touched, so UTF-8 stays UTF-8.
 ///
@@ -20,17 +18,30 @@ use std::fmt::Write as _;
 /// ```
 pub fn escape(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
-    for c in text.chars() {
-        match c {
-            '<' => out.push_str("&lt;"),
-            '>' => out.push_str("&gt;"),
-            '&' => out.push_str("&amp;"),
-            '"' => out.push_str("&quot;"),
-            '\'' => out.push_str("&#39;"),
-            other => out.push(other),
-        }
-    }
+    escape_into(&mut out, text);
     out
+}
+
+/// `text` escaped as [`escape`] does, appended to `out` with no string of its own: a page writes
+/// every text and attribute through this, and a page can hold the whole plan (I4200). The five
+/// characters it replaces are ASCII, so every cut falls on a character boundary, and a run with
+/// nothing to replace is copied whole.
+fn escape_into(out: &mut String, text: &str) {
+    let mut from = 0;
+    for (i, b) in text.bytes().enumerate() {
+        let entity = match b {
+            b'<' => "&lt;",
+            b'>' => "&gt;",
+            b'&' => "&amp;",
+            b'"' => "&quot;",
+            b'\'' => "&#39;",
+            _ => continue,
+        };
+        out.push_str(&text[from..i]);
+        out.push_str(entity);
+        from = i + 1;
+    }
+    out.push_str(&text[from..]);
 }
 
 /// Void elements: they take no children and are written without a closing tag.
@@ -215,12 +226,15 @@ impl El {
     }
 
     fn write(&self, out: &mut String) {
-        let _ = write!(out, "<{}", self.tag);
+        out.push('<');
+        out.push_str(self.tag);
         for (name, value) in &self.attributes {
-            if value.is_empty() {
-                let _ = write!(out, " {name}");
-            } else {
-                let _ = write!(out, " {name}=\"{}\"", escape(value));
+            out.push(' ');
+            out.push_str(name);
+            if !value.is_empty() {
+                out.push_str("=\"");
+                escape_into(out, value);
+                out.push('"');
             }
         }
         out.push('>');
@@ -230,11 +244,13 @@ impl El {
         for child in &self.children {
             match child {
                 Node::Element(e) => e.write(out),
-                Node::Text(t) => out.push_str(&escape(t)),
+                Node::Text(t) => escape_into(out, t),
                 Node::Raw(r) => out.push_str(r),
             }
         }
-        let _ = write!(out, "</{}>", self.tag);
+        out.push_str("</");
+        out.push_str(self.tag);
+        out.push('>');
     }
 }
 
