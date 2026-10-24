@@ -8573,6 +8573,25 @@ mod tests {
         );
     }
 
+    /// A node the mesh holds is listed on the page with its trust named, read through
+    /// mesh.nodes: a retired one by the key that succeeded it.
+    #[test]
+    fn a_listed_node_says_its_trust_on_the_mesh_page() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        crate::mesh::observe_one_node(
+            &ctx,
+            crate::mesh::TrustState::Retired("successorkey".into()),
+        );
+        let page = mesh(&ctx);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(
+            html.contains("retired: succeeded by successorkey"),
+            "{html}"
+        );
+    }
+
     /// Where an entity changed: the page says why there is nothing to list where git cannot
     /// answer, and says the list was cut, with the command that lists the rest, once more
     /// commits changed the file than the bound lets through.

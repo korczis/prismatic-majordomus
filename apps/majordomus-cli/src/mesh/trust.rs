@@ -209,6 +209,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn a_known_key_that_is_the_presented_one_is_judged_as_if_unknown() {
+        let allow = ["aa".to_string()];
+        let unknown =
+            evaluate_with_successions(&TrustPolicy::Allowlist, &allow, &[], "aa", None, None);
+        let known =
+            evaluate_with_successions(&TrustPolicy::Allowlist, &allow, &[], "aa", Some("aa"), None);
+        assert_eq!(known, unknown);
+        assert!(!matches!(known, TrustState::Rejected(_)), "{known:?}");
+    }
+
+    #[test]
     fn deny_unknown_observes_and_never_trusts() {
         let state = evaluate(&TrustPolicy::DenyUnknown, &[], "aa", None, None);
         assert_eq!(state, TrustState::Observed);

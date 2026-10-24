@@ -105,6 +105,23 @@ pub enum MeshError {
     Config(String),
 }
 
+/// One node observed in `ctx`'s mesh with `trust`, for a test of a page that lists nodes.
+/// A Cockpit page reads the mesh only through its capabilities (`scripts/ci/mesh-check`), so
+/// the fixture that puts a node there for it to read is made here, beside the runtime.
+#[cfg(test)]
+pub(crate) fn observe_one_node(ctx: &crate::capability::Context, trust: TrustState) {
+    let id = identity::NodeIdentity::ephemeral().expect("an identity");
+    let env = protocol::advertise(&id, 1, &[], &["http".into()], &[], "0.5.0");
+    assert!(ctx.mesh.registry().observe(
+        &env.adv,
+        id.public.node_id.clone(),
+        trust,
+        registry::MeshSource::UdpMulticast,
+        "127.0.0.1:7741",
+        serde_json::Value::Null,
+    ));
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

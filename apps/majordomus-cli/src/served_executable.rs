@@ -66,11 +66,11 @@ pub fn copy_target(exe: &Path) -> Option<PathBuf> {
         return None;
     }
     let meta = fs::metadata(exe).ok()?;
+    // a time the platform cannot give and one before the epoch name no copy alike
     let mtime = meta
         .modified()
-        .ok()?
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .ok()?
+        .ok()
+        .and_then(|t| t.duration_since(SystemTime::UNIX_EPOCH).ok())?
         .as_secs();
     let name = exe.file_name()?.to_string_lossy();
     Some(
@@ -240,9 +240,8 @@ pub fn serve_from_a_copy(command: &Command) {
         // always has; the kernel still knows the file it runs, which is what the lease records
         let mut args = std::env::args_os();
         let mut copy = std::process::Command::new(&target);
-        if let Some(name) = args.next() {
-            copy.arg0(name);
-        }
+        // a process started with no argv at all was started by no name, and keeps none
+        copy.arg0(args.next().unwrap_or_default());
         let err = copy.args(args).exec();
         eprintln!(
             "majordomus: could not run the copy {} ({err}); serving from {}",
@@ -286,6 +285,18 @@ mod tests {
         fs::remove_file(dir.path().join("CACHEDIR.TAG")).unwrap();
         assert_eq!(copy_target(&exe), None);
         assert_eq!(copy_target(Path::new("/nowhere/at/all/majordomus")), None);
+    }
+
+    #[test]
+    fn a_build_output_that_is_gone_has_no_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = build_output(dir.path());
+        fs::remove_file(&exe).unwrap();
+        assert_eq!(
+            copy_target(&exe),
+            None,
+            "the mark is there and the file is not"
+        );
     }
 
     #[test]

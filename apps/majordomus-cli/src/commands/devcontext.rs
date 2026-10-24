@@ -432,6 +432,14 @@ mod tests {
     }
 
     #[test]
+    fn a_source_section_without_an_unparsed_count_prints_no_unparsed_line() {
+        let t = compiled_with(json!({"parser": "syn 2", "truncated": 1}));
+        assert!(t.contains("parser       syn 2"), "{t}");
+        assert!(!t.contains("unparsed "), "{t}");
+        assert!(t.contains("truncated    1 file(s)"), "{t}");
+    }
+
+    #[test]
     fn the_text_says_what_was_selected_excluded_and_why() {
         let v = json!({
             "fingerprint": "abcdef0123456789",

@@ -563,6 +563,36 @@ mod tests {
     }
 
     #[test]
+    fn candidates_that_are_not_a_list_say_what_was_expected() {
+        let err = serde_json::from_str::<WireAnswer>(r#"{"accepted": true, "candidates": 3}"#)
+            .err()
+            .expect("a number is not a list of candidates");
+        let expected = format!("at most {MAX_ANSWER_CANDIDATES} candidate envelopes");
+        assert!(err.to_string().contains(&expected), "{err}");
+    }
+
+    #[test]
+    fn a_candidate_that_is_not_an_envelope_is_refused_where_it_is_read() {
+        let err = serde_json::from_str::<WireAnswer>(r#"{"accepted": true, "candidates": [3]}"#)
+            .err()
+            .expect("a number is not an envelope");
+        assert!(!err.to_string().contains(TOO_MANY_CANDIDATES), "{err}");
+    }
+
+    #[test]
+    fn a_broken_element_past_the_bound_is_malformed_not_too_many() {
+        let full = serde_json::to_string(&vec![an_envelope(); MAX_ANSWER_CANDIDATES]).unwrap();
+        let body = format!(
+            r#"{{"accepted": true, "candidates": {}, nul]}}"#,
+            full.strip_suffix(']').unwrap()
+        );
+        let err = serde_json::from_str::<WireAnswer>(&body)
+            .err()
+            .expect("one more element that is not JSON");
+        assert!(!err.to_string().contains(TOO_MANY_CANDIDATES), "{err}");
+    }
+
+    #[test]
     fn an_answer_at_the_candidate_bound_is_read_whole() {
         let endpoint = canned(200, answer_of(MAX_ANSWER_CANDIDATES));
         let answer = register(&endpoint, &an_envelope()).expect("at the bound is within it");
