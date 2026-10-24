@@ -54350,7 +54350,7 @@ capabilities:
     module: served
     kind: command
     title: Observe what a deployment serves
-    description: "Fetches the build identity the site serves (`build.json` under the configured base URL, one bounded probe, no shell), judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks)."
+    description: "Fetches the build identity a deployment serves (one bounded probe, no shell): for a `deployment` naming an object with a provider, its liveness route at the provider's URL; otherwise `build.json` under the configured base URL. It judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks)."
     input:
       name: ObserveInput
       schema:
@@ -54366,12 +54366,12 @@ capabilities:
             type:
               - string
               - "null"
-            description: "The site's base URL; `base_url` of `site/config.toml` when absent."
+            description: "The base URL; when absent, the `provider.url` of the deployment object `deployment`\nnames, else `base_url` of `site/config.toml` (I3822)."
           identity:
             type:
               - string
               - "null"
-            description: "The identity file under the base; `build.json` when absent."
+            description: "The identity under the base; when absent, the `health.liveness` route of the\ndeployment object `deployment` names (which answers `commit` and `dirty`), else\n`build.json`."
           commit:
             type:
               - string
@@ -54524,7 +54524,7 @@ capabilities:
     module: served
     kind: query
     title: What each deployment was last seen serving
-    description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
+    description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
     input:
       name: ShowInput
       schema:
@@ -54584,6 +54584,11 @@ capabilities:
               now:
                 "$ref": "#/$defs/Judgement"
                 description: "That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on."
+              status:
+                anyOf:
+                  - "$ref": "#/$defs/DeploymentStatus"
+                  - type: "null"
+                description: "For a deployment the layer declares as an object: `active` while `now` is served,\n`declared` otherwise, `retired` when the object says so. Derived from the newest\nobservation, never set by hand (I3822); absent for a name no object carries."
             required:
               - deployment
               - observation
@@ -54684,6 +54689,18 @@ capabilities:
               - verdict
               - reason
             description: "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
+          DeploymentStatus:
+            oneOf:
+              - type: string
+                const: declared
+                description: The object exists and nothing is deployed from it yet.
+              - type: string
+                const: active
+                description: It is deployed.
+              - type: string
+                const: retired
+                description: "It was, and the object is kept for the record."
+            description: "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::served

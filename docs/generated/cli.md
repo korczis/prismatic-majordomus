@@ -5573,8 +5573,8 @@ majordomus served observe [OPTIONS]
 | argument | value | default | description |
 |---|---|---|---|
 | `--commit` | `<COMMIT>` | — | The commit expected to be served (default HEAD) |
-| `--url` | `<URL>` | — | The site's base URL (default: base_url of site/config.toml) |
-| `--identity` | `<IDENTITY>` | — | The identity file under the base (default build.json) |
+| `--url` | `<URL>` | — | The base URL (default: the provider URL of the deployment object --deployment names, else base_url of site/config.toml) |
+| `--identity` | `<IDENTITY>` | — | The identity under the base (default: that object's liveness route, else build.json) |
 | `--deployment` | `<DEPLOYMENT>` | — | The name the observation is recorded under (default pages) |
 | `--timeout` | `<TIMEOUT>` | — | Bound on the probe, in seconds (default 10) |
 | `--dry-run` | flag | — | Judge without recording |
