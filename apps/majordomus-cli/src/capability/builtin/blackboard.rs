@@ -27,7 +27,7 @@ use crate::capability::module::ModuleDescriptor;
 use crate::mesh::journal::{ClaimMode, StreamLiveness};
 use crate::mesh::state::{ClaimState, CooperationState, ReviewState, SessionState, SessionView};
 use crate::monitor::{MonitorPage, MonitorSignal, MonitorSourceHealth, MonitorSourceState};
-use crate::peers::{claims_meet, rfc3339, OverlapPath, Peer};
+use crate::peers::{claims_meet, rfc3339, OverlapPath, Peer, PeerAddress};
 use crate::repository;
 use crate::{capability, module};
 
@@ -210,6 +210,12 @@ pub struct BlackboardWorker {
     /// Milliseconds since its runtime last beat. A beat is liveness, not work done.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_beat_ms: Option<u64>,
+    /// Where the worker can be reached from outside its connection: the board row's own
+    /// [`PeerAddress`] (machine, process, provider session, messaging socket), never a second
+    /// shape and never the messaging token. Absent for a mesh-only worker and for a client that
+    /// exposes none of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub address: Option<PeerAddress>,
     /// Its claims, board announcements and live mesh claims alike.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub claims: Vec<BlackboardClaim>,
@@ -611,6 +617,7 @@ pub(crate) fn project(
             connected_at: Some(peer.connected_at.clone()),
             last_seen_seconds_ago: Some(peer.last_seen_seconds_ago),
             last_beat_ms: beat,
+            address: peer.address.clone(),
             claims: claims_of_peer(peer, joined.map(&claims_of).unwrap_or_default()),
         });
     }
@@ -646,6 +653,7 @@ pub(crate) fn project(
             connected_at: None,
             last_seen_seconds_ago: None,
             last_beat_ms: reads.beats.get(&s.runtime).and_then(|b| b.1),
+            address: None,
             claims: claims_of(s),
         });
     }
@@ -1112,6 +1120,36 @@ mod tests {
             "c1".into(),
             None,
         )
+    }
+
+    /// The board row's address reaches the blackboard as the one [`PeerAddress`], a peer with
+    /// none and a session that is only in the mesh carry none, and the wire says so by leaving
+    /// the field out; the messaging token is not part of the model, so it cannot be there.
+    #[test]
+    fn a_workers_address_is_the_board_rows_and_absent_when_it_has_none() {
+        let env = |k: &str| match k {
+            "CLAUDE_CODE_SESSION_ID" => Some("sess-a".to_string()),
+            "CLAUDE_CODE_MESSAGING_SOCKET" => Some("/tmp/cc-socks/9.sock".to_string()),
+            "CLAUDE_CODE_MESSAGING_TOKEN" => Some("tok-never-shown".to_string()),
+            "CLAUDECODE" => Some("1".to_string()),
+            _ => None,
+        };
+        let address = PeerAddress::from_env(env, Some(9), "lundra").unwrap();
+        let mut located = peer("p1", "claude-code", "c1", &[]);
+        located.address = Some(address.clone());
+        let bare = peer("p2", "codex", "c1", &[]);
+        let answered = answer(
+            &list(vec![located, bare], "c1", None),
+            Err(MeshAbsence::Undeclared("none".into())),
+        );
+        let by = |key: &str| answered.workers.iter().find(|w| w.key == key).unwrap();
+        assert_eq!(by("board:c1/p1").address, Some(address));
+        assert_eq!(by("board:c1/p2").address, None);
+        let wire = serde_json::to_value(&answered.workers).unwrap().to_string();
+        assert!(wire.contains("/tmp/cc-socks/9.sock"), "{wire}");
+        assert!(!wire.contains("tok-never-shown"), "{wire}");
+        let none = serde_json::to_value(by("board:c1/p2")).unwrap();
+        assert!(none.get("address").is_none(), "{none}");
     }
 
     /// A board peer is joined to the session its own server's stream projected for it; the

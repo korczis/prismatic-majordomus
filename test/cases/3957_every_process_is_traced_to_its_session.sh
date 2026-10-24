@@ -14,6 +14,10 @@
 #   a client exposing no provider     still named by its machine and its process
 #   the messaging token               never on the board
 #
+# Slice 2 (I3998), the blackboard shows it again: majordomus_blackboard, the projection the
+# cockpit page renders, carries the same address on every worker that has one and none on one
+# that has none, and still not the token.
+#
 # Real processes over real MCP, an ephemeral port, the server ended with its last client.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -55,6 +59,7 @@ req 1 initialize "$(init case3957-a)" >&3
   printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
   req 2 tools/call '{"name":"majordomus_announce","arguments":{"intent":"a remote derive","scope":["apps"]}}'
   req 3 tools/call '{"name":"majordomus_peers","arguments":{"checkouts":"this"}}'
+  req 4 tools/call '{"name":"majordomus_blackboard","arguments":{"checkouts":"this"}}'
 } > "$S/in2"
 rc=0
 bare env CLAUDECODE=1 CLAUDE_CODE_SESSION_ID=sess-b CLAUDE_CODE_MESSAGING_SOCKET="$S/b.sock" \
@@ -83,6 +88,27 @@ echo "    a bridged client is located from what its bridge carried in initialize
 grep -qF "$TOKEN" "$S/out2.txt" && { echo "    the messaging token reached the board"; exit 1; }
 grep -qF "$TOKEN" "$S/err1.txt" "$S/err2.txt" && { echo "    the messaging token reached a log"; exit 1; }
 echo "    the provider's messaging token is never on the board nor in a log"
+
+# the blackboard's workers carry the board row's address, the same model and the same values
+wb="$(sed -n 4p "$S/out2.txt" | jq -c '.result.structuredContent.workers')"
+[ -n "$wb" ] && [ "$wb" != null ] || { echo "    no blackboard workers:"; sed -n 4p "$S/out2.txt"; exit 1; }
+printf '%s' "$wb" | jq -e --arg s "$S/a.sock" '
+  [.[] | select(.client == "case3957-a") | .address]
+  | length == 1 and .[0].provider == "claude-code" and .[0].session == "sess-a"
+    and .[0].pid == 4242 and .[0].socket == $s' >/dev/null \
+  || { echo "    the blackboard worker does not carry its address: $wb"; exit 1; }
+printf '%s' "$wb" | jq -e --arg s "$S/b.sock" '
+  [.[] | select(.client == "case3957-b") | .address.socket] == [$s]' >/dev/null \
+  || { echo "    the bridged blackboard worker does not carry its address: $wb"; exit 1; }
+echo "    the blackboard shows each worker's address, the board row's own"
+
+# the blackboard has the address only where the board row has it: the same count, no more
+printf '%s' "$wb" | jq -e --argjson n "$(printf '%s' "$board" | jq '[.[] | select(.address)] | length')" '
+  [.[] | select(.origin == "board" and has("address"))] | length == $n' >/dev/null \
+  || { echo "    the blackboard's addresses are not the board's: $wb"; exit 1; }
+printf '%s' "$wb" | jq -e '[.[] | select(.origin == "mesh") | has("address")] | any | not' >/dev/null \
+  || { echo "    a mesh-only worker invented an address: $wb"; exit 1; }
+echo "    a worker with no address carries none: it is left out, not invented"
 
 # ---------------------------------------------------------------- 3. a client with no provider
 {

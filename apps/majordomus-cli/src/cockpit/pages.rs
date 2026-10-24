@@ -5159,7 +5159,9 @@ fn peers_of(b: &Blackboard) -> Page {
             })
         } else {
             table(
-                &["Worker", "Where", "Client", "Here", "Intent", "Claims"],
+                &[
+                    "Worker", "Where", "Address", "Client", "Here", "Intent", "Claims",
+                ],
                 b.workers.iter().map(worker).collect(),
             )
         },
@@ -5323,6 +5325,10 @@ fn worker(w: &BlackboardWorker) -> El {
                     None => empty(),
                 }),
         ),
+        cell(match &w.address {
+            Some(address) => el("span").child(id_mono(address.line())),
+            None => el("span").class("mj-note").text("no address"),
+        }),
         cell(
             el("span")
                 .text(joined(&[Some(w.client.as_str()), w.title.as_deref()]))
@@ -8244,6 +8250,10 @@ mod tests {
                     "client": "claude-code", "title": "Claude Code", "intent": "renders the board",
                     "worktree": "/work/repo", "branch": "feature/peers", "machine": "lundra",
                     "board_peer": "p1",
+                    "address": {
+                        "provider": "claude-code", "host": "lundra", "pid": 85501,
+                        "session": "877e4b89", "socket": "/tmp/cc-socks/85501.sock",
+                    },
                     "claims": [
                         { "scope": ["src/cockpit", "docs"], "mode": "advisory" },
                         {
@@ -8349,6 +8359,9 @@ mod tests {
             "renders the board",
             "the reviewed work",
             "announced nothing",
+            // the address of the worker that has one, and the words for the two that have none
+            "claude-code pid 85501 on lundra, /tmp/cc-socks/85501.sock",
+            "no address",
             "no claim",
             "no paths",
             ">exclusive<",

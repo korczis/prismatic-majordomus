@@ -1,0 +1,31 @@
+id: I3998
+milestone: builds-reuse-the-mesh-cache
+title: "The cockpit Blackboard shows each worker's cross-session address again"
+slug: the-blackboard-shows-the-address
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "BlackboardWorker carries the board row's PeerAddress (the one model of peers.rs), so that blackboard.snapshot over the command line, HTTP and MCP, and the cockpit Blackboard page, name the machine, process, provider session and messaging socket of every worker that has an address, and say that a worker without one has none. The messaging token is never part of it."
+why: "#2398 (I3956 slice 1) added PeerAddress to every board row. Train 5 rebuilt the cockpit Blackboard page and its BlackboardWorker model and dropped the address; the train-6 block's fix afc122670c3 only made the test peer compile. The address that traces a worker to its session was on the board row and nowhere a person reads the blackboard."
+current_state: "BlackboardWorker has no address field; the Workers table has no address column; the blackboard projection ignores Peer::address."
+desired_state: "BlackboardWorker::address is the board peer's PeerAddress, absent for a mesh-only worker and for a client that exposes none; the Workers table has an Address column that reads the address on one line or says no address."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+  - "apps/majordomus-cli/src/cockpit/pages.rs"
+  - "test/cases/3957_every_process_is_traced_to_its_session.sh"
+  - ".ai/repo/project/issues/I3998.yaml"
+non_scope:
+  - "The address of a mesh-only session, which the mesh record does not carry"
+depends_on: []
+serves:
+  - a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it
+acceptance_criteria:
+  - "majordomus_blackboard carries address on a worker whose board row has one and leaves it out of one that has none"
+  - "The cockpit Workers table shows the address line, or no address"
+  - "The messaging token appears on no surface"
+validation:
+  - "bash test/run.sh 3957_every_process_is_traced_to_its_session"
+evidence_required:
+  - "trace_case"
+created_at: 2026-10-23
+updated_at: 2026-10-23
