@@ -8,7 +8,7 @@
 // It is an enhancement: without JavaScript the page is complete and a refresh shows the
 // same thing.
 
-import { api } from './cockpit.js?v=4d0ffef4b79e4673';
+import { api } from './cockpit.js?v=481e50c78bbc5f67';
 
 /** How often the topology is asked for, while the page is visible. Declared before the
  * first call below: a `const` is not hoisted, and a module that used it before this line

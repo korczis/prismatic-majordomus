@@ -1,0 +1,641 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/trends.rs`."><title>trends.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/ui/</div>trends.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Trends: how coverage and CI time move from run to run, for the CI/CD family of screens.
+<a href=#2 id=2 data-nosnippet>2</a>//! Read from `delivery.trends`, which reads `site/data/trends.json` of this checkout as it
+<a href=#3 id=3 data-nosnippet>3</a>//! lies when the screen is asked: the series the pages publication recorded, oldest run
+<a href=#4 id=4 data-nosnippet>4</a>//! first. Coverage is drawn as percentage lines (lines, functions, regions), wall and queued
+<a href=#5 id=5 data-nosnippet>5</a>//! time as minutes per run, both as inline SVG, with the slowest job medians in a table and
+<a href=#6 id=6 data-nosnippet>6</a>//! every run's figures as text beneath.
+<a href=#7 id=7 data-nosnippet>7</a>//!
+<a href=#8 id=8 data-nosnippet>8</a>//! The screen writes nothing and derives nothing: a checkout the publication never wrote
+<a href=#9 id=9 data-nosnippet>9</a>//! into has no series, and says so in words. A run that measured no coverage is a gap in the
+<a href=#10 id=10 data-nosnippet>10</a>//! line, never a point at zero; a figure the file does not give reads `unknown`.
+<a href=#11 id=11 data-nosnippet>11</a>
+<a href=#12 id=12 data-nosnippet>12</a></span><span class="kw">use </span>serde_json::Value;
+<a href=#13 id=13 data-nosnippet>13</a>
+<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::html::{el, El};
+<a href=#15 id=15 data-nosnippet>15</a>
+<a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span><span class="kw">super</span>::shell::View;
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span><span class="kw">super</span>::source::{ask_all, Answer, Source};
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span><span class="kw">super</span>::timings::duration;
+<a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span><span class="kw">super</span>::view::{
+<a href=#20 id=20 data-nosnippet>20</a>    hero, kpi, kpi_count, kpi_not_observed, list, nothing, panel, table, text, unanswered, wide,
+<a href=#21 id=21 data-nosnippet>21</a>};
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="doccomment">/// The route of the screen.
+<a href=#24 id=24 data-nosnippet>24</a></span><span class="kw">pub const </span>ROUTE: <span class="kw-2">&amp;</span>str = <span class="string">"/ui/trends"</span>;
+<a href=#25 id=25 data-nosnippet>25</a>
+<a href=#26 id=26 data-nosnippet>26</a><span class="kw">const </span>TRENDS: Source = Source::of(<span class="string">"delivery.trends"</span>);
+<a href=#27 id=27 data-nosnippet>27</a>
+<a href=#28 id=28 data-nosnippet>28</a><span class="doccomment">/// What the screen says when the checkout holds no series.
+<a href=#29 id=29 data-nosnippet>29</a></span><span class="kw">pub const </span>NONE_RECORDED: <span class="kw-2">&amp;</span>str =
+<a href=#30 id=30 data-nosnippet>30</a>    <span class="string">"no trends recorded in this checkout: the series is written by the pages publication"</span>;
+<a href=#31 id=31 data-nosnippet>31</a>
+<a href=#32 id=32 data-nosnippet>32</a><span class="doccomment">/// The chart's drawing area, in the units of its view box.
+<a href=#33 id=33 data-nosnippet>33</a></span><span class="kw">const </span>WIDTH: f64 = <span class="number">600.0</span>;
+<a href=#34 id=34 data-nosnippet>34</a><span class="kw">const </span>HEIGHT: f64 = <span class="number">200.0</span>;
+<a href=#35 id=35 data-nosnippet>35</a><span class="kw">const </span>LEFT: f64 = <span class="number">44.0</span>;
+<a href=#36 id=36 data-nosnippet>36</a><span class="kw">const </span>RIGHT: f64 = <span class="number">12.0</span>;
+<a href=#37 id=37 data-nosnippet>37</a><span class="kw">const </span>TOP: f64 = <span class="number">12.0</span>;
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">const </span>BOTTOM: f64 = <span class="number">28.0</span>;
+<a href=#39 id=39 data-nosnippet>39</a>
+<a href=#40 id=40 data-nosnippet>40</a><span class="doccomment">/// One line of a chart: its name, its tone and one value per run, `None` where the run has
+<a href=#41 id=41 data-nosnippet>41</a>/// none.
+<a href=#42 id=42 data-nosnippet>42</a></span><span class="kw">struct </span>Line {
+<a href=#43 id=43 data-nosnippet>43</a>    name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#44 id=44 data-nosnippet>44</a>    tone: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+<a href=#45 id=45 data-nosnippet>45</a>    values: Vec&lt;<span class="prelude-ty">Option</span>&lt;f64&gt;&gt;,
+<a href=#46 id=46 data-nosnippet>46</a>}
+<a href=#47 id=47 data-nosnippet>47</a>
+<a href=#48 id=48 data-nosnippet>48</a><span class="kw">fn </span>number(v: <span class="kw-2">&amp;</span>Value, pointer: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;f64&gt; {
+<a href=#49 id=49 data-nosnippet>49</a>    v.pointer(pointer).and_then(Value::as_f64)
+<a href=#50 id=50 data-nosnippet>50</a>}
+<a href=#51 id=51 data-nosnippet>51</a>
+<a href=#52 id=52 data-nosnippet>52</a><span class="doccomment">/// A percentage as a reader says it: one place, or `unknown`.
+<a href=#53 id=53 data-nosnippet>53</a></span><span class="kw">fn </span>percent(p: <span class="prelude-ty">Option</span>&lt;f64&gt;) -&gt; String {
+<a href=#54 id=54 data-nosnippet>54</a>    p.map_or_else(|| <span class="string">"unknown"</span>.into(), |p| <span class="macro">format!</span>(<span class="string">"{p:.1}%"</span>))
+<a href=#55 id=55 data-nosnippet>55</a>}
+<a href=#56 id=56 data-nosnippet>56</a>
+<a href=#57 id=57 data-nosnippet>57</a><span class="doccomment">/// Seconds as minutes with one place, or `unknown`: never a zero the file did not give.
+<a href=#58 id=58 data-nosnippet>58</a></span><span class="kw">fn </span>minutes(s: <span class="prelude-ty">Option</span>&lt;f64&gt;) -&gt; String {
+<a href=#59 id=59 data-nosnippet>59</a>    s.map_or_else(|| <span class="string">"unknown"</span>.into(), |s| <span class="macro">format!</span>(<span class="string">"{:.1} min"</span>, s / <span class="number">60.0</span>))
+<a href=#60 id=60 data-nosnippet>60</a>}
+<a href=#61 id=61 data-nosnippet>61</a>
+<a href=#62 id=62 data-nosnippet>62</a><span class="doccomment">/// The day of an RFC 3339 timestamp, as written.
+<a href=#63 id=63 data-nosnippet>63</a></span><span class="kw">fn </span>day(run: <span class="kw-2">&amp;</span>Value) -&gt; String {
+<a href=#64 id=64 data-nosnippet>64</a>    run.get(<span class="string">"started_at"</span>)
+<a href=#65 id=65 data-nosnippet>65</a>        .and_then(Value::as_str)
+<a href=#66 id=66 data-nosnippet>66</a>        .map_or_else(|| <span class="string">"unknown"</span>.into(), <span class="kw">super</span>::view::day)
+<a href=#67 id=67 data-nosnippet>67</a>}
+<a href=#68 id=68 data-nosnippet>68</a>
+<a href=#69 id=69 data-nosnippet>69</a><span class="doccomment">/// A line chart of `lines` over the runs, as an SVG with the numbers of each line in a
+<a href=#70 id=70 data-nosnippet>70</a>/// legend beneath it. `ceiling` fixes the top of the scale; `None` scales to the largest
+<a href=#71 id=71 data-nosnippet>71</a>/// value drawn. A `None` value breaks the line: the run has no point there.
+<a href=#72 id=72 data-nosnippet>72</a></span><span class="kw">fn </span>chart(label: <span class="kw-2">&amp;</span>str, unit: <span class="kw-2">&amp;</span>str, lines: <span class="kw-2">&amp;</span>[Line], runs: <span class="kw-2">&amp;</span>[Value], ceiling: <span class="prelude-ty">Option</span>&lt;f64&gt;) -&gt; El {
+<a href=#73 id=73 data-nosnippet>73</a>    <span class="kw">let </span>drawn = lines.iter().flat_map(|l| l.values.iter().flatten()).count();
+<a href=#74 id=74 data-nosnippet>74</a>    <span class="kw">if </span>drawn == <span class="number">0 </span>{
+<a href=#75 id=75 data-nosnippet>75</a>        <span class="kw">return </span>nothing(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"No run recorded {label}."</span>));
+<a href=#76 id=76 data-nosnippet>76</a>    }
+<a href=#77 id=77 data-nosnippet>77</a>    <span class="kw">let </span>top = ceiling.unwrap_or_else(|| {
+<a href=#78 id=78 data-nosnippet>78</a>        lines
+<a href=#79 id=79 data-nosnippet>79</a>            .iter()
+<a href=#80 id=80 data-nosnippet>80</a>            .flat_map(|l| l.values.iter().flatten().copied())
+<a href=#81 id=81 data-nosnippet>81</a>            .fold(<span class="number">0.0_f64</span>, f64::max)
+<a href=#82 id=82 data-nosnippet>82</a>            .max(<span class="number">1.0</span>)
+<a href=#83 id=83 data-nosnippet>83</a>    });
+<a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">let </span>n = runs.len();
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span>x = |i: usize| {
+<a href=#86 id=86 data-nosnippet>86</a>        <span class="kw">if </span>n &lt; <span class="number">2 </span>{
+<a href=#87 id=87 data-nosnippet>87</a>            LEFT + (WIDTH - LEFT - RIGHT) / <span class="number">2.0
+<a href=#88 id=88 data-nosnippet>88</a>        </span>} <span class="kw">else </span>{
+<a href=#89 id=89 data-nosnippet>89</a>            LEFT + (WIDTH - LEFT - RIGHT) * i <span class="kw">as </span>f64 / (n - <span class="number">1</span>) <span class="kw">as </span>f64
+<a href=#90 id=90 data-nosnippet>90</a>        }
+<a href=#91 id=91 data-nosnippet>91</a>    };
+<a href=#92 id=92 data-nosnippet>92</a>    <span class="kw">let </span>y = |v: f64| TOP + (HEIGHT - TOP - BOTTOM) * (<span class="number">1.0 </span>- v.min(top) / top);
+<a href=#93 id=93 data-nosnippet>93</a>    <span class="kw">let </span><span class="kw-2">mut </span>svg = el(<span class="string">"svg"</span>)
+<a href=#94 id=94 data-nosnippet>94</a>        .attr(<span class="string">"viewBox"</span>, <span class="macro">format!</span>(<span class="string">"0 0 {WIDTH} {HEIGHT}"</span>))
+<a href=#95 id=95 data-nosnippet>95</a>        .attr(<span class="string">"width"</span>, <span class="string">"100%"</span>)
+<a href=#96 id=96 data-nosnippet>96</a>        .attr(<span class="string">"role"</span>, <span class="string">"img"</span>)
+<a href=#97 id=97 data-nosnippet>97</a>        .attr(
+<a href=#98 id=98 data-nosnippet>98</a>            <span class="string">"aria-label"</span>,
+<a href=#99 id=99 data-nosnippet>99</a>            <span class="macro">format!</span>(<span class="string">"{label}, one point per run, oldest first"</span>),
+<a href=#100 id=100 data-nosnippet>100</a>        )
+<a href=#101 id=101 data-nosnippet>101</a>        .attr(<span class="string">"focusable"</span>, <span class="string">"false"</span>);
+<a href=#102 id=102 data-nosnippet>102</a>    <span class="comment">// the axes: a baseline at zero and a rule at the top of the scale, each named
+<a href=#103 id=103 data-nosnippet>103</a>    </span><span class="kw">for </span>(value, caption) <span class="kw">in </span>[(<span class="number">0.0</span>, <span class="macro">format!</span>(<span class="string">"0{unit}"</span>)), (top, <span class="macro">format!</span>(<span class="string">"{top:.0}{unit}"</span>))] {
+<a href=#104 id=104 data-nosnippet>104</a>        svg = svg
+<a href=#105 id=105 data-nosnippet>105</a>            .child(
+<a href=#106 id=106 data-nosnippet>106</a>                el(<span class="string">"line"</span>)
+<a href=#107 id=107 data-nosnippet>107</a>                    .attr(<span class="string">"x1"</span>, <span class="macro">format!</span>(<span class="string">"{LEFT}"</span>))
+<a href=#108 id=108 data-nosnippet>108</a>                    .attr(<span class="string">"x2"</span>, <span class="macro">format!</span>(<span class="string">"{}"</span>, WIDTH - RIGHT))
+<a href=#109 id=109 data-nosnippet>109</a>                    .attr(<span class="string">"y1"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, y(value)))
+<a href=#110 id=110 data-nosnippet>110</a>                    .attr(<span class="string">"y2"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, y(value)))
+<a href=#111 id=111 data-nosnippet>111</a>                    .attr(<span class="string">"stroke"</span>, <span class="string">"currentColor"</span>)
+<a href=#112 id=112 data-nosnippet>112</a>                    .attr(<span class="string">"opacity"</span>, <span class="string">"0.2"</span>),
+<a href=#113 id=113 data-nosnippet>113</a>            )
+<a href=#114 id=114 data-nosnippet>114</a>            .child(
+<a href=#115 id=115 data-nosnippet>115</a>                el(<span class="string">"text"</span>)
+<a href=#116 id=116 data-nosnippet>116</a>                    .attr(<span class="string">"x"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, LEFT - <span class="number">6.0</span>))
+<a href=#117 id=117 data-nosnippet>117</a>                    .attr(<span class="string">"y"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, y(value) + <span class="number">4.0</span>))
+<a href=#118 id=118 data-nosnippet>118</a>                    .attr(<span class="string">"text-anchor"</span>, <span class="string">"end"</span>)
+<a href=#119 id=119 data-nosnippet>119</a>                    .attr(<span class="string">"font-size"</span>, <span class="string">"11"</span>)
+<a href=#120 id=120 data-nosnippet>120</a>                    .attr(<span class="string">"fill"</span>, <span class="string">"currentColor"</span>)
+<a href=#121 id=121 data-nosnippet>121</a>                    .text(caption),
+<a href=#122 id=122 data-nosnippet>122</a>            );
+<a href=#123 id=123 data-nosnippet>123</a>    }
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="comment">// one run is captioned once, centred under its point; more runs at both ends of the axis
+<a href=#125 id=125 data-nosnippet>125</a>    </span><span class="kw">let </span>captions = <span class="kw">match </span>(runs.first(), runs.last()) {
+<a href=#126 id=126 data-nosnippet>126</a>        (<span class="prelude-val">Some</span>(only), <span class="kw">_</span>) <span class="kw">if </span>n == <span class="number">1 </span>=&gt; <span class="macro">vec!</span>[(<span class="number">0</span>, only, <span class="string">"middle"</span>)],
+<a href=#127 id=127 data-nosnippet>127</a>        (<span class="prelude-val">Some</span>(first), <span class="prelude-val">Some</span>(last)) =&gt; <span class="macro">vec!</span>[(<span class="number">0</span>, first, <span class="string">"start"</span>), (n - <span class="number">1</span>, last, <span class="string">"end"</span>)],
+<a href=#128 id=128 data-nosnippet>128</a>        <span class="kw">_ </span>=&gt; Vec::new(),
+<a href=#129 id=129 data-nosnippet>129</a>    };
+<a href=#130 id=130 data-nosnippet>130</a>    <span class="kw">for </span>(i, run, anchor) <span class="kw">in </span>captions {
+<a href=#131 id=131 data-nosnippet>131</a>        svg = svg.child(
+<a href=#132 id=132 data-nosnippet>132</a>            el(<span class="string">"text"</span>)
+<a href=#133 id=133 data-nosnippet>133</a>                .attr(<span class="string">"x"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, x(i)))
+<a href=#134 id=134 data-nosnippet>134</a>                .attr(<span class="string">"y"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, HEIGHT - <span class="number">8.0</span>))
+<a href=#135 id=135 data-nosnippet>135</a>                .attr(<span class="string">"text-anchor"</span>, anchor)
+<a href=#136 id=136 data-nosnippet>136</a>                .attr(<span class="string">"font-size"</span>, <span class="string">"11"</span>)
+<a href=#137 id=137 data-nosnippet>137</a>                .attr(<span class="string">"fill"</span>, <span class="string">"currentColor"</span>)
+<a href=#138 id=138 data-nosnippet>138</a>                .text(day(run)),
+<a href=#139 id=139 data-nosnippet>139</a>        );
+<a href=#140 id=140 data-nosnippet>140</a>    }
+<a href=#141 id=141 data-nosnippet>141</a>    <span class="kw">for </span>line <span class="kw">in </span>lines {
+<a href=#142 id=142 data-nosnippet>142</a>        <span class="comment">// a path per unbroken stretch; a stretch of one run is its point alone
+<a href=#143 id=143 data-nosnippet>143</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>path = String::new();
+<a href=#144 id=144 data-nosnippet>144</a>        <span class="kw">let </span><span class="kw-2">mut </span>previous = <span class="bool-val">false</span>;
+<a href=#145 id=145 data-nosnippet>145</a>        <span class="kw">for </span>(i, v) <span class="kw">in </span>line.values.iter().enumerate() {
+<a href=#146 id=146 data-nosnippet>146</a>            <span class="kw">match </span>v {
+<a href=#147 id=147 data-nosnippet>147</a>                <span class="prelude-val">Some</span>(v) =&gt; {
+<a href=#148 id=148 data-nosnippet>148</a>                    path.push_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#149 id=149 data-nosnippet>149</a>                        <span class="string">"{}{:.1} {:.1} "</span>,
+<a href=#150 id=150 data-nosnippet>150</a>                        <span class="kw">if </span>previous { <span class="string">"L" </span>} <span class="kw">else </span>{ <span class="string">"M" </span>},
+<a href=#151 id=151 data-nosnippet>151</a>                        x(i),
+<a href=#152 id=152 data-nosnippet>152</a>                        y(<span class="kw-2">*</span>v)
+<a href=#153 id=153 data-nosnippet>153</a>                    ));
+<a href=#154 id=154 data-nosnippet>154</a>                    previous = <span class="bool-val">true</span>;
+<a href=#155 id=155 data-nosnippet>155</a>                }
+<a href=#156 id=156 data-nosnippet>156</a>                <span class="prelude-val">None </span>=&gt; previous = <span class="bool-val">false</span>,
+<a href=#157 id=157 data-nosnippet>157</a>            }
+<a href=#158 id=158 data-nosnippet>158</a>        }
+<a href=#159 id=159 data-nosnippet>159</a>        <span class="kw">let </span><span class="kw-2">mut </span>group = el(<span class="string">"g"</span>).class(<span class="macro">format!</span>(<span class="string">"mj-tone--{}"</span>, line.tone));
+<a href=#160 id=160 data-nosnippet>160</a>        <span class="kw">if </span>!path.is_empty() {
+<a href=#161 id=161 data-nosnippet>161</a>            group = group.child(
+<a href=#162 id=162 data-nosnippet>162</a>                el(<span class="string">"path"</span>)
+<a href=#163 id=163 data-nosnippet>163</a>                    .attr(<span class="string">"d"</span>, path.trim_end())
+<a href=#164 id=164 data-nosnippet>164</a>                    .attr(<span class="string">"fill"</span>, <span class="string">"none"</span>)
+<a href=#165 id=165 data-nosnippet>165</a>                    .attr(<span class="string">"stroke"</span>, <span class="string">"var(--mj-tone-fg)"</span>)
+<a href=#166 id=166 data-nosnippet>166</a>                    .attr(<span class="string">"stroke-width"</span>, <span class="string">"2"</span>),
+<a href=#167 id=167 data-nosnippet>167</a>            );
+<a href=#168 id=168 data-nosnippet>168</a>        }
+<a href=#169 id=169 data-nosnippet>169</a>        <span class="kw">for </span>(i, v) <span class="kw">in </span>line.values.iter().enumerate() {
+<a href=#170 id=170 data-nosnippet>170</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = v {
+<a href=#171 id=171 data-nosnippet>171</a>                group = group.child(
+<a href=#172 id=172 data-nosnippet>172</a>                    el(<span class="string">"circle"</span>)
+<a href=#173 id=173 data-nosnippet>173</a>                        .attr(<span class="string">"cx"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, x(i)))
+<a href=#174 id=174 data-nosnippet>174</a>                        .attr(<span class="string">"cy"</span>, <span class="macro">format!</span>(<span class="string">"{:.1}"</span>, y(<span class="kw-2">*</span>v)))
+<a href=#175 id=175 data-nosnippet>175</a>                        .attr(<span class="string">"r"</span>, <span class="string">"3"</span>)
+<a href=#176 id=176 data-nosnippet>176</a>                        .attr(<span class="string">"fill"</span>, <span class="string">"var(--mj-tone-fg)"</span>),
+<a href=#177 id=177 data-nosnippet>177</a>                );
+<a href=#178 id=178 data-nosnippet>178</a>            }
+<a href=#179 id=179 data-nosnippet>179</a>        }
+<a href=#180 id=180 data-nosnippet>180</a>        svg = svg.child(group);
+<a href=#181 id=181 data-nosnippet>181</a>    }
+<a href=#182 id=182 data-nosnippet>182</a>    <span class="kw">let </span>legend = el(<span class="string">"ul"</span>)
+<a href=#183 id=183 data-nosnippet>183</a>        .class(<span class="string">"mj-ui-legend"</span>)
+<a href=#184 id=184 data-nosnippet>184</a>        .children(lines.iter().map(|l| {
+<a href=#185 id=185 data-nosnippet>185</a>            <span class="kw">let </span>latest = l.values.iter().rev().flatten().next();
+<a href=#186 id=186 data-nosnippet>186</a>            el(<span class="string">"li"</span>)
+<a href=#187 id=187 data-nosnippet>187</a>                .class(<span class="macro">format!</span>(<span class="string">"mj-ui-legend-item mj-tone--{}"</span>, l.tone))
+<a href=#188 id=188 data-nosnippet>188</a>                .child(
+<a href=#189 id=189 data-nosnippet>189</a>                    el(<span class="string">"span"</span>)
+<a href=#190 id=190 data-nosnippet>190</a>                        .class(<span class="string">"mj-ui-legend-dot"</span>)
+<a href=#191 id=191 data-nosnippet>191</a>                        .attr(<span class="string">"aria-hidden"</span>, <span class="string">"true"</span>),
+<a href=#192 id=192 data-nosnippet>192</a>                )
+<a href=#193 id=193 data-nosnippet>193</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-legend-name"</span>).text(l.name))
+<a href=#194 id=194 data-nosnippet>194</a>                .child(el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-legend-value"</span>).text(<span class="kw">match </span>latest {
+<a href=#195 id=195 data-nosnippet>195</a>                    <span class="prelude-val">Some</span>(v) =&gt; <span class="macro">format!</span>(<span class="string">"{v:.1}{unit} latest"</span>),
+<a href=#196 id=196 data-nosnippet>196</a>                    <span class="prelude-val">None </span>=&gt; <span class="string">"never recorded"</span>.into(),
+<a href=#197 id=197 data-nosnippet>197</a>                }))
+<a href=#198 id=198 data-nosnippet>198</a>        }));
+<a href=#199 id=199 data-nosnippet>199</a>    el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-stack"</span>).child(svg).child(legend)
+<a href=#200 id=200 data-nosnippet>200</a>}
+<a href=#201 id=201 data-nosnippet>201</a>
+<a href=#202 id=202 data-nosnippet>202</a><span class="doccomment">/// The percentage of one coverage kind of a run, or `None` when the run measured none or
+<a href=#203 id=203 data-nosnippet>203</a>/// the file gave no total.
+<a href=#204 id=204 data-nosnippet>204</a></span><span class="kw">fn </span>coverage(run: <span class="kw-2">&amp;</span>Value, kind: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;f64&gt; {
+<a href=#205 id=205 data-nosnippet>205</a>    number(run, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"/coverage/{kind}/percent"</span>))
+<a href=#206 id=206 data-nosnippet>206</a>}
+<a href=#207 id=207 data-nosnippet>207</a>
+<a href=#208 id=208 data-nosnippet>208</a><span class="kw">fn </span>run_row(run: <span class="kw-2">&amp;</span>Value) -&gt; El {
+<a href=#209 id=209 data-nosnippet>209</a>    <span class="kw">let </span>cell = |s: String| el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-mono"</span>).text(s);
+<a href=#210 id=210 data-nosnippet>210</a>    <span class="kw">let </span>sha = text(run, <span class="string">"head_sha"</span>);
+<a href=#211 id=211 data-nosnippet>211</a>    el(<span class="string">"tr"</span>)
+<a href=#212 id=212 data-nosnippet>212</a>        .child(cell(text(run, <span class="string">"run_id"</span>)))
+<a href=#213 id=213 data-nosnippet>213</a>        .child(cell(<span class="kw">if </span>sha.is_empty() {
+<a href=#214 id=214 data-nosnippet>214</a>            <span class="string">"unknown"</span>.into()
+<a href=#215 id=215 data-nosnippet>215</a>        } <span class="kw">else </span>{
+<a href=#216 id=216 data-nosnippet>216</a>            sha.chars().take(<span class="number">7</span>).collect()
+<a href=#217 id=217 data-nosnippet>217</a>        }))
+<a href=#218 id=218 data-nosnippet>218</a>        .child(cell(day(run)))
+<a href=#219 id=219 data-nosnippet>219</a>        .child(cell(<span class="kw">match </span>text(run, <span class="string">"conclusion"</span>).as_str() {
+<a href=#220 id=220 data-nosnippet>220</a>            <span class="string">"" </span>=&gt; <span class="string">"unknown"</span>.into(),
+<a href=#221 id=221 data-nosnippet>221</a>            c =&gt; c.to_string(),
+<a href=#222 id=222 data-nosnippet>222</a>        }))
+<a href=#223 id=223 data-nosnippet>223</a>        .child(cell(minutes(number(run, <span class="string">"/wall_seconds"</span>))))
+<a href=#224 id=224 data-nosnippet>224</a>        .child(cell(minutes(number(run, <span class="string">"/queued_seconds_total"</span>))))
+<a href=#225 id=225 data-nosnippet>225</a>        .child(cell(<span class="kw">match </span>run.get(<span class="string">"coverage"</span>).filter(|c| c.is_object()) {
+<a href=#226 id=226 data-nosnippet>226</a>            <span class="prelude-val">None </span>=&gt; <span class="string">"no coverage"</span>.into(),
+<a href=#227 id=227 data-nosnippet>227</a>            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="macro">format!</span>(
+<a href=#228 id=228 data-nosnippet>228</a>                <span class="string">"{} · {} · {}"</span>,
+<a href=#229 id=229 data-nosnippet>229</a>                percent(coverage(run, <span class="string">"lines"</span>)),
+<a href=#230 id=230 data-nosnippet>230</a>                percent(coverage(run, <span class="string">"functions"</span>)),
+<a href=#231 id=231 data-nosnippet>231</a>                percent(coverage(run, <span class="string">"regions"</span>))
+<a href=#232 id=232 data-nosnippet>232</a>            ),
+<a href=#233 id=233 data-nosnippet>233</a>        }))
+<a href=#234 id=234 data-nosnippet>234</a>}
+<a href=#235 id=235 data-nosnippet>235</a>
+<a href=#236 id=236 data-nosnippet>236</a><span class="kw">fn </span>medians(trends: <span class="kw-2">&amp;</span>Answer) -&gt; El {
+<a href=#237 id=237 data-nosnippet>237</a>    <span class="kw">let </span>rows = list(trends, <span class="string">"/job_medians"</span>)
+<a href=#238 id=238 data-nosnippet>238</a>        .iter()
+<a href=#239 id=239 data-nosnippet>239</a>        .map(|m| {
+<a href=#240 id=240 data-nosnippet>240</a>            <span class="kw">let </span>seconds = |k: <span class="kw-2">&amp;</span>str| {
+<a href=#241 id=241 data-nosnippet>241</a>                m.get(k)
+<a href=#242 id=242 data-nosnippet>242</a>                    .and_then(Value::as_f64)
+<a href=#243 id=243 data-nosnippet>243</a>                    .map_or_else(|| <span class="string">"unknown"</span>.into(), |s| duration(s.round() <span class="kw">as </span>u64))
+<a href=#244 id=244 data-nosnippet>244</a>            };
+<a href=#245 id=245 data-nosnippet>245</a>            el(<span class="string">"tr"</span>)
+<a href=#246 id=246 data-nosnippet>246</a>                .child(el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-mono"</span>).text(text(m, <span class="string">"name"</span>)))
+<a href=#247 id=247 data-nosnippet>247</a>                .child(
+<a href=#248 id=248 data-nosnippet>248</a>                    el(<span class="string">"td"</span>)
+<a href=#249 id=249 data-nosnippet>249</a>                        .class(<span class="string">"mj-ui-mono"</span>)
+<a href=#250 id=250 data-nosnippet>250</a>                        .text(seconds(<span class="string">"median_run_seconds"</span>)),
+<a href=#251 id=251 data-nosnippet>251</a>                )
+<a href=#252 id=252 data-nosnippet>252</a>                .child(
+<a href=#253 id=253 data-nosnippet>253</a>                    el(<span class="string">"td"</span>)
+<a href=#254 id=254 data-nosnippet>254</a>                        .class(<span class="string">"mj-ui-mono"</span>)
+<a href=#255 id=255 data-nosnippet>255</a>                        .text(seconds(<span class="string">"median_queued_seconds"</span>)),
+<a href=#256 id=256 data-nosnippet>256</a>                )
+<a href=#257 id=257 data-nosnippet>257</a>                .child(
+<a href=#258 id=258 data-nosnippet>258</a>                    el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-mono"</span>).text(
+<a href=#259 id=259 data-nosnippet>259</a>                        m.get(<span class="string">"runs"</span>)
+<a href=#260 id=260 data-nosnippet>260</a>                            .and_then(Value::as_u64)
+<a href=#261 id=261 data-nosnippet>261</a>                            .map_or_else(|| <span class="string">"unknown"</span>.into(), |n| n.to_string()),
+<a href=#262 id=262 data-nosnippet>262</a>                    ),
+<a href=#263 id=263 data-nosnippet>263</a>                )
+<a href=#264 id=264 data-nosnippet>264</a>        })
+<a href=#265 id=265 data-nosnippet>265</a>        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#266 id=266 data-nosnippet>266</a>    table(
+<a href=#267 id=267 data-nosnippet>267</a>        <span class="kw-2">&amp;</span>[<span class="string">"Job"</span>, <span class="string">"Median run"</span>, <span class="string">"Median queued"</span>, <span class="string">"Runs"</span>],
+<a href=#268 id=268 data-nosnippet>268</a>        rows,
+<a href=#269 id=269 data-nosnippet>269</a>        <span class="string">"The series gives no job median."</span>,
+<a href=#270 id=270 data-nosnippet>270</a>    )
+<a href=#271 id=271 data-nosnippet>271</a>}
+<a href=#272 id=272 data-nosnippet>272</a>
+<a href=#273 id=273 data-nosnippet>273</a><span class="doccomment">/// The Trends screen.
+<a href=#274 id=274 data-nosnippet>274</a></span><span class="kw">pub fn </span>screen(ctx: <span class="kw-2">&amp;</span><span class="kw">crate</span>::capability::Context) -&gt; View {
+<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span>answers = ask_all(ctx, <span class="kw-2">&amp;</span>[TRENDS]);
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">let </span>trends = <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>TRENDS];
+<a href=#277 id=277 data-nosnippet>277</a>    <span class="kw">let </span>recorded = trends.read(<span class="string">"/recorded"</span>).text().as_deref() == <span class="prelude-val">Some</span>(<span class="string">"true"</span>);
+<a href=#278 id=278 data-nosnippet>278</a>    <span class="kw">let </span>reason = trends.read(<span class="string">"/reason"</span>).text();
+<a href=#279 id=279 data-nosnippet>279</a>
+<a href=#280 id=280 data-nosnippet>280</a>    <span class="kw">let </span>kpis = <span class="kw">if </span>recorded {
+<a href=#281 id=281 data-nosnippet>281</a>        <span class="macro">vec!</span>[
+<a href=#282 id=282 data-nosnippet>282</a>            kpi_count(<span class="string">"Runs"</span>, <span class="kw-2">&amp;</span>trends.read(<span class="string">"/runs"</span>)),
+<a href=#283 id=283 data-nosnippet>283</a>            kpi_count(<span class="string">"Jobs measured"</span>, <span class="kw-2">&amp;</span>trends.read(<span class="string">"/job_medians"</span>)),
+<a href=#284 id=284 data-nosnippet>284</a>            kpi(<span class="string">"Series recorded"</span>, <span class="kw-2">&amp;</span>trends.read(<span class="string">"/recorded"</span>)),
+<a href=#285 id=285 data-nosnippet>285</a>        ]
+<a href=#286 id=286 data-nosnippet>286</a>    } <span class="kw">else </span>{
+<a href=#287 id=287 data-nosnippet>287</a>        <span class="kw">let </span>why = reason.as_deref().unwrap_or(<span class="string">"no reason was given"</span>);
+<a href=#288 id=288 data-nosnippet>288</a>        <span class="macro">vec!</span>[
+<a href=#289 id=289 data-nosnippet>289</a>            kpi_not_observed(<span class="string">"Runs"</span>, why, <span class="kw-2">&amp;</span>trends.read(<span class="string">"/runs"</span>)),
+<a href=#290 id=290 data-nosnippet>290</a>            kpi_not_observed(<span class="string">"Jobs measured"</span>, why, <span class="kw-2">&amp;</span>trends.read(<span class="string">"/job_medians"</span>)),
+<a href=#291 id=291 data-nosnippet>291</a>        ]
+<a href=#292 id=292 data-nosnippet>292</a>    };
+<a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">let </span>top = hero(
+<a href=#294 id=294 data-nosnippet>294</a>        <span class="string">"chart"</span>,
+<a href=#295 id=295 data-nosnippet>295</a>        <span class="string">"violet"</span>,
+<a href=#296 id=296 data-nosnippet>296</a>        <span class="string">"Trends"</span>,
+<a href=#297 id=297 data-nosnippet>297</a>        <span class="string">"How coverage and CI time move, run after run."</span>,
+<a href=#298 id=298 data-nosnippet>298</a>        <span class="string">"Coverage and time per run of the pages publication's series, read from this checkout when you ask."</span>,
+<a href=#299 id=299 data-nosnippet>299</a>        kpis,
+<a href=#300 id=300 data-nosnippet>300</a>    );
+<a href=#301 id=301 data-nosnippet>301</a>
+<a href=#302 id=302 data-nosnippet>302</a>    <span class="kw">let </span>body = |draw: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Fn(<span class="kw-2">&amp;</span>[Value]) -&gt; El| {
+<a href=#303 id=303 data-nosnippet>303</a>        unanswered(trends).unwrap_or_else(|| {
+<a href=#304 id=304 data-nosnippet>304</a>            <span class="kw">if </span>!recorded {
+<a href=#305 id=305 data-nosnippet>305</a>                <span class="kw">return </span>el(<span class="string">"div"</span>)
+<a href=#306 id=306 data-nosnippet>306</a>                    .class(<span class="string">"mj-ui-stack"</span>)
+<a href=#307 id=307 data-nosnippet>307</a>                    .child(nothing(NONE_RECORDED))
+<a href=#308 id=308 data-nosnippet>308</a>                    .child(
+<a href=#309 id=309 data-nosnippet>309</a>                        el(<span class="string">"p"</span>)
+<a href=#310 id=310 data-nosnippet>310</a>                            .class(<span class="string">"mj-ui-dim"</span>)
+<a href=#311 id=311 data-nosnippet>311</a>                            .text(reason.clone().unwrap_or_default()),
+<a href=#312 id=312 data-nosnippet>312</a>                    );
+<a href=#313 id=313 data-nosnippet>313</a>            }
+<a href=#314 id=314 data-nosnippet>314</a>            draw(
+<a href=#315 id=315 data-nosnippet>315</a>                trends
+<a href=#316 id=316 data-nosnippet>316</a>                    .ok()
+<a href=#317 id=317 data-nosnippet>317</a>                    .and_then(|v| v.get(<span class="string">"runs"</span>))
+<a href=#318 id=318 data-nosnippet>318</a>                    .and_then(Value::as_array)
+<a href=#319 id=319 data-nosnippet>319</a>                    .map_or(<span class="kw-2">&amp;</span>[][..], Vec::as_slice),
+<a href=#320 id=320 data-nosnippet>320</a>            )
+<a href=#321 id=321 data-nosnippet>321</a>        })
+<a href=#322 id=322 data-nosnippet>322</a>    };
+<a href=#323 id=323 data-nosnippet>323</a>    <span class="kw">let </span>kind = |name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, tone: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, key: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str| {
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">move </span>|runs: <span class="kw-2">&amp;</span>[Value]| Line {
+<a href=#325 id=325 data-nosnippet>325</a>            name,
+<a href=#326 id=326 data-nosnippet>326</a>            tone,
+<a href=#327 id=327 data-nosnippet>327</a>            values: runs.iter().map(|r| coverage(r, key)).collect(),
+<a href=#328 id=328 data-nosnippet>328</a>        }
+<a href=#329 id=329 data-nosnippet>329</a>    };
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="kw">let </span>coverage_chart = body(<span class="kw-2">&amp;</span>|runs| {
+<a href=#331 id=331 data-nosnippet>331</a>        chart(
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="string">"coverage"</span>,
+<a href=#333 id=333 data-nosnippet>333</a>            <span class="string">"%"</span>,
+<a href=#334 id=334 data-nosnippet>334</a>            <span class="kw-2">&amp;</span>[
+<a href=#335 id=335 data-nosnippet>335</a>                kind(<span class="string">"Lines"</span>, <span class="string">"blue"</span>, <span class="string">"lines"</span>)(runs),
+<a href=#336 id=336 data-nosnippet>336</a>                kind(<span class="string">"Functions"</span>, <span class="string">"green"</span>, <span class="string">"functions"</span>)(runs),
+<a href=#337 id=337 data-nosnippet>337</a>                kind(<span class="string">"Regions"</span>, <span class="string">"violet"</span>, <span class="string">"regions"</span>)(runs),
+<a href=#338 id=338 data-nosnippet>338</a>            ],
+<a href=#339 id=339 data-nosnippet>339</a>            runs,
+<a href=#340 id=340 data-nosnippet>340</a>            <span class="prelude-val">Some</span>(<span class="number">100.0</span>),
+<a href=#341 id=341 data-nosnippet>341</a>        )
+<a href=#342 id=342 data-nosnippet>342</a>    });
+<a href=#343 id=343 data-nosnippet>343</a>    <span class="kw">let </span>time_chart = body(<span class="kw-2">&amp;</span>|runs| {
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw">let </span>per = |key: <span class="kw-2">&amp;</span>str| {
+<a href=#345 id=345 data-nosnippet>345</a>            runs.iter()
+<a href=#346 id=346 data-nosnippet>346</a>                .map(|r| number(r, key).map(|s| s / <span class="number">60.0</span>))
+<a href=#347 id=347 data-nosnippet>347</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
+<a href=#348 id=348 data-nosnippet>348</a>        };
+<a href=#349 id=349 data-nosnippet>349</a>        chart(
+<a href=#350 id=350 data-nosnippet>350</a>            <span class="string">"wall or queued time"</span>,
+<a href=#351 id=351 data-nosnippet>351</a>            <span class="string">" min"</span>,
+<a href=#352 id=352 data-nosnippet>352</a>            <span class="kw-2">&amp;</span>[
+<a href=#353 id=353 data-nosnippet>353</a>                Line {
+<a href=#354 id=354 data-nosnippet>354</a>                    name: <span class="string">"Wall time"</span>,
+<a href=#355 id=355 data-nosnippet>355</a>                    tone: <span class="string">"orange"</span>,
+<a href=#356 id=356 data-nosnippet>356</a>                    values: per(<span class="string">"/wall_seconds"</span>),
+<a href=#357 id=357 data-nosnippet>357</a>                },
+<a href=#358 id=358 data-nosnippet>358</a>                Line {
+<a href=#359 id=359 data-nosnippet>359</a>                    name: <span class="string">"Queued time"</span>,
+<a href=#360 id=360 data-nosnippet>360</a>                    tone: <span class="string">"cyan"</span>,
+<a href=#361 id=361 data-nosnippet>361</a>                    values: per(<span class="string">"/queued_seconds_total"</span>),
+<a href=#362 id=362 data-nosnippet>362</a>                },
+<a href=#363 id=363 data-nosnippet>363</a>            ],
+<a href=#364 id=364 data-nosnippet>364</a>            runs,
+<a href=#365 id=365 data-nosnippet>365</a>            <span class="prelude-val">None</span>,
+<a href=#366 id=366 data-nosnippet>366</a>        )
+<a href=#367 id=367 data-nosnippet>367</a>    });
+<a href=#368 id=368 data-nosnippet>368</a>    <span class="kw">let </span>slowest = body(<span class="kw-2">&amp;</span>|<span class="kw">_</span>| medians(trends));
+<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">let </span>runs_table = body(<span class="kw-2">&amp;</span>|runs| {
+<a href=#370 id=370 data-nosnippet>370</a>        table(
+<a href=#371 id=371 data-nosnippet>371</a>            <span class="kw-2">&amp;</span>[
+<a href=#372 id=372 data-nosnippet>372</a>                <span class="string">"Run"</span>,
+<a href=#373 id=373 data-nosnippet>373</a>                <span class="string">"Commit"</span>,
+<a href=#374 id=374 data-nosnippet>374</a>                <span class="string">"Started"</span>,
+<a href=#375 id=375 data-nosnippet>375</a>                <span class="string">"Result"</span>,
+<a href=#376 id=376 data-nosnippet>376</a>                <span class="string">"Wall"</span>,
+<a href=#377 id=377 data-nosnippet>377</a>                <span class="string">"Queued"</span>,
+<a href=#378 id=378 data-nosnippet>378</a>                <span class="string">"Coverage: lines · functions · regions"</span>,
+<a href=#379 id=379 data-nosnippet>379</a>            ],
+<a href=#380 id=380 data-nosnippet>380</a>            runs.iter()
+<a href=#381 id=381 data-nosnippet>381</a>                .rev()
+<a href=#382 id=382 data-nosnippet>382</a>                .take(<span class="kw">super</span>::dashboard::ROWS * <span class="number">2</span>)
+<a href=#383 id=383 data-nosnippet>383</a>                .map(run_row)
+<a href=#384 id=384 data-nosnippet>384</a>                .collect(),
+<a href=#385 id=385 data-nosnippet>385</a>            <span class="string">"The series holds no run."</span>,
+<a href=#386 id=386 data-nosnippet>386</a>        )
+<a href=#387 id=387 data-nosnippet>387</a>    });
+<a href=#388 id=388 data-nosnippet>388</a>
+<a href=#389 id=389 data-nosnippet>389</a>    <span class="kw">let </span>grid = el(<span class="string">"div"</span>)
+<a href=#390 id=390 data-nosnippet>390</a>        .class(<span class="string">"mj-ui-grid"</span>)
+<a href=#391 id=391 data-nosnippet>391</a>        .child(panel(
+<a href=#392 id=392 data-nosnippet>392</a>            <span class="string">"Coverage"</span>,
+<a href=#393 id=393 data-nosnippet>393</a>            <span class="string">"Percent covered per run: lines, functions and regions. A run that measured none leaves a gap."</span>,
+<a href=#394 id=394 data-nosnippet>394</a>            coverage_chart,
+<a href=#395 id=395 data-nosnippet>395</a>            <span class="kw-2">&amp;</span>[trends],
+<a href=#396 id=396 data-nosnippet>396</a>        ))
+<a href=#397 id=397 data-nosnippet>397</a>        .child(panel(
+<a href=#398 id=398 data-nosnippet>398</a>            <span class="string">"Wall and queued time"</span>,
+<a href=#399 id=399 data-nosnippet>399</a>            <span class="string">"Minutes per run, from its start to its end, and the time its jobs waited for a runner."</span>,
+<a href=#400 id=400 data-nosnippet>400</a>            time_chart,
+<a href=#401 id=401 data-nosnippet>401</a>            <span class="kw-2">&amp;</span>[trends],
+<a href=#402 id=402 data-nosnippet>402</a>        ))
+<a href=#403 id=403 data-nosnippet>403</a>        .child(panel(
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="string">"Slowest jobs"</span>,
+<a href=#405 id=405 data-nosnippet>405</a>            <span class="string">"The median run and queue time of each job over the series, the slowest first."</span>,
+<a href=#406 id=406 data-nosnippet>406</a>            slowest,
+<a href=#407 id=407 data-nosnippet>407</a>            <span class="kw-2">&amp;</span>[trends],
+<a href=#408 id=408 data-nosnippet>408</a>        ))
+<a href=#409 id=409 data-nosnippet>409</a>        .child(wide(panel(
+<a href=#410 id=410 data-nosnippet>410</a>            <span class="string">"Runs"</span>,
+<a href=#411 id=411 data-nosnippet>411</a>            <span class="string">"The newest runs with the figures the lines are drawn from."</span>,
+<a href=#412 id=412 data-nosnippet>412</a>            runs_table,
+<a href=#413 id=413 data-nosnippet>413</a>            <span class="kw-2">&amp;</span>[trends],
+<a href=#414 id=414 data-nosnippet>414</a>        )));
+<a href=#415 id=415 data-nosnippet>415</a>
+<a href=#416 id=416 data-nosnippet>416</a>    View::new(
+<a href=#417 id=417 data-nosnippet>417</a>        <span class="string">"Trends"</span>,
+<a href=#418 id=418 data-nosnippet>418</a>        el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-stack"</span>).child(top).child(grid),
+<a href=#419 id=419 data-nosnippet>419</a>    )
+<a href=#420 id=420 data-nosnippet>420</a>}
+<a href=#421 id=421 data-nosnippet>421</a>
+<a href=#422 id=422 data-nosnippet>422</a><span class="attr">#[cfg(test)]
+<a href=#423 id=423 data-nosnippet>423</a></span><span class="kw">mod </span>tests {
+<a href=#424 id=424 data-nosnippet>424</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#425 id=425 data-nosnippet>425</a>    <span class="kw">use </span><span class="kw">crate</span>::synthetic::{Shape, SyntheticRepository};
+<a href=#426 id=426 data-nosnippet>426</a>
+<a href=#427 id=427 data-nosnippet>427</a>    <span class="kw">const </span>FIXTURE: <span class="kw-2">&amp;</span>str = <span class="macro">include_str!</span>(<span class="macro">concat!</span>(
+<a href=#428 id=428 data-nosnippet>428</a>        <span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>),
+<a href=#429 id=429 data-nosnippet>429</a>        <span class="string">"/../../test/fixtures/trends/trends.json"
+<a href=#430 id=430 data-nosnippet>430</a>    </span>));
+<a href=#431 id=431 data-nosnippet>431</a>
+<a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">fn </span>repository(trends: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; SyntheticRepository {
+<a href=#433 id=433 data-nosnippet>433</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
+<a href=#434 id=434 data-nosnippet>434</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(body) = trends {
+<a href=#435 id=435 data-nosnippet>435</a>            <span class="kw">let </span>path = repo.root().join(<span class="kw">crate</span>::delivery::trends::FILE);
+<a href=#436 id=436 data-nosnippet>436</a>            std::fs::create_dir_all(path.parent().expect(<span class="string">"a parent"</span>)).expect(<span class="string">"a directory"</span>);
+<a href=#437 id=437 data-nosnippet>437</a>            std::fs::write(path, body).expect(<span class="string">"a series"</span>);
+<a href=#438 id=438 data-nosnippet>438</a>        }
+<a href=#439 id=439 data-nosnippet>439</a>        repo
+<a href=#440 id=440 data-nosnippet>440</a>    }
+<a href=#441 id=441 data-nosnippet>441</a>
+<a href=#442 id=442 data-nosnippet>442</a>    <span class="doccomment">/// The route the dispatcher answers, as a request: its status and its page.
+<a href=#443 id=443 data-nosnippet>443</a>    </span><span class="kw">fn </span>get(repo: <span class="kw-2">&amp;</span>SyntheticRepository) -&gt; (u16, String) {
+<a href=#444 id=444 data-nosnippet>444</a>        <span class="kw">let </span>ui = <span class="kw">crate</span>::ui::Ui::new(repo.context().expect(<span class="string">"a context"</span>), <span class="string">"0.0.0-test"</span>, <span class="prelude-val">None</span>);
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="kw">let </span>r = ui.handle(<span class="kw-2">&amp;</span><span class="kw">crate</span>::http::router::Request::parse_target(
+<a href=#446 id=446 data-nosnippet>446</a>            <span class="string">"GET"</span>,
+<a href=#447 id=447 data-nosnippet>447</a>            ROUTE,
+<a href=#448 id=448 data-nosnippet>448</a>            Vec::new(),
+<a href=#449 id=449 data-nosnippet>449</a>        ));
+<a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">let </span>page = r.body.text().into_owned();
+<a href=#451 id=451 data-nosnippet>451</a>        <span class="comment">// the frame draws icons of its own: the screen is what lies inside its main part
+<a href=#452 id=452 data-nosnippet>452</a>        </span><span class="kw">let </span>main = page
+<a href=#453 id=453 data-nosnippet>453</a>            .split(<span class="string">"&lt;main"</span>)
+<a href=#454 id=454 data-nosnippet>454</a>            .nth(<span class="number">1</span>)
+<a href=#455 id=455 data-nosnippet>455</a>            .and_then(|m| m.split(<span class="string">"&lt;/main&gt;"</span>).next())
+<a href=#456 id=456 data-nosnippet>456</a>            .expect(<span class="string">"the page has a main part"</span>);
+<a href=#457 id=457 data-nosnippet>457</a>        (r.status, main.to_string())
+<a href=#458 id=458 data-nosnippet>458</a>    }
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a>    <span class="doccomment">/// The series is drawn: coverage as percentages computed from covered over total, the
+<a href=#461 id=461 data-nosnippet>461</a>    /// run that measured none as a gap with no zero point, the time in minutes, and the
+<a href=#462 id=462 data-nosnippet>462</a>    /// slowest job first.
+<a href=#463 id=463 data-nosnippet>463</a>    </span><span class="attr">#[test]
+<a href=#464 id=464 data-nosnippet>464</a>    </span><span class="kw">fn </span>the_series_is_drawn_with_its_percentages_and_its_gap() {
+<a href=#465 id=465 data-nosnippet>465</a>        <span class="kw">let </span>(status, html) = get(<span class="kw-2">&amp;</span>repository(<span class="prelude-val">Some</span>(FIXTURE)));
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="macro">assert_eq!</span>(status, <span class="number">200</span>);
+<a href=#467 id=467 data-nosnippet>467</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;svg"</span>), <span class="string">"{html}"</span>);
+<a href=#468 id=468 data-nosnippet>468</a>        <span class="kw">for </span>want <span class="kw">in </span>[
+<a href=#469 id=469 data-nosnippet>469</a>            <span class="string">"70.0%"</span>,
+<a href=#470 id=470 data-nosnippet>470</a>            <span class="string">"75.0%"</span>,
+<a href=#471 id=471 data-nosnippet>471</a>            <span class="string">"80.0%"</span>,
+<a href=#472 id=472 data-nosnippet>472</a>            <span class="string">"94.0%"</span>,
+<a href=#473 id=473 data-nosnippet>473</a>            <span class="string">"87.5%"</span>,
+<a href=#474 id=474 data-nosnippet>474</a>            <span class="string">"no coverage"</span>,
+<a href=#475 id=475 data-nosnippet>475</a>            <span class="string">"50.0 min"</span>,
+<a href=#476 id=476 data-nosnippet>476</a>            <span class="string">"9004"</span>,
+<a href=#477 id=477 data-nosnippet>477</a>            <span class="string">"4444444"</span>,
+<a href=#478 id=478 data-nosnippet>478</a>            <span class="string">"30 min 01 s"</span>,
+<a href=#479 id=479 data-nosnippet>479</a>            <span class="string">"mj-tone--blue"</span>,
+<a href=#480 id=480 data-nosnippet>480</a>        ] {
+<a href=#481 id=481 data-nosnippet>481</a>            <span class="macro">assert!</span>(html.contains(want), <span class="string">"no {want}: {html}"</span>);
+<a href=#482 id=482 data-nosnippet>482</a>        }
+<a href=#483 id=483 data-nosnippet>483</a>        <span class="macro">assert!</span>(!html.contains(NONE_RECORDED), <span class="string">"{html}"</span>);
+<a href=#484 id=484 data-nosnippet>484</a>        <span class="comment">// the slowest median leads the table
+<a href=#485 id=485 data-nosnippet>485</a>        </span><span class="kw">let </span>rust = html.find(<span class="string">"&gt;rust&lt;"</span>).expect(<span class="string">"rust"</span>);
+<a href=#486 id=486 data-nosnippet>486</a>        <span class="kw">let </span>lint = html.find(<span class="string">"&gt;lint&lt;"</span>).expect(<span class="string">"lint"</span>);
+<a href=#487 id=487 data-nosnippet>487</a>        <span class="macro">assert!</span>(rust &lt; lint, <span class="string">"the slowest job is not first"</span>);
+<a href=#488 id=488 data-nosnippet>488</a>        <span class="comment">// the lines of the coverage chart: lines has four runs but one gap, so its path is
+<a href=#489 id=489 data-nosnippet>489</a>        // broken into a stretch and a stretch (two moves) and never drawn through zero
+<a href=#490 id=490 data-nosnippet>490</a>        </span><span class="kw">let </span>chart = html
+<a href=#491 id=491 data-nosnippet>491</a>            .split(<span class="string">"aria-label=\"coverage, "</span>)
+<a href=#492 id=492 data-nosnippet>492</a>            .nth(<span class="number">1</span>)
+<a href=#493 id=493 data-nosnippet>493</a>            .and_then(|c| c.split(<span class="string">"&lt;/svg&gt;"</span>).next())
+<a href=#494 id=494 data-nosnippet>494</a>            .expect(<span class="string">"the coverage chart"</span>);
+<a href=#495 id=495 data-nosnippet>495</a>        <span class="kw">let </span>paths: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = chart
+<a href=#496 id=496 data-nosnippet>496</a>            .split(<span class="string">"&lt;path d=\""</span>)
+<a href=#497 id=497 data-nosnippet>497</a>            .skip(<span class="number">1</span>)
+<a href=#498 id=498 data-nosnippet>498</a>            .map(|p| p.split(<span class="string">'"'</span>).next().unwrap_or_default())
+<a href=#499 id=499 data-nosnippet>499</a>            .collect();
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="macro">assert_eq!</span>(paths.len(), <span class="number">3</span>, <span class="string">"{paths:?}"</span>);
+<a href=#501 id=501 data-nosnippet>501</a>        <span class="macro">assert_eq!</span>(paths[<span class="number">0</span>].matches(<span class="string">'M'</span>).count(), <span class="number">2</span>, <span class="string">"{}"</span>, paths[<span class="number">0</span>]);
+<a href=#502 id=502 data-nosnippet>502</a>        <span class="macro">assert_eq!</span>(paths[<span class="number">0</span>].matches(<span class="string">'L'</span>).count(), <span class="number">1</span>, <span class="string">"{}"</span>, paths[<span class="number">0</span>]);
+<a href=#503 id=503 data-nosnippet>503</a>        <span class="macro">assert!</span>(
+<a href=#504 id=504 data-nosnippet>504</a>            !html.contains(<span class="string">"NaN"</span>) &amp;&amp; !html.contains(<span class="string">"undefined"</span>),
+<a href=#505 id=505 data-nosnippet>505</a>            <span class="string">"{html}"
+<a href=#506 id=506 data-nosnippet>506</a>        </span>);
+<a href=#507 id=507 data-nosnippet>507</a>    }
+<a href=#508 id=508 data-nosnippet>508</a>
+<a href=#509 id=509 data-nosnippet>509</a>    <span class="doccomment">/// A checkout the publication never wrote into says so in words: a page, status 200, no
+<a href=#510 id=510 data-nosnippet>510</a>    /// chart and no zero.
+<a href=#511 id=511 data-nosnippet>511</a>    </span><span class="attr">#[test]
+<a href=#512 id=512 data-nosnippet>512</a>    </span><span class="kw">fn </span>an_absent_series_is_said_plainly() {
+<a href=#513 id=513 data-nosnippet>513</a>        <span class="kw">let </span>(status, html) = get(<span class="kw-2">&amp;</span>repository(<span class="prelude-val">None</span>));
+<a href=#514 id=514 data-nosnippet>514</a>        <span class="macro">assert_eq!</span>(status, <span class="number">200</span>);
+<a href=#515 id=515 data-nosnippet>515</a>        <span class="macro">assert!</span>(html.contains(NONE_RECORDED), <span class="string">"{html}"</span>);
+<a href=#516 id=516 data-nosnippet>516</a>        <span class="macro">assert!</span>(
+<a href=#517 id=517 data-nosnippet>517</a>            html.contains(<span class="string">"site/data/trends.json is not in this checkout"</span>),
+<a href=#518 id=518 data-nosnippet>518</a>            <span class="string">"{html}"
+<a href=#519 id=519 data-nosnippet>519</a>        </span>);
+<a href=#520 id=520 data-nosnippet>520</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"var(--mj-tone-fg)"</span>), <span class="string">"{html}"</span>);
+<a href=#521 id=521 data-nosnippet>521</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"not observed"</span>), <span class="string">"{html}"</span>);
+<a href=#522 id=522 data-nosnippet>522</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;h1"</span>), <span class="string">"{html}"</span>);
+<a href=#523 id=523 data-nosnippet>523</a>    }
+<a href=#524 id=524 data-nosnippet>524</a>
+<a href=#525 id=525 data-nosnippet>525</a>    <span class="doccomment">/// A file that is another schema, or no JSON at all, is not drawn as the series.
+<a href=#526 id=526 data-nosnippet>526</a>    </span><span class="attr">#[test]
+<a href=#527 id=527 data-nosnippet>527</a>    </span><span class="kw">fn </span>a_wrong_schema_is_said_and_not_drawn() {
+<a href=#528 id=528 data-nosnippet>528</a>        <span class="kw">for </span>body <span class="kw">in </span>[
+<a href=#529 id=529 data-nosnippet>529</a>            <span class="string">r#"{"schema":"trends/v2","runs":[{"run_id":1,"wall_seconds":60}]}"#</span>,
+<a href=#530 id=530 data-nosnippet>530</a>            <span class="string">"not json"</span>,
+<a href=#531 id=531 data-nosnippet>531</a>        ] {
+<a href=#532 id=532 data-nosnippet>532</a>            <span class="kw">let </span>(status, html) = get(<span class="kw-2">&amp;</span>repository(<span class="prelude-val">Some</span>(body)));
+<a href=#533 id=533 data-nosnippet>533</a>            <span class="macro">assert_eq!</span>(status, <span class="number">200</span>, <span class="string">"{body}"</span>);
+<a href=#534 id=534 data-nosnippet>534</a>            <span class="macro">assert!</span>(html.contains(NONE_RECORDED), <span class="string">"{body}: {html}"</span>);
+<a href=#535 id=535 data-nosnippet>535</a>            <span class="macro">assert!</span>(!html.contains(<span class="string">"var(--mj-tone-fg)"</span>), <span class="string">"{body}: {html}"</span>);
+<a href=#536 id=536 data-nosnippet>536</a>        }
+<a href=#537 id=537 data-nosnippet>537</a>        <span class="kw">let </span>(<span class="kw">_</span>, html) = get(<span class="kw-2">&amp;</span>repository(<span class="prelude-val">Some</span>(<span class="string">r#"{"schema":"trends/v2","runs":[]}"#</span>)));
+<a href=#538 id=538 data-nosnippet>538</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"trends/v2"</span>), <span class="string">"{html}"</span>);
+<a href=#539 id=539 data-nosnippet>539</a>    }
+<a href=#540 id=540 data-nosnippet>540</a>
+<a href=#541 id=541 data-nosnippet>541</a>    <span class="doccomment">/// A series whose runs measured no coverage draws the time and says no run recorded
+<a href=#542 id=542 data-nosnippet>542</a>    /// coverage, rather than a coverage line at zero.
+<a href=#543 id=543 data-nosnippet>543</a>    </span><span class="attr">#[test]
+<a href=#544 id=544 data-nosnippet>544</a>    </span><span class="kw">fn </span>a_series_without_coverage_draws_no_coverage_line() {
+<a href=#545 id=545 data-nosnippet>545</a>        <span class="kw">let </span>(status, html) = get(<span class="kw-2">&amp;</span>repository(<span class="prelude-val">Some</span>(
+<a href=#546 id=546 data-nosnippet>546</a>            <span class="string">r#"{"schema":"trends/v1","runs":[{"run_id":1,"started_at":"2026-10-22T00:00:00Z","wall_seconds":600,"coverage":null}],"job_medians":[]}"#</span>,
+<a href=#547 id=547 data-nosnippet>547</a>        )));
+<a href=#548 id=548 data-nosnippet>548</a>        <span class="macro">assert_eq!</span>(status, <span class="number">200</span>);
+<a href=#549 id=549 data-nosnippet>549</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"No run recorded coverage."</span>), <span class="string">"{html}"</span>);
+<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"10.0 min"</span>), <span class="string">"{html}"</span>);
+<a href=#551 id=551 data-nosnippet>551</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"The series gives no job median."</span>), <span class="string">"{html}"</span>);
+<a href=#552 id=552 data-nosnippet>552</a>    }
+<a href=#553 id=553 data-nosnippet>553</a>
+<a href=#554 id=554 data-nosnippet>554</a>    <span class="doccomment">/// A figure the file does not give reads `unknown` wherever it would have been a number:
+<a href=#555 id=555 data-nosnippet>555</a>    /// a run without a start or a conclusion, a kind without a percentage, a median without
+<a href=#556 id=556 data-nosnippet>556</a>    /// seconds or a run count.
+<a href=#557 id=557 data-nosnippet>557</a>    </span><span class="attr">#[test]
+<a href=#558 id=558 data-nosnippet>558</a>    </span><span class="kw">fn </span>a_figure_the_file_does_not_give_reads_unknown() {
+<a href=#559 id=559 data-nosnippet>559</a>        <span class="kw">let </span>(status, html) = get(<span class="kw-2">&amp;</span>repository(<span class="prelude-val">Some</span>(
+<a href=#560 id=560 data-nosnippet>560</a>            <span class="string">r#"{"schema":"trends/v1","runs":[
+<a href=#561 id=561 data-nosnippet>561</a>                {"run_id":1,"coverage":{"lines":{"covered":1,"total":0},"functions":{"covered":1,"total":2}}}],
+<a href=#562 id=562 data-nosnippet>562</a>               "job_medians":[{"name":"bare"}]}"#</span>,
+<a href=#563 id=563 data-nosnippet>563</a>        )));
+<a href=#564 id=564 data-nosnippet>564</a>        <span class="macro">assert_eq!</span>(status, <span class="number">200</span>);
+<a href=#565 id=565 data-nosnippet>565</a>        <span class="comment">// the run row: no sha, no day, no conclusion, no times; lines have no percentage
+<a href=#566 id=566 data-nosnippet>566</a>        </span><span class="macro">assert!</span>(
+<a href=#567 id=567 data-nosnippet>567</a>            html.contains(<span class="string">"&gt;unknown · 50.0% · unknown&lt;"</span>),
+<a href=#568 id=568 data-nosnippet>568</a>            <span class="string">"no coverage cell: {html}"
+<a href=#569 id=569 data-nosnippet>569</a>        </span>);
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="macro">assert!</span>(html.matches(<span class="string">"&gt;unknown&lt;"</span>).count() &gt;= <span class="number">8</span>, <span class="string">"{html}"</span>);
+<a href=#571 id=571 data-nosnippet>571</a>        <span class="comment">// the median row: name only, three unknown cells
+<a href=#572 id=572 data-nosnippet>572</a>        </span><span class="kw">let </span>row = html
+<a href=#573 id=573 data-nosnippet>573</a>            .split(<span class="string">"&gt;bare&lt;"</span>)
+<a href=#574 id=574 data-nosnippet>574</a>            .nth(<span class="number">1</span>)
+<a href=#575 id=575 data-nosnippet>575</a>            .and_then(|r| r.split(<span class="string">"&lt;/tr&gt;"</span>).next())
+<a href=#576 id=576 data-nosnippet>576</a>            .expect(<span class="string">"the median row"</span>);
+<a href=#577 id=577 data-nosnippet>577</a>        <span class="macro">assert_eq!</span>(row.matches(<span class="string">"&gt;unknown&lt;"</span>).count(), <span class="number">3</span>, <span class="string">"{row}"</span>);
+<a href=#578 id=578 data-nosnippet>578</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"NaN"</span>), <span class="string">"{html}"</span>);
+<a href=#579 id=579 data-nosnippet>579</a>    }
+<a href=#580 id=580 data-nosnippet>580</a>
+<a href=#581 id=581 data-nosnippet>581</a>    <span class="doccomment">/// A chart handed values and no run draws its lines and no day captions.
+<a href=#582 id=582 data-nosnippet>582</a>    </span><span class="attr">#[test]
+<a href=#583 id=583 data-nosnippet>583</a>    </span><span class="kw">fn </span>a_chart_of_values_without_runs_draws_no_day_caption() {
+<a href=#584 id=584 data-nosnippet>584</a>        <span class="kw">let </span>lines = [Line {
+<a href=#585 id=585 data-nosnippet>585</a>            name: <span class="string">"Lines"</span>,
+<a href=#586 id=586 data-nosnippet>586</a>            tone: <span class="string">"blue"</span>,
+<a href=#587 id=587 data-nosnippet>587</a>            values: <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">50.0</span>)],
+<a href=#588 id=588 data-nosnippet>588</a>        }];
+<a href=#589 id=589 data-nosnippet>589</a>        <span class="kw">let </span>html = chart(<span class="string">"coverage"</span>, <span class="string">"%"</span>, <span class="kw-2">&amp;</span>lines, <span class="kw-2">&amp;</span>[], <span class="prelude-val">Some</span>(<span class="number">100.0</span>)).render();
+<a href=#590 id=590 data-nosnippet>590</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"&lt;circle"</span>), <span class="string">"{html}"</span>);
+<a href=#591 id=591 data-nosnippet>591</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"50.0% latest"</span>), <span class="string">"{html}"</span>);
+<a href=#592 id=592 data-nosnippet>592</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"text-anchor=\"start\""</span>), <span class="string">"{html}"</span>);
+<a href=#593 id=593 data-nosnippet>593</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"text-anchor=\"middle\""</span>), <span class="string">"{html}"</span>);
+<a href=#594 id=594 data-nosnippet>594</a>        <span class="comment">// a line without any value is named, and never drawn
+<a href=#595 id=595 data-nosnippet>595</a>        </span><span class="kw">let </span>empty = [Line {
+<a href=#596 id=596 data-nosnippet>596</a>            name: <span class="string">"Lines"</span>,
+<a href=#597 id=597 data-nosnippet>597</a>            tone: <span class="string">"blue"</span>,
+<a href=#598 id=598 data-nosnippet>598</a>            values: <span class="macro">vec!</span>[],
+<a href=#599 id=599 data-nosnippet>599</a>        }];
+<a href=#600 id=600 data-nosnippet>600</a>        <span class="macro">assert!</span>(chart(<span class="string">"coverage"</span>, <span class="string">"%"</span>, <span class="kw-2">&amp;</span>empty, <span class="kw-2">&amp;</span>[], <span class="prelude-val">None</span>)
+<a href=#601 id=601 data-nosnippet>601</a>            .render()
+<a href=#602 id=602 data-nosnippet>602</a>            .contains(<span class="string">"No run recorded coverage."</span>));
+<a href=#603 id=603 data-nosnippet>603</a>    }
+<a href=#604 id=604 data-nosnippet>604</a>
+<a href=#605 id=605 data-nosnippet>605</a>    <span class="attr">#[test]
+<a href=#606 id=606 data-nosnippet>606</a>    </span><span class="kw">fn </span>one_run_is_captioned_once_and_more_runs_at_both_ends() {
+<a href=#607 id=607 data-nosnippet>607</a>        <span class="kw">let </span>one = [Line {
+<a href=#608 id=608 data-nosnippet>608</a>            name: <span class="string">"Lines"</span>,
+<a href=#609 id=609 data-nosnippet>609</a>            tone: <span class="string">"blue"</span>,
+<a href=#610 id=610 data-nosnippet>610</a>            values: <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">50.0</span>)],
+<a href=#611 id=611 data-nosnippet>611</a>        }];
+<a href=#612 id=612 data-nosnippet>612</a>        <span class="kw">let </span>run = |day: <span class="kw-2">&amp;</span>str| <span class="macro">serde_json::json!</span>({ <span class="string">"started_at"</span>: <span class="macro">format!</span>(<span class="string">"{day}T10:00:00Z"</span>) });
+<a href=#613 id=613 data-nosnippet>613</a>        <span class="kw">let </span>only = run(<span class="string">"2026-10-20"</span>);
+<a href=#614 id=614 data-nosnippet>614</a>        <span class="kw">let </span>html = chart(
+<a href=#615 id=615 data-nosnippet>615</a>            <span class="string">"coverage"</span>,
+<a href=#616 id=616 data-nosnippet>616</a>            <span class="string">"%"</span>,
+<a href=#617 id=617 data-nosnippet>617</a>            <span class="kw-2">&amp;</span>one,
+<a href=#618 id=618 data-nosnippet>618</a>            std::slice::from_ref(<span class="kw-2">&amp;</span>only),
+<a href=#619 id=619 data-nosnippet>619</a>            <span class="prelude-val">Some</span>(<span class="number">100.0</span>),
+<a href=#620 id=620 data-nosnippet>620</a>        )
+<a href=#621 id=621 data-nosnippet>621</a>        .render();
+<a href=#622 id=622 data-nosnippet>622</a>        <span class="comment">// the caption the chart draws is day(run); one run must carry it exactly once
+<a href=#623 id=623 data-nosnippet>623</a>        </span><span class="macro">assert_eq!</span>(
+<a href=#624 id=624 data-nosnippet>624</a>            html.matches(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"&gt;{}&lt;"</span>, day(<span class="kw-2">&amp;</span>only))).count(),
+<a href=#625 id=625 data-nosnippet>625</a>            <span class="number">1</span>,
+<a href=#626 id=626 data-nosnippet>626</a>            <span class="string">"{html}"
+<a href=#627 id=627 data-nosnippet>627</a>        </span>);
+<a href=#628 id=628 data-nosnippet>628</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"text-anchor=\"middle\""</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
+<a href=#629 id=629 data-nosnippet>629</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"text-anchor=\"start\""</span>), <span class="string">"{html}"</span>);
+<a href=#630 id=630 data-nosnippet>630</a>        <span class="kw">let </span>two = [Line {
+<a href=#631 id=631 data-nosnippet>631</a>            name: <span class="string">"Lines"</span>,
+<a href=#632 id=632 data-nosnippet>632</a>            tone: <span class="string">"blue"</span>,
+<a href=#633 id=633 data-nosnippet>633</a>            values: <span class="macro">vec!</span>[<span class="prelude-val">Some</span>(<span class="number">40.0</span>), <span class="prelude-val">Some</span>(<span class="number">50.0</span>)],
+<a href=#634 id=634 data-nosnippet>634</a>        }];
+<a href=#635 id=635 data-nosnippet>635</a>        <span class="kw">let </span>runs = [run(<span class="string">"2026-10-20"</span>), run(<span class="string">"2026-10-22"</span>)];
+<a href=#636 id=636 data-nosnippet>636</a>        <span class="kw">let </span>html = chart(<span class="string">"coverage"</span>, <span class="string">"%"</span>, <span class="kw-2">&amp;</span>two, <span class="kw-2">&amp;</span>runs, <span class="prelude-val">Some</span>(<span class="number">100.0</span>)).render();
+<a href=#637 id=637 data-nosnippet>637</a>        <span class="macro">assert_eq!</span>(html.matches(<span class="string">"text-anchor=\"start\""</span>).count(), <span class="number">1</span>, <span class="string">"{html}"</span>);
+<a href=#638 id=638 data-nosnippet>638</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"text-anchor=\"middle\""</span>), <span class="string">"{html}"</span>);
+<a href=#639 id=639 data-nosnippet>639</a>    }
+<a href=#640 id=640 data-nosnippet>640</a>}
+</code></pre></div></section></main></body></html>

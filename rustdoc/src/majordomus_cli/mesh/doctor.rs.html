@@ -1019,101 +1019,102 @@
 <a href=#1019 id=1019 data-nosnippet>1019</a>        <span class="kw">let </span><span class="kw-2">mut </span>quiet = config(<span class="bool-val">true</span>);
 <a href=#1020 id=1020 data-nosnippet>1020</a>        quiet.multicast.enabled = <span class="bool-val">false</span>;
 <a href=#1021 id=1021 data-nosnippet>1021</a>        quiet.trust.allow = <span class="macro">vec!</span>[identity.public.public_key.clone()];
-<a href=#1022 id=1022 data-nosnippet>1022</a>        server
-<a href=#1023 id=1023 data-nosnippet>1023</a>            .activate(<span class="kw-2">&amp;</span>quiet, identity, <span class="macro">vec!</span>[], <span class="macro">vec!</span>[], <span class="string">"test"</span>)
-<a href=#1024 id=1024 data-nosnippet>1024</a>            .unwrap();
-<a href=#1025 id=1025 data-nosnippet>1025</a>        <span class="kw">let </span><span class="kw-2">mut </span>status = server.status();
-<a href=#1026 id=1026 data-nosnippet>1026</a>        server.stop();
-<a href=#1027 id=1027 data-nosnippet>1027</a>        <span class="kw">let </span>active = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
-<a href=#1028 id=1028 data-nosnippet>1028</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>active, <span class="string">"runtime"</span>);
-<a href=#1029 id=1029 data-nosnippet>1029</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
-<a href=#1030 id=1030 data-nosnippet>1030</a>        <span class="macro">assert!</span>(
-<a href=#1031 id=1031 data-nosnippet>1031</a>            runtime.detail.starts_with(<span class="string">"active as "</span>)
-<a href=#1032 id=1032 data-nosnippet>1032</a>                &amp;&amp; runtime.detail.contains(<span class="string">": 0 of 0 provider(s) running;"</span>),
-<a href=#1033 id=1033 data-nosnippet>1033</a>            <span class="string">"{}"</span>,
-<a href=#1034 id=1034 data-nosnippet>1034</a>            runtime.detail
-<a href=#1035 id=1035 data-nosnippet>1035</a>        );
-<a href=#1036 id=1036 data-nosnippet>1036</a>        status.providers.push(<span class="kw">super</span>::<span class="kw">super</span>::ProviderStatus {
-<a href=#1037 id=1037 data-nosnippet>1037</a>            id: <span class="string">"udp_multicast"</span>.into(),
-<a href=#1038 id=1038 data-nosnippet>1038</a>            state: MeshProviderState::Failed,
-<a href=#1039 id=1039 data-nosnippet>1039</a>            detail: <span class="prelude-val">Some</span>(<span class="string">"address in use"</span>.into()),
-<a href=#1040 id=1040 data-nosnippet>1040</a>            sent: <span class="number">0</span>,
-<a href=#1041 id=1041 data-nosnippet>1041</a>            received: <span class="number">0</span>,
-<a href=#1042 id=1042 data-nosnippet>1042</a>        });
-<a href=#1043 id=1043 data-nosnippet>1043</a>        <span class="kw">let </span>deaf = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
-<a href=#1044 id=1044 data-nosnippet>1044</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>deaf, <span class="string">"runtime"</span>);
-<a href=#1045 id=1045 data-nosnippet>1045</a>        <span class="macro">assert!</span>(!runtime.ok);
-<a href=#1046 id=1046 data-nosnippet>1046</a>        <span class="macro">assert!</span>(
-<a href=#1047 id=1047 data-nosnippet>1047</a>            runtime
-<a href=#1048 id=1048 data-nosnippet>1048</a>                .detail
-<a href=#1049 id=1049 data-nosnippet>1049</a>                .contains(<span class="string">"failed: udp_multicast (address in use)"</span>),
-<a href=#1050 id=1050 data-nosnippet>1050</a>            <span class="string">"{}"</span>,
-<a href=#1051 id=1051 data-nosnippet>1051</a>            runtime.detail
-<a href=#1052 id=1052 data-nosnippet>1052</a>        );
-<a href=#1053 id=1053 data-nosnippet>1053</a>    }
-<a href=#1054 id=1054 data-nosnippet>1054</a>
-<a href=#1055 id=1055 data-nosnippet>1055</a>    <span class="attr">#[test]
-<a href=#1056 id=1056 data-nosnippet>1056</a>    </span><span class="kw">fn </span>the_transport_check_counts_tls_and_private_cleartext_and_refuses_public_cleartext() {
-<a href=#1057 id=1057 data-nosnippet>1057</a>        <span class="kw">let </span>declare = |endpoints: serde_json::Value, seeds: serde_json::Value| -&gt; MeshConfig {
-<a href=#1058 id=1058 data-nosnippet>1058</a>            serde_json::from_value(<span class="macro">serde_json::json!</span>({
-<a href=#1059 id=1059 data-nosnippet>1059</a>                <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>,
-<a href=#1060 id=1060 data-nosnippet>1060</a>                <span class="string">"rendezvous"</span>: { <span class="string">"endpoints"</span>: endpoints }, <span class="string">"cooperation"</span>: { <span class="string">"seeds"</span>: seeds }
-<a href=#1061 id=1061 data-nosnippet>1061</a>            }))
-<a href=#1062 id=1062 data-nosnippet>1062</a>            .unwrap()
-<a href=#1063 id=1063 data-nosnippet>1063</a>        };
-<a href=#1064 id=1064 data-nosnippet>1064</a>        <span class="kw">let </span>none = transport_check(<span class="kw-2">&amp;</span>declare(<span class="macro">serde_json::json!</span>([]), <span class="macro">serde_json::json!</span>([])));
-<a href=#1065 id=1065 data-nosnippet>1065</a>        <span class="macro">assert!</span>(none.ok);
-<a href=#1066 id=1066 data-nosnippet>1066</a>        <span class="macro">assert_eq!</span>(
-<a href=#1067 id=1067 data-nosnippet>1067</a>            none.detail,
-<a href=#1068 id=1068 data-nosnippet>1068</a>            <span class="string">"0 endpoint(s) over TLS, 0 in cleartext to loopback, private or overlay addresses"
-<a href=#1069 id=1069 data-nosnippet>1069</a>        </span>);
-<a href=#1070 id=1070 data-nosnippet>1070</a>        <span class="kw">let </span>held = transport_check(<span class="kw-2">&amp;</span>declare(
-<a href=#1071 id=1071 data-nosnippet>1071</a>            <span class="macro">serde_json::json!</span>([<span class="string">"https://hub.example"</span>, <span class="string">"http://100.92.246.32:8791"</span>]),
-<a href=#1072 id=1072 data-nosnippet>1072</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://127.0.0.1:8742"</span>, <span class="string">"http://bad..name:8742"</span>]),
-<a href=#1073 id=1073 data-nosnippet>1073</a>        ));
-<a href=#1074 id=1074 data-nosnippet>1074</a>        <span class="macro">assert!</span>(held.ok, <span class="string">"{}"</span>, held.detail);
-<a href=#1075 id=1075 data-nosnippet>1075</a>        <span class="macro">assert!</span>(
-<a href=#1076 id=1076 data-nosnippet>1076</a>            held.detail
-<a href=#1077 id=1077 data-nosnippet>1077</a>                .starts_with(<span class="string">"1 endpoint(s) over TLS, 2 in cleartext"</span>),
-<a href=#1078 id=1078 data-nosnippet>1078</a>            <span class="string">"{}"</span>,
-<a href=#1079 id=1079 data-nosnippet>1079</a>            held.detail
-<a href=#1080 id=1080 data-nosnippet>1080</a>        );
-<a href=#1081 id=1081 data-nosnippet>1081</a>        <span class="macro">assert!</span>(
-<a href=#1082 id=1082 data-nosnippet>1082</a>            held.detail
-<a href=#1083 id=1083 data-nosnippet>1083</a>                .contains(<span class="string">"not resolved here, judged again at every dial: http://bad..name:8742"</span>),
-<a href=#1084 id=1084 data-nosnippet>1084</a>            <span class="string">"{}"</span>,
-<a href=#1085 id=1085 data-nosnippet>1085</a>            held.detail
-<a href=#1086 id=1086 data-nosnippet>1086</a>        );
-<a href=#1087 id=1087 data-nosnippet>1087</a>        <span class="kw">let </span>refused = transport_check(<span class="kw-2">&amp;</span>declare(
-<a href=#1088 id=1088 data-nosnippet>1088</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://192.168.1.2:8791"</span>, <span class="string">"http://203.0.113.5:8791"</span>]),
-<a href=#1089 id=1089 data-nosnippet>1089</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://198.51.100.7:8742"</span>]),
-<a href=#1090 id=1090 data-nosnippet>1090</a>        ));
-<a href=#1091 id=1091 data-nosnippet>1091</a>        <span class="macro">assert!</span>(!refused.ok);
-<a href=#1092 id=1092 data-nosnippet>1092</a>        <span class="macro">assert!</span>(
-<a href=#1093 id=1093 data-nosnippet>1093</a>            refused
-<a href=#1094 id=1094 data-nosnippet>1094</a>                .detail
-<a href=#1095 id=1095 data-nosnippet>1095</a>                .contains(<span class="string">"http://203.0.113.5:8791 was not dialed"</span>),
-<a href=#1096 id=1096 data-nosnippet>1096</a>            <span class="string">"{}"</span>,
-<a href=#1097 id=1097 data-nosnippet>1097</a>            refused.detail
-<a href=#1098 id=1098 data-nosnippet>1098</a>        );
-<a href=#1099 id=1099 data-nosnippet>1099</a>        <span class="macro">assert!</span>(
-<a href=#1100 id=1100 data-nosnippet>1100</a>            refused.detail.contains(<span class="string">"198.51.100.7 is a public address"</span>),
-<a href=#1101 id=1101 data-nosnippet>1101</a>            <span class="string">"{}"</span>,
-<a href=#1102 id=1102 data-nosnippet>1102</a>            refused.detail
-<a href=#1103 id=1103 data-nosnippet>1103</a>        );
-<a href=#1104 id=1104 data-nosnippet>1104</a>        <span class="macro">assert!</span>(
-<a href=#1105 id=1105 data-nosnippet>1105</a>            !refused.detail.contains(<span class="string">"192.168.1.2"</span>),
-<a href=#1106 id=1106 data-nosnippet>1106</a>            <span class="string">"{}"</span>,
-<a href=#1107 id=1107 data-nosnippet>1107</a>            refused.detail
-<a href=#1108 id=1108 data-nosnippet>1108</a>        );
-<a href=#1109 id=1109 data-nosnippet>1109</a>        <span class="macro">assert!</span>(refused.remediation.unwrap().contains(<span class="string">"https://"</span>));
-<a href=#1110 id=1110 data-nosnippet>1110</a>        <span class="comment">// and the self-check carries it, right after the declaration it judges
-<a href=#1111 id=1111 data-nosnippet>1111</a>        </span><span class="kw">let </span>report = doctor(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(declare(
-<a href=#1112 id=1112 data-nosnippet>1112</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://203.0.113.5:8791"</span>]),
-<a href=#1113 id=1113 data-nosnippet>1113</a>            <span class="macro">serde_json::json!</span>([]),
-<a href=#1114 id=1114 data-nosnippet>1114</a>        ))));
-<a href=#1115 id=1115 data-nosnippet>1115</a>        <span class="macro">assert_eq!</span>(report.checks[<span class="number">1</span>].check, <span class="string">"transport"</span>);
-<a href=#1116 id=1116 data-nosnippet>1116</a>        <span class="macro">assert!</span>(!report.ok);
-<a href=#1117 id=1117 data-nosnippet>1117</a>    }
-<a href=#1118 id=1118 data-nosnippet>1118</a>}
+<a href=#1022 id=1022 data-nosnippet>1022</a>        quiet.tailscale.enabled = <span class="bool-val">false</span>;
+<a href=#1023 id=1023 data-nosnippet>1023</a>        server
+<a href=#1024 id=1024 data-nosnippet>1024</a>            .activate(<span class="kw-2">&amp;</span>quiet, identity, <span class="macro">vec!</span>[], <span class="macro">vec!</span>[], <span class="string">"test"</span>)
+<a href=#1025 id=1025 data-nosnippet>1025</a>            .unwrap();
+<a href=#1026 id=1026 data-nosnippet>1026</a>        <span class="kw">let </span><span class="kw-2">mut </span>status = server.status();
+<a href=#1027 id=1027 data-nosnippet>1027</a>        server.stop();
+<a href=#1028 id=1028 data-nosnippet>1028</a>        <span class="kw">let </span>active = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
+<a href=#1029 id=1029 data-nosnippet>1029</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>active, <span class="string">"runtime"</span>);
+<a href=#1030 id=1030 data-nosnippet>1030</a>        <span class="macro">assert!</span>(runtime.ok, <span class="string">"{}"</span>, runtime.detail);
+<a href=#1031 id=1031 data-nosnippet>1031</a>        <span class="macro">assert!</span>(
+<a href=#1032 id=1032 data-nosnippet>1032</a>            runtime.detail.starts_with(<span class="string">"active as "</span>)
+<a href=#1033 id=1033 data-nosnippet>1033</a>                &amp;&amp; runtime.detail.contains(<span class="string">": 0 of 0 provider(s) running;"</span>),
+<a href=#1034 id=1034 data-nosnippet>1034</a>            <span class="string">"{}"</span>,
+<a href=#1035 id=1035 data-nosnippet>1035</a>            runtime.detail
+<a href=#1036 id=1036 data-nosnippet>1036</a>        );
+<a href=#1037 id=1037 data-nosnippet>1037</a>        status.providers.push(<span class="kw">super</span>::<span class="kw">super</span>::ProviderStatus {
+<a href=#1038 id=1038 data-nosnippet>1038</a>            id: <span class="string">"udp_multicast"</span>.into(),
+<a href=#1039 id=1039 data-nosnippet>1039</a>            state: MeshProviderState::Failed,
+<a href=#1040 id=1040 data-nosnippet>1040</a>            detail: <span class="prelude-val">Some</span>(<span class="string">"address in use"</span>.into()),
+<a href=#1041 id=1041 data-nosnippet>1041</a>            sent: <span class="number">0</span>,
+<a href=#1042 id=1042 data-nosnippet>1042</a>            received: <span class="number">0</span>,
+<a href=#1043 id=1043 data-nosnippet>1043</a>        });
+<a href=#1044 id=1044 data-nosnippet>1044</a>        <span class="kw">let </span>deaf = doctor_at(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config(<span class="bool-val">true</span>))), <span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>status));
+<a href=#1045 id=1045 data-nosnippet>1045</a>        <span class="kw">let </span>runtime = check(<span class="kw-2">&amp;</span>deaf, <span class="string">"runtime"</span>);
+<a href=#1046 id=1046 data-nosnippet>1046</a>        <span class="macro">assert!</span>(!runtime.ok);
+<a href=#1047 id=1047 data-nosnippet>1047</a>        <span class="macro">assert!</span>(
+<a href=#1048 id=1048 data-nosnippet>1048</a>            runtime
+<a href=#1049 id=1049 data-nosnippet>1049</a>                .detail
+<a href=#1050 id=1050 data-nosnippet>1050</a>                .contains(<span class="string">"failed: udp_multicast (address in use)"</span>),
+<a href=#1051 id=1051 data-nosnippet>1051</a>            <span class="string">"{}"</span>,
+<a href=#1052 id=1052 data-nosnippet>1052</a>            runtime.detail
+<a href=#1053 id=1053 data-nosnippet>1053</a>        );
+<a href=#1054 id=1054 data-nosnippet>1054</a>    }
+<a href=#1055 id=1055 data-nosnippet>1055</a>
+<a href=#1056 id=1056 data-nosnippet>1056</a>    <span class="attr">#[test]
+<a href=#1057 id=1057 data-nosnippet>1057</a>    </span><span class="kw">fn </span>the_transport_check_counts_tls_and_private_cleartext_and_refuses_public_cleartext() {
+<a href=#1058 id=1058 data-nosnippet>1058</a>        <span class="kw">let </span>declare = |endpoints: serde_json::Value, seeds: serde_json::Value| -&gt; MeshConfig {
+<a href=#1059 id=1059 data-nosnippet>1059</a>            serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#1060 id=1060 data-nosnippet>1060</a>                <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>,
+<a href=#1061 id=1061 data-nosnippet>1061</a>                <span class="string">"rendezvous"</span>: { <span class="string">"endpoints"</span>: endpoints }, <span class="string">"cooperation"</span>: { <span class="string">"seeds"</span>: seeds }
+<a href=#1062 id=1062 data-nosnippet>1062</a>            }))
+<a href=#1063 id=1063 data-nosnippet>1063</a>            .unwrap()
+<a href=#1064 id=1064 data-nosnippet>1064</a>        };
+<a href=#1065 id=1065 data-nosnippet>1065</a>        <span class="kw">let </span>none = transport_check(<span class="kw-2">&amp;</span>declare(<span class="macro">serde_json::json!</span>([]), <span class="macro">serde_json::json!</span>([])));
+<a href=#1066 id=1066 data-nosnippet>1066</a>        <span class="macro">assert!</span>(none.ok);
+<a href=#1067 id=1067 data-nosnippet>1067</a>        <span class="macro">assert_eq!</span>(
+<a href=#1068 id=1068 data-nosnippet>1068</a>            none.detail,
+<a href=#1069 id=1069 data-nosnippet>1069</a>            <span class="string">"0 endpoint(s) over TLS, 0 in cleartext to loopback, private or overlay addresses"
+<a href=#1070 id=1070 data-nosnippet>1070</a>        </span>);
+<a href=#1071 id=1071 data-nosnippet>1071</a>        <span class="kw">let </span>held = transport_check(<span class="kw-2">&amp;</span>declare(
+<a href=#1072 id=1072 data-nosnippet>1072</a>            <span class="macro">serde_json::json!</span>([<span class="string">"https://hub.example"</span>, <span class="string">"http://100.92.246.32:8791"</span>]),
+<a href=#1073 id=1073 data-nosnippet>1073</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://127.0.0.1:8742"</span>, <span class="string">"http://bad..name:8742"</span>]),
+<a href=#1074 id=1074 data-nosnippet>1074</a>        ));
+<a href=#1075 id=1075 data-nosnippet>1075</a>        <span class="macro">assert!</span>(held.ok, <span class="string">"{}"</span>, held.detail);
+<a href=#1076 id=1076 data-nosnippet>1076</a>        <span class="macro">assert!</span>(
+<a href=#1077 id=1077 data-nosnippet>1077</a>            held.detail
+<a href=#1078 id=1078 data-nosnippet>1078</a>                .starts_with(<span class="string">"1 endpoint(s) over TLS, 2 in cleartext"</span>),
+<a href=#1079 id=1079 data-nosnippet>1079</a>            <span class="string">"{}"</span>,
+<a href=#1080 id=1080 data-nosnippet>1080</a>            held.detail
+<a href=#1081 id=1081 data-nosnippet>1081</a>        );
+<a href=#1082 id=1082 data-nosnippet>1082</a>        <span class="macro">assert!</span>(
+<a href=#1083 id=1083 data-nosnippet>1083</a>            held.detail
+<a href=#1084 id=1084 data-nosnippet>1084</a>                .contains(<span class="string">"not resolved here, judged again at every dial: http://bad..name:8742"</span>),
+<a href=#1085 id=1085 data-nosnippet>1085</a>            <span class="string">"{}"</span>,
+<a href=#1086 id=1086 data-nosnippet>1086</a>            held.detail
+<a href=#1087 id=1087 data-nosnippet>1087</a>        );
+<a href=#1088 id=1088 data-nosnippet>1088</a>        <span class="kw">let </span>refused = transport_check(<span class="kw-2">&amp;</span>declare(
+<a href=#1089 id=1089 data-nosnippet>1089</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://192.168.1.2:8791"</span>, <span class="string">"http://203.0.113.5:8791"</span>]),
+<a href=#1090 id=1090 data-nosnippet>1090</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://198.51.100.7:8742"</span>]),
+<a href=#1091 id=1091 data-nosnippet>1091</a>        ));
+<a href=#1092 id=1092 data-nosnippet>1092</a>        <span class="macro">assert!</span>(!refused.ok);
+<a href=#1093 id=1093 data-nosnippet>1093</a>        <span class="macro">assert!</span>(
+<a href=#1094 id=1094 data-nosnippet>1094</a>            refused
+<a href=#1095 id=1095 data-nosnippet>1095</a>                .detail
+<a href=#1096 id=1096 data-nosnippet>1096</a>                .contains(<span class="string">"http://203.0.113.5:8791 was not dialed"</span>),
+<a href=#1097 id=1097 data-nosnippet>1097</a>            <span class="string">"{}"</span>,
+<a href=#1098 id=1098 data-nosnippet>1098</a>            refused.detail
+<a href=#1099 id=1099 data-nosnippet>1099</a>        );
+<a href=#1100 id=1100 data-nosnippet>1100</a>        <span class="macro">assert!</span>(
+<a href=#1101 id=1101 data-nosnippet>1101</a>            refused.detail.contains(<span class="string">"198.51.100.7 is a public address"</span>),
+<a href=#1102 id=1102 data-nosnippet>1102</a>            <span class="string">"{}"</span>,
+<a href=#1103 id=1103 data-nosnippet>1103</a>            refused.detail
+<a href=#1104 id=1104 data-nosnippet>1104</a>        );
+<a href=#1105 id=1105 data-nosnippet>1105</a>        <span class="macro">assert!</span>(
+<a href=#1106 id=1106 data-nosnippet>1106</a>            !refused.detail.contains(<span class="string">"192.168.1.2"</span>),
+<a href=#1107 id=1107 data-nosnippet>1107</a>            <span class="string">"{}"</span>,
+<a href=#1108 id=1108 data-nosnippet>1108</a>            refused.detail
+<a href=#1109 id=1109 data-nosnippet>1109</a>        );
+<a href=#1110 id=1110 data-nosnippet>1110</a>        <span class="macro">assert!</span>(refused.remediation.unwrap().contains(<span class="string">"https://"</span>));
+<a href=#1111 id=1111 data-nosnippet>1111</a>        <span class="comment">// and the self-check carries it, right after the declaration it judges
+<a href=#1112 id=1112 data-nosnippet>1112</a>        </span><span class="kw">let </span>report = doctor(<span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(declare(
+<a href=#1113 id=1113 data-nosnippet>1113</a>            <span class="macro">serde_json::json!</span>([<span class="string">"http://203.0.113.5:8791"</span>]),
+<a href=#1114 id=1114 data-nosnippet>1114</a>            <span class="macro">serde_json::json!</span>([]),
+<a href=#1115 id=1115 data-nosnippet>1115</a>        ))));
+<a href=#1116 id=1116 data-nosnippet>1116</a>        <span class="macro">assert_eq!</span>(report.checks[<span class="number">1</span>].check, <span class="string">"transport"</span>);
+<a href=#1117 id=1117 data-nosnippet>1117</a>        <span class="macro">assert!</span>(!report.ok);
+<a href=#1118 id=1118 data-nosnippet>1118</a>    }
+<a href=#1119 id=1119 data-nosnippet>1119</a>}
 </code></pre></div></section></main></body></html>

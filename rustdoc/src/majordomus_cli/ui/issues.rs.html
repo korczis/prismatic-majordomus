@@ -16,7 +16,7 @@
 <a href=#16 id=16 data-nosnippet>16</a>
 <a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span><span class="kw">super</span>::shell::View;
 <a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span><span class="kw">super</span>::source::{ask_all, Answer, Source};
-<a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span><span class="kw">super</span>::view::{hero, kpi, list, meter, panel, state, table, text, unanswered, wide};
+<a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span><span class="kw">super</span>::view::{hero, items, kpi, list, meter, panel, state, table, text, unanswered, wide};
 <a href=#20 id=20 data-nosnippet>20</a>
 <a href=#21 id=21 data-nosnippet>21</a><span class="doccomment">/// The route of the screen.
 <a href=#22 id=22 data-nosnippet>22</a></span><span class="kw">pub const </span>ROUTE: <span class="kw-2">&amp;</span>str = <span class="string">"/ui/issues"</span>;
@@ -194,7 +194,7 @@
 <a href=#194 id=194 data-nosnippet>194</a><span class="doccomment">/// The browser: the status tabs, the filters, the issues the pick admits.
 <a href=#195 id=195 data-nosnippet>195</a></span><span class="kw">pub fn </span>browser(issues: <span class="kw-2">&amp;</span>Answer, roadmap: <span class="kw-2">&amp;</span>Answer, pick: <span class="kw-2">&amp;</span>Pick) -&gt; El {
 <a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">let </span>body = unanswered(issues).unwrap_or_else(|| {
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="kw">let </span>all = list(issues, <span class="string">"/issues"</span>);
+<a href=#197 id=197 data-nosnippet>197</a>        <span class="kw">let </span>all = items(issues, <span class="string">"/issues"</span>);
 <a href=#198 id=198 data-nosnippet>198</a>        <span class="kw">let </span>shown: Vec&lt;<span class="kw-2">&amp;</span>Value&gt; = all.iter().filter(|i| pick.admits(i)).collect();
 <a href=#199 id=199 data-nosnippet>199</a>        <span class="kw">let </span>tab = |label: String, href: String, current: bool| {
 <a href=#200 id=200 data-nosnippet>200</a>            el(<span class="string">"a"</span>)
@@ -211,7 +211,7 @@
 <a href=#211 id=211 data-nosnippet>211</a>                pick.href(<span class="string">"status"</span>, <span class="prelude-val">None</span>),
 <a href=#212 id=212 data-nosnippet>212</a>                pick.status.is_none(),
 <a href=#213 id=213 data-nosnippet>213</a>            ))
-<a href=#214 id=214 data-nosnippet>214</a>            .children(tally(<span class="kw-2">&amp;</span>all, <span class="string">"status"</span>).into_iter().map(|(s, n)| {
+<a href=#214 id=214 data-nosnippet>214</a>            .children(tally(all, <span class="string">"status"</span>).into_iter().map(|(s, n)| {
 <a href=#215 id=215 data-nosnippet>215</a>                <span class="kw">let </span>current = pick
 <a href=#216 id=216 data-nosnippet>216</a>                    .status
 <a href=#217 id=217 data-nosnippet>217</a>                    .as_deref()
@@ -284,7 +284,7 @@
 <a href=#284 id=284 data-nosnippet>284</a>            .child(select(
 <a href=#285 id=285 data-nosnippet>285</a>                <span class="string">"priority"</span>,
 <a href=#286 id=286 data-nosnippet>286</a>                <span class="string">"Priority"</span>,
-<a href=#287 id=287 data-nosnippet>287</a>                tally(<span class="kw-2">&amp;</span>all, <span class="string">"priority"</span>)
+<a href=#287 id=287 data-nosnippet>287</a>                tally(all, <span class="string">"priority"</span>)
 <a href=#288 id=288 data-nosnippet>288</a>                    .into_iter()
 <a href=#289 id=289 data-nosnippet>289</a>                    .map(|(p, n)| (p.clone(), <span class="macro">format!</span>(<span class="string">"{p} ({n})"</span>)))
 <a href=#290 id=290 data-nosnippet>290</a>                    .collect(),

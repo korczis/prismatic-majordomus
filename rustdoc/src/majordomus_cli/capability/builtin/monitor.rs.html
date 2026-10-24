@@ -123,7 +123,7 @@
 <a href=#123 id=123 data-nosnippet>123</a>    <span class="prelude-val">Err</span>((MonitorSourceHealth::Skipped, <span class="string">"not asked for"</span>.into()))
 <a href=#124 id=124 data-nosnippet>124</a>}
 <a href=#125 id=125 data-nosnippet>125</a>
-<a href=#126 id=126 data-nosnippet>126</a><span class="kw">fn </span>monitor(ctx: <span class="kw-2">&amp;</span>Context, input: MonitorInput) -&gt; <span class="prelude-ty">Result</span>&lt;MonitorPage, CapabilityError&gt; {
+<a href=#126 id=126 data-nosnippet>126</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>monitor(ctx: <span class="kw-2">&amp;</span>Context, input: MonitorInput) -&gt; <span class="prelude-ty">Result</span>&lt;MonitorPage, CapabilityError&gt; {
 <a href=#127 id=127 data-nosnippet>127</a>    <span class="kw">let </span>previous = <span class="kw">match </span>input.after.as_deref() {
 <a href=#128 id=128 data-nosnippet>128</a>        <span class="prelude-val">Some</span>(token) =&gt; Cursor::parse(token).map_err(CapabilityError::InvalidInput)<span class="question-mark">?</span>,
 <a href=#129 id=129 data-nosnippet>129</a>        <span class="prelude-val">None </span>=&gt; Cursor::default(),

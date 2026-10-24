@@ -1,0 +1,1566 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/capability/builtin/blackboard.rs`."><title>blackboard.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/capability/builtin/</div>blackboard.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! The `blackboard` module: who works on what in this repository, as one projection (ADR 0176).
+<a href=#2 id=2 data-nosnippet>2</a>//!
+<a href=#3 id=3 data-nosnippet>3</a>//! Three records already know it, each about its own half: the board of every checkout
+<a href=#4 id=4 data-nosnippet>4</a>//! (`peers.list`, gathered per ADR 0044) knows which clients are attached and what they
+<a href=#5 id=5 data-nosnippet>5</a>//! announced; the mesh journal (ADR 0067) knows the sessions, claims, reviews and handovers of
+<a href=#6 id=6 data-nosnippet>6</a>//! every linked machine, this repository's board peers among them as the `board-pN` sessions
+<a href=#7 id=7 data-nosnippet>7</a>//! their own server projected; the monitor (ADR 0133) knows what happened, folded, with a
+<a href=#8 id=8 data-nosnippet>8</a>//! cursor. This module joins them once, so that no surface joins them again. It writes nothing
+<a href=#9 id=9 data-nosnippet>9</a>//! and keeps nothing.
+<a href=#10 id=10 data-nosnippet>10</a>//!
+<a href=#11 id=11 data-nosnippet>11</a>//! The join is the whole of what is new here, and it is deliberately narrow: a board peer and
+<a href=#12 id=12 data-nosnippet>12</a>//! a mesh session are one worker only when an explicit identifier says so (see [`join`]). A
+<a href=#13 id=13 data-nosnippet>13</a>//! peer id such as `p1` is a position on one board, handed out again on every reconnect and by
+<a href=#14 id=14 data-nosnippet>14</a>//! every other board, so it is never an identity on its own.
+<a href=#15 id=15 data-nosnippet>15</a>
+<a href=#16 id=16 data-nosnippet>16</a></span><span class="kw">use </span>std::collections::{BTreeMap, HashMap};
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span>std::path::PathBuf;
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span>std::time::SystemTime;
+<a href=#19 id=19 data-nosnippet>19</a>
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span>schemars::JsonSchema;
+<a href=#21 id=21 data-nosnippet>21</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">use </span><span class="kw">crate</span>::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
+<a href=#24 id=24 data-nosnippet>24</a><span class="kw">use </span><span class="kw">crate</span>::capability::handler::{CapabilityError, Context};
+<a href=#25 id=25 data-nosnippet>25</a><span class="kw">use </span><span class="kw">crate</span>::capability::model::{CliExposure, Exposure, Stability};
+<a href=#26 id=26 data-nosnippet>26</a><span class="kw">use </span><span class="kw">crate</span>::capability::module::ModuleDescriptor;
+<a href=#27 id=27 data-nosnippet>27</a><span class="kw">use </span><span class="kw">crate</span>::mesh::journal::{ClaimMode, StreamLiveness};
+<a href=#28 id=28 data-nosnippet>28</a><span class="kw">use </span><span class="kw">crate</span>::mesh::state::{ClaimState, CooperationState, ReviewState, SessionState, SessionView};
+<a href=#29 id=29 data-nosnippet>29</a><span class="kw">use </span><span class="kw">crate</span>::monitor::{MonitorPage, MonitorSignal, MonitorSourceHealth, MonitorSourceState};
+<a href=#30 id=30 data-nosnippet>30</a><span class="kw">use </span><span class="kw">crate</span>::peers::{claims_meet, rfc3339, OverlapPath, Peer};
+<a href=#31 id=31 data-nosnippet>31</a><span class="kw">use </span><span class="kw">crate</span>::repository;
+<a href=#32 id=32 data-nosnippet>32</a><span class="kw">use crate</span>::{capability, module};
+<a href=#33 id=33 data-nosnippet>33</a>
+<a href=#34 id=34 data-nosnippet>34</a><span class="kw">use </span><span class="kw">super</span>::monitor::MonitorInput;
+<a href=#35 id=35 data-nosnippet>35</a><span class="kw">use </span><span class="kw">super</span>::peers::{BoardView, PeerList, PeerListInput, PeerListView};
+<a href=#36 id=36 data-nosnippet>36</a><span class="kw">use </span><span class="kw">super</span>::server::Checkouts;
+<a href=#37 id=37 data-nosnippet>37</a><span class="kw">use super</span>::{get, mcp};
+<a href=#38 id=38 data-nosnippet>38</a>
+<a href=#39 id=39 data-nosnippet>39</a><span class="doccomment">/// How many signals the answer carries when the caller does not say.
+<a href=#40 id=40 data-nosnippet>40</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>DEFAULT_SIGNALS: u64 = <span class="number">30</span>;
+<a href=#41 id=41 data-nosnippet>41</a>
+<a href=#42 id=42 data-nosnippet>42</a><span class="doccomment">/// The most signals one answer carries.
+<a href=#43 id=43 data-nosnippet>43</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MAX_SIGNALS: u64 = <span class="number">200</span>;
+<a href=#44 id=44 data-nosnippet>44</a>
+<a href=#45 id=45 data-nosnippet>45</a><span class="doccomment">/// The most conflicts one answer lists; `conflicts_total` counts them all.
+<a href=#46 id=46 data-nosnippet>46</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MAX_CONFLICTS: usize = <span class="number">100</span>;
+<a href=#47 id=47 data-nosnippet>47</a>
+<a href=#48 id=48 data-nosnippet>48</a><span class="doccomment">/// The most open reviews and untaken handovers one answer lists, each.
+<a href=#49 id=49 data-nosnippet>49</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">const </span>MAX_RECORDS: usize = <span class="number">50</span>;
+<a href=#50 id=50 data-nosnippet>50</a>
+<a href=#51 id=51 data-nosnippet>51</a><span class="doccomment">/// The monitor sources asked when the caller does not say: the ones this machine answers.
+<a href=#52 id=52 data-nosnippet>52</a>/// GitHub is asked only when the caller names it — it is not who is here, and it is the network.
+<a href=#53 id=53 data-nosnippet>53</a></span><span class="kw">const </span>DEFAULT_SOURCES: <span class="kw-2">&amp;</span>str = <span class="string">"mesh,executor"</span>;
+<a href=#54 id=54 data-nosnippet>54</a>
+<a href=#55 id=55 data-nosnippet>55</a><span class="attr">#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+<a href=#56 id=56 data-nosnippet>56</a>#[serde(deny_unknown_fields)]
+<a href=#57 id=57 data-nosnippet>57</a></span><span class="doccomment">/// The input of `blackboard.snapshot`: how wide the board is, who reads it, and how much of
+<a href=#58 id=58 data-nosnippet>58</a>/// what happened it carries.
+<a href=#59 id=59 data-nosnippet>59</a></span><span class="kw">pub struct </span>BlackboardInput {
+<a href=#60 id=60 data-nosnippet>60</a>    <span class="doccomment">/// Which checkouts' boards it covers: `repository` (every one, the default) or `this`.
+<a href=#61 id=61 data-nosnippet>61</a>    </span><span class="attr">#[serde(default)]
+<a href=#62 id=62 data-nosnippet>62</a>    </span><span class="kw">pub </span>checkouts: Checkouts,
+<a href=#63 id=63 data-nosnippet>63</a>    <span class="doccomment">/// Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session.
+<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="attr">#[serde(default, rename = <span class="string">"for"</span>, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#65 id=65 data-nosnippet>65</a>    </span><span class="kw">pub </span>reader: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#66 id=66 data-nosnippet>66</a>    <span class="doccomment">/// How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.
+<a href=#67 id=67 data-nosnippet>67</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#68 id=68 data-nosnippet>68</a>    </span><span class="kw">pub </span>signals: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#69 id=69 data-nosnippet>69</a>    <span class="doccomment">/// A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`).
+<a href=#70 id=70 data-nosnippet>70</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#71 id=71 data-nosnippet>71</a>    </span><span class="kw">pub </span>sources: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#72 id=72 data-nosnippet>72</a>}
+<a href=#73 id=73 data-nosnippet>73</a>
+<a href=#74 id=74 data-nosnippet>74</a><span class="kw">impl </span>BenchmarkCases <span class="kw">for </span>BlackboardInput {
+<a href=#75 id=75 data-nosnippet>75</a>    <span class="kw">fn </span>benchmark_cases(<span class="kw">_</span>: <span class="kw-2">&amp;</span>CaseContext&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;NamedCase&lt;<span class="self">Self</span>&gt;&gt; {
+<a href=#76 id=76 data-nosnippet>76</a>        cases()
+<a href=#77 id=77 data-nosnippet>77</a>    }
+<a href=#78 id=78 data-nosnippet>78</a>}
+<a href=#79 id=79 data-nosnippet>79</a>
+<a href=#80 id=80 data-nosnippet>80</a><span class="doccomment">/// The benchmark cases: every parameter has an example, no other checkout's server is asked
+<a href=#81 id=81 data-nosnippet>81</a>/// and GitHub — the network — never is, so a benchmark measures this machine.
+<a href=#82 id=82 data-nosnippet>82</a></span><span class="kw">fn </span>cases() -&gt; Vec&lt;NamedCase&lt;BlackboardInput&gt;&gt; {
+<a href=#83 id=83 data-nosnippet>83</a>    <span class="macro">vec!</span>[
+<a href=#84 id=84 data-nosnippet>84</a>        NamedCase::new(
+<a href=#85 id=85 data-nosnippet>85</a>            <span class="string">"this-checkout"</span>,
+<a href=#86 id=86 data-nosnippet>86</a>            BlackboardInput {
+<a href=#87 id=87 data-nosnippet>87</a>                checkouts: Checkouts::This,
+<a href=#88 id=88 data-nosnippet>88</a>                reader: <span class="prelude-val">None</span>,
+<a href=#89 id=89 data-nosnippet>89</a>                signals: <span class="prelude-val">None</span>,
+<a href=#90 id=90 data-nosnippet>90</a>                sources: <span class="prelude-val">Some</span>(<span class="string">"mesh,executor"</span>.into()),
+<a href=#91 id=91 data-nosnippet>91</a>            },
+<a href=#92 id=92 data-nosnippet>92</a>        ),
+<a href=#93 id=93 data-nosnippet>93</a>        NamedCase::new(
+<a href=#94 id=94 data-nosnippet>94</a>            <span class="string">"addressed"</span>,
+<a href=#95 id=95 data-nosnippet>95</a>            BlackboardInput {
+<a href=#96 id=96 data-nosnippet>96</a>                checkouts: Checkouts::This,
+<a href=#97 id=97 data-nosnippet>97</a>                reader: <span class="prelude-val">Some</span>(<span class="string">"1b"</span>.into()),
+<a href=#98 id=98 data-nosnippet>98</a>                signals: <span class="prelude-val">Some</span>(<span class="number">10</span>),
+<a href=#99 id=99 data-nosnippet>99</a>                sources: <span class="prelude-val">Some</span>(<span class="string">"mesh"</span>.into()),
+<a href=#100 id=100 data-nosnippet>100</a>            },
+<a href=#101 id=101 data-nosnippet>101</a>        ),
+<a href=#102 id=102 data-nosnippet>102</a>    ]
+<a href=#103 id=103 data-nosnippet>103</a>}
+<a href=#104 id=104 data-nosnippet>104</a>
+<a href=#105 id=105 data-nosnippet>105</a><span class="comment">// ---------------------------------------------------------------- the answer
+<a href=#106 id=106 data-nosnippet>106</a>
+<a href=#107 id=107 data-nosnippet>107</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#108 id=108 data-nosnippet>108</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#109 id=109 data-nosnippet>109</a></span><span class="doccomment">/// Where a worker of the blackboard was found.
+<a href=#110 id=110 data-nosnippet>110</a></span><span class="kw">pub enum </span>BlackboardOrigin {
+<a href=#111 id=111 data-nosnippet>111</a>    <span class="doccomment">/// On a checkout's board: an MCP client attached to that checkout's server.
+<a href=#112 id=112 data-nosnippet>112</a>    </span>Board,
+<a href=#113 id=113 data-nosnippet>113</a>    <span class="doccomment">/// In the mesh journal only: a session no board of this repository holds — another
+<a href=#114 id=114 data-nosnippet>114</a>    /// machine's, a task's, or a client's own.
+<a href=#115 id=115 data-nosnippet>115</a>    </span>Mesh,
+<a href=#116 id=116 data-nosnippet>116</a>}
+<a href=#117 id=117 data-nosnippet>117</a>
+<a href=#118 id=118 data-nosnippet>118</a><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#119 id=119 data-nosnippet>119</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#120 id=120 data-nosnippet>120</a></span><span class="doccomment">/// Whether a worker is here now.
+<a href=#121 id=121 data-nosnippet>121</a></span><span class="kw">pub enum </span>BlackboardPresence {
+<a href=#122 id=122 data-nosnippet>122</a>    <span class="doccomment">/// Attached to its board now.
+<a href=#123 id=123 data-nosnippet>123</a>    </span>Attached,
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="doccomment">/// Gone from its board, kept because it still holds an announcement.
+<a href=#125 id=125 data-nosnippet>125</a>    </span>Departed,
+<a href=#126 id=126 data-nosnippet>126</a>    <span class="doccomment">/// An open mesh session whose runtime still beats.
+<a href=#127 id=127 data-nosnippet>127</a>    </span>Active,
+<a href=#128 id=128 data-nosnippet>128</a>}
+<a href=#129 id=129 data-nosnippet>129</a>
+<a href=#130 id=130 data-nosnippet>130</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#131 id=131 data-nosnippet>131</a></span><span class="doccomment">/// One claim a worker holds.
+<a href=#132 id=132 data-nosnippet>132</a></span><span class="kw">pub struct </span>BlackboardClaim {
+<a href=#133 id=133 data-nosnippet>133</a>    <span class="doccomment">/// The claim's name, when its worker holds several.
+<a href=#134 id=134 data-nosnippet>134</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#135 id=135 data-nosnippet>135</a>    </span><span class="kw">pub </span>name: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#136 id=136 data-nosnippet>136</a>    <span class="doccomment">/// What it is for, in the worker's words.
+<a href=#137 id=137 data-nosnippet>137</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#138 id=138 data-nosnippet>138</a>    </span><span class="kw">pub </span>intent: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#139 id=139 data-nosnippet>139</a>    <span class="doccomment">/// The repository paths it names.
+<a href=#140 id=140 data-nosnippet>140</a>    </span><span class="kw">pub </span>scope: Vec&lt;String&gt;,
+<a href=#141 id=141 data-nosnippet>141</a>    <span class="doccomment">/// `advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive
+<a href=#142 id=142 data-nosnippet>142</a>    /// claim meeting it is refused while it lives). A board announcement is advisory.
+<a href=#143 id=143 data-nosnippet>143</a>    </span><span class="kw">pub </span>mode: ClaimMode,
+<a href=#144 id=144 data-nosnippet>144</a>    <span class="doccomment">/// The issue it is for, when the claim names one.
+<a href=#145 id=145 data-nosnippet>145</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#146 id=146 data-nosnippet>146</a>    </span><span class="kw">pub </span>issue: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#147 id=147 data-nosnippet>147</a>    <span class="doccomment">/// The mesh claim's key, when it is a journal record; a board announcement has none.
+<a href=#148 id=148 data-nosnippet>148</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#149 id=149 data-nosnippet>149</a>    </span><span class="kw">pub </span>record: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#150 id=150 data-nosnippet>150</a>    <span class="doccomment">/// Whether the mesh found it conflicting with another live claim.
+<a href=#151 id=151 data-nosnippet>151</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"std::ops::Not::not"</span>)]
+<a href=#152 id=152 data-nosnippet>152</a>    </span><span class="kw">pub </span>conflicted: bool,
+<a href=#153 id=153 data-nosnippet>153</a>}
+<a href=#154 id=154 data-nosnippet>154</a>
+<a href=#155 id=155 data-nosnippet>155</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#156 id=156 data-nosnippet>156</a></span><span class="doccomment">/// One worker of the repository: a board peer, a mesh session, or one of each that an
+<a href=#157 id=157 data-nosnippet>157</a>/// explicit identifier joins.
+<a href=#158 id=158 data-nosnippet>158</a></span><span class="kw">pub struct </span>BlackboardWorker {
+<a href=#159 id=159 data-nosnippet>159</a>    <span class="doccomment">/// Stable for as long as the worker is here: `board:&lt;checkout&gt;/&lt;peer&gt;` or
+<a href=#160 id=160 data-nosnippet>160</a>    /// `mesh:&lt;stream&gt;/&lt;session&gt;`. Never a bare peer id.
+<a href=#161 id=161 data-nosnippet>161</a>    </span><span class="kw">pub </span>key: String,
+<a href=#162 id=162 data-nosnippet>162</a>    <span class="doccomment">/// Where it was found.
+<a href=#163 id=163 data-nosnippet>163</a>    </span><span class="kw">pub </span>origin: BlackboardOrigin,
+<a href=#164 id=164 data-nosnippet>164</a>    <span class="doccomment">/// Whether it is here now.
+<a href=#165 id=165 data-nosnippet>165</a>    </span><span class="kw">pub </span>presence: BlackboardPresence,
+<a href=#166 id=166 data-nosnippet>166</a>    <span class="doccomment">/// The client's own name, from its MCP initialize or its mesh session.
+<a href=#167 id=167 data-nosnippet>167</a>    </span><span class="kw">pub </span>client: String,
+<a href=#168 id=168 data-nosnippet>168</a>    <span class="doccomment">/// The client's display title or the worker it says it is, when it gave one.
+<a href=#169 id=169 data-nosnippet>169</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#170 id=170 data-nosnippet>170</a>    </span><span class="kw">pub </span>title: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#171 id=171 data-nosnippet>171</a>    <span class="doccomment">/// The client's version, from its initialize.
+<a href=#172 id=172 data-nosnippet>172</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#173 id=173 data-nosnippet>173</a>    </span><span class="kw">pub </span>version: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#174 id=174 data-nosnippet>174</a>    <span class="doccomment">/// What it said it is doing; absent means it announced nothing.
+<a href=#175 id=175 data-nosnippet>175</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#176 id=176 data-nosnippet>176</a>    </span><span class="kw">pub </span>intent: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#177 id=177 data-nosnippet>177</a>    <span class="doccomment">/// The checkout's identity.
+<a href=#178 id=178 data-nosnippet>178</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#179 id=179 data-nosnippet>179</a>    </span><span class="kw">pub </span>checkout: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#180 id=180 data-nosnippet>180</a>    <span class="doccomment">/// The checkout's path on its machine.
+<a href=#181 id=181 data-nosnippet>181</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#182 id=182 data-nosnippet>182</a>    </span><span class="kw">pub </span>worktree: <span class="prelude-ty">Option</span>&lt;PathBuf&gt;,
+<a href=#183 id=183 data-nosnippet>183</a>    <span class="doccomment">/// The branch it works on.
+<a href=#184 id=184 data-nosnippet>184</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#185 id=185 data-nosnippet>185</a>    </span><span class="kw">pub </span>branch: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#186 id=186 data-nosnippet>186</a>    <span class="doccomment">/// Its position on its board (`p3`): meaningful on that board only.
+<a href=#187 id=187 data-nosnippet>187</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#188 id=188 data-nosnippet>188</a>    </span><span class="kw">pub </span>board_peer: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#189 id=189 data-nosnippet>189</a>    <span class="doccomment">/// Its mesh session's key, when it has one.
+<a href=#190 id=190 data-nosnippet>190</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#191 id=191 data-nosnippet>191</a>    </span><span class="kw">pub </span>session: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#192 id=192 data-nosnippet>192</a>    <span class="doccomment">/// The machine's display name.
+<a href=#193 id=193 data-nosnippet>193</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#194 id=194 data-nosnippet>194</a>    </span><span class="kw">pub </span>machine: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#195 id=195 data-nosnippet>195</a>    <span class="doccomment">/// The runtime (`&lt;node&gt;-&lt;runtime&gt;`) its mesh session belongs to.
+<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#197 id=197 data-nosnippet>197</a>    </span><span class="kw">pub </span>runtime: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#198 id=198 data-nosnippet>198</a>    <span class="doccomment">/// The task its mesh session names.
+<a href=#199 id=199 data-nosnippet>199</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#200 id=200 data-nosnippet>200</a>    </span><span class="kw">pub </span>task: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#201 id=201 data-nosnippet>201</a>    <span class="doccomment">/// The issue its mesh session names.
+<a href=#202 id=202 data-nosnippet>202</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#203 id=203 data-nosnippet>203</a>    </span><span class="kw">pub </span>issue: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#204 id=204 data-nosnippet>204</a>    <span class="doccomment">/// When it attached to its board.
+<a href=#205 id=205 data-nosnippet>205</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#206 id=206 data-nosnippet>206</a>    </span><span class="kw">pub </span>connected_at: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#207 id=207 data-nosnippet>207</a>    <span class="doccomment">/// Seconds since its board last heard from it.
+<a href=#208 id=208 data-nosnippet>208</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#209 id=209 data-nosnippet>209</a>    </span><span class="kw">pub </span>last_seen_seconds_ago: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#210 id=210 data-nosnippet>210</a>    <span class="doccomment">/// Milliseconds since its runtime last beat. A beat is liveness, not work done.
+<a href=#211 id=211 data-nosnippet>211</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#212 id=212 data-nosnippet>212</a>    </span><span class="kw">pub </span>last_beat_ms: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#213 id=213 data-nosnippet>213</a>    <span class="doccomment">/// Its claims, board announcements and live mesh claims alike.
+<a href=#214 id=214 data-nosnippet>214</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Vec::is_empty"</span>)]
+<a href=#215 id=215 data-nosnippet>215</a>    </span><span class="kw">pub </span>claims: Vec&lt;BlackboardClaim&gt;,
+<a href=#216 id=216 data-nosnippet>216</a>}
+<a href=#217 id=217 data-nosnippet>217</a>
+<a href=#218 id=218 data-nosnippet>218</a><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#219 id=219 data-nosnippet>219</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#220 id=220 data-nosnippet>220</a></span><span class="doccomment">/// How sure a conflict is.
+<a href=#221 id=221 data-nosnippet>221</a></span><span class="kw">pub enum </span>BlackboardCertainty {
+<a href=#222 id=222 data-nosnippet>222</a>    <span class="doccomment">/// Two claims meet and at least one of them is advisory: two workers about to touch the
+<a href=#223 id=223 data-nosnippet>223</a>    /// same paths, told and not stopped.
+<a href=#224 id=224 data-nosnippet>224</a>    </span>Potential,
+<a href=#225 id=225 data-nosnippet>225</a>    <span class="doccomment">/// Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim
+<a href=#226 id=226 data-nosnippet>226</a>    /// exists to prevent has happened.
+<a href=#227 id=227 data-nosnippet>227</a>    </span>Confirmed,
+<a href=#228 id=228 data-nosnippet>228</a>}
+<a href=#229 id=229 data-nosnippet>229</a>
+<a href=#230 id=230 data-nosnippet>230</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#231 id=231 data-nosnippet>231</a></span><span class="doccomment">/// One side of a conflict: a worker and which of its claims.
+<a href=#232 id=232 data-nosnippet>232</a></span><span class="kw">pub struct </span>BlackboardClaimRef {
+<a href=#233 id=233 data-nosnippet>233</a>    <span class="doccomment">/// The worker's key.
+<a href=#234 id=234 data-nosnippet>234</a>    </span><span class="kw">pub </span>worker: String,
+<a href=#235 id=235 data-nosnippet>235</a>    <span class="doccomment">/// The claim's name, when it has one.
+<a href=#236 id=236 data-nosnippet>236</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#237 id=237 data-nosnippet>237</a>    </span><span class="kw">pub </span>claim: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="doccomment">/// The mesh claim's key, when it is a journal record.
+<a href=#239 id=239 data-nosnippet>239</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#240 id=240 data-nosnippet>240</a>    </span><span class="kw">pub </span>record: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#241 id=241 data-nosnippet>241</a>}
+<a href=#242 id=242 data-nosnippet>242</a>
+<a href=#243 id=243 data-nosnippet>243</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#244 id=244 data-nosnippet>244</a></span><span class="doccomment">/// Two claims of two different workers whose scopes meet.
+<a href=#245 id=245 data-nosnippet>245</a></span><span class="kw">pub struct </span>BlackboardConflict {
+<a href=#246 id=246 data-nosnippet>246</a>    <span class="doccomment">/// Potential or confirmed.
+<a href=#247 id=247 data-nosnippet>247</a>    </span><span class="kw">pub </span>certainty: BlackboardCertainty,
+<a href=#248 id=248 data-nosnippet>248</a>    <span class="doccomment">/// The claim that came first in the answer's order.
+<a href=#249 id=249 data-nosnippet>249</a>    </span><span class="kw">pub </span>first: BlackboardClaimRef,
+<a href=#250 id=250 data-nosnippet>250</a>    <span class="doccomment">/// The claim that meets it.
+<a href=#251 id=251 data-nosnippet>251</a>    </span><span class="kw">pub </span>second: BlackboardClaimRef,
+<a href=#252 id=252 data-nosnippet>252</a>    <span class="doccomment">/// The paths that meet, `yours` the first's and `theirs` the second's.
+<a href=#253 id=253 data-nosnippet>253</a>    </span><span class="kw">pub </span>paths: Vec&lt;OverlapPath&gt;,
+<a href=#254 id=254 data-nosnippet>254</a>}
+<a href=#255 id=255 data-nosnippet>255</a>
+<a href=#256 id=256 data-nosnippet>256</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#257 id=257 data-nosnippet>257</a></span><span class="doccomment">/// A review request nobody has answered.
+<a href=#258 id=258 data-nosnippet>258</a></span><span class="kw">pub struct </span>BlackboardReview {
+<a href=#259 id=259 data-nosnippet>259</a>    <span class="doccomment">/// The review's key in the journal.
+<a href=#260 id=260 data-nosnippet>260</a>    </span><span class="kw">pub </span>key: String,
+<a href=#261 id=261 data-nosnippet>261</a>    <span class="doccomment">/// The requesting worker's key, or its session key when no worker holds it.
+<a href=#262 id=262 data-nosnippet>262</a>    </span><span class="kw">pub </span>from: String,
+<a href=#263 id=263 data-nosnippet>263</a>    <span class="doccomment">/// What it asks about.
+<a href=#264 id=264 data-nosnippet>264</a>    </span><span class="kw">pub </span>subject: String,
+<a href=#265 id=265 data-nosnippet>265</a>    <span class="doccomment">/// Whom it asks, as the request names it; absent means anyone.
+<a href=#266 id=266 data-nosnippet>266</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#267 id=267 data-nosnippet>267</a>    </span><span class="kw">pub </span>reviewer: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#268 id=268 data-nosnippet>268</a>    <span class="doccomment">/// The issue it names.
+<a href=#269 id=269 data-nosnippet>269</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#270 id=270 data-nosnippet>270</a>    </span><span class="kw">pub </span>issue: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#271 id=271 data-nosnippet>271</a>}
+<a href=#272 id=272 data-nosnippet>272</a>
+<a href=#273 id=273 data-nosnippet>273</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#274 id=274 data-nosnippet>274</a></span><span class="doccomment">/// A handover published to the mesh that nobody has taken. Its body is not repeated here:
+<a href=#275 id=275 data-nosnippet>275</a>/// `mesh.state` holds it. The journal names no recipient for a handover — whoever takes it
+<a href=#276 id=276 data-nosnippet>276</a>/// is its addressee — so none is inferred here.
+<a href=#277 id=277 data-nosnippet>277</a></span><span class="kw">pub struct </span>BlackboardHandover {
+<a href=#278 id=278 data-nosnippet>278</a>    <span class="doccomment">/// The handover's id.
+<a href=#279 id=279 data-nosnippet>279</a>    </span><span class="kw">pub </span>id: String,
+<a href=#280 id=280 data-nosnippet>280</a>    <span class="doccomment">/// The runtime that published it.
+<a href=#281 id=281 data-nosnippet>281</a>    </span><span class="kw">pub </span>runtime: String,
+<a href=#282 id=282 data-nosnippet>282</a>    <span class="doccomment">/// Its name, when it has one.
+<a href=#283 id=283 data-nosnippet>283</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#284 id=284 data-nosnippet>284</a>    </span><span class="kw">pub </span>name: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#285 id=285 data-nosnippet>285</a>    <span class="doccomment">/// The branch it continues.
+<a href=#286 id=286 data-nosnippet>286</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#287 id=287 data-nosnippet>287</a>    </span><span class="kw">pub </span>branch: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#288 id=288 data-nosnippet>288</a>    <span class="doccomment">/// The issue it continues.
+<a href=#289 id=289 data-nosnippet>289</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#290 id=290 data-nosnippet>290</a>    </span><span class="kw">pub </span>issue: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#291 id=291 data-nosnippet>291</a>    <span class="doccomment">/// The task it continues.
+<a href=#292 id=292 data-nosnippet>292</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#293 id=293 data-nosnippet>293</a>    </span><span class="kw">pub </span>task: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#294 id=294 data-nosnippet>294</a>    <span class="doccomment">/// When it was written.
+<a href=#295 id=295 data-nosnippet>295</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#296 id=296 data-nosnippet>296</a>    </span><span class="kw">pub </span>created_at: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#297 id=297 data-nosnippet>297</a>}
+<a href=#298 id=298 data-nosnippet>298</a>
+<a href=#299 id=299 data-nosnippet>299</a><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#300 id=300 data-nosnippet>300</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#301 id=301 data-nosnippet>301</a></span><span class="doccomment">/// What a relation between two workers is.
+<a href=#302 id=302 data-nosnippet>302</a></span><span class="kw">pub enum </span>BlackboardRelationKind {
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="doccomment">/// A board peer and a mesh session that may be one worker.
+<a href=#304 id=304 data-nosnippet>304</a>    </span>SameWorker,
+<a href=#305 id=305 data-nosnippet>305</a>    <span class="doccomment">/// One worker asked another for a review.
+<a href=#306 id=306 data-nosnippet>306</a>    </span>Review,
+<a href=#307 id=307 data-nosnippet>307</a>}
+<a href=#308 id=308 data-nosnippet>308</a>
+<a href=#309 id=309 data-nosnippet>309</a><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#310 id=310 data-nosnippet>310</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#311 id=311 data-nosnippet>311</a></span><span class="doccomment">/// What a relation rests on.
+<a href=#312 id=312 data-nosnippet>312</a></span><span class="kw">pub enum </span>BlackboardEvidence {
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="doccomment">/// An explicit identifier or a journal record joins the two ends.
+<a href=#314 id=314 data-nosnippet>314</a>    </span>Verified,
+<a href=#315 id=315 data-nosnippet>315</a>    <span class="doccomment">/// The ends could be joined and nothing proves it: more than one record fits.
+<a href=#316 id=316 data-nosnippet>316</a>    </span>Candidate,
+<a href=#317 id=317 data-nosnippet>317</a>}
+<a href=#318 id=318 data-nosnippet>318</a>
+<a href=#319 id=319 data-nosnippet>319</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#320 id=320 data-nosnippet>320</a></span><span class="doccomment">/// A typed relation between two workers, or a worker and the addressee a record names.
+<a href=#321 id=321 data-nosnippet>321</a></span><span class="kw">pub struct </span>BlackboardRelation {
+<a href=#322 id=322 data-nosnippet>322</a>    <span class="doccomment">/// What it is.
+<a href=#323 id=323 data-nosnippet>323</a>    </span><span class="kw">pub </span>kind: BlackboardRelationKind,
+<a href=#324 id=324 data-nosnippet>324</a>    <span class="doccomment">/// What it rests on.
+<a href=#325 id=325 data-nosnippet>325</a>    </span><span class="kw">pub </span>evidence: BlackboardEvidence,
+<a href=#326 id=326 data-nosnippet>326</a>    <span class="doccomment">/// A worker's key.
+<a href=#327 id=327 data-nosnippet>327</a>    </span><span class="kw">pub </span>from: String,
+<a href=#328 id=328 data-nosnippet>328</a>    <span class="doccomment">/// A worker's key, or the addressee as the record names it when no worker is it.
+<a href=#329 id=329 data-nosnippet>329</a>    </span><span class="kw">pub </span>to: String,
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="doccomment">/// The record it rests on: a session or a review key.
+<a href=#331 id=331 data-nosnippet>331</a>    </span><span class="kw">pub </span>record: String,
+<a href=#332 id=332 data-nosnippet>332</a>}
+<a href=#333 id=333 data-nosnippet>333</a>
+<a href=#334 id=334 data-nosnippet>334</a><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#335 id=335 data-nosnippet>335</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#336 id=336 data-nosnippet>336</a></span><span class="doccomment">/// How one source of the blackboard was read.
+<a href=#337 id=337 data-nosnippet>337</a></span><span class="kw">pub enum </span>BlackboardSourceState {
+<a href=#338 id=338 data-nosnippet>338</a>    <span class="doccomment">/// Read whole.
+<a href=#339 id=339 data-nosnippet>339</a>    </span><span class="prelude-val">Ok</span>,
+<a href=#340 id=340 data-nosnippet>340</a>    <span class="doccomment">/// Read, and some of what it covers could not be asked.
+<a href=#341 id=341 data-nosnippet>341</a>    </span>Partial,
+<a href=#342 id=342 data-nosnippet>342</a>    <span class="doccomment">/// Not read; the reason says why.
+<a href=#343 id=343 data-nosnippet>343</a>    </span>Absent,
+<a href=#344 id=344 data-nosnippet>344</a>    <span class="doccomment">/// Not asked for.
+<a href=#345 id=345 data-nosnippet>345</a>    </span>Skipped,
+<a href=#346 id=346 data-nosnippet>346</a>}
+<a href=#347 id=347 data-nosnippet>347</a>
+<a href=#348 id=348 data-nosnippet>348</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#349 id=349 data-nosnippet>349</a></span><span class="doccomment">/// One source of the blackboard and how it was read.
+<a href=#350 id=350 data-nosnippet>350</a></span><span class="kw">pub struct </span>BlackboardSource {
+<a href=#351 id=351 data-nosnippet>351</a>    <span class="doccomment">/// `board`, `mesh`, or a monitor source as `monitor.&lt;name&gt;`.
+<a href=#352 id=352 data-nosnippet>352</a>    </span><span class="kw">pub </span>source: String,
+<a href=#353 id=353 data-nosnippet>353</a>    <span class="doccomment">/// How it was read.
+<a href=#354 id=354 data-nosnippet>354</a>    </span><span class="kw">pub </span>state: BlackboardSourceState,
+<a href=#355 id=355 data-nosnippet>355</a>    <span class="doccomment">/// Why it is not `ok`.
+<a href=#356 id=356 data-nosnippet>356</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#357 id=357 data-nosnippet>357</a>    </span><span class="kw">pub </span>reason: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#358 id=358 data-nosnippet>358</a>}
+<a href=#359 id=359 data-nosnippet>359</a>
+<a href=#360 id=360 data-nosnippet>360</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+<a href=#361 id=361 data-nosnippet>361</a></span><span class="doccomment">/// The answer of `blackboard.snapshot`: who works on what in this repository, on every board
+<a href=#362 id=362 data-nosnippet>362</a>/// and every linked machine, with what meets and what waits, read once from the records that
+<a href=#363 id=363 data-nosnippet>363</a>/// know it.
+<a href=#364 id=364 data-nosnippet>364</a></span><span class="kw">pub struct </span>Blackboard {
+<a href=#365 id=365 data-nosnippet>365</a>    <span class="doccomment">/// When it was read (RFC 3339).
+<a href=#366 id=366 data-nosnippet>366</a>    </span><span class="kw">pub </span>at: String,
+<a href=#367 id=367 data-nosnippet>367</a>    <span class="doccomment">/// The identity of the checkout whose server answered.
+<a href=#368 id=368 data-nosnippet>368</a>    </span><span class="kw">pub </span>checkout: String,
+<a href=#369 id=369 data-nosnippet>369</a>    <span class="doccomment">/// That checkout's HEAD, when it has one.
+<a href=#370 id=370 data-nosnippet>370</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#371 id=371 data-nosnippet>371</a>    </span><span class="kw">pub </span>head: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="doccomment">/// Whether every board was read and the mesh, when the repository declares one, could be
+<a href=#373 id=373 data-nosnippet>373</a>    /// asked. `false` names its reason in `sources`, so that "nobody is here" is never what
+<a href=#374 id=374 data-nosnippet>374</a>    /// "I could not ask" reads as. The monitor's sources are reported in `sources` with their
+<a href=#375 id=375 data-nosnippet>375</a>    /// state and do not decide it: an empty executor trail or an absent `gh` is no board that
+<a href=#376 id=376 data-nosnippet>376</a>    /// could not be read.
+<a href=#377 id=377 data-nosnippet>377</a>    </span><span class="kw">pub </span>complete: bool,
+<a href=#378 id=378 data-nosnippet>378</a>    <span class="doccomment">/// Each source and how it was read.
+<a href=#379 id=379 data-nosnippet>379</a>    </span><span class="kw">pub </span>sources: Vec&lt;BlackboardSource&gt;,
+<a href=#380 id=380 data-nosnippet>380</a>    <span class="doccomment">/// Each checkout's board the summary lists: reached or not, with a server or a worker.
+<a href=#381 id=381 data-nosnippet>381</a>    </span><span class="kw">pub </span>boards: Vec&lt;BoardView&gt;,
+<a href=#382 id=382 data-nosnippet>382</a>    <span class="doccomment">/// How many checkouts the answer covers, listed in `boards` or counted in `omitted`.
+<a href=#383 id=383 data-nosnippet>383</a>    </span><span class="kw">pub </span>covered: usize,
+<a href=#384 id=384 data-nosnippet>384</a>    <span class="doccomment">/// The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):
+<a href=#385 id=385 data-nosnippet>385</a>    /// no server, nobody attached, no board.
+<a href=#386 id=386 data-nosnippet>386</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"BTreeMap::is_empty"</span>)]
+<a href=#387 id=387 data-nosnippet>387</a>    </span><span class="kw">pub </span>omitted: BTreeMap&lt;String, usize&gt;,
+<a href=#388 id=388 data-nosnippet>388</a>    <span class="doccomment">/// How many workers are here now: attached to a board or in an active mesh session.
+<a href=#389 id=389 data-nosnippet>389</a>    </span><span class="kw">pub </span>present: usize,
+<a href=#390 id=390 data-nosnippet>390</a>    <span class="doccomment">/// Every worker, this checkout's board first, then the other boards, then the mesh.
+<a href=#391 id=391 data-nosnippet>391</a>    </span><span class="kw">pub </span>workers: Vec&lt;BlackboardWorker&gt;,
+<a href=#392 id=392 data-nosnippet>392</a>    <span class="doccomment">/// The claims that meet, at most a hundred, confirmed first.
+<a href=#393 id=393 data-nosnippet>393</a>    </span><span class="kw">pub </span>conflicts: Vec&lt;BlackboardConflict&gt;,
+<a href=#394 id=394 data-nosnippet>394</a>    <span class="doccomment">/// How many conflicts there are in all.
+<a href=#395 id=395 data-nosnippet>395</a>    </span><span class="kw">pub </span>conflicts_total: usize,
+<a href=#396 id=396 data-nosnippet>396</a>    <span class="doccomment">/// The review requests nobody has answered, at most fifty.
+<a href=#397 id=397 data-nosnippet>397</a>    </span><span class="kw">pub </span>reviews: Vec&lt;BlackboardReview&gt;,
+<a href=#398 id=398 data-nosnippet>398</a>    <span class="doccomment">/// The handovers nobody has taken, at most fifty.
+<a href=#399 id=399 data-nosnippet>399</a>    </span><span class="kw">pub </span>handovers: Vec&lt;BlackboardHandover&gt;,
+<a href=#400 id=400 data-nosnippet>400</a>    <span class="doccomment">/// The typed relations between workers.
+<a href=#401 id=401 data-nosnippet>401</a>    </span><span class="kw">pub </span>relations: Vec&lt;BlackboardRelation&gt;,
+<a href=#402 id=402 data-nosnippet>402</a>    <span class="doccomment">/// The newest signals of the last hour, oldest first.
+<a href=#403 id=403 data-nosnippet>403</a>    </span><span class="kw">pub </span>signals: Vec&lt;MonitorSignal&gt;,
+<a href=#404 id=404 data-nosnippet>404</a>    <span class="doccomment">/// How many of them are for the reader.
+<a href=#405 id=405 data-nosnippet>405</a>    </span><span class="kw">pub </span>for_you: usize,
+<a href=#406 id=406 data-nosnippet>406</a>    <span class="doccomment">/// The monitor's cursor after these signals: where a follower resumes.
+<a href=#407 id=407 data-nosnippet>407</a>    </span><span class="kw">pub </span>cursor: String,
+<a href=#408 id=408 data-nosnippet>408</a>}
+<a href=#409 id=409 data-nosnippet>409</a>
+<a href=#410 id=410 data-nosnippet>410</a><span class="comment">// ---------------------------------------------------------------- the projection
+<a href=#411 id=411 data-nosnippet>411</a>
+<a href=#412 id=412 data-nosnippet>412</a></span><span class="doccomment">/// Why the mesh's state is not in the answer.
+<a href=#413 id=413 data-nosnippet>413</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">enum </span>MeshAbsence {
+<a href=#414 id=414 data-nosnippet>414</a>    <span class="doccomment">/// The repository declares no mesh, or declares it off: there is nothing to ask, and the
+<a href=#415 id=415 data-nosnippet>415</a>    /// answer is complete about what the repository has.
+<a href=#416 id=416 data-nosnippet>416</a>    </span>Undeclared(String),
+<a href=#417 id=417 data-nosnippet>417</a>    <span class="doccomment">/// The mesh is declared and could not be asked: the answer is incomplete.
+<a href=#418 id=418 data-nosnippet>418</a>    </span>Unreachable(String),
+<a href=#419 id=419 data-nosnippet>419</a>}
+<a href=#420 id=420 data-nosnippet>420</a>
+<a href=#421 id=421 data-nosnippet>421</a><span class="doccomment">/// What the projection reads: the three answers, and what the mesh knows of machines and
+<a href=#422 id=422 data-nosnippet>422</a>/// runtime beats.
+<a href=#423 id=423 data-nosnippet>423</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>Reads&lt;<span class="lifetime">'a</span>&gt; {
+<a href=#424 id=424 data-nosnippet>424</a>    <span class="kw">pub </span>board: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>PeerList,
+<a href=#425 id=425 data-nosnippet>425</a>    <span class="doccomment">/// The mesh's state, or how it stands when it could not be read.
+<a href=#426 id=426 data-nosnippet>426</a>    </span><span class="kw">pub </span>mesh: <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>CooperationState, MeshAbsence&gt;,
+<a href=#427 id=427 data-nosnippet>427</a>    <span class="doccomment">/// Node id → display name.
+<a href=#428 id=428 data-nosnippet>428</a>    </span><span class="kw">pub </span>machines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>HashMap&lt;String, String&gt;,
+<a href=#429 id=429 data-nosnippet>429</a>    <span class="doccomment">/// Runtime key → (liveness, milliseconds since its beat).
+<a href=#430 id=430 data-nosnippet>430</a>    </span><span class="kw">pub </span>beats: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>HashMap&lt;String, (StreamLiveness, <span class="prelude-ty">Option</span>&lt;u64&gt;)&gt;,
+<a href=#431 id=431 data-nosnippet>431</a>    <span class="kw">pub </span>monitor: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>MonitorPage,
+<a href=#432 id=432 data-nosnippet>432</a>}
+<a href=#433 id=433 data-nosnippet>433</a>
+<a href=#434 id=434 data-nosnippet>434</a><span class="doccomment">/// The mesh sessions the board peer's own server projected for it.
+<a href=#435 id=435 data-nosnippet>435</a>///
+<a href=#436 id=436 data-nosnippet>436</a>/// The server holding a checkout's board writes each attached peer into its own mesh stream
+<a href=#437 id=437 data-nosnippet>437</a>/// as the session `board-&lt;peer&gt;`, with the checkout's identity and the client's name
+<a href=#438 id=438 data-nosnippet>438</a>/// (`Cooperation::project_board`). A peer id is a position on that server's board, handed out
+<a href=#439 id=439 data-nosnippet>439</a>/// again by every server and after every restart, so the join is bound to the stream the
+<a href=#440 id=440 data-nosnippet>440</a>/// board's server names (`BoardView::stream`, which carries the process instance): a session of
+<a href=#441 id=441 data-nosnippet>441</a>/// that stream naming the same board session, checkout and client is that peer. A board whose
+<a href=#442 id=442 data-nosnippet>442</a>/// server names no stream joins nothing. More than one fitting session is a candidate each.
+<a href=#443 id=443 data-nosnippet>443</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>join&lt;<span class="lifetime">'s</span>&gt;(
+<a href=#444 id=444 data-nosnippet>444</a>    peer: <span class="kw-2">&amp;</span>Peer,
+<a href=#445 id=445 data-nosnippet>445</a>    checkout: <span class="kw-2">&amp;</span>str,
+<a href=#446 id=446 data-nosnippet>446</a>    stream: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
+<a href=#447 id=447 data-nosnippet>447</a>    sessions: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="lifetime">'s </span>SessionView],
+<a href=#448 id=448 data-nosnippet>448</a>) -&gt; Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'s </span>SessionView&gt; {
+<a href=#449 id=449 data-nosnippet>449</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(stream) = stream <span class="kw">else </span>{
+<a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">return </span>Vec::new();
+<a href=#451 id=451 data-nosnippet>451</a>    };
+<a href=#452 id=452 data-nosnippet>452</a>    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"board-{}"</span>, peer.id);
+<a href=#453 id=453 data-nosnippet>453</a>    <span class="comment">// cut exactly as the projection cut it: bytes on a character boundary, controls removed
+<a href=#454 id=454 data-nosnippet>454</a>    </span><span class="kw">let </span>client = <span class="kw">crate</span>::mesh::cooperation::clip(<span class="kw-2">&amp;</span>peer.client.name, <span class="number">64</span>);
+<a href=#455 id=455 data-nosnippet>455</a>    sessions
+<a href=#456 id=456 data-nosnippet>456</a>        .iter()
+<a href=#457 id=457 data-nosnippet>457</a>        .copied()
+<a href=#458 id=458 data-nosnippet>458</a>        .filter(|s| {
+<a href=#459 id=459 data-nosnippet>459</a>            s.state == SessionState::Active
+<a href=#460 id=460 data-nosnippet>460</a>                &amp;&amp; s.stream.as_str() == stream
+<a href=#461 id=461 data-nosnippet>461</a>                &amp;&amp; s.info.session == name
+<a href=#462 id=462 data-nosnippet>462</a>                &amp;&amp; s.info.checkout.as_deref() == <span class="prelude-val">Some</span>(checkout)
+<a href=#463 id=463 data-nosnippet>463</a>                &amp;&amp; s.info.client == client
+<a href=#464 id=464 data-nosnippet>464</a>        })
+<a href=#465 id=465 data-nosnippet>465</a>        .collect()
+<a href=#466 id=466 data-nosnippet>466</a>}
+<a href=#467 id=467 data-nosnippet>467</a>
+<a href=#468 id=468 data-nosnippet>468</a><span class="kw">fn </span>board_key(checkout: <span class="kw-2">&amp;</span>str, peer: <span class="kw-2">&amp;</span>Peer) -&gt; String {
+<a href=#469 id=469 data-nosnippet>469</a>    <span class="macro">format!</span>(<span class="string">"board:{checkout}/{}"</span>, peer.id)
+<a href=#470 id=470 data-nosnippet>470</a>}
+<a href=#471 id=471 data-nosnippet>471</a>
+<a href=#472 id=472 data-nosnippet>472</a><span class="kw">fn </span>mesh_key(session: <span class="kw-2">&amp;</span>SessionView) -&gt; String {
+<a href=#473 id=473 data-nosnippet>473</a>    <span class="macro">format!</span>(<span class="string">"mesh:{}"</span>, session.key)
+<a href=#474 id=474 data-nosnippet>474</a>}
+<a href=#475 id=475 data-nosnippet>475</a>
+<a href=#476 id=476 data-nosnippet>476</a><span class="doccomment">/// Join the reads into the blackboard.
+<a href=#477 id=477 data-nosnippet>477</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>project(
+<a href=#478 id=478 data-nosnippet>478</a>    reads: <span class="kw-2">&amp;</span>Reads&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#479 id=479 data-nosnippet>479</a>    at: String,
+<a href=#480 id=480 data-nosnippet>480</a>    checkout: String,
+<a href=#481 id=481 data-nosnippet>481</a>    head: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#482 id=482 data-nosnippet>482</a>) -&gt; Blackboard {
+<a href=#483 id=483 data-nosnippet>483</a>    <span class="kw">let </span><span class="kw-2">mut </span>sources = Vec::new();
+<a href=#484 id=484 data-nosnippet>484</a>    <span class="kw">let </span>unread: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = reads
+<a href=#485 id=485 data-nosnippet>485</a>        .board
+<a href=#486 id=486 data-nosnippet>486</a>        .boards
+<a href=#487 id=487 data-nosnippet>487</a>        .iter()
+<a href=#488 id=488 data-nosnippet>488</a>        .filter_map(|b| b.reason.as_deref())
+<a href=#489 id=489 data-nosnippet>489</a>        .collect();
+<a href=#490 id=490 data-nosnippet>490</a>    sources.push(BlackboardSource {
+<a href=#491 id=491 data-nosnippet>491</a>        source: <span class="string">"board"</span>.into(),
+<a href=#492 id=492 data-nosnippet>492</a>        state: <span class="kw">if </span>reads.board.complete {
+<a href=#493 id=493 data-nosnippet>493</a>            BlackboardSourceState::Ok
+<a href=#494 id=494 data-nosnippet>494</a>        } <span class="kw">else </span>{
+<a href=#495 id=495 data-nosnippet>495</a>            BlackboardSourceState::Partial
+<a href=#496 id=496 data-nosnippet>496</a>        },
+<a href=#497 id=497 data-nosnippet>497</a>        reason: (!unread.is_empty()).then(|| unread.join(<span class="string">"; "</span>)),
+<a href=#498 id=498 data-nosnippet>498</a>    });
+<a href=#499 id=499 data-nosnippet>499</a>    <span class="kw">let </span>(mesh_state, mesh_source) = <span class="kw">match </span><span class="kw-2">&amp;</span>reads.mesh {
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="prelude-val">Ok</span>(state) =&gt; (<span class="prelude-val">Some</span>(<span class="kw-2">*</span>state), (BlackboardSourceState::Ok, <span class="prelude-val">None</span>)),
+<a href=#501 id=501 data-nosnippet>501</a>        <span class="prelude-val">Err</span>(MeshAbsence::Undeclared(why)) =&gt; (<span class="prelude-val">None</span>, (BlackboardSourceState::Skipped, <span class="prelude-val">Some</span>(why.clone()))),
+<a href=#502 id=502 data-nosnippet>502</a>        <span class="prelude-val">Err</span>(MeshAbsence::Unreachable(why)) =&gt; (
+<a href=#503 id=503 data-nosnippet>503</a>            <span class="prelude-val">None</span>,
+<a href=#504 id=504 data-nosnippet>504</a>            (
+<a href=#505 id=505 data-nosnippet>505</a>                BlackboardSourceState::Absent,
+<a href=#506 id=506 data-nosnippet>506</a>                <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"{why}: other machines and the journal's claims, reviews and handovers are not covered"</span>)),
+<a href=#507 id=507 data-nosnippet>507</a>            ),
+<a href=#508 id=508 data-nosnippet>508</a>        ),
+<a href=#509 id=509 data-nosnippet>509</a>    };
+<a href=#510 id=510 data-nosnippet>510</a>    sources.push(BlackboardSource {
+<a href=#511 id=511 data-nosnippet>511</a>        source: <span class="string">"mesh"</span>.into(),
+<a href=#512 id=512 data-nosnippet>512</a>        state: mesh_source.<span class="number">0</span>,
+<a href=#513 id=513 data-nosnippet>513</a>        reason: mesh_source.<span class="number">1</span>,
+<a href=#514 id=514 data-nosnippet>514</a>    });
+<a href=#515 id=515 data-nosnippet>515</a>    <span class="comment">// who is here is the boards' and the mesh's to say: the monitor's sources are what
+<a href=#516 id=516 data-nosnippet>516</a>    // happened, and one that has recorded nothing yet is not a worker nobody could ask
+<a href=#517 id=517 data-nosnippet>517</a>    </span><span class="kw">let </span>complete = sources.iter().all(|s| {
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="macro">matches!</span>(
+<a href=#519 id=519 data-nosnippet>519</a>            s.state,
+<a href=#520 id=520 data-nosnippet>520</a>            BlackboardSourceState::Ok | BlackboardSourceState::Skipped
+<a href=#521 id=521 data-nosnippet>521</a>        )
+<a href=#522 id=522 data-nosnippet>522</a>    });
+<a href=#523 id=523 data-nosnippet>523</a>    <span class="kw">for </span>s <span class="kw">in </span><span class="kw-2">&amp;</span>reads.monitor.sources {
+<a href=#524 id=524 data-nosnippet>524</a>        sources.push(monitor_source(s));
+<a href=#525 id=525 data-nosnippet>525</a>    }
+<a href=#526 id=526 data-nosnippet>526</a>
+<a href=#527 id=527 data-nosnippet>527</a>    <span class="kw">let </span>active: Vec&lt;<span class="kw-2">&amp;</span>SessionView&gt; = mesh_state
+<a href=#528 id=528 data-nosnippet>528</a>        .map(|m| {
+<a href=#529 id=529 data-nosnippet>529</a>            m.sessions
+<a href=#530 id=530 data-nosnippet>530</a>                .iter()
+<a href=#531 id=531 data-nosnippet>531</a>                .filter(|s| s.state == SessionState::Active)
+<a href=#532 id=532 data-nosnippet>532</a>                .collect()
+<a href=#533 id=533 data-nosnippet>533</a>        })
+<a href=#534 id=534 data-nosnippet>534</a>        .unwrap_or_default();
+<a href=#535 id=535 data-nosnippet>535</a>    <span class="kw">let </span>claims_of = |session: <span class="kw-2">&amp;</span>SessionView| -&gt; Vec&lt;BlackboardClaim&gt; {
+<a href=#536 id=536 data-nosnippet>536</a>        mesh_state
+<a href=#537 id=537 data-nosnippet>537</a>            .map(|m| {
+<a href=#538 id=538 data-nosnippet>538</a>                m.claims
+<a href=#539 id=539 data-nosnippet>539</a>                    .iter()
+<a href=#540 id=540 data-nosnippet>540</a>                    .filter(|c| c.session == session.key &amp;&amp; c.state.is_live())
+<a href=#541 id=541 data-nosnippet>541</a>                    .map(|c| BlackboardClaim {
+<a href=#542 id=542 data-nosnippet>542</a>                        name: <span class="prelude-val">None</span>,
+<a href=#543 id=543 data-nosnippet>543</a>                        intent: c.intent.clone(),
+<a href=#544 id=544 data-nosnippet>544</a>                        scope: c.scope.clone(),
+<a href=#545 id=545 data-nosnippet>545</a>                        mode: c.mode,
+<a href=#546 id=546 data-nosnippet>546</a>                        issue: c.issue.clone(),
+<a href=#547 id=547 data-nosnippet>547</a>                        record: <span class="prelude-val">Some</span>(c.key.clone()),
+<a href=#548 id=548 data-nosnippet>548</a>                        conflicted: <span class="macro">matches!</span>(c.state, ClaimState::Conflicted(<span class="kw">_</span>)),
+<a href=#549 id=549 data-nosnippet>549</a>                    })
+<a href=#550 id=550 data-nosnippet>550</a>                    .collect()
+<a href=#551 id=551 data-nosnippet>551</a>            })
+<a href=#552 id=552 data-nosnippet>552</a>            .unwrap_or_default()
+<a href=#553 id=553 data-nosnippet>553</a>    };
+<a href=#554 id=554 data-nosnippet>554</a>    <span class="kw">let </span><span class="kw-2">mut </span>workers = Vec::new();
+<a href=#555 id=555 data-nosnippet>555</a>    <span class="kw">let </span><span class="kw-2">mut </span>relations = Vec::new();
+<a href=#556 id=556 data-nosnippet>556</a>    <span class="comment">// session key → the worker that holds it
+<a href=#557 id=557 data-nosnippet>557</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>held: BTreeMap&lt;String, String&gt; = BTreeMap::new();
+<a href=#558 id=558 data-nosnippet>558</a>    <span class="kw">for </span>peer <span class="kw">in </span><span class="kw-2">&amp;</span>reads.board.peers {
+<a href=#559 id=559 data-nosnippet>559</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(checkout) = peer.checkout.as_ref() <span class="kw">else </span>{
+<a href=#560 id=560 data-nosnippet>560</a>            <span class="kw">continue</span>;
+<a href=#561 id=561 data-nosnippet>561</a>        };
+<a href=#562 id=562 data-nosnippet>562</a>        <span class="kw">let </span>key = board_key(<span class="kw-2">&amp;</span>checkout.id, peer);
+<a href=#563 id=563 data-nosnippet>563</a>        <span class="kw">let </span>stream = reads
+<a href=#564 id=564 data-nosnippet>564</a>            .board
+<a href=#565 id=565 data-nosnippet>565</a>            .boards
+<a href=#566 id=566 data-nosnippet>566</a>            .iter()
+<a href=#567 id=567 data-nosnippet>567</a>            .find(|b| b.checkout.id == checkout.id)
+<a href=#568 id=568 data-nosnippet>568</a>            .and_then(|b| b.stream.as_deref());
+<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">let </span>fits = join(peer, <span class="kw-2">&amp;</span>checkout.id, stream, <span class="kw-2">&amp;</span>active);
+<a href=#570 id=570 data-nosnippet>570</a>        <span class="kw">let </span>joined = (fits.len() == <span class="number">1</span>).then(|| fits[<span class="number">0</span>]);
+<a href=#571 id=571 data-nosnippet>571</a>        <span class="kw">for </span>s <span class="kw">in </span><span class="kw-2">&amp;</span>fits {
+<a href=#572 id=572 data-nosnippet>572</a>            relations.push(BlackboardRelation {
+<a href=#573 id=573 data-nosnippet>573</a>                kind: BlackboardRelationKind::SameWorker,
+<a href=#574 id=574 data-nosnippet>574</a>                evidence: <span class="kw">if </span>joined.is_some() {
+<a href=#575 id=575 data-nosnippet>575</a>                    BlackboardEvidence::Verified
+<a href=#576 id=576 data-nosnippet>576</a>                } <span class="kw">else </span>{
+<a href=#577 id=577 data-nosnippet>577</a>                    BlackboardEvidence::Candidate
+<a href=#578 id=578 data-nosnippet>578</a>                },
+<a href=#579 id=579 data-nosnippet>579</a>                from: key.clone(),
+<a href=#580 id=580 data-nosnippet>580</a>                to: mesh_key(s),
+<a href=#581 id=581 data-nosnippet>581</a>                record: s.key.clone(),
+<a href=#582 id=582 data-nosnippet>582</a>            });
+<a href=#583 id=583 data-nosnippet>583</a>        }
+<a href=#584 id=584 data-nosnippet>584</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = joined {
+<a href=#585 id=585 data-nosnippet>585</a>            held.insert(s.key.clone(), key.clone());
+<a href=#586 id=586 data-nosnippet>586</a>        }
+<a href=#587 id=587 data-nosnippet>587</a>        <span class="kw">let </span>beat = joined
+<a href=#588 id=588 data-nosnippet>588</a>            .and_then(|s| reads.beats.get(<span class="kw-2">&amp;</span>s.runtime))
+<a href=#589 id=589 data-nosnippet>589</a>            .and_then(|b| b.<span class="number">1</span>);
+<a href=#590 id=590 data-nosnippet>590</a>        workers.push(BlackboardWorker {
+<a href=#591 id=591 data-nosnippet>591</a>            key,
+<a href=#592 id=592 data-nosnippet>592</a>            origin: BlackboardOrigin::Board,
+<a href=#593 id=593 data-nosnippet>593</a>            presence: <span class="kw">if </span>peer.attached {
+<a href=#594 id=594 data-nosnippet>594</a>                BlackboardPresence::Attached
+<a href=#595 id=595 data-nosnippet>595</a>            } <span class="kw">else </span>{
+<a href=#596 id=596 data-nosnippet>596</a>                BlackboardPresence::Departed
+<a href=#597 id=597 data-nosnippet>597</a>            },
+<a href=#598 id=598 data-nosnippet>598</a>            client: peer.client.name.clone(),
+<a href=#599 id=599 data-nosnippet>599</a>            title: peer.client.title.clone().filter(|t| !t.is_empty()),
+<a href=#600 id=600 data-nosnippet>600</a>            version: <span class="prelude-val">Some</span>(peer.client.version.clone()).filter(|v| !v.is_empty()),
+<a href=#601 id=601 data-nosnippet>601</a>            intent: peer.announcement.as_ref().map(|a| a.intent.clone()),
+<a href=#602 id=602 data-nosnippet>602</a>            checkout: <span class="prelude-val">Some</span>(checkout.id.clone()),
+<a href=#603 id=603 data-nosnippet>603</a>            worktree: <span class="prelude-val">Some</span>(checkout.worktree.clone()),
+<a href=#604 id=604 data-nosnippet>604</a>            branch: checkout.branch.clone(),
+<a href=#605 id=605 data-nosnippet>605</a>            board_peer: <span class="prelude-val">Some</span>(peer.id.to_string()),
+<a href=#606 id=606 data-nosnippet>606</a>            session: joined.map(|s| s.key.clone()),
+<a href=#607 id=607 data-nosnippet>607</a>            machine: joined.and_then(|s| reads.machines.get(<span class="kw-2">&amp;</span>s.node).cloned()),
+<a href=#608 id=608 data-nosnippet>608</a>            runtime: joined.map(|s| s.runtime.clone()),
+<a href=#609 id=609 data-nosnippet>609</a>            task: joined.and_then(|s| s.info.task.clone()),
+<a href=#610 id=610 data-nosnippet>610</a>            issue: joined.and_then(|s| s.info.issue.clone()),
+<a href=#611 id=611 data-nosnippet>611</a>            connected_at: <span class="prelude-val">Some</span>(peer.connected_at.clone()),
+<a href=#612 id=612 data-nosnippet>612</a>            last_seen_seconds_ago: <span class="prelude-val">Some</span>(peer.last_seen_seconds_ago),
+<a href=#613 id=613 data-nosnippet>613</a>            last_beat_ms: beat,
+<a href=#614 id=614 data-nosnippet>614</a>            claims: claims_of_peer(peer, joined.map(<span class="kw-2">&amp;</span>claims_of).unwrap_or_default()),
+<a href=#615 id=615 data-nosnippet>615</a>        });
+<a href=#616 id=616 data-nosnippet>616</a>    }
+<a href=#617 id=617 data-nosnippet>617</a>    <span class="comment">// a candidate session stays a worker of its own: which board peer it is cannot be told
+<a href=#618 id=618 data-nosnippet>618</a>    </span><span class="kw">let </span>candidates: BTreeMap&lt;String, String&gt; = relations
+<a href=#619 id=619 data-nosnippet>619</a>        .iter()
+<a href=#620 id=620 data-nosnippet>620</a>        .filter(|r| r.evidence == BlackboardEvidence::Candidate)
+<a href=#621 id=621 data-nosnippet>621</a>        .map(|r| (r.to.clone(), r.from.clone()))
+<a href=#622 id=622 data-nosnippet>622</a>        .collect();
+<a href=#623 id=623 data-nosnippet>623</a>    <span class="kw">for </span>s <span class="kw">in </span><span class="kw-2">&amp;</span>active {
+<a href=#624 id=624 data-nosnippet>624</a>        <span class="kw">if </span>held.contains_key(<span class="kw-2">&amp;</span>s.key) {
+<a href=#625 id=625 data-nosnippet>625</a>            <span class="kw">continue</span>;
+<a href=#626 id=626 data-nosnippet>626</a>        }
+<a href=#627 id=627 data-nosnippet>627</a>        <span class="kw">let </span>key = mesh_key(s);
+<a href=#628 id=628 data-nosnippet>628</a>        held.insert(s.key.clone(), key.clone());
+<a href=#629 id=629 data-nosnippet>629</a>        workers.push(BlackboardWorker {
+<a href=#630 id=630 data-nosnippet>630</a>            key,
+<a href=#631 id=631 data-nosnippet>631</a>            origin: BlackboardOrigin::Mesh,
+<a href=#632 id=632 data-nosnippet>632</a>            presence: BlackboardPresence::Active,
+<a href=#633 id=633 data-nosnippet>633</a>            client: s.info.client.clone(),
+<a href=#634 id=634 data-nosnippet>634</a>            title: s.info.worker.clone(),
+<a href=#635 id=635 data-nosnippet>635</a>            version: <span class="prelude-val">None</span>,
+<a href=#636 id=636 data-nosnippet>636</a>            intent: s.info.intent.clone(),
+<a href=#637 id=637 data-nosnippet>637</a>            checkout: s.info.checkout.clone(),
+<a href=#638 id=638 data-nosnippet>638</a>            worktree: <span class="prelude-val">None</span>,
+<a href=#639 id=639 data-nosnippet>639</a>            branch: s.info.branch.clone(),
+<a href=#640 id=640 data-nosnippet>640</a>            board_peer: <span class="prelude-val">None</span>,
+<a href=#641 id=641 data-nosnippet>641</a>            session: <span class="prelude-val">Some</span>(s.key.clone()),
+<a href=#642 id=642 data-nosnippet>642</a>            machine: reads.machines.get(<span class="kw-2">&amp;</span>s.node).cloned(),
+<a href=#643 id=643 data-nosnippet>643</a>            runtime: <span class="prelude-val">Some</span>(s.runtime.clone()),
+<a href=#644 id=644 data-nosnippet>644</a>            task: s.info.task.clone(),
+<a href=#645 id=645 data-nosnippet>645</a>            issue: s.info.issue.clone(),
+<a href=#646 id=646 data-nosnippet>646</a>            connected_at: <span class="prelude-val">None</span>,
+<a href=#647 id=647 data-nosnippet>647</a>            last_seen_seconds_ago: <span class="prelude-val">None</span>,
+<a href=#648 id=648 data-nosnippet>648</a>            last_beat_ms: reads.beats.get(<span class="kw-2">&amp;</span>s.runtime).and_then(|b| b.<span class="number">1</span>),
+<a href=#649 id=649 data-nosnippet>649</a>            claims: claims_of(s),
+<a href=#650 id=650 data-nosnippet>650</a>        });
+<a href=#651 id=651 data-nosnippet>651</a>    }
+<a href=#652 id=652 data-nosnippet>652</a>
+<a href=#653 id=653 data-nosnippet>653</a>    <span class="kw">let </span>(conflicts_total, conflicts) = conflicts_among(<span class="kw-2">&amp;</span>workers, <span class="kw-2">&amp;</span>candidates);
+<a href=#654 id=654 data-nosnippet>654</a>
+<a href=#655 id=655 data-nosnippet>655</a>    <span class="kw">let </span><span class="kw-2">mut </span>reviews = Vec::new();
+<a href=#656 id=656 data-nosnippet>656</a>    <span class="kw">let </span><span class="kw-2">mut </span>handovers = Vec::new();
+<a href=#657 id=657 data-nosnippet>657</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(m) = mesh_state {
+<a href=#658 id=658 data-nosnippet>658</a>        <span class="kw">for </span>r <span class="kw">in </span>m.reviews.iter().filter(|r| r.state == ReviewState::Open) {
+<a href=#659 id=659 data-nosnippet>659</a>            <span class="kw">let </span>from = held
+<a href=#660 id=660 data-nosnippet>660</a>                .get(<span class="kw-2">&amp;</span>r.session)
+<a href=#661 id=661 data-nosnippet>661</a>                .cloned()
+<a href=#662 id=662 data-nosnippet>662</a>                .unwrap_or_else(|| r.session.clone());
+<a href=#663 id=663 data-nosnippet>663</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(reviewer) = <span class="kw-2">&amp;</span>r.reviewer {
+<a href=#664 id=664 data-nosnippet>664</a>                <span class="comment">// the record names its reviewer as a session key, a bare session id, a runtime
+<a href=#665 id=665 data-nosnippet>665</a>                // or a person's word; only a whole session key is a worker — a bare `board-p3`
+<a href=#666 id=666 data-nosnippet>666</a>                // is a position every board has — so anything else stays as the record says it
+<a href=#667 id=667 data-nosnippet>667</a>                </span>relations.push(BlackboardRelation {
+<a href=#668 id=668 data-nosnippet>668</a>                    kind: BlackboardRelationKind::Review,
+<a href=#669 id=669 data-nosnippet>669</a>                    evidence: BlackboardEvidence::Verified,
+<a href=#670 id=670 data-nosnippet>670</a>                    from: from.clone(),
+<a href=#671 id=671 data-nosnippet>671</a>                    to: held
+<a href=#672 id=672 data-nosnippet>672</a>                        .get(reviewer)
+<a href=#673 id=673 data-nosnippet>673</a>                        .cloned()
+<a href=#674 id=674 data-nosnippet>674</a>                        .unwrap_or_else(|| reviewer.clone()),
+<a href=#675 id=675 data-nosnippet>675</a>                    record: r.key.clone(),
+<a href=#676 id=676 data-nosnippet>676</a>                });
+<a href=#677 id=677 data-nosnippet>677</a>            }
+<a href=#678 id=678 data-nosnippet>678</a>            <span class="kw">if </span>reviews.len() &lt; MAX_RECORDS {
+<a href=#679 id=679 data-nosnippet>679</a>                reviews.push(BlackboardReview {
+<a href=#680 id=680 data-nosnippet>680</a>                    key: r.key.clone(),
+<a href=#681 id=681 data-nosnippet>681</a>                    from,
+<a href=#682 id=682 data-nosnippet>682</a>                    subject: r.subject.clone(),
+<a href=#683 id=683 data-nosnippet>683</a>                    reviewer: r.reviewer.clone(),
+<a href=#684 id=684 data-nosnippet>684</a>                    issue: r.issue.clone(),
+<a href=#685 id=685 data-nosnippet>685</a>                });
+<a href=#686 id=686 data-nosnippet>686</a>            }
+<a href=#687 id=687 data-nosnippet>687</a>        }
+<a href=#688 id=688 data-nosnippet>688</a>        <span class="kw">for </span>h <span class="kw">in </span>m
+<a href=#689 id=689 data-nosnippet>689</a>            .handovers
+<a href=#690 id=690 data-nosnippet>690</a>            .iter()
+<a href=#691 id=691 data-nosnippet>691</a>            .filter(|h| h.consumed_by.is_empty())
+<a href=#692 id=692 data-nosnippet>692</a>            .take(MAX_RECORDS)
+<a href=#693 id=693 data-nosnippet>693</a>        {
+<a href=#694 id=694 data-nosnippet>694</a>            handovers.push(BlackboardHandover {
+<a href=#695 id=695 data-nosnippet>695</a>                id: h.id.clone(),
+<a href=#696 id=696 data-nosnippet>696</a>                runtime: h.runtime.clone(),
+<a href=#697 id=697 data-nosnippet>697</a>                name: h.handover.name.clone(),
+<a href=#698 id=698 data-nosnippet>698</a>                branch: h.handover.branch.clone(),
+<a href=#699 id=699 data-nosnippet>699</a>                issue: h.handover.issue.clone(),
+<a href=#700 id=700 data-nosnippet>700</a>                task: h.handover.task.clone(),
+<a href=#701 id=701 data-nosnippet>701</a>                created_at: h.handover.created_at.clone(),
+<a href=#702 id=702 data-nosnippet>702</a>            });
+<a href=#703 id=703 data-nosnippet>703</a>        }
+<a href=#704 id=704 data-nosnippet>704</a>    }
+<a href=#705 id=705 data-nosnippet>705</a>
+<a href=#706 id=706 data-nosnippet>706</a>    Blackboard {
+<a href=#707 id=707 data-nosnippet>707</a>        at,
+<a href=#708 id=708 data-nosnippet>708</a>        checkout,
+<a href=#709 id=709 data-nosnippet>709</a>        head,
+<a href=#710 id=710 data-nosnippet>710</a>        complete,
+<a href=#711 id=711 data-nosnippet>711</a>        sources,
+<a href=#712 id=712 data-nosnippet>712</a>        boards: reads.board.boards.clone(),
+<a href=#713 id=713 data-nosnippet>713</a>        covered: reads.board.covered,
+<a href=#714 id=714 data-nosnippet>714</a>        omitted: reads.board.omitted.clone(),
+<a href=#715 id=715 data-nosnippet>715</a>        present: workers
+<a href=#716 id=716 data-nosnippet>716</a>            .iter()
+<a href=#717 id=717 data-nosnippet>717</a>            .filter(|w| w.presence != BlackboardPresence::Departed)
+<a href=#718 id=718 data-nosnippet>718</a>            .count(),
+<a href=#719 id=719 data-nosnippet>719</a>        workers,
+<a href=#720 id=720 data-nosnippet>720</a>        conflicts,
+<a href=#721 id=721 data-nosnippet>721</a>        conflicts_total,
+<a href=#722 id=722 data-nosnippet>722</a>        reviews,
+<a href=#723 id=723 data-nosnippet>723</a>        handovers,
+<a href=#724 id=724 data-nosnippet>724</a>        relations,
+<a href=#725 id=725 data-nosnippet>725</a>        signals: reads.monitor.signals.clone(),
+<a href=#726 id=726 data-nosnippet>726</a>        for_you: reads.monitor.for_you,
+<a href=#727 id=727 data-nosnippet>727</a>        cursor: reads.monitor.cursor.clone(),
+<a href=#728 id=728 data-nosnippet>728</a>    }
+<a href=#729 id=729 data-nosnippet>729</a>}
+<a href=#730 id=730 data-nosnippet>730</a>
+<a href=#731 id=731 data-nosnippet>731</a><span class="doccomment">/// A board peer's claims: its announcements, and the live claims its joined session holds
+<a href=#732 id=732 data-nosnippet>732</a>/// beside them — an exclusive `mesh.claim` taken through its MCP session, say. The advisory
+<a href=#733 id=733 data-nosnippet>733</a>/// claims its server projected from the announcements are the announcements themselves and
+<a href=#734 id=734 data-nosnippet>734</a>/// are not counted twice; a projected claim is one that carries exactly what the projection
+<a href=#735 id=735 data-nosnippet>735</a>/// writes (`Cooperation::project_board`): advisory, the announcement's scope and clipped
+<a href=#736 id=736 data-nosnippet>736</a>/// intent, no issue. Each announcement stands for one such claim. Any other claim of the
+<a href=#737 id=737 data-nosnippet>737</a>/// session, a same-scope advisory claim with its own intent or issue among them, is kept.
+<a href=#738 id=738 data-nosnippet>738</a></span><span class="kw">fn </span>claims_of_peer(peer: <span class="kw-2">&amp;</span>Peer, session: Vec&lt;BlackboardClaim&gt;) -&gt; Vec&lt;BlackboardClaim&gt; {
+<a href=#739 id=739 data-nosnippet>739</a>    <span class="kw">let </span>normal = |scope: <span class="kw-2">&amp;</span>[String]| -&gt; Vec&lt;String&gt; {
+<a href=#740 id=740 data-nosnippet>740</a>        scope
+<a href=#741 id=741 data-nosnippet>741</a>            .iter()
+<a href=#742 id=742 data-nosnippet>742</a>            .map(|p| p.trim().trim_start_matches(<span class="string">"./"</span>).to_string())
+<a href=#743 id=743 data-nosnippet>743</a>            .filter(|p| !p.is_empty())
+<a href=#744 id=744 data-nosnippet>744</a>            .collect()
+<a href=#745 id=745 data-nosnippet>745</a>    };
+<a href=#746 id=746 data-nosnippet>746</a>    <span class="kw">let </span><span class="kw-2">mut </span>claims: Vec&lt;BlackboardClaim&gt; = peer
+<a href=#747 id=747 data-nosnippet>747</a>        .claims
+<a href=#748 id=748 data-nosnippet>748</a>        .iter()
+<a href=#749 id=749 data-nosnippet>749</a>        .map(|c| BlackboardClaim {
+<a href=#750 id=750 data-nosnippet>750</a>            name: c.name.clone(),
+<a href=#751 id=751 data-nosnippet>751</a>            intent: <span class="prelude-val">Some</span>(c.intent.clone()).filter(|i| !i.is_empty()),
+<a href=#752 id=752 data-nosnippet>752</a>            scope: c.scope.clone(),
+<a href=#753 id=753 data-nosnippet>753</a>            mode: ClaimMode::Advisory,
+<a href=#754 id=754 data-nosnippet>754</a>            issue: <span class="prelude-val">None</span>,
+<a href=#755 id=755 data-nosnippet>755</a>            record: <span class="prelude-val">None</span>,
+<a href=#756 id=756 data-nosnippet>756</a>            conflicted: <span class="bool-val">false</span>,
+<a href=#757 id=757 data-nosnippet>757</a>        })
+<a href=#758 id=758 data-nosnippet>758</a>        .collect();
+<a href=#759 id=759 data-nosnippet>759</a>    <span class="comment">// what the projection wrote for each announcement, each matched at most once
+<a href=#760 id=760 data-nosnippet>760</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>projected: Vec&lt;<span class="prelude-ty">Option</span>&lt;(Vec&lt;String&gt;, <span class="prelude-ty">Option</span>&lt;String&gt;)&gt;&gt; = peer
+<a href=#761 id=761 data-nosnippet>761</a>        .claims
+<a href=#762 id=762 data-nosnippet>762</a>        .iter()
+<a href=#763 id=763 data-nosnippet>763</a>        .map(|c| {
+<a href=#764 id=764 data-nosnippet>764</a>            <span class="kw">let </span>intent = <span class="kw">crate</span>::mesh::cooperation::clip(<span class="kw-2">&amp;</span>c.intent, <span class="number">512</span>);
+<a href=#765 id=765 data-nosnippet>765</a>            <span class="prelude-val">Some</span>((normal(<span class="kw-2">&amp;</span>c.scope), <span class="prelude-val">Some</span>(intent).filter(|i| !i.is_empty())))
+<a href=#766 id=766 data-nosnippet>766</a>        })
+<a href=#767 id=767 data-nosnippet>767</a>        .collect();
+<a href=#768 id=768 data-nosnippet>768</a>    claims.extend(session.into_iter().filter(|c| {
+<a href=#769 id=769 data-nosnippet>769</a>        <span class="kw">if </span>c.mode != ClaimMode::Advisory || c.conflicted || c.issue.is_some() {
+<a href=#770 id=770 data-nosnippet>770</a>            <span class="kw">return </span><span class="bool-val">true</span>;
+<a href=#771 id=771 data-nosnippet>771</a>        }
+<a href=#772 id=772 data-nosnippet>772</a>        <span class="kw">let </span>this = (normal(<span class="kw-2">&amp;</span>c.scope), c.intent.clone());
+<a href=#773 id=773 data-nosnippet>773</a>        <span class="kw">match </span>projected.iter_mut().find(|p| p.as_ref() == <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>this)) {
+<a href=#774 id=774 data-nosnippet>774</a>            <span class="prelude-val">Some</span>(slot) =&gt; {
+<a href=#775 id=775 data-nosnippet>775</a>                <span class="kw-2">*</span>slot = <span class="prelude-val">None</span>;
+<a href=#776 id=776 data-nosnippet>776</a>                <span class="bool-val">false
+<a href=#777 id=777 data-nosnippet>777</a>            </span>}
+<a href=#778 id=778 data-nosnippet>778</a>            <span class="prelude-val">None </span>=&gt; <span class="bool-val">true</span>,
+<a href=#779 id=779 data-nosnippet>779</a>        }
+<a href=#780 id=780 data-nosnippet>780</a>    }));
+<a href=#781 id=781 data-nosnippet>781</a>    claims
+<a href=#782 id=782 data-nosnippet>782</a>}
+<a href=#783 id=783 data-nosnippet>783</a>
+<a href=#784 id=784 data-nosnippet>784</a><span class="kw">fn </span>monitor_source(s: <span class="kw-2">&amp;</span>MonitorSourceState) -&gt; BlackboardSource {
+<a href=#785 id=785 data-nosnippet>785</a>    <span class="kw">let </span>name = serde_json::to_value(s.source)
+<a href=#786 id=786 data-nosnippet>786</a>        .ok()
+<a href=#787 id=787 data-nosnippet>787</a>        .and_then(|v| v.as_str().map(str::to_string))
+<a href=#788 id=788 data-nosnippet>788</a>        .unwrap_or_default();
+<a href=#789 id=789 data-nosnippet>789</a>    BlackboardSource {
+<a href=#790 id=790 data-nosnippet>790</a>        source: <span class="macro">format!</span>(<span class="string">"monitor.{name}"</span>),
+<a href=#791 id=791 data-nosnippet>791</a>        state: <span class="kw">match </span>s.state {
+<a href=#792 id=792 data-nosnippet>792</a>            MonitorSourceHealth::Ok =&gt; BlackboardSourceState::Ok,
+<a href=#793 id=793 data-nosnippet>793</a>            MonitorSourceHealth::Skipped =&gt; BlackboardSourceState::Skipped,
+<a href=#794 id=794 data-nosnippet>794</a>            MonitorSourceHealth::Absent | MonitorSourceHealth::Error =&gt; {
+<a href=#795 id=795 data-nosnippet>795</a>                BlackboardSourceState::Absent
+<a href=#796 id=796 data-nosnippet>796</a>            }
+<a href=#797 id=797 data-nosnippet>797</a>        },
+<a href=#798 id=798 data-nosnippet>798</a>        reason: s.reason.clone(),
+<a href=#799 id=799 data-nosnippet>799</a>    }
+<a href=#800 id=800 data-nosnippet>800</a>}
+<a href=#801 id=801 data-nosnippet>801</a>
+<a href=#802 id=802 data-nosnippet>802</a><span class="doccomment">/// Every pair of claims of two different workers whose scopes meet, confirmed first, at most
+<a href=#803 id=803 data-nosnippet>803</a>/// [`MAX_CONFLICTS`], with how many there are in all. A worker and a candidate session of its
+<a href=#804 id=804 data-nosnippet>804</a>/// own are not two workers for this: the session's claims are the projection of the peer's.
+<a href=#805 id=805 data-nosnippet>805</a></span><span class="kw">fn </span>conflicts_among(
+<a href=#806 id=806 data-nosnippet>806</a>    workers: <span class="kw-2">&amp;</span>[BlackboardWorker],
+<a href=#807 id=807 data-nosnippet>807</a>    candidates: <span class="kw-2">&amp;</span>BTreeMap&lt;String, String&gt;,
+<a href=#808 id=808 data-nosnippet>808</a>) -&gt; (usize, Vec&lt;BlackboardConflict&gt;) {
+<a href=#809 id=809 data-nosnippet>809</a>    <span class="kw">let </span>same = |a: <span class="kw-2">&amp;</span>str, b: <span class="kw-2">&amp;</span>str| {
+<a href=#810 id=810 data-nosnippet>810</a>        candidates.get(a).is_some_and(|w| w == b) || candidates.get(b).is_some_and(|w| w == a)
+<a href=#811 id=811 data-nosnippet>811</a>    };
+<a href=#812 id=812 data-nosnippet>812</a>    <span class="kw">let </span><span class="kw-2">mut </span>confirmed = Vec::new();
+<a href=#813 id=813 data-nosnippet>813</a>    <span class="kw">let </span><span class="kw-2">mut </span>potential = Vec::new();
+<a href=#814 id=814 data-nosnippet>814</a>    <span class="kw">for </span>(i, first) <span class="kw">in </span>workers.iter().enumerate() {
+<a href=#815 id=815 data-nosnippet>815</a>        <span class="kw">for </span>second <span class="kw">in </span>workers.iter().skip(i + <span class="number">1</span>) {
+<a href=#816 id=816 data-nosnippet>816</a>            <span class="kw">if </span>same(<span class="kw-2">&amp;</span>first.key, <span class="kw-2">&amp;</span>second.key) {
+<a href=#817 id=817 data-nosnippet>817</a>                <span class="kw">continue</span>;
+<a href=#818 id=818 data-nosnippet>818</a>            }
+<a href=#819 id=819 data-nosnippet>819</a>            <span class="kw">for </span>a <span class="kw">in </span><span class="kw-2">&amp;</span>first.claims {
+<a href=#820 id=820 data-nosnippet>820</a>                <span class="kw">for </span>b <span class="kw">in </span><span class="kw-2">&amp;</span>second.claims {
+<a href=#821 id=821 data-nosnippet>821</a>                    <span class="kw">let </span>paths: Vec&lt;OverlapPath&gt; = a
+<a href=#822 id=822 data-nosnippet>822</a>                        .scope
+<a href=#823 id=823 data-nosnippet>823</a>                        .iter()
+<a href=#824 id=824 data-nosnippet>824</a>                        .flat_map(|x| {
+<a href=#825 id=825 data-nosnippet>825</a>                            b.scope
+<a href=#826 id=826 data-nosnippet>826</a>                                .iter()
+<a href=#827 id=827 data-nosnippet>827</a>                                .filter(|y| claims_meet(x, y))
+<a href=#828 id=828 data-nosnippet>828</a>                                .map(|y| OverlapPath {
+<a href=#829 id=829 data-nosnippet>829</a>                                    yours: x.clone(),
+<a href=#830 id=830 data-nosnippet>830</a>                                    theirs: y.clone(),
+<a href=#831 id=831 data-nosnippet>831</a>                                })
+<a href=#832 id=832 data-nosnippet>832</a>                        })
+<a href=#833 id=833 data-nosnippet>833</a>                        .collect();
+<a href=#834 id=834 data-nosnippet>834</a>                    <span class="kw">if </span>paths.is_empty() {
+<a href=#835 id=835 data-nosnippet>835</a>                        <span class="kw">continue</span>;
+<a href=#836 id=836 data-nosnippet>836</a>                    }
+<a href=#837 id=837 data-nosnippet>837</a>                    <span class="kw">let </span>both_exclusive =
+<a href=#838 id=838 data-nosnippet>838</a>                        a.mode == ClaimMode::Exclusive &amp;&amp; b.mode == ClaimMode::Exclusive;
+<a href=#839 id=839 data-nosnippet>839</a>                    <span class="kw">let </span>certainty = <span class="kw">if </span>both_exclusive || a.conflicted || b.conflicted {
+<a href=#840 id=840 data-nosnippet>840</a>                        BlackboardCertainty::Confirmed
+<a href=#841 id=841 data-nosnippet>841</a>                    } <span class="kw">else </span>{
+<a href=#842 id=842 data-nosnippet>842</a>                        BlackboardCertainty::Potential
+<a href=#843 id=843 data-nosnippet>843</a>                    };
+<a href=#844 id=844 data-nosnippet>844</a>                    <span class="kw">let </span>conflict = BlackboardConflict {
+<a href=#845 id=845 data-nosnippet>845</a>                        certainty,
+<a href=#846 id=846 data-nosnippet>846</a>                        first: claim_ref(first, a),
+<a href=#847 id=847 data-nosnippet>847</a>                        second: claim_ref(second, b),
+<a href=#848 id=848 data-nosnippet>848</a>                        paths,
+<a href=#849 id=849 data-nosnippet>849</a>                    };
+<a href=#850 id=850 data-nosnippet>850</a>                    <span class="kw">match </span>certainty {
+<a href=#851 id=851 data-nosnippet>851</a>                        BlackboardCertainty::Confirmed =&gt; confirmed.push(conflict),
+<a href=#852 id=852 data-nosnippet>852</a>                        BlackboardCertainty::Potential =&gt; potential.push(conflict),
+<a href=#853 id=853 data-nosnippet>853</a>                    }
+<a href=#854 id=854 data-nosnippet>854</a>                }
+<a href=#855 id=855 data-nosnippet>855</a>            }
+<a href=#856 id=856 data-nosnippet>856</a>        }
+<a href=#857 id=857 data-nosnippet>857</a>    }
+<a href=#858 id=858 data-nosnippet>858</a>    <span class="kw">let </span>total = confirmed.len() + potential.len();
+<a href=#859 id=859 data-nosnippet>859</a>    confirmed.extend(potential);
+<a href=#860 id=860 data-nosnippet>860</a>    confirmed.truncate(MAX_CONFLICTS);
+<a href=#861 id=861 data-nosnippet>861</a>    (total, confirmed)
+<a href=#862 id=862 data-nosnippet>862</a>}
+<a href=#863 id=863 data-nosnippet>863</a>
+<a href=#864 id=864 data-nosnippet>864</a><span class="kw">fn </span>claim_ref(worker: <span class="kw-2">&amp;</span>BlackboardWorker, claim: <span class="kw-2">&amp;</span>BlackboardClaim) -&gt; BlackboardClaimRef {
+<a href=#865 id=865 data-nosnippet>865</a>    BlackboardClaimRef {
+<a href=#866 id=866 data-nosnippet>866</a>        worker: worker.key.clone(),
+<a href=#867 id=867 data-nosnippet>867</a>        claim: claim.name.clone(),
+<a href=#868 id=868 data-nosnippet>868</a>        record: claim.record.clone(),
+<a href=#869 id=869 data-nosnippet>869</a>    }
+<a href=#870 id=870 data-nosnippet>870</a>}
+<a href=#871 id=871 data-nosnippet>871</a>
+<a href=#872 id=872 data-nosnippet>872</a><span class="comment">// ---------------------------------------------------------------- the handler
+<a href=#873 id=873 data-nosnippet>873</a>
+<a href=#874 id=874 data-nosnippet>874</a></span><span class="doccomment">/// Node id → display name: every node the mesh has observed, and this one.
+<a href=#875 id=875 data-nosnippet>875</a></span><span class="kw">fn </span>machines(
+<a href=#876 id=876 data-nosnippet>876</a>    nodes: Vec&lt;<span class="kw">crate</span>::mesh::registry::NodeRecord&gt;,
+<a href=#877 id=877 data-nosnippet>877</a>    me: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::mesh::identity::PublicIdentity&gt;,
+<a href=#878 id=878 data-nosnippet>878</a>) -&gt; HashMap&lt;String, String&gt; {
+<a href=#879 id=879 data-nosnippet>879</a>    <span class="kw">let </span><span class="kw-2">mut </span>machines = HashMap::new();
+<a href=#880 id=880 data-nosnippet>880</a>    <span class="kw">for </span>n <span class="kw">in </span>nodes {
+<a href=#881 id=881 data-nosnippet>881</a>        machines.insert(n.node_id.as_str().to_string(), n.display_name);
+<a href=#882 id=882 data-nosnippet>882</a>    }
+<a href=#883 id=883 data-nosnippet>883</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(me) = me {
+<a href=#884 id=884 data-nosnippet>884</a>        machines.insert(me.node_id.as_str().to_string(), me.display_name);
+<a href=#885 id=885 data-nosnippet>885</a>    }
+<a href=#886 id=886 data-nosnippet>886</a>    machines
+<a href=#887 id=887 data-nosnippet>887</a>}
+<a href=#888 id=888 data-nosnippet>888</a>
+<a href=#889 id=889 data-nosnippet>889</a><span class="doccomment">/// How a mesh that is not read stands, from what the repository declares: one it does not
+<a href=#890 id=890 data-nosnippet>890</a>/// declare, or declares disabled, is not missing; one it declares and that could not be read
+<a href=#891 id=891 data-nosnippet>891</a>/// is, for `reason`.
+<a href=#892 id=892 data-nosnippet>892</a></span><span class="kw">fn </span>absence(
+<a href=#893 id=893 data-nosnippet>893</a>    declaration: <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;<span class="kw">crate</span>::mesh::MeshConfig, <span class="kw">crate</span>::mesh::MeshError&gt;&gt;,
+<a href=#894 id=894 data-nosnippet>894</a>    reason: String,
+<a href=#895 id=895 data-nosnippet>895</a>) -&gt; MeshAbsence {
+<a href=#896 id=896 data-nosnippet>896</a>    <span class="kw">match </span>declaration {
+<a href=#897 id=897 data-nosnippet>897</a>        <span class="prelude-val">None </span>=&gt; MeshAbsence::Undeclared(<span class="string">"the repository declares no mesh"</span>.into()),
+<a href=#898 id=898 data-nosnippet>898</a>        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(config)) <span class="kw">if </span>!config.enabled =&gt; {
+<a href=#899 id=899 data-nosnippet>899</a>            MeshAbsence::Undeclared(<span class="string">"the repository's mesh declaration is disabled"</span>.into())
+<a href=#900 id=900 data-nosnippet>900</a>        }
+<a href=#901 id=901 data-nosnippet>901</a>        <span class="kw">_ </span>=&gt; MeshAbsence::Unreachable(reason),
+<a href=#902 id=902 data-nosnippet>902</a>    }
+<a href=#903 id=903 data-nosnippet>903</a>}
+<a href=#904 id=904 data-nosnippet>904</a>
+<a href=#905 id=905 data-nosnippet>905</a><span class="kw">fn </span>snapshot(ctx: <span class="kw-2">&amp;</span>Context, input: BlackboardInput) -&gt; <span class="prelude-ty">Result</span>&lt;Blackboard, CapabilityError&gt; {
+<a href=#906 id=906 data-nosnippet>906</a>    <span class="kw">let </span>asked = PeerListInput {
+<a href=#907 id=907 data-nosnippet>907</a>        checkouts: input.checkouts,
+<a href=#908 id=908 data-nosnippet>908</a>        view: PeerListView::Summary,
+<a href=#909 id=909 data-nosnippet>909</a>    };
+<a href=#910 id=910 data-nosnippet>910</a>    <span class="kw">super</span>::peers::peers_list(ctx, asked).and_then(|board| read(ctx, input, <span class="kw-2">&amp;</span>board))
+<a href=#911 id=911 data-nosnippet>911</a>}
+<a href=#912 id=912 data-nosnippet>912</a>
+<a href=#913 id=913 data-nosnippet>913</a><span class="doccomment">/// The blackboard over `board`: the signals and the mesh read, and every source joined.
+<a href=#914 id=914 data-nosnippet>914</a></span><span class="kw">fn </span>read(
+<a href=#915 id=915 data-nosnippet>915</a>    ctx: <span class="kw-2">&amp;</span>Context,
+<a href=#916 id=916 data-nosnippet>916</a>    input: BlackboardInput,
+<a href=#917 id=917 data-nosnippet>917</a>    board: <span class="kw-2">&amp;</span>PeerList,
+<a href=#918 id=918 data-nosnippet>918</a>) -&gt; <span class="prelude-ty">Result</span>&lt;Blackboard, CapabilityError&gt; {
+<a href=#919 id=919 data-nosnippet>919</a>    <span class="kw">let </span>wanted = input.signals.unwrap_or(DEFAULT_SIGNALS).min(MAX_SIGNALS);
+<a href=#920 id=920 data-nosnippet>920</a>    <span class="comment">// no signals asked for is no monitor read: the journal is read once less, which is most
+<a href=#921 id=921 data-nosnippet>921</a>    // of what the answer costs
+<a href=#922 id=922 data-nosnippet>922</a>    </span><span class="kw">let </span>monitor = <span class="kw">if </span>wanted == <span class="number">0 </span>{
+<a href=#923 id=923 data-nosnippet>923</a>        MonitorPage::default()
+<a href=#924 id=924 data-nosnippet>924</a>    } <span class="kw">else </span>{
+<a href=#925 id=925 data-nosnippet>925</a>        <span class="kw">super</span>::monitor::monitor(
+<a href=#926 id=926 data-nosnippet>926</a>            ctx,
+<a href=#927 id=927 data-nosnippet>927</a>            MonitorInput {
+<a href=#928 id=928 data-nosnippet>928</a>                after: <span class="prelude-val">None</span>,
+<a href=#929 id=929 data-nosnippet>929</a>                limit: <span class="prelude-val">Some</span>(wanted),
+<a href=#930 id=930 data-nosnippet>930</a>                sources: <span class="prelude-val">Some</span>(input.sources.unwrap_or_else(|| DEFAULT_SOURCES.into())),
+<a href=#931 id=931 data-nosnippet>931</a>                reader: input.reader,
+<a href=#932 id=932 data-nosnippet>932</a>                since: <span class="prelude-val">None</span>,
+<a href=#933 id=933 data-nosnippet>933</a>            },
+<a href=#934 id=934 data-nosnippet>934</a>        )<span class="question-mark">?
+<a href=#935 id=935 data-nosnippet>935</a>    </span>};
+<a href=#936 id=936 data-nosnippet>936</a>    <span class="kw">let </span>cooperation = ctx.mesh.cooperation();
+<a href=#937 id=937 data-nosnippet>937</a>    <span class="kw">let </span>state = cooperation.as_ref().map(|c| c.state());
+<a href=#938 id=938 data-nosnippet>938</a>    <span class="kw">let </span>beats: HashMap&lt;String, (StreamLiveness, <span class="prelude-ty">Option</span>&lt;u64&gt;)&gt; = cooperation
+<a href=#939 id=939 data-nosnippet>939</a>        .as_ref()
+<a href=#940 id=940 data-nosnippet>940</a>        .map(|c| {
+<a href=#941 id=941 data-nosnippet>941</a>            c.streams()
+<a href=#942 id=942 data-nosnippet>942</a>                .into_iter()
+<a href=#943 id=943 data-nosnippet>943</a>                .map(|(stream, liveness, beat)| (stream.runtime_key(), (liveness, beat)))
+<a href=#944 id=944 data-nosnippet>944</a>                .collect()
+<a href=#945 id=945 data-nosnippet>945</a>        })
+<a href=#946 id=946 data-nosnippet>946</a>        .unwrap_or_default();
+<a href=#947 id=947 data-nosnippet>947</a>    <span class="kw">let </span>machines = machines(ctx.mesh.nodes(), ctx.mesh.status().identity);
+<a href=#948 id=948 data-nosnippet>948</a>    <span class="kw">let </span>reason = ctx
+<a href=#949 id=949 data-nosnippet>949</a>        .mesh
+<a href=#950 id=950 data-nosnippet>950</a>        .cooperation_status()
+<a href=#951 id=951 data-nosnippet>951</a>        .reason
+<a href=#952 id=952 data-nosnippet>952</a>        .unwrap_or_else(|| <span class="string">"the mesh is not running in this server"</span>.to_string());
+<a href=#953 id=953 data-nosnippet>953</a>    <span class="kw">let </span>absence = absence(<span class="kw">super</span>::mesh::resolved_declaration(ctx).declaration, reason);
+<a href=#954 id=954 data-nosnippet>954</a>    <span class="kw">let </span>root = PathBuf::from(<span class="kw-2">&amp;</span>ctx.index.repository.root);
+<a href=#955 id=955 data-nosnippet>955</a>    <span class="kw">let </span>root = root.canonicalize().unwrap_or(root);
+<a href=#956 id=956 data-nosnippet>956</a>    <span class="kw">let </span>head = <span class="kw">crate</span>::worktree::git::head_of(<span class="kw-2">&amp;</span>root).ok().flatten();
+<a href=#957 id=957 data-nosnippet>957</a>    <span class="prelude-val">Ok</span>(project(
+<a href=#958 id=958 data-nosnippet>958</a>        <span class="kw-2">&amp;</span>Reads {
+<a href=#959 id=959 data-nosnippet>959</a>            board,
+<a href=#960 id=960 data-nosnippet>960</a>            mesh: state.as_ref().ok_or(absence),
+<a href=#961 id=961 data-nosnippet>961</a>            machines: <span class="kw-2">&amp;</span>machines,
+<a href=#962 id=962 data-nosnippet>962</a>            beats: <span class="kw-2">&amp;</span>beats,
+<a href=#963 id=963 data-nosnippet>963</a>            monitor: <span class="kw-2">&amp;</span>monitor,
+<a href=#964 id=964 data-nosnippet>964</a>        },
+<a href=#965 id=965 data-nosnippet>965</a>        rfc3339(SystemTime::now()),
+<a href=#966 id=966 data-nosnippet>966</a>        repository::identity(<span class="kw-2">&amp;</span>root),
+<a href=#967 id=967 data-nosnippet>967</a>        head,
+<a href=#968 id=968 data-nosnippet>968</a>    ))
+<a href=#969 id=969 data-nosnippet>969</a>}
+<a href=#970 id=970 data-nosnippet>970</a>
+<a href=#971 id=971 data-nosnippet>971</a><span class="doccomment">/// The `blackboard` module.
+<a href=#972 id=972 data-nosnippet>972</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
+<a href=#973 id=973 data-nosnippet>973</a>    <span class="macro">module!</span> {
+<a href=#974 id=974 data-nosnippet>974</a>        id: <span class="string">"blackboard"</span>,
+<a href=#975 id=975 data-nosnippet>975</a>        title: <span class="string">"The peer blackboard"</span>,
+<a href=#976 id=976 data-nosnippet>976</a>        description: <span class="string">"Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why."</span>,
+<a href=#977 id=977 data-nosnippet>977</a>        stability: Stability::Experimental,
+<a href=#978 id=978 data-nosnippet>978</a>        capabilities: [
+<a href=#979 id=979 data-nosnippet>979</a>            <span class="macro">capability!</span> {
+<a href=#980 id=980 data-nosnippet>980</a>                id: <span class="string">"blackboard.snapshot"</span>,
+<a href=#981 id=981 data-nosnippet>981</a>                title: <span class="string">"Who works on what, now"</span>,
+<a href=#982 id=982 data-nosnippet>982</a>                description: <span class="string">"Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only."</span>,
+<a href=#983 id=983 data-nosnippet>983</a>                input: BlackboardInput,
+<a href=#984 id=984 data-nosnippet>984</a>                output: Blackboard,
+<a href=#985 id=985 data-nosnippet>985</a>                stability: Stability::Experimental,
+<a href=#986 id=986 data-nosnippet>986</a>                exposure: Exposure { mcp: mcp(<span class="string">"majordomus_blackboard"</span>), http: get(<span class="string">"/api/v1/blackboard"</span>), cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"blackboard"</span>.into()] }) },
+<a href=#987 id=987 data-nosnippet>987</a>                tags: [<span class="string">"peers"</span>, <span class="string">"mesh"</span>, <span class="string">"monitor"</span>, <span class="string">"coordination"</span>],
+<a href=#988 id=988 data-nosnippet>988</a>                handler: snapshot,
+<a href=#989 id=989 data-nosnippet>989</a>            },
+<a href=#990 id=990 data-nosnippet>990</a>        ],
+<a href=#991 id=991 data-nosnippet>991</a>    }
+<a href=#992 id=992 data-nosnippet>992</a>}
+<a href=#993 id=993 data-nosnippet>993</a>
+<a href=#994 id=994 data-nosnippet>994</a><span class="attr">#[cfg(test)]
+<a href=#995 id=995 data-nosnippet>995</a></span><span class="kw">mod </span>tests {
+<a href=#996 id=996 data-nosnippet>996</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#997 id=997 data-nosnippet>997</a>    <span class="kw">use </span><span class="kw">crate</span>::mesh::journal::{SessionInfo, StreamId};
+<a href=#998 id=998 data-nosnippet>998</a>    <span class="kw">use </span><span class="kw">crate</span>::mesh::state::{ClaimView, ReviewView};
+<a href=#999 id=999 data-nosnippet>999</a>    <span class="kw">use </span><span class="kw">crate</span>::peers::{Announcement, ClientInfo, PeerCheckout, PeerId, Transport};
+<a href=#1000 id=1000 data-nosnippet>1000</a>
+<a href=#1001 id=1001 data-nosnippet>1001</a>    <span class="kw">fn </span>peer(id: <span class="kw-2">&amp;</span>str, client: <span class="kw-2">&amp;</span>str, checkout: <span class="kw-2">&amp;</span>str, claims: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str])]) -&gt; Peer {
+<a href=#1002 id=1002 data-nosnippet>1002</a>        <span class="kw">let </span>claims: Vec&lt;Announcement&gt; = claims
+<a href=#1003 id=1003 data-nosnippet>1003</a>            .iter()
+<a href=#1004 id=1004 data-nosnippet>1004</a>            .map(|(intent, scope)| Announcement {
+<a href=#1005 id=1005 data-nosnippet>1005</a>                name: <span class="prelude-val">None</span>,
+<a href=#1006 id=1006 data-nosnippet>1006</a>                intent: (<span class="kw-2">*</span>intent).into(),
+<a href=#1007 id=1007 data-nosnippet>1007</a>                scope: scope.iter().map(|s| (<span class="kw-2">*</span>s).into()).collect(),
+<a href=#1008 id=1008 data-nosnippet>1008</a>                at: <span class="string">"2026-10-18T00:00:00Z"</span>.into(),
+<a href=#1009 id=1009 data-nosnippet>1009</a>            })
+<a href=#1010 id=1010 data-nosnippet>1010</a>            .collect();
+<a href=#1011 id=1011 data-nosnippet>1011</a>        Peer {
+<a href=#1012 id=1012 data-nosnippet>1012</a>            id: serde_json::from_value::&lt;PeerId&gt;(<span class="macro">serde_json::json!</span>(id)).unwrap(),
+<a href=#1013 id=1013 data-nosnippet>1013</a>            client: ClientInfo {
+<a href=#1014 id=1014 data-nosnippet>1014</a>                name: client.into(),
+<a href=#1015 id=1015 data-nosnippet>1015</a>                version: <span class="string">"1"</span>.into(),
+<a href=#1016 id=1016 data-nosnippet>1016</a>                title: <span class="prelude-val">None</span>,
+<a href=#1017 id=1017 data-nosnippet>1017</a>            },
+<a href=#1018 id=1018 data-nosnippet>1018</a>            transport: Transport::Http,
+<a href=#1019 id=1019 data-nosnippet>1019</a>            connected_at: <span class="string">"2026-10-18T00:00:00Z"</span>.into(),
+<a href=#1020 id=1020 data-nosnippet>1020</a>            last_seen_seconds_ago: <span class="number">1</span>,
+<a href=#1021 id=1021 data-nosnippet>1021</a>            attached: <span class="bool-val">true</span>,
+<a href=#1022 id=1022 data-nosnippet>1022</a>            announcement: claims.last().cloned(),
+<a href=#1023 id=1023 data-nosnippet>1023</a>            claims,
+<a href=#1024 id=1024 data-nosnippet>1024</a>            checkout: <span class="prelude-val">Some</span>(PeerCheckout {
+<a href=#1025 id=1025 data-nosnippet>1025</a>                id: checkout.into(),
+<a href=#1026 id=1026 data-nosnippet>1026</a>                worktree: PathBuf::from(<span class="string">"/w"</span>),
+<a href=#1027 id=1027 data-nosnippet>1027</a>                branch: <span class="prelude-val">Some</span>(<span class="string">"master"</span>.into()),
+<a href=#1028 id=1028 data-nosnippet>1028</a>                this_checkout: <span class="bool-val">true</span>,
+<a href=#1029 id=1029 data-nosnippet>1029</a>            }),
+<a href=#1030 id=1030 data-nosnippet>1030</a>        }
+<a href=#1031 id=1031 data-nosnippet>1031</a>    }
+<a href=#1032 id=1032 data-nosnippet>1032</a>
+<a href=#1033 id=1033 data-nosnippet>1033</a>    <span class="doccomment">/// The stream of machine `node`, runtime `runtime` and process `instance` (one hex digit
+<a href=#1034 id=1034 data-nosnippet>1034</a>    /// each).
+<a href=#1035 id=1035 data-nosnippet>1035</a>    </span><span class="kw">fn </span>stream(node: <span class="kw-2">&amp;</span>str, runtime: <span class="kw-2">&amp;</span>str, instance: <span class="kw-2">&amp;</span>str) -&gt; StreamId {
+<a href=#1036 id=1036 data-nosnippet>1036</a>        StreamId::new(<span class="kw-2">&amp;</span>node.repeat(<span class="number">32</span>), <span class="kw-2">&amp;</span>runtime.repeat(<span class="number">16</span>), <span class="kw-2">&amp;</span>instance.repeat(<span class="number">16</span>)).unwrap()
+<a href=#1037 id=1037 data-nosnippet>1037</a>    }
+<a href=#1038 id=1038 data-nosnippet>1038</a>
+<a href=#1039 id=1039 data-nosnippet>1039</a>    <span class="kw">fn </span>session(at: <span class="kw-2">&amp;</span>StreamId, id: <span class="kw-2">&amp;</span>str, client: <span class="kw-2">&amp;</span>str, checkout: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; SessionView {
+<a href=#1040 id=1040 data-nosnippet>1040</a>        SessionView {
+<a href=#1041 id=1041 data-nosnippet>1041</a>            key: <span class="macro">format!</span>(<span class="string">"{}/{id}"</span>, at.as_str()),
+<a href=#1042 id=1042 data-nosnippet>1042</a>            stream: at.clone(),
+<a href=#1043 id=1043 data-nosnippet>1043</a>            runtime: at.runtime_key(),
+<a href=#1044 id=1044 data-nosnippet>1044</a>            node: at.as_str()[..<span class="number">32</span>].to_string(),
+<a href=#1045 id=1045 data-nosnippet>1045</a>            info: SessionInfo {
+<a href=#1046 id=1046 data-nosnippet>1046</a>                session: id.into(),
+<a href=#1047 id=1047 data-nosnippet>1047</a>                client: client.into(),
+<a href=#1048 id=1048 data-nosnippet>1048</a>                checkout: checkout.map(str::to_string),
+<a href=#1049 id=1049 data-nosnippet>1049</a>                ..SessionInfo::default()
+<a href=#1050 id=1050 data-nosnippet>1050</a>            },
+<a href=#1051 id=1051 data-nosnippet>1051</a>            state: SessionState::Active,
+<a href=#1052 id=1052 data-nosnippet>1052</a>            updated_lamport: <span class="number">1</span>,
+<a href=#1053 id=1053 data-nosnippet>1053</a>        }
+<a href=#1054 id=1054 data-nosnippet>1054</a>    }
+<a href=#1055 id=1055 data-nosnippet>1055</a>
+<a href=#1056 id=1056 data-nosnippet>1056</a>    <span class="kw">fn </span>claim(of: <span class="kw-2">&amp;</span>SessionView, key: <span class="kw-2">&amp;</span>str, scope: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], mode: ClaimMode) -&gt; ClaimView {
+<a href=#1057 id=1057 data-nosnippet>1057</a>        ClaimView {
+<a href=#1058 id=1058 data-nosnippet>1058</a>            key: key.into(),
+<a href=#1059 id=1059 data-nosnippet>1059</a>            stream: of.stream.clone(),
+<a href=#1060 id=1060 data-nosnippet>1060</a>            runtime: of.runtime.clone(),
+<a href=#1061 id=1061 data-nosnippet>1061</a>            session: of.key.clone(),
+<a href=#1062 id=1062 data-nosnippet>1062</a>            scope: scope.iter().map(|s| (<span class="kw-2">*</span>s).into()).collect(),
+<a href=#1063 id=1063 data-nosnippet>1063</a>            intent: <span class="prelude-val">None</span>,
+<a href=#1064 id=1064 data-nosnippet>1064</a>            mode,
+<a href=#1065 id=1065 data-nosnippet>1065</a>            issue: <span class="prelude-val">None</span>,
+<a href=#1066 id=1066 data-nosnippet>1066</a>            acquired_lamport: <span class="number">1</span>,
+<a href=#1067 id=1067 data-nosnippet>1067</a>            acquired_seq: <span class="number">1</span>,
+<a href=#1068 id=1068 data-nosnippet>1068</a>            state: ClaimState::Held,
+<a href=#1069 id=1069 data-nosnippet>1069</a>        }
+<a href=#1070 id=1070 data-nosnippet>1070</a>    }
+<a href=#1071 id=1071 data-nosnippet>1071</a>
+<a href=#1072 id=1072 data-nosnippet>1072</a>    <span class="doccomment">/// A board of checkout `checkout` whose server projects into `stream`.
+<a href=#1073 id=1073 data-nosnippet>1073</a>    </span><span class="kw">fn </span>list(peers: Vec&lt;Peer&gt;, checkout: <span class="kw-2">&amp;</span>str, stream: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>StreamId&gt;) -&gt; PeerList {
+<a href=#1074 id=1074 data-nosnippet>1074</a>        <span class="kw">let </span>board = <span class="macro">serde_json::json!</span>({
+<a href=#1075 id=1075 data-nosnippet>1075</a>            <span class="string">"id"</span>: checkout, <span class="string">"worktree"</span>: <span class="string">"/w"</span>, <span class="string">"this_checkout"</span>: <span class="bool-val">true</span>, <span class="string">"standing"</span>: <span class="string">"ready"</span>,
+<a href=#1076 id=1076 data-nosnippet>1076</a>            <span class="string">"attached"</span>: peers.len(), <span class="string">"stream"</span>: stream.map(|s| s.as_str()),
+<a href=#1077 id=1077 data-nosnippet>1077</a>        });
+<a href=#1078 id=1078 data-nosnippet>1078</a>        PeerList {
+<a href=#1079 id=1079 data-nosnippet>1079</a>            count: peers.len(),
+<a href=#1080 id=1080 data-nosnippet>1080</a>            caller: <span class="prelude-val">None</span>,
+<a href=#1081 id=1081 data-nosnippet>1081</a>            peers,
+<a href=#1082 id=1082 data-nosnippet>1082</a>            overlaps: Vec::new(),
+<a href=#1083 id=1083 data-nosnippet>1083</a>            covered: <span class="number">1</span>,
+<a href=#1084 id=1084 data-nosnippet>1084</a>            boards: <span class="macro">vec!</span>[serde_json::from_value(board).unwrap()],
+<a href=#1085 id=1085 data-nosnippet>1085</a>            omitted: BTreeMap::new(),
+<a href=#1086 id=1086 data-nosnippet>1086</a>            complete: <span class="bool-val">true</span>,
+<a href=#1087 id=1087 data-nosnippet>1087</a>            stream: stream.map(|s| s.as_str().to_string()),
+<a href=#1088 id=1088 data-nosnippet>1088</a>        }
+<a href=#1089 id=1089 data-nosnippet>1089</a>    }
+<a href=#1090 id=1090 data-nosnippet>1090</a>
+<a href=#1091 id=1091 data-nosnippet>1091</a>    <span class="kw">fn </span>page() -&gt; MonitorPage {
+<a href=#1092 id=1092 data-nosnippet>1092</a>        serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#1093 id=1093 data-nosnippet>1093</a>            <span class="string">"signals"</span>: [], <span class="string">"for_you"</span>: <span class="number">0</span>, <span class="string">"suppressed"</span>: <span class="number">0</span>, <span class="string">"sources"</span>: [], <span class="string">"cursor"</span>: <span class="string">"x0"</span>, <span class="string">"more"</span>: <span class="bool-val">false
+<a href=#1094 id=1094 data-nosnippet>1094</a>        </span>}))
+<a href=#1095 id=1095 data-nosnippet>1095</a>        .unwrap()
+<a href=#1096 id=1096 data-nosnippet>1096</a>    }
+<a href=#1097 id=1097 data-nosnippet>1097</a>
+<a href=#1098 id=1098 data-nosnippet>1098</a>    <span class="kw">fn </span>answer(board: <span class="kw-2">&amp;</span>PeerList, mesh: <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span>CooperationState, MeshAbsence&gt;) -&gt; Blackboard {
+<a href=#1099 id=1099 data-nosnippet>1099</a>        <span class="kw">let </span>machines = HashMap::from([(<span class="string">"1"</span>.repeat(<span class="number">32</span>), <span class="string">"here"</span>.to_string())]);
+<a href=#1100 id=1100 data-nosnippet>1100</a>        <span class="kw">let </span>beats = HashMap::new();
+<a href=#1101 id=1101 data-nosnippet>1101</a>        <span class="kw">let </span>monitor = page();
+<a href=#1102 id=1102 data-nosnippet>1102</a>        project(
+<a href=#1103 id=1103 data-nosnippet>1103</a>            <span class="kw-2">&amp;</span>Reads {
+<a href=#1104 id=1104 data-nosnippet>1104</a>                board,
+<a href=#1105 id=1105 data-nosnippet>1105</a>                mesh,
+<a href=#1106 id=1106 data-nosnippet>1106</a>                machines: <span class="kw-2">&amp;</span>machines,
+<a href=#1107 id=1107 data-nosnippet>1107</a>                beats: <span class="kw-2">&amp;</span>beats,
+<a href=#1108 id=1108 data-nosnippet>1108</a>                monitor: <span class="kw-2">&amp;</span>monitor,
+<a href=#1109 id=1109 data-nosnippet>1109</a>            },
+<a href=#1110 id=1110 data-nosnippet>1110</a>            <span class="string">"2026-10-18T00:00:00Z"</span>.into(),
+<a href=#1111 id=1111 data-nosnippet>1111</a>            <span class="string">"c1"</span>.into(),
+<a href=#1112 id=1112 data-nosnippet>1112</a>            <span class="prelude-val">None</span>,
+<a href=#1113 id=1113 data-nosnippet>1113</a>        )
+<a href=#1114 id=1114 data-nosnippet>1114</a>    }
+<a href=#1115 id=1115 data-nosnippet>1115</a>
+<a href=#1116 id=1116 data-nosnippet>1116</a>    <span class="doccomment">/// A board peer is joined to the session its own server's stream projected for it; the
+<a href=#1117 id=1117 data-nosnippet>1117</a>    /// same board session id in another process of the same runtime (a restarted or superseded
+<a href=#1118 id=1118 data-nosnippet>1118</a>    /// server), on another machine or for another checkout is a different worker.
+<a href=#1119 id=1119 data-nosnippet>1119</a>    </span><span class="attr">#[test]
+<a href=#1120 id=1120 data-nosnippet>1120</a>    </span><span class="kw">fn </span>a_peer_is_joined_only_through_its_servers_stream() {
+<a href=#1121 id=1121 data-nosnippet>1121</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1122 id=1122 data-nosnippet>1122</a>        <span class="kw">let </span>board = list(
+<a href=#1123 id=1123 data-nosnippet>1123</a>            <span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"claude-code"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"x"</span>, <span class="kw-2">&amp;</span>[<span class="string">"apps"</span>])])],
+<a href=#1124 id=1124 data-nosnippet>1124</a>            <span class="string">"c1"</span>,
+<a href=#1125 id=1125 data-nosnippet>1125</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>here),
+<a href=#1126 id=1126 data-nosnippet>1126</a>        );
+<a href=#1127 id=1127 data-nosnippet>1127</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1128 id=1128 data-nosnippet>1128</a>            sessions: <span class="macro">vec!</span>[
+<a href=#1129 id=1129 data-nosnippet>1129</a>                session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p1"</span>, <span class="string">"claude-code"</span>, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>)),
+<a href=#1130 id=1130 data-nosnippet>1130</a>                session(
+<a href=#1131 id=1131 data-nosnippet>1131</a>                    <span class="kw-2">&amp;</span>stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"b"</span>),
+<a href=#1132 id=1132 data-nosnippet>1132</a>                    <span class="string">"board-p1"</span>,
+<a href=#1133 id=1133 data-nosnippet>1133</a>                    <span class="string">"claude-code"</span>,
+<a href=#1134 id=1134 data-nosnippet>1134</a>                    <span class="prelude-val">Some</span>(<span class="string">"c1"</span>),
+<a href=#1135 id=1135 data-nosnippet>1135</a>                ),
+<a href=#1136 id=1136 data-nosnippet>1136</a>                session(
+<a href=#1137 id=1137 data-nosnippet>1137</a>                    <span class="kw-2">&amp;</span>stream(<span class="string">"2"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>),
+<a href=#1138 id=1138 data-nosnippet>1138</a>                    <span class="string">"board-p1"</span>,
+<a href=#1139 id=1139 data-nosnippet>1139</a>                    <span class="string">"claude-code"</span>,
+<a href=#1140 id=1140 data-nosnippet>1140</a>                    <span class="prelude-val">Some</span>(<span class="string">"c1"</span>),
+<a href=#1141 id=1141 data-nosnippet>1141</a>                ),
+<a href=#1142 id=1142 data-nosnippet>1142</a>                session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p2"</span>, <span class="string">"claude-code"</span>, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>)),
+<a href=#1143 id=1143 data-nosnippet>1143</a>            ],
+<a href=#1144 id=1144 data-nosnippet>1144</a>            ..CooperationState::default()
+<a href=#1145 id=1145 data-nosnippet>1145</a>        };
+<a href=#1146 id=1146 data-nosnippet>1146</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1147 id=1147 data-nosnippet>1147</a>        <span class="macro">assert!</span>(b.complete);
+<a href=#1148 id=1148 data-nosnippet>1148</a>        <span class="macro">assert_eq!</span>(b.workers.len(), <span class="number">4</span>, <span class="string">"{:#?}"</span>, b.workers);
+<a href=#1149 id=1149 data-nosnippet>1149</a>        <span class="kw">let </span>joined = <span class="kw-2">&amp;</span>b.workers[<span class="number">0</span>];
+<a href=#1150 id=1150 data-nosnippet>1150</a>        <span class="macro">assert_eq!</span>(joined.key, <span class="string">"board:c1/p1"</span>);
+<a href=#1151 id=1151 data-nosnippet>1151</a>        <span class="macro">assert_eq!</span>(
+<a href=#1152 id=1152 data-nosnippet>1152</a>            joined.session.as_deref(),
+<a href=#1153 id=1153 data-nosnippet>1153</a>            <span class="prelude-val">Some</span>(state.sessions[<span class="number">0</span>].key.as_str())
+<a href=#1154 id=1154 data-nosnippet>1154</a>        );
+<a href=#1155 id=1155 data-nosnippet>1155</a>        <span class="macro">assert_eq!</span>(joined.machine.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"here"</span>));
+<a href=#1156 id=1156 data-nosnippet>1156</a>        <span class="macro">assert_eq!</span>(b.relations.len(), <span class="number">1</span>);
+<a href=#1157 id=1157 data-nosnippet>1157</a>        <span class="macro">assert_eq!</span>(b.relations[<span class="number">0</span>].evidence, BlackboardEvidence::Verified);
+<a href=#1158 id=1158 data-nosnippet>1158</a>        <span class="macro">assert!</span>(b.workers[<span class="number">1</span>..]
+<a href=#1159 id=1159 data-nosnippet>1159</a>            .iter()
+<a href=#1160 id=1160 data-nosnippet>1160</a>            .all(|w| w.origin == BlackboardOrigin::Mesh));
+<a href=#1161 id=1161 data-nosnippet>1161</a>
+<a href=#1162 id=1162 data-nosnippet>1162</a>        <span class="comment">// a board whose server names no stream joins nothing
+<a href=#1163 id=1163 data-nosnippet>1163</a>        </span><span class="kw">let </span>unnamed = list(board.peers.clone(), <span class="string">"c1"</span>, <span class="prelude-val">None</span>);
+<a href=#1164 id=1164 data-nosnippet>1164</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>unnamed, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1165 id=1165 data-nosnippet>1165</a>        <span class="macro">assert!</span>(b.relations.is_empty());
+<a href=#1166 id=1166 data-nosnippet>1166</a>        <span class="macro">assert_eq!</span>(b.workers.len(), <span class="number">5</span>);
+<a href=#1167 id=1167 data-nosnippet>1167</a>    }
+<a href=#1168 id=1168 data-nosnippet>1168</a>
+<a href=#1169 id=1169 data-nosnippet>1169</a>    <span class="doccomment">/// A joined peer keeps the exclusive claim its session took beside its announcements, and
+<a href=#1170 id=1170 data-nosnippet>1170</a>    /// the advisory claim its server projected from an announcement is not counted twice.
+<a href=#1171 id=1171 data-nosnippet>1171</a>    </span><span class="attr">#[test]
+<a href=#1172 id=1172 data-nosnippet>1172</a>    </span><span class="kw">fn </span>a_joined_peer_keeps_its_exclusive_mesh_claims() {
+<a href=#1173 id=1173 data-nosnippet>1173</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1174 id=1174 data-nosnippet>1174</a>        <span class="kw">let </span>board = list(
+<a href=#1175 id=1175 data-nosnippet>1175</a>            <span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"codex"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"x"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>])])],
+<a href=#1176 id=1176 data-nosnippet>1176</a>            <span class="string">"c1"</span>,
+<a href=#1177 id=1177 data-nosnippet>1177</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>here),
+<a href=#1178 id=1178 data-nosnippet>1178</a>        );
+<a href=#1179 id=1179 data-nosnippet>1179</a>        <span class="kw">let </span>s = session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p1"</span>, <span class="string">"codex"</span>, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>));
+<a href=#1180 id=1180 data-nosnippet>1180</a>        <span class="comment">// what the projection writes for the announcement: advisory, its scope, its intent
+<a href=#1181 id=1181 data-nosnippet>1181</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>projected = claim(<span class="kw-2">&amp;</span>s, <span class="string">"k1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimMode::Advisory);
+<a href=#1182 id=1182 data-nosnippet>1182</a>        projected.intent = <span class="prelude-val">Some</span>(<span class="string">"x"</span>.into());
+<a href=#1183 id=1183 data-nosnippet>1183</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1184 id=1184 data-nosnippet>1184</a>            claims: <span class="macro">vec!</span>[projected, claim(<span class="kw-2">&amp;</span>s, <span class="string">"k2"</span>, <span class="kw-2">&amp;</span>[<span class="string">"apps"</span>], ClaimMode::Exclusive)],
+<a href=#1185 id=1185 data-nosnippet>1185</a>            sessions: <span class="macro">vec!</span>[s],
+<a href=#1186 id=1186 data-nosnippet>1186</a>            ..CooperationState::default()
+<a href=#1187 id=1187 data-nosnippet>1187</a>        };
+<a href=#1188 id=1188 data-nosnippet>1188</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1189 id=1189 data-nosnippet>1189</a>        <span class="kw">let </span>claims = <span class="kw-2">&amp;</span>b.workers[<span class="number">0</span>].claims;
+<a href=#1190 id=1190 data-nosnippet>1190</a>        <span class="macro">assert_eq!</span>(claims.len(), <span class="number">2</span>, <span class="string">"{claims:#?}"</span>);
+<a href=#1191 id=1191 data-nosnippet>1191</a>        <span class="macro">assert_eq!</span>(claims[<span class="number">1</span>].mode, ClaimMode::Exclusive);
+<a href=#1192 id=1192 data-nosnippet>1192</a>        <span class="macro">assert_eq!</span>(claims[<span class="number">1</span>].record.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"k2"</span>));
+<a href=#1193 id=1193 data-nosnippet>1193</a>    }
+<a href=#1194 id=1194 data-nosnippet>1194</a>
+<a href=#1195 id=1195 data-nosnippet>1195</a>    <span class="doccomment">/// An advisory claim the session took itself over the same paths as an announcement, with
+<a href=#1196 id=1196 data-nosnippet>1196</a>    /// its own intent or issue, is not the announcement's projection: it is kept with its
+<a href=#1197 id=1197 data-nosnippet>1197</a>    /// record. Only a claim carrying exactly what the projection writes is folded, once.
+<a href=#1198 id=1198 data-nosnippet>1198</a>    </span><span class="attr">#[test]
+<a href=#1199 id=1199 data-nosnippet>1199</a>    </span><span class="kw">fn </span>an_independent_same_scope_claim_is_kept() {
+<a href=#1200 id=1200 data-nosnippet>1200</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1201 id=1201 data-nosnippet>1201</a>        <span class="kw">let </span>board = list(
+<a href=#1202 id=1202 data-nosnippet>1202</a>            <span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"codex"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"document UI"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>])])],
+<a href=#1203 id=1203 data-nosnippet>1203</a>            <span class="string">"c1"</span>,
+<a href=#1204 id=1204 data-nosnippet>1204</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>here),
+<a href=#1205 id=1205 data-nosnippet>1205</a>        );
+<a href=#1206 id=1206 data-nosnippet>1206</a>        <span class="kw">let </span>s = session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p1"</span>, <span class="string">"codex"</span>, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>));
+<a href=#1207 id=1207 data-nosnippet>1207</a>        <span class="kw">let </span><span class="kw-2">mut </span>projected = claim(<span class="kw-2">&amp;</span>s, <span class="string">"k1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimMode::Advisory);
+<a href=#1208 id=1208 data-nosnippet>1208</a>        projected.intent = <span class="prelude-val">Some</span>(<span class="string">"document UI"</span>.into());
+<a href=#1209 id=1209 data-nosnippet>1209</a>        <span class="kw">let </span><span class="kw-2">mut </span>review = claim(<span class="kw-2">&amp;</span>s, <span class="string">"k2"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimMode::Advisory);
+<a href=#1210 id=1210 data-nosnippet>1210</a>        review.intent = <span class="prelude-val">Some</span>(<span class="string">"review delivery"</span>.into());
+<a href=#1211 id=1211 data-nosnippet>1211</a>        review.issue = <span class="prelude-val">Some</span>(<span class="string">"I2980"</span>.into());
+<a href=#1212 id=1212 data-nosnippet>1212</a>        <span class="kw">let </span><span class="kw-2">mut </span>twin = claim(<span class="kw-2">&amp;</span>s, <span class="string">"k3"</span>, <span class="kw-2">&amp;</span>[<span class="string">"./docs"</span>], ClaimMode::Advisory);
+<a href=#1213 id=1213 data-nosnippet>1213</a>        twin.intent = <span class="prelude-val">Some</span>(<span class="string">"document UI"</span>.into());
+<a href=#1214 id=1214 data-nosnippet>1214</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1215 id=1215 data-nosnippet>1215</a>            claims: <span class="macro">vec!</span>[projected, review, twin],
+<a href=#1216 id=1216 data-nosnippet>1216</a>            sessions: <span class="macro">vec!</span>[s],
+<a href=#1217 id=1217 data-nosnippet>1217</a>            ..CooperationState::default()
+<a href=#1218 id=1218 data-nosnippet>1218</a>        };
+<a href=#1219 id=1219 data-nosnippet>1219</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1220 id=1220 data-nosnippet>1220</a>        <span class="kw">let </span>claims = <span class="kw-2">&amp;</span>b.workers[<span class="number">0</span>].claims;
+<a href=#1221 id=1221 data-nosnippet>1221</a>        <span class="kw">let </span>records: Vec&lt;<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;&gt; = claims.iter().map(|c| c.record.as_deref()).collect();
+<a href=#1222 id=1222 data-nosnippet>1222</a>        <span class="macro">assert_eq!</span>(records, <span class="macro">vec!</span>[<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(<span class="string">"k2"</span>), <span class="prelude-val">Some</span>(<span class="string">"k3"</span>)], <span class="string">"{claims:#?}"</span>);
+<a href=#1223 id=1223 data-nosnippet>1223</a>        <span class="macro">assert_eq!</span>(claims[<span class="number">1</span>].issue.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"I2980"</span>));
+<a href=#1224 id=1224 data-nosnippet>1224</a>        <span class="macro">assert_eq!</span>(claims[<span class="number">1</span>].intent.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"review delivery"</span>));
+<a href=#1225 id=1225 data-nosnippet>1225</a>    }
+<a href=#1226 id=1226 data-nosnippet>1226</a>
+<a href=#1227 id=1227 data-nosnippet>1227</a>    <span class="doccomment">/// A client name is cut for the join exactly as the projection cut it — at 64 bytes on a
+<a href=#1228 id=1228 data-nosnippet>1228</a>    /// character boundary, controls removed — so a long multi-byte or control-bearing name is
+<a href=#1229 id=1229 data-nosnippet>1229</a>    /// one worker, not two.
+<a href=#1230 id=1230 data-nosnippet>1230</a>    </span><span class="attr">#[test]
+<a href=#1231 id=1231 data-nosnippet>1231</a>    </span><span class="kw">fn </span>a_multibyte_client_name_joins_as_the_projection_cut_it() {
+<a href=#1232 id=1232 data-nosnippet>1232</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1233 id=1233 data-nosnippet>1233</a>        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}\u{7}"</span>, <span class="string">"\u{17e}"</span>.repeat(<span class="number">40</span>));
+<a href=#1234 id=1234 data-nosnippet>1234</a>        <span class="kw">let </span>board = list(<span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="kw-2">&amp;</span>name, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[])], <span class="string">"c1"</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>here));
+<a href=#1235 id=1235 data-nosnippet>1235</a>        <span class="kw">let </span>projected_client = <span class="kw">crate</span>::mesh::cooperation::clip(<span class="kw-2">&amp;</span>name, <span class="number">64</span>);
+<a href=#1236 id=1236 data-nosnippet>1236</a>        <span class="macro">assert_eq!</span>(projected_client, <span class="string">"\u{17e}"</span>.repeat(<span class="number">32</span>));
+<a href=#1237 id=1237 data-nosnippet>1237</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1238 id=1238 data-nosnippet>1238</a>            sessions: <span class="macro">vec!</span>[session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p1"</span>, <span class="kw-2">&amp;</span>projected_client, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>))],
+<a href=#1239 id=1239 data-nosnippet>1239</a>            ..CooperationState::default()
+<a href=#1240 id=1240 data-nosnippet>1240</a>        };
+<a href=#1241 id=1241 data-nosnippet>1241</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1242 id=1242 data-nosnippet>1242</a>        <span class="macro">assert_eq!</span>(b.workers.len(), <span class="number">1</span>, <span class="string">"{:#?}"</span>, b.workers);
+<a href=#1243 id=1243 data-nosnippet>1243</a>        <span class="macro">assert_eq!</span>(b.relations[<span class="number">0</span>].evidence, BlackboardEvidence::Verified);
+<a href=#1244 id=1244 data-nosnippet>1244</a>    }
+<a href=#1245 id=1245 data-nosnippet>1245</a>
+<a href=#1246 id=1246 data-nosnippet>1246</a>    <span class="doccomment">/// Two sessions of one stream that fit the same peer are candidates, neither is joined,
+<a href=#1247 id=1247 data-nosnippet>1247</a>    /// and the peer is not in conflict with its own projection.
+<a href=#1248 id=1248 data-nosnippet>1248</a>    </span><span class="attr">#[test]
+<a href=#1249 id=1249 data-nosnippet>1249</a>    </span><span class="kw">fn </span>two_fitting_sessions_are_candidates_and_no_join() {
+<a href=#1250 id=1250 data-nosnippet>1250</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1251 id=1251 data-nosnippet>1251</a>        <span class="kw">let </span>board = list(
+<a href=#1252 id=1252 data-nosnippet>1252</a>            <span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"codex"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"x"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>])])],
+<a href=#1253 id=1253 data-nosnippet>1253</a>            <span class="string">"c1"</span>,
+<a href=#1254 id=1254 data-nosnippet>1254</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>here),
+<a href=#1255 id=1255 data-nosnippet>1255</a>        );
+<a href=#1256 id=1256 data-nosnippet>1256</a>        <span class="kw">let </span>one = session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p1"</span>, <span class="string">"codex"</span>, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>));
+<a href=#1257 id=1257 data-nosnippet>1257</a>        <span class="kw">let </span><span class="kw-2">mut </span>two = one.clone();
+<a href=#1258 id=1258 data-nosnippet>1258</a>        two.key.push(<span class="string">'x'</span>);
+<a href=#1259 id=1259 data-nosnippet>1259</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1260 id=1260 data-nosnippet>1260</a>            claims: <span class="macro">vec!</span>[claim(<span class="kw-2">&amp;</span>one, <span class="string">"k1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimMode::Advisory)],
+<a href=#1261 id=1261 data-nosnippet>1261</a>            sessions: <span class="macro">vec!</span>[one, two],
+<a href=#1262 id=1262 data-nosnippet>1262</a>            ..CooperationState::default()
+<a href=#1263 id=1263 data-nosnippet>1263</a>        };
+<a href=#1264 id=1264 data-nosnippet>1264</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1265 id=1265 data-nosnippet>1265</a>        <span class="macro">assert_eq!</span>(b.workers[<span class="number">0</span>].session, <span class="prelude-val">None</span>);
+<a href=#1266 id=1266 data-nosnippet>1266</a>        <span class="macro">assert_eq!</span>(b.relations.len(), <span class="number">2</span>);
+<a href=#1267 id=1267 data-nosnippet>1267</a>        <span class="macro">assert!</span>(b
+<a href=#1268 id=1268 data-nosnippet>1268</a>            .relations
+<a href=#1269 id=1269 data-nosnippet>1269</a>            .iter()
+<a href=#1270 id=1270 data-nosnippet>1270</a>            .all(|r| r.evidence == BlackboardEvidence::Candidate));
+<a href=#1271 id=1271 data-nosnippet>1271</a>        <span class="macro">assert_eq!</span>(b.workers.len(), <span class="number">3</span>);
+<a href=#1272 id=1272 data-nosnippet>1272</a>        <span class="macro">assert_eq!</span>(b.conflicts_total, <span class="number">0</span>, <span class="string">"{:#?}"</span>, b.conflicts);
+<a href=#1273 id=1273 data-nosnippet>1273</a>    }
+<a href=#1274 id=1274 data-nosnippet>1274</a>
+<a href=#1275 id=1275 data-nosnippet>1275</a>    <span class="doccomment">/// Claims of two workers that meet are a conflict: potential when one is advisory,
+<a href=#1276 id=1276 data-nosnippet>1276</a>    /// confirmed when both are exclusive. Claims that do not meet are not.
+<a href=#1277 id=1277 data-nosnippet>1277</a>    </span><span class="attr">#[test]
+<a href=#1278 id=1278 data-nosnippet>1278</a>    </span><span class="kw">fn </span>meeting_claims_are_conflicts_and_exclusive_ones_are_confirmed() {
+<a href=#1279 id=1279 data-nosnippet>1279</a>        <span class="kw">let </span>board = list(
+<a href=#1280 id=1280 data-nosnippet>1280</a>            <span class="macro">vec!</span>[
+<a href=#1281 id=1281 data-nosnippet>1281</a>                peer(<span class="string">"p1"</span>, <span class="string">"a"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"one"</span>, <span class="kw-2">&amp;</span>[<span class="string">"apps/majordomus-cli"</span>])]),
+<a href=#1282 id=1282 data-nosnippet>1282</a>                peer(<span class="string">"p2"</span>, <span class="string">"b"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[(<span class="string">"two"</span>, <span class="kw-2">&amp;</span>[<span class="string">"apps"</span>]), (<span class="string">"three"</span>, <span class="kw-2">&amp;</span>[<span class="string">"site"</span>])]),
+<a href=#1283 id=1283 data-nosnippet>1283</a>            ],
+<a href=#1284 id=1284 data-nosnippet>1284</a>            <span class="string">"c1"</span>,
+<a href=#1285 id=1285 data-nosnippet>1285</a>            <span class="prelude-val">None</span>,
+<a href=#1286 id=1286 data-nosnippet>1286</a>        );
+<a href=#1287 id=1287 data-nosnippet>1287</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Err</span>(MeshAbsence::Undeclared(<span class="string">"none"</span>.into())));
+<a href=#1288 id=1288 data-nosnippet>1288</a>        <span class="macro">assert_eq!</span>(b.conflicts_total, <span class="number">1</span>);
+<a href=#1289 id=1289 data-nosnippet>1289</a>        <span class="macro">assert_eq!</span>(b.conflicts[<span class="number">0</span>].certainty, BlackboardCertainty::Potential);
+<a href=#1290 id=1290 data-nosnippet>1290</a>        <span class="macro">assert_eq!</span>(b.conflicts[<span class="number">0</span>].first.worker, <span class="string">"board:c1/p1"</span>);
+<a href=#1291 id=1291 data-nosnippet>1291</a>        <span class="macro">assert_eq!</span>(b.conflicts[<span class="number">0</span>].second.worker, <span class="string">"board:c1/p2"</span>);
+<a href=#1292 id=1292 data-nosnippet>1292</a>
+<a href=#1293 id=1293 data-nosnippet>1293</a>        <span class="kw">let </span><span class="kw-2">mut </span>x = b.workers.clone();
+<a href=#1294 id=1294 data-nosnippet>1294</a>        <span class="kw">for </span>w <span class="kw">in </span><span class="kw-2">&amp;mut </span>x {
+<a href=#1295 id=1295 data-nosnippet>1295</a>            <span class="kw">for </span>c <span class="kw">in </span><span class="kw-2">&amp;mut </span>w.claims {
+<a href=#1296 id=1296 data-nosnippet>1296</a>                c.mode = ClaimMode::Exclusive;
+<a href=#1297 id=1297 data-nosnippet>1297</a>            }
+<a href=#1298 id=1298 data-nosnippet>1298</a>        }
+<a href=#1299 id=1299 data-nosnippet>1299</a>        <span class="kw">let </span>(total, found) = conflicts_among(<span class="kw-2">&amp;</span>x, <span class="kw-2">&amp;</span>BTreeMap::new());
+<a href=#1300 id=1300 data-nosnippet>1300</a>        <span class="macro">assert_eq!</span>(total, <span class="number">1</span>);
+<a href=#1301 id=1301 data-nosnippet>1301</a>        <span class="macro">assert_eq!</span>(found[<span class="number">0</span>].certainty, BlackboardCertainty::Confirmed);
+<a href=#1302 id=1302 data-nosnippet>1302</a>    }
+<a href=#1303 id=1303 data-nosnippet>1303</a>
+<a href=#1304 id=1304 data-nosnippet>1304</a>    <span class="doccomment">/// A review names its reviewer as the requester wrote it: a whole session key a worker
+<a href=#1305 id=1305 data-nosnippet>1305</a>    /// holds is that worker, a bare `board-p1` is a position every board has and stays a word.
+<a href=#1306 id=1306 data-nosnippet>1306</a>    </span><span class="attr">#[test]
+<a href=#1307 id=1307 data-nosnippet>1307</a>    </span><span class="kw">fn </span>a_reviewer_is_a_worker_only_by_a_whole_session_key() {
+<a href=#1308 id=1308 data-nosnippet>1308</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1309 id=1309 data-nosnippet>1309</a>        <span class="kw">let </span>board = list(<span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"codex"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[])], <span class="string">"c1"</span>, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>here));
+<a href=#1310 id=1310 data-nosnippet>1310</a>        <span class="kw">let </span>s = session(<span class="kw-2">&amp;</span>here, <span class="string">"board-p1"</span>, <span class="string">"codex"</span>, <span class="prelude-val">Some</span>(<span class="string">"c1"</span>));
+<a href=#1311 id=1311 data-nosnippet>1311</a>        <span class="kw">let </span>review = |key: <span class="kw-2">&amp;</span>str, reviewer: <span class="kw-2">&amp;</span>str| ReviewView {
+<a href=#1312 id=1312 data-nosnippet>1312</a>            key: key.into(),
+<a href=#1313 id=1313 data-nosnippet>1313</a>            session: <span class="string">"elsewhere/s9"</span>.into(),
+<a href=#1314 id=1314 data-nosnippet>1314</a>            subject: <span class="string">"read this"</span>.into(),
+<a href=#1315 id=1315 data-nosnippet>1315</a>            scope: Vec::new(),
+<a href=#1316 id=1316 data-nosnippet>1316</a>            issue: <span class="prelude-val">None</span>,
+<a href=#1317 id=1317 data-nosnippet>1317</a>            reviewer: <span class="prelude-val">Some</span>(reviewer.into()),
+<a href=#1318 id=1318 data-nosnippet>1318</a>            body: <span class="prelude-val">None</span>,
+<a href=#1319 id=1319 data-nosnippet>1319</a>            state: ReviewState::Open,
+<a href=#1320 id=1320 data-nosnippet>1320</a>            answers: Vec::new(),
+<a href=#1321 id=1321 data-nosnippet>1321</a>            result: <span class="prelude-val">None</span>,
+<a href=#1322 id=1322 data-nosnippet>1322</a>        };
+<a href=#1323 id=1323 data-nosnippet>1323</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1324 id=1324 data-nosnippet>1324</a>            reviews: <span class="macro">vec!</span>[review(<span class="string">"r1"</span>, <span class="kw-2">&amp;</span>s.key), review(<span class="string">"r2"</span>, <span class="string">"board-p1"</span>)],
+<a href=#1325 id=1325 data-nosnippet>1325</a>            sessions: <span class="macro">vec!</span>[s],
+<a href=#1326 id=1326 data-nosnippet>1326</a>            ..CooperationState::default()
+<a href=#1327 id=1327 data-nosnippet>1327</a>        };
+<a href=#1328 id=1328 data-nosnippet>1328</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1329 id=1329 data-nosnippet>1329</a>        <span class="kw">let </span>to: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = b
+<a href=#1330 id=1330 data-nosnippet>1330</a>            .relations
+<a href=#1331 id=1331 data-nosnippet>1331</a>            .iter()
+<a href=#1332 id=1332 data-nosnippet>1332</a>            .filter(|r| r.kind == BlackboardRelationKind::Review)
+<a href=#1333 id=1333 data-nosnippet>1333</a>            .map(|r| r.to.as_str())
+<a href=#1334 id=1334 data-nosnippet>1334</a>            .collect();
+<a href=#1335 id=1335 data-nosnippet>1335</a>        <span class="macro">assert_eq!</span>(to, [<span class="string">"board:c1/p1"</span>, <span class="string">"board-p1"</span>]);
+<a href=#1336 id=1336 data-nosnippet>1336</a>        <span class="macro">assert_eq!</span>(b.reviews.len(), <span class="number">2</span>);
+<a href=#1337 id=1337 data-nosnippet>1337</a>        <span class="macro">assert_eq!</span>(b.reviews[<span class="number">0</span>].from, <span class="string">"elsewhere/s9"</span>);
+<a href=#1338 id=1338 data-nosnippet>1338</a>    }
+<a href=#1339 id=1339 data-nosnippet>1339</a>
+<a href=#1340 id=1340 data-nosnippet>1340</a>    <span class="doccomment">/// A mesh that is declared and not running and a board that could not be read each make
+<a href=#1341 id=1341 data-nosnippet>1341</a>    /// the answer incomplete with their reason; a mesh the repository does not declare does
+<a href=#1342 id=1342 data-nosnippet>1342</a>    /// not; the workers that could be read are there either way.
+<a href=#1343 id=1343 data-nosnippet>1343</a>    </span><span class="attr">#[test]
+<a href=#1344 id=1344 data-nosnippet>1344</a>    </span><span class="kw">fn </span>only_what_could_not_be_asked_makes_the_answer_incomplete() {
+<a href=#1345 id=1345 data-nosnippet>1345</a>        <span class="kw">let </span><span class="kw-2">mut </span>board = list(<span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"a"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[])], <span class="string">"c1"</span>, <span class="prelude-val">None</span>);
+<a href=#1346 id=1346 data-nosnippet>1346</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Err</span>(MeshAbsence::Unreachable(<span class="string">"not active"</span>.into())));
+<a href=#1347 id=1347 data-nosnippet>1347</a>        <span class="macro">assert!</span>(!b.complete);
+<a href=#1348 id=1348 data-nosnippet>1348</a>        <span class="kw">let </span>mesh = b.sources.iter().find(|s| s.source == <span class="string">"mesh"</span>).unwrap();
+<a href=#1349 id=1349 data-nosnippet>1349</a>        <span class="macro">assert_eq!</span>(mesh.state, BlackboardSourceState::Absent);
+<a href=#1350 id=1350 data-nosnippet>1350</a>        <span class="macro">assert!</span>(mesh.reason.as_deref().unwrap().starts_with(<span class="string">"not active"</span>));
+<a href=#1351 id=1351 data-nosnippet>1351</a>        <span class="macro">assert_eq!</span>(b.present, <span class="number">1</span>);
+<a href=#1352 id=1352 data-nosnippet>1352</a>        <span class="macro">assert_eq!</span>(b.workers[<span class="number">0</span>].intent, <span class="prelude-val">None</span>, <span class="string">"announced nothing"</span>);
+<a href=#1353 id=1353 data-nosnippet>1353</a>
+<a href=#1354 id=1354 data-nosnippet>1354</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Err</span>(MeshAbsence::Undeclared(<span class="string">"no mesh"</span>.into())));
+<a href=#1355 id=1355 data-nosnippet>1355</a>        <span class="macro">assert!</span>(b.complete, <span class="string">"{:?}"</span>, b.sources);
+<a href=#1356 id=1356 data-nosnippet>1356</a>
+<a href=#1357 id=1357 data-nosnippet>1357</a>        board.complete = <span class="bool-val">false</span>;
+<a href=#1358 id=1358 data-nosnippet>1358</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>CooperationState::default()));
+<a href=#1359 id=1359 data-nosnippet>1359</a>        <span class="macro">assert!</span>(!b.complete);
+<a href=#1360 id=1360 data-nosnippet>1360</a>        <span class="macro">assert_eq!</span>(b.sources[<span class="number">0</span>].state, BlackboardSourceState::Partial);
+<a href=#1361 id=1361 data-nosnippet>1361</a>    }
+<a href=#1362 id=1362 data-nosnippet>1362</a>
+<a href=#1363 id=1363 data-nosnippet>1363</a>    <span class="doccomment">/// What a reading could not read is said with its reason, a peer that left is departed
+<a href=#1364 id=1364 data-nosnippet>1364</a>    /// with the title its client gave, a peer of no checkout is no worker, a handover nobody
+<a href=#1365 id=1365 data-nosnippet>1365</a>    /// took waits, and a monitor source that was read is `ok`.
+<a href=#1366 id=1366 data-nosnippet>1366</a>    </span><span class="attr">#[test]
+<a href=#1367 id=1367 data-nosnippet>1367</a>    </span><span class="kw">fn </span>what_was_not_read_who_left_and_what_waits_are_said() {
+<a href=#1368 id=1368 data-nosnippet>1368</a>        <span class="kw">let </span><span class="kw-2">mut </span>gone = peer(<span class="string">"p2"</span>, <span class="string">"codex"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[]);
+<a href=#1369 id=1369 data-nosnippet>1369</a>        gone.attached = <span class="bool-val">false</span>;
+<a href=#1370 id=1370 data-nosnippet>1370</a>        gone.client.title = <span class="prelude-val">Some</span>(<span class="string">"Codex"</span>.into());
+<a href=#1371 id=1371 data-nosnippet>1371</a>        <span class="kw">let </span><span class="kw-2">mut </span>nowhere = peer(<span class="string">"p3"</span>, <span class="string">"x"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[]);
+<a href=#1372 id=1372 data-nosnippet>1372</a>        nowhere.checkout = <span class="prelude-val">None</span>;
+<a href=#1373 id=1373 data-nosnippet>1373</a>        <span class="kw">let </span><span class="kw-2">mut </span>board = list(<span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"a"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[]), gone, nowhere], <span class="string">"c1"</span>, <span class="prelude-val">None</span>);
+<a href=#1374 id=1374 data-nosnippet>1374</a>        board.complete = <span class="bool-val">false</span>;
+<a href=#1375 id=1375 data-nosnippet>1375</a>        board.boards[<span class="number">0</span>].reason = <span class="prelude-val">Some</span>(<span class="string">"its server is starting"</span>.into());
+<a href=#1376 id=1376 data-nosnippet>1376</a>        <span class="kw">let </span>here = stream(<span class="string">"1"</span>, <span class="string">"1"</span>, <span class="string">"a"</span>);
+<a href=#1377 id=1377 data-nosnippet>1377</a>        <span class="kw">let </span>body = <span class="kw">crate</span>::mesh::journal::HandoverBody {
+<a href=#1378 id=1378 data-nosnippet>1378</a>            id: <span class="string">"h"</span>.into(),
+<a href=#1379 id=1379 data-nosnippet>1379</a>            task: <span class="prelude-val">None</span>,
+<a href=#1380 id=1380 data-nosnippet>1380</a>            issue: <span class="prelude-val">Some</span>(<span class="string">"I1"</span>.into()),
+<a href=#1381 id=1381 data-nosnippet>1381</a>            milestone: <span class="prelude-val">None</span>,
+<a href=#1382 id=1382 data-nosnippet>1382</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"side"</span>.into()),
+<a href=#1383 id=1383 data-nosnippet>1383</a>            head: <span class="prelude-val">None</span>,
+<a href=#1384 id=1384 data-nosnippet>1384</a>            created_at: <span class="prelude-val">None</span>,
+<a href=#1385 id=1385 data-nosnippet>1385</a>            name: <span class="prelude-val">Some</span>(<span class="string">"the rest"</span>.into()),
+<a href=#1386 id=1386 data-nosnippet>1386</a>            body: <span class="string">"# Objective\n"</span>.into(),
+<a href=#1387 id=1387 data-nosnippet>1387</a>        };
+<a href=#1388 id=1388 data-nosnippet>1388</a>        <span class="kw">let </span>handover = |id: <span class="kw-2">&amp;</span>str, consumed: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| <span class="kw">crate</span>::mesh::state::HandoverView {
+<a href=#1389 id=1389 data-nosnippet>1389</a>            id: id.into(),
+<a href=#1390 id=1390 data-nosnippet>1390</a>            stream: here.clone(),
+<a href=#1391 id=1391 data-nosnippet>1391</a>            runtime: here.runtime_key(),
+<a href=#1392 id=1392 data-nosnippet>1392</a>            published_lamport: <span class="number">1</span>,
+<a href=#1393 id=1393 data-nosnippet>1393</a>            handover: body.clone(),
+<a href=#1394 id=1394 data-nosnippet>1394</a>            consumed_by: consumed.iter().map(|c| (<span class="kw-2">*</span>c).into()).collect(),
+<a href=#1395 id=1395 data-nosnippet>1395</a>        };
+<a href=#1396 id=1396 data-nosnippet>1396</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1397 id=1397 data-nosnippet>1397</a>            handovers: <span class="macro">vec!</span>[handover(<span class="string">"h-open"</span>, <span class="kw-2">&amp;</span>[]), handover(<span class="string">"h-taken"</span>, <span class="kw-2">&amp;</span>[<span class="string">"s/x"</span>])],
+<a href=#1398 id=1398 data-nosnippet>1398</a>            ..CooperationState::default()
+<a href=#1399 id=1399 data-nosnippet>1399</a>        };
+<a href=#1400 id=1400 data-nosnippet>1400</a>        <span class="kw">let </span>monitor: MonitorPage = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#1401 id=1401 data-nosnippet>1401</a>            <span class="string">"signals"</span>: [], <span class="string">"for_you"</span>: <span class="number">0</span>, <span class="string">"suppressed"</span>: <span class="number">0</span>, <span class="string">"cursor"</span>: <span class="string">"x0"</span>, <span class="string">"more"</span>: <span class="bool-val">false</span>,
+<a href=#1402 id=1402 data-nosnippet>1402</a>            <span class="string">"sources"</span>: [{<span class="string">"source"</span>: <span class="string">"mesh"</span>, <span class="string">"state"</span>: <span class="string">"ok"</span>, <span class="string">"signals"</span>: <span class="number">0</span>, <span class="string">"suppressed"</span>: <span class="number">0</span>}]
+<a href=#1403 id=1403 data-nosnippet>1403</a>        }))
+<a href=#1404 id=1404 data-nosnippet>1404</a>        .unwrap();
+<a href=#1405 id=1405 data-nosnippet>1405</a>        <span class="kw">let </span>(machines, beats) = (HashMap::new(), HashMap::new());
+<a href=#1406 id=1406 data-nosnippet>1406</a>        <span class="kw">let </span>b = project(
+<a href=#1407 id=1407 data-nosnippet>1407</a>            <span class="kw-2">&amp;</span>Reads {
+<a href=#1408 id=1408 data-nosnippet>1408</a>                board: <span class="kw-2">&amp;</span>board,
+<a href=#1409 id=1409 data-nosnippet>1409</a>                mesh: <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state),
+<a href=#1410 id=1410 data-nosnippet>1410</a>                machines: <span class="kw-2">&amp;</span>machines,
+<a href=#1411 id=1411 data-nosnippet>1411</a>                beats: <span class="kw-2">&amp;</span>beats,
+<a href=#1412 id=1412 data-nosnippet>1412</a>                monitor: <span class="kw-2">&amp;</span>monitor,
+<a href=#1413 id=1413 data-nosnippet>1413</a>            },
+<a href=#1414 id=1414 data-nosnippet>1414</a>            <span class="string">"2026-10-18T00:00:00Z"</span>.into(),
+<a href=#1415 id=1415 data-nosnippet>1415</a>            <span class="string">"c1"</span>.into(),
+<a href=#1416 id=1416 data-nosnippet>1416</a>            <span class="prelude-val">None</span>,
+<a href=#1417 id=1417 data-nosnippet>1417</a>        );
+<a href=#1418 id=1418 data-nosnippet>1418</a>        <span class="macro">assert!</span>(!b.complete);
+<a href=#1419 id=1419 data-nosnippet>1419</a>        <span class="macro">assert_eq!</span>(
+<a href=#1420 id=1420 data-nosnippet>1420</a>            b.sources[<span class="number">0</span>].reason.as_deref(),
+<a href=#1421 id=1421 data-nosnippet>1421</a>            <span class="prelude-val">Some</span>(<span class="string">"its server is starting"</span>)
+<a href=#1422 id=1422 data-nosnippet>1422</a>        );
+<a href=#1423 id=1423 data-nosnippet>1423</a>        <span class="kw">let </span>read = b
+<a href=#1424 id=1424 data-nosnippet>1424</a>            .sources
+<a href=#1425 id=1425 data-nosnippet>1425</a>            .iter()
+<a href=#1426 id=1426 data-nosnippet>1426</a>            .find(|s| s.source == <span class="string">"monitor.mesh"</span>)
+<a href=#1427 id=1427 data-nosnippet>1427</a>            .unwrap();
+<a href=#1428 id=1428 data-nosnippet>1428</a>        <span class="macro">assert_eq!</span>(read.state, BlackboardSourceState::Ok);
+<a href=#1429 id=1429 data-nosnippet>1429</a>        <span class="macro">assert_eq!</span>(b.workers.len(), <span class="number">2</span>, <span class="string">"a peer of no checkout is no worker"</span>);
+<a href=#1430 id=1430 data-nosnippet>1430</a>        <span class="kw">let </span>left = b.workers.iter().find(|w| w.client == <span class="string">"codex"</span>).unwrap();
+<a href=#1431 id=1431 data-nosnippet>1431</a>        <span class="macro">assert_eq!</span>(left.presence, BlackboardPresence::Departed);
+<a href=#1432 id=1432 data-nosnippet>1432</a>        <span class="macro">assert_eq!</span>(left.title.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"Codex"</span>));
+<a href=#1433 id=1433 data-nosnippet>1433</a>        <span class="macro">assert_eq!</span>(b.handovers.len(), <span class="number">1</span>, <span class="string">"{:?}"</span>, b.handovers);
+<a href=#1434 id=1434 data-nosnippet>1434</a>        <span class="macro">assert_eq!</span>(b.handovers[<span class="number">0</span>].id, <span class="string">"h-open"</span>);
+<a href=#1435 id=1435 data-nosnippet>1435</a>        <span class="macro">assert_eq!</span>(b.handovers[<span class="number">0</span>].name.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"the rest"</span>));
+<a href=#1436 id=1436 data-nosnippet>1436</a>    }
+<a href=#1437 id=1437 data-nosnippet>1437</a>
+<a href=#1438 id=1438 data-nosnippet>1438</a>    <span class="doccomment">/// Every observed node is named, and this one by its own name.
+<a href=#1439 id=1439 data-nosnippet>1439</a>    </span><span class="attr">#[test]
+<a href=#1440 id=1440 data-nosnippet>1440</a>    </span><span class="kw">fn </span>every_observed_node_and_this_one_are_named() {
+<a href=#1441 id=1441 data-nosnippet>1441</a>        <span class="kw">let </span>me = <span class="kw">crate</span>::mesh::identity::NodeIdentity::ephemeral()
+<a href=#1442 id=1442 data-nosnippet>1442</a>            .unwrap()
+<a href=#1443 id=1443 data-nosnippet>1443</a>            .public;
+<a href=#1444 id=1444 data-nosnippet>1444</a>        <span class="kw">let </span>other = <span class="kw">crate</span>::mesh::identity::NodeIdentity::ephemeral()
+<a href=#1445 id=1445 data-nosnippet>1445</a>            .unwrap()
+<a href=#1446 id=1446 data-nosnippet>1446</a>            .public;
+<a href=#1447 id=1447 data-nosnippet>1447</a>        <span class="kw">let </span>node: <span class="kw">crate</span>::mesh::registry::NodeRecord = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#1448 id=1448 data-nosnippet>1448</a>            <span class="string">"node_id"</span>: other.node_id, <span class="string">"public_key"</span>: other.public_key, <span class="string">"display_name"</span>: <span class="string">"lundra"</span>,
+<a href=#1449 id=1449 data-nosnippet>1449</a>            <span class="string">"instance_id"</span>: other.instance_id, <span class="string">"trust"</span>: { <span class="string">"state"</span>: <span class="string">"observed" </span>},
+<a href=#1450 id=1450 data-nosnippet>1450</a>            <span class="string">"presence"</span>: <span class="string">"present"</span>, <span class="string">"endpoints"</span>: [], <span class="string">"capabilities"</span>: [], <span class="string">"repositories"</span>: [],
+<a href=#1451 id=1451 data-nosnippet>1451</a>            <span class="string">"protocol_version"</span>: <span class="number">1</span>, <span class="string">"version"</span>: <span class="string">"t"</span>, <span class="string">"sources"</span>: [], <span class="string">"first_seen"</span>: <span class="string">""</span>,
+<a href=#1452 id=1452 data-nosnippet>1452</a>            <span class="string">"last_seen"</span>: <span class="string">""</span>, <span class="string">"restarts"</span>: <span class="number">0</span>,
+<a href=#1453 id=1453 data-nosnippet>1453</a>        }))
+<a href=#1454 id=1454 data-nosnippet>1454</a>        .unwrap();
+<a href=#1455 id=1455 data-nosnippet>1455</a>        <span class="kw">let </span>named = machines(<span class="macro">vec!</span>[node], <span class="prelude-val">Some</span>(me.clone()));
+<a href=#1456 id=1456 data-nosnippet>1456</a>        <span class="macro">assert_eq!</span>(named[other.node_id.as_str()], <span class="string">"lundra"</span>);
+<a href=#1457 id=1457 data-nosnippet>1457</a>        <span class="macro">assert_eq!</span>(named[me.node_id.as_str()], me.display_name);
+<a href=#1458 id=1458 data-nosnippet>1458</a>        <span class="macro">assert!</span>(machines(Vec::new(), <span class="prelude-val">None</span>).is_empty());
+<a href=#1459 id=1459 data-nosnippet>1459</a>    }
+<a href=#1460 id=1460 data-nosnippet>1460</a>
+<a href=#1461 id=1461 data-nosnippet>1461</a>    <span class="doccomment">/// A review for anyone relates nobody, and the reviews listed stop at the bound while
+<a href=#1462 id=1462 data-nosnippet>1462</a>    /// every one is still read.
+<a href=#1463 id=1463 data-nosnippet>1463</a>    </span><span class="attr">#[test]
+<a href=#1464 id=1464 data-nosnippet>1464</a>    </span><span class="kw">fn </span>a_review_for_anyone_relates_nobody_and_the_list_is_bounded() {
+<a href=#1465 id=1465 data-nosnippet>1465</a>        <span class="kw">let </span>board = list(<span class="macro">vec!</span>[peer(<span class="string">"p1"</span>, <span class="string">"codex"</span>, <span class="string">"c1"</span>, <span class="kw-2">&amp;</span>[])], <span class="string">"c1"</span>, <span class="prelude-val">None</span>);
+<a href=#1466 id=1466 data-nosnippet>1466</a>        <span class="kw">let </span>review = |n: usize, reviewer: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;| ReviewView {
+<a href=#1467 id=1467 data-nosnippet>1467</a>            key: <span class="macro">format!</span>(<span class="string">"s/r-{n}"</span>),
+<a href=#1468 id=1468 data-nosnippet>1468</a>            session: <span class="string">"elsewhere/s9"</span>.into(),
+<a href=#1469 id=1469 data-nosnippet>1469</a>            subject: <span class="string">"read this"</span>.into(),
+<a href=#1470 id=1470 data-nosnippet>1470</a>            scope: Vec::new(),
+<a href=#1471 id=1471 data-nosnippet>1471</a>            issue: <span class="prelude-val">None</span>,
+<a href=#1472 id=1472 data-nosnippet>1472</a>            reviewer: reviewer.map(str::to_string),
+<a href=#1473 id=1473 data-nosnippet>1473</a>            body: <span class="prelude-val">None</span>,
+<a href=#1474 id=1474 data-nosnippet>1474</a>            state: ReviewState::Open,
+<a href=#1475 id=1475 data-nosnippet>1475</a>            answers: Vec::new(),
+<a href=#1476 id=1476 data-nosnippet>1476</a>            result: <span class="prelude-val">None</span>,
+<a href=#1477 id=1477 data-nosnippet>1477</a>        };
+<a href=#1478 id=1478 data-nosnippet>1478</a>        <span class="kw">let </span><span class="kw-2">mut </span>reviews = <span class="macro">vec!</span>[review(<span class="number">0</span>, <span class="prelude-val">None</span>)];
+<a href=#1479 id=1479 data-nosnippet>1479</a>        reviews.extend((<span class="number">1</span>..=MAX_RECORDS).map(|n| review(n, <span class="prelude-val">Some</span>(<span class="string">"1b"</span>))));
+<a href=#1480 id=1480 data-nosnippet>1480</a>        <span class="kw">let </span>state = CooperationState {
+<a href=#1481 id=1481 data-nosnippet>1481</a>            reviews,
+<a href=#1482 id=1482 data-nosnippet>1482</a>            ..CooperationState::default()
+<a href=#1483 id=1483 data-nosnippet>1483</a>        };
+<a href=#1484 id=1484 data-nosnippet>1484</a>        <span class="kw">let </span>b = answer(<span class="kw-2">&amp;</span>board, <span class="prelude-val">Ok</span>(<span class="kw-2">&amp;</span>state));
+<a href=#1485 id=1485 data-nosnippet>1485</a>        <span class="macro">assert_eq!</span>(b.reviews.len(), MAX_RECORDS);
+<a href=#1486 id=1486 data-nosnippet>1486</a>        <span class="macro">assert_eq!</span>(b.reviews[<span class="number">0</span>].reviewer, <span class="prelude-val">None</span>);
+<a href=#1487 id=1487 data-nosnippet>1487</a>        <span class="macro">assert_eq!</span>(
+<a href=#1488 id=1488 data-nosnippet>1488</a>            b.relations
+<a href=#1489 id=1489 data-nosnippet>1489</a>                .iter()
+<a href=#1490 id=1490 data-nosnippet>1490</a>                .filter(|r| r.kind == BlackboardRelationKind::Review)
+<a href=#1491 id=1491 data-nosnippet>1491</a>                .count(),
+<a href=#1492 id=1492 data-nosnippet>1492</a>            MAX_RECORDS,
+<a href=#1493 id=1493 data-nosnippet>1493</a>            <span class="string">"the review for anyone relates nobody"
+<a href=#1494 id=1494 data-nosnippet>1494</a>        </span>);
+<a href=#1495 id=1495 data-nosnippet>1495</a>    }
+<a href=#1496 id=1496 data-nosnippet>1496</a>
+<a href=#1497 id=1497 data-nosnippet>1497</a>    <span class="doccomment">/// A mesh the repository does not declare, or declares disabled, is not missing; one it
+<a href=#1498 id=1498 data-nosnippet>1498</a>    /// declares that could not be read is, with the reason.
+<a href=#1499 id=1499 data-nosnippet>1499</a>    </span><span class="attr">#[test]
+<a href=#1500 id=1500 data-nosnippet>1500</a>    </span><span class="kw">fn </span>a_mesh_is_missing_only_when_it_is_declared() {
+<a href=#1501 id=1501 data-nosnippet>1501</a>        <span class="kw">let </span>declared = |enabled: bool| {
+<a href=#1502 id=1502 data-nosnippet>1502</a>            <span class="kw">crate</span>::mesh::MeshConfig::from_metadata(
+<a href=#1503 id=1503 data-nosnippet>1503</a>                <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#1504 id=1504 data-nosnippet>1504</a>                    <span class="string">"schema"</span>: <span class="string">"mesh/v1"</span>, <span class="string">"kind"</span>: <span class="string">"mesh-declaration"</span>, <span class="string">"id"</span>: <span class="string">"x"</span>, <span class="string">"enabled"</span>: enabled,
+<a href=#1505 id=1505 data-nosnippet>1505</a>                }),
+<a href=#1506 id=1506 data-nosnippet>1506</a>                <span class="string">"x"</span>,
+<a href=#1507 id=1507 data-nosnippet>1507</a>            )
+<a href=#1508 id=1508 data-nosnippet>1508</a>        };
+<a href=#1509 id=1509 data-nosnippet>1509</a>        <span class="kw">let </span>undeclared = |a: MeshAbsence| <span class="macro">matches!</span>(a, MeshAbsence::Undeclared(<span class="kw">_</span>));
+<a href=#1510 id=1510 data-nosnippet>1510</a>        <span class="macro">assert!</span>(undeclared(absence(<span class="prelude-val">None</span>, <span class="string">"off"</span>.into())));
+<a href=#1511 id=1511 data-nosnippet>1511</a>        <span class="macro">assert!</span>(undeclared(absence(<span class="prelude-val">Some</span>(declared(<span class="bool-val">false</span>)), <span class="string">"off"</span>.into())));
+<a href=#1512 id=1512 data-nosnippet>1512</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#1513 id=1513 data-nosnippet>1513</a>            absence(<span class="prelude-val">Some</span>(declared(<span class="bool-val">true</span>)), <span class="string">"not active"</span>.into()),
+<a href=#1514 id=1514 data-nosnippet>1514</a>            MeshAbsence::Unreachable(r) <span class="kw">if </span>r == <span class="string">"not active"
+<a href=#1515 id=1515 data-nosnippet>1515</a>        </span>));
+<a href=#1516 id=1516 data-nosnippet>1516</a>    }
+<a href=#1517 id=1517 data-nosnippet>1517</a>
+<a href=#1518 id=1518 data-nosnippet>1518</a>    <span class="doccomment">/// Asked through the capability, a running mesh is read, and signals asked of a source the
+<a href=#1519 id=1519 data-nosnippet>1519</a>    /// monitor does not know are refused.
+<a href=#1520 id=1520 data-nosnippet>1520</a>    </span><span class="attr">#[test]
+<a href=#1521 id=1521 data-nosnippet>1521</a>    </span><span class="kw">fn </span>the_handler_reads_a_running_mesh_and_refuses_an_unknown_source() {
+<a href=#1522 id=1522 data-nosnippet>1522</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().unwrap();
+<a href=#1523 id=1523 data-nosnippet>1523</a>        <span class="kw">let </span>mesh_of = |ctx: <span class="kw-2">&amp;</span>Context| {
+<a href=#1524 id=1524 data-nosnippet>1524</a>            <span class="kw">let </span>v = ctx
+<a href=#1525 id=1525 data-nosnippet>1525</a>                .execute(
+<a href=#1526 id=1526 data-nosnippet>1526</a>                    <span class="string">"blackboard.snapshot"</span>,
+<a href=#1527 id=1527 data-nosnippet>1527</a>                    <span class="macro">serde_json::json!</span>({ <span class="string">"checkouts"</span>: <span class="string">"this"</span>, <span class="string">"signals"</span>: <span class="number">0 </span>}),
+<a href=#1528 id=1528 data-nosnippet>1528</a>                )
+<a href=#1529 id=1529 data-nosnippet>1529</a>                .unwrap();
+<a href=#1530 id=1530 data-nosnippet>1530</a>            <span class="kw">let </span>mesh = v[<span class="string">"sources"</span>]
+<a href=#1531 id=1531 data-nosnippet>1531</a>                .as_array()
+<a href=#1532 id=1532 data-nosnippet>1532</a>                .unwrap()
+<a href=#1533 id=1533 data-nosnippet>1533</a>                .iter()
+<a href=#1534 id=1534 data-nosnippet>1534</a>                .find(|s| s[<span class="string">"source"</span>] == <span class="string">"mesh"</span>)
+<a href=#1535 id=1535 data-nosnippet>1535</a>                .cloned()
+<a href=#1536 id=1536 data-nosnippet>1536</a>                .unwrap();
+<a href=#1537 id=1537 data-nosnippet>1537</a>            (mesh[<span class="string">"state"</span>].as_str().unwrap().to_string(), v)
+<a href=#1538 id=1538 data-nosnippet>1538</a>        };
+<a href=#1539 id=1539 data-nosnippet>1539</a>        <span class="kw">let </span>ctx = repo.context().unwrap();
+<a href=#1540 id=1540 data-nosnippet>1540</a>        <span class="kw">crate</span>::mesh::testing::attach(<span class="kw-2">&amp;</span>ctx, <span class="kw">crate</span>::monitor::testing::cooperation());
+<a href=#1541 id=1541 data-nosnippet>1541</a>        <span class="kw">let </span>(state, v) = mesh_of(<span class="kw-2">&amp;</span>ctx);
+<a href=#1542 id=1542 data-nosnippet>1542</a>        <span class="macro">assert_eq!</span>(state, <span class="string">"ok"</span>, <span class="string">"{v}"</span>);
+<a href=#1543 id=1543 data-nosnippet>1543</a>        <span class="macro">assert!</span>(ctx
+<a href=#1544 id=1544 data-nosnippet>1544</a>            .execute(
+<a href=#1545 id=1545 data-nosnippet>1545</a>                <span class="string">"blackboard.snapshot"</span>,
+<a href=#1546 id=1546 data-nosnippet>1546</a>                <span class="macro">serde_json::json!</span>({ <span class="string">"checkouts"</span>: <span class="string">"this"</span>, <span class="string">"signals"</span>: <span class="number">5</span>, <span class="string">"sources"</span>: <span class="string">"nowhere" </span>}),
+<a href=#1547 id=1547 data-nosnippet>1547</a>            )
+<a href=#1548 id=1548 data-nosnippet>1548</a>            .is_err());
+<a href=#1549 id=1549 data-nosnippet>1549</a>    }
+<a href=#1550 id=1550 data-nosnippet>1550</a>
+<a href=#1551 id=1551 data-nosnippet>1551</a>    <span class="attr">#[test]
+<a href=#1552 id=1552 data-nosnippet>1552</a>    </span><span class="kw">fn </span>the_benchmark_cases_ask_nothing_beyond_this_machine() {
+<a href=#1553 id=1553 data-nosnippet>1553</a>        <span class="kw">for </span>case <span class="kw">in </span>cases() {
+<a href=#1554 id=1554 data-nosnippet>1554</a>            <span class="macro">assert_eq!</span>(case.input.checkouts, Checkouts::This, <span class="string">"{}"</span>, case.name);
+<a href=#1555 id=1555 data-nosnippet>1555</a>            <span class="kw">let </span>sources = <span class="kw">super</span>::<span class="kw">super</span>::monitor::wanted(case.input.sources.as_deref()).unwrap();
+<a href=#1556 id=1556 data-nosnippet>1556</a>            <span class="macro">assert!</span>(
+<a href=#1557 id=1557 data-nosnippet>1557</a>                !sources.contains(<span class="kw-2">&amp;</span><span class="kw">crate</span>::monitor::MonitorSource::Github),
+<a href=#1558 id=1558 data-nosnippet>1558</a>                <span class="string">"{}"</span>,
+<a href=#1559 id=1559 data-nosnippet>1559</a>                case.name
+<a href=#1560 id=1560 data-nosnippet>1560</a>            );
+<a href=#1561 id=1561 data-nosnippet>1561</a>        }
+<a href=#1562 id=1562 data-nosnippet>1562</a>        <span class="kw">let </span>default = <span class="kw">super</span>::<span class="kw">super</span>::monitor::wanted(<span class="prelude-val">Some</span>(DEFAULT_SOURCES)).unwrap();
+<a href=#1563 id=1563 data-nosnippet>1563</a>        <span class="macro">assert!</span>(!default.contains(<span class="kw-2">&amp;</span><span class="kw">crate</span>::monitor::MonitorSource::Github));
+<a href=#1564 id=1564 data-nosnippet>1564</a>    }
+<a href=#1565 id=1565 data-nosnippet>1565</a>}
+</code></pre></div></section></main></body></html>

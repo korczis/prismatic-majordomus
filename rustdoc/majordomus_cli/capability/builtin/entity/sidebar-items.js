@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["EvidenceState"],"fn":["module"],"struct":["ClaimedArtifact","EntityInput","EntityView","Evidence","KindEntry","KindList","ProofRef"]};
+window.SIDEBAR_ITEMS = {"constant":["HISTORY_BOUND"],"enum":["EvidenceState"],"fn":["module"],"struct":["ClaimedArtifact","EntityInput","EntityView","Evidence","History","HistoryCommit","KindEntry","KindList","ProofRef"]};

@@ -1,0 +1,1439 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>blackboard.snapshot — Prismatic Majordomus</title>
+<meta name="description" content="Every worker of this repository — attached to a checkout&#39;s board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor&#39;s cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/blackboard-snapshot/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="blackboard.snapshot — Prismatic Majordomus">
+<meta property="og:description" content="Every worker of this repository — attached to a checkout&#39;s board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor&#39;s cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/blackboard-snapshot/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+<script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
+document.addEventListener("click",function(e){var a=e.target.closest&&e.target.closest("[data-i18n-lang]");if(a)try{localStorage.setItem(K,a.getAttribute("data-i18n-lang"))}catch(x){}},true);
+if(d.lang!==S)return;var r=document.referrer;if(r&&r.indexOf(location.origin)===0)return;
+var p=(k?[k]:navigator.languages||[navigator.language||""]).map(function(l){return String(l).slice(0,2).toLowerCase()});
+for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=location.href;if(u.indexOf(B)!==0)return;location.replace(B+"/"+p[i]+u.slice(B.length).replace(/^(?!\/)/,"/"));return}}}catch(e){}})();</script>
+
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/registry/capabilities/blackboard-snapshot/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/cs/registry/capabilities/blackboard-snapshot/">
+<link rel="alternate" hreflang="x-default" href="https://majordomus.dev/registry/capabilities/blackboard-snapshot/">
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary text-base" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-3 sm:p-4">
+    <a href="https://majordomus.dev/" class="flex min-w-0 items-center gap-1.5 sm:gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-6 w-6 shrink-0 text-heading sm:h-7 sm:w-7 [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-base font-semibold text-heading sm:text-xl">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading" data-release="0.30.2">v0.30.2</span>
+      
+    </a>
+    <div class="flex items-center gap-1 sm:gap-2 md:order-2"><button type="button" data-site-search-open hidden aria-haspopup="dialog" aria-controls="site-search" aria-expanded="false" aria-keyshortcuts="/ Control+K Meta+K" class="inline-flex h-10 min-w-10 items-center justify-center gap-2 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+        <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+        <span class="sr-only lg:not-sr-only">Search</span>
+        <kbd class="hidden rounded border border-default-medium px-1.5 font-mono text-xs text-body-subtle lg:inline" aria-hidden="true">/</kbd>
+      </button>
+      <div class="relative" data-i18n-switch>
+  <button type="button" aria-label="Language" data-dropdown-toggle="language-menu" data-dropdown-placement="bottom-end" aria-haspopup="true" aria-controls="language-menu" aria-expanded="false" class="inline-flex h-10 items-center justify-center gap-1.5 rounded-base border border-default px-2.5 text-sm font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+    <svg class="h-5 w-5 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0c2.2-2.4 3.3-5.4 3.3-9S14.2 5.4 12 3m0 18c-2.2-2.4-3.3-5.4-3.3-9S9.8 5.4 12 3M3.5 9h17M3.5 15h17"/></svg>
+    <span class="font-mono text-xs uppercase" translate="no" data-i18n-current-label>en</span>
+    <svg class="h-2.5 w-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg>
+  </button>
+  <div id="language-menu" class="absolute right-0 top-full z-50 mt-2 hidden w-44 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+    <ul class="p-2 text-sm font-medium text-body" translate="no">
+      <li><a href="https://majordomus.dev/registry/capabilities/blackboard-snapshot/" hreflang="en" lang="en" data-i18n-keep data-i18n-current data-i18n-lang="en" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading" aria-current="true"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">en</span>English</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+      <li><a href="https://majordomus.dev/cs/registry/capabilities/blackboard-snapshot/" hreflang="cs" lang="cs" data-i18n-keep data-i18n-current data-i18n-lang="cs" class="group flex w-full items-center justify-between gap-3 rounded-sm px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading aria-[current=true]:text-heading"><span class="flex items-center gap-2"><span class="w-6 font-mono text-xs uppercase text-body-subtle">cs</span>Čeština</span><svg class="invisible h-4 w-4 text-fg-brand group-aria-[current=true]:visible" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11.917 9.724 16.5 19 7.5"/></svg></a></li>
+    </ul>
+  </div>
+</div>
+
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+<a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="hidden rounded-base border border-brand-subtle px-3 py-2 text-sm font-semibold text-fg-brand hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary xl:inline-flex">Product UI</a>
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-1" data-dropdown-toggle="nav-menu-1" type="button" aria-controls="nav-menu-1" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-1" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-1">
+              <li><a href="https://majordomus.dev/domains/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Features</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Use cases</a></li><li><a href="https://majordomus.dev/ui/" data-nav-snapshot="ui" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Product UI <span data-nav-snapshot-note class="text-xs text-body-subtle">&middot; snapshot</span></a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Cockpit</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-1" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 10 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" type="button" aria-controls="nav-menu-2" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Vocabulary</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Sessions</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-2" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 43 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" type="button" aria-controls="nav-menu-3" class="flex w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/challenge/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Evidence graph</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Roadmap</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-3" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 16 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" type="button" aria-controls="nav-menu-4" class="flex w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3 shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="hidden md:absolute md:left-0 md:top-full md:z-10 md:mt-2 md:w-64 md:rounded-base md:border md:border-default-medium md:bg-neutral-primary-medium md:shadow-lg">
+            <ul class="pb-2 ps-3 text-sm font-medium text-body md:p-2" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">Commands</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">MCP surface</a></li>
+              <li class="mt-1 border-t border-default pt-1"><a href="#site-map-4" class="block rounded px-3 py-2 text-body-subtle hover:bg-neutral-tertiary-medium hover:text-heading md:p-2">All 11 pages in the site map &darr;</a></li>
+            </ul>
+          </div>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/ui/" data-nav-primary="ui" class="block rounded-base border border-brand-subtle px-3 py-2 text-center font-semibold text-fg-brand hover:bg-neutral-tertiary">Product UI</a></li>
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div data-i18n-notice hidden class="border-b border-default bg-neutral-secondary-soft">
+  <p class="mx-auto max-w-screen-xl px-4 py-2 text-xs text-body">This page was translated automatically from English, the only language this site is written in. <a href="https://majordomus.dev/registry/capabilities/blackboard-snapshot/" hreflang="en" lang="en" data-i18n-keep data-i18n-lang="en" class="font-medium underline">Read the original</a>.</p>
+</div>
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">blackboard.snapshot</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">blackboard.snapshot</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every worker of this repository — attached to a checkout&#39;s board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor&#39;s cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">Every worker of this repository — attached to a checkout&#39;s board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor&#39;s cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">experimental</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/blackboard/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module blackboard</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#peers</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#mesh</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#monitor</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#coordination</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_blackboard</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/blackboard/#op-blackboard-snapshot" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/blackboard</a> <span class="text-xs text-body-subtle">operationId blackboard.snapshot</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus blackboard</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · BlackboardInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>blackboard.snapshot</code>: how wide the board is, who reads it, and how much of
+what happened it carries.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkouts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Which checkouts' boards it covers: <code>repository</code> (every one, the default) or <code>this</code>. <span class="font-mono text-xs text-body-subtle">default &quot;repository&quot;</span></td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">for</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Comma-separated names of the reader — a worker (<code>1b</code>), a role, a login — so that the signals addressed to it are marked <code>for_you</code>. An MCP caller is also its own board session.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">signals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">sources</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A comma-separated subset of the monitor's sources, <code>mesh</code>, <code>executor</code> and <code>github</code> (default: <code>mesh,executor</code>).</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;Checkouts&quot;: {
+      &quot;description&quot;: &quot;Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository&#39;s checkouts are read from git&#39;s registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \&quot;this\&quot;);\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \&quot;repository\&quot;);\nassert_eq!(Checkouts::default(), Checkouts::Repository, \&quot;the wide answer is what a caller who says nothing has always got\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;repository&quot;,
+          &quot;description&quot;: &quot;Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;this&quot;,
+          &quot;description&quot;: &quot;This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `blackboard.snapshot`: how wide the board is, who reads it, and how much of\nwhat happened it carries.&quot;,
+  &quot;properties&quot;: {
+    &quot;checkouts&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/Checkouts&quot;,
+      &quot;default&quot;: &quot;repository&quot;,
+      &quot;description&quot;: &quot;Which checkouts&#39; boards it covers: `repository` (every one, the default) or `this`.&quot;
+    },
+    &quot;for&quot;: {
+      &quot;description&quot;: &quot;Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;signals&quot;: {
+      &quot;description&quot;: &quot;How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: [
+        &quot;integer&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;sources&quot;: {
+      &quot;description&quot;: &quot;A comma-separated subset of the monitor&#39;s sources, `mesh`, `executor` and `github` (default: `mesh,executor`).&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    }
+  },
+  &quot;title&quot;: &quot;BlackboardInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · Blackboard</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>blackboard.snapshot</code>: who works on what in this repository, on every board
+and every linked machine, with what meets and what waits, read once from the records that
+know it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When it was read (RFC 3339).</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">boards</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Each checkout's board the summary lists: reached or not, with a server or a worker.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">checkout</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity of the checkout whose server answered.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">complete</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether every board was read and the mesh, when the repository declares one, could be
+asked. <code>false</code> names its reason in <code>sources</code>, so that "nobody is here" is never what
+"I could not ask" reads as. The monitor's sources are reported in <code>sources</code> with their
+state and do not decide it: an empty executor trail or an absent <code>gh</code> is no board that
+could not be read.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">conflicts</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The claims that meet, at most a hundred, confirmed first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">conflicts_total</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many conflicts there are in all.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">covered</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many checkouts the answer covers, listed in <code>boards</code> or counted in <code>omitted</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">cursor</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The monitor's cursor after these signals: where a follower resumes.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">for_you</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many of them are for the reader.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">handovers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The handovers nobody has taken, at most fifty.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">head</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">That checkout's HEAD, when it has one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">omitted</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The covered checkouts <code>boards</code> does not list, counted by standing (<code>absent</code>, <code>stale</code>):
+no server, nobody attached, no board.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">present</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many workers are here now: attached to a board or in an active mesh session.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">relations</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The typed relations between workers.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reviews</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The review requests nobody has answered, at most fifty.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">signals</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The newest signals of the last hour, oldest first.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">sources</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Each source and how it was read.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">workers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every worker, this checkout's board first, then the other boards, then the mesh.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;BlackboardCertainty&quot;: {
+      &quot;description&quot;: &quot;How sure a conflict is.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;potential&quot;,
+          &quot;description&quot;: &quot;Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;confirmed&quot;,
+          &quot;description&quot;: &quot;Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardClaim&quot;: {
+      &quot;description&quot;: &quot;One claim a worker holds.&quot;,
+      &quot;properties&quot;: {
+        &quot;conflicted&quot;: {
+          &quot;description&quot;: &quot;Whether the mesh found it conflicting with another live claim.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it is for, in the worker&#39;s words.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it is for, when the claim names one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ClaimMode&quot;,
+          &quot;description&quot;: &quot;`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory.&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The claim&#39;s name, when its worker holds several.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, when it is a journal record; a board announcement has none.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;scope&quot;: {
+          &quot;description&quot;: &quot;The repository paths it names.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;scope&quot;,
+        &quot;mode&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardClaimRef&quot;: {
+      &quot;description&quot;: &quot;One side of a conflict: a worker and which of its claims.&quot;,
+      &quot;properties&quot;: {
+        &quot;claim&quot;: {
+          &quot;description&quot;: &quot;The claim&#39;s name, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The mesh claim&#39;s key, when it is a journal record.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worker&quot;: {
+          &quot;description&quot;: &quot;The worker&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;worker&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardConflict&quot;: {
+      &quot;description&quot;: &quot;Two claims of two different workers whose scopes meet.&quot;,
+      &quot;properties&quot;: {
+        &quot;certainty&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardCertainty&quot;,
+          &quot;description&quot;: &quot;Potential or confirmed.&quot;
+        },
+        &quot;first&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardClaimRef&quot;,
+          &quot;description&quot;: &quot;The claim that came first in the answer&#39;s order.&quot;
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The paths that meet, `yours` the first&#39;s and `theirs` the second&#39;s.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/OverlapPath&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;second&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardClaimRef&quot;,
+          &quot;description&quot;: &quot;The claim that meets it.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;certainty&quot;,
+        &quot;first&quot;,
+        &quot;second&quot;,
+        &quot;paths&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardEvidence&quot;: {
+      &quot;description&quot;: &quot;What a relation rests on.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;verified&quot;,
+          &quot;description&quot;: &quot;An explicit identifier or a journal record joins the two ends.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;candidate&quot;,
+          &quot;description&quot;: &quot;The ends could be joined and nothing proves it: more than one record fits.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardHandover&quot;: {
+      &quot;description&quot;: &quot;A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here.&quot;,
+      &quot;properties&quot;: {
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;created_at&quot;: {
+          &quot;description&quot;: &quot;When it was written.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The handover&#39;s id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;Its name, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;The runtime that published it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task it continues.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;runtime&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardOrigin&quot;: {
+      &quot;description&quot;: &quot;Where a worker of the blackboard was found.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;board&quot;,
+          &quot;description&quot;: &quot;On a checkout&#39;s board: an MCP client attached to that checkout&#39;s server.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mesh&quot;,
+          &quot;description&quot;: &quot;In the mesh journal only: a session no board of this repository holds — another\nmachine&#39;s, a task&#39;s, or a client&#39;s own.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardPresence&quot;: {
+      &quot;description&quot;: &quot;Whether a worker is here now.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;attached&quot;,
+          &quot;description&quot;: &quot;Attached to its board now.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;departed&quot;,
+          &quot;description&quot;: &quot;Gone from its board, kept because it still holds an announcement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;active&quot;,
+          &quot;description&quot;: &quot;An open mesh session whose runtime still beats.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardRelation&quot;: {
+      &quot;description&quot;: &quot;A typed relation between two workers, or a worker and the addressee a record names.&quot;,
+      &quot;properties&quot;: {
+        &quot;evidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardEvidence&quot;,
+          &quot;description&quot;: &quot;What it rests on.&quot;
+        },
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;A worker&#39;s key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardRelationKind&quot;,
+          &quot;description&quot;: &quot;What it is.&quot;
+        },
+        &quot;record&quot;: {
+          &quot;description&quot;: &quot;The record it rests on: a session or a review key.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;to&quot;: {
+          &quot;description&quot;: &quot;A worker&#39;s key, or the addressee as the record names it when no worker is it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;kind&quot;,
+        &quot;evidence&quot;,
+        &quot;from&quot;,
+        &quot;to&quot;,
+        &quot;record&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardRelationKind&quot;: {
+      &quot;description&quot;: &quot;What a relation between two workers is.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;same_worker&quot;,
+          &quot;description&quot;: &quot;A board peer and a mesh session that may be one worker.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;review&quot;,
+          &quot;description&quot;: &quot;One worker asked another for a review.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardReview&quot;: {
+      &quot;description&quot;: &quot;A review request nobody has answered.&quot;,
+      &quot;properties&quot;: {
+        &quot;from&quot;: {
+          &quot;description&quot;: &quot;The requesting worker&#39;s key, or its session key when no worker holds it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;The review&#39;s key in the journal.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reviewer&quot;: {
+          &quot;description&quot;: &quot;Whom it asks, as the request names it; absent means anyone.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;What it asks about.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;from&quot;,
+        &quot;subject&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardSource&quot;: {
+      &quot;description&quot;: &quot;One source of the blackboard and how it was read.&quot;,
+      &quot;properties&quot;: {
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why it is not `ok`.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;`board`, `mesh`, or a monitor source as `monitor.&lt;name&gt;`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardSourceState&quot;,
+          &quot;description&quot;: &quot;How it was read.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;source&quot;,
+        &quot;state&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BlackboardSourceState&quot;: {
+      &quot;description&quot;: &quot;How one source of the blackboard was read.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;ok&quot;,
+          &quot;description&quot;: &quot;Read whole.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;partial&quot;,
+          &quot;description&quot;: &quot;Read, and some of what it covers could not be asked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;Not read; the reason says why.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;skipped&quot;,
+          &quot;description&quot;: &quot;Not asked for.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BlackboardWorker&quot;: {
+      &quot;description&quot;: &quot;One worker of the repository: a board peer, a mesh session, or one of each that an\nexplicit identifier joins.&quot;,
+      &quot;properties&quot;: {
+        &quot;board_peer&quot;: {
+          &quot;description&quot;: &quot;Its position on its board (`p3`): meaningful on that board only.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it works on.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;checkout&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;claims&quot;: {
+          &quot;description&quot;: &quot;Its claims, board announcements and live mesh claims alike.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/BlackboardClaim&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;client&quot;: {
+          &quot;description&quot;: &quot;The client&#39;s own name, from its MCP initialize or its mesh session.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;connected_at&quot;: {
+          &quot;description&quot;: &quot;When it attached to its board.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;intent&quot;: {
+          &quot;description&quot;: &quot;What it said it is doing; absent means it announced nothing.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue its mesh session names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;key&quot;: {
+          &quot;description&quot;: &quot;Stable for as long as the worker is here: `board:&lt;checkout&gt;/&lt;peer&gt;` or\n`mesh:&lt;stream&gt;/&lt;session&gt;`. Never a bare peer id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;last_beat_ms&quot;: {
+          &quot;description&quot;: &quot;Milliseconds since its runtime last beat. A beat is liveness, not work done.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;last_seen_seconds_ago&quot;: {
+          &quot;description&quot;: &quot;Seconds since its board last heard from it.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;machine&quot;: {
+          &quot;description&quot;: &quot;The machine&#39;s display name.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;origin&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardOrigin&quot;,
+          &quot;description&quot;: &quot;Where it was found.&quot;
+        },
+        &quot;presence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BlackboardPresence&quot;,
+          &quot;description&quot;: &quot;Whether it is here now.&quot;
+        },
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;The runtime (`&lt;node&gt;-&lt;runtime&gt;`) its mesh session belongs to.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;Its mesh session&#39;s key, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task its mesh session names.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;The client&#39;s display title or the worker it says it is, when it gave one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The client&#39;s version, from its initialize.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s path on its machine.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;key&quot;,
+        &quot;origin&quot;,
+        &quot;presence&quot;,
+        &quot;client&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BoardView&quot;: {
+      &quot;description&quot;: &quot;One checkout&#39;s board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here.&quot;,
+      &quot;properties&quot;: {
+        &quot;attached&quot;: {
+          &quot;description&quot;: &quot;How many of this board&#39;s peers are attached.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch checked out there, when it could be read.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The checkout&#39;s identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Why this board is not in the answer. `None` when it is.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ServerStanding&quot;,
+          &quot;description&quot;: &quot;Where its server stands, by the same reading `server.status` reports.&quot;
+        },
+        &quot;stream&quot;: {
+          &quot;description&quot;: &quot;The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board&#39;s peers into as `board-pN` sessions. A position such as\n`p1` is that server&#39;s alone, so only this stream ties a board peer to its session.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;this_checkout&quot;: {
+          &quot;description&quot;: &quot;Whether this is the checkout of the server answering the call.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The address its lease names, when it has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;worktree&quot;: {
+          &quot;description&quot;: &quot;Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;worktree&quot;,
+        &quot;this_checkout&quot;,
+        &quot;standing&quot;,
+        &quot;attached&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ClaimMode&quot;: {
+      &quot;description&quot;: &quot;Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \&quot;do not edit this while I\nam\&quot;, an advisory one is saying \&quot;I am here\&quot;. Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\&quot;advisory\&quot;));\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;exclusive&quot;,
+          &quot;description&quot;: &quot;Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;advisory&quot;,
+          &quot;description&quot;: &quot;Advisory: an announcement, like the peer board&#39;s. Overlaps are reported, never\nrefused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MonitorSeverity&quot;: {
+      &quot;description&quot;: &quot;How much a signal asks of its reader.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;info&quot;,
+          &quot;description&quot;: &quot;Something happened; nothing is asked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;attention&quot;,
+          &quot;description&quot;: &quot;Something failed or waits for someone: worth a look.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;action&quot;,
+          &quot;description&quot;: &quot;Something waits for the reader: a review asked of them, a handover for them.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MonitorSignal&quot;: {
+      &quot;description&quot;: &quot;One thing that happened, as one line a person or an agent can act on.&quot;,
+      &quot;properties&quot;: {
+        &quot;actor&quot;: {
+          &quot;description&quot;: &quot;Who did it: a session&#39;s worker or client, the executor&#39;s actor, a GitHub login.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When it happened, in Unix seconds, on the clock of whoever recorded it.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;branch&quot;: {
+          &quot;description&quot;: &quot;The branch it is about.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;for_you&quot;: {
+          &quot;default&quot;: false,
+          &quot;description&quot;: &quot;Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;issue&quot;: {
+          &quot;description&quot;: &quot;The issue it is about.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;link&quot;: {
+          &quot;description&quot;: &quot;Where to read more, when there is a page for it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;machine&quot;: {
+          &quot;description&quot;: &quot;The machine it happened on, by its display name when the mesh knows it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;paths&quot;: {
+          &quot;description&quot;: &quot;The repository paths it is about.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;pr&quot;: {
+          &quot;description&quot;: &quot;The pull request it is about.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The session that did it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;severity&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MonitorSeverity&quot;,
+          &quot;description&quot;: &quot;How much it asks of the reader.&quot;
+        },
+        &quot;source&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MonitorSource&quot;,
+          &quot;description&quot;: &quot;Which record it comes from.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;What happened, in one line of at most 200 characters.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;at&quot;,
+        &quot;source&quot;,
+        &quot;kind&quot;,
+        &quot;severity&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;MonitorSource&quot;: {
+      &quot;description&quot;: &quot;Where a signal comes from.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;mesh&quot;,
+          &quot;description&quot;: &quot;The mesh journal: sessions on every linked machine (this checkout&#39;s board among\nthem), their claims, handovers and reviews.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;executor&quot;,
+          &quot;description&quot;: &quot;The executor&#39;s trail: the pull-request lane&#39;s merges, refreshes, repairs, closures\nand failures.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;github&quot;,
+          &quot;description&quot;: &quot;GitHub: pull requests opened, merged and closed, and finished workflow runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;OverlapPath&quot;: {
+      &quot;description&quot;: &quot;One pair of claims that contain one another.&quot;,
+      &quot;properties&quot;: {
+        &quot;theirs&quot;: {
+          &quot;description&quot;: &quot;The path the other peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;yours&quot;: {
+          &quot;description&quot;: &quot;The path the announcing peer claimed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;yours&quot;,
+        &quot;theirs&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ServerStanding&quot;: {
+      &quot;description&quot;: &quot;Where a checkout&#39;s server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable&#39;s code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec&lt;&amp;str&gt; = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\&quot;absent\&quot;, \&quot;starting\&quot;, \&quot;ready\&quot;, \&quot;outdated\&quot;, \&quot;stale\&quot;]);\nassert_eq!(serde_json::from_str::&lt;ServerStanding&gt;(\&quot;\\\&quot;stale\\\&quot;\&quot;).unwrap(), ServerStanding::Stale);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;absent&quot;,
+          &quot;description&quot;: &quot;No lease: nothing serves this checkout.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;starting&quot;,
+          &quot;description&quot;: &quot;A lease without an address, young enough that its owner is still binding.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ready&quot;,
+          &quot;description&quot;: &quot;The server the lease names answers for this checkout, from the code on disk, at\nthis executable&#39;s version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;outdated&quot;,
+          &quot;description&quot;: &quot;The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday&#39;s.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The lease names a server that does not answer, or is not a lease at all.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it.&quot;,
+  &quot;properties&quot;: {
+    &quot;at&quot;: {
+      &quot;description&quot;: &quot;When it was read (RFC 3339).&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;boards&quot;: {
+      &quot;description&quot;: &quot;Each checkout&#39;s board the summary lists: reached or not, with a server or a worker.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BoardView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;checkout&quot;: {
+      &quot;description&quot;: &quot;The identity of the checkout whose server answered.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;complete&quot;: {
+      &quot;description&quot;: &quot;Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \&quot;nobody is here\&quot; is never what\n\&quot;I could not ask\&quot; reads as. The monitor&#39;s sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;conflicts&quot;: {
+      &quot;description&quot;: &quot;The claims that meet, at most a hundred, confirmed first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardConflict&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;conflicts_total&quot;: {
+      &quot;description&quot;: &quot;How many conflicts there are in all.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;covered&quot;: {
+      &quot;description&quot;: &quot;How many checkouts the answer covers, listed in `boards` or counted in `omitted`.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;cursor&quot;: {
+      &quot;description&quot;: &quot;The monitor&#39;s cursor after these signals: where a follower resumes.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;for_you&quot;: {
+      &quot;description&quot;: &quot;How many of them are for the reader.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;handovers&quot;: {
+      &quot;description&quot;: &quot;The handovers nobody has taken, at most fifty.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardHandover&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;head&quot;: {
+      &quot;description&quot;: &quot;That checkout&#39;s HEAD, when it has one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;omitted&quot;: {
+      &quot;additionalProperties&quot;: {
+        &quot;format&quot;: &quot;uint&quot;,
+        &quot;minimum&quot;: 0,
+        &quot;type&quot;: &quot;integer&quot;
+      },
+      &quot;description&quot;: &quot;The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):\nno server, nobody attached, no board.&quot;,
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;present&quot;: {
+      &quot;description&quot;: &quot;How many workers are here now: attached to a board or in an active mesh session.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;relations&quot;: {
+      &quot;description&quot;: &quot;The typed relations between workers.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardRelation&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reviews&quot;: {
+      &quot;description&quot;: &quot;The review requests nobody has answered, at most fifty.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardReview&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;signals&quot;: {
+      &quot;description&quot;: &quot;The newest signals of the last hour, oldest first.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/MonitorSignal&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;sources&quot;: {
+      &quot;description&quot;: &quot;Each source and how it was read.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardSource&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;workers&quot;: {
+      &quot;description&quot;: &quot;Every worker, this checkout&#39;s board first, then the other boards, then the mesh.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/BlackboardWorker&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;at&quot;,
+    &quot;checkout&quot;,
+    &quot;complete&quot;,
+    &quot;sources&quot;,
+    &quot;boards&quot;,
+    &quot;covered&quot;,
+    &quot;present&quot;,
+    &quot;workers&quot;,
+    &quot;conflicts&quot;,
+    &quot;conflicts_total&quot;,
+    &quot;reviews&quot;,
+    &quot;handovers&quot;,
+    &quot;relations&quot;,
+    &quot;signals&quot;,
+    &quot;for_you&quot;,
+    &quot;cursor&quot;
+  ],
+  &quot;title&quot;: &quot;Blackboard&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-blackboard-snapshot-direct-this-checkout" class="break-all text-fg-brand hover:underline inline-block py-1">this-checkout</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-blackboard-snapshot-direct-addressed" class="break-all text-fg-brand hover:underline inline-block py-1">addressed</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-blackboard-snapshot-mcp-this-checkout" class="break-all text-fg-brand hover:underline inline-block py-1">this-checkout</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-blackboard-snapshot-mcp-addressed" class="break-all text-fg-brand hover:underline inline-block py-1">addressed</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-blackboard-snapshot-http-this-checkout" class="break-all text-fg-brand hover:underline inline-block py-1">this-checkout</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-blackboard-snapshot-http-addressed" class="break-all text-fg-brand hover:underline inline-block py-1">addressed</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">blackboard.snapshot</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/blackboard.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/blackboard.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::blackboard</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">BlackboardInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">Blackboard</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/docs/generated/modules/blackboard.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/blackboard.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">41c0be0a67d3ef649d5b39a7d55c8382c26c85b399b7cbee152e595e50ac70cd</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.8</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer id="site-map" class="border-t border-default bg-neutral-primary-soft" aria-label="Site map">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-1">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/domains/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/domains/" class="hover:text-heading hover:underline">The product, by domain</a></li><li><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why it exists: the failure modes</a></li><li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li><li><a href="https://majordomus.dev/docs/majordomus-ui/" class="hover:text-heading hover:underline">Product UI</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="hover:text-heading hover:underline">Cockpit</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-2">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/everything-followed/" class="hover:text-heading hover:underline">Article: everything, followed</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li><li><a href="https://majordomus.dev/vsechno-v-jednom-proudu/" class="hover:text-heading hover:underline">Everything, followed, written in Czech</a></li><li><a href="https://majordomus.dev/the-bet-on-a-layer/" class="hover:text-heading hover:underline">Essay: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/teze/" class="hover:text-heading hover:underline">Essay in Czech: the bet on a layer, not a model</a></li><li><a href="https://majordomus.dev/a-pasted-brief-becomes-a-plan/" class="hover:text-heading hover:underline">Article: a pasted brief becomes a plan</a></li><li><a href="https://majordomus.dev/vlozene-zadani-se-stava-planem/" class="hover:text-heading hover:underline">The pasted brief, written in Czech</a></li><li><a href="https://majordomus.dev/seats-not-names/" class="hover:text-heading hover:underline">Article: seats, not names</a></li><li><a href="https://majordomus.dev/kresla-ne-jmena/" class="hover:text-heading hover:underline">Seats, not names, written in Czech</a></li><li><a href="https://majordomus.dev/a-plan-is-attacked-before-it-is-built/" class="hover:text-heading hover:underline">Article: a plan is attacked before it is built</a></li><li><a href="https://majordomus.dev/plan-se-napadne-driv-nez-se-postavi/" class="hover:text-heading hover:underline">The plan critique, written in Czech</a></li><li><a href="https://majordomus.dev/written-once-derived-everywhere/" class="hover:text-heading hover:underline">Article: written once, derived everywhere</a></li><li><a href="https://majordomus.dev/napsano-jednou-odvozeno-vsude/" class="hover:text-heading hover:underline">Written once, derived everywhere, in Czech</a></li><li><a href="https://majordomus.dev/claimed-before-it-is-built/" class="hover:text-heading hover:underline">Article: claimed before it is built</a></li><li><a href="https://majordomus.dev/zabrano-driv-nez-se-stavi/" class="hover:text-heading hover:underline">Claimed before it is built, in Czech</a></li><li><a href="https://majordomus.dev/a-session-ends-the-work-does-not/" class="hover:text-heading hover:underline">Article: a session ends, the work does not</a></li><li><a href="https://majordomus.dev/session-skonci-prace-ne/" class="hover:text-heading hover:underline">A session ends, the work does not, in Czech</a></li><li><a href="https://majordomus.dev/one-branch-one-place/" class="hover:text-heading hover:underline">Article: one branch, one place</a></li><li><a href="https://majordomus.dev/jedna-vetev-jedno-misto/" class="hover:text-heading hover:underline">One branch, one place, in Czech</a></li><li><a href="https://majordomus.dev/many-machines-one-journal/" class="hover:text-heading hover:underline">Article: many machines, one journal</a></li><li><a href="https://majordomus.dev/mnoho-stroju-jeden-denik/" class="hover:text-heading hover:underline">Many machines, one journal, in Czech</a></li><li><a href="https://majordomus.dev/a-doubt-is-settled-by-an-experiment/" class="hover:text-heading hover:underline">Article: a doubt is settled by an experiment</a></li><li><a href="https://majordomus.dev/pochybnost-rozhodne-experiment/" class="hover:text-heading hover:underline">A doubt is settled by an experiment, in Czech</a></li><li><a href="https://majordomus.dev/silence-is-not-a-verdict/" class="hover:text-heading hover:underline">Article: silence is not a verdict</a></li><li><a href="https://majordomus.dev/mlceni-neni-verdikt/" class="hover:text-heading hover:underline">Silence is not a verdict, in Czech</a></li><li><a href="https://majordomus.dev/automation-is-a-capability/" class="hover:text-heading hover:underline">Article: automation is a capability</a></li><li><a href="https://majordomus.dev/automatizace-je-schopnost/" class="hover:text-heading hover:underline">Automation is a capability, in Czech</a></li><li><a href="https://majordomus.dev/a-saving-is-measured-not-claimed/" class="hover:text-heading hover:underline">Article: a saving is measured, not claimed</a></li><li><a href="https://majordomus.dev/uspora-se-meri-netvrdi/" class="hover:text-heading hover:underline">A saving is measured, not claimed, in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-3">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">The challenge: watch it refuse an agent</a></li><li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/trends/" class="hover:text-heading hover:underline">Coverage and CI cost over time</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0 scroll-mt-20" id="site-map-4">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/563fe99a7eb73b261f475245362fbbe544e96712" class="font-mono underline">563fe99</a> · inputs <span class="font-mono">25fa8654fe03</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    </div>
+  </div>
+</footer>
+<dialog id="site-search" data-site-search data-index="https://majordomus.dev/docs/index.json" aria-labelledby="site-search-label" class="m-0 h-dvh max-h-none w-full max-w-none border-0 bg-neutral-primary p-0 text-body backdrop:bg-neutral-primary-strong/80 sm:mx-auto sm:mt-20 sm:h-auto sm:max-h-[75vh] sm:max-w-2xl sm:rounded-base sm:border sm:border-default sm:shadow-lg">
+  <div class="flex h-full max-h-[inherit] flex-col">
+    <div class="flex items-center gap-2 border-b border-default p-3">
+      <label id="site-search-label" for="site-search-input" class="sr-only">Search this site</label>
+      <svg class="h-5 w-5 shrink-0 text-body-subtle" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="m21 21-3.5-3.5M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+      <input id="site-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="site-search-results" aria-autocomplete="list" aria-describedby="site-search-status" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="A rule, a decision, a command, a page…" class="block min-w-0 flex-1 rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-base text-heading focus:border-brand focus:ring-brand sm:text-sm">
+      <button type="button" data-site-search-close class="inline-flex h-10 shrink-0 items-center rounded-base border border-default px-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">Close<span class="sr-only"> the search</span></button>
+    </div>
+    <p id="site-search-status" class="px-4 pt-3 text-xs text-body-subtle" aria-live="polite" data-site-search-status>Searches the titles and descriptions of every page this site publishes.</p>
+    <div id="site-search-results" role="listbox" aria-label="Pages that match" class="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-2 py-2" data-site-search-results></div>
+    <template data-site-search-item><a tabindex="-1" class="block rounded-base px-3 py-2 hover:bg-neutral-secondary-medium aria-selected:bg-neutral-secondary-medium aria-selected:ring-2 aria-selected:ring-brand"><span class="block break-words font-medium text-heading" data-slot="title"></span><span class="block break-all font-mono text-xs text-body-subtle" data-slot="meta"></span><span class="mt-0.5 line-clamp-2 text-sm text-body" data-slot="description"></span></a></template>
+  </div>
+</dialog>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script defer src="https://majordomus.dev/js/search.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+
+</body>
+</html>

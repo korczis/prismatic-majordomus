@@ -12,7 +12,7 @@
 <a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::view::word_badge;
 <a href=#13 id=13 data-nosnippet>13</a>
 <a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span><span class="kw">super</span>::source::Answer;
-<a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span><span class="kw">super</span>::view::{list, nothing, panel, state, table, text, unanswered};
+<a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span><span class="kw">super</span>::view::{command, items, nothing, panel, state, table, text, unanswered};
 <a href=#16 id=16 data-nosnippet>16</a>
 <a href=#17 id=17 data-nosnippet>17</a><span class="doccomment">/// An intent id, as the repository writes them (`intent-bound-work`): letters, digits, `-`
 <a href=#18 id=18 data-nosnippet>18</a>/// and `_`, and nothing a link could carry anything else in.
@@ -82,8 +82,8 @@
 <a href=#82 id=82 data-nosnippet>82</a>    <span class="kw">let </span>body = unanswered(intents)
 <a href=#83 id=83 data-nosnippet>83</a>        .or_else(|| unanswered(issues))
 <a href=#84 id=84 data-nosnippet>84</a>        .unwrap_or_else(|| {
-<a href=#85 id=85 data-nosnippet>85</a>            <span class="kw">let </span><span class="prelude-val">Some</span>(i) = list(intents, <span class="string">"/intents"</span>)
-<a href=#86 id=86 data-nosnippet>86</a>                .into_iter()
+<a href=#85 id=85 data-nosnippet>85</a>            <span class="kw">let </span><span class="prelude-val">Some</span>(i) = items(intents, <span class="string">"/intents"</span>)
+<a href=#86 id=86 data-nosnippet>86</a>                .iter()
 <a href=#87 id=87 data-nosnippet>87</a>                .find(|i| text(i, <span class="string">"id"</span>) == id)
 <a href=#88 id=88 data-nosnippet>88</a>            <span class="kw">else </span>{
 <a href=#89 id=89 data-nosnippet>89</a>                <span class="kw">return </span>nothing(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{id} is not an intent of this repository."</span>));
@@ -146,7 +146,7 @@
 <a href=#146 id=146 data-nosnippet>146</a>                        .child(el(<span class="string">"td"</span>).child(<span class="kw">if </span>reproduce.is_empty() {
 <a href=#147 id=147 data-nosnippet>147</a>                            el(<span class="string">"span"</span>).class(<span class="string">"mj-ui-dim"</span>).text(<span class="string">"none"</span>)
 <a href=#148 id=148 data-nosnippet>148</a>                        } <span class="kw">else </span>{
-<a href=#149 id=149 data-nosnippet>149</a>                            el(<span class="string">"code"</span>).class(<span class="string">"mj-ui-mono"</span>).text(reproduce)
+<a href=#149 id=149 data-nosnippet>149</a>                            command(<span class="kw-2">&amp;</span>reproduce)
 <a href=#150 id=150 data-nosnippet>150</a>                        }))
 <a href=#151 id=151 data-nosnippet>151</a>                })
 <a href=#152 id=152 data-nosnippet>152</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -158,12 +158,12 @@
 <a href=#158 id=158 data-nosnippet>158</a>                    el(<span class="string">"div"</span>)
 <a href=#159 id=159 data-nosnippet>159</a>                        .class(<span class="string">"mj-ui-detail-head"</span>)
 <a href=#160 id=160 data-nosnippet>160</a>                        .child(el(<span class="string">"p"</span>).class(<span class="string">"mj-ui-mono mj-ui-dim"</span>).text(id.to_string()))
-<a href=#161 id=161 data-nosnippet>161</a>                        .child(el(<span class="string">"h3"</span>).class(<span class="string">"mj-ui-detail-title"</span>).text(text(<span class="kw-2">&amp;</span>i, <span class="string">"title"</span>)))
+<a href=#161 id=161 data-nosnippet>161</a>                        .child(el(<span class="string">"h3"</span>).class(<span class="string">"mj-ui-detail-title"</span>).text(text(i, <span class="string">"title"</span>)))
 <a href=#162 id=162 data-nosnippet>162</a>                        .child(
 <a href=#163 id=163 data-nosnippet>163</a>                            el(<span class="string">"p"</span>)
 <a href=#164 id=164 data-nosnippet>164</a>                                .class(<span class="string">"mj-ui-badges"</span>)
-<a href=#165 id=165 data-nosnippet>165</a>                                .child(state(<span class="kw-2">&amp;</span>i, <span class="string">"stage"</span>))
-<a href=#166 id=166 data-nosnippet>166</a>                                .child(verdict(<span class="kw-2">&amp;</span>i))
+<a href=#165 id=165 data-nosnippet>165</a>                                .child(state(i, <span class="string">"stage"</span>))
+<a href=#166 id=166 data-nosnippet>166</a>                                .child(verdict(i))
 <a href=#167 id=167 data-nosnippet>167</a>                                .child(
 <a href=#168 id=168 data-nosnippet>168</a>                                    el(<span class="string">"span"</span>)
 <a href=#169 id=169 data-nosnippet>169</a>                                        .class(<span class="string">"mj-ui-mono mj-ui-dim"</span>)
@@ -177,14 +177,14 @@
 <a href=#177 id=177 data-nosnippet>177</a>                                ),
 <a href=#178 id=178 data-nosnippet>178</a>                        ),
 <a href=#179 id=179 data-nosnippet>179</a>                )
-<a href=#180 id=180 data-nosnippet>180</a>                .child(<span class="kw">super</span>::prose::paragraph(<span class="kw-2">&amp;</span>text(<span class="kw-2">&amp;</span>i, <span class="string">"statement"</span>), <span class="kw-2">&amp;</span>known))
+<a href=#180 id=180 data-nosnippet>180</a>                .child(<span class="kw">super</span>::prose::paragraph(<span class="kw-2">&amp;</span>text(i, <span class="string">"statement"</span>), <span class="kw-2">&amp;</span>known))
 <a href=#181 id=181 data-nosnippet>181</a>                .child(
 <a href=#182 id=182 data-nosnippet>182</a>                    el(<span class="string">"h4"</span>)
 <a href=#183 id=183 data-nosnippet>183</a>                        .class(<span class="string">"mj-ui-panel-title"</span>)
 <a href=#184 id=184 data-nosnippet>184</a>                        .text(<span class="string">"What does it hold the work to?"</span>),
 <a href=#185 id=185 data-nosnippet>185</a>                )
 <a href=#186 id=186 data-nosnippet>186</a>                .child({
-<a href=#187 id=187 data-nosnippet>187</a>                    <span class="kw">let </span>inv = strings(<span class="kw-2">&amp;</span>i, <span class="string">"invariants"</span>);
+<a href=#187 id=187 data-nosnippet>187</a>                    <span class="kw">let </span>inv = strings(i, <span class="string">"invariants"</span>);
 <a href=#188 id=188 data-nosnippet>188</a>                    <span class="kw">if </span>inv.is_empty() {
 <a href=#189 id=189 data-nosnippet>189</a>                        nothing(<span class="string">"It declares no invariant."</span>)
 <a href=#190 id=190 data-nosnippet>190</a>                    } <span class="kw">else </span>{
@@ -288,7 +288,7 @@
 <a href=#288 id=288 data-nosnippet>288</a>        <span class="kw">for </span>want <span class="kw">in </span>[
 <a href=#289 id=289 data-nosnippet>289</a>            <span class="string">"id=\"intent\""</span>,
 <a href=#290 id=290 data-nosnippet>290</a>            <span class="string">"1 of 2 criteria met"</span>,
-<a href=#291 id=291 data-nosnippet>291</a>            <span class="string">"cargo test --test x"</span>,
+<a href=#291 id=291 data-nosnippet>291</a>            <span class="string">"&lt;pre class=\"mj-ui-command-text\"&gt;&lt;code&gt;cargo test --test x&lt;/code&gt;&lt;/pre&gt;"</span>,
 <a href=#292 id=292 data-nosnippet>292</a>            <span class="string">"/ui/roadmap?milestone=M7#milestone"</span>,
 <a href=#293 id=293 data-nosnippet>293</a>            <span class="string">"/ui/prs?issue=I0009#issue"</span>,
 <a href=#294 id=294 data-nosnippet>294</a>            <span class="string">"one rule"</span>,

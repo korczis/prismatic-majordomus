@@ -338,467 +338,504 @@
 <a href=#338 id=338 data-nosnippet>338</a>/// std::fs::create_dir_all(&amp;mesh).unwrap();
 <a href=#339 id=339 data-nosnippet>339</a>/// std::fs::write(mesh.join("mesh.yaml"), "enabled: false\n").unwrap();
 <a href=#340 id=340 data-nosnippet>340</a>/// assert!(!mesh_declared_enabled(dir.path()));
-<a href=#341 id=341 data-nosnippet>341</a>/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\n").unwrap();
-<a href=#342 id=342 data-nosnippet>342</a>/// assert!(mesh_declared_enabled(dir.path()));
-<a href=#343 id=343 data-nosnippet>343</a>/// ```
-<a href=#344 id=344 data-nosnippet>344</a></span><span class="kw">pub fn </span>mesh_declared_enabled(root: <span class="kw-2">&amp;</span>Path) -&gt; bool {
-<a href=#345 id=345 data-nosnippet>345</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(entries) = std::fs::read_dir(root.join(<span class="string">".ai/repo/mesh"</span>)) <span class="kw">else </span>{
-<a href=#346 id=346 data-nosnippet>346</a>        <span class="kw">return </span><span class="bool-val">false</span>;
-<a href=#347 id=347 data-nosnippet>347</a>    };
-<a href=#348 id=348 data-nosnippet>348</a>    entries.flatten().any(|e| {
-<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">let </span>p = e.path();
-<a href=#350 id=350 data-nosnippet>350</a>        <span class="macro">matches!</span>(p.extension().and_then(|x| x.to_str()), <span class="prelude-val">Some</span>(<span class="string">"yaml" </span>| <span class="string">"yml"</span>))
-<a href=#351 id=351 data-nosnippet>351</a>            &amp;&amp; std::fs::read_to_string(<span class="kw-2">&amp;</span>p)
-<a href=#352 id=352 data-nosnippet>352</a>                .ok()
-<a href=#353 id=353 data-nosnippet>353</a>                .and_then(|t| <span class="kw">crate</span>::metadata::yaml::parse_mapping(<span class="kw-2">&amp;</span>t).ok())
-<a href=#354 id=354 data-nosnippet>354</a>                .and_then(|m| m.get(<span class="string">"enabled"</span>).and_then(|v| v.as_bool()))
-<a href=#355 id=355 data-nosnippet>355</a>                == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>)
-<a href=#356 id=356 data-nosnippet>356</a>    })
-<a href=#357 id=357 data-nosnippet>357</a>}
-<a href=#358 id=358 data-nosnippet>358</a>
-<a href=#359 id=359 data-nosnippet>359</a><span class="doccomment">/// `session.edits_require_claim` of the repository at `root`, or why its policy could not
-<a href=#360 id=360 data-nosnippet>360</a>/// be read — which [`judge_facts`] answers by enforcing nothing.
-<a href=#361 id=361 data-nosnippet>361</a>///
-<a href=#362 id=362 data-nosnippet>362</a>/// ```
-<a href=#363 id=363 data-nosnippet>363</a>/// use majordomus_cli::guard::edits_require_claim;
-<a href=#364 id=364 data-nosnippet>364</a>///
-<a href=#365 id=365 data-nosnippet>365</a>/// let dir = tempfile::tempdir().unwrap();
-<a href=#366 id=366 data-nosnippet>366</a>/// assert!(edits_require_claim(dir.path()).is_err(), "no manifest, so no policy");
-<a href=#367 id=367 data-nosnippet>367</a>/// ```
-<a href=#368 id=368 data-nosnippet>368</a></span><span class="kw">pub fn </span>edits_require_claim(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt; {
-<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">let </span>repository = <span class="kw">crate</span>::repository::Repository::open(root).map_err(|e| e.to_string())<span class="question-mark">?</span>;
-<a href=#370 id=370 data-nosnippet>370</a>    <span class="kw">crate</span>::policy::LoadedPolicy::load(<span class="kw-2">&amp;</span>repository)
-<a href=#371 id=371 data-nosnippet>371</a>        .map(|p| p.policy.session.edits_require_claim)
-<a href=#372 id=372 data-nosnippet>372</a>        .map_err(|e| e.to_string())
-<a href=#373 id=373 data-nosnippet>373</a>}
-<a href=#374 id=374 data-nosnippet>374</a>
-<a href=#375 id=375 data-nosnippet>375</a><span class="doccomment">/// The active task of the checkout at `root`: its id and scope, while its outcome is active.
-<a href=#376 id=376 data-nosnippet>376</a>///
-<a href=#377 id=377 data-nosnippet>377</a>/// ```
-<a href=#378 id=378 data-nosnippet>378</a>/// use majordomus_cli::guard::active_task;
-<a href=#379 id=379 data-nosnippet>379</a>///
-<a href=#380 id=380 data-nosnippet>380</a>/// let dir = tempfile::tempdir().unwrap();
-<a href=#381 id=381 data-nosnippet>381</a>/// assert_eq!(active_task(dir.path()), None, "no task record");
-<a href=#382 id=382 data-nosnippet>382</a>/// let state = dir.path().join(".ai/local/state");
-<a href=#383 id=383 data-nosnippet>383</a>/// std::fs::create_dir_all(&amp;state).unwrap();
-<a href=#384 id=384 data-nosnippet>384</a>/// let record = "id: t-1\noutcome: active\nscope:\n  - lib\n";
-<a href=#385 id=385 data-nosnippet>385</a>/// std::fs::write(state.join("current.yaml"), record).unwrap();
-<a href=#386 id=386 data-nosnippet>386</a>/// assert_eq!(active_task(dir.path()), Some(("t-1".to_string(), vec!["lib".to_string()])));
-<a href=#387 id=387 data-nosnippet>387</a>/// let finished = record.replace("active", "completed");
-<a href=#388 id=388 data-nosnippet>388</a>/// std::fs::write(state.join("current.yaml"), finished).unwrap();
-<a href=#389 id=389 data-nosnippet>389</a>/// assert_eq!(active_task(dir.path()), None, "a finished task claims nothing");
+<a href=#341 id=341 data-nosnippet>341</a>/// // enabled and closed to everyone: deny_unknown (the default) and nobody listed, as the
+<a href=#342 id=342 data-nosnippet>342</a>/// // seed `init` writes (I2412). No machine announces or dials, so it is no mesh here.
+<a href=#343 id=343 data-nosnippet>343</a>/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\n").unwrap();
+<a href=#344 id=344 data-nosnippet>344</a>/// assert!(!mesh_declared_enabled(dir.path()));
+<a href=#345 id=345 data-nosnippet>345</a>/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n").unwrap();
+<a href=#346 id=346 data-nosnippet>346</a>/// assert!(!mesh_declared_enabled(dir.path()));
+<a href=#347 id=347 data-nosnippet>347</a>/// // a listed key, or trust on first use, opens it
+<a href=#348 id=348 data-nosnippet>348</a>/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\ntrust:\n  allow:\n    - \"ab12\"\n").unwrap();
+<a href=#349 id=349 data-nosnippet>349</a>/// assert!(mesh_declared_enabled(dir.path()));
+<a href=#350 id=350 data-nosnippet>350</a>/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\ntrust:\n  policy: tofu\n").unwrap();
+<a href=#351 id=351 data-nosnippet>351</a>/// assert!(mesh_declared_enabled(dir.path()));
+<a href=#352 id=352 data-nosnippet>352</a>/// ```
+<a href=#353 id=353 data-nosnippet>353</a></span><span class="kw">pub fn </span>mesh_declared_enabled(root: <span class="kw-2">&amp;</span>Path) -&gt; bool {
+<a href=#354 id=354 data-nosnippet>354</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(entries) = std::fs::read_dir(root.join(<span class="string">".ai/repo/mesh"</span>)) <span class="kw">else </span>{
+<a href=#355 id=355 data-nosnippet>355</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#356 id=356 data-nosnippet>356</a>    };
+<a href=#357 id=357 data-nosnippet>357</a>    entries.flatten().any(|e| {
+<a href=#358 id=358 data-nosnippet>358</a>        <span class="kw">let </span>p = e.path();
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="macro">matches!</span>(p.extension().and_then(|x| x.to_str()), <span class="prelude-val">Some</span>(<span class="string">"yaml" </span>| <span class="string">"yml"</span>))
+<a href=#360 id=360 data-nosnippet>360</a>            &amp;&amp; std::fs::read_to_string(<span class="kw-2">&amp;</span>p)
+<a href=#361 id=361 data-nosnippet>361</a>                .ok()
+<a href=#362 id=362 data-nosnippet>362</a>                .and_then(|t| <span class="kw">crate</span>::metadata::yaml::parse_mapping(<span class="kw-2">&amp;</span>t).ok())
+<a href=#363 id=363 data-nosnippet>363</a>                .is_some_and(|m| declares_open_mesh(<span class="kw-2">&amp;</span>m))
+<a href=#364 id=364 data-nosnippet>364</a>    })
+<a href=#365 id=365 data-nosnippet>365</a>}
+<a href=#366 id=366 data-nosnippet>366</a>
+<a href=#367 id=367 data-nosnippet>367</a><span class="doccomment">/// Whether a parsed declaration opens a mesh for some machine: enabled, and either trusting
+<a href=#368 id=368 data-nosnippet>368</a>/// on first use or listing at least one key. One that is closed to everyone (deny_unknown,
+<a href=#369 id=369 data-nosnippet>369</a>/// the default, with an empty `trust.allow`) runs no mesh on any machine
+<a href=#370 id=370 data-nosnippet>370</a>/// (`mesh::manager::closed_to`), so nothing can be claimed on it and it asks for nothing.
+<a href=#371 id=371 data-nosnippet>371</a></span><span class="kw">fn </span>declares_open_mesh(m: <span class="kw-2">&amp;</span>serde_json::Map&lt;String, serde_json::Value&gt;) -&gt; bool {
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="kw">if </span>m.get(<span class="string">"enabled"</span>).and_then(|v| v.as_bool()) != <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
+<a href=#373 id=373 data-nosnippet>373</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#374 id=374 data-nosnippet>374</a>    }
+<a href=#375 id=375 data-nosnippet>375</a>    <span class="kw">let </span>trust = m.get(<span class="string">"trust"</span>);
+<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">let </span>tofu = trust
+<a href=#377 id=377 data-nosnippet>377</a>        .and_then(|t| t.get(<span class="string">"policy"</span>))
+<a href=#378 id=378 data-nosnippet>378</a>        .and_then(|p| p.as_str())
+<a href=#379 id=379 data-nosnippet>379</a>        .is_some_and(|p| p == <span class="string">"tofu"</span>);
+<a href=#380 id=380 data-nosnippet>380</a>    <span class="kw">let </span>listed = trust
+<a href=#381 id=381 data-nosnippet>381</a>        .and_then(|t| t.get(<span class="string">"allow"</span>))
+<a href=#382 id=382 data-nosnippet>382</a>        .and_then(|a| a.as_array())
+<a href=#383 id=383 data-nosnippet>383</a>        .is_some_and(|a| !a.is_empty());
+<a href=#384 id=384 data-nosnippet>384</a>    tofu || listed
+<a href=#385 id=385 data-nosnippet>385</a>}
+<a href=#386 id=386 data-nosnippet>386</a>
+<a href=#387 id=387 data-nosnippet>387</a><span class="doccomment">/// `session.edits_require_claim` of the repository at `root`, or why its policy could not
+<a href=#388 id=388 data-nosnippet>388</a>/// be read — which [`judge_facts`] answers by enforcing nothing.
+<a href=#389 id=389 data-nosnippet>389</a>///
 <a href=#390 id=390 data-nosnippet>390</a>/// ```
-<a href=#391 id=391 data-nosnippet>391</a></span><span class="kw">pub fn </span>active_task(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;(String, Vec&lt;String&gt;)&gt; {
-<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">let </span>task = <span class="kw">crate</span>::capability::builtin::continuity::read_task(
-<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw-2">&amp;</span>root.join(<span class="string">".ai/local/state/current.yaml"</span>),
-<a href=#394 id=394 data-nosnippet>394</a>    )<span class="question-mark">?</span>;
-<a href=#395 id=395 data-nosnippet>395</a>    (task.outcome == <span class="string">"active"</span>).then_some((task.id, task.scope))
-<a href=#396 id=396 data-nosnippet>396</a>}
-<a href=#397 id=397 data-nosnippet>397</a>
-<a href=#398 id=398 data-nosnippet>398</a><span class="doccomment">/// The live claims of the checkout's shared server, asked over HTTP from outside it.
-<a href=#399 id=399 data-nosnippet>399</a>///
-<a href=#400 id=400 data-nosnippet>400</a>/// ```
-<a href=#401 id=401 data-nosnippet>401</a>/// use majordomus_cli::guard::{server_claims, ClaimSource};
-<a href=#402 id=402 data-nosnippet>402</a>///
-<a href=#403 id=403 data-nosnippet>403</a>/// let dir = tempfile::tempdir().unwrap();
-<a href=#404 id=404 data-nosnippet>404</a>/// let ClaimSource::Unavailable(why) = server_claims(dir.path()) else {
-<a href=#405 id=405 data-nosnippet>405</a>///     panic!("a checkout no server serves has no claims to read");
-<a href=#406 id=406 data-nosnippet>406</a>/// };
-<a href=#407 id=407 data-nosnippet>407</a>/// assert!(why.contains("no shared server"));
-<a href=#408 id=408 data-nosnippet>408</a>/// ```
-<a href=#409 id=409 data-nosnippet>409</a></span><span class="kw">pub fn </span>server_claims(root: <span class="kw-2">&amp;</span>Path) -&gt; ClaimSource {
-<a href=#410 id=410 data-nosnippet>410</a>    <span class="kw">match </span><span class="kw">crate</span>::integration::exclusive::server_of(root) {
-<a href=#411 id=411 data-nosnippet>411</a>        <span class="prelude-val">Some</span>(server) =&gt; claims_of(<span class="kw-2">&amp;</span>server),
-<a href=#412 id=412 data-nosnippet>412</a>        <span class="prelude-val">None </span>=&gt; ClaimSource::Unavailable(<span class="string">"no shared server answers for this checkout"</span>.into()),
-<a href=#413 id=413 data-nosnippet>413</a>    }
-<a href=#414 id=414 data-nosnippet>414</a>}
-<a href=#415 id=415 data-nosnippet>415</a>
-<a href=#416 id=416 data-nosnippet>416</a><span class="doccomment">/// The live claims `mesh` answers with, or why they could not be read. A server that does
-<a href=#417 id=417 data-nosnippet>417</a>/// not run the mesh answers 200 with `active: false` and its reason, and that is said as
-<a href=#418 id=418 data-nosnippet>418</a>/// such rather than as a state that does not parse.
-<a href=#419 id=419 data-nosnippet>419</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>claims_of(mesh: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Mesh) -&gt; ClaimSource {
-<a href=#420 id=420 data-nosnippet>420</a>    <span class="kw">match </span>mesh.ask(<span class="string">"GET"</span>, <span class="string">"/api/v1/mesh/state?view=full&amp;claims=live"</span>, <span class="prelude-val">None</span>) {
-<a href=#421 id=421 data-nosnippet>421</a>        <span class="prelude-val">Ok</span>((<span class="number">200</span>, v)) <span class="kw">if </span>v[<span class="string">"active"</span>] == <span class="bool-val">false </span>=&gt; {
-<a href=#422 id=422 data-nosnippet>422</a>            <span class="kw">let </span>why = v[<span class="string">"reason"</span>].as_str().unwrap_or(<span class="string">"no reason given"</span>);
-<a href=#423 id=423 data-nosnippet>423</a>            ClaimSource::Unavailable(<span class="macro">format!</span>(<span class="string">"the server does not run the mesh: {why}"</span>))
-<a href=#424 id=424 data-nosnippet>424</a>        }
-<a href=#425 id=425 data-nosnippet>425</a>        <span class="prelude-val">Ok</span>((<span class="number">200</span>, v)) =&gt; {
-<a href=#426 id=426 data-nosnippet>426</a>            <span class="kw">match </span>serde_json::from_value::&lt;Vec&lt;ClaimView&gt;&gt;(v[<span class="string">"state"</span>][<span class="string">"claims"</span>].clone()) {
-<a href=#427 id=427 data-nosnippet>427</a>                <span class="prelude-val">Ok</span>(c) =&gt; ClaimSource::Claims(c),
-<a href=#428 id=428 data-nosnippet>428</a>                <span class="prelude-val">Err</span>(e) =&gt; ClaimSource::Unavailable(<span class="macro">format!</span>(<span class="string">"the mesh state does not parse: {e}"</span>)),
-<a href=#429 id=429 data-nosnippet>429</a>            }
-<a href=#430 id=430 data-nosnippet>430</a>        }
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="prelude-val">Ok</span>((status, v)) =&gt; {
-<a href=#432 id=432 data-nosnippet>432</a>            <span class="kw">let </span>m = v[<span class="string">"error"</span>][<span class="string">"message"</span>]
-<a href=#433 id=433 data-nosnippet>433</a>                .as_str()
-<a href=#434 id=434 data-nosnippet>434</a>                .unwrap_or_default()
-<a href=#435 id=435 data-nosnippet>435</a>                .to_string();
-<a href=#436 id=436 data-nosnippet>436</a>            ClaimSource::Unavailable(<span class="macro">format!</span>(<span class="string">"the server answered {status}: {m}"</span>))
-<a href=#437 id=437 data-nosnippet>437</a>        }
-<a href=#438 id=438 data-nosnippet>438</a>        <span class="prelude-val">Err</span>(e) =&gt; ClaimSource::Unavailable(e),
-<a href=#439 id=439 data-nosnippet>439</a>    }
-<a href=#440 id=440 data-nosnippet>440</a>}
-<a href=#441 id=441 data-nosnippet>441</a>
-<a href=#442 id=442 data-nosnippet>442</a><span class="doccomment">/// Judge an edit of `path` by `session` in the checkout at `root`, reading every fact.
-<a href=#443 id=443 data-nosnippet>443</a>/// `claims` is asked only when the cheaper facts have not already decided.
-<a href=#444 id=444 data-nosnippet>444</a>///
-<a href=#445 id=445 data-nosnippet>445</a>/// ```
-<a href=#446 id=446 data-nosnippet>446</a>/// use majordomus_cli::guard::judge;
-<a href=#447 id=447 data-nosnippet>447</a>///
-<a href=#448 id=448 data-nosnippet>448</a>/// let dir = tempfile::tempdir().unwrap();
-<a href=#449 id=449 data-nosnippet>449</a>/// // no manifest, so no policy: nothing is enforced, and the mesh is never asked
-<a href=#450 id=450 data-nosnippet>450</a>/// let v = judge(dir.path(), "a.md", None, || unreachable!("the claims are not needed"));
-<a href=#451 id=451 data-nosnippet>451</a>/// assert!(v.allowed);
-<a href=#452 id=452 data-nosnippet>452</a>/// assert_eq!((v.path.as_str(), v.ground.as_str()), ("a.md", "undecided"));
-<a href=#453 id=453 data-nosnippet>453</a>/// ```
-<a href=#454 id=454 data-nosnippet>454</a></span><span class="kw">pub fn </span>judge(
-<a href=#455 id=455 data-nosnippet>455</a>    root: <span class="kw-2">&amp;</span>Path,
-<a href=#456 id=456 data-nosnippet>456</a>    path: <span class="kw-2">&amp;</span>str,
-<a href=#457 id=457 data-nosnippet>457</a>    session: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
-<a href=#458 id=458 data-nosnippet>458</a>    claims: <span class="kw">impl </span>FnOnce() -&gt; ClaimSource,
-<a href=#459 id=459 data-nosnippet>459</a>) -&gt; EditVerdict {
-<a href=#460 id=460 data-nosnippet>460</a>    <span class="kw">let </span>rel = relative_to(root, path);
-<a href=#461 id=461 data-nosnippet>461</a>    <span class="kw">let </span>required = edits_require_claim(root);
-<a href=#462 id=462 data-nosnippet>462</a>    <span class="kw">let </span>mesh_enabled = mesh_declared_enabled(root);
-<a href=#463 id=463 data-nosnippet>463</a>    <span class="kw">let </span>task = active_task(root);
-<a href=#464 id=464 data-nosnippet>464</a>    <span class="kw">let </span>needs_claims = rel.is_some()
-<a href=#465 id=465 data-nosnippet>465</a>        &amp;&amp; required == <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
-<a href=#466 id=466 data-nosnippet>466</a>        &amp;&amp; mesh_enabled
-<a href=#467 id=467 data-nosnippet>467</a>        &amp;&amp; !task
-<a href=#468 id=468 data-nosnippet>468</a>            .as_ref()
-<a href=#469 id=469 data-nosnippet>469</a>            .zip(rel.as_deref())
-<a href=#470 id=470 data-nosnippet>470</a>            .is_some_and(|((<span class="kw">_</span>, scope), r)| scope.iter().any(|s| covers(s, r)));
-<a href=#471 id=471 data-nosnippet>471</a>    <span class="kw">let </span>claims = <span class="kw">if </span>needs_claims {
-<a href=#472 id=472 data-nosnippet>472</a>        claims()
-<a href=#473 id=473 data-nosnippet>473</a>    } <span class="kw">else </span>{
-<a href=#474 id=474 data-nosnippet>474</a>        ClaimSource::Claims(Vec::new())
-<a href=#475 id=475 data-nosnippet>475</a>    };
-<a href=#476 id=476 data-nosnippet>476</a>    judge_facts(
-<a href=#477 id=477 data-nosnippet>477</a>        path,
-<a href=#478 id=478 data-nosnippet>478</a>        rel.as_deref(),
-<a href=#479 id=479 data-nosnippet>479</a>        EditFacts {
-<a href=#480 id=480 data-nosnippet>480</a>            required,
-<a href=#481 id=481 data-nosnippet>481</a>            mesh_enabled,
-<a href=#482 id=482 data-nosnippet>482</a>            task: task
-<a href=#483 id=483 data-nosnippet>483</a>                .as_ref()
-<a href=#484 id=484 data-nosnippet>484</a>                .map(|(id, scope)| (id.as_str(), scope.as_slice())),
-<a href=#485 id=485 data-nosnippet>485</a>            session,
-<a href=#486 id=486 data-nosnippet>486</a>            claims,
-<a href=#487 id=487 data-nosnippet>487</a>        },
-<a href=#488 id=488 data-nosnippet>488</a>    )
-<a href=#489 id=489 data-nosnippet>489</a>}
-<a href=#490 id=490 data-nosnippet>490</a>
-<a href=#491 id=491 data-nosnippet>491</a><span class="doccomment">/// The path a provider's pre-tool payload names, and the provider's own session id: the
-<a href=#492 id=492 data-nosnippet>492</a>/// fields Claude Code sends (`tool_input.file_path`, `tool_input.notebook_path`,
-<a href=#493 id=493 data-nosnippet>493</a>/// `session_id`). `None` when the payload names no path — a tool that writes no file.
-<a href=#494 id=494 data-nosnippet>494</a>///
-<a href=#495 id=495 data-nosnippet>495</a>/// ```
-<a href=#496 id=496 data-nosnippet>496</a>/// use majordomus_cli::guard::from_payload;
-<a href=#497 id=497 data-nosnippet>497</a>///
-<a href=#498 id=498 data-nosnippet>498</a>/// let p = r#"{"session_id":"s1","tool_name":"Edit","tool_input":{"file_path":"/r/lib/a.sh"}}"#;
-<a href=#499 id=499 data-nosnippet>499</a>/// assert_eq!(from_payload(p), Some(("/r/lib/a.sh".to_string(), Some("s1".to_string()))));
-<a href=#500 id=500 data-nosnippet>500</a>/// let n = r#"{"session_id":"s1","tool_input":{"notebook_path":"/r/n.ipynb"}}"#;
-<a href=#501 id=501 data-nosnippet>501</a>/// assert_eq!(from_payload(n).unwrap().0, "/r/n.ipynb");
-<a href=#502 id=502 data-nosnippet>502</a>/// assert_eq!(from_payload(r#"{"tool_input":{"command":"ls"}}"#), None);
-<a href=#503 id=503 data-nosnippet>503</a>/// assert_eq!(from_payload("not json"), None);
-<a href=#504 id=504 data-nosnippet>504</a>/// ```
-<a href=#505 id=505 data-nosnippet>505</a></span><span class="kw">pub fn </span>from_payload(payload: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;(String, <span class="prelude-ty">Option</span>&lt;String&gt;)&gt; {
-<a href=#506 id=506 data-nosnippet>506</a>    <span class="kw">let </span>v: serde_json::Value = serde_json::from_str(payload).ok()<span class="question-mark">?</span>;
-<a href=#507 id=507 data-nosnippet>507</a>    <span class="kw">let </span>input = <span class="kw-2">&amp;</span>v[<span class="string">"tool_input"</span>];
-<a href=#508 id=508 data-nosnippet>508</a>    <span class="kw">let </span>path = input[<span class="string">"file_path"</span>]
-<a href=#509 id=509 data-nosnippet>509</a>        .as_str()
-<a href=#510 id=510 data-nosnippet>510</a>        .or_else(|| input[<span class="string">"notebook_path"</span>].as_str())<span class="question-mark">?
-<a href=#511 id=511 data-nosnippet>511</a>        </span>.to_string();
-<a href=#512 id=512 data-nosnippet>512</a>    <span class="kw">let </span>session = v[<span class="string">"session_id"</span>].as_str().map(str::to_string);
-<a href=#513 id=513 data-nosnippet>513</a>    <span class="prelude-val">Some</span>((path, session))
-<a href=#514 id=514 data-nosnippet>514</a>}
-<a href=#515 id=515 data-nosnippet>515</a>
-<a href=#516 id=516 data-nosnippet>516</a><span class="attr">#[cfg(test)]
-<a href=#517 id=517 data-nosnippet>517</a></span><span class="kw">mod </span>tests {
-<a href=#518 id=518 data-nosnippet>518</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#519 id=519 data-nosnippet>519</a>
-<a href=#520 id=520 data-nosnippet>520</a>    <span class="kw">fn </span>claim(session: <span class="kw-2">&amp;</span>str, scope: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], state: ClaimState) -&gt; ClaimView {
-<a href=#521 id=521 data-nosnippet>521</a>        <span class="kw">let </span>stream = <span class="string">"641bdb94dae9f62268abf5ca73c11e15-94bb82f89e960c38-daeb650615a562b1"</span>;
-<a href=#522 id=522 data-nosnippet>522</a>        serde_json::from_value(<span class="macro">serde_json::json!</span>({
-<a href=#523 id=523 data-nosnippet>523</a>            <span class="string">"key"</span>: <span class="macro">format!</span>(<span class="string">"{stream}/c-1"</span>),
-<a href=#524 id=524 data-nosnippet>524</a>            <span class="string">"stream"</span>: stream,
-<a href=#525 id=525 data-nosnippet>525</a>            <span class="string">"runtime"</span>: <span class="string">"641bdb94dae9f62268abf5ca73c11e15-94bb82f89e960c38"</span>,
-<a href=#526 id=526 data-nosnippet>526</a>            <span class="string">"session"</span>: <span class="macro">format!</span>(<span class="string">"{stream}/{session}"</span>),
-<a href=#527 id=527 data-nosnippet>527</a>            <span class="string">"scope"</span>: scope,
-<a href=#528 id=528 data-nosnippet>528</a>            <span class="string">"mode"</span>: <span class="string">"advisory"</span>,
-<a href=#529 id=529 data-nosnippet>529</a>            <span class="string">"acquired_lamport"</span>: <span class="number">1</span>,
-<a href=#530 id=530 data-nosnippet>530</a>            <span class="string">"acquired_seq"</span>: <span class="number">1</span>,
-<a href=#531 id=531 data-nosnippet>531</a>            <span class="string">"state"</span>: state,
-<a href=#532 id=532 data-nosnippet>532</a>        }))
-<a href=#533 id=533 data-nosnippet>533</a>        .expect(<span class="string">"a claim view"</span>)
-<a href=#534 id=534 data-nosnippet>534</a>    }
-<a href=#535 id=535 data-nosnippet>535</a>
-<a href=#536 id=536 data-nosnippet>536</a>    <span class="kw">fn </span>facts&lt;<span class="lifetime">'a</span>&gt;(task: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[String])&gt;, claims: ClaimSource) -&gt; EditFacts&lt;<span class="lifetime">'a</span>&gt; {
-<a href=#537 id=537 data-nosnippet>537</a>        EditFacts {
-<a href=#538 id=538 data-nosnippet>538</a>            required: <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
-<a href=#539 id=539 data-nosnippet>539</a>            mesh_enabled: <span class="bool-val">true</span>,
-<a href=#540 id=540 data-nosnippet>540</a>            task,
-<a href=#541 id=541 data-nosnippet>541</a>            session: <span class="prelude-val">Some</span>(<span class="string">"claude-code-s1"</span>),
-<a href=#542 id=542 data-nosnippet>542</a>            claims,
-<a href=#543 id=543 data-nosnippet>543</a>        }
-<a href=#544 id=544 data-nosnippet>544</a>    }
-<a href=#545 id=545 data-nosnippet>545</a>
-<a href=#546 id=546 data-nosnippet>546</a>    <span class="attr">#[test]
-<a href=#547 id=547 data-nosnippet>547</a>    </span><span class="kw">fn </span>a_claim_covers_its_path_its_descendants_and_the_root_covers_all() {
-<a href=#548 id=548 data-nosnippet>548</a>        <span class="macro">assert!</span>(covers(<span class="string">"."</span>, <span class="string">"docs/a.md"</span>));
-<a href=#549 id=549 data-nosnippet>549</a>        <span class="macro">assert!</span>(!covers(<span class="string">"."</span>, <span class="string">""</span>));
-<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert!</span>(covers(<span class="string">"docs/"</span>, <span class="string">"docs/a.md"</span>));
-<a href=#551 id=551 data-nosnippet>551</a>        <span class="macro">assert!</span>(!covers(<span class="string">"doc"</span>, <span class="string">"docs/a.md"</span>));
-<a href=#552 id=552 data-nosnippet>552</a>    }
-<a href=#553 id=553 data-nosnippet>553</a>
-<a href=#554 id=554 data-nosnippet>554</a>    <span class="attr">#[test]
-<a href=#555 id=555 data-nosnippet>555</a>    </span><span class="kw">fn </span>a_path_is_placed_lexically_inside_or_outside_the_checkout() {
-<a href=#556 id=556 data-nosnippet>556</a>        <span class="kw">let </span>root = Path::new(<span class="string">"/work/repo"</span>);
-<a href=#557 id=557 data-nosnippet>557</a>        <span class="macro">assert_eq!</span>(
-<a href=#558 id=558 data-nosnippet>558</a>            relative_to(root, <span class="string">"./docs/../lib/a.sh"</span>).as_deref(),
-<a href=#559 id=559 data-nosnippet>559</a>            <span class="prelude-val">Some</span>(<span class="string">"lib/a.sh"</span>)
-<a href=#560 id=560 data-nosnippet>560</a>        );
-<a href=#561 id=561 data-nosnippet>561</a>        <span class="macro">assert_eq!</span>(relative_to(root, <span class="string">"/work/other/a.sh"</span>), <span class="prelude-val">None</span>);
-<a href=#562 id=562 data-nosnippet>562</a>        <span class="macro">assert_eq!</span>(
-<a href=#563 id=563 data-nosnippet>563</a>            relative_to(root, <span class="string">"/work/repo"</span>),
-<a href=#564 id=564 data-nosnippet>564</a>            <span class="prelude-val">None</span>,
-<a href=#565 id=565 data-nosnippet>565</a>            <span class="string">"the root itself is no file"
-<a href=#566 id=566 data-nosnippet>566</a>        </span>);
-<a href=#567 id=567 data-nosnippet>567</a>        <span class="kw">let </span>relative = Path::new(<span class="string">"./repo"</span>);
-<a href=#568 id=568 data-nosnippet>568</a>        <span class="macro">assert_eq!</span>(relative_to(relative, <span class="string">"a.sh"</span>).as_deref(), <span class="prelude-val">Some</span>(<span class="string">"a.sh"</span>));
-<a href=#569 id=569 data-nosnippet>569</a>    }
-<a href=#570 id=570 data-nosnippet>570</a>
-<a href=#571 id=571 data-nosnippet>571</a>    <span class="attr">#[test]
-<a href=#572 id=572 data-nosnippet>572</a>    </span><span class="kw">fn </span>a_task_that_claims_elsewhere_is_named_in_the_refusal() {
-<a href=#573 id=573 data-nosnippet>573</a>        <span class="kw">let </span>scope = [<span class="string">"lib"</span>.to_string()];
-<a href=#574 id=574 data-nosnippet>574</a>        <span class="kw">let </span>v = judge_facts(
-<a href=#575 id=575 data-nosnippet>575</a>            <span class="string">"docs/a.md"</span>,
-<a href=#576 id=576 data-nosnippet>576</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
-<a href=#577 id=577 data-nosnippet>577</a>            facts(<span class="prelude-val">Some</span>((<span class="string">"t-1"</span>, <span class="kw-2">&amp;</span>scope[..])), ClaimSource::Claims(<span class="macro">vec!</span>[])),
-<a href=#578 id=578 data-nosnippet>578</a>        );
-<a href=#579 id=579 data-nosnippet>579</a>        <span class="macro">assert!</span>(!v.allowed);
-<a href=#580 id=580 data-nosnippet>580</a>        <span class="macro">assert!</span>(v.detail.contains(<span class="string">"(t-1)"</span>), <span class="string">"{}"</span>, v.detail);
-<a href=#581 id=581 data-nosnippet>581</a>    }
-<a href=#582 id=582 data-nosnippet>582</a>
-<a href=#583 id=583 data-nosnippet>583</a>    <span class="attr">#[test]
-<a href=#584 id=584 data-nosnippet>584</a>    </span><span class="kw">fn </span>without_a_session_only_a_task_is_offered_as_the_remedy() {
-<a href=#585 id=585 data-nosnippet>585</a>        <span class="kw">let </span>f = EditFacts {
-<a href=#586 id=586 data-nosnippet>586</a>            session: <span class="prelude-val">None</span>,
-<a href=#587 id=587 data-nosnippet>587</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
-<a href=#588 id=588 data-nosnippet>588</a>        };
-<a href=#589 id=589 data-nosnippet>589</a>        <span class="kw">let </span>v = judge_facts(<span class="string">"docs/a.md"</span>, <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>), f);
-<a href=#590 id=590 data-nosnippet>590</a>        <span class="macro">assert!</span>(!v.allowed);
-<a href=#591 id=591 data-nosnippet>591</a>        <span class="kw">let </span>remedy = v.remedy.unwrap();
-<a href=#592 id=592 data-nosnippet>592</a>        <span class="macro">assert!</span>(remedy.contains(<span class="string">"majordomus start"</span>), <span class="string">"{remedy}"</span>);
-<a href=#593 id=593 data-nosnippet>593</a>        <span class="macro">assert!</span>(!remedy.contains(<span class="string">"--session"</span>), <span class="string">"{remedy}"</span>);
-<a href=#594 id=594 data-nosnippet>594</a>    }
-<a href=#595 id=595 data-nosnippet>595</a>
-<a href=#596 id=596 data-nosnippet>596</a>    <span class="attr">#[test]
-<a href=#597 id=597 data-nosnippet>597</a>    </span><span class="kw">fn </span>the_sessions_live_claim_covers_the_edit() {
-<a href=#598 id=598 data-nosnippet>598</a>        <span class="kw">let </span>c = <span class="macro">vec!</span>[claim(<span class="string">"claude-code-s1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Held)];
-<a href=#599 id=599 data-nosnippet>599</a>        <span class="kw">let </span>v = judge_facts(
-<a href=#600 id=600 data-nosnippet>600</a>            <span class="string">"docs/a.md"</span>,
-<a href=#601 id=601 data-nosnippet>601</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
-<a href=#602 id=602 data-nosnippet>602</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(c)),
-<a href=#603 id=603 data-nosnippet>603</a>        );
-<a href=#604 id=604 data-nosnippet>604</a>        <span class="macro">assert!</span>(v.allowed, <span class="string">"{v:?}"</span>);
-<a href=#605 id=605 data-nosnippet>605</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"claim"</span>);
-<a href=#606 id=606 data-nosnippet>606</a>    }
-<a href=#607 id=607 data-nosnippet>607</a>
-<a href=#608 id=608 data-nosnippet>608</a>    <span class="attr">#[test]
-<a href=#609 id=609 data-nosnippet>609</a>    </span><span class="kw">fn </span>another_sessions_claim_does_not() {
-<a href=#610 id=610 data-nosnippet>610</a>        <span class="kw">let </span>c = <span class="macro">vec!</span>[claim(<span class="string">"claude-code-s2"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Held)];
-<a href=#611 id=611 data-nosnippet>611</a>        <span class="kw">let </span>v = judge_facts(
-<a href=#612 id=612 data-nosnippet>612</a>            <span class="string">"docs/a.md"</span>,
-<a href=#613 id=613 data-nosnippet>613</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
-<a href=#614 id=614 data-nosnippet>614</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(c)),
-<a href=#615 id=615 data-nosnippet>615</a>        );
-<a href=#616 id=616 data-nosnippet>616</a>        <span class="macro">assert!</span>(!v.allowed);
-<a href=#617 id=617 data-nosnippet>617</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"unclaimed"</span>);
-<a href=#618 id=618 data-nosnippet>618</a>    }
-<a href=#619 id=619 data-nosnippet>619</a>
-<a href=#620 id=620 data-nosnippet>620</a>    <span class="attr">#[test]
-<a href=#621 id=621 data-nosnippet>621</a>    </span><span class="kw">fn </span>a_released_claim_does_not() {
-<a href=#622 id=622 data-nosnippet>622</a>        <span class="kw">let </span>c = <span class="macro">vec!</span>[claim(<span class="string">"claude-code-s1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Released)];
-<a href=#623 id=623 data-nosnippet>623</a>        <span class="kw">let </span>v = judge_facts(
-<a href=#624 id=624 data-nosnippet>624</a>            <span class="string">"docs/a.md"</span>,
-<a href=#625 id=625 data-nosnippet>625</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
-<a href=#626 id=626 data-nosnippet>626</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(c)),
-<a href=#627 id=627 data-nosnippet>627</a>        );
-<a href=#628 id=628 data-nosnippet>628</a>        <span class="macro">assert!</span>(!v.allowed);
-<a href=#629 id=629 data-nosnippet>629</a>    }
-<a href=#630 id=630 data-nosnippet>630</a>
-<a href=#631 id=631 data-nosnippet>631</a>    <span class="attr">#[test]
-<a href=#632 id=632 data-nosnippet>632</a>    </span><span class="kw">fn </span>off_no_mesh_local_and_outside_are_let_through() {
-<a href=#633 id=633 data-nosnippet>633</a>        <span class="kw">let </span>off = EditFacts {
-<a href=#634 id=634 data-nosnippet>634</a>            required: <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
-<a href=#635 id=635 data-nosnippet>635</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
-<a href=#636 id=636 data-nosnippet>636</a>        };
-<a href=#637 id=637 data-nosnippet>637</a>        <span class="macro">assert_eq!</span>(judge_facts(<span class="string">"a"</span>, <span class="prelude-val">Some</span>(<span class="string">"a"</span>), off).ground, <span class="string">"off"</span>);
-<a href=#638 id=638 data-nosnippet>638</a>        <span class="kw">let </span>no_mesh = EditFacts {
-<a href=#639 id=639 data-nosnippet>639</a>            mesh_enabled: <span class="bool-val">false</span>,
-<a href=#640 id=640 data-nosnippet>640</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
-<a href=#641 id=641 data-nosnippet>641</a>        };
-<a href=#642 id=642 data-nosnippet>642</a>        <span class="macro">assert_eq!</span>(judge_facts(<span class="string">"a"</span>, <span class="prelude-val">Some</span>(<span class="string">"a"</span>), no_mesh).ground, <span class="string">"no_mesh"</span>);
-<a href=#643 id=643 data-nosnippet>643</a>        <span class="kw">let </span>local = judge_facts(
-<a href=#644 id=644 data-nosnippet>644</a>            <span class="string">".ai/local/state/x"</span>,
-<a href=#645 id=645 data-nosnippet>645</a>            <span class="prelude-val">Some</span>(<span class="string">".ai/local/state/x"</span>),
-<a href=#646 id=646 data-nosnippet>646</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[])),
-<a href=#647 id=647 data-nosnippet>647</a>        );
-<a href=#648 id=648 data-nosnippet>648</a>        <span class="macro">assert_eq!</span>(local.ground, <span class="string">"local"</span>);
-<a href=#649 id=649 data-nosnippet>649</a>        <span class="macro">assert_eq!</span>(
-<a href=#650 id=650 data-nosnippet>650</a>            judge_facts(<span class="string">"/elsewhere"</span>, <span class="prelude-val">None</span>, facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))).ground,
-<a href=#651 id=651 data-nosnippet>651</a>            <span class="string">"outside"
-<a href=#652 id=652 data-nosnippet>652</a>        </span>);
-<a href=#653 id=653 data-nosnippet>653</a>    }
-<a href=#654 id=654 data-nosnippet>654</a>
-<a href=#655 id=655 data-nosnippet>655</a>    <span class="attr">#[test]
-<a href=#656 id=656 data-nosnippet>656</a>    </span><span class="kw">fn </span>an_unreadable_policy_enforces_nothing() {
-<a href=#657 id=657 data-nosnippet>657</a>        <span class="kw">let </span>f = EditFacts {
-<a href=#658 id=658 data-nosnippet>658</a>            required: <span class="prelude-val">Err</span>(<span class="string">"no manifest"</span>.into()),
-<a href=#659 id=659 data-nosnippet>659</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
-<a href=#660 id=660 data-nosnippet>660</a>        };
-<a href=#661 id=661 data-nosnippet>661</a>        <span class="kw">let </span>v = judge_facts(<span class="string">"a"</span>, <span class="prelude-val">Some</span>(<span class="string">"a"</span>), f);
-<a href=#662 id=662 data-nosnippet>662</a>        <span class="macro">assert!</span>(v.allowed);
-<a href=#663 id=663 data-nosnippet>663</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"undecided"</span>);
-<a href=#664 id=664 data-nosnippet>664</a>    }
-<a href=#665 id=665 data-nosnippet>665</a>
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="doccomment">/// A repository made of the shipped skeleton's manifest and policy, with the policy
-<a href=#667 id=667 data-nosnippet>667</a>    /// switch and the mesh declaration as asked.
-<a href=#668 id=668 data-nosnippet>668</a>    </span><span class="kw">fn </span>repository(required: bool, mesh: bool) -&gt; tempfile::TempDir {
-<a href=#669 id=669 data-nosnippet>669</a>        <span class="kw">let </span>skeleton = Path::new(<span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>)).join(<span class="string">"../../share/skeleton"</span>);
-<a href=#670 id=670 data-nosnippet>670</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#671 id=671 data-nosnippet>671</a>        <span class="kw">let </span>ai = dir.path().join(<span class="string">".ai"</span>);
-<a href=#672 id=672 data-nosnippet>672</a>        std::fs::create_dir_all(ai.join(<span class="string">"repo/mesh"</span>)).unwrap();
-<a href=#673 id=673 data-nosnippet>673</a>        std::fs::copy(skeleton.join(<span class="string">"ai/manifest.yaml"</span>), ai.join(<span class="string">"manifest.yaml"</span>)).unwrap();
-<a href=#674 id=674 data-nosnippet>674</a>        <span class="kw">let </span>policy = std::fs::read_to_string(skeleton.join(<span class="string">"policy.yaml"</span>)).unwrap();
-<a href=#675 id=675 data-nosnippet>675</a>        <span class="kw">let </span>line = <span class="string">"edits_require_claim: false"</span>;
-<a href=#676 id=676 data-nosnippet>676</a>        <span class="macro">assert!</span>(policy.contains(line), <span class="string">"the skeleton declares the switch"</span>);
-<a href=#677 id=677 data-nosnippet>677</a>        <span class="kw">let </span>policy = policy.replace(line, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"edits_require_claim: {required}"</span>));
-<a href=#678 id=678 data-nosnippet>678</a>        std::fs::write(ai.join(<span class="string">"repo/policy.yaml"</span>), policy).unwrap();
-<a href=#679 id=679 data-nosnippet>679</a>        std::fs::write(ai.join(<span class="string">"repo/mesh/mesh.yaml"</span>), <span class="macro">format!</span>(<span class="string">"enabled: {mesh}\n"</span>)).unwrap();
-<a href=#680 id=680 data-nosnippet>680</a>        dir
+<a href=#391 id=391 data-nosnippet>391</a>/// use majordomus_cli::guard::edits_require_claim;
+<a href=#392 id=392 data-nosnippet>392</a>///
+<a href=#393 id=393 data-nosnippet>393</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#394 id=394 data-nosnippet>394</a>/// assert!(edits_require_claim(dir.path()).is_err(), "no manifest, so no policy");
+<a href=#395 id=395 data-nosnippet>395</a>/// ```
+<a href=#396 id=396 data-nosnippet>396</a></span><span class="kw">pub fn </span>edits_require_claim(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;bool, String&gt; {
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="kw">let </span>repository = <span class="kw">crate</span>::repository::Repository::open(root).map_err(|e| e.to_string())<span class="question-mark">?</span>;
+<a href=#398 id=398 data-nosnippet>398</a>    <span class="kw">crate</span>::policy::LoadedPolicy::load(<span class="kw-2">&amp;</span>repository)
+<a href=#399 id=399 data-nosnippet>399</a>        .map(|p| p.policy.session.edits_require_claim)
+<a href=#400 id=400 data-nosnippet>400</a>        .map_err(|e| e.to_string())
+<a href=#401 id=401 data-nosnippet>401</a>}
+<a href=#402 id=402 data-nosnippet>402</a>
+<a href=#403 id=403 data-nosnippet>403</a><span class="doccomment">/// The active task of the checkout at `root`: its id and scope, while its outcome is active.
+<a href=#404 id=404 data-nosnippet>404</a>///
+<a href=#405 id=405 data-nosnippet>405</a>/// ```
+<a href=#406 id=406 data-nosnippet>406</a>/// use majordomus_cli::guard::active_task;
+<a href=#407 id=407 data-nosnippet>407</a>///
+<a href=#408 id=408 data-nosnippet>408</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#409 id=409 data-nosnippet>409</a>/// assert_eq!(active_task(dir.path()), None, "no task record");
+<a href=#410 id=410 data-nosnippet>410</a>/// let state = dir.path().join(".ai/local/state");
+<a href=#411 id=411 data-nosnippet>411</a>/// std::fs::create_dir_all(&amp;state).unwrap();
+<a href=#412 id=412 data-nosnippet>412</a>/// let record = "id: t-1\noutcome: active\nscope:\n  - lib\n";
+<a href=#413 id=413 data-nosnippet>413</a>/// std::fs::write(state.join("current.yaml"), record).unwrap();
+<a href=#414 id=414 data-nosnippet>414</a>/// assert_eq!(active_task(dir.path()), Some(("t-1".to_string(), vec!["lib".to_string()])));
+<a href=#415 id=415 data-nosnippet>415</a>/// let finished = record.replace("active", "completed");
+<a href=#416 id=416 data-nosnippet>416</a>/// std::fs::write(state.join("current.yaml"), finished).unwrap();
+<a href=#417 id=417 data-nosnippet>417</a>/// assert_eq!(active_task(dir.path()), None, "a finished task claims nothing");
+<a href=#418 id=418 data-nosnippet>418</a>/// ```
+<a href=#419 id=419 data-nosnippet>419</a></span><span class="kw">pub fn </span>active_task(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;(String, Vec&lt;String&gt;)&gt; {
+<a href=#420 id=420 data-nosnippet>420</a>    <span class="kw">let </span>task = <span class="kw">crate</span>::capability::builtin::continuity::read_task(
+<a href=#421 id=421 data-nosnippet>421</a>        <span class="kw-2">&amp;</span>root.join(<span class="string">".ai/local/state/current.yaml"</span>),
+<a href=#422 id=422 data-nosnippet>422</a>    )<span class="question-mark">?</span>;
+<a href=#423 id=423 data-nosnippet>423</a>    (task.outcome == <span class="string">"active"</span>).then_some((task.id, task.scope))
+<a href=#424 id=424 data-nosnippet>424</a>}
+<a href=#425 id=425 data-nosnippet>425</a>
+<a href=#426 id=426 data-nosnippet>426</a><span class="doccomment">/// The live claims of the checkout's shared server, asked over HTTP from outside it.
+<a href=#427 id=427 data-nosnippet>427</a>///
+<a href=#428 id=428 data-nosnippet>428</a>/// ```
+<a href=#429 id=429 data-nosnippet>429</a>/// use majordomus_cli::guard::{server_claims, ClaimSource};
+<a href=#430 id=430 data-nosnippet>430</a>///
+<a href=#431 id=431 data-nosnippet>431</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#432 id=432 data-nosnippet>432</a>/// let ClaimSource::Unavailable(why) = server_claims(dir.path()) else {
+<a href=#433 id=433 data-nosnippet>433</a>///     panic!("a checkout no server serves has no claims to read");
+<a href=#434 id=434 data-nosnippet>434</a>/// };
+<a href=#435 id=435 data-nosnippet>435</a>/// assert!(why.contains("no shared server"));
+<a href=#436 id=436 data-nosnippet>436</a>/// ```
+<a href=#437 id=437 data-nosnippet>437</a></span><span class="kw">pub fn </span>server_claims(root: <span class="kw-2">&amp;</span>Path) -&gt; ClaimSource {
+<a href=#438 id=438 data-nosnippet>438</a>    <span class="kw">match </span><span class="kw">crate</span>::integration::exclusive::server_of(root) {
+<a href=#439 id=439 data-nosnippet>439</a>        <span class="prelude-val">Some</span>(server) =&gt; claims_of(<span class="kw-2">&amp;</span>server),
+<a href=#440 id=440 data-nosnippet>440</a>        <span class="prelude-val">None </span>=&gt; ClaimSource::Unavailable(<span class="string">"no shared server answers for this checkout"</span>.into()),
+<a href=#441 id=441 data-nosnippet>441</a>    }
+<a href=#442 id=442 data-nosnippet>442</a>}
+<a href=#443 id=443 data-nosnippet>443</a>
+<a href=#444 id=444 data-nosnippet>444</a><span class="doccomment">/// The live claims `mesh` answers with, or why they could not be read. A server that does
+<a href=#445 id=445 data-nosnippet>445</a>/// not run the mesh answers 200 with `active: false` and its reason, and that is said as
+<a href=#446 id=446 data-nosnippet>446</a>/// such rather than as a state that does not parse.
+<a href=#447 id=447 data-nosnippet>447</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>claims_of(mesh: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Mesh) -&gt; ClaimSource {
+<a href=#448 id=448 data-nosnippet>448</a>    <span class="kw">match </span>mesh.ask(<span class="string">"GET"</span>, <span class="string">"/api/v1/mesh/state?view=full&amp;claims=live"</span>, <span class="prelude-val">None</span>) {
+<a href=#449 id=449 data-nosnippet>449</a>        <span class="prelude-val">Ok</span>((<span class="number">200</span>, v)) <span class="kw">if </span>v[<span class="string">"active"</span>] == <span class="bool-val">false </span>=&gt; {
+<a href=#450 id=450 data-nosnippet>450</a>            <span class="kw">let </span>why = v[<span class="string">"reason"</span>].as_str().unwrap_or(<span class="string">"no reason given"</span>);
+<a href=#451 id=451 data-nosnippet>451</a>            ClaimSource::Unavailable(<span class="macro">format!</span>(<span class="string">"the server does not run the mesh: {why}"</span>))
+<a href=#452 id=452 data-nosnippet>452</a>        }
+<a href=#453 id=453 data-nosnippet>453</a>        <span class="prelude-val">Ok</span>((<span class="number">200</span>, v)) =&gt; {
+<a href=#454 id=454 data-nosnippet>454</a>            <span class="kw">match </span>serde_json::from_value::&lt;Vec&lt;ClaimView&gt;&gt;(v[<span class="string">"state"</span>][<span class="string">"claims"</span>].clone()) {
+<a href=#455 id=455 data-nosnippet>455</a>                <span class="prelude-val">Ok</span>(c) =&gt; ClaimSource::Claims(c),
+<a href=#456 id=456 data-nosnippet>456</a>                <span class="prelude-val">Err</span>(e) =&gt; ClaimSource::Unavailable(<span class="macro">format!</span>(<span class="string">"the mesh state does not parse: {e}"</span>)),
+<a href=#457 id=457 data-nosnippet>457</a>            }
+<a href=#458 id=458 data-nosnippet>458</a>        }
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="prelude-val">Ok</span>((status, v)) =&gt; {
+<a href=#460 id=460 data-nosnippet>460</a>            <span class="kw">let </span>m = v[<span class="string">"error"</span>][<span class="string">"message"</span>]
+<a href=#461 id=461 data-nosnippet>461</a>                .as_str()
+<a href=#462 id=462 data-nosnippet>462</a>                .unwrap_or_default()
+<a href=#463 id=463 data-nosnippet>463</a>                .to_string();
+<a href=#464 id=464 data-nosnippet>464</a>            ClaimSource::Unavailable(<span class="macro">format!</span>(<span class="string">"the server answered {status}: {m}"</span>))
+<a href=#465 id=465 data-nosnippet>465</a>        }
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="prelude-val">Err</span>(e) =&gt; ClaimSource::Unavailable(e),
+<a href=#467 id=467 data-nosnippet>467</a>    }
+<a href=#468 id=468 data-nosnippet>468</a>}
+<a href=#469 id=469 data-nosnippet>469</a>
+<a href=#470 id=470 data-nosnippet>470</a><span class="doccomment">/// Judge an edit of `path` by `session` in the checkout at `root`, reading every fact.
+<a href=#471 id=471 data-nosnippet>471</a>/// `claims` is asked only when the cheaper facts have not already decided.
+<a href=#472 id=472 data-nosnippet>472</a>///
+<a href=#473 id=473 data-nosnippet>473</a>/// ```
+<a href=#474 id=474 data-nosnippet>474</a>/// use majordomus_cli::guard::judge;
+<a href=#475 id=475 data-nosnippet>475</a>///
+<a href=#476 id=476 data-nosnippet>476</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#477 id=477 data-nosnippet>477</a>/// // no manifest, so no policy: nothing is enforced, and the mesh is never asked
+<a href=#478 id=478 data-nosnippet>478</a>/// let v = judge(dir.path(), "a.md", None, || unreachable!("the claims are not needed"));
+<a href=#479 id=479 data-nosnippet>479</a>/// assert!(v.allowed);
+<a href=#480 id=480 data-nosnippet>480</a>/// assert_eq!((v.path.as_str(), v.ground.as_str()), ("a.md", "undecided"));
+<a href=#481 id=481 data-nosnippet>481</a>/// ```
+<a href=#482 id=482 data-nosnippet>482</a></span><span class="kw">pub fn </span>judge(
+<a href=#483 id=483 data-nosnippet>483</a>    root: <span class="kw-2">&amp;</span>Path,
+<a href=#484 id=484 data-nosnippet>484</a>    path: <span class="kw-2">&amp;</span>str,
+<a href=#485 id=485 data-nosnippet>485</a>    session: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
+<a href=#486 id=486 data-nosnippet>486</a>    claims: <span class="kw">impl </span>FnOnce() -&gt; ClaimSource,
+<a href=#487 id=487 data-nosnippet>487</a>) -&gt; EditVerdict {
+<a href=#488 id=488 data-nosnippet>488</a>    <span class="kw">let </span>rel = relative_to(root, path);
+<a href=#489 id=489 data-nosnippet>489</a>    <span class="kw">let </span>required = edits_require_claim(root);
+<a href=#490 id=490 data-nosnippet>490</a>    <span class="kw">let </span>mesh_enabled = mesh_declared_enabled(root);
+<a href=#491 id=491 data-nosnippet>491</a>    <span class="kw">let </span>task = active_task(root);
+<a href=#492 id=492 data-nosnippet>492</a>    <span class="kw">let </span>needs_claims = rel.is_some()
+<a href=#493 id=493 data-nosnippet>493</a>        &amp;&amp; required == <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
+<a href=#494 id=494 data-nosnippet>494</a>        &amp;&amp; mesh_enabled
+<a href=#495 id=495 data-nosnippet>495</a>        &amp;&amp; !task
+<a href=#496 id=496 data-nosnippet>496</a>            .as_ref()
+<a href=#497 id=497 data-nosnippet>497</a>            .zip(rel.as_deref())
+<a href=#498 id=498 data-nosnippet>498</a>            .is_some_and(|((<span class="kw">_</span>, scope), r)| scope.iter().any(|s| covers(s, r)));
+<a href=#499 id=499 data-nosnippet>499</a>    <span class="kw">let </span>claims = <span class="kw">if </span>needs_claims {
+<a href=#500 id=500 data-nosnippet>500</a>        claims()
+<a href=#501 id=501 data-nosnippet>501</a>    } <span class="kw">else </span>{
+<a href=#502 id=502 data-nosnippet>502</a>        ClaimSource::Claims(Vec::new())
+<a href=#503 id=503 data-nosnippet>503</a>    };
+<a href=#504 id=504 data-nosnippet>504</a>    judge_facts(
+<a href=#505 id=505 data-nosnippet>505</a>        path,
+<a href=#506 id=506 data-nosnippet>506</a>        rel.as_deref(),
+<a href=#507 id=507 data-nosnippet>507</a>        EditFacts {
+<a href=#508 id=508 data-nosnippet>508</a>            required,
+<a href=#509 id=509 data-nosnippet>509</a>            mesh_enabled,
+<a href=#510 id=510 data-nosnippet>510</a>            task: task
+<a href=#511 id=511 data-nosnippet>511</a>                .as_ref()
+<a href=#512 id=512 data-nosnippet>512</a>                .map(|(id, scope)| (id.as_str(), scope.as_slice())),
+<a href=#513 id=513 data-nosnippet>513</a>            session,
+<a href=#514 id=514 data-nosnippet>514</a>            claims,
+<a href=#515 id=515 data-nosnippet>515</a>        },
+<a href=#516 id=516 data-nosnippet>516</a>    )
+<a href=#517 id=517 data-nosnippet>517</a>}
+<a href=#518 id=518 data-nosnippet>518</a>
+<a href=#519 id=519 data-nosnippet>519</a><span class="doccomment">/// The path a provider's pre-tool payload names, and the provider's own session id: the
+<a href=#520 id=520 data-nosnippet>520</a>/// fields Claude Code sends (`tool_input.file_path`, `tool_input.notebook_path`,
+<a href=#521 id=521 data-nosnippet>521</a>/// `session_id`). `None` when the payload names no path — a tool that writes no file.
+<a href=#522 id=522 data-nosnippet>522</a>///
+<a href=#523 id=523 data-nosnippet>523</a>/// ```
+<a href=#524 id=524 data-nosnippet>524</a>/// use majordomus_cli::guard::from_payload;
+<a href=#525 id=525 data-nosnippet>525</a>///
+<a href=#526 id=526 data-nosnippet>526</a>/// let p = r#"{"session_id":"s1","tool_name":"Edit","tool_input":{"file_path":"/r/lib/a.sh"}}"#;
+<a href=#527 id=527 data-nosnippet>527</a>/// assert_eq!(from_payload(p), Some(("/r/lib/a.sh".to_string(), Some("s1".to_string()))));
+<a href=#528 id=528 data-nosnippet>528</a>/// let n = r#"{"session_id":"s1","tool_input":{"notebook_path":"/r/n.ipynb"}}"#;
+<a href=#529 id=529 data-nosnippet>529</a>/// assert_eq!(from_payload(n).unwrap().0, "/r/n.ipynb");
+<a href=#530 id=530 data-nosnippet>530</a>/// assert_eq!(from_payload(r#"{"tool_input":{"command":"ls"}}"#), None);
+<a href=#531 id=531 data-nosnippet>531</a>/// assert_eq!(from_payload("not json"), None);
+<a href=#532 id=532 data-nosnippet>532</a>/// ```
+<a href=#533 id=533 data-nosnippet>533</a></span><span class="kw">pub fn </span>from_payload(payload: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;(String, <span class="prelude-ty">Option</span>&lt;String&gt;)&gt; {
+<a href=#534 id=534 data-nosnippet>534</a>    <span class="kw">let </span>v: serde_json::Value = serde_json::from_str(payload).ok()<span class="question-mark">?</span>;
+<a href=#535 id=535 data-nosnippet>535</a>    <span class="kw">let </span>input = <span class="kw-2">&amp;</span>v[<span class="string">"tool_input"</span>];
+<a href=#536 id=536 data-nosnippet>536</a>    <span class="kw">let </span>path = input[<span class="string">"file_path"</span>]
+<a href=#537 id=537 data-nosnippet>537</a>        .as_str()
+<a href=#538 id=538 data-nosnippet>538</a>        .or_else(|| input[<span class="string">"notebook_path"</span>].as_str())<span class="question-mark">?
+<a href=#539 id=539 data-nosnippet>539</a>        </span>.to_string();
+<a href=#540 id=540 data-nosnippet>540</a>    <span class="kw">let </span>session = v[<span class="string">"session_id"</span>].as_str().map(str::to_string);
+<a href=#541 id=541 data-nosnippet>541</a>    <span class="prelude-val">Some</span>((path, session))
+<a href=#542 id=542 data-nosnippet>542</a>}
+<a href=#543 id=543 data-nosnippet>543</a>
+<a href=#544 id=544 data-nosnippet>544</a><span class="attr">#[cfg(test)]
+<a href=#545 id=545 data-nosnippet>545</a></span><span class="kw">mod </span>tests {
+<a href=#546 id=546 data-nosnippet>546</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#547 id=547 data-nosnippet>547</a>
+<a href=#548 id=548 data-nosnippet>548</a>    <span class="kw">fn </span>claim(session: <span class="kw-2">&amp;</span>str, scope: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str], state: ClaimState) -&gt; ClaimView {
+<a href=#549 id=549 data-nosnippet>549</a>        <span class="kw">let </span>stream = <span class="string">"641bdb94dae9f62268abf5ca73c11e15-94bb82f89e960c38-daeb650615a562b1"</span>;
+<a href=#550 id=550 data-nosnippet>550</a>        serde_json::from_value(<span class="macro">serde_json::json!</span>({
+<a href=#551 id=551 data-nosnippet>551</a>            <span class="string">"key"</span>: <span class="macro">format!</span>(<span class="string">"{stream}/c-1"</span>),
+<a href=#552 id=552 data-nosnippet>552</a>            <span class="string">"stream"</span>: stream,
+<a href=#553 id=553 data-nosnippet>553</a>            <span class="string">"runtime"</span>: <span class="string">"641bdb94dae9f62268abf5ca73c11e15-94bb82f89e960c38"</span>,
+<a href=#554 id=554 data-nosnippet>554</a>            <span class="string">"session"</span>: <span class="macro">format!</span>(<span class="string">"{stream}/{session}"</span>),
+<a href=#555 id=555 data-nosnippet>555</a>            <span class="string">"scope"</span>: scope,
+<a href=#556 id=556 data-nosnippet>556</a>            <span class="string">"mode"</span>: <span class="string">"advisory"</span>,
+<a href=#557 id=557 data-nosnippet>557</a>            <span class="string">"acquired_lamport"</span>: <span class="number">1</span>,
+<a href=#558 id=558 data-nosnippet>558</a>            <span class="string">"acquired_seq"</span>: <span class="number">1</span>,
+<a href=#559 id=559 data-nosnippet>559</a>            <span class="string">"state"</span>: state,
+<a href=#560 id=560 data-nosnippet>560</a>        }))
+<a href=#561 id=561 data-nosnippet>561</a>        .expect(<span class="string">"a claim view"</span>)
+<a href=#562 id=562 data-nosnippet>562</a>    }
+<a href=#563 id=563 data-nosnippet>563</a>
+<a href=#564 id=564 data-nosnippet>564</a>    <span class="kw">fn </span>facts&lt;<span class="lifetime">'a</span>&gt;(task: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[String])&gt;, claims: ClaimSource) -&gt; EditFacts&lt;<span class="lifetime">'a</span>&gt; {
+<a href=#565 id=565 data-nosnippet>565</a>        EditFacts {
+<a href=#566 id=566 data-nosnippet>566</a>            required: <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>),
+<a href=#567 id=567 data-nosnippet>567</a>            mesh_enabled: <span class="bool-val">true</span>,
+<a href=#568 id=568 data-nosnippet>568</a>            task,
+<a href=#569 id=569 data-nosnippet>569</a>            session: <span class="prelude-val">Some</span>(<span class="string">"claude-code-s1"</span>),
+<a href=#570 id=570 data-nosnippet>570</a>            claims,
+<a href=#571 id=571 data-nosnippet>571</a>        }
+<a href=#572 id=572 data-nosnippet>572</a>    }
+<a href=#573 id=573 data-nosnippet>573</a>
+<a href=#574 id=574 data-nosnippet>574</a>    <span class="attr">#[test]
+<a href=#575 id=575 data-nosnippet>575</a>    </span><span class="kw">fn </span>a_claim_covers_its_path_its_descendants_and_the_root_covers_all() {
+<a href=#576 id=576 data-nosnippet>576</a>        <span class="macro">assert!</span>(covers(<span class="string">"."</span>, <span class="string">"docs/a.md"</span>));
+<a href=#577 id=577 data-nosnippet>577</a>        <span class="macro">assert!</span>(!covers(<span class="string">"."</span>, <span class="string">""</span>));
+<a href=#578 id=578 data-nosnippet>578</a>        <span class="macro">assert!</span>(covers(<span class="string">"docs/"</span>, <span class="string">"docs/a.md"</span>));
+<a href=#579 id=579 data-nosnippet>579</a>        <span class="macro">assert!</span>(!covers(<span class="string">"doc"</span>, <span class="string">"docs/a.md"</span>));
+<a href=#580 id=580 data-nosnippet>580</a>    }
+<a href=#581 id=581 data-nosnippet>581</a>
+<a href=#582 id=582 data-nosnippet>582</a>    <span class="attr">#[test]
+<a href=#583 id=583 data-nosnippet>583</a>    </span><span class="kw">fn </span>a_path_is_placed_lexically_inside_or_outside_the_checkout() {
+<a href=#584 id=584 data-nosnippet>584</a>        <span class="kw">let </span>root = Path::new(<span class="string">"/work/repo"</span>);
+<a href=#585 id=585 data-nosnippet>585</a>        <span class="macro">assert_eq!</span>(
+<a href=#586 id=586 data-nosnippet>586</a>            relative_to(root, <span class="string">"./docs/../lib/a.sh"</span>).as_deref(),
+<a href=#587 id=587 data-nosnippet>587</a>            <span class="prelude-val">Some</span>(<span class="string">"lib/a.sh"</span>)
+<a href=#588 id=588 data-nosnippet>588</a>        );
+<a href=#589 id=589 data-nosnippet>589</a>        <span class="macro">assert_eq!</span>(relative_to(root, <span class="string">"/work/other/a.sh"</span>), <span class="prelude-val">None</span>);
+<a href=#590 id=590 data-nosnippet>590</a>        <span class="macro">assert_eq!</span>(
+<a href=#591 id=591 data-nosnippet>591</a>            relative_to(root, <span class="string">"/work/repo"</span>),
+<a href=#592 id=592 data-nosnippet>592</a>            <span class="prelude-val">None</span>,
+<a href=#593 id=593 data-nosnippet>593</a>            <span class="string">"the root itself is no file"
+<a href=#594 id=594 data-nosnippet>594</a>        </span>);
+<a href=#595 id=595 data-nosnippet>595</a>        <span class="kw">let </span>relative = Path::new(<span class="string">"./repo"</span>);
+<a href=#596 id=596 data-nosnippet>596</a>        <span class="macro">assert_eq!</span>(relative_to(relative, <span class="string">"a.sh"</span>).as_deref(), <span class="prelude-val">Some</span>(<span class="string">"a.sh"</span>));
+<a href=#597 id=597 data-nosnippet>597</a>    }
+<a href=#598 id=598 data-nosnippet>598</a>
+<a href=#599 id=599 data-nosnippet>599</a>    <span class="attr">#[test]
+<a href=#600 id=600 data-nosnippet>600</a>    </span><span class="kw">fn </span>a_task_that_claims_elsewhere_is_named_in_the_refusal() {
+<a href=#601 id=601 data-nosnippet>601</a>        <span class="kw">let </span>scope = [<span class="string">"lib"</span>.to_string()];
+<a href=#602 id=602 data-nosnippet>602</a>        <span class="kw">let </span>v = judge_facts(
+<a href=#603 id=603 data-nosnippet>603</a>            <span class="string">"docs/a.md"</span>,
+<a href=#604 id=604 data-nosnippet>604</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
+<a href=#605 id=605 data-nosnippet>605</a>            facts(<span class="prelude-val">Some</span>((<span class="string">"t-1"</span>, <span class="kw-2">&amp;</span>scope[..])), ClaimSource::Claims(<span class="macro">vec!</span>[])),
+<a href=#606 id=606 data-nosnippet>606</a>        );
+<a href=#607 id=607 data-nosnippet>607</a>        <span class="macro">assert!</span>(!v.allowed);
+<a href=#608 id=608 data-nosnippet>608</a>        <span class="macro">assert!</span>(v.detail.contains(<span class="string">"(t-1)"</span>), <span class="string">"{}"</span>, v.detail);
+<a href=#609 id=609 data-nosnippet>609</a>    }
+<a href=#610 id=610 data-nosnippet>610</a>
+<a href=#611 id=611 data-nosnippet>611</a>    <span class="attr">#[test]
+<a href=#612 id=612 data-nosnippet>612</a>    </span><span class="kw">fn </span>without_a_session_only_a_task_is_offered_as_the_remedy() {
+<a href=#613 id=613 data-nosnippet>613</a>        <span class="kw">let </span>f = EditFacts {
+<a href=#614 id=614 data-nosnippet>614</a>            session: <span class="prelude-val">None</span>,
+<a href=#615 id=615 data-nosnippet>615</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
+<a href=#616 id=616 data-nosnippet>616</a>        };
+<a href=#617 id=617 data-nosnippet>617</a>        <span class="kw">let </span>v = judge_facts(<span class="string">"docs/a.md"</span>, <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>), f);
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="macro">assert!</span>(!v.allowed);
+<a href=#619 id=619 data-nosnippet>619</a>        <span class="kw">let </span>remedy = v.remedy.unwrap();
+<a href=#620 id=620 data-nosnippet>620</a>        <span class="macro">assert!</span>(remedy.contains(<span class="string">"majordomus start"</span>), <span class="string">"{remedy}"</span>);
+<a href=#621 id=621 data-nosnippet>621</a>        <span class="macro">assert!</span>(!remedy.contains(<span class="string">"--session"</span>), <span class="string">"{remedy}"</span>);
+<a href=#622 id=622 data-nosnippet>622</a>    }
+<a href=#623 id=623 data-nosnippet>623</a>
+<a href=#624 id=624 data-nosnippet>624</a>    <span class="attr">#[test]
+<a href=#625 id=625 data-nosnippet>625</a>    </span><span class="kw">fn </span>the_sessions_live_claim_covers_the_edit() {
+<a href=#626 id=626 data-nosnippet>626</a>        <span class="kw">let </span>c = <span class="macro">vec!</span>[claim(<span class="string">"claude-code-s1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Held)];
+<a href=#627 id=627 data-nosnippet>627</a>        <span class="kw">let </span>v = judge_facts(
+<a href=#628 id=628 data-nosnippet>628</a>            <span class="string">"docs/a.md"</span>,
+<a href=#629 id=629 data-nosnippet>629</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
+<a href=#630 id=630 data-nosnippet>630</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(c)),
+<a href=#631 id=631 data-nosnippet>631</a>        );
+<a href=#632 id=632 data-nosnippet>632</a>        <span class="macro">assert!</span>(v.allowed, <span class="string">"{v:?}"</span>);
+<a href=#633 id=633 data-nosnippet>633</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"claim"</span>);
+<a href=#634 id=634 data-nosnippet>634</a>    }
+<a href=#635 id=635 data-nosnippet>635</a>
+<a href=#636 id=636 data-nosnippet>636</a>    <span class="attr">#[test]
+<a href=#637 id=637 data-nosnippet>637</a>    </span><span class="kw">fn </span>another_sessions_claim_does_not() {
+<a href=#638 id=638 data-nosnippet>638</a>        <span class="kw">let </span>c = <span class="macro">vec!</span>[claim(<span class="string">"claude-code-s2"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Held)];
+<a href=#639 id=639 data-nosnippet>639</a>        <span class="kw">let </span>v = judge_facts(
+<a href=#640 id=640 data-nosnippet>640</a>            <span class="string">"docs/a.md"</span>,
+<a href=#641 id=641 data-nosnippet>641</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
+<a href=#642 id=642 data-nosnippet>642</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(c)),
+<a href=#643 id=643 data-nosnippet>643</a>        );
+<a href=#644 id=644 data-nosnippet>644</a>        <span class="macro">assert!</span>(!v.allowed);
+<a href=#645 id=645 data-nosnippet>645</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"unclaimed"</span>);
+<a href=#646 id=646 data-nosnippet>646</a>    }
+<a href=#647 id=647 data-nosnippet>647</a>
+<a href=#648 id=648 data-nosnippet>648</a>    <span class="attr">#[test]
+<a href=#649 id=649 data-nosnippet>649</a>    </span><span class="kw">fn </span>a_released_claim_does_not() {
+<a href=#650 id=650 data-nosnippet>650</a>        <span class="kw">let </span>c = <span class="macro">vec!</span>[claim(<span class="string">"claude-code-s1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Released)];
+<a href=#651 id=651 data-nosnippet>651</a>        <span class="kw">let </span>v = judge_facts(
+<a href=#652 id=652 data-nosnippet>652</a>            <span class="string">"docs/a.md"</span>,
+<a href=#653 id=653 data-nosnippet>653</a>            <span class="prelude-val">Some</span>(<span class="string">"docs/a.md"</span>),
+<a href=#654 id=654 data-nosnippet>654</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(c)),
+<a href=#655 id=655 data-nosnippet>655</a>        );
+<a href=#656 id=656 data-nosnippet>656</a>        <span class="macro">assert!</span>(!v.allowed);
+<a href=#657 id=657 data-nosnippet>657</a>    }
+<a href=#658 id=658 data-nosnippet>658</a>
+<a href=#659 id=659 data-nosnippet>659</a>    <span class="attr">#[test]
+<a href=#660 id=660 data-nosnippet>660</a>    </span><span class="kw">fn </span>off_no_mesh_local_and_outside_are_let_through() {
+<a href=#661 id=661 data-nosnippet>661</a>        <span class="kw">let </span>off = EditFacts {
+<a href=#662 id=662 data-nosnippet>662</a>            required: <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>),
+<a href=#663 id=663 data-nosnippet>663</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
+<a href=#664 id=664 data-nosnippet>664</a>        };
+<a href=#665 id=665 data-nosnippet>665</a>        <span class="macro">assert_eq!</span>(judge_facts(<span class="string">"a"</span>, <span class="prelude-val">Some</span>(<span class="string">"a"</span>), off).ground, <span class="string">"off"</span>);
+<a href=#666 id=666 data-nosnippet>666</a>        <span class="kw">let </span>no_mesh = EditFacts {
+<a href=#667 id=667 data-nosnippet>667</a>            mesh_enabled: <span class="bool-val">false</span>,
+<a href=#668 id=668 data-nosnippet>668</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
+<a href=#669 id=669 data-nosnippet>669</a>        };
+<a href=#670 id=670 data-nosnippet>670</a>        <span class="macro">assert_eq!</span>(judge_facts(<span class="string">"a"</span>, <span class="prelude-val">Some</span>(<span class="string">"a"</span>), no_mesh).ground, <span class="string">"no_mesh"</span>);
+<a href=#671 id=671 data-nosnippet>671</a>        <span class="kw">let </span>local = judge_facts(
+<a href=#672 id=672 data-nosnippet>672</a>            <span class="string">".ai/local/state/x"</span>,
+<a href=#673 id=673 data-nosnippet>673</a>            <span class="prelude-val">Some</span>(<span class="string">".ai/local/state/x"</span>),
+<a href=#674 id=674 data-nosnippet>674</a>            facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[])),
+<a href=#675 id=675 data-nosnippet>675</a>        );
+<a href=#676 id=676 data-nosnippet>676</a>        <span class="macro">assert_eq!</span>(local.ground, <span class="string">"local"</span>);
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="macro">assert_eq!</span>(
+<a href=#678 id=678 data-nosnippet>678</a>            judge_facts(<span class="string">"/elsewhere"</span>, <span class="prelude-val">None</span>, facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))).ground,
+<a href=#679 id=679 data-nosnippet>679</a>            <span class="string">"outside"
+<a href=#680 id=680 data-nosnippet>680</a>        </span>);
 <a href=#681 id=681 data-nosnippet>681</a>    }
 <a href=#682 id=682 data-nosnippet>682</a>
 <a href=#683 id=683 data-nosnippet>683</a>    <span class="attr">#[test]
-<a href=#684 id=684 data-nosnippet>684</a>    </span><span class="kw">fn </span>the_policy_switch_is_read_from_the_repository() {
-<a href=#685 id=685 data-nosnippet>685</a>        <span class="macro">assert!</span>(
-<a href=#686 id=686 data-nosnippet>686</a>            !<span class="kw">crate</span>::policy::SessionPolicy::default().edits_require_claim,
-<a href=#687 id=687 data-nosnippet>687</a>            <span class="string">"off unless a repository turns it on"
-<a href=#688 id=688 data-nosnippet>688</a>        </span>);
-<a href=#689 id=689 data-nosnippet>689</a>        <span class="macro">assert_eq!</span>(edits_require_claim(repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>).path()), <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
-<a href=#690 id=690 data-nosnippet>690</a>        <span class="macro">assert_eq!</span>(
-<a href=#691 id=691 data-nosnippet>691</a>            edits_require_claim(repository(<span class="bool-val">false</span>, <span class="bool-val">true</span>).path()),
-<a href=#692 id=692 data-nosnippet>692</a>            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
-<a href=#693 id=693 data-nosnippet>693</a>        );
-<a href=#694 id=694 data-nosnippet>694</a>        <span class="kw">let </span>bare = tempfile::tempdir().unwrap();
-<a href=#695 id=695 data-nosnippet>695</a>        <span class="macro">assert!</span>(edits_require_claim(bare.path()).is_err());
-<a href=#696 id=696 data-nosnippet>696</a>        <span class="kw">let </span>broken = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
-<a href=#697 id=697 data-nosnippet>697</a>        std::fs::write(broken.path().join(<span class="string">".ai/repo/policy.yaml"</span>), <span class="string">"session: [\n"</span>).unwrap();
-<a href=#698 id=698 data-nosnippet>698</a>        <span class="macro">assert!</span>(
-<a href=#699 id=699 data-nosnippet>699</a>            edits_require_claim(broken.path()).is_err(),
-<a href=#700 id=700 data-nosnippet>700</a>            <span class="string">"a policy that does not parse"
-<a href=#701 id=701 data-nosnippet>701</a>        </span>);
-<a href=#702 id=702 data-nosnippet>702</a>    }
-<a href=#703 id=703 data-nosnippet>703</a>
-<a href=#704 id=704 data-nosnippet>704</a>    <span class="attr">#[test]
-<a href=#705 id=705 data-nosnippet>705</a>    </span><span class="kw">fn </span>the_mesh_declaration_is_read_from_its_yaml_files() {
-<a href=#706 id=706 data-nosnippet>706</a>        <span class="macro">assert!</span>(mesh_declared_enabled(repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>).path()));
-<a href=#707 id=707 data-nosnippet>707</a>        <span class="kw">let </span>bare = tempfile::tempdir().unwrap();
-<a href=#708 id=708 data-nosnippet>708</a>        <span class="macro">assert!</span>(!mesh_declared_enabled(bare.path()), <span class="string">"no mesh directory"</span>);
-<a href=#709 id=709 data-nosnippet>709</a>        <span class="kw">let </span>off = repository(<span class="bool-val">true</span>, <span class="bool-val">false</span>);
-<a href=#710 id=710 data-nosnippet>710</a>        <span class="macro">assert!</span>(!mesh_declared_enabled(off.path()));
-<a href=#711 id=711 data-nosnippet>711</a>        <span class="kw">let </span>mesh = off.path().join(<span class="string">".ai/repo/mesh"</span>);
-<a href=#712 id=712 data-nosnippet>712</a>        std::fs::write(mesh.join(<span class="string">"README.md"</span>), <span class="string">"enabled: true\n"</span>).unwrap();
-<a href=#713 id=713 data-nosnippet>713</a>        <span class="macro">assert!</span>(
-<a href=#714 id=714 data-nosnippet>714</a>            !mesh_declared_enabled(off.path()),
-<a href=#715 id=715 data-nosnippet>715</a>            <span class="string">"only a YAML file declares"
-<a href=#716 id=716 data-nosnippet>716</a>        </span>);
-<a href=#717 id=717 data-nosnippet>717</a>        std::fs::write(mesh.join(<span class="string">"other.yml"</span>), <span class="string">"enabled: true\n"</span>).unwrap();
-<a href=#718 id=718 data-nosnippet>718</a>        <span class="macro">assert!</span>(mesh_declared_enabled(off.path()));
-<a href=#719 id=719 data-nosnippet>719</a>    }
-<a href=#720 id=720 data-nosnippet>720</a>
-<a href=#721 id=721 data-nosnippet>721</a>    <span class="attr">#[test]
-<a href=#722 id=722 data-nosnippet>722</a>    </span><span class="kw">fn </span>an_unclaimed_edit_of_a_repository_on_the_mesh_is_refused() {
-<a href=#723 id=723 data-nosnippet>723</a>        <span class="kw">let </span>dir = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
-<a href=#724 id=724 data-nosnippet>724</a>        <span class="kw">let </span>asked = std::cell::Cell::new(<span class="bool-val">false</span>);
-<a href=#725 id=725 data-nosnippet>725</a>        <span class="kw">let </span>v = judge(dir.path(), <span class="string">"docs/a.md"</span>, <span class="prelude-val">Some</span>(<span class="string">"claude-code-s1"</span>), || {
-<a href=#726 id=726 data-nosnippet>726</a>            asked.set(<span class="bool-val">true</span>);
-<a href=#727 id=727 data-nosnippet>727</a>            ClaimSource::Claims(<span class="macro">vec!</span>[])
-<a href=#728 id=728 data-nosnippet>728</a>        });
-<a href=#729 id=729 data-nosnippet>729</a>        <span class="macro">assert!</span>(asked.get(), <span class="string">"only the claims could decide"</span>);
-<a href=#730 id=730 data-nosnippet>730</a>        <span class="macro">assert!</span>(!v.allowed);
-<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"unclaimed"</span>);
-<a href=#732 id=732 data-nosnippet>732</a>    }
-<a href=#733 id=733 data-nosnippet>733</a>
-<a href=#734 id=734 data-nosnippet>734</a>    <span class="attr">#[test]
-<a href=#735 id=735 data-nosnippet>735</a>    </span><span class="kw">fn </span>the_active_tasks_scope_lets_the_edit_through_without_asking_the_mesh() {
-<a href=#736 id=736 data-nosnippet>736</a>        <span class="kw">let </span>dir = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
-<a href=#737 id=737 data-nosnippet>737</a>        <span class="kw">let </span>state = dir.path().join(<span class="string">".ai/local/state"</span>);
-<a href=#738 id=738 data-nosnippet>738</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>state).unwrap();
-<a href=#739 id=739 data-nosnippet>739</a>        <span class="kw">let </span>record = <span class="string">"id: t-1\noutcome: active\nscope:\n  - docs\n"</span>;
-<a href=#740 id=740 data-nosnippet>740</a>        std::fs::write(state.join(<span class="string">"current.yaml"</span>), record).unwrap();
-<a href=#741 id=741 data-nosnippet>741</a>        <span class="kw">let </span>v = judge(dir.path(), <span class="string">"docs/a.md"</span>, <span class="prelude-val">None</span>, || {
-<a href=#742 id=742 data-nosnippet>742</a>            <span class="macro">unreachable!</span>(<span class="string">"the task decides"</span>)
-<a href=#743 id=743 data-nosnippet>743</a>        });
-<a href=#744 id=744 data-nosnippet>744</a>        <span class="macro">assert_eq!</span>((v.allowed, v.ground.as_str()), (<span class="bool-val">true</span>, <span class="string">"task"</span>));
-<a href=#745 id=745 data-nosnippet>745</a>    }
-<a href=#746 id=746 data-nosnippet>746</a>
-<a href=#747 id=747 data-nosnippet>747</a>    <span class="attr">#[test]
-<a href=#748 id=748 data-nosnippet>748</a>    </span><span class="kw">fn </span>a_checkout_no_server_serves_has_no_claims_to_read() {
-<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw">let </span>dir = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
-<a href=#750 id=750 data-nosnippet>750</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
-<a href=#751 id=751 data-nosnippet>751</a>            server_claims(dir.path()),
-<a href=#752 id=752 data-nosnippet>752</a>            ClaimSource::Unavailable(<span class="kw">_</span>)
-<a href=#753 id=753 data-nosnippet>753</a>        ));
-<a href=#754 id=754 data-nosnippet>754</a>    }
-<a href=#755 id=755 data-nosnippet>755</a>
-<a href=#756 id=756 data-nosnippet>756</a>    <span class="doccomment">/// A server that answers every question the same way.
-<a href=#757 id=757 data-nosnippet>757</a>    </span><span class="kw">struct </span>Answering(<span class="prelude-ty">Result</span>&lt;(u16, serde_json::Value), String&gt;);
-<a href=#758 id=758 data-nosnippet>758</a>
-<a href=#759 id=759 data-nosnippet>759</a>    <span class="kw">impl </span>Mesh <span class="kw">for </span>Answering {
-<a href=#760 id=760 data-nosnippet>760</a>        <span class="kw">fn </span>ask(
-<a href=#761 id=761 data-nosnippet>761</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
-<a href=#762 id=762 data-nosnippet>762</a>            <span class="kw">_</span>: <span class="kw-2">&amp;</span>str,
-<a href=#763 id=763 data-nosnippet>763</a>            <span class="kw">_</span>: <span class="kw-2">&amp;</span>str,
-<a href=#764 id=764 data-nosnippet>764</a>            <span class="kw">_</span>: <span class="prelude-ty">Option</span>&lt;serde_json::Value&gt;,
-<a href=#765 id=765 data-nosnippet>765</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;(u16, serde_json::Value), String&gt; {
-<a href=#766 id=766 data-nosnippet>766</a>            <span class="self">self</span>.<span class="number">0</span>.clone()
-<a href=#767 id=767 data-nosnippet>767</a>        }
-<a href=#768 id=768 data-nosnippet>768</a>    }
-<a href=#769 id=769 data-nosnippet>769</a>
-<a href=#770 id=770 data-nosnippet>770</a>    <span class="attr">#[test]
-<a href=#771 id=771 data-nosnippet>771</a>    </span><span class="kw">fn </span>the_servers_answer_is_read_as_claims_or_as_why_not() {
-<a href=#772 id=772 data-nosnippet>772</a>        <span class="kw">let </span>held = claim(<span class="string">"claude-code-s1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Held);
-<a href=#773 id=773 data-nosnippet>773</a>        <span class="kw">let </span>ok = <span class="macro">serde_json::json!</span>({ <span class="string">"state"</span>: { <span class="string">"claims"</span>: [held] } });
-<a href=#774 id=774 data-nosnippet>774</a>        <span class="kw">let </span>ClaimSource::Claims(c) = claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, ok)))) <span class="kw">else </span>{
-<a href=#775 id=775 data-nosnippet>775</a>            <span class="macro">panic!</span>(<span class="string">"a well-formed answer is claims"</span>);
-<a href=#776 id=776 data-nosnippet>776</a>        };
-<a href=#777 id=777 data-nosnippet>777</a>        <span class="macro">assert_eq!</span>(c.len(), <span class="number">1</span>);
-<a href=#778 id=778 data-nosnippet>778</a>        <span class="kw">let </span>inactive = <span class="macro">serde_json::json!</span>({ <span class="string">"active"</span>: <span class="bool-val">false</span>, <span class="string">"reason"</span>: <span class="string">"not declared" </span>});
-<a href=#779 id=779 data-nosnippet>779</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
-<a href=#780 id=780 data-nosnippet>780</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, inactive)))),
-<a href=#781 id=781 data-nosnippet>781</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w == <span class="string">"the server does not run the mesh: not declared"
-<a href=#782 id=782 data-nosnippet>782</a>        </span>));
-<a href=#783 id=783 data-nosnippet>783</a>        <span class="kw">let </span>silent = <span class="macro">serde_json::json!</span>({ <span class="string">"active"</span>: <span class="bool-val">false </span>});
-<a href=#784 id=784 data-nosnippet>784</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
-<a href=#785 id=785 data-nosnippet>785</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, silent)))),
-<a href=#786 id=786 data-nosnippet>786</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w.ends_with(<span class="string">"no reason given"</span>)
-<a href=#787 id=787 data-nosnippet>787</a>        ));
-<a href=#788 id=788 data-nosnippet>788</a>        <span class="kw">let </span>malformed = <span class="macro">serde_json::json!</span>({ <span class="string">"state"</span>: { <span class="string">"claims"</span>: <span class="string">"none" </span>} });
-<a href=#789 id=789 data-nosnippet>789</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
-<a href=#790 id=790 data-nosnippet>790</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, malformed)))),
-<a href=#791 id=791 data-nosnippet>791</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w.contains(<span class="string">"does not parse"</span>)
-<a href=#792 id=792 data-nosnippet>792</a>        ));
-<a href=#793 id=793 data-nosnippet>793</a>        <span class="kw">let </span>refused = <span class="macro">serde_json::json!</span>({ <span class="string">"error"</span>: { <span class="string">"message"</span>: <span class="string">"mesh off" </span>} });
-<a href=#794 id=794 data-nosnippet>794</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
-<a href=#795 id=795 data-nosnippet>795</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">503</span>, refused)))),
-<a href=#796 id=796 data-nosnippet>796</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w.contains(<span class="string">"503: mesh off"</span>)
-<a href=#797 id=797 data-nosnippet>797</a>        ));
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
-<a href=#799 id=799 data-nosnippet>799</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Err</span>(<span class="string">"connection refused"</span>.into()))),
-<a href=#800 id=800 data-nosnippet>800</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w == <span class="string">"connection refused"
-<a href=#801 id=801 data-nosnippet>801</a>        </span>));
-<a href=#802 id=802 data-nosnippet>802</a>    }
-<a href=#803 id=803 data-nosnippet>803</a>}
+<a href=#684 id=684 data-nosnippet>684</a>    </span><span class="kw">fn </span>an_unreadable_policy_enforces_nothing() {
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="kw">let </span>f = EditFacts {
+<a href=#686 id=686 data-nosnippet>686</a>            required: <span class="prelude-val">Err</span>(<span class="string">"no manifest"</span>.into()),
+<a href=#687 id=687 data-nosnippet>687</a>            ..facts(<span class="prelude-val">None</span>, ClaimSource::Claims(<span class="macro">vec!</span>[]))
+<a href=#688 id=688 data-nosnippet>688</a>        };
+<a href=#689 id=689 data-nosnippet>689</a>        <span class="kw">let </span>v = judge_facts(<span class="string">"a"</span>, <span class="prelude-val">Some</span>(<span class="string">"a"</span>), f);
+<a href=#690 id=690 data-nosnippet>690</a>        <span class="macro">assert!</span>(v.allowed);
+<a href=#691 id=691 data-nosnippet>691</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"undecided"</span>);
+<a href=#692 id=692 data-nosnippet>692</a>    }
+<a href=#693 id=693 data-nosnippet>693</a>
+<a href=#694 id=694 data-nosnippet>694</a>    <span class="doccomment">/// A repository made of the shipped skeleton's manifest and policy, with the policy
+<a href=#695 id=695 data-nosnippet>695</a>    /// switch and the mesh declaration as asked.
+<a href=#696 id=696 data-nosnippet>696</a>    </span><span class="kw">fn </span>repository(required: bool, mesh: bool) -&gt; tempfile::TempDir {
+<a href=#697 id=697 data-nosnippet>697</a>        <span class="kw">let </span>skeleton = Path::new(<span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>)).join(<span class="string">"../../share/skeleton"</span>);
+<a href=#698 id=698 data-nosnippet>698</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#699 id=699 data-nosnippet>699</a>        <span class="kw">let </span>ai = dir.path().join(<span class="string">".ai"</span>);
+<a href=#700 id=700 data-nosnippet>700</a>        std::fs::create_dir_all(ai.join(<span class="string">"repo/mesh"</span>)).unwrap();
+<a href=#701 id=701 data-nosnippet>701</a>        std::fs::copy(skeleton.join(<span class="string">"ai/manifest.yaml"</span>), ai.join(<span class="string">"manifest.yaml"</span>)).unwrap();
+<a href=#702 id=702 data-nosnippet>702</a>        <span class="kw">let </span>policy = std::fs::read_to_string(skeleton.join(<span class="string">"policy.yaml"</span>)).unwrap();
+<a href=#703 id=703 data-nosnippet>703</a>        <span class="kw">let </span>line = <span class="string">"edits_require_claim: false"</span>;
+<a href=#704 id=704 data-nosnippet>704</a>        <span class="macro">assert!</span>(policy.contains(line), <span class="string">"the skeleton declares the switch"</span>);
+<a href=#705 id=705 data-nosnippet>705</a>        <span class="kw">let </span>policy = policy.replace(line, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"edits_require_claim: {required}"</span>));
+<a href=#706 id=706 data-nosnippet>706</a>        std::fs::write(ai.join(<span class="string">"repo/policy.yaml"</span>), policy).unwrap();
+<a href=#707 id=707 data-nosnippet>707</a>        <span class="comment">// open when it is on: trust on first use, so it runs a mesh on some machine
+<a href=#708 id=708 data-nosnippet>708</a>        </span>std::fs::write(
+<a href=#709 id=709 data-nosnippet>709</a>            ai.join(<span class="string">"repo/mesh/mesh.yaml"</span>),
+<a href=#710 id=710 data-nosnippet>710</a>            <span class="macro">format!</span>(<span class="string">"enabled: {mesh}\ntrust:\n  policy: tofu\n"</span>),
+<a href=#711 id=711 data-nosnippet>711</a>        )
+<a href=#712 id=712 data-nosnippet>712</a>        .unwrap();
+<a href=#713 id=713 data-nosnippet>713</a>        dir
+<a href=#714 id=714 data-nosnippet>714</a>    }
+<a href=#715 id=715 data-nosnippet>715</a>
+<a href=#716 id=716 data-nosnippet>716</a>    <span class="attr">#[test]
+<a href=#717 id=717 data-nosnippet>717</a>    </span><span class="kw">fn </span>the_policy_switch_is_read_from_the_repository() {
+<a href=#718 id=718 data-nosnippet>718</a>        <span class="macro">assert!</span>(
+<a href=#719 id=719 data-nosnippet>719</a>            !<span class="kw">crate</span>::policy::SessionPolicy::default().edits_require_claim,
+<a href=#720 id=720 data-nosnippet>720</a>            <span class="string">"off unless a repository turns it on"
+<a href=#721 id=721 data-nosnippet>721</a>        </span>);
+<a href=#722 id=722 data-nosnippet>722</a>        <span class="macro">assert_eq!</span>(edits_require_claim(repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>).path()), <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>));
+<a href=#723 id=723 data-nosnippet>723</a>        <span class="macro">assert_eq!</span>(
+<a href=#724 id=724 data-nosnippet>724</a>            edits_require_claim(repository(<span class="bool-val">false</span>, <span class="bool-val">true</span>).path()),
+<a href=#725 id=725 data-nosnippet>725</a>            <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+<a href=#726 id=726 data-nosnippet>726</a>        );
+<a href=#727 id=727 data-nosnippet>727</a>        <span class="kw">let </span>bare = tempfile::tempdir().unwrap();
+<a href=#728 id=728 data-nosnippet>728</a>        <span class="macro">assert!</span>(edits_require_claim(bare.path()).is_err());
+<a href=#729 id=729 data-nosnippet>729</a>        <span class="kw">let </span>broken = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
+<a href=#730 id=730 data-nosnippet>730</a>        std::fs::write(broken.path().join(<span class="string">".ai/repo/policy.yaml"</span>), <span class="string">"session: [\n"</span>).unwrap();
+<a href=#731 id=731 data-nosnippet>731</a>        <span class="macro">assert!</span>(
+<a href=#732 id=732 data-nosnippet>732</a>            edits_require_claim(broken.path()).is_err(),
+<a href=#733 id=733 data-nosnippet>733</a>            <span class="string">"a policy that does not parse"
+<a href=#734 id=734 data-nosnippet>734</a>        </span>);
+<a href=#735 id=735 data-nosnippet>735</a>    }
+<a href=#736 id=736 data-nosnippet>736</a>
+<a href=#737 id=737 data-nosnippet>737</a>    <span class="attr">#[test]
+<a href=#738 id=738 data-nosnippet>738</a>    </span><span class="kw">fn </span>the_mesh_declaration_is_read_from_its_yaml_files() {
+<a href=#739 id=739 data-nosnippet>739</a>        <span class="macro">assert!</span>(mesh_declared_enabled(repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>).path()));
+<a href=#740 id=740 data-nosnippet>740</a>        <span class="kw">let </span>bare = tempfile::tempdir().unwrap();
+<a href=#741 id=741 data-nosnippet>741</a>        <span class="macro">assert!</span>(!mesh_declared_enabled(bare.path()), <span class="string">"no mesh directory"</span>);
+<a href=#742 id=742 data-nosnippet>742</a>        <span class="kw">let </span>off = repository(<span class="bool-val">true</span>, <span class="bool-val">false</span>);
+<a href=#743 id=743 data-nosnippet>743</a>        <span class="macro">assert!</span>(!mesh_declared_enabled(off.path()));
+<a href=#744 id=744 data-nosnippet>744</a>        <span class="kw">let </span>mesh = off.path().join(<span class="string">".ai/repo/mesh"</span>);
+<a href=#745 id=745 data-nosnippet>745</a>        std::fs::write(mesh.join(<span class="string">"README.md"</span>), <span class="string">"enabled: true\n"</span>).unwrap();
+<a href=#746 id=746 data-nosnippet>746</a>        <span class="macro">assert!</span>(
+<a href=#747 id=747 data-nosnippet>747</a>            !mesh_declared_enabled(off.path()),
+<a href=#748 id=748 data-nosnippet>748</a>            <span class="string">"only a YAML file declares"
+<a href=#749 id=749 data-nosnippet>749</a>        </span>);
+<a href=#750 id=750 data-nosnippet>750</a>        std::fs::write(
+<a href=#751 id=751 data-nosnippet>751</a>            mesh.join(<span class="string">"other.yml"</span>),
+<a href=#752 id=752 data-nosnippet>752</a>            <span class="string">"enabled: true\ntrust:\n  policy: tofu\n"</span>,
+<a href=#753 id=753 data-nosnippet>753</a>        )
+<a href=#754 id=754 data-nosnippet>754</a>        .unwrap();
+<a href=#755 id=755 data-nosnippet>755</a>        <span class="macro">assert!</span>(mesh_declared_enabled(off.path()));
+<a href=#756 id=756 data-nosnippet>756</a>    }
+<a href=#757 id=757 data-nosnippet>757</a>
+<a href=#758 id=758 data-nosnippet>758</a>    <span class="attr">#[test]
+<a href=#759 id=759 data-nosnippet>759</a>    </span><span class="kw">fn </span>an_unclaimed_edit_of_a_repository_on_the_mesh_is_refused() {
+<a href=#760 id=760 data-nosnippet>760</a>        <span class="kw">let </span>dir = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
+<a href=#761 id=761 data-nosnippet>761</a>        <span class="kw">let </span>asked = std::cell::Cell::new(<span class="bool-val">false</span>);
+<a href=#762 id=762 data-nosnippet>762</a>        <span class="kw">let </span>v = judge(dir.path(), <span class="string">"docs/a.md"</span>, <span class="prelude-val">Some</span>(<span class="string">"claude-code-s1"</span>), || {
+<a href=#763 id=763 data-nosnippet>763</a>            asked.set(<span class="bool-val">true</span>);
+<a href=#764 id=764 data-nosnippet>764</a>            ClaimSource::Claims(<span class="macro">vec!</span>[])
+<a href=#765 id=765 data-nosnippet>765</a>        });
+<a href=#766 id=766 data-nosnippet>766</a>        <span class="macro">assert!</span>(asked.get(), <span class="string">"only the claims could decide"</span>);
+<a href=#767 id=767 data-nosnippet>767</a>        <span class="macro">assert!</span>(!v.allowed);
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="macro">assert_eq!</span>(v.ground, <span class="string">"unclaimed"</span>);
+<a href=#769 id=769 data-nosnippet>769</a>    }
+<a href=#770 id=770 data-nosnippet>770</a>
+<a href=#771 id=771 data-nosnippet>771</a>    <span class="attr">#[test]
+<a href=#772 id=772 data-nosnippet>772</a>    </span><span class="kw">fn </span>the_active_tasks_scope_lets_the_edit_through_without_asking_the_mesh() {
+<a href=#773 id=773 data-nosnippet>773</a>        <span class="kw">let </span>dir = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
+<a href=#774 id=774 data-nosnippet>774</a>        <span class="kw">let </span>state = dir.path().join(<span class="string">".ai/local/state"</span>);
+<a href=#775 id=775 data-nosnippet>775</a>        std::fs::create_dir_all(<span class="kw-2">&amp;</span>state).unwrap();
+<a href=#776 id=776 data-nosnippet>776</a>        <span class="kw">let </span>record = <span class="string">"id: t-1\noutcome: active\nscope:\n  - docs\n"</span>;
+<a href=#777 id=777 data-nosnippet>777</a>        std::fs::write(state.join(<span class="string">"current.yaml"</span>), record).unwrap();
+<a href=#778 id=778 data-nosnippet>778</a>        <span class="kw">let </span>v = judge(dir.path(), <span class="string">"docs/a.md"</span>, <span class="prelude-val">None</span>, || {
+<a href=#779 id=779 data-nosnippet>779</a>            <span class="macro">unreachable!</span>(<span class="string">"the task decides"</span>)
+<a href=#780 id=780 data-nosnippet>780</a>        });
+<a href=#781 id=781 data-nosnippet>781</a>        <span class="macro">assert_eq!</span>((v.allowed, v.ground.as_str()), (<span class="bool-val">true</span>, <span class="string">"task"</span>));
+<a href=#782 id=782 data-nosnippet>782</a>    }
+<a href=#783 id=783 data-nosnippet>783</a>
+<a href=#784 id=784 data-nosnippet>784</a>    <span class="attr">#[test]
+<a href=#785 id=785 data-nosnippet>785</a>    </span><span class="kw">fn </span>a_checkout_no_server_serves_has_no_claims_to_read() {
+<a href=#786 id=786 data-nosnippet>786</a>        <span class="kw">let </span>dir = repository(<span class="bool-val">true</span>, <span class="bool-val">true</span>);
+<a href=#787 id=787 data-nosnippet>787</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#788 id=788 data-nosnippet>788</a>            server_claims(dir.path()),
+<a href=#789 id=789 data-nosnippet>789</a>            ClaimSource::Unavailable(<span class="kw">_</span>)
+<a href=#790 id=790 data-nosnippet>790</a>        ));
+<a href=#791 id=791 data-nosnippet>791</a>    }
+<a href=#792 id=792 data-nosnippet>792</a>
+<a href=#793 id=793 data-nosnippet>793</a>    <span class="doccomment">/// A server that answers every question the same way.
+<a href=#794 id=794 data-nosnippet>794</a>    </span><span class="kw">struct </span>Answering(<span class="prelude-ty">Result</span>&lt;(u16, serde_json::Value), String&gt;);
+<a href=#795 id=795 data-nosnippet>795</a>
+<a href=#796 id=796 data-nosnippet>796</a>    <span class="kw">impl </span>Mesh <span class="kw">for </span>Answering {
+<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">fn </span>ask(
+<a href=#798 id=798 data-nosnippet>798</a>            <span class="kw-2">&amp;</span><span class="self">self</span>,
+<a href=#799 id=799 data-nosnippet>799</a>            <span class="kw">_</span>: <span class="kw-2">&amp;</span>str,
+<a href=#800 id=800 data-nosnippet>800</a>            <span class="kw">_</span>: <span class="kw-2">&amp;</span>str,
+<a href=#801 id=801 data-nosnippet>801</a>            <span class="kw">_</span>: <span class="prelude-ty">Option</span>&lt;serde_json::Value&gt;,
+<a href=#802 id=802 data-nosnippet>802</a>        ) -&gt; <span class="prelude-ty">Result</span>&lt;(u16, serde_json::Value), String&gt; {
+<a href=#803 id=803 data-nosnippet>803</a>            <span class="self">self</span>.<span class="number">0</span>.clone()
+<a href=#804 id=804 data-nosnippet>804</a>        }
+<a href=#805 id=805 data-nosnippet>805</a>    }
+<a href=#806 id=806 data-nosnippet>806</a>
+<a href=#807 id=807 data-nosnippet>807</a>    <span class="attr">#[test]
+<a href=#808 id=808 data-nosnippet>808</a>    </span><span class="kw">fn </span>the_servers_answer_is_read_as_claims_or_as_why_not() {
+<a href=#809 id=809 data-nosnippet>809</a>        <span class="kw">let </span>held = claim(<span class="string">"claude-code-s1"</span>, <span class="kw-2">&amp;</span>[<span class="string">"docs"</span>], ClaimState::Held);
+<a href=#810 id=810 data-nosnippet>810</a>        <span class="kw">let </span>ok = <span class="macro">serde_json::json!</span>({ <span class="string">"state"</span>: { <span class="string">"claims"</span>: [held] } });
+<a href=#811 id=811 data-nosnippet>811</a>        <span class="kw">let </span>ClaimSource::Claims(c) = claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, ok)))) <span class="kw">else </span>{
+<a href=#812 id=812 data-nosnippet>812</a>            <span class="macro">panic!</span>(<span class="string">"a well-formed answer is claims"</span>);
+<a href=#813 id=813 data-nosnippet>813</a>        };
+<a href=#814 id=814 data-nosnippet>814</a>        <span class="macro">assert_eq!</span>(c.len(), <span class="number">1</span>);
+<a href=#815 id=815 data-nosnippet>815</a>        <span class="kw">let </span>inactive = <span class="macro">serde_json::json!</span>({ <span class="string">"active"</span>: <span class="bool-val">false</span>, <span class="string">"reason"</span>: <span class="string">"not declared" </span>});
+<a href=#816 id=816 data-nosnippet>816</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#817 id=817 data-nosnippet>817</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, inactive)))),
+<a href=#818 id=818 data-nosnippet>818</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w == <span class="string">"the server does not run the mesh: not declared"
+<a href=#819 id=819 data-nosnippet>819</a>        </span>));
+<a href=#820 id=820 data-nosnippet>820</a>        <span class="kw">let </span>silent = <span class="macro">serde_json::json!</span>({ <span class="string">"active"</span>: <span class="bool-val">false </span>});
+<a href=#821 id=821 data-nosnippet>821</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#822 id=822 data-nosnippet>822</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, silent)))),
+<a href=#823 id=823 data-nosnippet>823</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w.ends_with(<span class="string">"no reason given"</span>)
+<a href=#824 id=824 data-nosnippet>824</a>        ));
+<a href=#825 id=825 data-nosnippet>825</a>        <span class="kw">let </span>malformed = <span class="macro">serde_json::json!</span>({ <span class="string">"state"</span>: { <span class="string">"claims"</span>: <span class="string">"none" </span>} });
+<a href=#826 id=826 data-nosnippet>826</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#827 id=827 data-nosnippet>827</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">200</span>, malformed)))),
+<a href=#828 id=828 data-nosnippet>828</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w.contains(<span class="string">"does not parse"</span>)
+<a href=#829 id=829 data-nosnippet>829</a>        ));
+<a href=#830 id=830 data-nosnippet>830</a>        <span class="kw">let </span>refused = <span class="macro">serde_json::json!</span>({ <span class="string">"error"</span>: { <span class="string">"message"</span>: <span class="string">"mesh off" </span>} });
+<a href=#831 id=831 data-nosnippet>831</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#832 id=832 data-nosnippet>832</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Ok</span>((<span class="number">503</span>, refused)))),
+<a href=#833 id=833 data-nosnippet>833</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w.contains(<span class="string">"503: mesh off"</span>)
+<a href=#834 id=834 data-nosnippet>834</a>        ));
+<a href=#835 id=835 data-nosnippet>835</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#836 id=836 data-nosnippet>836</a>            claims_of(<span class="kw-2">&amp;</span>Answering(<span class="prelude-val">Err</span>(<span class="string">"connection refused"</span>.into()))),
+<a href=#837 id=837 data-nosnippet>837</a>            ClaimSource::Unavailable(w) <span class="kw">if </span>w == <span class="string">"connection refused"
+<a href=#838 id=838 data-nosnippet>838</a>        </span>));
+<a href=#839 id=839 data-nosnippet>839</a>    }
+<a href=#840 id=840 data-nosnippet>840</a>}
 </code></pre></div></section></main></body></html>

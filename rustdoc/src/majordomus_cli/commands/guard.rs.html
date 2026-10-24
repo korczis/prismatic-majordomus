@@ -96,76 +96,80 @@
 <a href=#96 id=96 data-nosnippet>96</a>            .unwrap()
 <a href=#97 id=97 data-nosnippet>97</a>            .replace(<span class="string">"edits_require_claim: false"</span>, <span class="string">"edits_require_claim: true"</span>);
 <a href=#98 id=98 data-nosnippet>98</a>        std::fs::write(ai.join(<span class="string">"repo/policy.yaml"</span>), policy).unwrap();
-<a href=#99 id=99 data-nosnippet>99</a>        std::fs::write(ai.join(<span class="string">"repo/mesh/mesh.yaml"</span>), <span class="string">"enabled: true\n"</span>).unwrap();
-<a href=#100 id=100 data-nosnippet>100</a>        dir
-<a href=#101 id=101 data-nosnippet>101</a>    }
-<a href=#102 id=102 data-nosnippet>102</a>
-<a href=#103 id=103 data-nosnippet>103</a>    <span class="kw">fn </span>edit(path: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#104 id=104 data-nosnippet>104</a>        <span class="macro">serde_json::json!</span>({ <span class="string">"session_id"</span>: <span class="string">"s1"</span>, <span class="string">"tool_input"</span>: { <span class="string">"file_path"</span>: path } }).to_string()
+<a href=#99 id=99 data-nosnippet>99</a>        std::fs::write(
+<a href=#100 id=100 data-nosnippet>100</a>            ai.join(<span class="string">"repo/mesh/mesh.yaml"</span>),
+<a href=#101 id=101 data-nosnippet>101</a>            <span class="string">"enabled: true\ntrust:\n  policy: tofu\n"</span>,
+<a href=#102 id=102 data-nosnippet>102</a>        )
+<a href=#103 id=103 data-nosnippet>103</a>        .unwrap();
+<a href=#104 id=104 data-nosnippet>104</a>        dir
 <a href=#105 id=105 data-nosnippet>105</a>    }
 <a href=#106 id=106 data-nosnippet>106</a>
-<a href=#107 id=107 data-nosnippet>107</a>    <span class="attr">#[test]
-<a href=#108 id=108 data-nosnippet>108</a>    </span><span class="kw">fn </span>an_unclaimed_edit_is_refused_with_the_reason_and_the_remedy() {
-<a href=#109 id=109 data-nosnippet>109</a>        <span class="kw">let </span>dir = repository();
-<a href=#110 id=110 data-nosnippet>110</a>        <span class="kw">let </span>root = dir.path().canonicalize().unwrap();
-<a href=#111 id=111 data-nosnippet>111</a>        <span class="kw">let </span>verdict = answer(
-<a href=#112 id=112 data-nosnippet>112</a>            <span class="string">"claude-code"</span>,
-<a href=#113 id=113 data-nosnippet>113</a>            <span class="prelude-val">Some</span>(dir.path().to_path_buf()),
-<a href=#114 id=114 data-nosnippet>114</a>            <span class="kw-2">&amp;</span>edit(<span class="string">"docs/new.md"</span>),
-<a href=#115 id=115 data-nosnippet>115</a>            |asked| {
-<a href=#116 id=116 data-nosnippet>116</a>                <span class="macro">assert_eq!</span>(asked, root.as_path(), <span class="string">"the checkout of the file is asked"</span>);
-<a href=#117 id=117 data-nosnippet>117</a>                ClaimSource::Claims(<span class="macro">vec!</span>[])
-<a href=#118 id=118 data-nosnippet>118</a>            },
-<a href=#119 id=119 data-nosnippet>119</a>        )
-<a href=#120 id=120 data-nosnippet>120</a>        .expect(<span class="string">"a file of the repository"</span>);
-<a href=#121 id=121 data-nosnippet>121</a>        <span class="macro">assert!</span>(!verdict.allowed);
-<a href=#122 id=122 data-nosnippet>122</a>        <span class="macro">assert_eq!</span>(
-<a href=#123 id=123 data-nosnippet>123</a>            verdict.path, <span class="string">"docs/new.md"</span>,
-<a href=#124 id=124 data-nosnippet>124</a>            <span class="string">"a file that does not exist yet is placed"
-<a href=#125 id=125 data-nosnippet>125</a>        </span>);
-<a href=#126 id=126 data-nosnippet>126</a>        <span class="kw">let </span><span class="kw-2">mut </span>err = Vec::new();
-<a href=#127 id=127 data-nosnippet>127</a>        <span class="macro">assert_eq!</span>(report(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>verdict), <span class="kw-2">&amp;mut </span>err), EXIT_REFUSED);
-<a href=#128 id=128 data-nosnippet>128</a>        <span class="kw">let </span>text = String::from_utf8(err).unwrap();
-<a href=#129 id=129 data-nosnippet>129</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"no claim covers docs/new.md"</span>), <span class="string">"{text}"</span>);
-<a href=#130 id=130 data-nosnippet>130</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"--session claude-code-s1"</span>), <span class="string">"{text}"</span>);
-<a href=#131 id=131 data-nosnippet>131</a>    }
-<a href=#132 id=132 data-nosnippet>132</a>
-<a href=#133 id=133 data-nosnippet>133</a>    <span class="attr">#[test]
-<a href=#134 id=134 data-nosnippet>134</a>    </span><span class="kw">fn </span>an_edit_naming_no_file_of_a_repository_is_let_through() {
-<a href=#135 id=135 data-nosnippet>135</a>        <span class="kw">let </span>dir = repository();
-<a href=#136 id=136 data-nosnippet>136</a>        <span class="kw">let </span>none = |<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path| -&gt; ClaimSource { <span class="macro">unreachable!</span>(<span class="string">"nothing to judge"</span>) };
-<a href=#137 id=137 data-nosnippet>137</a>        <span class="kw">let </span>base = <span class="prelude-val">Some</span>(dir.path().to_path_buf());
-<a href=#138 id=138 data-nosnippet>138</a>        <span class="macro">assert!</span>(answer(<span class="string">"claude-code"</span>, base.clone(), <span class="string">"not json"</span>, none).is_none());
-<a href=#139 id=139 data-nosnippet>139</a>        <span class="kw">let </span>ls = <span class="string">r#"{"tool_input":{"command":"ls"}}"#</span>;
-<a href=#140 id=140 data-nosnippet>140</a>        <span class="macro">assert!</span>(answer(<span class="string">"claude-code"</span>, base, ls, none).is_none());
-<a href=#141 id=141 data-nosnippet>141</a>        <span class="kw">let </span>bare = tempfile::tempdir().unwrap();
-<a href=#142 id=142 data-nosnippet>142</a>        <span class="kw">let </span>outside = edit(<span class="kw-2">&amp;</span>bare.path().join(<span class="string">"a.md"</span>).to_string_lossy());
-<a href=#143 id=143 data-nosnippet>143</a>        <span class="macro">assert!</span>(
-<a href=#144 id=144 data-nosnippet>144</a>            answer(<span class="string">"claude-code"</span>, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>outside, none).is_none(),
-<a href=#145 id=145 data-nosnippet>145</a>            <span class="string">"no manifest is above it"
-<a href=#146 id=146 data-nosnippet>146</a>        </span>);
-<a href=#147 id=147 data-nosnippet>147</a>        <span class="kw">let </span>nowhere = edit(<span class="string">"no-such-directory/y.md"</span>);
-<a href=#148 id=148 data-nosnippet>148</a>        <span class="macro">assert!</span>(answer(<span class="string">"claude-code"</span>, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>nowhere, none).is_none());
-<a href=#149 id=149 data-nosnippet>149</a>        <span class="kw">let </span><span class="kw-2">mut </span>err = Vec::new();
-<a href=#150 id=150 data-nosnippet>150</a>        <span class="macro">assert_eq!</span>(report(<span class="prelude-val">None</span>, <span class="kw-2">&amp;mut </span>err), <span class="number">0</span>);
-<a href=#151 id=151 data-nosnippet>151</a>        <span class="macro">assert!</span>(err.is_empty());
-<a href=#152 id=152 data-nosnippet>152</a>    }
-<a href=#153 id=153 data-nosnippet>153</a>
-<a href=#154 id=154 data-nosnippet>154</a>    <span class="attr">#[test]
-<a href=#155 id=155 data-nosnippet>155</a>    </span><span class="kw">fn </span>an_allowed_edit_says_nothing() {
-<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw">let </span>dir = repository();
-<a href=#157 id=157 data-nosnippet>157</a>        <span class="kw">let </span>claims = |<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path| ClaimSource::Unavailable(<span class="string">"no server"</span>.into());
-<a href=#158 id=158 data-nosnippet>158</a>        <span class="kw">let </span>verdict = answer(
-<a href=#159 id=159 data-nosnippet>159</a>            <span class="string">"claude-code"</span>,
-<a href=#160 id=160 data-nosnippet>160</a>            <span class="prelude-val">Some</span>(dir.path().into()),
-<a href=#161 id=161 data-nosnippet>161</a>            <span class="kw-2">&amp;</span>edit(<span class="string">"a.md"</span>),
-<a href=#162 id=162 data-nosnippet>162</a>            claims,
-<a href=#163 id=163 data-nosnippet>163</a>        )
-<a href=#164 id=164 data-nosnippet>164</a>        .expect(<span class="string">"a file of the repository"</span>);
-<a href=#165 id=165 data-nosnippet>165</a>        <span class="macro">assert_eq!</span>(verdict.ground, <span class="string">"undecided"</span>);
-<a href=#166 id=166 data-nosnippet>166</a>        <span class="kw">let </span><span class="kw-2">mut </span>err = Vec::new();
-<a href=#167 id=167 data-nosnippet>167</a>        <span class="macro">assert_eq!</span>(report(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>verdict), <span class="kw-2">&amp;mut </span>err), <span class="number">0</span>);
-<a href=#168 id=168 data-nosnippet>168</a>        <span class="macro">assert!</span>(err.is_empty());
-<a href=#169 id=169 data-nosnippet>169</a>    }
-<a href=#170 id=170 data-nosnippet>170</a>}
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="kw">fn </span>edit(path: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#108 id=108 data-nosnippet>108</a>        <span class="macro">serde_json::json!</span>({ <span class="string">"session_id"</span>: <span class="string">"s1"</span>, <span class="string">"tool_input"</span>: { <span class="string">"file_path"</span>: path } }).to_string()
+<a href=#109 id=109 data-nosnippet>109</a>    }
+<a href=#110 id=110 data-nosnippet>110</a>
+<a href=#111 id=111 data-nosnippet>111</a>    <span class="attr">#[test]
+<a href=#112 id=112 data-nosnippet>112</a>    </span><span class="kw">fn </span>an_unclaimed_edit_is_refused_with_the_reason_and_the_remedy() {
+<a href=#113 id=113 data-nosnippet>113</a>        <span class="kw">let </span>dir = repository();
+<a href=#114 id=114 data-nosnippet>114</a>        <span class="kw">let </span>root = dir.path().canonicalize().unwrap();
+<a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span>verdict = answer(
+<a href=#116 id=116 data-nosnippet>116</a>            <span class="string">"claude-code"</span>,
+<a href=#117 id=117 data-nosnippet>117</a>            <span class="prelude-val">Some</span>(dir.path().to_path_buf()),
+<a href=#118 id=118 data-nosnippet>118</a>            <span class="kw-2">&amp;</span>edit(<span class="string">"docs/new.md"</span>),
+<a href=#119 id=119 data-nosnippet>119</a>            |asked| {
+<a href=#120 id=120 data-nosnippet>120</a>                <span class="macro">assert_eq!</span>(asked, root.as_path(), <span class="string">"the checkout of the file is asked"</span>);
+<a href=#121 id=121 data-nosnippet>121</a>                ClaimSource::Claims(<span class="macro">vec!</span>[])
+<a href=#122 id=122 data-nosnippet>122</a>            },
+<a href=#123 id=123 data-nosnippet>123</a>        )
+<a href=#124 id=124 data-nosnippet>124</a>        .expect(<span class="string">"a file of the repository"</span>);
+<a href=#125 id=125 data-nosnippet>125</a>        <span class="macro">assert!</span>(!verdict.allowed);
+<a href=#126 id=126 data-nosnippet>126</a>        <span class="macro">assert_eq!</span>(
+<a href=#127 id=127 data-nosnippet>127</a>            verdict.path, <span class="string">"docs/new.md"</span>,
+<a href=#128 id=128 data-nosnippet>128</a>            <span class="string">"a file that does not exist yet is placed"
+<a href=#129 id=129 data-nosnippet>129</a>        </span>);
+<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span><span class="kw-2">mut </span>err = Vec::new();
+<a href=#131 id=131 data-nosnippet>131</a>        <span class="macro">assert_eq!</span>(report(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>verdict), <span class="kw-2">&amp;mut </span>err), EXIT_REFUSED);
+<a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">let </span>text = String::from_utf8(err).unwrap();
+<a href=#133 id=133 data-nosnippet>133</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"no claim covers docs/new.md"</span>), <span class="string">"{text}"</span>);
+<a href=#134 id=134 data-nosnippet>134</a>        <span class="macro">assert!</span>(text.contains(<span class="string">"--session claude-code-s1"</span>), <span class="string">"{text}"</span>);
+<a href=#135 id=135 data-nosnippet>135</a>    }
+<a href=#136 id=136 data-nosnippet>136</a>
+<a href=#137 id=137 data-nosnippet>137</a>    <span class="attr">#[test]
+<a href=#138 id=138 data-nosnippet>138</a>    </span><span class="kw">fn </span>an_edit_naming_no_file_of_a_repository_is_let_through() {
+<a href=#139 id=139 data-nosnippet>139</a>        <span class="kw">let </span>dir = repository();
+<a href=#140 id=140 data-nosnippet>140</a>        <span class="kw">let </span>none = |<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path| -&gt; ClaimSource { <span class="macro">unreachable!</span>(<span class="string">"nothing to judge"</span>) };
+<a href=#141 id=141 data-nosnippet>141</a>        <span class="kw">let </span>base = <span class="prelude-val">Some</span>(dir.path().to_path_buf());
+<a href=#142 id=142 data-nosnippet>142</a>        <span class="macro">assert!</span>(answer(<span class="string">"claude-code"</span>, base.clone(), <span class="string">"not json"</span>, none).is_none());
+<a href=#143 id=143 data-nosnippet>143</a>        <span class="kw">let </span>ls = <span class="string">r#"{"tool_input":{"command":"ls"}}"#</span>;
+<a href=#144 id=144 data-nosnippet>144</a>        <span class="macro">assert!</span>(answer(<span class="string">"claude-code"</span>, base, ls, none).is_none());
+<a href=#145 id=145 data-nosnippet>145</a>        <span class="kw">let </span>bare = tempfile::tempdir().unwrap();
+<a href=#146 id=146 data-nosnippet>146</a>        <span class="kw">let </span>outside = edit(<span class="kw-2">&amp;</span>bare.path().join(<span class="string">"a.md"</span>).to_string_lossy());
+<a href=#147 id=147 data-nosnippet>147</a>        <span class="macro">assert!</span>(
+<a href=#148 id=148 data-nosnippet>148</a>            answer(<span class="string">"claude-code"</span>, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>outside, none).is_none(),
+<a href=#149 id=149 data-nosnippet>149</a>            <span class="string">"no manifest is above it"
+<a href=#150 id=150 data-nosnippet>150</a>        </span>);
+<a href=#151 id=151 data-nosnippet>151</a>        <span class="kw">let </span>nowhere = edit(<span class="string">"no-such-directory/y.md"</span>);
+<a href=#152 id=152 data-nosnippet>152</a>        <span class="macro">assert!</span>(answer(<span class="string">"claude-code"</span>, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>nowhere, none).is_none());
+<a href=#153 id=153 data-nosnippet>153</a>        <span class="kw">let </span><span class="kw-2">mut </span>err = Vec::new();
+<a href=#154 id=154 data-nosnippet>154</a>        <span class="macro">assert_eq!</span>(report(<span class="prelude-val">None</span>, <span class="kw-2">&amp;mut </span>err), <span class="number">0</span>);
+<a href=#155 id=155 data-nosnippet>155</a>        <span class="macro">assert!</span>(err.is_empty());
+<a href=#156 id=156 data-nosnippet>156</a>    }
+<a href=#157 id=157 data-nosnippet>157</a>
+<a href=#158 id=158 data-nosnippet>158</a>    <span class="attr">#[test]
+<a href=#159 id=159 data-nosnippet>159</a>    </span><span class="kw">fn </span>an_allowed_edit_says_nothing() {
+<a href=#160 id=160 data-nosnippet>160</a>        <span class="kw">let </span>dir = repository();
+<a href=#161 id=161 data-nosnippet>161</a>        <span class="kw">let </span>claims = |<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path| ClaimSource::Unavailable(<span class="string">"no server"</span>.into());
+<a href=#162 id=162 data-nosnippet>162</a>        <span class="kw">let </span>verdict = answer(
+<a href=#163 id=163 data-nosnippet>163</a>            <span class="string">"claude-code"</span>,
+<a href=#164 id=164 data-nosnippet>164</a>            <span class="prelude-val">Some</span>(dir.path().into()),
+<a href=#165 id=165 data-nosnippet>165</a>            <span class="kw-2">&amp;</span>edit(<span class="string">"a.md"</span>),
+<a href=#166 id=166 data-nosnippet>166</a>            claims,
+<a href=#167 id=167 data-nosnippet>167</a>        )
+<a href=#168 id=168 data-nosnippet>168</a>        .expect(<span class="string">"a file of the repository"</span>);
+<a href=#169 id=169 data-nosnippet>169</a>        <span class="macro">assert_eq!</span>(verdict.ground, <span class="string">"undecided"</span>);
+<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">let </span><span class="kw-2">mut </span>err = Vec::new();
+<a href=#171 id=171 data-nosnippet>171</a>        <span class="macro">assert_eq!</span>(report(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>verdict), <span class="kw-2">&amp;mut </span>err), <span class="number">0</span>);
+<a href=#172 id=172 data-nosnippet>172</a>        <span class="macro">assert!</span>(err.is_empty());
+<a href=#173 id=173 data-nosnippet>173</a>    }
+<a href=#174 id=174 data-nosnippet>174</a>}
 </code></pre></div></section></main></body></html>

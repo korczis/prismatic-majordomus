@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ARCHIVE_SUFFIX","LEDGER","STATE_DIR"],"enum":["TaskEconomicsFieldStatus","TaskEconomicsState"],"fn":["fold","read_checkout","tasks"],"struct":["TaskEconomicsEpisode","TaskEconomicsField","TaskEconomicsLedger","TaskEconomicsList","TaskEconomicsQuery","TaskEconomicsRecord","TaskEconomicsSource","TaskEconomicsUnread"]};

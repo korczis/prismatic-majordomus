@@ -24,7 +24,7 @@
 // extension would be a second vendored file for one page. So the four `choose()` picks
 // between are `circle`, `breadthfirst`, `cose` and `concentric`.
 
-import { api, vendor, palette, explainMissing, motionAllowed } from './cockpit.js?v=4d0ffef4b79e4673';
+import { api, vendor, palette, explainMissing, motionAllowed } from './cockpit.js?v=481e50c78bbc5f67';
 
 /** At or under this many nodes every label is painted at every zoom; above it, not. */
 const LABELS_EVERYWHERE_UNDER = 80;

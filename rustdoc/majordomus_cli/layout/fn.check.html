@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Check both halves of `repository` against their declared layouts."><title>check in majordomus_cli::layout - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">check</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">1.0.0-alpha.8</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>layout</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a>::<wbr><a href="index.html">layout</a></div><h1>Function <span class="fn">check</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/layout.rs.html#202-299">Source</a> </span></div><pre class="rust item-decl"><code>pub fn check(
+    repository: &amp;<a class="struct" href="../repository/struct.Repository.html" title="struct majordomus_cli::repository::Repository">Repository</a>,
+    index: &amp;<a class="struct" href="../index/struct.Index.html" title="struct majordomus_cli::index::Index">Index</a>,
+    kinds: &amp;<a class="struct" href="../metadata/struct.KindSchema.html" title="struct majordomus_cli::metadata::KindSchema">KindSchema</a>,
+) -&gt; <a class="struct" href="struct.LayoutReport.html" title="struct majordomus_cli::layout::LayoutReport">LayoutReport</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Check both halves of <code>repository</code> against their declared layouts.</p>
+<p>Reads git at the repository’s root — the tracked half’s index entries and the ones its
+ignore rules match — and the local half’s Markdown and YAML files. A root git cannot
+read is answered unmeasured rather than passing; a local half the manifest does not
+declare <code>excludes: [canonical]</code> for is counted but not judged.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::layout;
+<span class="kw">use </span>majordomus_cli::metadata::KindSchema;
+<span class="kw">use </span>majordomus_cli::repository::Repository;
+<span class="kw">use </span>majordomus_cli::share::Share;
+<span class="kw">use </span>majordomus_cli::synthetic::{crate_share, SyntheticRepository};
+
+<span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
+<span class="kw">let </span>root = repo.root();
+<span class="comment">// the local half declares that authored knowledge never lives there
+</span><span class="kw">let </span>manifest = root.join(<span class="string">".ai/manifest.yaml"</span>);
+<span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>manifest).unwrap().replace(
+    <span class="string">"  implicit_context: false\n"</span>,
+    <span class="string">"  implicit_context: false\n  lifecycle: runtime\n  excludes: [canonical]\n"</span>,
+);
+std::fs::write(<span class="kw-2">&amp;</span>manifest, text).unwrap();
+<span class="kw">let </span>git = |args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    <span class="kw">let </span><span class="kw-2">mut </span>git = std::process::Command::new(<span class="string">"git"</span>);
+    <span class="macro">assert!</span>(git.arg(<span class="string">"-C"</span>).arg(root).args(args).status().unwrap().success());
+};
+git(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">".ai"</span>]);
+<span class="comment">// a byte copy of a tracked rule, left in the local half
+</span><span class="kw">let </span>rule = std::fs::read(root.join(<span class="string">".ai/repo/rules/project/rule-0.v1.md"</span>)).unwrap();
+std::fs::create_dir_all(root.join(<span class="string">".ai/local/notes"</span>)).unwrap();
+std::fs::write(root.join(<span class="string">".ai/local/notes/rule-0.md"</span>), rule).unwrap();
+
+<span class="kw">let </span>repository = Repository::discover(root).unwrap();
+<span class="kw">let </span>share = Share::locate(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>crate_share()), root).unwrap();
+<span class="kw">let </span>kinds = KindSchema::load(<span class="kw-2">&amp;</span>share, <span class="kw-2">&amp;</span>repository).unwrap();
+<span class="kw">let </span>report = layout::check(<span class="kw-2">&amp;</span>repository, <span class="kw-2">&amp;</span>repo.index().unwrap(), <span class="kw-2">&amp;</span>kinds);
+<span class="macro">assert!</span>(report.measured &amp;&amp; !report.passes);
+<span class="macro">assert_eq!</span>(report.findings.len(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(report.findings[<span class="number">0</span>].path, <span class="string">".ai/local/notes/rule-0.md"</span>);
+<span class="macro">assert!</span>(report.findings[<span class="number">0</span>].reason.contains(<span class="string">".ai/repo/rules/project/rule-0.v1.md"</span>));</code></pre></div></div></details></section></div></main></body></html>

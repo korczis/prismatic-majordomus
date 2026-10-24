@@ -1,24 +1,41 @@
-// The monitor page keeps itself current (ADR 0133). The server rendered the first page and
-// put its cursor on the frame; while the page is visible this asks /api/v1/monitor for the
-// page after that cursor every few seconds and adds each new signal as a row on top. The
-// cursor carries every source's position, so nothing comes twice and nothing is computed
-// here: a row is the capability's signal, written with textContent only.
+// The monitor page keeps itself current (ADR 0133, ADR 0176). The server rendered the first
+// page and put on the frame its cursor and the live channel that continues from it: while the
+// page is open the server pushes each new signal over that channel the moment the board or
+// the mesh journal changes, and this adds it as a row on top. The cursor carries every
+// source's position, so nothing comes twice and nothing is computed here: a row is the
+// capability's signal, written with textContent only.
 //
-// It is an enhancement: without JavaScript the page is complete and a refresh shows the
-// newest signals.
+// A page whose channel cannot be opened — a proxy that does not carry WebSockets, a server
+// that refuses it — asks /api/v1/monitor for the page after the cursor every few seconds
+// instead, and says that it polls. It is an enhancement: without JavaScript the page is
+// complete and a refresh shows the newest signals.
 
-import { api } from './cockpit.js?v=4d0ffef4b79e4673';
+import { api } from './cockpit.js?v=481e50c78bbc5f67';
+import { follow as channel, LIVE, OFFLINE, RECONNECTING } from './socket.js?v=ba950eef18e47db4';
 
-/** How often the stream is asked for, while the page is visible. Declared before the
- * first call below: a `const` is not hoisted. */
+/** How often the stream is asked for when the channel cannot be opened, while the page is
+ * visible. Declared before the first call below: a `const` is not hoisted. */
 const INTERVAL_MS = 5000;
+
+/** How long the channel may take to open before the page polls instead. */
+const OPEN_MS = 5000;
 
 /** The most rows the live list keeps; older ones fall off the bottom. */
 const MAX_ROWS = 500;
 
+/** The longest the page stays quiet after failures in a row before it polls again. */
+const MAX_QUIET_MS = 300_000;
+
+/** How long to stay quiet after `failures` failures in a row: the interval, doubled for each
+ * failure past the first, up to MAX_QUIET_MS (I1017). */
+function quietAfter(failures) {
+  if (failures <= 0) return 0;
+  return Math.min(INTERVAL_MS * 2 ** (failures - 1), MAX_QUIET_MS);
+}
+
 const frame = document.querySelector('[data-mj-monitor]');
 if (frame) {
-  follow(frame);
+  live(frame);
 }
 
 function clock(at) {
@@ -89,35 +106,106 @@ function body(frame) {
   return tbody;
 }
 
-function follow(frame) {
-  const source = frame.dataset.mjMonitor;
-  let cursor = frame.dataset.mjMonitorCursor || '';
+function add(frame, signals) {
+  if (!signals.length) return;
+  const tbody = body(frame);
+  // oldest first in the answer: each goes on top, so the newest ends up first
+  for (const signal of signals) tbody.prepend(row(signal));
+  while (tbody.rows.length > MAX_ROWS) tbody.deleteRow(-1);
+}
+
+function live(frame) {
+  const path = frame.dataset.mjMonitorLive;
   const note = frame.querySelector('[data-mj-monitor-note]');
+  // a gap the server could not fill stays said until the page is read again: the list may be
+  // missing something, and "Live" after it is true of what follows, not of what came before
+  let gap = '';
+  const say = (text) => {
+    if (note) note.textContent = gap ? `${text} ${gap}` : text;
+  };
+  if (!path || typeof WebSocket === 'undefined') {
+    poll(frame, frame.dataset.mjMonitorCursor || '', say);
+    return;
+  }
+  let opened = false;
+  const followed = channel(path, {
+    message(f) {
+      if (f.type !== 'blackboard.signals' || !f.data) return;
+      const signals = f.data.signals || [];
+      add(frame, signals);
+      const at = new Date().toLocaleTimeString();
+      say(`Live: pushed by the server; ${signals.length} new at ${at}.`);
+    },
+    state(name) {
+      if (name === LIVE) {
+        opened = true;
+        say('Live: the server pushes what happens as it happens.');
+      } else if (name === RECONNECTING && opened) {
+        say('Reconnecting to the live channel; the list shows the last signals it pushed.');
+      } else if (name === OFFLINE && opened) {
+        // the channel stopped trying after its last attempt (I1017): say so, not "reconnecting"
+        say('Not connected: the live channel gave up; reload the page to read it again.');
+      }
+    },
+    resync(reason) {
+      // a reconnection resumes from the channel's own cursor: nothing is missing
+      if (reason === 'reconnect') return;
+      gap =
+        `Earlier signals may be missing: the server could not continue from this page's ` +
+        `cursor (${reason}); reload the page to see them.`;
+      say('Live from now on.');
+    },
+  });
+  // a channel that never opens is not waited for: the page polls, and says so
+  window.setTimeout(() => {
+    if (opened) return;
+    followed.close();
+    poll(frame, frame.dataset.mjMonitorCursor || '', say);
+  }, OPEN_MS);
+}
+
+function poll(frame, from, say) {
+  const source = frame.dataset.mjMonitor;
+  let cursor = from;
   let polling = 0;
   let busy = false;
+  // failures in a row, and the earliest moment the next sample may go out: a server that
+  // does not answer is asked less and less often, never once every interval (I1017)
+  let failures = 0;
+  let notBefore = 0;
+  const failed = () => {
+    failures += 1;
+    notBefore = Date.now() + quietAfter(failures);
+    say('Polling: the stream could not be read; the list shows the last answer.');
+  };
 
   async function sample() {
-    if (busy) return;
+    if (busy || Date.now() < notBefore) return;
     busy = true;
     try {
       const url = cursor ? `${source}&after=${encodeURIComponent(cursor)}` : source;
-      const answer = await api(url);
-      if (!answer.ok || !answer.body) {
-        if (note) note.textContent = 'The stream could not be read; the list shows the last answer.';
+      let answer;
+      try {
+        answer = await api(url);
+      } catch (e) {
+        failed(); // the network refused before any answer: fetch rejects, it does not return
         return;
       }
+      if (!answer.ok || !answer.body) {
+        failed();
+        return;
+      }
+      failures = 0;
+      notBefore = 0;
       const page = answer.body;
       const signals = page.signals || [];
-      if (signals.length) {
-        const tbody = body(frame);
-        // oldest first in the answer: each goes on top, so the newest ends up first
-        for (const signal of signals) tbody.prepend(row(signal));
-        while (tbody.rows.length > MAX_ROWS) tbody.deleteRow(-1);
-      }
+      add(frame, signals);
       if (page.cursor) cursor = page.cursor;
-      if (note) {
-        note.textContent = `Live: checked ${new Date().toLocaleTimeString()}; ${signals.length} new.`;
-      }
+      const at = new Date().toLocaleTimeString();
+      say(
+        `Polling every ${INTERVAL_MS / 1000} s, the live channel could not be opened: ` +
+          `checked ${at}; ${signals.length} new.`,
+      );
       if (page.more) window.setTimeout(sample, 0);
     } finally {
       busy = false;

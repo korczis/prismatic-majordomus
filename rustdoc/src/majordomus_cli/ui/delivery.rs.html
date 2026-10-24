@@ -1,221 +1,427 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/delivery.rs`."><title>delivery.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/ui/</div>delivery.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! CI/CD &amp; Releases: what was released, where it is deployed, and what the CI model runs.
-<a href=#2 id=2 data-nosnippet>2</a>//! Read from `distribution.releases`, `release.version`, `deploy.list` and `gates.model`.
-<a href=#3 id=3 data-nosnippet>3</a>//!
-<a href=#4 id=4 data-nosnippet>4</a>//! How long CI takes is `integration.timings`, measured from the recorded forge observation
-<a href=#5 id=5 data-nosnippet>5</a>//! (`super::timings`): the CI model says which gates run and when, the timings how long the
-<a href=#6 id=6 data-nosnippet>6</a>//! runs on the open pull requests took.
-<a href=#7 id=7 data-nosnippet>7</a>
-<a href=#8 id=8 data-nosnippet>8</a></span><span class="kw">use </span><span class="kw">crate</span>::capability::Context;
-<a href=#9 id=9 data-nosnippet>9</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::html::el;
-<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>serde_json::Value;
-<a href=#11 id=11 data-nosnippet>11</a>
-<a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span><span class="kw">super</span>::dashboard::releases_panel;
-<a href=#13 id=13 data-nosnippet>13</a><span class="kw">use </span><span class="kw">super</span>::shell::View;
-<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span><span class="kw">super</span>::source::{ask_all, Source};
-<a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span><span class="kw">super</span>::view::{
-<a href=#16 id=16 data-nosnippet>16</a>    anchor, code_link, hero, kpi, list, none, panel, table, text, unanswered, value, wide,
-<a href=#17 id=17 data-nosnippet>17</a>};
-<a href=#18 id=18 data-nosnippet>18</a>
-<a href=#19 id=19 data-nosnippet>19</a><span class="doccomment">/// The route of the screen.
-<a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">pub const </span>ROUTE: <span class="kw-2">&amp;</span>str = <span class="string">"/ui/delivery"</span>;
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/ui/delivery.rs`."><title>delivery.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/ui/</div>delivery.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! CI/CD &amp; Releases: what was released, whether the landed work since is released, where it
+<a href=#2 id=2 data-nosnippet>2</a>//! is deployed, and what the CI model runs. Read from `distribution.releases`,
+<a href=#3 id=3 data-nosnippet>3</a>//! `release.version`, `release.currency`, `deploy.list` and `gates.model`.
+<a href=#4 id=4 data-nosnippet>4</a>//!
+<a href=#5 id=5 data-nosnippet>5</a>//! How long CI takes is `integration.timings`, measured from the recorded forge observation
+<a href=#6 id=6 data-nosnippet>6</a>//! (`super::timings`): the CI model says which gates run and when, the timings how long the
+<a href=#7 id=7 data-nosnippet>7</a>//! runs on the open pull requests took.
+<a href=#8 id=8 data-nosnippet>8</a>
+<a href=#9 id=9 data-nosnippet>9</a></span><span class="kw">use </span><span class="kw">crate</span>::capability::Context;
+<a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::html::{el, El};
+<a href=#11 id=11 data-nosnippet>11</a><span class="kw">use </span><span class="kw">crate</span>::cockpit::view::word_badge;
+<a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span>serde_json::Value;
+<a href=#13 id=13 data-nosnippet>13</a>
+<a href=#14 id=14 data-nosnippet>14</a><span class="kw">use </span><span class="kw">super</span>::dashboard::releases_panel;
+<a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span><span class="kw">super</span>::shell::View;
+<a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span><span class="kw">super</span>::source::{ask_all, Answer, Source};
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span><span class="kw">super</span>::view::{
+<a href=#18 id=18 data-nosnippet>18</a>    anchor, code_link, hero, kpi, kpi_state, list, none, panel, table, text, unanswered, value,
+<a href=#19 id=19 data-nosnippet>19</a>    wide,
+<a href=#20 id=20 data-nosnippet>20</a>};
 <a href=#21 id=21 data-nosnippet>21</a>
-<a href=#22 id=22 data-nosnippet>22</a><span class="doccomment">/// Where one gate of the CI model is: its row on this screen. A rule's proof and a pull
-<a href=#23 id=23 data-nosnippet>23</a>/// request's checks name gates by id, and lead here.
-<a href=#24 id=24 data-nosnippet>24</a></span><span class="kw">pub fn </span>gate_href(id: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#25 id=25 data-nosnippet>25</a>    <span class="macro">format!</span>(<span class="string">"{ROUTE}#gate-{}"</span>, anchor(id))
-<a href=#26 id=26 data-nosnippet>26</a>}
-<a href=#27 id=27 data-nosnippet>27</a>
-<a href=#28 id=28 data-nosnippet>28</a><span class="kw">const </span>RELEASES: Source = Source::of(<span class="string">"distribution.releases"</span>);
-<a href=#29 id=29 data-nosnippet>29</a><span class="kw">const </span>VERSION: Source = Source::of(<span class="string">"release.version"</span>);
-<a href=#30 id=30 data-nosnippet>30</a><span class="kw">const </span>DEPLOYMENTS: Source = Source::of(<span class="string">"deploy.list"</span>);
-<a href=#31 id=31 data-nosnippet>31</a><span class="kw">const </span>GATES: Source = Source::of(<span class="string">"gates.model"</span>);
-<a href=#32 id=32 data-nosnippet>32</a>
-<a href=#33 id=33 data-nosnippet>33</a><span class="doccomment">/// The CI/CD &amp; Releases screen.
-<a href=#34 id=34 data-nosnippet>34</a></span><span class="kw">pub fn </span>screen(ctx: <span class="kw-2">&amp;</span>Context) -&gt; View {
-<a href=#35 id=35 data-nosnippet>35</a>    <span class="kw">let </span>answers = ask_all(
-<a href=#36 id=36 data-nosnippet>36</a>        ctx,
-<a href=#37 id=37 data-nosnippet>37</a>        <span class="kw-2">&amp;</span>[
-<a href=#38 id=38 data-nosnippet>38</a>            RELEASES,
-<a href=#39 id=39 data-nosnippet>39</a>            VERSION,
-<a href=#40 id=40 data-nosnippet>40</a>            DEPLOYMENTS,
-<a href=#41 id=41 data-nosnippet>41</a>            GATES,
-<a href=#42 id=42 data-nosnippet>42</a>            <span class="kw">super</span>::timings::TIMINGS,
-<a href=#43 id=43 data-nosnippet>43</a>        ],
-<a href=#44 id=44 data-nosnippet>44</a>    );
-<a href=#45 id=45 data-nosnippet>45</a>    <span class="kw">let </span>(releases, version, deployments, gates) = (
-<a href=#46 id=46 data-nosnippet>46</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>RELEASES],
-<a href=#47 id=47 data-nosnippet>47</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>VERSION],
-<a href=#48 id=48 data-nosnippet>48</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>DEPLOYMENTS],
-<a href=#49 id=49 data-nosnippet>49</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>GATES],
-<a href=#50 id=50 data-nosnippet>50</a>    );
-<a href=#51 id=51 data-nosnippet>51</a>
-<a href=#52 id=52 data-nosnippet>52</a>    <span class="kw">let </span>top = hero(
-<a href=#53 id=53 data-nosnippet>53</a>        <span class="string">"layers"</span>,
-<a href=#54 id=54 data-nosnippet>54</a>        <span class="string">"orange"</span>,
-<a href=#55 id=55 data-nosnippet>55</a>        <span class="string">"CI/CD &amp; Releases"</span>,
-<a href=#56 id=56 data-nosnippet>56</a>        <span class="string">"From a green check to a published release."</span>,
-<a href=#57 id=57 data-nosnippet>57</a>        <span class="string">"What was released, what the tree declares and what its commits imply next, where it is deployed, and every gate the CI model can run."</span>,
-<a href=#58 id=58 data-nosnippet>58</a>        <span class="macro">vec!</span>[
-<a href=#59 id=59 data-nosnippet>59</a>            kpi(<span class="string">"Released"</span>, <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/version"</span>)),
-<a href=#60 id=60 data-nosnippet>60</a>            kpi(<span class="string">"Declared"</span>, <span class="kw-2">&amp;</span>version.read(<span class="string">"/declared"</span>)),
-<a href=#61 id=61 data-nosnippet>61</a>            kpi(<span class="string">"Next"</span>, <span class="kw-2">&amp;</span>version.read(<span class="string">"/next"</span>)),
-<a href=#62 id=62 data-nosnippet>62</a>            kpi(<span class="string">"Gates"</span>, <span class="kw-2">&amp;</span>gates.read(<span class="string">"/count"</span>)),
-<a href=#63 id=63 data-nosnippet>63</a>        ],
-<a href=#64 id=64 data-nosnippet>64</a>    );
-<a href=#65 id=65 data-nosnippet>65</a>
-<a href=#66 id=66 data-nosnippet>66</a>    <span class="kw">let </span>deployed = unanswered(deployments).unwrap_or_else(|| {
-<a href=#67 id=67 data-nosnippet>67</a>        <span class="kw">let </span>rows = list(deployments, <span class="string">"/deployments"</span>)
-<a href=#68 id=68 data-nosnippet>68</a>            .iter()
-<a href=#69 id=69 data-nosnippet>69</a>            .map(|d| <span class="kw">super</span>::deployments::summary_row(ctx, d))
-<a href=#70 id=70 data-nosnippet>70</a>            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#71 id=71 data-nosnippet>71</a>        table(
-<a href=#72 id=72 data-nosnippet>72</a>            <span class="kw-2">&amp;</span>[<span class="string">"Deployment"</span>, <span class="string">"Application"</span>, <span class="string">"State"</span>],
-<a href=#73 id=73 data-nosnippet>73</a>            rows,
-<a href=#74 id=74 data-nosnippet>74</a>            <span class="string">"No deployment is declared."</span>,
-<a href=#75 id=75 data-nosnippet>75</a>        )
-<a href=#76 id=76 data-nosnippet>76</a>    });
-<a href=#77 id=77 data-nosnippet>77</a>
-<a href=#78 id=78 data-nosnippet>78</a>    <span class="kw">let </span>model = unanswered(gates).unwrap_or_else(|| {
-<a href=#79 id=79 data-nosnippet>79</a>        <span class="kw">let </span>rows = list(gates, <span class="string">"/gates"</span>)
-<a href=#80 id=80 data-nosnippet>80</a>            .iter()
-<a href=#81 id=81 data-nosnippet>81</a>            .map(|g| {
-<a href=#82 id=82 data-nosnippet>82</a>                <span class="kw">let </span>when = <span class="kw">if </span>g.get(<span class="string">"always"</span>).and_then(Value::as_bool) == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
-<a href=#83 id=83 data-nosnippet>83</a>                    <span class="string">"every plan"
-<a href=#84 id=84 data-nosnippet>84</a>                </span>} <span class="kw">else if </span>g.get(<span class="string">"on-demand"</span>).and_then(Value::as_bool) == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
-<a href=#85 id=85 data-nosnippet>85</a>                    <span class="string">"on demand"
-<a href=#86 id=86 data-nosnippet>86</a>                </span>} <span class="kw">else </span>{
-<a href=#87 id=87 data-nosnippet>87</a>                    <span class="string">"when its paths change"
-<a href=#88 id=88 data-nosnippet>88</a>                </span>};
-<a href=#89 id=89 data-nosnippet>89</a>                <span class="kw">let </span>id = text(g, <span class="string">"id"</span>);
-<a href=#90 id=90 data-nosnippet>90</a>                el(<span class="string">"tr"</span>)
-<a href=#91 id=91 data-nosnippet>91</a>                    .attr(<span class="string">"id"</span>, <span class="macro">format!</span>(<span class="string">"gate-{}"</span>, anchor(<span class="kw-2">&amp;</span>id)))
-<a href=#92 id=92 data-nosnippet>92</a>                    .child(el(<span class="string">"td"</span>).child(code_link(gate_href(<span class="kw-2">&amp;</span>id), value(g, <span class="string">"id"</span>))))
-<a href=#93 id=93 data-nosnippet>93</a>                    .child(el(<span class="string">"td"</span>).text(value(g, <span class="string">"job"</span>)))
-<a href=#94 id=94 data-nosnippet>94</a>                    .child(el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-dim"</span>).text(when))
-<a href=#95 id=95 data-nosnippet>95</a>                    .child(el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-dim"</span>).text(value(g, <span class="string">"summary"</span>)))
-<a href=#96 id=96 data-nosnippet>96</a>                    .child(el(<span class="string">"td"</span>).child(gates_named(g, <span class="string">"implies"</span>)))
-<a href=#97 id=97 data-nosnippet>97</a>            })
-<a href=#98 id=98 data-nosnippet>98</a>            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#99 id=99 data-nosnippet>99</a>        table(
-<a href=#100 id=100 data-nosnippet>100</a>            <span class="kw-2">&amp;</span>[<span class="string">"Gate"</span>, <span class="string">"Job"</span>, <span class="string">"Runs"</span>, <span class="string">"What it holds"</span>, <span class="string">"Implies"</span>],
-<a href=#101 id=101 data-nosnippet>101</a>            rows,
-<a href=#102 id=102 data-nosnippet>102</a>            <span class="string">"The CI model declares no gate."</span>,
-<a href=#103 id=103 data-nosnippet>103</a>        )
-<a href=#104 id=104 data-nosnippet>104</a>    });
-<a href=#105 id=105 data-nosnippet>105</a>
-<a href=#106 id=106 data-nosnippet>106</a>    <span class="kw">let </span>grid = el(<span class="string">"div"</span>)
-<a href=#107 id=107 data-nosnippet>107</a>        .class(<span class="string">"mj-ui-grid"</span>)
-<a href=#108 id=108 data-nosnippet>108</a>        .child(releases_panel(releases, version, <span class="prelude-val">None</span>))
-<a href=#109 id=109 data-nosnippet>109</a>        .child(panel(
-<a href=#110 id=110 data-nosnippet>110</a>            <span class="string">"Deployments"</span>,
-<a href=#111 id=111 data-nosnippet>111</a>            <span class="string">"Where the product is declared to run."</span>,
-<a href=#112 id=112 data-nosnippet>112</a>            deployed,
-<a href=#113 id=113 data-nosnippet>113</a>            <span class="kw-2">&amp;</span>[deployments],
-<a href=#114 id=114 data-nosnippet>114</a>        ))
-<a href=#115 id=115 data-nosnippet>115</a>        .child(wide(panel(
-<a href=#116 id=116 data-nosnippet>116</a>            <span class="string">"CI model"</span>,
-<a href=#117 id=117 data-nosnippet>117</a>            <span class="string">"Every gate the model declares, the job it runs in and when it is selected."</span>,
-<a href=#118 id=118 data-nosnippet>118</a>            model,
-<a href=#119 id=119 data-nosnippet>119</a>            <span class="kw-2">&amp;</span>[gates],
-<a href=#120 id=120 data-nosnippet>120</a>        )))
-<a href=#121 id=121 data-nosnippet>121</a>        .child(wide(<span class="kw">super</span>::timings::panel_of(
-<a href=#122 id=122 data-nosnippet>122</a>            <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span><span class="kw">super</span>::timings::TIMINGS],
-<a href=#123 id=123 data-nosnippet>123</a>        )));
-<a href=#124 id=124 data-nosnippet>124</a>
-<a href=#125 id=125 data-nosnippet>125</a>    View::new(
-<a href=#126 id=126 data-nosnippet>126</a>        <span class="string">"CI/CD &amp; Releases"</span>,
-<a href=#127 id=127 data-nosnippet>127</a>        el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-stack"</span>).child(top).child(grid),
-<a href=#128 id=128 data-nosnippet>128</a>    )
-<a href=#129 id=129 data-nosnippet>129</a>}
-<a href=#130 id=130 data-nosnippet>130</a>
-<a href=#131 id=131 data-nosnippet>131</a><span class="doccomment">/// The gates an entry names under `key`, each a link to its own row; `none` when it names none.
-<a href=#132 id=132 data-nosnippet>132</a></span><span class="kw">fn </span>gates_named(g: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw">crate</span>::cockpit::html::El {
-<a href=#133 id=133 data-nosnippet>133</a>    <span class="kw">let </span>ids: Vec&lt;String&gt; = g
-<a href=#134 id=134 data-nosnippet>134</a>        .get(key)
-<a href=#135 id=135 data-nosnippet>135</a>        .and_then(Value::as_array)
-<a href=#136 id=136 data-nosnippet>136</a>        .map(|a| {
-<a href=#137 id=137 data-nosnippet>137</a>            a.iter()
-<a href=#138 id=138 data-nosnippet>138</a>                .filter_map(Value::as_str)
-<a href=#139 id=139 data-nosnippet>139</a>                .map(str::to_string)
-<a href=#140 id=140 data-nosnippet>140</a>                .collect()
-<a href=#141 id=141 data-nosnippet>141</a>        })
-<a href=#142 id=142 data-nosnippet>142</a>        .unwrap_or_default();
-<a href=#143 id=143 data-nosnippet>143</a>    <span class="kw">if </span>ids.is_empty() {
-<a href=#144 id=144 data-nosnippet>144</a>        <span class="kw">return </span>none();
-<a href=#145 id=145 data-nosnippet>145</a>    }
-<a href=#146 id=146 data-nosnippet>146</a>    el(<span class="string">"span"</span>)
-<a href=#147 id=147 data-nosnippet>147</a>        .class(<span class="string">"mj-ui-badges"</span>)
-<a href=#148 id=148 data-nosnippet>148</a>        .children(ids.iter().map(|id| code_link(gate_href(id), id.clone())))
-<a href=#149 id=149 data-nosnippet>149</a>}
-<a href=#150 id=150 data-nosnippet>150</a>
-<a href=#151 id=151 data-nosnippet>151</a><span class="attr">#[cfg(test)]
-<a href=#152 id=152 data-nosnippet>152</a></span><span class="kw">mod </span>tests {
-<a href=#153 id=153 data-nosnippet>153</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#154 id=154 data-nosnippet>154</a>    <span class="kw">use </span><span class="kw">crate</span>::ui::deployments::tests::furnished;
-<a href=#155 id=155 data-nosnippet>155</a>
-<a href=#156 id=156 data-nosnippet>156</a>    <span class="doccomment">/// Every declared deployment is a row, and every gate of the CI model says when it
-<a href=#157 id=157 data-nosnippet>157</a>    /// runs: in every plan, on demand, or when its paths change.
-<a href=#158 id=158 data-nosnippet>158</a>    </span><span class="attr">#[test]
-<a href=#159 id=159 data-nosnippet>159</a>    </span><span class="kw">fn </span>every_deployment_and_every_gate_is_a_row_that_says_when_it_runs() {
-<a href=#160 id=160 data-nosnippet>160</a>        <span class="kw">let </span>repo = furnished();
-<a href=#161 id=161 data-nosnippet>161</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#162 id=162 data-nosnippet>162</a>        <span class="kw">let </span>html = screen(<span class="kw-2">&amp;</span>ctx).main.render();
-<a href=#163 id=163 data-nosnippet>163</a>        <span class="macro">assert!</span>(
-<a href=#164 id=164 data-nosnippet>164</a>            html.contains(<span class="string">"The Majordomus layer, served from its container image"</span>),
-<a href=#165 id=165 data-nosnippet>165</a>            <span class="string">"{html}"
-<a href=#166 id=166 data-nosnippet>166</a>        </span>);
-<a href=#167 id=167 data-nosnippet>167</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"No deployment is declared."</span>), <span class="string">"{html}"</span>);
-<a href=#168 id=168 data-nosnippet>168</a>        <span class="kw">for </span>(gate, when) <span class="kw">in </span>[
-<a href=#169 id=169 data-nosnippet>169</a>            (<span class="string">"every-plan"</span>, <span class="string">"every plan"</span>),
-<a href=#170 id=170 data-nosnippet>170</a>            (<span class="string">"when-asked"</span>, <span class="string">"on demand"</span>),
-<a href=#171 id=171 data-nosnippet>171</a>            (<span class="string">"by-path"</span>, <span class="string">"when its paths change"</span>),
-<a href=#172 id=172 data-nosnippet>172</a>        ] {
-<a href=#173 id=173 data-nosnippet>173</a>            <span class="macro">assert!</span>(html.contains(gate), <span class="string">"{gate} is missing: {html}"</span>);
-<a href=#174 id=174 data-nosnippet>174</a>            <span class="macro">assert!</span>(html.contains(when), <span class="string">"{gate} does not say {when}: {html}"</span>);
-<a href=#175 id=175 data-nosnippet>175</a>        }
-<a href=#176 id=176 data-nosnippet>176</a>        <span class="macro">assert!</span>(
-<a href=#177 id=177 data-nosnippet>177</a>            html.contains(<span class="string">"runs in every plan"</span>),
-<a href=#178 id=178 data-nosnippet>178</a>            <span class="string">"the gate's own summary: {html}"
-<a href=#179 id=179 data-nosnippet>179</a>        </span>);
-<a href=#180 id=180 data-nosnippet>180</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"The CI model declares no gate."</span>), <span class="string">"{html}"</span>);
-<a href=#181 id=181 data-nosnippet>181</a>    }
-<a href=#182 id=182 data-nosnippet>182</a>
-<a href=#183 id=183 data-nosnippet>183</a>    <span class="doccomment">/// A gate is a row a link can lead to, and the gates it implies lead to theirs.
-<a href=#184 id=184 data-nosnippet>184</a>    </span><span class="attr">#[test]
-<a href=#185 id=185 data-nosnippet>185</a>    </span><span class="kw">fn </span>a_gate_is_a_row_links_lead_to() {
-<a href=#186 id=186 data-nosnippet>186</a>        <span class="macro">assert_eq!</span>(gate_href(<span class="string">"shell-suite"</span>), <span class="string">"/ui/delivery#gate-shell-suite"</span>);
-<a href=#187 id=187 data-nosnippet>187</a>        <span class="kw">let </span>implied = gates_named(
-<a href=#188 id=188 data-nosnippet>188</a>            <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"implies"</span>: [<span class="string">"rust-integration"</span>, <span class="string">"rust-quality"</span>] }),
-<a href=#189 id=189 data-nosnippet>189</a>            <span class="string">"implies"</span>,
-<a href=#190 id=190 data-nosnippet>190</a>        )
-<a href=#191 id=191 data-nosnippet>191</a>        .render();
-<a href=#192 id=192 data-nosnippet>192</a>        <span class="macro">assert!</span>(
-<a href=#193 id=193 data-nosnippet>193</a>            implied.contains(<span class="string">"href=\"/ui/delivery#gate-rust-integration\""</span>),
-<a href=#194 id=194 data-nosnippet>194</a>            <span class="string">"{implied}"
-<a href=#195 id=195 data-nosnippet>195</a>        </span>);
-<a href=#196 id=196 data-nosnippet>196</a>        <span class="macro">assert!</span>(
-<a href=#197 id=197 data-nosnippet>197</a>            implied.contains(<span class="string">"href=\"/ui/delivery#gate-rust-quality\""</span>),
-<a href=#198 id=198 data-nosnippet>198</a>            <span class="string">"{implied}"
-<a href=#199 id=199 data-nosnippet>199</a>        </span>);
-<a href=#200 id=200 data-nosnippet>200</a>        <span class="macro">assert!</span>(gates_named(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({}), <span class="string">"implies"</span>)
-<a href=#201 id=201 data-nosnippet>201</a>            .render()
-<a href=#202 id=202 data-nosnippet>202</a>            .contains(<span class="string">"&gt;none&lt;"</span>));
-<a href=#203 id=203 data-nosnippet>203</a>
-<a href=#204 id=204 data-nosnippet>204</a>        <span class="kw">let </span>repo = furnished();
-<a href=#205 id=205 data-nosnippet>205</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#206 id=206 data-nosnippet>206</a>        <span class="kw">let </span>html = screen(<span class="kw-2">&amp;</span>ctx).main.render();
-<a href=#207 id=207 data-nosnippet>207</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"id=\"gate-every-plan\""</span>), <span class="string">"{html}"</span>);
-<a href=#208 id=208 data-nosnippet>208</a>        <span class="macro">assert!</span>(
-<a href=#209 id=209 data-nosnippet>209</a>            html.contains(<span class="string">"href=\"/ui/delivery#gate-by-path\""</span>),
-<a href=#210 id=210 data-nosnippet>210</a>            <span class="string">"{html}"
-<a href=#211 id=211 data-nosnippet>211</a>        </span>);
-<a href=#212 id=212 data-nosnippet>212</a>        <span class="macro">assert!</span>(
-<a href=#213 id=213 data-nosnippet>213</a>            html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#214 id=214 data-nosnippet>214</a>                <span class="string">"href=\"{}\""</span>,
-<a href=#215 id=215 data-nosnippet>215</a>                <span class="kw">super</span>::<span class="kw">super</span>::deployments::href(<span class="string">"majordomus"</span>)
-<a href=#216 id=216 data-nosnippet>216</a>            )),
-<a href=#217 id=217 data-nosnippet>217</a>            <span class="string">"a deployment leads to its row on Deployments: {html}"
-<a href=#218 id=218 data-nosnippet>218</a>        </span>);
-<a href=#219 id=219 data-nosnippet>219</a>    }
-<a href=#220 id=220 data-nosnippet>220</a>}
+<a href=#22 id=22 data-nosnippet>22</a><span class="doccomment">/// The route of the screen.
+<a href=#23 id=23 data-nosnippet>23</a></span><span class="kw">pub const </span>ROUTE: <span class="kw-2">&amp;</span>str = <span class="string">"/ui/delivery"</span>;
+<a href=#24 id=24 data-nosnippet>24</a>
+<a href=#25 id=25 data-nosnippet>25</a><span class="doccomment">/// Where one gate of the CI model is: its row on this screen. A rule's proof and a pull
+<a href=#26 id=26 data-nosnippet>26</a>/// request's checks name gates by id, and lead here.
+<a href=#27 id=27 data-nosnippet>27</a></span><span class="kw">pub fn </span>gate_href(id: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="macro">format!</span>(<span class="string">"{ROUTE}#gate-{}"</span>, anchor(id))
+<a href=#29 id=29 data-nosnippet>29</a>}
+<a href=#30 id=30 data-nosnippet>30</a>
+<a href=#31 id=31 data-nosnippet>31</a><span class="kw">const </span>RELEASES: Source = Source::of(<span class="string">"distribution.releases"</span>);
+<a href=#32 id=32 data-nosnippet>32</a><span class="kw">const </span>VERSION: Source = Source::of(<span class="string">"release.version"</span>);
+<a href=#33 id=33 data-nosnippet>33</a><span class="kw">const </span>DEPLOYMENTS: Source = Source::of(<span class="string">"deploy.list"</span>);
+<a href=#34 id=34 data-nosnippet>34</a><span class="kw">const </span>GATES: Source = Source::of(<span class="string">"gates.model"</span>);
+<a href=#35 id=35 data-nosnippet>35</a><span class="comment">// asked without the version: the hero's Next is release.version's, and one screen names one
+<a href=#36 id=36 data-nosnippet>36</a>// next version (the plan critique of 2026-10-19)
+<a href=#37 id=37 data-nosnippet>37</a></span><span class="kw">const </span>CURRENCY: Source = Source::with(<span class="string">"release.currency"</span>, <span class="string">r#"{"next":false}"#</span>);
+<a href=#38 id=38 data-nosnippet>38</a>
+<a href=#39 id=39 data-nosnippet>39</a><span class="doccomment">/// The CI/CD &amp; Releases screen.
+<a href=#40 id=40 data-nosnippet>40</a></span><span class="kw">pub fn </span>screen(ctx: <span class="kw-2">&amp;</span>Context) -&gt; View {
+<a href=#41 id=41 data-nosnippet>41</a>    <span class="kw">let </span>answers = ask_all(
+<a href=#42 id=42 data-nosnippet>42</a>        ctx,
+<a href=#43 id=43 data-nosnippet>43</a>        <span class="kw-2">&amp;</span>[
+<a href=#44 id=44 data-nosnippet>44</a>            RELEASES,
+<a href=#45 id=45 data-nosnippet>45</a>            VERSION,
+<a href=#46 id=46 data-nosnippet>46</a>            DEPLOYMENTS,
+<a href=#47 id=47 data-nosnippet>47</a>            GATES,
+<a href=#48 id=48 data-nosnippet>48</a>            CURRENCY,
+<a href=#49 id=49 data-nosnippet>49</a>            <span class="kw">super</span>::timings::TIMINGS,
+<a href=#50 id=50 data-nosnippet>50</a>        ],
+<a href=#51 id=51 data-nosnippet>51</a>    );
+<a href=#52 id=52 data-nosnippet>52</a>    <span class="kw">let </span>(releases, version, deployments, gates, currency) = (
+<a href=#53 id=53 data-nosnippet>53</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>RELEASES],
+<a href=#54 id=54 data-nosnippet>54</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>VERSION],
+<a href=#55 id=55 data-nosnippet>55</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>DEPLOYMENTS],
+<a href=#56 id=56 data-nosnippet>56</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>GATES],
+<a href=#57 id=57 data-nosnippet>57</a>        <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>CURRENCY],
+<a href=#58 id=58 data-nosnippet>58</a>    );
+<a href=#59 id=59 data-nosnippet>59</a>
+<a href=#60 id=60 data-nosnippet>60</a>    <span class="kw">let </span>top = hero(
+<a href=#61 id=61 data-nosnippet>61</a>        <span class="string">"layers"</span>,
+<a href=#62 id=62 data-nosnippet>62</a>        <span class="string">"orange"</span>,
+<a href=#63 id=63 data-nosnippet>63</a>        <span class="string">"CI/CD &amp; Releases"</span>,
+<a href=#64 id=64 data-nosnippet>64</a>        <span class="string">"From a green check to a published release."</span>,
+<a href=#65 id=65 data-nosnippet>65</a>        <span class="string">"What was released, whether the work landed since is released, what the tree declares and what its commits imply next, where it is deployed, and every gate the CI model can run."</span>,
+<a href=#66 id=66 data-nosnippet>66</a>        <span class="macro">vec!</span>[
+<a href=#67 id=67 data-nosnippet>67</a>            kpi(<span class="string">"Released"</span>, <span class="kw-2">&amp;</span>releases.read(<span class="string">"/latest/version"</span>)),
+<a href=#68 id=68 data-nosnippet>68</a>            kpi_state(<span class="string">"Since then"</span>, <span class="kw-2">&amp;</span>currency.read(<span class="string">"/stance"</span>)),
+<a href=#69 id=69 data-nosnippet>69</a>            kpi(<span class="string">"Declared"</span>, <span class="kw-2">&amp;</span>version.read(<span class="string">"/declared"</span>)),
+<a href=#70 id=70 data-nosnippet>70</a>            kpi(<span class="string">"Next"</span>, <span class="kw-2">&amp;</span>version.read(<span class="string">"/next"</span>)),
+<a href=#71 id=71 data-nosnippet>71</a>            kpi(<span class="string">"Gates"</span>, <span class="kw-2">&amp;</span>gates.read(<span class="string">"/count"</span>)),
+<a href=#72 id=72 data-nosnippet>72</a>        ],
+<a href=#73 id=73 data-nosnippet>73</a>    );
+<a href=#74 id=74 data-nosnippet>74</a>
+<a href=#75 id=75 data-nosnippet>75</a>    <span class="kw">let </span>deployed = unanswered(deployments).unwrap_or_else(|| {
+<a href=#76 id=76 data-nosnippet>76</a>        <span class="kw">let </span>rows = list(deployments, <span class="string">"/deployments"</span>)
+<a href=#77 id=77 data-nosnippet>77</a>            .iter()
+<a href=#78 id=78 data-nosnippet>78</a>            .map(|d| <span class="kw">super</span>::deployments::summary_row(ctx, d))
+<a href=#79 id=79 data-nosnippet>79</a>            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#80 id=80 data-nosnippet>80</a>        table(
+<a href=#81 id=81 data-nosnippet>81</a>            <span class="kw-2">&amp;</span>[<span class="string">"Deployment"</span>, <span class="string">"Application"</span>, <span class="string">"State"</span>],
+<a href=#82 id=82 data-nosnippet>82</a>            rows,
+<a href=#83 id=83 data-nosnippet>83</a>            <span class="string">"No deployment is declared."</span>,
+<a href=#84 id=84 data-nosnippet>84</a>        )
+<a href=#85 id=85 data-nosnippet>85</a>    });
+<a href=#86 id=86 data-nosnippet>86</a>
+<a href=#87 id=87 data-nosnippet>87</a>    <span class="kw">let </span>model = unanswered(gates).unwrap_or_else(|| {
+<a href=#88 id=88 data-nosnippet>88</a>        <span class="kw">let </span>rows = list(gates, <span class="string">"/gates"</span>)
+<a href=#89 id=89 data-nosnippet>89</a>            .iter()
+<a href=#90 id=90 data-nosnippet>90</a>            .map(|g| {
+<a href=#91 id=91 data-nosnippet>91</a>                <span class="kw">let </span>when = <span class="kw">if </span>g.get(<span class="string">"always"</span>).and_then(Value::as_bool) == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
+<a href=#92 id=92 data-nosnippet>92</a>                    <span class="string">"every plan"
+<a href=#93 id=93 data-nosnippet>93</a>                </span>} <span class="kw">else if </span>g.get(<span class="string">"on-demand"</span>).and_then(Value::as_bool) == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
+<a href=#94 id=94 data-nosnippet>94</a>                    <span class="string">"on demand"
+<a href=#95 id=95 data-nosnippet>95</a>                </span>} <span class="kw">else </span>{
+<a href=#96 id=96 data-nosnippet>96</a>                    <span class="string">"when its paths change"
+<a href=#97 id=97 data-nosnippet>97</a>                </span>};
+<a href=#98 id=98 data-nosnippet>98</a>                <span class="kw">let </span>id = text(g, <span class="string">"id"</span>);
+<a href=#99 id=99 data-nosnippet>99</a>                el(<span class="string">"tr"</span>)
+<a href=#100 id=100 data-nosnippet>100</a>                    .attr(<span class="string">"id"</span>, <span class="macro">format!</span>(<span class="string">"gate-{}"</span>, anchor(<span class="kw-2">&amp;</span>id)))
+<a href=#101 id=101 data-nosnippet>101</a>                    .child(el(<span class="string">"td"</span>).child(code_link(gate_href(<span class="kw-2">&amp;</span>id), value(g, <span class="string">"id"</span>))))
+<a href=#102 id=102 data-nosnippet>102</a>                    .child(el(<span class="string">"td"</span>).text(value(g, <span class="string">"job"</span>)))
+<a href=#103 id=103 data-nosnippet>103</a>                    .child(el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-dim"</span>).text(when))
+<a href=#104 id=104 data-nosnippet>104</a>                    .child(el(<span class="string">"td"</span>).class(<span class="string">"mj-ui-dim"</span>).text(value(g, <span class="string">"summary"</span>)))
+<a href=#105 id=105 data-nosnippet>105</a>                    .child(el(<span class="string">"td"</span>).child(gates_named(g, <span class="string">"implies"</span>)))
+<a href=#106 id=106 data-nosnippet>106</a>            })
+<a href=#107 id=107 data-nosnippet>107</a>            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#108 id=108 data-nosnippet>108</a>        table(
+<a href=#109 id=109 data-nosnippet>109</a>            <span class="kw-2">&amp;</span>[<span class="string">"Gate"</span>, <span class="string">"Job"</span>, <span class="string">"Runs"</span>, <span class="string">"What it holds"</span>, <span class="string">"Implies"</span>],
+<a href=#110 id=110 data-nosnippet>110</a>            rows,
+<a href=#111 id=111 data-nosnippet>111</a>            <span class="string">"The CI model declares no gate."</span>,
+<a href=#112 id=112 data-nosnippet>112</a>        )
+<a href=#113 id=113 data-nosnippet>113</a>    });
+<a href=#114 id=114 data-nosnippet>114</a>
+<a href=#115 id=115 data-nosnippet>115</a>    <span class="kw">let </span>grid = el(<span class="string">"div"</span>)
+<a href=#116 id=116 data-nosnippet>116</a>        .class(<span class="string">"mj-ui-grid"</span>)
+<a href=#117 id=117 data-nosnippet>117</a>        .child(releases_panel(releases, version, <span class="prelude-val">None</span>))
+<a href=#118 id=118 data-nosnippet>118</a>        .child(panel(
+<a href=#119 id=119 data-nosnippet>119</a>            <span class="string">"Deployments"</span>,
+<a href=#120 id=120 data-nosnippet>120</a>            <span class="string">"Where the product is declared to run."</span>,
+<a href=#121 id=121 data-nosnippet>121</a>            deployed,
+<a href=#122 id=122 data-nosnippet>122</a>            <span class="kw-2">&amp;</span>[deployments],
+<a href=#123 id=123 data-nosnippet>123</a>        ))
+<a href=#124 id=124 data-nosnippet>124</a>        <span class="comment">// full width, after the pair above, so that adding it moves no panel of the grid
+<a href=#125 id=125 data-nosnippet>125</a>        </span>.child(wide(currency_panel(currency)))
+<a href=#126 id=126 data-nosnippet>126</a>        .child(wide(panel(
+<a href=#127 id=127 data-nosnippet>127</a>            <span class="string">"CI model"</span>,
+<a href=#128 id=128 data-nosnippet>128</a>            <span class="string">"Every gate the model declares, the job it runs in and when it is selected."</span>,
+<a href=#129 id=129 data-nosnippet>129</a>            model,
+<a href=#130 id=130 data-nosnippet>130</a>            <span class="kw-2">&amp;</span>[gates],
+<a href=#131 id=131 data-nosnippet>131</a>        )))
+<a href=#132 id=132 data-nosnippet>132</a>        .child(wide(<span class="kw">super</span>::timings::panel_of(
+<a href=#133 id=133 data-nosnippet>133</a>            <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span><span class="kw">super</span>::timings::TIMINGS],
+<a href=#134 id=134 data-nosnippet>134</a>        )));
+<a href=#135 id=135 data-nosnippet>135</a>
+<a href=#136 id=136 data-nosnippet>136</a>    View::new(
+<a href=#137 id=137 data-nosnippet>137</a>        <span class="string">"CI/CD &amp; Releases"</span>,
+<a href=#138 id=138 data-nosnippet>138</a>        el(<span class="string">"div"</span>).class(<span class="string">"mj-ui-stack"</span>).child(top).child(grid),
+<a href=#139 id=139 data-nosnippet>139</a>    )
+<a href=#140 id=140 data-nosnippet>140</a>}
+<a href=#141 id=141 data-nosnippet>141</a>
+<a href=#142 id=142 data-nosnippet>142</a><span class="doccomment">/// Whether the trunk's landed work is released (`release.currency`, I3071): the stance and
+<a href=#143 id=143 data-nosnippet>143</a>/// its sentence, how much landed work waits, since when and how that was dated, and the
+<a href=#144 id=144 data-nosnippet>144</a>/// release it is measured from. The version required next is the hero's, read from
+<a href=#145 id=145 data-nosnippet>145</a>/// `release.version`. The capability reads the remote-tracking trunk as of its last fetch and
+<a href=#146 id=146 data-nosnippet>146</a>/// the clock, so the panel says that a published snapshot shows it as read when the snapshot
+<a href=#147 id=147 data-nosnippet>147</a>/// was built.
+<a href=#148 id=148 data-nosnippet>148</a></span><span class="kw">fn </span>currency_panel(currency: <span class="kw-2">&amp;</span>Answer) -&gt; El {
+<a href=#149 id=149 data-nosnippet>149</a>    <span class="kw">let </span>body = unanswered(currency)
+<a href=#150 id=150 data-nosnippet>150</a>        .unwrap_or_else(|| currency_body(currency.ok().unwrap_or(<span class="kw-2">&amp;</span>Value::Null)));
+<a href=#151 id=151 data-nosnippet>151</a>    panel(
+<a href=#152 id=152 data-nosnippet>152</a>        <span class="string">"Is the trunk released?"</span>,
+<a href=#153 id=153 data-nosnippet>153</a>        <span class="string">"The landed work past the last release, read from the remote-tracking trunk as of its last fetch. A published snapshot shows it as read when the snapshot was built."</span>,
+<a href=#154 id=154 data-nosnippet>154</a>        body,
+<a href=#155 id=155 data-nosnippet>155</a>        <span class="kw-2">&amp;</span>[currency],
+<a href=#156 id=156 data-nosnippet>156</a>    )
+<a href=#157 id=157 data-nosnippet>157</a>}
+<a href=#158 id=158 data-nosnippet>158</a>
+<a href=#159 id=159 data-nosnippet>159</a><span class="doccomment">/// The rows of one answer of `release.currency`, each in the answer's own words: a figure
+<a href=#160 id=160 data-nosnippet>160</a>/// the answer did not give is said as missing, never as a zero.
+<a href=#161 id=161 data-nosnippet>161</a></span><span class="kw">fn </span>currency_body(answer: <span class="kw-2">&amp;</span>Value) -&gt; El {
+<a href=#162 id=162 data-nosnippet>162</a>    <span class="kw">let </span>number = |key: <span class="kw-2">&amp;</span>str| answer.get(key).and_then(Value::as_u64);
+<a href=#163 id=163 data-nosnippet>163</a>    <span class="kw">let </span>waited = <span class="kw">match </span>(
+<a href=#164 id=164 data-nosnippet>164</a>        number(<span class="string">"waited_seconds"</span>),
+<a href=#165 id=165 data-nosnippet>165</a>        answer.get(<span class="string">"oldest_landing"</span>).and_then(Value::as_str),
+<a href=#166 id=166 data-nosnippet>166</a>    ) {
+<a href=#167 id=167 data-nosnippet>167</a>        (<span class="prelude-val">Some</span>(seconds), at) =&gt; {
+<a href=#168 id=168 data-nosnippet>168</a>            <span class="kw">let </span>dated = <span class="kw">match </span>answer.get(<span class="string">"landed_at"</span>).and_then(Value::as_str) {
+<a href=#169 id=169 data-nosnippet>169</a>                <span class="comment">// a commit time bounds the wait from above, and the row says so
+<a href=#170 id=170 data-nosnippet>170</a>                </span><span class="prelude-val">Some</span>(<span class="string">"commit"</span>) =&gt; <span class="macro">format!</span>(
+<a href=#171 id=171 data-nosnippet>171</a>                    <span class="string">"at most {}, from its commit time: this clone holds no record of when it landed"</span>,
+<a href=#172 id=172 data-nosnippet>172</a>                    <span class="kw">super</span>::timings::duration(seconds)
+<a href=#173 id=173 data-nosnippet>173</a>                ),
+<a href=#174 id=174 data-nosnippet>174</a>                <span class="kw">_ </span>=&gt; <span class="macro">format!</span>(
+<a href=#175 id=175 data-nosnippet>175</a>                    <span class="string">"{}, since this clone saw it land"</span>,
+<a href=#176 id=176 data-nosnippet>176</a>                    <span class="kw">super</span>::timings::duration(seconds)
+<a href=#177 id=177 data-nosnippet>177</a>                ),
+<a href=#178 id=178 data-nosnippet>178</a>            };
+<a href=#179 id=179 data-nosnippet>179</a>            <span class="kw">match </span>at {
+<a href=#180 id=180 data-nosnippet>180</a>                <span class="prelude-val">Some</span>(at) =&gt; <span class="macro">format!</span>(<span class="string">"{dated} ({at})"</span>),
+<a href=#181 id=181 data-nosnippet>181</a>                <span class="prelude-val">None </span>=&gt; dated,
+<a href=#182 id=182 data-nosnippet>182</a>            }
+<a href=#183 id=183 data-nosnippet>183</a>        }
+<a href=#184 id=184 data-nosnippet>184</a>        (<span class="prelude-val">None</span>, <span class="kw">_</span>) =&gt; <span class="string">"nothing waits"</span>.into(),
+<a href=#185 id=185 data-nosnippet>185</a>    };
+<a href=#186 id=186 data-nosnippet>186</a>    <span class="kw">let </span>landed = <span class="kw">match </span>(number(<span class="string">"landed"</span>), number(<span class="string">"landings"</span>)) {
+<a href=#187 id=187 data-nosnippet>187</a>        (<span class="prelude-val">Some</span>(commits), <span class="prelude-val">Some</span>(landings)) =&gt; {
+<a href=#188 id=188 data-nosnippet>188</a>            <span class="macro">format!</span>(<span class="string">"{commits} commit(s) in {landings} landing(s)"</span>)
+<a href=#189 id=189 data-nosnippet>189</a>        }
+<a href=#190 id=190 data-nosnippet>190</a>        <span class="kw">_ </span>=&gt; <span class="string">"not measured"</span>.into(),
+<a href=#191 id=191 data-nosnippet>191</a>    };
+<a href=#192 id=192 data-nosnippet>192</a>    <span class="kw">let </span>measured_from = answer.get(<span class="string">"release"</span>).map_or_else(
+<a href=#193 id=193 data-nosnippet>193</a>        || <span class="string">"no release"</span>.to_string(),
+<a href=#194 id=194 data-nosnippet>194</a>        |release| {
+<a href=#195 id=195 data-nosnippet>195</a>            <span class="kw">let </span>reference = value(release, <span class="string">"reference"</span>);
+<a href=#196 id=196 data-nosnippet>196</a>            <span class="kw">if </span>release.get(<span class="string">"recorded"</span>).and_then(Value::as_bool) == <span class="prelude-val">Some</span>(<span class="bool-val">false</span>) {
+<a href=#197 id=197 data-nosnippet>197</a>                <span class="macro">format!</span>(<span class="string">"{reference} (tagged; its record has not landed yet)"</span>)
+<a href=#198 id=198 data-nosnippet>198</a>            } <span class="kw">else </span>{
+<a href=#199 id=199 data-nosnippet>199</a>                reference
+<a href=#200 id=200 data-nosnippet>200</a>            }
+<a href=#201 id=201 data-nosnippet>201</a>        },
+<a href=#202 id=202 data-nosnippet>202</a>    );
+<a href=#203 id=203 data-nosnippet>203</a>    <span class="kw">let </span>row = |label: <span class="kw-2">&amp;</span>str, cell: El| {
+<a href=#204 id=204 data-nosnippet>204</a>        el(<span class="string">"tr"</span>)
+<a href=#205 id=205 data-nosnippet>205</a>            .child(el(<span class="string">"th"</span>).attr(<span class="string">"scope"</span>, <span class="string">"row"</span>).text(label))
+<a href=#206 id=206 data-nosnippet>206</a>            .child(el(<span class="string">"td"</span>).child(cell))
+<a href=#207 id=207 data-nosnippet>207</a>    };
+<a href=#208 id=208 data-nosnippet>208</a>    table(
+<a href=#209 id=209 data-nosnippet>209</a>        <span class="kw-2">&amp;</span>[<span class="string">"Reading"</span>, <span class="string">"Answer"</span>],
+<a href=#210 id=210 data-nosnippet>210</a>        <span class="macro">vec!</span>[
+<a href=#211 id=211 data-nosnippet>211</a>            row(
+<a href=#212 id=212 data-nosnippet>212</a>                <span class="string">"Stance"</span>,
+<a href=#213 id=213 data-nosnippet>213</a>                el(<span class="string">"span"</span>)
+<a href=#214 id=214 data-nosnippet>214</a>                    .child(word_badge(<span class="kw-2">&amp;</span>value(answer, <span class="string">"stance"</span>)))
+<a href=#215 id=215 data-nosnippet>215</a>                    .text(<span class="string">" "</span>)
+<a href=#216 id=216 data-nosnippet>216</a>                    .text(text(answer, <span class="string">"summary"</span>)),
+<a href=#217 id=217 data-nosnippet>217</a>            ),
+<a href=#218 id=218 data-nosnippet>218</a>            row(<span class="string">"Landed past it"</span>, el(<span class="string">"span"</span>).text(landed)),
+<a href=#219 id=219 data-nosnippet>219</a>            row(<span class="string">"Waited"</span>, el(<span class="string">"span"</span>).text(waited)),
+<a href=#220 id=220 data-nosnippet>220</a>            row(<span class="string">"Measured from"</span>, el(<span class="string">"span"</span>).text(measured_from)),
+<a href=#221 id=221 data-nosnippet>221</a>        ],
+<a href=#222 id=222 data-nosnippet>222</a>        <span class="string">"release.currency gave no answer."</span>,
+<a href=#223 id=223 data-nosnippet>223</a>    )
+<a href=#224 id=224 data-nosnippet>224</a>}
+<a href=#225 id=225 data-nosnippet>225</a>
+<a href=#226 id=226 data-nosnippet>226</a><span class="doccomment">/// The gates an entry names under `key`, each a link to its own row; `none` when it names none.
+<a href=#227 id=227 data-nosnippet>227</a></span><span class="kw">fn </span>gates_named(g: <span class="kw-2">&amp;</span>Value, key: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw">crate</span>::cockpit::html::El {
+<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">let </span>ids: Vec&lt;String&gt; = g
+<a href=#229 id=229 data-nosnippet>229</a>        .get(key)
+<a href=#230 id=230 data-nosnippet>230</a>        .and_then(Value::as_array)
+<a href=#231 id=231 data-nosnippet>231</a>        .map(|a| {
+<a href=#232 id=232 data-nosnippet>232</a>            a.iter()
+<a href=#233 id=233 data-nosnippet>233</a>                .filter_map(Value::as_str)
+<a href=#234 id=234 data-nosnippet>234</a>                .map(str::to_string)
+<a href=#235 id=235 data-nosnippet>235</a>                .collect()
+<a href=#236 id=236 data-nosnippet>236</a>        })
+<a href=#237 id=237 data-nosnippet>237</a>        .unwrap_or_default();
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">if </span>ids.is_empty() {
+<a href=#239 id=239 data-nosnippet>239</a>        <span class="kw">return </span>none();
+<a href=#240 id=240 data-nosnippet>240</a>    }
+<a href=#241 id=241 data-nosnippet>241</a>    el(<span class="string">"span"</span>)
+<a href=#242 id=242 data-nosnippet>242</a>        .class(<span class="string">"mj-ui-badges"</span>)
+<a href=#243 id=243 data-nosnippet>243</a>        .children(ids.iter().map(|id| code_link(gate_href(id), id.clone())))
+<a href=#244 id=244 data-nosnippet>244</a>}
+<a href=#245 id=245 data-nosnippet>245</a>
+<a href=#246 id=246 data-nosnippet>246</a><span class="attr">#[cfg(test)]
+<a href=#247 id=247 data-nosnippet>247</a></span><span class="kw">mod </span>tests {
+<a href=#248 id=248 data-nosnippet>248</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#249 id=249 data-nosnippet>249</a>    <span class="kw">use </span><span class="kw">crate</span>::ui::deployments::tests::furnished;
+<a href=#250 id=250 data-nosnippet>250</a>
+<a href=#251 id=251 data-nosnippet>251</a>    <span class="doccomment">/// Every declared deployment is a row, and every gate of the CI model says when it
+<a href=#252 id=252 data-nosnippet>252</a>    /// runs: in every plan, on demand, or when its paths change.
+<a href=#253 id=253 data-nosnippet>253</a>    </span><span class="attr">#[test]
+<a href=#254 id=254 data-nosnippet>254</a>    </span><span class="kw">fn </span>every_deployment_and_every_gate_is_a_row_that_says_when_it_runs() {
+<a href=#255 id=255 data-nosnippet>255</a>        <span class="kw">let </span>repo = furnished();
+<a href=#256 id=256 data-nosnippet>256</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#257 id=257 data-nosnippet>257</a>        <span class="kw">let </span>html = screen(<span class="kw-2">&amp;</span>ctx).main.render();
+<a href=#258 id=258 data-nosnippet>258</a>        <span class="macro">assert!</span>(
+<a href=#259 id=259 data-nosnippet>259</a>            html.contains(<span class="string">"The Majordomus layer, served from its container image"</span>),
+<a href=#260 id=260 data-nosnippet>260</a>            <span class="string">"{html}"
+<a href=#261 id=261 data-nosnippet>261</a>        </span>);
+<a href=#262 id=262 data-nosnippet>262</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"No deployment is declared."</span>), <span class="string">"{html}"</span>);
+<a href=#263 id=263 data-nosnippet>263</a>        <span class="kw">for </span>(gate, when) <span class="kw">in </span>[
+<a href=#264 id=264 data-nosnippet>264</a>            (<span class="string">"every-plan"</span>, <span class="string">"every plan"</span>),
+<a href=#265 id=265 data-nosnippet>265</a>            (<span class="string">"when-asked"</span>, <span class="string">"on demand"</span>),
+<a href=#266 id=266 data-nosnippet>266</a>            (<span class="string">"by-path"</span>, <span class="string">"when its paths change"</span>),
+<a href=#267 id=267 data-nosnippet>267</a>        ] {
+<a href=#268 id=268 data-nosnippet>268</a>            <span class="macro">assert!</span>(html.contains(gate), <span class="string">"{gate} is missing: {html}"</span>);
+<a href=#269 id=269 data-nosnippet>269</a>            <span class="macro">assert!</span>(html.contains(when), <span class="string">"{gate} does not say {when}: {html}"</span>);
+<a href=#270 id=270 data-nosnippet>270</a>        }
+<a href=#271 id=271 data-nosnippet>271</a>        <span class="macro">assert!</span>(
+<a href=#272 id=272 data-nosnippet>272</a>            html.contains(<span class="string">"runs in every plan"</span>),
+<a href=#273 id=273 data-nosnippet>273</a>            <span class="string">"the gate's own summary: {html}"
+<a href=#274 id=274 data-nosnippet>274</a>        </span>);
+<a href=#275 id=275 data-nosnippet>275</a>        <span class="macro">assert!</span>(!html.contains(<span class="string">"The CI model declares no gate."</span>), <span class="string">"{html}"</span>);
+<a href=#276 id=276 data-nosnippet>276</a>    }
+<a href=#277 id=277 data-nosnippet>277</a>
+<a href=#278 id=278 data-nosnippet>278</a>    <span class="doccomment">/// The release panel says the stance in its own sentence, how much landed work waits and
+<a href=#279 id=279 data-nosnippet>279</a>    /// since when, the release it is measured from and the version required next (I3071).
+<a href=#280 id=280 data-nosnippet>280</a>    </span><span class="attr">#[test]
+<a href=#281 id=281 data-nosnippet>281</a>    </span><span class="kw">fn </span>the_release_panel_says_what_waits_past_the_last_release() {
+<a href=#282 id=282 data-nosnippet>282</a>        <span class="comment">// the answers below are shaped as measure() gives them, asked with next false
+<a href=#283 id=283 data-nosnippet>283</a>        </span><span class="kw">let </span>owed = currency_body(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#284 id=284 data-nosnippet>284</a>            <span class="string">"stance"</span>: <span class="string">"owed"</span>,
+<a href=#285 id=285 data-nosnippet>285</a>            <span class="string">"summary"</span>: <span class="string">"1 landed commit(s) in 1 landing(s) wait past v0.30.2 (tagged, its record not landed yet) on origin/master, the oldest for 1 h 2 min since this clone saw it land"</span>,
+<a href=#286 id=286 data-nosnippet>286</a>            <span class="string">"trunk"</span>: <span class="string">"origin/master"</span>,
+<a href=#287 id=287 data-nosnippet>287</a>            <span class="string">"release"</span>: {<span class="string">"version"</span>: <span class="string">"0.30.2"</span>, <span class="string">"reference"</span>: <span class="string">"v0.30.2"</span>, <span class="string">"at"</span>: <span class="string">"v0.30.2"</span>, <span class="string">"recorded"</span>: <span class="bool-val">false</span>},
+<a href=#288 id=288 data-nosnippet>288</a>            <span class="string">"landed"</span>: <span class="number">1</span>,
+<a href=#289 id=289 data-nosnippet>289</a>            <span class="string">"landings"</span>: <span class="number">1</span>,
+<a href=#290 id=290 data-nosnippet>290</a>            <span class="string">"oldest_landing"</span>: <span class="string">"2026-10-19T05:00:00Z"</span>,
+<a href=#291 id=291 data-nosnippet>291</a>            <span class="string">"landed_at"</span>: <span class="string">"reflog"</span>,
+<a href=#292 id=292 data-nosnippet>292</a>            <span class="string">"waited_seconds"</span>: <span class="number">3720</span>,
+<a href=#293 id=293 data-nosnippet>293</a>            <span class="string">"overdue_after_seconds"</span>: <span class="number">21600
+<a href=#294 id=294 data-nosnippet>294</a>        </span>}))
+<a href=#295 id=295 data-nosnippet>295</a>        .render();
+<a href=#296 id=296 data-nosnippet>296</a>        <span class="kw">for </span>want <span class="kw">in </span>[
+<a href=#297 id=297 data-nosnippet>297</a>            <span class="string">"&gt;owed&lt;"</span>,
+<a href=#298 id=298 data-nosnippet>298</a>            <span class="string">"wait past v0.30.2"</span>,
+<a href=#299 id=299 data-nosnippet>299</a>            <span class="string">"1 commit(s) in 1 landing(s)"</span>,
+<a href=#300 id=300 data-nosnippet>300</a>            <span class="string">"1 h 02 min, since this clone saw it land (2026-10-19T05:00:00Z)"</span>,
+<a href=#301 id=301 data-nosnippet>301</a>            <span class="string">"v0.30.2 (tagged; its record has not landed yet)"</span>,
+<a href=#302 id=302 data-nosnippet>302</a>        ] {
+<a href=#303 id=303 data-nosnippet>303</a>            <span class="macro">assert!</span>(owed.contains(want), <span class="string">"{want}: {owed}"</span>);
+<a href=#304 id=304 data-nosnippet>304</a>        }
+<a href=#305 id=305 data-nosnippet>305</a>
+<a href=#306 id=306 data-nosnippet>306</a>        <span class="kw">let </span>bounded = currency_body(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#307 id=307 data-nosnippet>307</a>            <span class="string">"stance"</span>: <span class="string">"owed"</span>,
+<a href=#308 id=308 data-nosnippet>308</a>            <span class="string">"summary"</span>: <span class="string">"1 landed commit(s) in 1 landing(s) wait past v0.30.2 on origin/master, the oldest for at most 7 h 0 min"</span>,
+<a href=#309 id=309 data-nosnippet>309</a>            <span class="string">"trunk"</span>: <span class="string">"origin/master"</span>,
+<a href=#310 id=310 data-nosnippet>310</a>            <span class="string">"release"</span>: {<span class="string">"version"</span>: <span class="string">"0.30.2"</span>, <span class="string">"reference"</span>: <span class="string">"v0.30.2"</span>, <span class="string">"at"</span>: <span class="string">"abc"</span>, <span class="string">"recorded"</span>: <span class="bool-val">true</span>},
+<a href=#311 id=311 data-nosnippet>311</a>            <span class="string">"landed"</span>: <span class="number">1</span>,
+<a href=#312 id=312 data-nosnippet>312</a>            <span class="string">"landings"</span>: <span class="number">1</span>,
+<a href=#313 id=313 data-nosnippet>313</a>            <span class="string">"oldest_landing"</span>: <span class="string">"2026-10-18T23:00:00Z"</span>,
+<a href=#314 id=314 data-nosnippet>314</a>            <span class="string">"landed_at"</span>: <span class="string">"commit"</span>,
+<a href=#315 id=315 data-nosnippet>315</a>            <span class="string">"waited_seconds"</span>: <span class="number">25200</span>,
+<a href=#316 id=316 data-nosnippet>316</a>            <span class="string">"overdue_after_seconds"</span>: <span class="number">21600
+<a href=#317 id=317 data-nosnippet>317</a>        </span>}))
+<a href=#318 id=318 data-nosnippet>318</a>        .render();
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="macro">assert!</span>(
+<a href=#320 id=320 data-nosnippet>320</a>            bounded.contains(<span class="string">"at most 7 h 00 min, from its commit time"</span>),
+<a href=#321 id=321 data-nosnippet>321</a>            <span class="string">"{bounded}"
+<a href=#322 id=322 data-nosnippet>322</a>        </span>);
+<a href=#323 id=323 data-nosnippet>323</a>
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">let </span>current = currency_body(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#325 id=325 data-nosnippet>325</a>            <span class="string">"stance"</span>: <span class="string">"current"</span>,
+<a href=#326 id=326 data-nosnippet>326</a>            <span class="string">"summary"</span>: <span class="string">"origin/master holds no landed work past v0.30.2"</span>,
+<a href=#327 id=327 data-nosnippet>327</a>            <span class="string">"trunk"</span>: <span class="string">"origin/master"</span>,
+<a href=#328 id=328 data-nosnippet>328</a>            <span class="string">"release"</span>: {<span class="string">"version"</span>: <span class="string">"0.30.2"</span>, <span class="string">"reference"</span>: <span class="string">"v0.30.2"</span>, <span class="string">"at"</span>: <span class="string">"abc"</span>, <span class="string">"recorded"</span>: <span class="bool-val">true</span>},
+<a href=#329 id=329 data-nosnippet>329</a>            <span class="string">"landed"</span>: <span class="number">0</span>,
+<a href=#330 id=330 data-nosnippet>330</a>            <span class="string">"landings"</span>: <span class="number">0</span>,
+<a href=#331 id=331 data-nosnippet>331</a>            <span class="string">"overdue_after_seconds"</span>: <span class="number">21600
+<a href=#332 id=332 data-nosnippet>332</a>        </span>}))
+<a href=#333 id=333 data-nosnippet>333</a>        .render();
+<a href=#334 id=334 data-nosnippet>334</a>        <span class="macro">assert!</span>(current.contains(<span class="string">"nothing waits"</span>), <span class="string">"{current}"</span>);
+<a href=#335 id=335 data-nosnippet>335</a>        <span class="macro">assert!</span>(
+<a href=#336 id=336 data-nosnippet>336</a>            current.contains(<span class="string">"holds no landed work past v0.30.2"</span>),
+<a href=#337 id=337 data-nosnippet>337</a>            <span class="string">"{current}"
+<a href=#338 id=338 data-nosnippet>338</a>        </span>);
+<a href=#339 id=339 data-nosnippet>339</a>        <span class="macro">assert!</span>(!current.contains(<span class="string">"its record has not landed"</span>), <span class="string">"{current}"</span>);
+<a href=#340 id=340 data-nosnippet>340</a>
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="comment">// a figure the answer did not give is said as missing, never as a zero
+<a href=#342 id=342 data-nosnippet>342</a>        </span><span class="kw">let </span>bare = currency_body(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#343 id=343 data-nosnippet>343</a>            <span class="string">"stance"</span>: <span class="string">"unknown"</span>,
+<a href=#344 id=344 data-nosnippet>344</a>            <span class="string">"summary"</span>: <span class="string">"the trunk cannot be told: no remote-tracking branch"</span>,
+<a href=#345 id=345 data-nosnippet>345</a>            <span class="string">"landed"</span>: <span class="number">0</span>,
+<a href=#346 id=346 data-nosnippet>346</a>            <span class="string">"landings"</span>: <span class="number">0</span>,
+<a href=#347 id=347 data-nosnippet>347</a>            <span class="string">"overdue_after_seconds"</span>: <span class="number">21600
+<a href=#348 id=348 data-nosnippet>348</a>        </span>}))
+<a href=#349 id=349 data-nosnippet>349</a>        .render();
+<a href=#350 id=350 data-nosnippet>350</a>        <span class="macro">assert!</span>(bare.contains(<span class="string">"no release"</span>), <span class="string">"{bare}"</span>);
+<a href=#351 id=351 data-nosnippet>351</a>        <span class="macro">assert!</span>(bare.contains(<span class="string">"nothing waits"</span>), <span class="string">"{bare}"</span>);
+<a href=#352 id=352 data-nosnippet>352</a>        <span class="macro">assert!</span>(bare.contains(<span class="string">"no remote-tracking branch"</span>), <span class="string">"{bare}"</span>);
+<a href=#353 id=353 data-nosnippet>353</a>
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="comment">// a wait the answer gave without its landing's date is the wait alone, and counts it
+<a href=#355 id=355 data-nosnippet>355</a>        // did not give are not measured
+<a href=#356 id=356 data-nosnippet>356</a>        </span><span class="kw">let </span>partial = currency_body(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#357 id=357 data-nosnippet>357</a>            <span class="string">"stance"</span>: <span class="string">"owed"</span>,
+<a href=#358 id=358 data-nosnippet>358</a>            <span class="string">"summary"</span>: <span class="string">"landed work waits past v0.30.2 on origin/master"</span>,
+<a href=#359 id=359 data-nosnippet>359</a>            <span class="string">"trunk"</span>: <span class="string">"origin/master"</span>,
+<a href=#360 id=360 data-nosnippet>360</a>            <span class="string">"release"</span>: {<span class="string">"version"</span>: <span class="string">"0.30.2"</span>, <span class="string">"reference"</span>: <span class="string">"v0.30.2"</span>, <span class="string">"at"</span>: <span class="string">"abc"</span>, <span class="string">"recorded"</span>: <span class="bool-val">true</span>},
+<a href=#361 id=361 data-nosnippet>361</a>            <span class="string">"landed_at"</span>: <span class="string">"reflog"</span>,
+<a href=#362 id=362 data-nosnippet>362</a>            <span class="string">"waited_seconds"</span>: <span class="number">3600</span>,
+<a href=#363 id=363 data-nosnippet>363</a>            <span class="string">"overdue_after_seconds"</span>: <span class="number">21600
+<a href=#364 id=364 data-nosnippet>364</a>        </span>}))
+<a href=#365 id=365 data-nosnippet>365</a>        .render();
+<a href=#366 id=366 data-nosnippet>366</a>        <span class="macro">assert!</span>(
+<a href=#367 id=367 data-nosnippet>367</a>            partial.contains(<span class="string">"1 h 00 min, since this clone saw it land"</span>),
+<a href=#368 id=368 data-nosnippet>368</a>            <span class="string">"{partial}"
+<a href=#369 id=369 data-nosnippet>369</a>        </span>);
+<a href=#370 id=370 data-nosnippet>370</a>        <span class="macro">assert!</span>(!partial.contains(<span class="string">"saw it land ("</span>), <span class="string">"{partial}"</span>);
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="macro">assert!</span>(partial.contains(<span class="string">"not measured"</span>), <span class="string">"{partial}"</span>);
+<a href=#372 id=372 data-nosnippet>372</a>    }
+<a href=#373 id=373 data-nosnippet>373</a>
+<a href=#374 id=374 data-nosnippet>374</a>    <span class="doccomment">/// The screen reads release.currency: a KPI beside what was released, and the panel that
+<a href=#375 id=375 data-nosnippet>375</a>    /// names the capability it read.
+<a href=#376 id=376 data-nosnippet>376</a>    </span><span class="attr">#[test]
+<a href=#377 id=377 data-nosnippet>377</a>    </span><span class="kw">fn </span>the_screen_says_whether_the_trunk_is_released() {
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>repo = furnished();
+<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#380 id=380 data-nosnippet>380</a>        <span class="kw">let </span>html = screen(<span class="kw-2">&amp;</span>ctx).main.render();
+<a href=#381 id=381 data-nosnippet>381</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"Since then"</span>), <span class="string">"{html}"</span>);
+<a href=#382 id=382 data-nosnippet>382</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"Is the trunk released?"</span>), <span class="string">"{html}"</span>);
+<a href=#383 id=383 data-nosnippet>383</a>        <span class="macro">assert!</span>(
+<a href=#384 id=384 data-nosnippet>384</a>            html.contains(<span class="string">"release.currency"</span>),
+<a href=#385 id=385 data-nosnippet>385</a>            <span class="string">"the panel's source line names the capability: {html}"
+<a href=#386 id=386 data-nosnippet>386</a>        </span>);
+<a href=#387 id=387 data-nosnippet>387</a>    }
+<a href=#388 id=388 data-nosnippet>388</a>
+<a href=#389 id=389 data-nosnippet>389</a>    <span class="doccomment">/// A gate is a row a link can lead to, and the gates it implies lead to theirs.
+<a href=#390 id=390 data-nosnippet>390</a>    </span><span class="attr">#[test]
+<a href=#391 id=391 data-nosnippet>391</a>    </span><span class="kw">fn </span>a_gate_is_a_row_links_lead_to() {
+<a href=#392 id=392 data-nosnippet>392</a>        <span class="macro">assert_eq!</span>(gate_href(<span class="string">"shell-suite"</span>), <span class="string">"/ui/delivery#gate-shell-suite"</span>);
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">let </span>implied = gates_named(
+<a href=#394 id=394 data-nosnippet>394</a>            <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"implies"</span>: [<span class="string">"rust-integration"</span>, <span class="string">"rust-quality"</span>] }),
+<a href=#395 id=395 data-nosnippet>395</a>            <span class="string">"implies"</span>,
+<a href=#396 id=396 data-nosnippet>396</a>        )
+<a href=#397 id=397 data-nosnippet>397</a>        .render();
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="macro">assert!</span>(
+<a href=#399 id=399 data-nosnippet>399</a>            implied.contains(<span class="string">"href=\"/ui/delivery#gate-rust-integration\""</span>),
+<a href=#400 id=400 data-nosnippet>400</a>            <span class="string">"{implied}"
+<a href=#401 id=401 data-nosnippet>401</a>        </span>);
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="macro">assert!</span>(
+<a href=#403 id=403 data-nosnippet>403</a>            implied.contains(<span class="string">"href=\"/ui/delivery#gate-rust-quality\""</span>),
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="string">"{implied}"
+<a href=#405 id=405 data-nosnippet>405</a>        </span>);
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="macro">assert!</span>(gates_named(<span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({}), <span class="string">"implies"</span>)
+<a href=#407 id=407 data-nosnippet>407</a>            .render()
+<a href=#408 id=408 data-nosnippet>408</a>            .contains(<span class="string">"&gt;none&lt;"</span>));
+<a href=#409 id=409 data-nosnippet>409</a>
+<a href=#410 id=410 data-nosnippet>410</a>        <span class="kw">let </span>repo = furnished();
+<a href=#411 id=411 data-nosnippet>411</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#412 id=412 data-nosnippet>412</a>        <span class="kw">let </span>html = screen(<span class="kw-2">&amp;</span>ctx).main.render();
+<a href=#413 id=413 data-nosnippet>413</a>        <span class="macro">assert!</span>(html.contains(<span class="string">"id=\"gate-every-plan\""</span>), <span class="string">"{html}"</span>);
+<a href=#414 id=414 data-nosnippet>414</a>        <span class="macro">assert!</span>(
+<a href=#415 id=415 data-nosnippet>415</a>            html.contains(<span class="string">"href=\"/ui/delivery#gate-by-path\""</span>),
+<a href=#416 id=416 data-nosnippet>416</a>            <span class="string">"{html}"
+<a href=#417 id=417 data-nosnippet>417</a>        </span>);
+<a href=#418 id=418 data-nosnippet>418</a>        <span class="macro">assert!</span>(
+<a href=#419 id=419 data-nosnippet>419</a>            html.contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#420 id=420 data-nosnippet>420</a>                <span class="string">"href=\"{}\""</span>,
+<a href=#421 id=421 data-nosnippet>421</a>                <span class="kw">super</span>::<span class="kw">super</span>::deployments::href(<span class="string">"majordomus"</span>)
+<a href=#422 id=422 data-nosnippet>422</a>            )),
+<a href=#423 id=423 data-nosnippet>423</a>            <span class="string">"a deployment leads to its row on Deployments: {html}"
+<a href=#424 id=424 data-nosnippet>424</a>        </span>);
+<a href=#425 id=425 data-nosnippet>425</a>    }
+<a href=#426 id=426 data-nosnippet>426</a>}
 </code></pre></div></section></main></body></html>

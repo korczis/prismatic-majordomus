@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["endpoints","peers_of"],"struct":["TailscaleProvider"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DECISION_KINDS","DIMENSIONS","NO_PLAN","PLAN","PLAN_SCHEMA"],"enum":["ProofCount","ProofDecision"],"fn":["counts_toward","digest","load","protocol_digest"],"struct":["ProofBound","ProofChange","ProofField","ProofInstrument","ProofPeriod","ProofPlan","ProofProtocol","ProofStamp","ProofTest"],"trait":["ProofRecord"]};

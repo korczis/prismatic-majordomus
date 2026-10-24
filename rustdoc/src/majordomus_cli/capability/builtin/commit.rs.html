@@ -53,7 +53,7 @@
 <a href=#53 id=53 data-nosnippet>53</a>/// read. An unreadable policy is `doctor`'s finding; it is not a reason for a validator to
 <a href=#54 id=54 data-nosnippet>54</a>/// silently stop checking.
 <a href=#55 id=55 data-nosnippet>55</a></span><span class="kw">fn </span>policy(ctx: <span class="kw-2">&amp;</span>Context) -&gt; CommitPolicy {
-<a href=#56 id=56 data-nosnippet>56</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(repo) = <span class="kw">crate</span>::repository::Repository::open(<span class="kw-2">&amp;</span>root(ctx)) <span class="kw">else </span>{
+<a href=#56 id=56 data-nosnippet>56</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(repo) = ctx.repository() <span class="kw">else </span>{
 <a href=#57 id=57 data-nosnippet>57</a>        <span class="kw">return </span>CommitPolicy::default();
 <a href=#58 id=58 data-nosnippet>58</a>    };
 <a href=#59 id=59 data-nosnippet>59</a>    <span class="kw">crate</span>::policy::LoadedPolicy::load(<span class="kw-2">&amp;</span>repo)
