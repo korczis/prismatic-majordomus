@@ -480,12 +480,13 @@ fn variables_for(store: &Store, credentials: &Path, triple: &str) -> Vec<EnvVar>
 /// assert!(!answer.sccache.found);
 /// ```
 pub fn report(opts: &EnvOptions) -> EnvReport {
-    report_under(opts, config_dir().as_deref())
+    report_under(opts, config_dir().as_deref(), HEALTH_BUDGET)
 }
 
 /// [`report`], with the default node and credential files under `config`, or none when there
-/// is no configuration directory.
-fn report_under(opts: &EnvOptions, config: Option<&Path>) -> EnvReport {
+/// is no configuration directory, and `health` for the store's readiness answer: the command
+/// waits [`HEALTH_BUDGET`], a test as long as an answer takes on a loaded runner.
+fn report_under(opts: &EnvOptions, config: Option<&Path>, health: Duration) -> EnvReport {
     let Some(version) = sccache_version(&opts.sccache) else {
         return local_only(
             format!(
@@ -518,7 +519,7 @@ fn report_under(opts: &EnvOptions, config: Option<&Path>) -> EnvReport {
         }
         Some(Err(FileError::Absent)) | None => NodeFile::default(),
     };
-    let offers = offers_of(&file, OWN_NODE, HEALTH_BUDGET);
+    let offers = offers_of(&file, OWN_NODE, health);
     let selection = select(
         &offers,
         &Policy {
@@ -622,6 +623,18 @@ mod tests {
     use std::io::{Read, Write};
     use std::net::TcpListener;
     use std::os::unix::fs::PermissionsExt;
+
+    /// The readiness budget a test gives a store that is up. 300 ms is the command's answer;
+    /// a loaded runner missed it with the store listening (CI run 40055289048 read `Mesh` as
+    /// `LocalOnly`), so a test waits for the answer, not for the clock. A store that is down
+    /// refuses the connection at once, whatever the budget.
+    const PATIENT: Duration = Duration::from_secs(10);
+
+    /// [`report`] with the default files under the real configuration directory and the
+    /// patient budget.
+    fn patient(opts: &EnvOptions) -> EnvReport {
+        report_under(opts, config_dir().as_deref(), PATIENT)
+    }
 
     const SECRET: &str = "wJalrXUtnFEMI-NOT-A-REAL-KEY-7MDENG";
 
@@ -734,7 +747,7 @@ mod tests {
         let d = tempfile::tempdir().unwrap();
         let port = store_up();
         let creds = good_credentials(d.path());
-        let r = report(&opts(
+        let r = patient(&opts(
             capable(d.path()),
             Some(node_file(d.path(), port)),
             Some(creds.clone()),
@@ -767,7 +780,7 @@ mod tests {
     fn no_answer_names_a_key_only_the_path_of_the_file() {
         let d = tempfile::tempdir().unwrap();
         let port = store_up();
-        let r = report(&opts(
+        let r = patient(&opts(
             capable(d.path()),
             Some(node_file(d.path(), port)),
             Some(good_credentials(d.path())),
@@ -805,7 +818,7 @@ mod tests {
     fn an_sccache_without_the_chain_is_local_only_and_its_throwaway_server_is_stopped() {
         let d = tempfile::tempdir().unwrap();
         let port = store_up();
-        let r = report(&opts(
+        let r = patient(&opts(
             incapable(d.path()),
             Some(node_file(d.path(), port)),
             Some(good_credentials(d.path())),
@@ -831,7 +844,7 @@ mod tests {
         let (answer, _) = measure_multilevel(&path.display().to_string());
         assert_eq!(answer, None);
         let port = store_up();
-        let r = report(&opts(
+        let r = patient(&opts(
             path.display().to_string(),
             Some(node_file(d.path(), port)),
             Some(good_credentials(d.path())),
@@ -843,7 +856,7 @@ mod tests {
     #[test]
     fn a_store_that_is_down_when_the_server_would_start_is_left_out() {
         let d = tempfile::tempdir().unwrap();
-        let r = report(&opts(
+        let r = patient(&opts(
             capable(d.path()),
             Some(node_file(d.path(), store_down())),
             Some(good_credentials(d.path())),
@@ -880,15 +893,15 @@ mod tests {
             Some(node_file(d.path(), port)),
             Some(good_credentials(d.path())),
         );
-        assert_eq!(report(&o).mode, Mode::Mesh);
+        assert_eq!(patient(&o).mode, Mode::Mesh);
         up.join().unwrap();
-        assert_eq!(report(&o).mode, Mode::LocalOnly, "a stopped store is out");
+        assert_eq!(patient(&o).mode, Mode::LocalOnly, "a stopped store is out");
     }
 
     #[test]
     fn a_node_that_offers_and_knows_nothing_is_local_only() {
         let d = tempfile::tempdir().unwrap();
-        let r = report(&opts(
+        let r = patient(&opts(
             capable(d.path()),
             Some(d.path().join("absent.json")),
             Some(good_credentials(d.path())),
@@ -903,7 +916,7 @@ mod tests {
         let d = tempfile::tempdir().unwrap();
         let bad = d.path().join("bad.json");
         std::fs::write(&bad, "{").unwrap();
-        let r = report(&opts(capable(d.path()), Some(bad), None));
+        let r = patient(&opts(capable(d.path()), Some(bad), None));
         assert_eq!(r.mode, Mode::LocalOnly);
         assert!(r.reason.contains("node file is unusable"), "{}", r.reason);
     }
@@ -934,7 +947,7 @@ mod tests {
             (Some(d.path().to_path_buf()), "not a regular file"),
         ];
         for (creds, want) in cases {
-            let r = report(&opts(capable(d.path()), Some(node.clone()), creds));
+            let r = patient(&opts(capable(d.path()), Some(node.clone()), creds));
             assert_eq!(r.mode, Mode::LocalOnly, "{want}");
             assert!(r.reason.contains(want), "{want}: {}", r.reason);
             assert!(r.variables.is_empty());
@@ -945,7 +958,7 @@ mod tests {
 
     #[test]
     fn an_absent_sccache_is_local_only_and_says_the_build_is_what_it_was() {
-        let r = report(&opts("/no/such/sccache".into(), None, None));
+        let r = patient(&opts("/no/such/sccache".into(), None, None));
         assert_eq!(r.mode, Mode::LocalOnly);
         assert!(!r.sccache.found);
         assert!(r.reason.contains("absent"), "{}", r.reason);
@@ -1049,6 +1062,7 @@ mod tests {
         let r = report_under(
             &opts(capable(d.path()), Some(node_file(d.path(), port)), None),
             None,
+            PATIENT,
         );
         assert_eq!(r.mode, Mode::LocalOnly);
         assert!(
@@ -1066,7 +1080,7 @@ mod tests {
         let d = tempfile::tempdir().unwrap();
         let config = d.path().join("config");
         // no node file under it: nothing is offered
-        let r = report_under(&opts(capable(d.path()), None, None), Some(&config));
+        let r = report_under(&opts(capable(d.path()), None, None), Some(&config), PATIENT);
         assert_eq!(r.mode, Mode::LocalOnly);
         assert!(r.reason.contains("no node offers"), "{}", r.reason);
         // a node file given, the credential looked for under it, and not there
@@ -1074,6 +1088,7 @@ mod tests {
         let r = report_under(
             &opts(capable(d.path()), Some(node_file(d.path(), port)), None),
             Some(&config),
+            PATIENT,
         );
         assert_eq!(r.mode, Mode::LocalOnly);
         let want = credentials_under(&config);
@@ -1104,7 +1119,7 @@ mod tests {
         write_exec(&path, "#!/bin/sh\necho 'sccache 0.18.0'\nexit 3\n");
         let program = path.display().to_string();
         assert_eq!(sccache_version(&program), None);
-        let r = report_under(&opts(program, None, None), None);
+        let r = report_under(&opts(program, None, None), None, PATIENT);
         assert_eq!(r.mode, Mode::LocalOnly);
         assert!(!r.sccache.found);
     }

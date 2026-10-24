@@ -337,10 +337,15 @@ jobs:
       # the build job's executable (I3939), with MAJORDOMUS_BIN and the commit it was built
       # from. Six of this job's gates and the scripts several others call run it; each used to
       # reach it through `cargo run` or a launcher that built, and waited on the build lock.
+      # The pinned toolchain is set up all the same: core-check's derive-toolchain wiring
+      # refuses a job whose cargo lacks it, since a derive there would fetch it mid-merge.
+      - id: rust
+        uses: ./.github/actions/setup-rust
       - name: the executable every gate runs
         uses: ./.github/actions/majordomus-bin
         with:
           exe: "true"
+          setup: "false"
       # Every gate the model assigns to this job, in its order, as the plan selected them:
       # shell-lint, ui-check and core-check on every plan, and the structural gates a change
       # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched

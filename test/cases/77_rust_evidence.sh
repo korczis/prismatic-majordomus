@@ -1,3 +1,4 @@
+# majordomus-exclusive: compiles the crate's doc examples and its benchmarks with every core cargo takes; beside it on CI's four-core runner case 431 starved past its 600 s bound (I4199)
 # majordomus-covers: none
 # claims: rust-evidence-gates, rust-hot-path-benchmarks, rust-coverage-floor
 # The Rust executable carries its evidence with it (rule project.rust-cli-evidence). The
