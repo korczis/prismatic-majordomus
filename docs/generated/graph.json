@@ -718,6 +718,15 @@
         "status": "query"
       },
       {
+        "id": "capability:gates.state",
+        "kind": "capability",
+        "label": "gates.state",
+        "summary": "How each gate last went",
+        "route": "/cockpit/capabilities/gates.state",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -32617,8 +32626,9 @@
             "A gate that has never reported is distinguished from a gate that passed",
             "The capability answers without network access, saying what it could not reach"
           ],
+          "completed_at": "2026-10-15T08:49:02Z",
+          "completed_event": "sha256:38aa9c3f50e73ff304b9b57d284172dcba21f9d210ea23503a900e77c894fa75",
           "created_at": "2026-09-11",
-          "current_state": "Gates are declared and planned. Their run state is read by a person on GitHub and by nothing in this repository. No capability, no route, no page.",
           "depends_on": [],
           "desired_state": "The runtime answers the gate set and the standing of each gate's last run, including the case where no run has reported, which is the case that matters most and the one an absent reader hides.",
           "evidence_required": [
@@ -32642,11 +32652,15 @@
             "test/cases"
           ],
           "slug": "ci-status-is-a-capability",
-          "updated_at": "2026-09-11",
+          "started_at": "2026-10-15T08:07:51Z",
+          "started_event": "sha256:26c99efa25b484a96bd66d2420777c12d1d80f2926a267eb56254f8766400297",
+          "updated_at": "2026-10-15T08:49:02Z",
           "validation": [
             "bin/majordomus-cli capabilities validate",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-15T08:48:52Z",
+          "verified_event": "sha256:84a013d887cf5f12e756472c65f86bf4fda4b77e263242650fbe46db10815a6a"
         }
       },
       {
@@ -85639,6 +85653,13 @@
         "source": "test/cases/3056_every_failure_class_names_its_proof.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3059_gate_state_is_answerable.sh",
+        "kind": "test",
+        "label": "test/cases/3059_gate_state_is_answerable.sh",
+        "route": "/cockpit/objects/test/test-cases-3059-gate-state-is-answerable-sh",
+        "source": "test/cases/3059_gate_state_is_answerable.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "label": "test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -92050,6 +92071,21 @@
       },
       {
         "source": "capability:gates.model",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.state",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.state",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.state",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -128524,6 +128560,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3059_gate_state_is_answerable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -133649,6 +133690,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.state",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -134330,8 +134376,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3768,
-      "edges": 8711,
+      "nodes": 3770,
+      "edges": 8716,
       "acyclic": false,
       "truncated": false
     }

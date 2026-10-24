@@ -404,6 +404,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:gates.state",
+      "path": "/evidence/capabilities/gates-state/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:graph.get",
       "path": "/evidence/capabilities/graph-get/"
     },
@@ -4767,6 +4772,16 @@
       "kind": "capability",
       "id": "gates.model",
       "page": "/evidence/capabilities/gates-model/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:gates.state": {
+      "kind": "capability",
+      "id": "gates.state",
+      "page": "/evidence/capabilities/gates-state/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -14436,6 +14451,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:3059_gate_state_is_answerable",
+          "path": "test/cases/3059_gate_state_is_answerable.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:103_obligations",
           "path": "test/cases/103_obligations.sh",
@@ -14721,6 +14742,12 @@
           "via": "behaviour",
           "test": "suite:2988_a_scope_admits_what_its_derive_wrote",
           "path": "test/cases/2988_a_scope_admits_what_its_derive_wrote.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3059_gate_state_is_answerable",
+          "path": "test/cases/3059_gate_state_is_answerable.sh",
           "category": "e2e"
         },
         {
@@ -20399,6 +20426,18 @@
       "programs": [],
       "members": [
         "capability:product.features"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_gate_state": {
+      "kind": "mcp",
+      "id": "majordomus_gate_state",
+      "alias_of": "capability:gates.state",
+      "programs": [],
+      "members": [
+        "capability:gates.state"
       ],
       "routes": [],
       "mechanisms": [],

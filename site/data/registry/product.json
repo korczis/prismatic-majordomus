@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.6"
   },
-  "fingerprint": "d3acfde278c614400196685dcaf0df10aa6b001c94eef10c91f8498c2077b9a8",
+  "fingerprint": "1ca5b7cebbaaab53f2d1bbd57d33f10259ff61db1ac076f4b2fd8b0f6fda1745",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -2569,7 +2569,7 @@
         "use_cases": 8,
         "rules": 12,
         "enforced_rules": 10,
-        "capabilities": 4,
+        "capabilities": 5,
         "moments": 31
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 139,
+        "capabilities": 140,
         "moments": 38
       },
       "evidence": {
@@ -8457,6 +8457,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         }
@@ -8494,10 +8503,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 2,
-        "mcp_tools": 2,
-        "mcp_resources": 2,
-        "http_routes": 2,
+        "capabilities": 3,
+        "mcp_tools": 3,
+        "mcp_resources": 3,
+        "http_routes": 3,
         "cli_paths": 0,
         "commands": 0,
         "objects": 0,
@@ -8626,6 +8635,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -8975,10 +8993,10 @@
         "planning"
       ],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
-        "mcp_resources": 4,
-        "http_routes": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 5,
+        "http_routes": 5,
         "cli_paths": 0,
         "commands": 4,
         "objects": 0,
@@ -11125,6 +11143,15 @@
               "tool": "majordomus_gates",
               "resource": "majordomus://gates",
               "route": "GET /api/v1/gates"
+            },
+            {
+              "id": "gates.state",
+              "title": "How each gate last went",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_gate_state",
+              "resource": "majordomus://gates/state",
+              "route": "GET /api/v1/gates/state"
             }
           ]
         },
@@ -11702,10 +11729,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 102,
-        "mcp_tools": 93,
-        "mcp_resources": 16,
-        "http_routes": 98,
+        "capabilities": 103,
+        "mcp_tools": 94,
+        "mcp_resources": 17,
+        "http_routes": 99,
         "cli_paths": 44,
         "commands": 0,
         "objects": 0,
@@ -18424,17 +18451,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3314,
-    "builtin": 208,
-    "declarative": 3106,
+    "capabilities": 3316,
+    "builtin": 209,
+    "declarative": 3107,
     "modules": 58,
-    "mcp_tools": 197,
-    "mcp_resources": 3161,
-    "http_routes": 202,
+    "mcp_tools": 198,
+    "mcp_resources": 3163,
+    "http_routes": 203,
     "cli_commands": 210,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3106,
+    "objects": 3107,
     "by_kind": {
       "adr": 160,
       "application": 5,
@@ -18467,7 +18494,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 602,
+      "test": 603,
       "use-case": 49,
       "workspace": 1
     },

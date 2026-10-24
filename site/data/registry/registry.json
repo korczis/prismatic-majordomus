@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.6"
   },
   "registry": {
-    "fingerprint": "192d43271727fc5e4d52160c5ee1e516f4332ad17286125ec64558a2b6a885e7",
+    "fingerprint": "6d87a9af10d61160d9daeba82c24fbb2adac402d354d3d86edaa6120668acb6a",
     "summary": {
-      "total": 3314,
-      "builtin": 208,
-      "declarative": 3106,
+      "total": 3316,
+      "builtin": 209,
+      "declarative": 3107,
       "by_kind": {
         "command": 32,
-        "query": 176,
-        "resource": 3106
+        "query": 177,
+        "resource": 3107
       },
       "by_stability": {
-        "behaviorally_verified": 143,
+        "behaviorally_verified": 144,
         "experimental": 55,
-        "implemented": 3116
+        "implemented": 3117
       },
-      "mcp_tools": 197,
-      "mcp_resources": 3161,
-      "http_routes": 202,
+      "mcp_tools": 198,
+      "mcp_resources": 3163,
+      "http_routes": 203,
       "cli_commands": 112,
       "modules": 92,
-      "benchmark_required": 175,
+      "benchmark_required": 176,
       "benchmark_waived": 33,
       "cached": 54
     },
@@ -31825,6 +31825,286 @@
           "policy": "process",
           "max_entries": 4,
           "ttl_seconds": 5
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs"
+      },
+      {
+        "id": "gates.state",
+        "module": "gates",
+        "kind": "query",
+        "title": "How each gate last went",
+        "description": "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "GateStateReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Where the gate set was read from, repository-relative."
+              },
+              "ledger": {
+                "type": "string",
+                "description": "Where the recorded runs were read from, repository-relative."
+              },
+              "head": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit this checkout is at, when git could say."
+              },
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many gates the model declares; measured."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many gates stand in each status, by the status word."
+              },
+              "never_reported": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The gates no run has ever reported, in declaration order."
+              },
+              "gates": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/GateState"
+                },
+                "description": "Every declared gate, in declaration order."
+              },
+              "unreached": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What this answer did not consult, so its silence about it is not read as a verdict."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read, and what that means for the answer."
+              },
+              "evaluated_at": {
+                "type": "string",
+                "description": "When this answer was taken, RFC 3339 UTC."
+              }
+            },
+            "required": [
+              "source",
+              "ledger",
+              "count",
+              "tallies",
+              "never_reported",
+              "gates",
+              "unreached",
+              "findings",
+              "evaluated_at"
+            ],
+            "description": "The declared gate set and the standing of each gate's last recorded run.\n\n`count`, `tallies` and `never_reported` are measured from `gates`, never written down,\nand `unreached` always names what was not consulted.\n\n```\nuse majordomus_cli::gates::GateStateReport;\n\nlet r: GateStateReport = serde_json::from_value(serde_json::json!({\n    \"source\": \".ai/repo/ci/gates.yaml\",\n    \"ledger\": \".ai/local/state/ledger.jsonl\",\n    \"count\": 0,\n    \"tallies\": {},\n    \"never_reported\": [],\n    \"gates\": [],\n    \"unreached\": [\"the forge's CI runs were not consulted\"],\n    \"findings\": [],\n    \"evaluated_at\": \"2026-10-15T00:00:00Z\",\n}))\n.unwrap();\nassert_eq!(r.count, r.gates.len());\nassert!(r.head.is_none(), \"a checkout without git still answers, and says so\");\nassert!(!r.unreached.is_empty());\n```",
+            "title": "GateStateReport",
+            "$defs": {
+              "GateState": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The gate's identity in the model."
+                  },
+                  "job": {
+                    "type": "string",
+                    "description": "The CI job that runs it."
+                  },
+                  "always": {
+                    "type": "boolean",
+                    "description": "Whether every plan selects it."
+                  },
+                  "on_demand": {
+                    "type": "boolean",
+                    "description": "Whether its runner can be had only on demand, so no routine plan runs it."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/GateStatus",
+                    "description": "What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree)."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why it is in that status, in words a person can act on."
+                  },
+                  "last_run": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/GateRun"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The run that last reported, whichever task recorded it."
+                  },
+                  "on_head": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read."
+                  },
+                  "inputs_hash": {
+                    "type": "string",
+                    "description": "The hash of the gate's inputs as they stand now, when it could be taken."
+                  }
+                },
+                "required": [
+                  "id",
+                  "job",
+                  "always",
+                  "on_demand",
+                  "status",
+                  "reason"
+                ],
+                "description": "One declared gate and the standing of its last recorded run.\n\n```\nuse majordomus_cli::gates::{GateState, GateStatus};\n\nlet never: GateState = serde_json::from_value(serde_json::json!({\n    \"id\": \"rust-check\",\n    \"job\": \"rust\",\n    \"always\": true,\n    \"on_demand\": false,\n    \"status\": \"queued\",\n    \"reason\": \"no run of this gate has ever been recorded in this checkout\",\n}))\n.unwrap();\n// no run, no head, and a word that is not `pass`\nassert!(never.last_run.is_none() && never.on_head.is_none());\nassert_eq!(never.status, GateStatus::Queued);\n```"
+              },
+              "GateStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "pass",
+                    "description": "It ran over these inputs and succeeded. The only word that discharges anything."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "It ran over these inputs and failed. Completion is refused."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "It ran, and the files that select it have changed since; what it proved is about a\ntree that no longer exists. Completion is refused, because the alternative is\ntreating a claim about the past as a claim about the present."
+                  },
+                  {
+                    "type": "string",
+                    "const": "blocked",
+                    "description": "Something it cannot run without has not passed, so its own silence means nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "queued",
+                    "description": "The plan selects it and no run has ever reported. Not `unknown`: the question was\nasked and no answer came, which is a debt somebody owes, and not `pass`, which is\nthe mistake this word exists to make impossible."
+                  },
+                  {
+                    "type": "string",
+                    "const": "exempt",
+                    "description": "The plan does not select it: nothing the task changed can make it true or false."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "It cannot be judged here at all — no model, no git, a ledger that would not read.\nAn honest gap, and never a pass."
+                  }
+                ],
+                "description": "```\nuse majordomus_cli::gates::GateStatus;\n\n// the three answers a reader is entitled to, and they are different answers\nassert!(GateStatus::Fail.refuses(), \"a run that failed refuses\");\nassert!(GateStatus::Queued.unverified(), \"asked and unanswered is a debt\");\nassert!(!GateStatus::Exempt.refuses() && !GateStatus::Exempt.unverified());\n\n// and the one that is neither: a run whose tree has moved proves nothing about this one\nassert!(GateStatus::Stale.refuses());\nassert_eq!(GateStatus::Stale.as_str(), \"stale\");\n```\nWhat is known about one gate. Every word is one this repository's design tokens already\ncarry (`share/design/tokens.yaml`, `status.states`), so a surface renders it without\nbeing taught a sixth vocabulary and the design gate does not refuse it."
+              },
+              "GateRun": {
+                "type": "object",
+                "properties": {
+                  "recorded_at": {
+                    "type": "string",
+                    "description": "When it was recorded, RFC 3339 UTC."
+                  },
+                  "head": {
+                    "type": "string",
+                    "description": "The commit the ledger's envelope stamped on it."
+                  },
+                  "branch": {
+                    "type": "string",
+                    "description": "The branch it was recorded on."
+                  },
+                  "exit": {
+                    "type": "integer",
+                    "format": "int64",
+                    "description": "The exit status the gate reported. `0` is a pass."
+                  },
+                  "command": {
+                    "type": "string",
+                    "description": "The command that produced it — narrative is not evidence."
+                  },
+                  "inputs_hash": {
+                    "type": "string",
+                    "description": "The hash of the files that select the gate, as they stood when it ran."
+                  },
+                  "session": {
+                    "type": "string",
+                    "description": "The session that recorded it."
+                  }
+                },
+                "required": [
+                  "recorded_at",
+                  "head",
+                  "branch",
+                  "exit"
+                ],
+                "description": "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::gates"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_gate_state",
+            "resource": {
+              "uri": "majordomus://gates/state",
+              "name": "gate-state"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/gates/state"
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "gates",
+          "ci",
+          "evidence",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
         },
         "execution": {
           "effect": "read",
@@ -86086,10 +86366,11 @@
         "description": "Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
           "gates.completion",
-          "gates.model"
+          "gates.model",
+          "gates.state"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
         "rustdoc": {
@@ -86797,7 +87078,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 602,
+        "capabilities": 603,
         "capability_ids": []
       },
       {
@@ -86889,7 +87170,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9f1a261184ea6b1b45421fbdad4386d682be485dcaeb2b1fd3f684e6c2fbafd0",
+    "fingerprint": "df6b8ea91e9bee7b5c40e781774ca58f0a1e1020e3a0079f8a2053eb83522bac",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -86943,7 +87224,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 602,
+      "test": 603,
       "use-case": 49,
       "workspace": 1
     },
@@ -94181,7 +94462,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 795321
+        "bytes": 782278
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -94307,7 +94588,7 @@
         "title": "How Majordomus derives its surfaces — one typed reality, many projections",
         "path": "docs/SURFACES.md",
         "source_class": "document",
-        "bytes": 82589
+        "bytes": 82664
       },
       {
         "uri": "majordomus://document/docs/TWO_FOLDER_CONSOLIDATION.md",
@@ -100373,7 +100654,7 @@
         "path": ".ai/repo/project/issues/I1512.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2602
+        "bytes": 5740
       },
       {
         "uri": "majordomus://issue/I1516",
@@ -117021,6 +117302,14 @@
         "bytes": 9317
       },
       {
+        "uri": "majordomus://test/test/cases/3059_gate_state_is_answerable.sh",
+        "kind": "test",
+        "identity": "test/cases/3059_gate_state_is_answerable.sh",
+        "path": "test/cases/3059_gate_state_is_answerable.sh",
+        "source_class": "case",
+        "bytes": 5371
+      },
+      {
         "uri": "majordomus://test/test/cases/305_a_command_is_claimed_or_classified.sh",
         "kind": "test",
         "identity": "test/cases/305_a_command_is_claimed_or_classified.sh",
@@ -120977,7 +121266,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 602
+      "objects": 603
     },
     {
       "name": "use-case",
@@ -155004,6 +155293,23 @@
         "output": "GateModelReport"
       },
       {
+        "name": "majordomus_gate_state",
+        "id": "gates.state",
+        "title": "How each gate last went",
+        "description": "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "GateStateReport"
+      },
+      {
         "name": "majordomus_graph",
         "id": "graph.get",
         "title": "Derive one graph",
@@ -157332,6 +157638,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://gates/state",
+        "name": "gate-state",
+        "id": "gates.state",
+        "title": "How each gate last went",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://graphs",
         "name": "graphs",
         "id": "graph.list",
@@ -158000,6 +158313,12 @@
         "method": "GET",
         "path": "/api/v1/gates",
         "id": "gates.model",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/gates/state",
+        "id": "gates.state",
         "kind": "query"
       },
       {
@@ -161290,6 +161609,35 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/gates"
+      },
+      {
+        "key": "gates.state|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "gates.state",
+        "module": "gates",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "gates.state|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "gates.state",
+        "module": "gates",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_gate_state"
+      },
+      {
+        "key": "gates.state|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "gates.state",
+        "module": "gates",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/gates/state"
       },
       {
         "key": "graph.get|direct|registry",
@@ -167967,6 +168315,27 @@
           "cases": 1
         },
         {
+          "subject": "gates.state",
+          "module": "gates",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "gates.state",
+          "module": "gates",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "gates.state",
+          "module": "gates",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "graph.get",
           "module": "graph",
           "transport": "direct",
@@ -170907,22 +171276,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 208,
-          "covered": 175,
+          "required": 209,
+          "covered": 176,
           "missing": 0,
           "waived": 33,
           "inapplicable": 0
         },
         "http": {
-          "required": 202,
-          "covered": 175,
+          "required": 203,
+          "covered": 176,
           "missing": 0,
           "waived": 27,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 197,
-          "covered": 171,
+          "required": 198,
+          "covered": 172,
           "missing": 0,
           "waived": 26,
           "inapplicable": 0
@@ -170935,8 +171304,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 621,
-          "covered": 535,
+          "required": 624,
+          "covered": 538,
           "missing": 0,
           "waived": 86,
           "inapplicable": 0

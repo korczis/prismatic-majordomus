@@ -4780,6 +4780,61 @@ paths:
         resource:
           uri: majordomus://gates/completion
           name: completion
+  "/api/v1/gates/state":
+    get:
+      operationId: gates.state
+      summary: How each gate last went
+      description: "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out."
+      tags:
+        - gates
+      parameters: []
+      responses:
+        "200":
+          description: "How each gate last went: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/GateStateReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: gates.state
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::gates
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_gate_state
+        resource:
+          uri: majordomus://gates/state
+          name: gate-state
   "/api/v1/graph":
     get:
       operationId: graph.get
@@ -25308,6 +25363,108 @@ components:
         - branch
         - exit
       description: "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it."
+    GateState:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The gate's identity in the model."
+        job:
+          type: string
+          description: The CI job that runs it.
+        always:
+          type: boolean
+          description: Whether every plan selects it.
+        on_demand:
+          type: boolean
+          description: "Whether its runner can be had only on demand, so no routine plan runs it."
+        status:
+          "$ref": "#/components/schemas/GateStatus"
+          description: "What is known about its last run: `pass`, `fail`, `stale`, `queued` (never\nreported) or `unknown` (a run exists and cannot be checked against this tree)."
+        reason:
+          type: string
+          description: "Why it is in that status, in words a person can act on."
+        last_run:
+          anyOf:
+            - "$ref": "#/components/schemas/GateRun"
+            - type: "null"
+          description: "The run that last reported, whichever task recorded it."
+        on_head:
+          type:
+            - boolean
+            - "null"
+          description: "Whether that run was taken at the commit this checkout is at now. Absent when there\nis no run or when the current commit could not be read."
+        inputs_hash:
+          type: string
+          description: "The hash of the gate's inputs as they stand now, when it could be taken."
+      required:
+        - id
+        - job
+        - always
+        - on_demand
+        - status
+        - reason
+      description: "One declared gate and the standing of its last recorded run.\n\n```\nuse majordomus_cli::gates::{GateState, GateStatus};\n\nlet never: GateState = serde_json::from_value(serde_json::json!({\n    \"id\": \"rust-check\",\n    \"job\": \"rust\",\n    \"always\": true,\n    \"on_demand\": false,\n    \"status\": \"queued\",\n    \"reason\": \"no run of this gate has ever been recorded in this checkout\",\n}))\n.unwrap();\n// no run, no head, and a word that is not `pass`\nassert!(never.last_run.is_none() && never.on_head.is_none());\nassert_eq!(never.status, GateStatus::Queued);\n```"
+    GateStateReport:
+      type: object
+      properties:
+        source:
+          type: string
+          description: "Where the gate set was read from, repository-relative."
+        ledger:
+          type: string
+          description: "Where the recorded runs were read from, repository-relative."
+        head:
+          type:
+            - string
+            - "null"
+          description: "The commit this checkout is at, when git could say."
+        count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many gates the model declares; measured.
+        tallies:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many gates stand in each status, by the status word."
+        never_reported:
+          type: array
+          items:
+            type: string
+          description: "The gates no run has ever reported, in declaration order."
+        gates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/GateState"
+          description: "Every declared gate, in declaration order."
+        unreached:
+          type: array
+          items:
+            type: string
+          description: "What this answer did not consult, so its silence about it is not read as a verdict."
+        findings:
+          type: array
+          items:
+            type: string
+          description: "What could not be read, and what that means for the answer."
+        evaluated_at:
+          type: string
+          description: "When this answer was taken, RFC 3339 UTC."
+      required:
+        - source
+        - ledger
+        - count
+        - tallies
+        - never_reported
+        - gates
+        - unreached
+        - findings
+        - evaluated_at
+      description: "The declared gate set and the standing of each gate's last recorded run.\n\n`count`, `tallies` and `never_reported` are measured from `gates`, never written down,\nand `unreached` always names what was not consulted.\n\n```\nuse majordomus_cli::gates::GateStateReport;\n\nlet r: GateStateReport = serde_json::from_value(serde_json::json!({\n    \"source\": \".ai/repo/ci/gates.yaml\",\n    \"ledger\": \".ai/local/state/ledger.jsonl\",\n    \"count\": 0,\n    \"tallies\": {},\n    \"never_reported\": [],\n    \"gates\": [],\n    \"unreached\": [\"the forge's CI runs were not consulted\"],\n    \"findings\": [],\n    \"evaluated_at\": \"2026-10-15T00:00:00Z\",\n}))\n.unwrap();\nassert_eq!(r.count, r.gates.len());\nassert!(r.head.is_none(), \"a checkout without git still answers, and says so\");\nassert!(!r.unreached.is_empty());\n```"
     GateStatus:
       oneOf:
         - type: string
