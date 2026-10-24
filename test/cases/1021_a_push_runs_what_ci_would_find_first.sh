@@ -97,7 +97,7 @@ expect_grep 'the plan could not be computed .* so the push is refused'
 # and whose working tree holds such a temporary, untracked and not ignored.
 mkdir -p planned/scripts/ci planned/lib planned/bin planned/.ai/repo/ci planned/docs
 cp "$ROOT/scripts/ci/run-plan" planned/scripts/ci/ && cp "$ROOT/scripts/ci-plan" planned/scripts/
-cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" planned/lib/ && cp "$ROOT/.ai/repo/ci/gates.yaml" planned/.ai/repo/ci/
+cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" "$ROOT/lib/rust_bin.sh" planned/lib/ && cp "$ROOT/.ai/repo/ci/gates.yaml" planned/.ai/repo/ci/
 printf 'base\n' > planned/docs/README.md
 git -C planned init -q -b master && git -C planned add -A \
   && git -C planned -c user.email=case@example.invalid -c user.name=case commit -qm base \
