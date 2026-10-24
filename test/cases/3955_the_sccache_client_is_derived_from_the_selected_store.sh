@@ -207,6 +207,19 @@ grep -qF "$SECRET" "$S/exec.env" && { echo "    a key reached the compiler's env
 [ "$(cat "$S/exec.args")" = "rustc -vV" ] || { echo "    the compiler's arguments did not pass through: $(cat "$S/exec.args")"; exit 1; }
 echo "    the wrapper starts sccache with the derived store, the credential by path, the arguments intact"
 
+# the provisioned copy (I3997) is the same file: from another path it gets the same configuration
+mkdir -p "$S/installed"; cp "$W" "$S/installed/sccache-mesh"; chmod +x "$S/installed/sccache-mesh"
+cp "$S/exec.env" "$S/exec.env.shipped"
+rm -f "$S/exec.env"
+env XDG_CONFIG_HOME="$S/xdg" SCCACHE_SERVER_PORT="$SP" SCCACHE_MESH_SCCACHE="$S/sccache-capable" \
+  MAJORDOMUS_BIN="$RB" "$S/installed/sccache-mesh" rustc -vV >/dev/null 2>&1
+for v in SCCACHE_BUCKET SCCACHE_ENDPOINT SCCACHE_S3_USE_SSL SCCACHE_S3_KEY_PREFIX SCCACHE_MULTILEVEL_CHAIN AWS_SHARED_CREDENTIALS_FILE; do
+  [ "$(grep "^$v=" "$S/exec.env")" = "$(grep "^$v=" "$S/exec.env.shipped")" ] \
+    && [ -n "$(grep "^$v=" "$S/exec.env")" ] || { echo "    the installed copy and the shipped wrapper disagree on $v"; exit 1; }
+done
+[ ! -e "$ROOT/share/mesh-cache-provider/sccache-mesh" ] || { echo "    a second wrapper source exists"; exit 1; }
+echo "    both entry points get identical configuration from mesh.build_cache.env"
+
 # a server already listening: nothing is asked of majordomus
 cat > "$S/asked-mj" <<EOF
 #!/bin/sh

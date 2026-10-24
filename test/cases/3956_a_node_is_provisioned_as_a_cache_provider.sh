@@ -69,6 +69,12 @@ printf '[build]\nrustc-wrapper = "/home/korczis/.cargo/bin/sccache"\n' > "$S/hos
 prov --dry-run --root "$S/host" > "$S/drift.json" 2> "$S/err" || fail "the drift plan failed" "$S/err"
 jq -e '.plan.changes == 2' "$S/drift.json" >/dev/null || fail "drift and the wrapper edit are not both owed" "$S/drift.json"
 prov --apply --root "$S/host" > "$S/apply3.json" 2> "$S/err" || fail "the repair failed" "$S/err" "$S/apply3.json"
+# one wrapper (I3997): the installed file is the shipped one, and no second copy is declared
+cmp -s "$S/host/home/korczis/.local/bin/sccache-mesh" "$ROOT/share/libexec/sccache-mesh" \
+  || fail "the installed wrapper is not share/libexec/sccache-mesh"
+[ ! -e "$ROOT/share/mesh-cache-provider/sccache-mesh" ] || fail "a second wrapper source exists"
+! grep -q 'SCCACHE_S3_USE_SSL\|SCCACHE_S3_KEY_PREFIX\|minio/health' "$S/host/home/korczis/.local/bin/sccache-mesh" \
+  || fail "the installed wrapper decides the configuration itself"
 grep -q 'sccache-mesh' "$S/host/home/korczis/.cargo/config.toml" || fail "the wrapper line was not rewritten"
 ! grep -q '\.cargo/bin/sccache"' "$S/host/home/korczis/.cargo/config.toml" || fail "the old wrapper line remains"
 cmp -s "$S/host/etc/docker/daemon.json" "$ROOT/share/mesh-cache-provider/daemon.json" || fail "daemon.json was not put back"

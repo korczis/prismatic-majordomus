@@ -68282,6 +68282,60 @@
         }
       },
       {
+        "id": "majordomus://issue/I3997",
+        "kind": "issue",
+        "label": "I3997",
+        "summary": "The sccache-mesh wrapper has one configuration source",
+        "route": "/cockpit/objects/issue/i3997",
+        "source": ".ai/repo/project/issues/I3997.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The provisioned wrapper is byte-identical to share/libexec/sccache-mesh and no second wrapper source exists",
+            "Both entry points yield identical configuration variables from one source",
+            "With no majordomus executable the build is local-only and succeeds"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "Two wrapper files; cache_provision.rs embeds the self-contained one.",
+          "depends_on": [
+            "I2673",
+            "I2674"
+          ],
+          "desired_state": "One wrapper file, share/libexec/sccache-mesh; cache_provision.rs embeds it; a node without majordomus builds local-only and succeeds.",
+          "evidence_required": [
+            "one_wrapper_one_configuration_source"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "The derivation itself (mesh.build_cache.env)"
+          ],
+          "objective": "A provider host's rustc wrapper is share/libexec/sccache-mesh, installed unchanged, so the endpoint, credentials, SSL, key prefix and health of the store are decided only by mesh.build_cache.env.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "share/libexec/sccache-mesh",
+            "share/mesh-cache-provider/sccache-mesh",
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/MESH.md",
+            "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+            "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+            ".ai/repo/project/issues/I3997.yaml"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it",
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+          ],
+          "slug": "the-sccache-mesh-wrapper-has-one-configuration-source",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 3955_the_sccache_client_is_derived_from_the_selected_store",
+            "bash test/run.sh 3956_a_node_is_provisioned_as_a_cache_provider",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -129371,6 +129425,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3997",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3997",
+        "target": "majordomus://issue/I2673",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3997",
+        "target": "majordomus://issue/I2674",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3997",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -140847,8 +140921,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3921,
-      "edges": 9060,
+      "nodes": 3922,
+      "edges": 9064,
       "acyclic": false,
       "truncated": false
     }

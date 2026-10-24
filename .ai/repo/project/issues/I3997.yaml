@@ -1,0 +1,40 @@
+id: I3997
+milestone: builds-reuse-the-mesh-cache
+title: "The sccache-mesh wrapper has one configuration source"
+slug: the-sccache-mesh-wrapper-has-one-configuration-source
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A provider host's rustc wrapper is share/libexec/sccache-mesh, installed unchanged, so the endpoint, credentials, SSL, key prefix and health of the store are decided only by mesh.build_cache.env."
+why: "ADR 0004: a repeated semantic definition across projections is a design defect. share/mesh-cache-provider/sccache-mesh (I2674) sourced ~/.config/mesh-build-cache/env, ran its own curl health probe, hard-coded SCCACHE_S3_USE_SSL=false and its own rust/<triple>/ prefix, while share/libexec/sccache-mesh (I2673) asked majordomus mesh build-cache env: two places deciding one configuration, free to drift."
+current_state: "Two wrapper files; cache_provision.rs embeds the self-contained one."
+desired_state: "One wrapper file, share/libexec/sccache-mesh; cache_provision.rs embeds it; a node without majordomus builds local-only and succeeds."
+scope:
+  - "share/libexec/sccache-mesh"
+  - "share/mesh-cache-provider/sccache-mesh"
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - ".ai/repo/automation/inventory.jsonl"
+  - "docs/MESH.md"
+  - "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh"
+  - "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh"
+  - ".ai/repo/project/issues/I3997.yaml"
+non_scope:
+  - "The derivation itself (mesh.build_cache.env)"
+depends_on:
+  - I2673
+  - I2674
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+  - "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+acceptance_criteria:
+  - "The provisioned wrapper is byte-identical to share/libexec/sccache-mesh and no second wrapper source exists"
+  - "Both entry points yield identical configuration variables from one source"
+  - "With no majordomus executable the build is local-only and succeeds"
+validation:
+  - "bash test/run.sh 3955_the_sccache_client_is_derived_from_the_selected_store"
+  - "bash test/run.sh 3956_a_node_is_provisioned_as_a_cache_provider"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "one_wrapper_one_configuration_source"
+created_at: 2026-10-23
+updated_at: 2026-10-23

@@ -37,7 +37,10 @@ const GUARD_SERVICE: &str =
 const GUARD_TIMER: &str = include_str!("../../../../share/mesh-cache-provider/disk-guard.timer");
 const RW_POLICY: &str =
     include_str!("../../../../share/mesh-cache-provider/mesh-build-cache-rw.json");
-const WRAPPER: &str = include_str!("../../../../share/mesh-cache-provider/sccache-mesh");
+/// The node's rustc wrapper: the one `share/libexec/sccache-mesh`, installed unchanged. It asks
+/// `majordomus mesh build-cache env` for the endpoint, credentials, SSL, prefix and health, so a
+/// second copy of that decision does not exist (I3997).
+const WRAPPER: &str = include_str!("../../../../share/libexec/sccache-mesh");
 
 /// Where the per-node credentials and environments live on the provider, outside any
 /// repository and readable by root alone.
@@ -319,7 +322,7 @@ fn wants(policy: &Policy) -> Vec<Want> {
         mode: 0o755,
         owner: Some(policy.user.clone()),
         content: Content::Text(WRAPPER.to_string()),
-        source: "declared:sccache-mesh".into(),
+        source: "declared:share/libexec/sccache-mesh".into(),
     });
     out
 }
@@ -928,6 +931,20 @@ mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn the_installed_wrapper_asks_the_one_derivation_and_decides_nothing_itself() {
+        // I3997: the endpoint, SSL, prefix and health live in `mesh build-cache env`.
+        assert!(WRAPPER.contains("mesh build-cache env"));
+        for own in [
+            "SCCACHE_S3_USE_SSL",
+            "SCCACHE_S3_KEY_PREFIX",
+            "minio/health",
+            "curl",
+        ] {
+            assert!(!WRAPPER.contains(own), "the wrapper decides {own} itself");
+        }
+    }
 
     fn scratch(name: &str) -> PathBuf {
         let d =

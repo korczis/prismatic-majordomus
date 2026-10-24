@@ -834,6 +834,11 @@ on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs s
 arguments unchanged. A running server ignores the environment, so nothing is asked then.
 `SCCACHE_MESH_OFF=1` keeps a build local-only; a missing `majordomus` changes nothing.
 
+There is one wrapper. `majordomus mesh build-cache provision` installs this same file, byte for
+byte, as `~/.local/bin/sccache-mesh` on a provider host, so the endpoint, the credentials, SSL, the
+key prefix and the health of the store are decided in `mesh.build_cache.env` and nowhere else
+(I3997, ADR 0004). A host without `majordomus` on its path builds local-only and succeeds.
+
 What a second node can reuse is bounded by sccache's own key, measured on 2026-10-22 with sccache
 0.17.0: an entry is keyed by the absolute path of the cargo target directory, and a workspace
 crate also by the path of its checkout (`CARGO_MANIFEST_DIR`). Two compiles of one crate in one
