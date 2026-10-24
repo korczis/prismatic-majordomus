@@ -426,9 +426,10 @@ fn default_ready_path() -> String {
 /// assert_eq!(h, Health::Unknown);
 /// ```
 pub fn probe_health(endpoint: &str, ready_path: &str, budget: Duration) -> Health {
+    let endpoint = normalise_endpoint(endpoint);
     let authority = endpoint
         .strip_prefix("http://")
-        .unwrap_or(endpoint)
+        .unwrap_or(&endpoint)
         .split('/')
         .next()
         .unwrap_or_default();
@@ -462,6 +463,18 @@ pub fn probe_health(endpoint: &str, ready_path: &str, budget: Duration) -> Healt
         Some(code) if code.starts_with('2') => Health::Healthy,
         Some(_) => Health::Unhealthy,
         None => Health::Unknown,
+    }
+}
+
+/// An endpoint as every reader takes it: one that names no scheme is `host:port` and means
+/// `http://host:port`; one that names a scheme is left as written. The health probe, the offer
+/// a node signs and the client that speaks to the store all read an endpoint through this one
+/// function (ADR 0004).
+pub(crate) fn normalise_endpoint(endpoint: &str) -> String {
+    if endpoint.contains("://") {
+        endpoint.to_string()
+    } else {
+        format!("http://{endpoint}")
     }
 }
 
@@ -676,6 +689,18 @@ mod tests {
     }
 
     #[test]
+    fn a_scheme_less_endpoint_means_http_and_a_schemed_one_is_left_as_written() {
+        assert_eq!(normalise_endpoint("10.0.0.1:9000"), "http://10.0.0.1:9000");
+        assert_eq!(
+            normalise_endpoint("host.lan:9000/"),
+            "http://host.lan:9000/"
+        );
+        assert_eq!(normalise_endpoint("http://h:1"), "http://h:1");
+        assert_eq!(normalise_endpoint("https://h:1"), "https://h:1");
+        assert_eq!(normalise_endpoint(""), "http://");
+    }
+
+    #[test]
     fn no_offer_is_a_normal_answer_and_says_the_build_goes_on() {
         let s = select(&[], &Policy::default());
         assert_eq!(s.chosen, None);
@@ -873,13 +898,27 @@ mod tests {
 
     #[test]
     fn a_closed_port_is_unhealthy_and_a_name_or_a_non_url_is_unknown_never_healthy() {
-        // a port nothing listens on: bind, note it, drop the listener
-        let port = {
-            let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
-            l.local_addr().expect("addr").port()
-        };
-        let closed = format!("http://127.0.0.1:{port}");
-        assert_eq!(probe_health(&closed, "/x", PROBE_BUDGET), Health::Unhealthy);
+        // a port nothing listens on: bind, note it, drop the listener. Another test's listener
+        // can take the freed port before the probe arrives (under coverage, thousands of tests
+        // bind port 0 at once), and the probe then waits on it and says Unknown. So the probe
+        // asks fresh ports: a closed one answers Unhealthy at once, and a probe that never
+        // does fails every attempt.
+        let mut answers = Vec::new();
+        for _ in 0..5 {
+            let port = {
+                let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
+                l.local_addr().expect("addr").port()
+            };
+            answers.push(probe_health(
+                &format!("http://127.0.0.1:{port}"),
+                "/x",
+                PROBE_BUDGET,
+            ));
+            if answers.last() == Some(&Health::Unhealthy) {
+                break;
+            }
+        }
+        assert_eq!(answers.last(), Some(&Health::Unhealthy), "{answers:?}");
         // a name would need DNS, which a probe never does
         assert_eq!(
             probe_health("http://jetson-tx2:9000", "/x", PROBE_BUDGET),

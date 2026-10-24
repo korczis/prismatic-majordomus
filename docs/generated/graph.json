@@ -67587,6 +67587,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I3958",
+        "kind": "issue",
+        "label": "I3958",
+        "summary": "A store declared without a scheme is spoken to",
+        "route": "/cockpit/objects/issue/i3958",
+        "source": ".ai/repo/project/issues/I3958.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "current_state": "Measured on the train-6 block 376493cd4c9: a_declared_store_without_a_scheme_is_probed_but_not_spoken_to pins the defect.",
+          "depends_on": [],
+          "desired_state": "A bare host:port store is chosen and answered by ensure's client, through one endpoint normaliser.",
+          "evidence_required": [
+            "scheme_less_store_spoken_to_test"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Accepting any scheme but http://",
+            "The env report store-health budget, which train 6 already made a parameter"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            ".ai/repo/project/issues/I3958.yaml"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+          ],
+          "slug": "a-scheme-less-store-is-spoken-to",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --lib mesh::build_cache"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3960",
         "kind": "issue",
         "label": "I3960",
@@ -129176,6 +129215,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3958",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3958",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3960",
         "target": "kind:issue",
         "kind": "is_a"
@@ -140847,8 +140896,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3921,
-      "edges": 9060,
+      "nodes": 3922,
+      "edges": 9062,
       "acyclic": false,
       "truncated": false
     }

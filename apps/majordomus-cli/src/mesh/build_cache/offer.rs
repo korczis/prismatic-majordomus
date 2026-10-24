@@ -274,11 +274,7 @@ pub(crate) fn current(
     if let Some(why) = offer.health.refusal() {
         return Err(why.into());
     }
-    let endpoint = if offer.endpoint.contains("://") {
-        offer.endpoint
-    } else {
-        format!("http://{}", offer.endpoint)
-    };
+    let endpoint = super::normalise_endpoint(&offer.endpoint);
     let record = BuildCacheOffer {
         protocol: offer.protocol,
         provider: offer.provider,

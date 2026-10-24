@@ -1577,12 +1577,20 @@ mod tests {
     }
 
     #[test]
-    fn a_declared_store_without_a_scheme_is_probed_but_not_spoken_to() {
+    fn a_declared_store_without_a_scheme_is_probed_and_spoken_to() {
         let f = fixture();
         let (url, _) = stub_store();
-        declare_store(&f.m, url.trim_start_matches("http://"));
-        let err = select_store(&f.m).unwrap_err();
-        assert!(err.contains("only http://"), "{err}");
+        let bare = url.trim_start_matches("http://");
+        declare_store(&f.m, bare);
+        let store = select_store(&f.m).expect("a host:port store is chosen");
+        assert_eq!(store.endpoint.host, bare);
+        // and it is spoken to: an object put through it is the one the stub then holds
+        let dir = tempfile::tempdir().unwrap();
+        let (src, dest) = (dir.path().join("src"), dir.path().join("dest"));
+        fs::write(&src, b"spoken").unwrap();
+        store.put("v1/obj", &src).unwrap();
+        assert!(store.get("v1/obj", &dest).unwrap());
+        assert_eq!(fs::read(&dest).unwrap(), b"spoken");
     }
 
     #[test]

@@ -267,9 +267,11 @@ pub(crate) struct Endpoint {
 }
 
 impl Endpoint {
-    /// Parse `http://host:port[/]`. Any other scheme, a path or a missing port is refused
-    /// with its cause.
+    /// Parse `http://host:port[/]`, or `host:port` as `http://host:port`. Any other scheme, a
+    /// path or a missing port is refused with its cause.
     pub(crate) fn parse(url: &str) -> Result<Endpoint, String> {
+        let url = super::normalise_endpoint(url);
+        let url = url.as_str();
         let rest = url.strip_prefix("http://").ok_or_else(|| {
             format!("{url}: only http:// endpoints on the mesh's network are spoken")
         })?;
@@ -665,6 +667,12 @@ mod tests {
             .unwrap_err()
             .contains("without a path"));
         assert!(Endpoint::parse("http://h").unwrap_err().contains("no port"));
+        // no scheme is the same endpoint as `http://`: one normaliser, shared with the probe
+        assert_eq!(
+            Endpoint::parse("10.0.0.1:9000").unwrap(),
+            Endpoint::parse("http://10.0.0.1:9000").unwrap()
+        );
+        assert!(Endpoint::parse("h").unwrap_err().contains("no port"));
         assert!(Endpoint::parse("http://")
             .unwrap_err()
             .contains("without a path"));
