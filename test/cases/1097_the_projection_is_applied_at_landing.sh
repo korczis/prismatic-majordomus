@@ -196,6 +196,45 @@ for p, i in zip(phases, at):
     open('%s/%s.sh' % (out, p['id']), 'w', encoding='utf-8').write(steps[i]['run'])
 PY
 
+# ---------------------------------------------------------------- 11. the one run a pull request may start
+# Version 2 of the rule admits one workflow a pull request reaches: the pull request
+# projection, on pull_request_target, from the default branch and never the head, reading
+# issues and writing none. Every other workflow that a pull request reaches stays outside
+# this rule; the issue projection above has no such trigger.
+#   W  pr-meta.yml checks out ${{ github.event.pull_request.head.sha }}             -> 11
+#   W  pr-meta.yml asks for `issues: write`                                         -> 11
+#   W  pr-meta.yml on `pull_request` instead of pull_request_target                 -> 11
+python3 - "$ROOT/.github/workflows/pr-meta.yml" "$ROOT/.ai/repo/ci/pr-meta.yaml" <<'PY' || exit 1
+import sys, yaml
+wf_path, model_path = sys.argv[1:3]
+wf = yaml.safe_load(open(wf_path, encoding='utf-8'))
+model = yaml.safe_load(open(model_path, encoding='utf-8'))
+def no(msg):
+    print('    ' + msg); sys.exit(1)
+on = wf.get(True) or wf.get('on') or {}
+if 'pull_request' in on:
+    no("pr-meta.yml runs on pull_request; the record asks for pull_request_target, whose run is the base's")
+if 'pull_request_target' not in on:
+    no("pr-meta.yml is not started by a pull request at all")
+if (on['pull_request_target'] or {}).get('types') != model['trigger']['pull_request_target']['types']:
+    no("pr-meta.yml's event types are not the model's")
+want = {'pull-requests': 'write', 'issues': 'read', 'contents': 'read'}
+if wf.get('permissions') != want or model.get('permissions') != want:
+    no("pr-meta.yml asks for %r (model %r); a pull request's run writes pull requests and reads"
+       " issues, nothing broader" % (wf.get('permissions'), model.get('permissions')))
+for name, job in (wf.get('jobs') or {}).items():
+    if 'permissions' in job:
+        no("the job %s of pr-meta.yml widens its permissions" % name)
+    for st in job.get('steps') or []:
+        if str(st.get('uses', '')).startswith('actions/checkout@'):
+            ref = (st.get('with') or {}).get('ref')
+            if ref != '${{ github.event.repository.default_branch }}':
+                no("pr-meta.yml checks out %r; with a token that writes, only the default branch is run" % ref)
+        if 'head' in str(st.get('run', '')) and 'github.event.pull_request.head' in str(st.get('run', '')):
+            no("a step of pr-meta.yml interpolates the head into a command")
+print("    the one run a pull request starts is pr-meta.yml, from the default branch, reading issues")
+PY
+
 # ---------------------------------------------------------------- the steps, run
 # A tree with a remote, a scripted adapter and a scripted gate. The adapter records how it was
 # called and exits as the scenario says; nothing here can reach GitHub.

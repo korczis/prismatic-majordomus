@@ -1,6 +1,7 @@
 {
   "anchors": {
     "op-artifacts-list": "docs/api/artifacts/",
+    "op-blackboard-snapshot": "docs/api/blackboard/",
     "op-brief-session": "docs/api/brief/",
     "op-capabilities-describe": "docs/api/capabilities/",
     "op-capabilities-list": "docs/api/capabilities/",
@@ -24,6 +25,7 @@
     "op-dashboard-overview": "docs/api/dashboard/",
     "op-delivery-feature": "docs/api/delivery/",
     "op-delivery-report": "docs/api/delivery/",
+    "op-delivery-trends": "docs/api/delivery/",
     "op-deploy-check": "docs/api/deploy/",
     "op-deploy-get": "docs/api/deploy/",
     "op-deploy-list": "docs/api/deploy/",
@@ -47,6 +49,7 @@
     "op-economics-explain": "docs/api/economics/",
     "op-economics-runs": "docs/api/economics/",
     "op-economics-summary": "docs/api/economics/",
+    "op-economics-tasks": "docs/api/economics/",
     "op-editors-status": "docs/api/editors/",
     "op-entity-kinds": "docs/api/entity/",
     "op-entity-show": "docs/api/entity/",
@@ -94,6 +97,7 @@
     "op-knowledge_base-candidates": "docs/api/knowledge-base/",
     "op-knowledge_base-record": "docs/api/knowledge-base/",
     "op-knowledge_base-status": "docs/api/knowledge-base/",
+    "op-layout-check": "docs/api/layout/",
     "op-lifecycle-closed": "docs/api/lifecycle/",
     "op-lifecycle-episodes": "docs/api/lifecycle/",
     "op-lifecycle-providers": "docs/api/lifecycle/",
@@ -103,6 +107,7 @@
     "op-mesh-claim": "docs/api/mesh/",
     "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
+    "op-mesh-enrol": "docs/api/mesh/",
     "op-mesh-events": "docs/api/mesh/",
     "op-mesh-firewall": "docs/api/mesh/",
     "op-mesh-handover-consume": "docs/api/mesh/",
@@ -251,9 +256,24 @@
     "schema-BindingRefusal": "docs/api/intents/",
     "schema-BindingRequest": "docs/api/intents/",
     "schema-BindingStanding": "docs/api/intents/",
+    "schema-Blackboard": "docs/api/blackboard/",
+    "schema-BlackboardCertainty": "docs/api/blackboard/",
+    "schema-BlackboardClaim": "docs/api/blackboard/",
+    "schema-BlackboardClaimRef": "docs/api/blackboard/",
+    "schema-BlackboardConflict": "docs/api/blackboard/",
+    "schema-BlackboardEvidence": "docs/api/blackboard/",
+    "schema-BlackboardHandover": "docs/api/blackboard/",
+    "schema-BlackboardOrigin": "docs/api/blackboard/",
+    "schema-BlackboardPresence": "docs/api/blackboard/",
+    "schema-BlackboardRelation": "docs/api/blackboard/",
+    "schema-BlackboardRelationKind": "docs/api/blackboard/",
+    "schema-BlackboardReview": "docs/api/blackboard/",
+    "schema-BlackboardSource": "docs/api/blackboard/",
+    "schema-BlackboardSourceState": "docs/api/blackboard/",
+    "schema-BlackboardWorker": "docs/api/blackboard/",
     "schema-Blocker": "docs/api/devtask/",
     "schema-BlockerKind": "docs/api/devtask/",
-    "schema-BoardView": "docs/api/peers/",
+    "schema-BoardView": "docs/api/shared/",
     "schema-BranchState": "docs/api/worktree/",
     "schema-BranchTrace": "docs/api/trace/",
     "schema-BriefDeriveSection": "docs/api/brief/",
@@ -296,7 +316,7 @@
     "schema-CiTimings": "docs/api/integration/",
     "schema-ClaimEvidence": "docs/api/evidence/",
     "schema-ClaimInput": "docs/api/mesh/",
-    "schema-ClaimMode": "docs/api/mesh/",
+    "schema-ClaimMode": "docs/api/shared/",
     "schema-ClaimOverlap": "docs/api/mesh/",
     "schema-ClaimRef": "docs/api/product/",
     "schema-ClaimState": "docs/api/mesh/",
@@ -403,7 +423,7 @@
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
     "schema-DeploymentStanding": "docs/api/served/",
-    "schema-DeploymentStatus": "docs/api/deploy/",
+    "schema-DeploymentStatus": "docs/api/shared/",
     "schema-DeploymentView": "docs/api/deploy/",
     "schema-DesignReport": "docs/api/design/",
     "schema-Desired": "docs/api/server/",
@@ -612,6 +632,8 @@
     "schema-HealthCheck": "docs/api/health/",
     "schema-HealthRoutes": "docs/api/deploy/",
     "schema-HealthStatus": "docs/api/shared/",
+    "schema-History": "docs/api/entity/",
+    "schema-HistoryCommit": "docs/api/entity/",
     "schema-HistoryReport": "docs/api/commit/",
     "schema-Holding": "docs/api/convergence/",
     "schema-HoldingKind": "docs/api/convergence/",
@@ -687,6 +709,7 @@
     "schema-IssueOrigin": "docs/api/intents/",
     "schema-IssuePurpose": "docs/api/intents/",
     "schema-IssueTrace": "docs/api/trace/",
+    "schema-JobMedian": "docs/api/delivery/",
     "schema-JournalTallies": "docs/api/mesh/",
     "schema-JudgedCommit": "docs/api/commit/",
     "schema-Judgement": "docs/api/served/",
@@ -703,6 +726,8 @@
     "schema-LabelPolicy": "docs/api/integration/",
     "schema-LandingDecision": "docs/api/release/",
     "schema-LayerSummary": "docs/api/environment/",
+    "schema-LayoutFinding": "docs/api/layout/",
+    "schema-LayoutReport": "docs/api/layout/",
     "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
     "schema-LedgerMark": "docs/api/knowledge-base/",
@@ -745,6 +770,7 @@
     "schema-MeshClaimCounts": "docs/api/mesh/",
     "schema-MeshClaimFilter": "docs/api/mesh/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
+    "schema-MeshEnrolment": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshHandoverBrief": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
@@ -780,9 +806,9 @@
     "schema-MomentRef": "docs/api/product/",
     "schema-MomentSummary": "docs/api/why/",
     "schema-MonitorPage": "docs/api/monitor/",
-    "schema-MonitorSeverity": "docs/api/monitor/",
-    "schema-MonitorSignal": "docs/api/monitor/",
-    "schema-MonitorSource": "docs/api/monitor/",
+    "schema-MonitorSeverity": "docs/api/shared/",
+    "schema-MonitorSignal": "docs/api/shared/",
+    "schema-MonitorSource": "docs/api/shared/",
     "schema-MonitorSourceHealth": "docs/api/monitor/",
     "schema-MonitorSourceState": "docs/api/monitor/",
     "schema-Mount": "docs/api/web/",
@@ -817,7 +843,7 @@
     "schema-OutFile": "docs/api/repository/",
     "schema-Overlap": "docs/api/peers/",
     "schema-OverlapKind": "docs/api/integration/",
-    "schema-OverlapPath": "docs/api/peers/",
+    "schema-OverlapPath": "docs/api/shared/",
     "schema-PackFinding": "docs/api/pack/",
     "schema-PackPlan": "docs/api/pack/",
     "schema-PackVerdict": "docs/api/pack/",
@@ -831,6 +857,7 @@
     "schema-PeerDetail": "docs/api/mesh/",
     "schema-PeerId": "docs/api/shared/",
     "schema-PeerList": "docs/api/peers/",
+    "schema-PeerListView": "docs/api/peers/",
     "schema-PeerTree": "docs/api/mesh/",
     "schema-PeerVerdict": "docs/api/mesh/",
     "schema-PeerView": "docs/api/mesh/",
@@ -1151,6 +1178,15 @@
     "schema-Tally": "docs/api/repository/",
     "schema-TargetStatus": "docs/api/distribution/",
     "schema-TargetView": "docs/api/distribution/",
+    "schema-TaskEconomicsEpisode": "docs/api/economics/",
+    "schema-TaskEconomicsField": "docs/api/economics/",
+    "schema-TaskEconomicsFieldStatus": "docs/api/economics/",
+    "schema-TaskEconomicsLedger": "docs/api/economics/",
+    "schema-TaskEconomicsList": "docs/api/economics/",
+    "schema-TaskEconomicsQuery": "docs/api/economics/",
+    "schema-TaskEconomicsRecord": "docs/api/economics/",
+    "schema-TaskEconomicsState": "docs/api/economics/",
+    "schema-TaskEconomicsUnread": "docs/api/economics/",
     "schema-TaskReadiness": "docs/api/devtask/",
     "schema-TaskRef": "docs/api/continuity/",
     "schema-TestEvidence": "docs/api/evidence/",
@@ -1180,6 +1216,11 @@
     "schema-Transition": "docs/api/session-domain/",
     "schema-TransitionView": "docs/api/session-domain/",
     "schema-Transport": "docs/api/peers/",
+    "schema-TrendCoverage": "docs/api/delivery/",
+    "schema-TrendJob": "docs/api/delivery/",
+    "schema-TrendRatio": "docs/api/delivery/",
+    "schema-TrendRun": "docs/api/delivery/",
+    "schema-TrendsReport": "docs/api/delivery/",
     "schema-TrunkDistance": "docs/api/shared/",
     "schema-TrunkSource": "docs/api/worktree/",
     "schema-TrunkStanding": "docs/api/shared/",
@@ -1216,6 +1257,7 @@
     "schema-WorktreeState": "docs/api/worktree/",
     "schema-Written": "docs/api/mesh/",
     "tag-artifacts": "docs/api/artifacts/",
+    "tag-blackboard": "docs/api/blackboard/",
     "tag-brief": "docs/api/brief/",
     "tag-capabilities": "docs/api/capabilities/",
     "tag-commands": "docs/api/commands/",
@@ -1245,6 +1287,7 @@
     "tag-intent_realization": "docs/api/intent-realization/",
     "tag-intents": "docs/api/intents/",
     "tag-knowledge_base": "docs/api/knowledge-base/",
+    "tag-layout": "docs/api/layout/",
     "tag-lifecycle": "docs/api/lifecycle/",
     "tag-mcp": "docs/api/mcp/",
     "tag-mesh": "docs/api/mesh/",
@@ -1276,9 +1319,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 202,
-    "schemas": 1013,
-    "tags": 58
+    "operations": 207,
+    "schemas": 1049,
+    "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1307,7 +1350,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 1.0.0-alpha.6",
+  "generated_by": "majordomus-cli 1.0.0-alpha.8",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1316,7 +1359,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "1.0.0-alpha.6"
+    "version": "1.0.0-alpha.8"
   },
   "infrastructure": [
     {
@@ -1370,6 +1413,7 @@
   ],
   "op_homes": {
     "artifacts.list": "artifacts",
+    "blackboard.snapshot": "blackboard",
     "brief.session": "brief",
     "capabilities.describe": "capabilities",
     "capabilities.list": "capabilities",
@@ -1393,6 +1437,7 @@
     "dashboard.overview": "dashboard",
     "delivery.feature": "delivery",
     "delivery.report": "delivery",
+    "delivery.trends": "delivery",
     "deploy.check": "deploy",
     "deploy.get": "deploy",
     "deploy.list": "deploy",
@@ -1416,6 +1461,7 @@
     "economics.explain": "economics",
     "economics.runs": "economics",
     "economics.summary": "economics",
+    "economics.tasks": "economics",
     "editors.status": "editors",
     "entity.kinds": "entity",
     "entity.show": "entity",
@@ -1463,6 +1509,7 @@
     "knowledge_base.candidates": "knowledge-base",
     "knowledge_base.record": "knowledge-base",
     "knowledge_base.status": "knowledge-base",
+    "layout.check": "layout",
     "lifecycle.closed": "lifecycle",
     "lifecycle.episodes": "lifecycle",
     "lifecycle.providers": "lifecycle",
@@ -1472,6 +1519,7 @@
     "mesh.claim": "mesh",
     "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
+    "mesh.enrol": "mesh",
     "mesh.events": "mesh",
     "mesh.firewall": "mesh",
     "mesh.handover.consume": "mesh",
@@ -1624,9 +1672,24 @@
     "BindingRefusal": "intents",
     "BindingRequest": "intents",
     "BindingStanding": "intents",
+    "Blackboard": "blackboard",
+    "BlackboardCertainty": "blackboard",
+    "BlackboardClaim": "blackboard",
+    "BlackboardClaimRef": "blackboard",
+    "BlackboardConflict": "blackboard",
+    "BlackboardEvidence": "blackboard",
+    "BlackboardHandover": "blackboard",
+    "BlackboardOrigin": "blackboard",
+    "BlackboardPresence": "blackboard",
+    "BlackboardRelation": "blackboard",
+    "BlackboardRelationKind": "blackboard",
+    "BlackboardReview": "blackboard",
+    "BlackboardSource": "blackboard",
+    "BlackboardSourceState": "blackboard",
+    "BlackboardWorker": "blackboard",
     "Blocker": "devtask",
     "BlockerKind": "devtask",
-    "BoardView": "peers",
+    "BoardView": "shared",
     "BranchState": "worktree",
     "BranchTrace": "trace",
     "BriefDeriveSection": "brief",
@@ -1669,7 +1732,7 @@
     "CiTimings": "integration",
     "ClaimEvidence": "evidence",
     "ClaimInput": "mesh",
-    "ClaimMode": "mesh",
+    "ClaimMode": "shared",
     "ClaimOverlap": "mesh",
     "ClaimRef": "product",
     "ClaimState": "mesh",
@@ -1776,7 +1839,7 @@
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
     "DeploymentStanding": "served",
-    "DeploymentStatus": "deploy",
+    "DeploymentStatus": "shared",
     "DeploymentView": "deploy",
     "DesignReport": "design",
     "Desired": "server",
@@ -1985,6 +2048,8 @@
     "HealthCheck": "health",
     "HealthRoutes": "deploy",
     "HealthStatus": "shared",
+    "History": "entity",
+    "HistoryCommit": "entity",
     "HistoryReport": "commit",
     "Holding": "convergence",
     "HoldingKind": "convergence",
@@ -2060,6 +2125,7 @@
     "IssueOrigin": "intents",
     "IssuePurpose": "intents",
     "IssueTrace": "trace",
+    "JobMedian": "delivery",
     "JournalTallies": "mesh",
     "JudgedCommit": "commit",
     "Judgement": "served",
@@ -2076,6 +2142,8 @@
     "LabelPolicy": "integration",
     "LandingDecision": "release",
     "LayerSummary": "environment",
+    "LayoutFinding": "layout",
+    "LayoutReport": "layout",
     "LeaseHolder": "integration",
     "LeaseView": "server",
     "LedgerMark": "knowledge-base",
@@ -2118,6 +2186,7 @@
     "MeshClaimCounts": "mesh",
     "MeshClaimFilter": "mesh",
     "MeshDoctorReport": "mesh",
+    "MeshEnrolment": "mesh",
     "MeshEvent": "mesh",
     "MeshHandoverBrief": "mesh",
     "MeshIdentityReport": "mesh",
@@ -2153,9 +2222,9 @@
     "MomentRef": "product",
     "MomentSummary": "why",
     "MonitorPage": "monitor",
-    "MonitorSeverity": "monitor",
-    "MonitorSignal": "monitor",
-    "MonitorSource": "monitor",
+    "MonitorSeverity": "shared",
+    "MonitorSignal": "shared",
+    "MonitorSource": "shared",
     "MonitorSourceHealth": "monitor",
     "MonitorSourceState": "monitor",
     "Mount": "web",
@@ -2190,7 +2259,7 @@
     "OutFile": "repository",
     "Overlap": "peers",
     "OverlapKind": "integration",
-    "OverlapPath": "peers",
+    "OverlapPath": "shared",
     "PackFinding": "pack",
     "PackPlan": "pack",
     "PackVerdict": "pack",
@@ -2204,6 +2273,7 @@
     "PeerDetail": "mesh",
     "PeerId": "shared",
     "PeerList": "peers",
+    "PeerListView": "peers",
     "PeerTree": "mesh",
     "PeerVerdict": "mesh",
     "PeerView": "mesh",
@@ -2524,6 +2594,15 @@
     "Tally": "repository",
     "TargetStatus": "distribution",
     "TargetView": "distribution",
+    "TaskEconomicsEpisode": "economics",
+    "TaskEconomicsField": "economics",
+    "TaskEconomicsFieldStatus": "economics",
+    "TaskEconomicsLedger": "economics",
+    "TaskEconomicsList": "economics",
+    "TaskEconomicsQuery": "economics",
+    "TaskEconomicsRecord": "economics",
+    "TaskEconomicsState": "economics",
+    "TaskEconomicsUnread": "economics",
     "TaskReadiness": "devtask",
     "TaskRef": "continuity",
     "TestEvidence": "evidence",
@@ -2553,6 +2632,11 @@
     "Transition": "session-domain",
     "TransitionView": "session-domain",
     "Transport": "peers",
+    "TrendCoverage": "delivery",
+    "TrendJob": "delivery",
+    "TrendRatio": "delivery",
+    "TrendRun": "delivery",
+    "TrendsReport": "delivery",
     "TrunkDistance": "shared",
     "TrunkSource": "worktree",
     "TrunkStanding": "shared",
@@ -5021,6 +5105,833 @@
       "variants": []
     },
     {
+      "description": "The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "Blackboard",
+      "properties": [
+        {
+          "description": "When it was read (RFC 3339).",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity of the checkout whose server answered.",
+          "name": "checkout",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That checkout's HEAD, when it has one.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as. The monitor's sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Each source and how it was read.",
+          "name": "sources",
+          "refs": [
+            "BlackboardSource"
+          ],
+          "required": true,
+          "type": "array of BlackboardSource"
+        },
+        {
+          "description": "Each checkout's board the summary lists: reached or not, with a server or a worker.",
+          "name": "boards",
+          "refs": [
+            "BoardView"
+          ],
+          "required": true,
+          "type": "array of BoardView"
+        },
+        {
+          "description": "How many checkouts the answer covers, listed in `boards` or counted in `omitted`.",
+          "name": "covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):\nno server, nobody attached, no board.",
+          "name": "omitted",
+          "refs": [],
+          "required": false,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "How many workers are here now: attached to a board or in an active mesh session.",
+          "name": "present",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every worker, this checkout's board first, then the other boards, then the mesh.",
+          "name": "workers",
+          "refs": [
+            "BlackboardWorker"
+          ],
+          "required": true,
+          "type": "array of BlackboardWorker"
+        },
+        {
+          "description": "The claims that meet, at most a hundred, confirmed first.",
+          "name": "conflicts",
+          "refs": [
+            "BlackboardConflict"
+          ],
+          "required": true,
+          "type": "array of BlackboardConflict"
+        },
+        {
+          "description": "How many conflicts there are in all.",
+          "name": "conflicts_total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The review requests nobody has answered, at most fifty.",
+          "name": "reviews",
+          "refs": [
+            "BlackboardReview"
+          ],
+          "required": true,
+          "type": "array of BlackboardReview"
+        },
+        {
+          "description": "The handovers nobody has taken, at most fifty.",
+          "name": "handovers",
+          "refs": [
+            "BlackboardHandover"
+          ],
+          "required": true,
+          "type": "array of BlackboardHandover"
+        },
+        {
+          "description": "The typed relations between workers.",
+          "name": "relations",
+          "refs": [
+            "BlackboardRelation"
+          ],
+          "required": true,
+          "type": "array of BlackboardRelation"
+        },
+        {
+          "description": "The newest signals of the last hour, oldest first.",
+          "name": "signals",
+          "refs": [
+            "MonitorSignal"
+          ],
+          "required": true,
+          "type": "array of MonitorSignal"
+        },
+        {
+          "description": "How many of them are for the reader.",
+          "name": "for_you",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The monitor's cursor after these signals: where a follower resumes.",
+          "name": "cursor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "blackboard.snapshot"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How sure a conflict is.",
+      "home": "blackboard",
+      "is_enum": true,
+      "name": "BlackboardCertainty",
+      "properties": [],
+      "type": "\"potential\" | \"confirmed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardConflict"
+      ],
+      "values": [
+        {
+          "description": "Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped.",
+          "value": "potential"
+        },
+        {
+          "description": "Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened.",
+          "value": "confirmed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One claim a worker holds.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardClaim",
+      "properties": [
+        {
+          "description": "The claim's name, when its worker holds several.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it is for, in the worker's words.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The repository paths it names.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory.",
+          "name": "mode",
+          "refs": [
+            "ClaimMode"
+          ],
+          "required": true,
+          "type": "ClaimMode"
+        },
+        {
+          "description": "The issue it is for, when the claim names one.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The mesh claim's key, when it is a journal record; a board announcement has none.",
+          "name": "record",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the mesh found it conflicting with another live claim.",
+          "name": "conflicted",
+          "refs": [],
+          "required": false,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardWorker"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One side of a conflict: a worker and which of its claims.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardClaimRef",
+      "properties": [
+        {
+          "description": "The worker's key.",
+          "name": "worker",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The claim's name, when it has one.",
+          "name": "claim",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The mesh claim's key, when it is a journal record.",
+          "name": "record",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardConflict"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Two claims of two different workers whose scopes meet.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardConflict",
+      "properties": [
+        {
+          "description": "Potential or confirmed.",
+          "name": "certainty",
+          "refs": [
+            "BlackboardCertainty"
+          ],
+          "required": true,
+          "type": "BlackboardCertainty"
+        },
+        {
+          "description": "The claim that came first in the answer's order.",
+          "name": "first",
+          "refs": [
+            "BlackboardClaimRef"
+          ],
+          "required": true,
+          "type": "BlackboardClaimRef"
+        },
+        {
+          "description": "The claim that meets it.",
+          "name": "second",
+          "refs": [
+            "BlackboardClaimRef"
+          ],
+          "required": true,
+          "type": "BlackboardClaimRef"
+        },
+        {
+          "description": "The paths that meet, `yours` the first's and `theirs` the second's.",
+          "name": "paths",
+          "refs": [
+            "OverlapPath"
+          ],
+          "required": true,
+          "type": "array of OverlapPath"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a relation rests on.",
+      "home": "blackboard",
+      "is_enum": true,
+      "name": "BlackboardEvidence",
+      "properties": [],
+      "type": "\"verified\" | \"candidate\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardRelation"
+      ],
+      "values": [
+        {
+          "description": "An explicit identifier or a journal record joins the two ends.",
+          "value": "verified"
+        },
+        {
+          "description": "The ends could be joined and nothing proves it: more than one record fits.",
+          "value": "candidate"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardHandover",
+      "properties": [
+        {
+          "description": "The handover's id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The runtime that published it.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its name, when it has one.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch it continues.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue it continues.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The task it continues.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was written.",
+          "name": "created_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a worker of the blackboard was found.",
+      "home": "blackboard",
+      "is_enum": true,
+      "name": "BlackboardOrigin",
+      "properties": [],
+      "type": "\"board\" | \"mesh\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardWorker"
+      ],
+      "values": [
+        {
+          "description": "On a checkout's board: an MCP client attached to that checkout's server.",
+          "value": "board"
+        },
+        {
+          "description": "In the mesh journal only: a session no board of this repository holds — another\nmachine's, a task's, or a client's own.",
+          "value": "mesh"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Whether a worker is here now.",
+      "home": "blackboard",
+      "is_enum": true,
+      "name": "BlackboardPresence",
+      "properties": [],
+      "type": "\"attached\" | \"departed\" | \"active\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardWorker"
+      ],
+      "values": [
+        {
+          "description": "Attached to its board now.",
+          "value": "attached"
+        },
+        {
+          "description": "Gone from its board, kept because it still holds an announcement.",
+          "value": "departed"
+        },
+        {
+          "description": "An open mesh session whose runtime still beats.",
+          "value": "active"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A typed relation between two workers, or a worker and the addressee a record names.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardRelation",
+      "properties": [
+        {
+          "description": "What it is.",
+          "name": "kind",
+          "refs": [
+            "BlackboardRelationKind"
+          ],
+          "required": true,
+          "type": "BlackboardRelationKind"
+        },
+        {
+          "description": "What it rests on.",
+          "name": "evidence",
+          "refs": [
+            "BlackboardEvidence"
+          ],
+          "required": true,
+          "type": "BlackboardEvidence"
+        },
+        {
+          "description": "A worker's key.",
+          "name": "from",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "A worker's key, or the addressee as the record names it when no worker is it.",
+          "name": "to",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The record it rests on: a session or a review key.",
+          "name": "record",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a relation between two workers is.",
+      "home": "blackboard",
+      "is_enum": true,
+      "name": "BlackboardRelationKind",
+      "properties": [],
+      "type": "\"same_worker\" | \"review\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardRelation"
+      ],
+      "values": [
+        {
+          "description": "A board peer and a mesh session that may be one worker.",
+          "value": "same_worker"
+        },
+        {
+          "description": "One worker asked another for a review.",
+          "value": "review"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A review request nobody has answered.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardReview",
+      "properties": [
+        {
+          "description": "The review's key in the journal.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The requesting worker's key, or its session key when no worker holds it.",
+          "name": "from",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it asks about.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whom it asks, as the request names it; absent means anyone.",
+          "name": "reviewer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue it names.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One source of the blackboard and how it was read.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardSource",
+      "properties": [
+        {
+          "description": "`board`, `mesh`, or a monitor source as `monitor.<name>`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How it was read.",
+          "name": "state",
+          "refs": [
+            "BlackboardSourceState"
+          ],
+          "required": true,
+          "type": "BlackboardSourceState"
+        },
+        {
+          "description": "Why it is not `ok`.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How one source of the blackboard was read.",
+      "home": "blackboard",
+      "is_enum": true,
+      "name": "BlackboardSourceState",
+      "properties": [],
+      "type": "\"ok\" | \"partial\" | \"absent\" | \"skipped\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "BlackboardSource"
+      ],
+      "values": [
+        {
+          "description": "Read whole.",
+          "value": "ok"
+        },
+        {
+          "description": "Read, and some of what it covers could not be asked.",
+          "value": "partial"
+        },
+        {
+          "description": "Not read; the reason says why.",
+          "value": "absent"
+        },
+        {
+          "description": "Not asked for.",
+          "value": "skipped"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One worker of the repository: a board peer, a mesh session, or one of each that an\nexplicit identifier joins.",
+      "home": "blackboard",
+      "is_enum": false,
+      "name": "BlackboardWorker",
+      "properties": [
+        {
+          "description": "Stable for as long as the worker is here: `board:<checkout>/<peer>` or\n`mesh:<stream>/<session>`. Never a bare peer id.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it was found.",
+          "name": "origin",
+          "refs": [
+            "BlackboardOrigin"
+          ],
+          "required": true,
+          "type": "BlackboardOrigin"
+        },
+        {
+          "description": "Whether it is here now.",
+          "name": "presence",
+          "refs": [
+            "BlackboardPresence"
+          ],
+          "required": true,
+          "type": "BlackboardPresence"
+        },
+        {
+          "description": "The client's own name, from its MCP initialize or its mesh session.",
+          "name": "client",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The client's display title or the worker it says it is, when it gave one.",
+          "name": "title",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The client's version, from its initialize.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it said it is doing; absent means it announced nothing.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout's identity.",
+          "name": "checkout",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout's path on its machine.",
+          "name": "worktree",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch it works on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its position on its board (`p3`): meaningful on that board only.",
+          "name": "board_peer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its mesh session's key, when it has one.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The machine's display name.",
+          "name": "machine",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The runtime (`<node>-<runtime>`) its mesh session belongs to.",
+          "name": "runtime",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The task its mesh session names.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue its mesh session names.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it attached to its board.",
+          "name": "connected_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds since its board last heard from it.",
+          "name": "last_seen_seconds_ago",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Milliseconds since its runtime last beat. A beat is liveness, not work done.",
+          "name": "last_beat_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Its claims, board announcements and live mesh claims alike.",
+          "name": "claims",
+          "refs": [
+            "BlackboardClaim"
+          ],
+          "required": false,
+          "type": "array of BlackboardClaim"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Blackboard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One thing standing between a task and being startable, with what to do about it.",
       "home": "devtask",
       "is_enum": false,
@@ -5095,7 +6006,7 @@
     },
     {
       "description": "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here.",
-      "home": "peers",
+      "home": "shared",
       "is_enum": false,
       "name": "BoardView",
       "properties": [
@@ -5156,11 +6067,19 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board's peers into as `board-pN` sessions. A position such as\n`p1` is that server's alone, so only this stream ties a board peer to its session.",
+          "name": "stream",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Blackboard",
         "PeerList"
       ],
       "values": [],
@@ -7198,6 +8117,7 @@
       "properties": [],
       "type": "\"repository\" | \"this\"",
       "used_by": [
+        "blackboard.snapshot",
         "brief.session",
         "peers.list",
         "server.status"
@@ -7463,13 +8383,14 @@
     },
     {
       "description": "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```",
-      "home": "mesh",
+      "home": "shared",
       "is_enum": true,
       "name": "ClaimMode",
       "properties": [],
       "type": "\"exclusive\" | \"advisory\"",
       "used_by": [],
       "used_by_schemas": [
+        "BlackboardClaim",
         "ClaimInput",
         "ClaimView",
         "MeshClaimBrief"
@@ -11159,6 +12080,27 @@
           "refs": [],
           "required": false,
           "type": "array of string"
+        },
+        {
+          "description": "The lifecycle of what lives here, when the contract declares its layout (I2870).",
+          "name": "layout_lifecycle",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The kinds the directory holds, when the contract says.",
+          "name": "layout_holds",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Lifecycles or kinds that must never appear here, when the contract says.",
+          "name": "layout_excludes",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -11666,6 +12608,13 @@
         {
           "description": "Enumerations of the repository's declared sources.",
           "name": "repository_scans",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Manifests read and parsed to discover a repository.",
+          "name": "repository_discoveries",
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
@@ -13271,6 +14220,15 @@
           ],
           "required": true,
           "type": "Judgement"
+        },
+        {
+          "description": "For a deployment the layer declares as an object: `active` while `now` is served,\n`declared` otherwise, `retired` when the object says so. Derived from the newest\nobservation, never set by hand (I3822); absent for a name no object carries.",
+          "name": "status",
+          "refs": [
+            "DeploymentStatus"
+          ],
+          "required": false,
+          "type": "DeploymentStatus | null"
         }
       ],
       "type": "object",
@@ -13283,13 +14241,14 @@
     },
     {
       "description": "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.",
-      "home": "deploy",
+      "home": "shared",
       "is_enum": true,
       "name": "DeploymentStatus",
       "properties": [],
       "type": "\"declared\" | \"active\" | \"retired\"",
       "used_by": [],
       "used_by_schemas": [
+        "DeploymentStanding",
         "DeploymentView"
       ],
       "values": [
@@ -18887,6 +19846,7 @@
       "properties": [],
       "type": "object",
       "used_by": [
+        "mesh.enrol",
         "mesh.verify"
       ],
       "used_by_schemas": [],
@@ -19305,6 +20265,15 @@
           ],
           "required": false,
           "type": "EntityDocumentation | null"
+        },
+        {
+          "description": "The commits that changed its file, read from git when it is read and never stored in\nthe index (I3314).",
+          "name": "history",
+          "refs": [
+            "History"
+          ],
+          "required": false,
+          "type": "History"
         }
       ],
       "type": "object",
@@ -20007,6 +20976,7 @@
       "type": "object",
       "used_by": [
         "artifacts.list",
+        "blackboard.snapshot",
         "brief.session",
         "capabilities.list",
         "capabilities.projections",
@@ -20031,6 +21001,7 @@
         "dashboard.overview",
         "delivery.report",
         "delivery.feature",
+        "delivery.trends",
         "deploy.get",
         "deploy.list",
         "deploy.check",
@@ -20054,6 +21025,7 @@
         "economics.check",
         "economics.explain",
         "economics.runs",
+        "economics.tasks",
         "editors.status",
         "entity.show",
         "entity.kinds",
@@ -20092,6 +21064,7 @@
         "knowledge_base.candidates",
         "knowledge_base.record",
         "knowledge_base.status",
+        "layout.check",
         "lifecycle.closed",
         "lifecycle.episodes",
         "lifecycle.providers",
@@ -20104,6 +21077,7 @@
         "mesh.release",
         "mesh.cooperation",
         "mesh.doctor",
+        "mesh.enrol",
         "mesh.events",
         "mesh.firewall",
         "mesh.handover.publish",
@@ -20360,11 +21334,18 @@
           "type": "integer (uint)"
         },
         {
-          "description": "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140).",
+          "description": "The `after` of the next page of a walk by stamp: the stamp of the last event this\npage carries, or the `after` that was asked when it carries none. A page never ends\ninside a run of equal stamps (I2140).",
           "name": "lamport",
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
+        },
+        {
+          "description": "The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly\nafter what this page returned (I2733). Absent from an answer to a walk by `after`.",
+          "name": "cursor",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "The events, in Lamport order.",
@@ -24229,6 +25210,13 @@
           "type": "array of string"
         },
         {
+          "description": "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```",
+          "name": "subsumed-by",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale.",
           "name": "inputs",
           "refs": [],
@@ -25516,6 +26504,103 @@
       "variants": []
     },
     {
+      "description": "The commits that changed an object's file, newest first (I3314). An object that is one\nmember of a collection file has the file's history.\n\nA history that does not apply says why rather than reading as an empty one, and the\nmembers it has no value for are left out of its JSON:\n\n```\nuse majordomus_cli::capability::builtin::entity::{History, HistoryCommit};\nlet none = History {\n    reason: Some(\"no commit has changed this file yet\".into()),\n    bound: 20,\n    ..History::default()\n};\nlet json = serde_json::to_value(&none).unwrap();\nassert_eq!(json[\"applicable\"], false);\nassert_eq!(json[\"reason\"], \"no commit has changed this file yet\");\nassert!(json.get(\"last\").is_none(), \"no last commit is written, not a null\");\n\nlet commit = HistoryCommit {\n    commit: \"0123456789abcdef0123456789abcdef01234567\".into(),\n    date: \"2026-10-21T12:00:00+00:00\".into(),\n    subject: \"feat(entity): the entity page lists its history\".into(),\n};\nlet some = History {\n    applicable: true,\n    last: Some(commit.clone()),\n    commits: vec![commit],\n    bound: 20,\n    ..History::default()\n};\nlet back: History = serde_json::from_value(serde_json::to_value(&some).unwrap()).unwrap();\nassert_eq!(back.last, back.commits.first().cloned());\nassert!(back.reason.is_none() && !back.cut);\n```",
+      "home": "entity",
+      "is_enum": false,
+      "name": "History",
+      "properties": [
+        {
+          "description": "Whether a history applies. False when git cannot answer for the file or no commit\nhas touched it yet; `reason` says which. Never an empty history that reads as none.",
+          "name": "applicable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why no history applies, when none does.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit that last changed the file: the first of `commits`.",
+          "name": "last",
+          "refs": [
+            "HistoryCommit"
+          ],
+          "required": false,
+          "type": "HistoryCommit | null"
+        },
+        {
+          "description": "The commits that changed it, newest first, at most `bound`.",
+          "name": "commits",
+          "refs": [
+            "HistoryCommit"
+          ],
+          "required": false,
+          "type": "array of HistoryCommit"
+        },
+        {
+          "description": "The most commits listed.",
+          "name": "bound",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Whether more commits changed the file than `bound` lets through.",
+          "name": "cut",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One commit that changed an entity's file, as `git log --follow` named it: what a reader\nfollows from the entity page to the change itself, newest first in `History::commits`.\n\n```\nuse majordomus_cli::capability::builtin::entity::HistoryCommit;\nlet c: HistoryCommit = serde_json::from_str(\n    r#\"{\"commit\":\"0123456789abcdef0123456789abcdef01234567\",\n        \"date\":\"2026-10-21T12:00:00+00:00\",\n        \"subject\":\"fix(layout): a copy is named with its original\"}\"#,\n)\n.unwrap();\nassert_eq!(c.subject, \"fix(layout): a copy is named with its original\");\n// every member is required: a commit without its date or subject is not one\nassert!(serde_json::from_str::<HistoryCommit>(r#\"{\"commit\":\"0123\"}\"#).is_err());\n```",
+      "home": "entity",
+      "is_enum": false,
+      "name": "HistoryCommit",
+      "properties": [
+        {
+          "description": "The full commit id.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The committer date, ISO 8601.",
+          "name": "date",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The first line of its message.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "History"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A range of history, judged.\nA range of history, judged in one pass.\n\n```\nuse majordomus_cli::commit::verdict::HistoryReport;\nlet r = HistoryReport {\n    range: \"HEAD\".into(),\n    total: 1755,\n    exempt: 561,\n    failing: 54,\n    commits: Vec::new(),\n};\n// a commit with nothing to say is counted and not listed: a report of a thousand\n// passing commits is a report nobody reads\nassert!(r.commits.is_empty());\nassert_eq!(r.total - r.exempt, 1194);\n```",
       "home": "commit",
       "is_enum": false,
@@ -26768,7 +27853,7 @@
           "type": "FailureClass | null"
         },
         {
-          "description": "On `merge_succeeded`: the merge commit, once it is read.",
+          "description": "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward.",
           "name": "merge_commit",
           "refs": [],
           "required": false,
@@ -27101,7 +28186,7 @@
           "type": "array of LabelPolicy"
         },
         {
-          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
+          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
           "name": "merge_method",
           "refs": [],
           "required": false,
@@ -29672,6 +30757,49 @@
       "variants": []
     },
     {
+      "description": "The median of one job over the series.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "JobMedian",
+      "properties": [
+        {
+          "description": "The job's name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many runs the median is over.",
+          "name": "runs",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The median of its run time, in seconds.",
+          "name": "median_run_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "The median of its queue time, in seconds.",
+          "name": "median_queued_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendsReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The journal's counters since start: how much it holds, how much it has written,\nreceived, absorbed, refused, held back and compacted away. They are what makes a\nreplication problem diagnosable from one machine — a runtime whose `received` never\nrises is not linked, one whose `rejected` rises is being sent something it will not\ntake, and one whose `pending` stays high is missing an event ahead of what it has.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, JournalTallies};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet before: JournalTallies = j.tallies();\nassert_eq!((before.written, before.events), (0, 0));\n\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\nlet after = j.tallies();\nassert_eq!((after.written, after.events, after.streams), (1, 1, 1));\nassert!(after.lamport > before.lamport);\n```",
       "home": "mesh",
       "is_enum": false,
@@ -30759,6 +31887,101 @@
       "used_by_schemas": [
         "RepositoryEnvironment"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One misplaced artifact: a path found in a half whose declared layout excludes it, with the\ncontract that excludes it and why, so a refusal names what to move and where it belongs.\n\nIt travels as the JSON of the `layout.check` capability, so its member names are the\nwire contract every projection reads:\n\n```\nuse majordomus_cli::layout::LayoutFinding;\nlet finding = LayoutFinding {\n    path: \".ai/local/notes/rule.md\".into(),\n    contract: \"manifest local\".into(),\n    excludes: \"canonical\".into(),\n    reason: \"a copy of .ai/repo/rules/rule.md\".into(),\n};\nlet json = serde_json::to_value(&finding).unwrap();\nassert_eq!(json[\"contract\"], \"manifest local\");\nassert_eq!(json[\"excludes\"], \"canonical\");\nlet back: LayoutFinding = serde_json::from_value(json).unwrap();\nassert_eq!(back, finding);\n```",
+      "home": "layout",
+      "is_enum": false,
+      "name": "LayoutFinding",
+      "properties": [
+        {
+          "description": "The path, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The contract it violates: a context document's id, or `manifest local`.",
+          "name": "contract",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the contract excludes that this path is.",
+          "name": "excludes",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the path was found to be, and how.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LayoutReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of the layout check: whether the halves were read, how many paths were\njudged, and every path a contract excludes. A report that could not read the halves\nnever passes, so silence about a tree nobody measured cannot read as a clean tree.\n\n```\nuse majordomus_cli::layout::LayoutReport;\nlet clean = LayoutReport::of(true, None, 12, Vec::new());\nassert!(clean.passes);\nassert_eq!(clean.checked, 12);\nlet unread = LayoutReport::of(false, Some(\"git could not start\".into()), 0, Vec::new());\nassert!(!unread.passes, \"nothing found because nothing was read\");\nassert_eq!(unread.reason.as_deref(), Some(\"git could not start\"));\n```",
+      "home": "layout",
+      "is_enum": false,
+      "name": "LayoutReport",
+      "properties": [
+        {
+          "description": "Whether the halves could be read at all. `false` is not a pass.",
+          "name": "measured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why they could not, when they could not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How many paths were judged.",
+          "name": "checked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every path a contract excludes, in canonical order. Empty is the passing answer.",
+          "name": "findings",
+          "refs": [
+            "LayoutFinding"
+          ],
+          "required": true,
+          "type": "array of LayoutFinding"
+        },
+        {
+          "description": "`true` when the halves were read and nothing was found.",
+          "name": "passes",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "layout.check"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -32622,6 +33845,49 @@
       "variants": []
     },
     {
+      "description": "The answer of `mesh.enrol`: which declaration, which key, and whether it changed.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshEnrolment",
+      "properties": [
+        {
+          "description": "The declaration file, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "This machine's public key: what is listed, never a secret.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the key was added now; `false` when it was listed already.",
+          "name": "added",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What to do next: commit the file, or nothing.",
+          "name": "next",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.enrol"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines' idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\n\nlet event: &MeshEvent = &j.events()[0];\nassert_eq!(event.seq, 1, \"dense from 1 within its stream\");\nassert_eq!(event.kind(), \"session_closed\");\nassert_eq!(event.id(), format!(\"{}/1\", event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \"another-repository\".into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```",
       "home": "mesh",
       "is_enum": false,
@@ -33071,7 +34337,7 @@
       "is_enum": true,
       "name": "MeshSource",
       "properties": [],
-      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"synthetic\"",
+      "type": "\"udp_multicast\" | \"udp_broadcast\" | \"rendezvous\" | \"tailscale\" | \"synthetic\"",
       "used_by": [],
       "used_by_schemas": [
         "Sighting"
@@ -33088,6 +34354,10 @@
         {
           "description": "A rendezvous answer or registration.",
           "value": "rendezvous"
+        },
+        {
+          "description": "A tailnet peer asked as a rendezvous.",
+          "value": "tailscale"
         },
         {
           "description": "A synthetic provider (tests, self-check).",
@@ -34877,7 +36147,7 @@
     },
     {
       "description": "How much a signal asks of its reader.",
-      "home": "monitor",
+      "home": "shared",
       "is_enum": true,
       "name": "MonitorSeverity",
       "properties": [],
@@ -34904,7 +36174,7 @@
     },
     {
       "description": "One thing that happened, as one line a person or an agent can act on.",
-      "home": "monitor",
+      "home": "shared",
       "is_enum": false,
       "name": "MonitorSignal",
       "properties": [
@@ -35014,6 +36284,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "Blackboard",
         "MonitorPage"
       ],
       "values": [],
@@ -35021,7 +36292,7 @@
     },
     {
       "description": "Where a signal comes from.",
-      "home": "monitor",
+      "home": "shared",
       "is_enum": true,
       "name": "MonitorSource",
       "properties": [],
@@ -36893,7 +38164,7 @@
     },
     {
       "description": "One pair of claims that contain one another.",
-      "home": "peers",
+      "home": "shared",
       "is_enum": false,
       "name": "OverlapPath",
       "properties": [
@@ -36915,6 +38186,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "BlackboardConflict",
         "Overlap"
       ],
       "values": [],
@@ -37629,7 +38901,14 @@
           "type": "array of Overlap"
         },
         {
-          "description": "One entry per checkout the answer covers, reached or not.",
+          "description": "How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a\ncount, where the input `checkouts` is a choice of which to cover.",
+          "name": "covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "One entry per checkout the answer lists, reached or not: every covered checkout under\n`view: full`; under the default summary, every one but those `omitted` counts. A board\nthat could not be read is always listed.",
           "name": "boards",
           "refs": [
             "BoardView"
@@ -37638,11 +38917,25 @@
           "type": "array of BoardView"
         },
         {
+          "description": "The covered checkouts the summary does not list, counted by standing (`absent`,\n`stale`): no server, nobody attached, no board. Empty under `view: full`.",
+          "name": "omitted",
+          "refs": [],
+          "required": false,
+          "type": "map of integer (uint)"
+        },
+        {
           "description": "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and `BoardView::reason` says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\".",
           "name": "complete",
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "The mesh stream of the server that answered, when its mesh runs: the stream its own\nboard's peers are projected into. A sibling's answer carries it so that the gatherer\ncan name it on that sibling's `BoardView`.",
+          "name": "stream",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -37651,6 +38944,29 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "How many of the covered checkouts `peers.list` lists one by one — the same two words, and\nthe same default, as the mesh's own `view` (`mesh::page::View`), for the same reason.\n\nOn 2026-10-22 this repository registered 625 checkouts, 601 of them with no server and\nnobody attached, and the default answer was 168 kB: past what an MCP client shows, so\nthe read every worker is told to make before it starts went through a saved file. A\ncheckout with no server holds no board (`ServerStanding::Absent`, or a `Stale` lease that\nnames a process that is gone), so listing it says only that it exists; the summary counts\nthose by standing and lists every other. The evidence is\n`the_summary_counts_only_checkouts_that_hold_no_board` below.",
+      "home": "peers",
+      "is_enum": true,
+      "name": "PeerListView",
+      "properties": [],
+      "type": "\"summary\" | \"full\"",
+      "used_by": [
+        "peers.list"
+      ],
+      "used_by_schemas": [],
+      "values": [
+        {
+          "description": "This checkout, every checkout with a worker attached or a server standing, and every\nboard that could not be read; the checkouts with no server and nobody attached are\ncounted in `omitted` by standing.",
+          "value": "summary"
+        },
+        {
+          "description": "Every covered checkout, one entry each.",
+          "value": "full"
+        }
+      ],
       "variants": []
     },
     {
@@ -51948,6 +53264,20 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The client process the session belongs to, on the machine of the runtime holding it.\nA client that crashes never says goodbye, so this is what lets that runtime close the\nsession for it once the process is gone (I3810).",
+          "name": "client_pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared.",
+          "name": "client_started",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -52038,6 +53368,20 @@
         {
           "description": "The context revision it works from.",
           "name": "context",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The client process the session belongs to, on this machine: the runtime closes the\nsession once that process has ended (I3810).",
+          "name": "client_pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "When that process started, as this machine's process table reports it.",
+          "name": "client_started",
           "refs": [],
           "required": false,
           "type": "string | null"
@@ -55660,6 +57004,427 @@
       "variants": []
     },
     {
+      "description": "One episode that carried a task, with the span of the lines it wrote about it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsEpisode, TaskEconomicsSource};\nlet line = |ts: &str, event: &str, session: &str| {\n    format!(r#\"{{\"ts\":\"{ts}\",\"event\":\"{event}\",\"head\":\"h\",\"branch\":\"b\",\"by\":\"me\",\"session\":\"{session}\",\"task_id\":\"t-1\"}}\"#)\n};\nlet text = [\n    line(\"2026-10-21T10:00:00Z\", \"task.started\", \"s-1\"),\n    line(\"2026-10-21T11:00:00Z\", \"task.finished\", \"s-2\"),\n]\n.join(\"\\n\");\nlet list = fold(vec![TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", &text)], &Default::default());\nlet episodes: &[TaskEconomicsEpisode] = &list.tasks[0].episodes;\nassert_eq!(episodes.len(), 2, \"two session stamps are two episodes\");\nassert_eq!((episodes[1].session.as_str(), episodes[1].lines), (\"s-2\", 1));\nassert_eq!(episodes[1].first_at, \"2026-10-21T11:00:00Z\");\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsEpisode",
+      "properties": [
+        {
+          "description": "The episode's session id.",
+          "name": "session",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The provider that ran the episode, when the ledger names it. Left out of the answer\nwhen it does not, so it reads back as empty: without `default` the text form, which\nreads the capability's JSON, refused every episode whose provider is unknown.",
+          "name": "provider",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The time of the episode's first line about the task.",
+          "name": "first_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The time of the episode's last line about the task.",
+          "name": "last_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many of the episode's lines are about the task.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsRecord"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A field of the record that nothing observes yet, carrying the reason and the issue that\nwill supply it in place of a value.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsField, TaskEconomicsSource};\nlet text = r#\"{\"ts\":\"2026-10-21T10:00:00Z\",\"event\":\"task.started\",\"head\":\"h\",\"branch\":\"b\",\"by\":\"me\",\"task_id\":\"t-1\"}\"#;\nlet list = fold(vec![TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", text)], &Default::default());\nlet field: &TaskEconomicsField = &list.tasks[0].ci_reruns;\nlet v = serde_json::to_value(field).unwrap();\nassert_eq!(v[\"status\"], \"not_observed\");\nassert!(field.reason.contains(\"I3378\"), \"{}\", field.reason);\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsField",
+      "properties": [
+        {
+          "description": "Always `not_observed` until the field's supplier lands.",
+          "name": "status",
+          "refs": [
+            "TaskEconomicsFieldStatus"
+          ],
+          "required": true,
+          "type": "TaskEconomicsFieldStatus"
+        },
+        {
+          "description": "Why there is no value, naming what will supply it.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsRecord"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a field holds an observation. Its one variant says there is none, which is not a\nzero.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsFieldStatus;\nlet v = serde_json::to_value(TaskEconomicsFieldStatus::NotObserved).unwrap();\nassert_eq!(v, \"not_observed\");\n```",
+      "home": "economics",
+      "is_enum": true,
+      "name": "TaskEconomicsFieldStatus",
+      "properties": [],
+      "type": "\"not_observed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsField"
+      ],
+      "values": [
+        {
+          "description": "Nothing observes the field yet: there is no value, which is not a zero.",
+          "value": "not_observed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One ledger file that was read, with how many of its lines were entries and how many\ncould not be read as one.\n\n```\nuse majordomus_cli::economics::tasks::{TaskEconomicsLedger, TaskEconomicsSource};\nlet s = TaskEconomicsSource::parse(\"repo\", \".ai/local/state/ledger.jsonl\", \"{}\\nnot json\\n\");\nlet ledger: &TaskEconomicsLedger = &s.ledgers[0];\nassert_eq!(ledger.checkout, \"repo\");\nassert_eq!(ledger.path, \".ai/local/state/ledger.jsonl\");\nassert_eq!((ledger.lines, ledger.skipped), (0, 2), \"neither line is a ledger entry\");\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsLedger",
+      "properties": [
+        {
+          "description": "The checkout the ledger belongs to.",
+          "name": "checkout",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The file, relative to the checkout.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many lines were read as ledger entries.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many non-empty lines could not be read as ledger entries.",
+          "name": "skipped",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every task the ledgers read carry, and what was read to answer it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsList, TaskEconomicsQuery, TaskEconomicsSource};\nlet text = r#\"{\"ts\":\"2026-10-21T10:00:00Z\",\"event\":\"task.started\",\"head\":\"h\",\"branch\":\"b\",\"by\":\"me\",\"session\":\"s-1\",\"task_id\":\"t-1\"}\"#;\nlet source = TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", text);\nlet list: TaskEconomicsList = fold(vec![source], &TaskEconomicsQuery::default());\nassert_eq!((list.count, list.tasks.len()), (1, 1));\nassert_eq!(list.ledgers[0].path, \"ledger.jsonl\");\nassert!(list.unread.is_empty(), \"fold reads no checkout, so it names none unread\");\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsList",
+      "properties": [
+        {
+          "description": "How many tasks are answered: the number of distinct task ids within the window.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The window the tasks were filtered by, as given.",
+          "name": "window",
+          "refs": [
+            "TaskEconomicsQuery"
+          ],
+          "required": true,
+          "type": "TaskEconomicsQuery"
+        },
+        {
+          "description": "One record per task, in the order the tasks started.",
+          "name": "tasks",
+          "refs": [
+            "TaskEconomicsRecord"
+          ],
+          "required": true,
+          "type": "array of TaskEconomicsRecord"
+        },
+        {
+          "description": "Every ledger file read, with its line and skipped-line counts.",
+          "name": "ledgers",
+          "refs": [
+            "TaskEconomicsLedger"
+          ],
+          "required": true,
+          "type": "array of TaskEconomicsLedger"
+        },
+        {
+          "description": "Every checkout whose ledger could not be read, and why.",
+          "name": "unread",
+          "refs": [
+            "TaskEconomicsUnread"
+          ],
+          "required": true,
+          "type": "array of TaskEconomicsUnread"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "economics.tasks"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Which tasks to answer. A window filters by each task's `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\"{\"since\":\"2026-10-21T00:00:00Z\"}\"#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\"2026-10-21T00:00:00Z\"));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::<TaskEconomicsQuery>(\"{}\").unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::<TaskEconomicsQuery>(r#\"{\"after\":\"x\"}\"#).is_err());\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsQuery",
+      "properties": [
+        {
+          "description": "Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`).",
+          "name": "since",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`).",
+          "name": "until",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One task's delivery economics: who carried it, when, how often `finish` refused it, and\nthe fields nothing observes yet, each saying why it has no value.\n\n```\nuse majordomus_cli::economics::tasks::{\n    fold, TaskEconomicsRecord, TaskEconomicsSource, TaskEconomicsState,\n};\nlet text = r#\"{\"ts\":\"2026-10-21T10:00:00Z\",\"event\":\"task.started\",\"head\":\"h\",\"branch\":\"b\",\n    \"by\":\"me\",\"session\":\"s-1\",\"task_id\":\"t-1\",\"issue\":\"I3376\"}\"#;\nlet source = TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", &text.replace('\\n', \"\"));\nlet list = fold(vec![source], &Default::default());\nlet r: &TaskEconomicsRecord = &list.tasks[0];\nassert_eq!((r.task_id.as_str(), r.branch.as_str()), (\"t-1\", \"b\"));\nassert_eq!(r.state, TaskEconomicsState::Open);\nassert_eq!(r.outcome, \"active\");\nassert_eq!(r.wall_seconds, None, \"an open task with no refusal has no end\");\nassert_eq!(r.issue.as_deref(), Some(\"I3376\"));\nassert!(r.spend.reason.contains(\"I3379\"));\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsRecord",
+      "properties": [
+        {
+          "description": "The task's id, as `start` wrote it.",
+          "name": "task_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The issue the task was started under, when it named one.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The intent the task was started under, when it named one.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout whose ledger carries the task.",
+          "name": "checkout",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch the task started on.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`finished` once a `task.finished` line is read, `open` otherwise.",
+          "name": "state",
+          "refs": [
+            "TaskEconomicsState"
+          ],
+          "required": true,
+          "type": "TaskEconomicsState"
+        },
+        {
+          "description": "The outcome as recorded: the finish's outcome, or `active` / `handed_over` while open.",
+          "name": "outcome",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The time of the task's first `task.started` line.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The time of the task's last `task.finished` line, or of its last `task.refused` line\nwhile it has none.",
+          "name": "ended_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds from `started_at` to `ended_at`; absent while either is.",
+          "name": "wall_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many times `finish` refused the task.",
+          "name": "refusals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The episodes that carried the task, each with the span of its lines about it.",
+          "name": "episodes",
+          "refs": [
+            "TaskEconomicsEpisode"
+          ],
+          "required": true,
+          "type": "array of TaskEconomicsEpisode"
+        },
+        {
+          "description": "Human interventions during the task.",
+          "name": "interventions",
+          "refs": [
+            "TaskEconomicsField"
+          ],
+          "required": true,
+          "type": "TaskEconomicsField"
+        },
+        {
+          "description": "CI runs of the task's work that were rerun.",
+          "name": "ci_reruns",
+          "refs": [
+            "TaskEconomicsField"
+          ],
+          "required": true,
+          "type": "TaskEconomicsField"
+        },
+        {
+          "description": "What the task cost.",
+          "name": "spend",
+          "refs": [
+            "TaskEconomicsField"
+          ],
+          "required": true,
+          "type": "TaskEconomicsField"
+        },
+        {
+          "description": "Whether the task's result was accepted.",
+          "name": "accepted",
+          "refs": [
+            "TaskEconomicsField"
+          ],
+          "required": true,
+          "type": "TaskEconomicsField"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a task has finished, as the command line, MCP and HTTP spell it.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsState;\nassert_eq!(serde_json::to_value(TaskEconomicsState::Open).unwrap(), \"open\");\nassert_eq!(serde_json::to_value(TaskEconomicsState::Finished).unwrap(), \"finished\");\n```",
+      "home": "economics",
+      "is_enum": true,
+      "name": "TaskEconomicsState",
+      "properties": [],
+      "type": "\"open\" | \"finished\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsRecord"
+      ],
+      "values": [
+        {
+          "description": "No `task.finished` line was read for the task.",
+          "value": "open"
+        },
+        {
+          "description": "A `task.finished` line was read for the task.",
+          "value": "finished"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A checkout whose ledger was not read, and the reason, so a missing ledger is never read\nas a checkout with no tasks.\n\n```\nuse majordomus_cli::economics::tasks::{tasks, TaskEconomicsQuery, TaskEconomicsUnread};\nlet dir = tempfile::tempdir().unwrap();\nlet list = tasks(dir.path(), &TaskEconomicsQuery::default());\nlet unread: &TaskEconomicsUnread = &list.unread[0];\nassert_eq!(unread.checkout, dir.path().display().to_string());\nassert_eq!(unread.reason, \"no ledger under .ai/local/state\");\n```",
+      "home": "economics",
+      "is_enum": false,
+      "name": "TaskEconomicsUnread",
+      "properties": [
+        {
+          "description": "The checkout.",
+          "name": "checkout",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why its ledger was not read.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TaskEconomicsList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a development task stands, as work.\n\n```\nuse majordomus_cli::devtask::TaskReadiness;\n\n// every state names the canonical status it refines, and refines only one\nassert_eq!(TaskReadiness::Ready.canonical(), \"READY\");\nassert_eq!(TaskReadiness::Waiting.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Blocked.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Review.canonical(), \"VERIFY\");\nassert_eq!(TaskReadiness::CompletionBlocked.canonical(), \"VERIFY\");\n\n// and one state is the absence of a record rather than a status of one\nassert!(TaskReadiness::Undeclared.canonical().is_empty());\n```",
       "home": "devtask",
       "is_enum": true,
@@ -57388,6 +59153,256 @@
           "value": "http"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The coverage a run measured; each kind is `None` when the file does not give it.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendCoverage",
+      "properties": [
+        {
+          "description": "Source lines.",
+          "name": "lines",
+          "refs": [
+            "TrendRatio"
+          ],
+          "required": false,
+          "type": "TrendRatio | null"
+        },
+        {
+          "description": "Functions.",
+          "name": "functions",
+          "refs": [
+            "TrendRatio"
+          ],
+          "required": false,
+          "type": "TrendRatio | null"
+        },
+        {
+          "description": "Regions.",
+          "name": "regions",
+          "refs": [
+            "TrendRatio"
+          ],
+          "required": false,
+          "type": "TrendRatio | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendRun"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One job of a run.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendJob",
+      "properties": [
+        {
+          "description": "The job's name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds it waited for a runner, when the file gives them.",
+          "name": "queued_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Seconds it ran, when the file gives them.",
+          "name": "run_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "How it ended, when the file says.",
+          "name": "conclusion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendRun"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One covered-over-total figure of a run, with the percentage the two give.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendRatio",
+      "properties": [
+        {
+          "description": "What the run covered: lines, functions or regions.",
+          "name": "covered",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What there was to cover.",
+          "name": "total",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`covered` over `total` in percent, or `None` when there was nothing to cover.",
+          "name": "percent",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One run of the series.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendRun",
+      "properties": [
+        {
+          "description": "The forge's id of the run, as text.",
+          "name": "run_id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the run judged.",
+          "name": "head_sha",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the run started, as the file wrote it.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "How the run ended.",
+          "name": "conclusion",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Seconds from the run's start to its end.",
+          "name": "wall_seconds",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Seconds its jobs waited for a runner, summed.",
+          "name": "queued_seconds_total",
+          "refs": [],
+          "required": false,
+          "type": "number | null"
+        },
+        {
+          "description": "Its jobs.",
+          "name": "jobs",
+          "refs": [
+            "TrendJob"
+          ],
+          "required": true,
+          "type": "array of TrendJob"
+        },
+        {
+          "description": "The coverage it measured, or `None` when it measured none.",
+          "name": "coverage",
+          "refs": [
+            "TrendCoverage"
+          ],
+          "required": false,
+          "type": "TrendCoverage | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "TrendsReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The series, or why this checkout holds none.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "TrendsReport",
+      "properties": [
+        {
+          "description": "Whether the checkout holds a series of this schema.",
+          "name": "recorded",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it does not, when it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The ids of the runs the series was written from, as the file gives them.",
+          "name": "generated_from",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The runs, oldest first.",
+          "name": "runs",
+          "refs": [
+            "TrendRun"
+          ],
+          "required": true,
+          "type": "array of TrendRun"
+        },
+        {
+          "description": "The medians of the jobs, the slowest first.",
+          "name": "job_medians",
+          "refs": [
+            "JobMedian"
+          ],
+          "required": true,
+          "type": "array of JobMedian"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "delivery.trends"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -59337,6 +61352,124 @@
       "slug": "artifacts"
     },
     {
+      "description": "Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why.",
+      "name": "blackboard",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "blackboard",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/blackboard?checkouts=this&for=1b&signals=10&sources=mesh\"",
+          "description": "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only.",
+          "home": "blackboard",
+          "id": "blackboard.snapshot",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_blackboard",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Which checkouts' boards it covers: `repository` (every one, the default) or `this`.",
+              "examples": [
+                {
+                  "case": "addressed",
+                  "value": "\"this\""
+                },
+                {
+                  "case": "this-checkout",
+                  "value": "\"this\""
+                }
+              ],
+              "name": "checkouts",
+              "required": false,
+              "type": "Checkouts"
+            },
+            {
+              "description": "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session.",
+              "examples": [
+                {
+                  "case": "addressed",
+                  "value": "\"1b\""
+                }
+              ],
+              "name": "for",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor.",
+              "examples": [
+                {
+                  "case": "addressed",
+                  "value": "10"
+                }
+              ],
+              "name": "signals",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`).",
+              "examples": [
+                {
+                  "case": "addressed",
+                  "value": "\"mesh\""
+                },
+                {
+                  "case": "this-checkout",
+                  "value": "\"mesh,executor\""
+                }
+              ],
+              "name": "sources",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/blackboard",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::blackboard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Who works on what, now: the result.",
+              "schema": "Blackboard",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Blackboard",
+          "stability": "experimental",
+          "summary": "Who works on what, now"
+        }
+      ],
+      "slug": "blackboard"
+    },
+    {
       "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
       "name": "brief",
       "operations": [
@@ -60895,6 +63028,60 @@
           "result_schema": "FeatureDelivery",
           "stability": "experimental",
           "summary": "Does this feature exist"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/delivery/trends\"",
+          "description": "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series.",
+          "home": "delivery",
+          "id": "delivery.trends",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/delivery/trends",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::delivery",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "How CI runs trend: the result.",
+              "schema": "TrendsReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TrendsReport",
+          "stability": "experimental",
+          "summary": "How CI runs trend"
         }
       ],
       "slug": "delivery"
@@ -62610,6 +64797,85 @@
           "result_schema": "EconomicsRunList",
           "stability": "behaviorally_verified",
           "summary": "Recorded benchmark runs"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "economics tasks",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/economics/tasks?since=2026-10-19T00%3A00%3A00Z&until=2026-10-22T00%3A00%3A00Z\"",
+          "description": "One record per task, folded from the ledger of every checkout `git worktree list` reports and the archives a ledger rotation left: its issue and intent, checkout and branch, first start, last finish or refusal, wall seconds, refusal count, and the episodes that carried it with their spans. Interventions, CI reruns, spend and acceptance are present on every record as not_observed, each with the reason and the issue that will supply it. Lists every ledger read with its line and skipped-line counts and every checkout not read; an optional since/until window filters by each task's start.",
+          "home": "economics",
+          "id": "economics.tasks",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_economics_tasks",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`).",
+              "examples": [
+                {
+                  "case": "window",
+                  "value": "\"2026-10-19T00:00:00Z\""
+                }
+              ],
+              "name": "since",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`).",
+              "examples": [
+                {
+                  "case": "window",
+                  "value": "\"2026-10-22T00:00:00Z\""
+                }
+              ],
+              "name": "until",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/economics/tasks",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::economics",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Each task's delivery economics: the result.",
+              "schema": "TaskEconomicsList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "TaskEconomicsList",
+          "stability": "behaviorally_verified",
+          "summary": "Each task's delivery economics"
         }
       ],
       "slug": "economics"
@@ -65808,6 +68074,67 @@
       "slug": "knowledge-base"
     },
     {
+      "description": "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: what lives where, and what must never appear there (I1102).",
+      "name": "layout",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "layout check",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/layout/check\"",
+          "description": "Every path a declared layout excludes, named with the contract it violates: a tracked file under the tracked half that git's ignore rules match (state that does not travel, under a contract that excludes cache or runtime), and a file under the local half that is a byte copy of a tracked canonical file or declares the schema of a kind share/kinds.yaml calls canonical (under the manifest's `local.excludes: [canonical]`). Only what a contract declares is judged. Reads git and the local half's files; no build and no network.",
+          "home": "layout",
+          "id": "layout.check",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_layout_check",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/layout/check",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::layout",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Refuse a misplaced artifact: the result.",
+              "schema": "LayoutReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LayoutReport",
+          "stability": "behaviorally_verified",
+          "summary": "Refuse a misplaced artifact"
+        }
+      ],
+      "slug": "layout"
+    },
+    {
       "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.",
       "name": "lifecycle",
       "operations": [
@@ -66465,6 +68792,70 @@
           "summary": "The mesh self-check"
         },
         {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "Empty",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh enrol",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/enrol\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+          "home": "mesh",
+          "id": "mesh.enrol",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_enrol",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/enrol",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Enrol this machine in the mesh: the result.",
+              "schema": "MeshEnrolment",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshEnrolment",
+          "stability": "experimental",
+          "summary": "Enrol this machine in the mesh"
+        },
+        {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [],
@@ -66473,7 +68864,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/events?limit=100\"",
-          "description": "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
+          "description": "The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp.",
           "home": "mesh",
           "id": "mesh.events",
           "kind": "query",
@@ -66482,11 +68873,18 @@
           "method": "GET",
           "parameters": [
             {
-              "description": "Only events whose Lamport stamp is above this.",
+              "description": "Only events whose Lamport stamp is above this: a walk by stamp, which never returns\nan event a partitioned runtime stamped at or below it and delivered later. Prefer\n`cursor`, which returns those too.",
               "examples": [],
               "name": "after",
               "required": false,
               "type": "integer (uint64)"
+            },
+            {
+              "description": "The `cursor` the previous page answered: the next page is what this run of the\nruntime applied after it, every event exactly once across the whole walk, a late one\nfrom a healed partition included (I2733). A cursor another run issued is refused as\n`stale_cursor`. Without `cursor` and `after` the walk starts at the beginning.",
+              "examples": [],
+              "name": "cursor",
+              "required": false,
+              "type": "string"
             },
             {
               "description": "At most this many (default 100, at most 1000).",
@@ -68853,8 +71251,8 @@
           "cache": "disabled",
           "cache_detail": "",
           "cli": "",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/peers?checkouts=this\"",
-          "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/peers?checkouts=this&view=summary\"",
+          "description": "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'covered' says how many checkouts were covered, 'boards' lists each one with a server, a worker or a board that could not be read (the rest counted in 'omitted'; 'view: full' lists every one), and 'complete' whether every board could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes.",
           "home": "peers",
           "id": "peers.list",
           "kind": "query",
@@ -68873,6 +71271,18 @@
               "name": "checkouts",
               "required": false,
               "type": "Checkouts"
+            },
+            {
+              "description": "How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one.",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "\"summary\""
+                }
+              ],
+              "name": "view",
+              "required": false,
+              "type": "PeerListView"
             }
           ],
           "path": "/api/v1/peers",
@@ -71764,7 +74174,7 @@
           "cache_detail": "",
           "cli": "served show",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/served?commit=HEAD&deployment=pages\"",
-          "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+          "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
           "home": "served",
           "id": "served.show",
           "kind": "query",

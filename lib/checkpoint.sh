@@ -59,8 +59,10 @@ H
     return 0
   fi
 
+  mj_record_attribution
+  id="$MJ_RECORD_TASK"; profile="$MJ_RECORD_PROFILE"; owner="$MJ_RECORD_OWNER"
   local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.cb.XXXXXX")"
-  if [ "$derive" = 1 ]; then mj_derive_checkpoint_body > "$body"; else cat > "$body"; fi
+  if [ "$derive" = 1 ]; then mj_derive_checkpoint_body record > "$body"; else cat > "$body"; fi
   local now; now="$(mj_now)" ; local final=""
   if [ -s "$body" ]; then
     if mj_reject_identity "$body"; then
@@ -91,10 +93,10 @@ H
   [ -n "$id" ] && fields="\"task_id\":\"$id\""
   if [ -n "$final" ]; then
     [ -n "$fields" ] && fields="$fields,"
-    mj_ledger_append task.checkpoint "$fields\"checkpoint_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\""
+    mj_ledger_append task.checkpoint "$fields\"checkpoint_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\"" "$MJ_RECORD_SESSION"
     printf '%s\n' "${final#"$MJ_ROOT/"}"
   else
-    mj_ledger_append task.checkpoint "$fields"
+    mj_ledger_append task.checkpoint "$fields" "$MJ_RECORD_SESSION"
     printf 'checkpoint %s at %s (no body)\n' "${id:-(no task)}" "$now"
   fi
 }
