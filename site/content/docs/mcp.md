@@ -489,7 +489,7 @@ reference on the site at `/docs/api/` and is served raw at the site's `/openapi.
 
 A hook can only add context; nothing but a first message starts a turn. So a session that is
 merely opened is handed the briefing and waits for a person to type, and until someone does
-it is not on the board (ADR 0156, ADR 0172). `share/shell/session-start.sh` closes that for
+it is not on the board (ADR 0226, ADR 0172). `share/shell/session-start.sh` closes that for
 Claude Code: sourced from `~/.bashrc` or `~/.zshrc`, it wraps a **bare** `claude` so that,
 inside a repository with an `.ai/` layer, the first message is
 `majordomus prompt render session-start` — the repository's own prompt

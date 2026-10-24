@@ -1,6 +1,6 @@
 ---
 schema: adr/v1
-id: adr-0156
+id: adr-0226
 kind: adr
 title: A session joins the cluster before it works — current, announced and useful — and the repository says when it has not
 status: proposed

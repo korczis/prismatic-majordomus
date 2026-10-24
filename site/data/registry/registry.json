@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "560a7d77e356f56af45b95160ec13c590a1b5654c099bae9e35753e6ad88e596",
+    "fingerprint": "08a862eae53ac0d6e2c489e26e431927184c963e4a4defbce3585cd9474751a5",
     "summary": {
       "total": 3534,
       "builtin": 219,
@@ -91810,7 +91810,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2431b89cfcbf9ef099d317855c32aff359f16b5c9cf9e95f1a194915a355571b",
+    "fingerprint": "5b592d0173ba7c4b757ff783cd94f6818067f6a98f185e54f661f9177587164c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -93643,23 +93643,6 @@
         ]
       },
       {
-        "uri": "majordomus://adr/adr-0156",
-        "kind": "adr",
-        "identity": "adr-0156",
-        "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
-        "description": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
-        "path": ".ai/repo/adrs/0156-a-session-joins-the-cluster-before-it-works.md",
-        "section": "adrs",
-        "source_class": "adr",
-        "bytes": 6132,
-        "tags": [
-          "coordination",
-          "mesh",
-          "governance",
-          "enforcement"
-        ]
-      },
-      {
         "uri": "majordomus://adr/adr-0157",
         "kind": "adr",
         "identity": "adr-0157",
@@ -94560,6 +94543,23 @@
         "tags": [
           "launcher",
           "build",
+          "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0226",
+        "kind": "adr",
+        "identity": "adr-0226",
+        "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+        "description": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+        "path": ".ai/repo/adrs/0226-a-session-joins-the-cluster-before-it-works.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 6132,
+        "tags": [
+          "coordination",
+          "mesh",
+          "governance",
           "enforcement"
         ]
       },
@@ -96126,7 +96126,7 @@
         "kind": "claim",
         "identity": "mcp-client-always-served",
         "title": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
-        "description": "The generation is the commit the release's RELEASE.json names, which must carry every crate input of the working tree unchanged (mj_rust_same_generation); a version string is not one (ADR 0224, superseding ADR 0172). Every command of the launcher gets the same answer, not mcp alone. A file inside the repository, and one that does not answer --version, is never taken for the installed release. The 2026-10-16 session that began as the only worker of a repository (ADR 0156) began with exit 12 on 4.5GB free; the 2026-10-22 pre-push that timed out at ninety minutes behind the build lock is why the launcher no longer builds at all.",
+        "description": "The generation is the commit the release's RELEASE.json names, which must carry every crate input of the working tree unchanged (mj_rust_same_generation); a version string is not one (ADR 0224, superseding ADR 0172). Every command of the launcher gets the same answer, not mcp alone. A file inside the repository, and one that does not answer --version, is never taken for the installed release. The 2026-10-16 session that began as the only worker of a repository (ADR 0226) began with exit 12 on 4.5GB free; the 2026-10-22 pre-push that timed out at ninety minutes behind the build lock is why the launcher no longer builds at all.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 196612
@@ -107573,7 +107573,7 @@
         "kind": "issue",
         "identity": "I2690",
         "title": "A session reads whether it is current, attached, announced and useful, from one capability",
-        "description": "Derive the four facts of ADR 0156 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
+        "description": "Derive the four facts of ADR 0226 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
         "path": ".ai/repo/project/issues/I2690.yaml",
         "section": "project",
         "source_class": "issue",

@@ -32054,8 +32054,8 @@
         "Any screen or page: that is I2692",
         "A change to how the board is gathered (ADR 0044)"
       ],
-      "objective": "Derive the four facts of ADR 0156 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
-      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156.",
+      "objective": "Derive the four facts of ADR 0226 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
+      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226.",
       "current_state": "Measured on master f0696ec535 on 2026-10-13: majordomus context prints the task and the peers but not whether the checkout is behind the trunk or the session is unannounced; the SessionStart line says 'Already up to date' from a state fetched earlier; mesh peers lists asks to all but no command lists what is unheld.",
       "desired_state": "One read capability, declared once with capability! under apps/majordomus-cli/src/capability/builtin/ and projected by majordomus generate to CLI, MCP and HTTP, answers current, attached, announced and useful with the commands that repair each one; an unreachable remote, a closed mesh and a missing server are each a named state, never 'current'.",
       "acceptance_criteria": [
@@ -32110,7 +32110,7 @@
         "A refusal of reads, of context, of mesh or of doctor"
       ],
       "objective": "Make the derived state of I2690 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is.",
-      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156.",
+      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226.",
       "current_state": "Measured on master f0696ec535 on 2026-10-13: nothing refuses a stale or unannounced session; on the owner's Mac the git hooks were not installed at all (core.hooksPath unset), and doctor said so only as six wiring failures nobody read.",
       "desired_state": "start, check and finish carry the join doctrine; the pre-commit and pre-push hooks run it; doctor reports a machine whose hooks are not wired as one finding with the single command that wires them; an unreachable remote, a closed mesh and a mesh with no server never refuse.",
       "acceptance_criteria": [
@@ -32163,7 +32163,7 @@
         "A new screen framework"
       ],
       "objective": "Show every surface the same derived state and the same rule, authored once, so that no page restates it by hand and a worker, a person and a visitor read one account of how workers keep together.",
-      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156.",
+      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226.",
       "current_state": "Measured on master f0696ec535 on 2026-10-13: docs/MESH.md describes announcing in prose; the landing page and the handbook do not say what keeps a late worker from working alone; no screen shows who is stale or unannounced.",
       "desired_state": "The SessionStart briefing opens with the four facts; /ui and the Cockpit show each worker's state on the board; docs/MESH.md, the handbook and the site's description of coordination are generated from the rule and the capability; the landing page answers 'how do the workers not collide' with the evidence chain; the published Pages carry all of it.",
       "acceptance_criteria": [
@@ -32214,7 +32214,7 @@
         "Making the MCP server connect: that is the runtime lifecycle milestone's"
       ],
       "objective": "Close the two behavioural gaps of 2026-10-13: a silent fall-back from MCP to the bare CLI, and a free worker that looks for work of its own while asks to everybody are open.",
-      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156.",
+      "why": "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226.",
       "current_state": "Measured on master f0696ec535 on 2026-10-13: the session start line showed the majordomus MCP server as failed to connect and no session announced the fall-back; a peer's 'ASKS ALL: I am free, what is unheld' stood unanswered.",
       "desired_state": "The provider start hook announces the transport it found and, when it is CLI only, opens the mesh session itself with that fact in its intent; an idle worker's briefing lists the open asks to all, and answering one is one command.",
       "acceptance_criteria": [

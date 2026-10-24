@@ -5,8 +5,8 @@ slug: a-session-reads-whether-it-has-joined-the-cluster
 priority: p0
 profile: implementation
 parallel_safe: false
-objective: "Derive the four facts of ADR 0156 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld."
-why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
+objective: "Derive the four facts of ADR 0226 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226."
 current_state: "Measured on master f0696ec535 on 2026-10-13: majordomus context prints the task and the peers but not whether the checkout is behind the trunk or the session is unannounced; the SessionStart line says 'Already up to date' from a state fetched earlier; mesh peers lists asks to all but no command lists what is unheld."
 desired_state: "One read capability, declared once with capability! under apps/majordomus-cli/src/capability/builtin/ and projected by majordomus generate to CLI, MCP and HTTP, answers current, attached, announced and useful with the commands that repair each one; an unreachable remote, a closed mesh and a missing server are each a named state, never 'current'."
 scope:

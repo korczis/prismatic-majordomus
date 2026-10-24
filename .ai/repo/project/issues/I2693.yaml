@@ -6,7 +6,7 @@ priority: p0
 profile: implementation
 parallel_safe: false
 objective: "Close the two behavioural gaps of 2026-10-13: a silent fall-back from MCP to the bare CLI, and a free worker that looks for work of its own while asks to everybody are open."
-why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226."
 current_state: "Measured on master f0696ec535 on 2026-10-13: the session start line showed the majordomus MCP server as failed to connect and no session announced the fall-back; a peer's 'ASKS ALL: I am free, what is unheld' stood unanswered."
 desired_state: "The provider start hook announces the transport it found and, when it is CLI only, opens the mesh session itself with that fact in its intent; an idle worker's briefing lists the open asks to all, and answering one is one command."
 scope:

@@ -6,7 +6,7 @@ priority: p0
 profile: implementation
 parallel_safe: false
 objective: "Make the derived state of I2690 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is."
-why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0156."
+why: "The owner, 2026-10-13, after a session worked three hours stale and unannounced in a cluster of nineteen workers: this must never happen again; it must be formalized, derived, inferred, enforced, in .ai, announced, a hard requirement, on GitHub Pages, tested, documented and on the landing page. See ADR 0226."
 current_state: "Measured on master f0696ec535 on 2026-10-13: nothing refuses a stale or unannounced session; on the owner's Mac the git hooks were not installed at all (core.hooksPath unset), and doctor said so only as six wiring failures nobody read."
 desired_state: "start, check and finish carry the join doctrine; the pre-commit and pre-push hooks run it; doctor reports a machine whose hooks are not wired as one finding with the single command that wires them; an unreachable remote, a closed mesh and a mesh with no server never refuse."
 scope:

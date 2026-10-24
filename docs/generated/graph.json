@@ -7883,31 +7883,6 @@
         }
       },
       {
-        "id": "majordomus://adr/adr-0156",
-        "kind": "adr",
-        "label": "adr-0156",
-        "summary": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
-        "route": "/cockpit/objects/adr/adr-0156",
-        "source": ".ai/repo/adrs/0156-a-session-joins-the-cluster-before-it-works.md",
-        "status": "proposed",
-        "facts": {
-          "date": "2026-10-13",
-          "related": [
-            "file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
-            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
-            "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
-            "file:.ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md",
-            "file:docs/MESH.md"
-          ],
-          "tags": [
-            "coordination",
-            "mesh",
-            "governance",
-            "enforcement"
-          ]
-        }
-      },
-      {
         "id": "majordomus://adr/adr-0157",
         "kind": "adr",
         "label": "adr-0157",
@@ -9582,6 +9557,31 @@
           "tags": [
             "launcher",
             "build",
+            "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0226",
+        "kind": "adr",
+        "label": "adr-0226",
+        "summary": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+        "route": "/cockpit/objects/adr/adr-0226",
+        "source": ".ai/repo/adrs/0226-a-session-joins-the-cluster-before-it-works.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-13",
+          "related": [
+            "file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md",
+            "file:.ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md",
+            "file:docs/MESH.md"
+          ],
+          "tags": [
+            "coordination",
+            "mesh",
+            "governance",
             "enforcement"
           ]
         }
@@ -106044,36 +106044,6 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0156",
-        "target": "kind:adr",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0156",
-        "target": "majordomus://adr/adr-0043",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0156",
-        "target": "majordomus://adr/adr-0044",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0156",
-        "target": "majordomus://document/docs/MESH.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0156",
-        "target": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0156",
-        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0157",
         "target": "kind:adr",
         "kind": "is_a"
@@ -109346,6 +109316,36 @@
       {
         "source": "majordomus://adr/adr-0224",
         "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0226",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0226",
+        "target": "majordomus://adr/adr-0043",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0226",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0226",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0226",
+        "target": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0226",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "put_in_force"
       },
       {

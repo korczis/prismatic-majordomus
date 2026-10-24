@@ -11,7 +11,7 @@ depends_on: []
 tags: [coordination, mesh, process]
 
 x-majordomus:
-  reviewed_because: no command derives the four facts yet; ADR 0156 proposes the capability that does, and the case numbered 3010 (a_session_joins_the_cluster, under test/cases) becomes this rule's decision when it lands, with this declaration falling away and the class raised to blocking
+  reviewed_because: no command derives the four facts yet; ADR 0226 proposes the capability that does, and the case numbered 3010 (a_session_joins_the_cluster, under test/cases) becomes this rule's decision when it lands, with this declaration falling away and the class raised to blocking
 ---
 
 # Rationale
@@ -20,7 +20,7 @@ On 2026-10-13 a session spent three hours as the only worker of a repository tha
 nineteen. Its checkout was ninety commits behind the trunk, two releases had been tagged
 without it, it had never announced itself, and the cluster's open asks to everybody went
 unanswered while it looked for work of its own. The prose that would have prevented all of
-it was in `CLAUDE.md` and was read. See ADR 0156 for the account and the decision.
+it was in `CLAUDE.md` and was read. See ADR 0226 for the account and the decision.
 
 # Required behaviour
 
@@ -44,7 +44,7 @@ it was in `CLAUDE.md` and was read. See ADR 0156 for the account and the decisio
 
 # Verification
 
-Advisory until the capability that derives the four facts lands (ADR 0156). Then this rule
+Advisory until the capability that derives the four facts lands (ADR 0226). Then this rule
 is raised to `blocking` as version 2, `start`, `check`, `finish` and the commit and push
 hooks refuse a change from a session that is not announced or is behind the trunk by more
 than the policy's bound, and the case numbered 3010 (`a_session_joins_the_cluster`, under test/cases) proves the
