@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "4a12d942f591891d6a3baf612b3e4acb6de48842c22a700b4a44bb8a7bb86a9d",
+    "fingerprint": "14726a3b79c65de2c870c07cc07975c814478e59d9561115ccd0ef3bf38768da",
     "summary": {
-      "total": 3438,
+      "total": 3440,
       "builtin": 213,
-      "declarative": 3225,
+      "declarative": 3227,
       "by_kind": {
         "command": 33,
         "query": 180,
-        "resource": 3225
+        "resource": 3227
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 58,
-        "implemented": 3235
+        "implemented": 3237
       },
       "mcp_tools": 201,
-      "mcp_resources": 3280,
+      "mcp_resources": 3282,
       "http_routes": 207,
       "cli_commands": 116,
       "modules": 94,
@@ -88434,7 +88434,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 978,
+        "capabilities": 979,
         "capability_ids": []
       },
       {
@@ -89027,7 +89027,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 628,
+        "capabilities": 629,
         "capability_ids": []
       },
       {
@@ -89119,7 +89119,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c65b0144ef539f6cb140767a6fa4283231ed96dbe93110771aa826629a2b0074",
+    "fingerprint": "052e81e8fc06a0fa08dc1efb34cdb89089163e7757a8136aa6e856bb2772815c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89159,7 +89159,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 38,
-      "issue": 978,
+      "issue": 979,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 106,
@@ -89173,7 +89173,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 628,
+      "test": 629,
       "use-case": 49,
       "workspace": 1
     },
@@ -96486,7 +96486,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 911614
+        "bytes": 917760
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -111107,6 +111107,17 @@
         "bytes": 2333
       },
       {
+        "uri": "majordomus://issue/I4223",
+        "kind": "issue",
+        "identity": "I4223",
+        "title": "The pre-commit generation gate answers inside its bound, and a failed case's reason reaches an artifact",
+        "description": "Make `generate --check`, which `scripts/pages current` runs in front of every commit, stop paying for the plan's scope-conflict scan: choose the runnable issues once, normalise every scope entry once, and compare normalised entries without allocating, with the same findings in the same order. And make the reason a failed case prints reach a file CI keeps: test/run.sh writes every failed or timed-out case's output to MJ_TEST_FAILURES, and validate.yml uploads it per suite shard.",
+        "path": ".ai/repo/project/issues/I4223.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3420
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -121723,6 +121734,14 @@
         "bytes": 5261
       },
       {
+        "uri": "majordomus://test/test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
+        "kind": "test",
+        "identity": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
+        "path": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
+        "source_class": "case",
+        "bytes": 3613
+      },
+      {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
         "kind": "test",
         "identity": "test/cases/42_dag_waves.sh",
@@ -122168,7 +122187,7 @@
         "identity": "test/cases/56_derived_current_gate.sh",
         "path": "test/cases/56_derived_current_gate.sh",
         "source_class": "case",
-        "bytes": 12570
+        "bytes": 13029
       },
       {
         "uri": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
@@ -124285,7 +124304,7 @@
       "identity": [
         "id"
       ],
-      "objects": 978
+      "objects": 979
     },
     {
       "name": "knowledge",
@@ -124447,7 +124466,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 628
+      "objects": 629
     },
     {
       "name": "use-case",
