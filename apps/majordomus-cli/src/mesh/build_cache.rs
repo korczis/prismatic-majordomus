@@ -873,13 +873,27 @@ mod tests {
 
     #[test]
     fn a_closed_port_is_unhealthy_and_a_name_or_a_non_url_is_unknown_never_healthy() {
-        // a port nothing listens on: bind, note it, drop the listener
-        let port = {
-            let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
-            l.local_addr().expect("addr").port()
-        };
-        let closed = format!("http://127.0.0.1:{port}");
-        assert_eq!(probe_health(&closed, "/x", PROBE_BUDGET), Health::Unhealthy);
+        // a port nothing listens on: bind, note it, drop the listener. Another test's listener
+        // can take the freed port before the probe arrives (under coverage, thousands of tests
+        // bind port 0 at once), and the probe then waits on it and says Unknown. So the probe
+        // asks fresh ports: a closed one answers Unhealthy at once, and a probe that never
+        // does fails every attempt.
+        let mut answers = Vec::new();
+        for _ in 0..5 {
+            let port = {
+                let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
+                l.local_addr().expect("addr").port()
+            };
+            answers.push(probe_health(
+                &format!("http://127.0.0.1:{port}"),
+                "/x",
+                PROBE_BUDGET,
+            ));
+            if answers.last() == Some(&Health::Unhealthy) {
+                break;
+            }
+        }
+        assert_eq!(answers.last(), Some(&Health::Unhealthy), "{answers:?}");
         // a name would need DNS, which a probe never does
         assert_eq!(
             probe_health("http://jetson-tx2:9000", "/x", PROBE_BUDGET),
