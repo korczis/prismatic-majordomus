@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 217 | 179 | 0 | 38 |
-| http | 209 | 179 | 0 | 30 |
-| mcp | 203 | 174 | 0 | 29 |
+| direct | 218 | 180 | 0 | 38 |
+| http | 210 | 180 | 0 | 30 |
+| mcp | 204 | 175 | 0 | 29 |
 | system | 14 | 14 | 0 | 0 |
-| total | 643 | 546 | 0 | 97 |
+| total | 646 | 549 | 0 | 97 |
 
 ## Capabilities
 
@@ -192,6 +192,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
 | `quality.rustdoc` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default`, `missing-pages-summary` |
+| `quality.secret_argv` | quality | query | — | covered | covered | covered | `default` |
 | `reasoning.advisors` | reasoning | query | — | covered | covered | covered | `default` |
 | `reasoning.check` | reasoning | query | — | covered | covered | covered | `default` |
 | `reasoning.explain` | reasoning | query | — | waived | waived | waived | — |

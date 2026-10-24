@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "f049695bd1fe20a32f0f169d2f4a3113f5268b40e409903a28f41c80cc480261",
+    "fingerprint": "6ad4f2b296233f164a21e401557c97643ba76d7a0c682e3d201de58e6f3ca0f1",
     "summary": {
-      "total": 3461,
-      "builtin": 217,
-      "declarative": 3244,
+      "total": 3465,
+      "builtin": 218,
+      "declarative": 3247,
       "by_kind": {
         "command": 35,
-        "query": 182,
-        "resource": 3244
+        "query": 183,
+        "resource": 3247
       },
       "by_stability": {
-        "behaviorally_verified": 145,
+        "behaviorally_verified": 146,
         "experimental": 62,
-        "implemented": 3254
+        "implemented": 3257
       },
-      "mcp_tools": 203,
-      "mcp_resources": 3299,
-      "http_routes": 209,
-      "cli_commands": 120,
+      "mcp_tools": 204,
+      "mcp_resources": 3302,
+      "http_routes": 210,
+      "cli_commands": 121,
       "modules": 94,
-      "benchmark_required": 179,
+      "benchmark_required": 180,
       "benchmark_waived": 38,
       "cached": 54
     },
@@ -48268,7 +48268,7 @@
                   },
                   "line": {
                     "type": "string",
-                    "description": "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+                    "description": "The command as it is run. A node's secret is never on it: `<secret of NODE>` names\nwhat the command reads on its standard input."
                   },
                   "when": {
                     "type": "string",
@@ -69207,6 +69207,165 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
       },
       {
+        "id": "quality.secret_argv",
+        "module": "quality",
+        "kind": "query",
+        "title": "Refuse a secret on a command line",
+        "description": "Every Rust source and every shell unit the tree would commit, read for a child process given a secret as an argument, where every user of the host reads it (ps, /proc/<pid>/cmdline): a value read from a credential source (a call or variable named as a secret, an env::var of one, a keychain or credentials-file read) or a binding filled from one, reaching .arg, .args, Command::new, a vector named argv, args or cmd, a runner's argument list, or an argument of an external shell command. Standard input, the child's environment and a 0600 file are the forms that pass. Each finding names the file, the line, the value's name (never the value), where it went and the rule; a line that says why with `secret-argv: <why>` is not one. Reads the tree and git's index only; no build and no network.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "SecretArgvReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "measured": {
+                "type": "boolean",
+                "description": "Whether the tree could be read. `false` is not a pass: the reason says what stopped it."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the tree could not be read, when it could not."
+              },
+              "rule": {
+                "type": "string",
+                "description": "The rule the check enforces."
+              },
+              "rust_files": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many Rust sources were read."
+              },
+              "shell_files": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many shell units were read."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/SecretArgvFinding"
+                },
+                "description": "Every finding, by file and line. Empty is the passing answer."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "`true` when the tree was read and nothing was found."
+              }
+            },
+            "required": [
+              "measured",
+              "rule",
+              "rust_files",
+              "shell_files",
+              "findings",
+              "passes"
+            ],
+            "description": "The verdict of one check of the tree.",
+            "title": "SecretArgvReport",
+            "$defs": {
+              "SecretArgvFinding": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The file, relative to the repository root."
+                  },
+                  "line": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The 1-based line of the command line."
+                  },
+                  "language": {
+                    "type": "string",
+                    "description": "`rust` or `shell`."
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "The binding, variable or call that carries the secret. Never its value."
+                  },
+                  "sink": {
+                    "type": "string",
+                    "description": "Where the command line is built: `.arg`, `argv.push`, `Command::new`, or the external\ncommand a shell line runs."
+                  },
+                  "rule": {
+                    "type": "string",
+                    "description": "The rule the finding breaks."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What to do about it."
+                  }
+                },
+                "required": [
+                  "path",
+                  "line",
+                  "language",
+                  "value",
+                  "sink",
+                  "rule",
+                  "remedy"
+                ],
+                "description": "One value that reaches a command line."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::quality"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_quality_secret_argv"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/quality/secret-argv"
+          },
+          "cli": {
+            "path": [
+              "quality",
+              "secret-argv"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "quality",
+          "security",
+          "rust",
+          "shell"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
+      },
+      {
         "id": "reasoning.advisors",
         "module": "reasoning",
         "kind": "query",
@@ -89937,7 +90096,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 982,
+        "capabilities": 983,
         "capability_ids": []
       },
       {
@@ -90286,10 +90445,11 @@
         "description": "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them.",
         "stability": "behaviorally_verified",
         "source": "builtin",
-        "capabilities": 2,
+        "capabilities": 3,
         "capability_ids": [
           "quality.report",
-          "quality.rustdoc"
+          "quality.rustdoc",
+          "quality.secret_argv"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs",
         "rustdoc": {
@@ -90390,7 +90550,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 189,
+        "capabilities": 190,
         "capability_ids": []
       },
       {
@@ -90534,7 +90694,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 635,
+        "capabilities": 636,
         "capability_ids": []
       },
       {
@@ -90626,7 +90786,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fd9b2ac92902da0b60420c3ec6034eadcfae6076db4869d68a61b6dbbe2cf3d5",
+    "fingerprint": "b3efd4e0d69ebce588ed23faf8865b8072adcd7d3c3ea95b3c831ee4b5275d00",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90666,7 +90826,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 40,
-      "issue": 982,
+      "issue": 983,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 108,
@@ -90675,12 +90835,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 36,
-      "rule": 189,
+      "rule": 190,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 635,
+      "test": 636,
       "use-case": 49,
       "workspace": 1
     },
@@ -98040,7 +98200,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 908866
+        "bytes": 909063
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -112727,6 +112887,17 @@
         "bytes": 3073
       },
       {
+        "uri": "majordomus://issue/I3996",
+        "kind": "issue",
+        "identity": "I3996",
+        "title": "A provisioning secret never travels on a command line, and a gate refuses one that does",
+        "description": "mesh build-cache provision makes a node's MinIO identity with `mc admin user add <alias> <access key>` and gives the secret on the command's standard input, mc's own documented form (minio/mc cmd/admin-user-add.go, fetchUserKeys), so it is in no process's argv; the typed capability quality.secret_argv (gate secret-argv, rule project.a-secret-never-travels-on-a-command-line) refuses a Rust or shell command line that carries a value read from a credential source, naming the file, the line and the rule.",
+        "path": ".ai/repo/project/issues/I3996.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3432
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -117062,6 +117233,22 @@
         "tags": [
           "ci",
           "process"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.a-secret-never-travels-on-a-command-line@1",
+        "kind": "rule",
+        "identity": "project.a-secret-never-travels-on-a-command-line@1",
+        "title": "A secret never travels on a command line",
+        "description": "A value read from a credential source, or named as one, is handed to a child process on its standard input, in its environment or through a file of mode 0600 it reads, and never as an argument, which every user of the host can read for as long as the child runs.",
+        "path": ".ai/repo/rules/project/a-secret-never-travels-on-a-command-line.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4049,
+        "tags": [
+          "security",
+          "rust",
+          "shell"
         ]
       },
       {
@@ -123310,6 +123497,14 @@
         "bytes": 1641
       },
       {
+        "uri": "majordomus://test/test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+        "kind": "test",
+        "identity": "test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+        "path": "test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+        "source_class": "case",
+        "bytes": 6710
+      },
+      {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "test",
         "identity": "test/cases/400_derivation_is_one_graph.sh",
@@ -125984,7 +126179,7 @@
       "identity": [
         "id"
       ],
-      "objects": 982
+      "objects": 983
     },
     {
       "name": "knowledge",
@@ -126081,7 +126276,7 @@
         "id",
         "version"
       ],
-      "objects": 189
+      "objects": 190
     },
     {
       "name": "scope",
@@ -126146,7 +126341,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 635
+      "objects": 636
     },
     {
       "name": "use-case",
@@ -144012,6 +144207,132 @@
                 "command": "majordomus quality rustdoc --tree site/public/rustdoc --format json",
                 "setup": [],
                 "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "quality",
+              "secret-argv"
+            ],
+            "route": "/docs/cli/quality/secret-argv/",
+            "executable": true,
+            "usage": "majordomus quality secret-argv [OPTIONS]",
+            "about": "Refuse a secret handed to a child process on its command line, in the Rust and the shell",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "quality-secret-argv",
+                "title": "Whether any code hands a child a secret on its command line",
+                "description": "Every Rust source and shell unit of the tree read for a value from a credential source that becomes an argument of a child process, where every user of the host can read it. Exits 0 when there is none, 10 with findings (each naming the file, the line, the value's name and the rule), and 12 when the tree cannot be read. The repository the examples run in has nothing to find.",
+                "argv": [
+                  "quality",
+                  "secret-argv"
+                ],
+                "command": "majordomus quality secret-argv",
+                "setup": [],
+                "expectation": "exits 0; prints secret-argv: no secret on a command line"
+              },
+              {
+                "id": "quality-secret-argv-json",
+                "title": "The same answer as the API and MCP give it",
+                "description": "The typed report: whether the tree was read, how many Rust sources and shell units, every finding, and the verdict, exactly as GET /api/v1/quality/secret-argv and the majordomus_quality_secret_argv tool return it.",
+                "argv": [
+                  "quality",
+                  "secret-argv",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus quality secret-argv --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /measured, /passes, /findings, /rule"
               }
             ],
             "subcommands": []
@@ -162962,6 +163283,23 @@
         "output": "RustdocReport"
       },
       {
+        "name": "majordomus_quality_secret_argv",
+        "id": "quality.secret_argv",
+        "title": "Refuse a secret on a command line",
+        "description": "Every Rust source and every shell unit the tree would commit, read for a child process given a secret as an argument, where every user of the host reads it (ps, /proc/<pid>/cmdline): a value read from a credential source (a call or variable named as a secret, an env::var of one, a keychain or credentials-file read) or a binding filled from one, reaching .arg, .args, Command::new, a vector named argv, args or cmd, a runner's argument list, or an argument of an external shell command. Standard input, the child's environment and a 0600 file are the forms that pass. Each finding names the file, the line, the value's name (never the value), where it went and the rule; a line that says why with `secret-argv: <why>` is not one. Reads the tree and git's index only; no build and no network.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "Empty",
+        "output": "SecretArgvReport"
+      },
+      {
         "name": "majordomus_reasoning_advisors",
         "id": "reasoning.advisors",
         "title": "The advisors and what they can do now",
@@ -165067,6 +165405,12 @@
         "method": "GET",
         "path": "/api/v1/quality/rustdoc",
         "id": "quality.rustdoc",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/quality/secret-argv",
+        "id": "quality.secret_argv",
         "kind": "query"
       },
       {
@@ -171156,6 +171500,35 @@
         "route": "GET /api/v1/quality/rustdoc"
       },
       {
+        "key": "quality.secret_argv|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "quality.secret_argv",
+        "module": "quality",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "quality.secret_argv|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "quality.secret_argv",
+        "module": "quality",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_quality_secret_argv"
+      },
+      {
+        "key": "quality.secret_argv|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "quality.secret_argv",
+        "module": "quality",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/quality/secret-argv"
+      },
+      {
         "key": "reasoning.advisors|direct|default",
         "kind": "capability",
         "transport": "direct",
@@ -176779,6 +177152,27 @@
           "cases": 2
         },
         {
+          "subject": "quality.secret_argv",
+          "module": "quality",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "quality.secret_argv",
+          "module": "quality",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "quality.secret_argv",
+          "module": "quality",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "reasoning.advisors",
           "module": "reasoning",
           "transport": "direct",
@@ -177789,22 +178183,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 217,
-          "covered": 179,
+          "required": 218,
+          "covered": 180,
           "missing": 0,
           "waived": 38,
           "inapplicable": 0
         },
         "http": {
-          "required": 209,
-          "covered": 179,
+          "required": 210,
+          "covered": 180,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 203,
-          "covered": 174,
+          "required": 204,
+          "covered": 175,
           "missing": 0,
           "waived": 29,
           "inapplicable": 0
@@ -177817,8 +178211,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 643,
-          "covered": 546,
+          "required": 646,
+          "covered": 549,
           "missing": 0,
           "waived": 97,
           "inapplicable": 0

@@ -1,0 +1,41 @@
+id: I3996
+milestone: builds-reuse-the-mesh-cache
+title: "A provisioning secret never travels on a command line, and a gate refuses one that does"
+slug: a-secret-never-travels-on-a-command-line
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "mesh build-cache provision makes a node's MinIO identity with `mc admin user add <alias> <access key>` and gives the secret on the command's standard input, mc's own documented form (minio/mc cmd/admin-user-add.go, fetchUserKeys), so it is in no process's argv; the typed capability quality.secret_argv (gate secret-argv, rule project.a-secret-never-travels-on-a-command-line) refuses a Rust or shell command line that carries a value read from a credential source, naming the file, the line and the rule."
+why: "Found in review of I2674 (#2402) on 2026-10-23: apps/majordomus-cli/src/mesh/cache_provision.rs pushed each node's generated secret onto the argv of `mc admin user add`, where every user of the provider host reads it in ps and /proc/<pid>/cmdline for as long as the call runs. The intent this milestone serves says no credential appears in a process's environment, a log or an answer; an argument is all three."
+current_state: "Measured at 376493cd4c9 on 2026-10-23: run_steps built `runuser -u <user> -- mc --quiet admin user add <alias> mesh-cache-<node> <secret>` and the runner gave the child no standard input; no gate, rule or case refused a secret on a command line, and a search of the Rust (Command::new, .arg, .args), lib/, scripts/ and share/ found no other secret handed to a child as an argument."
+desired_state: "No command the repository runs carries a secret in its argv; the forms that pass are standard input, the child's environment and a 0600 file; a new command line that carries one is refused before it lands."
+scope:
+  - "apps/majordomus-cli/src/mesh/cache_provision.rs"
+  - "apps/majordomus-cli/src/quality/secret_argv.rs"
+  - "apps/majordomus-cli/src/quality/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/quality.rs"
+  - "apps/majordomus-cli/src/commands/quality.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/rules/project/a-secret-never-travels-on-a-command-line.v1.md"
+  - ".ai/repo/project/issues/I3996.yaml"
+  - "test/cases/3996_a_secret_never_travels_on_a_command_line.sh"
+non_scope:
+  - "The GitHub workflows: their run: blocks receive secrets through env: and write them with shell builtins, and they are not shell units the check reads"
+  - "Rotating the identities lundra already holds"
+depends_on:
+  - I2674
+acceptance_criteria:
+  - "With a stand-in mc that records its argv and its standard input, no node's secret is in any argv the apply runs, and each node's secret is the standard input of its own admin user add"
+  - "The gate refuses a fixture that pushes a secret read from a credential file onto an argv, and passes the fixed form"
+  - "The gate refuses a shell fixture that passes a token as an argument of an external command, and passes the same value given on standard input or in the child's environment"
+  - "This repository's tree passes the gate"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3996_a_secret_never_travels_on_a_command_line"
+evidence_required:
+  - "secret_argv_case"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+created_at: 2026-10-23
+updated_at: 2026-10-23

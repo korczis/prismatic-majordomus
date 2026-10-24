@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "9db3b7dc8914cf0d7d6bdcfa777595a83f318c7b622d05ab017573b3def95f50",
+  "fingerprint": "f8bef8678e0df16d65569908840a2565275356e416daf7b8c32927ee260ac501",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 146,
+        "capabilities": 147,
         "moments": 38
       },
       "evidence": {
@@ -3476,6 +3476,15 @@
               "resource": "majordomus://quality/rustdoc",
               "route": "GET /api/v1/quality/rustdoc",
               "cli": "majordomus quality rustdoc"
+            },
+            {
+              "id": "quality.secret_argv",
+              "title": "Refuse a secret on a command line",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_quality_secret_argv",
+              "route": "GET /api/v1/quality/secret-argv",
+              "cli": "majordomus quality secret-argv"
             }
           ]
         }
@@ -3780,11 +3789,11 @@
         "why"
       ],
       "counts": {
-        "capabilities": 12,
-        "mcp_tools": 12,
+        "capabilities": 13,
+        "mcp_tools": 13,
         "mcp_resources": 323,
-        "http_routes": 12,
-        "cli_paths": 11,
+        "http_routes": 13,
+        "cli_paths": 12,
         "commands": 2,
         "objects": 316,
         "rules": 5,
@@ -8030,7 +8039,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 189
+          "objects": 190
         }
       ],
       "rule_refs": [
@@ -8406,11 +8415,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 191,
+        "mcp_resources": 192,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 189,
+        "objects": 190,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -13407,7 +13416,7 @@
         },
         {
           "name": "issue",
-          "objects": 982
+          "objects": 983
         },
         {
           "name": "intent",
@@ -13617,11 +13626,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1172,
+        "mcp_resources": 1173,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1169,
+        "objects": 1170,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17554,7 +17563,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (982)",
+        "title": "issue (983)",
         "features": [
           "planning"
         ]
@@ -17617,7 +17626,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (189)",
+        "title": "rule (190)",
         "features": [
           "doctrine"
         ]
@@ -18589,17 +18598,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3461,
-    "builtin": 217,
-    "declarative": 3244,
+    "capabilities": 3465,
+    "builtin": 218,
+    "declarative": 3247,
     "modules": 60,
-    "mcp_tools": 203,
-    "mcp_resources": 3299,
-    "http_routes": 209,
-    "cli_commands": 218,
+    "mcp_tools": 204,
+    "mcp_resources": 3302,
+    "http_routes": 210,
+    "cli_commands": 219,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3244,
+    "objects": 3247,
     "by_kind": {
       "adr": 163,
       "application": 5,
@@ -18618,7 +18627,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 40,
-      "issue": 982,
+      "issue": 983,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 108,
@@ -18627,12 +18636,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 36,
-      "rule": 189,
+      "rule": 190,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 635,
+      "test": 636,
       "use-case": 49,
       "workspace": 1
     },

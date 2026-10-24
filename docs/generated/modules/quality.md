@@ -5,7 +5,7 @@
 
 What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them.
 
-Stability: behaviorally_verified. Capabilities: 2.
+Stability: behaviorally_verified. Capabilities: 3.
 
 ## `quality.report` — Public API quality report
 
@@ -68,4 +68,24 @@ verdict would be a way of passing a tree with a missing page. |
 out. |
 
 Output: `RustdocReport`.
+
+## `quality.secret_argv` — Refuse a secret on a command line
+
+Every Rust source and every shell unit the tree would commit, read for a child process given a secret as an argument, where every user of the host reads it (ps, /proc/<pid>/cmdline): a value read from a credential source (a call or variable named as a secret, an env::var of one, a keychain or credentials-file read) or a binding filled from one, reaching .arg, .args, Command::new, a vector named argv, args or cmd, a runner's argument list, or an argument of an external shell command. Standard input, the child's environment and a 0600 file are the forms that pass. Each finding names the file, the line, the value's name (never the value), where it went and the rule; a line that says why with `secret-argv: <why>` is not one. Reads the tree and git's index only; no build and no network.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_quality_secret_argv` |
+| HTTP | `GET /api/v1/quality/secret-argv` |
+| CLI | `majordomus quality secret-argv` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::quality |
+| tags | quality, security, rust, shell |
+
+Input: none.
+
+Output: `SecretArgvReport`.
 

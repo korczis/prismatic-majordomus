@@ -1,6 +1,7 @@
 //! `majordomus quality report`: the crate's own public surface, through the registry's
-//! `quality.report`; and `majordomus quality rustdoc`: the tree rustdoc renders from it,
-//! through `quality.rustdoc`.
+//! `quality.report`; `majordomus quality rustdoc`: the tree rustdoc renders from it,
+//! through `quality.rustdoc`; and `majordomus quality secret-argv`: no secret on a child's
+//! command line, through `quality.secret_argv`.
 //!
 //! The command owns the rendering and nothing else. The measurement, the filtering, the
 //! ratchet and the verdict all happen inside the capability, so the terminal report, the
@@ -22,9 +23,11 @@ use crate::capability::builtin::quality::{baseline_key, judge_rustdoc, QualityAn
 use crate::capability::CapabilityError;
 use crate::cli::{
     OutputFormat, QualityArgs, QualityCommand, QualityReportArgs, QualityRustdocArgs,
+    QualitySecretArgvArgs,
 };
 use crate::error::{Error, Result};
 use crate::quality::rustdoc::{RustdocFindingKind, RustdocReport, RustdocVerdict, Tree};
+use crate::quality::secret_argv::SecretArgvReport;
 
 /// The exit code when a finding stands. The code every unmet contract in this executable
 /// uses, so a caller need not learn a second vocabulary for this one.
@@ -35,7 +38,95 @@ pub fn run(args: QualityArgs) -> Result<u8> {
     match args.command {
         QualityCommand::Report(args) => report(args),
         QualityCommand::Rustdoc(args) => rustdoc(args),
+        QualityCommand::SecretArgv(args) => secret_argv(args),
     }
+}
+
+/// The exit code when the tree could not be read: not a pass.
+const EXIT_UNMEASURED: u8 = 12;
+
+/// `majordomus quality secret-argv`: the capability's answer rendered, its verdict the exit code.
+fn secret_argv(args: QualitySecretArgvArgs) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let ctx = &app.context;
+    let id = ctx
+        .registry
+        .by_cli(&["quality".to_string(), "secret-argv".to_string()])
+        .map(|c| c.id.as_str())
+        .ok_or_else(|| Error::Protocol {
+            reason: "no capability is exposed as `majordomus quality secret-argv`".into(),
+        })?;
+    let value = ctx.execute(id, json!({})).map_err(map)?;
+    let report: SecretArgvReport =
+        serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
+            reason: format!(
+                "quality.secret_argv answered with something this command cannot read: {e}"
+            ),
+        })?;
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    match args.format {
+        OutputFormat::Json => writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(&value).unwrap_or_else(|_| value.to_string())
+        )
+        .map_err(Error::Transport)?,
+        OutputFormat::Text => out
+            .write_all(render_secret_argv(&report).as_bytes())
+            .map_err(Error::Transport)?,
+    }
+    Ok(secret_argv_exit(&report))
+}
+
+/// The exit code a report earns: 0 clean, 10 with findings, 12 unread.
+fn secret_argv_exit(report: &SecretArgvReport) -> u8 {
+    if !report.measured {
+        EXIT_UNMEASURED
+    } else if report.passes {
+        0
+    } else {
+        EXIT_VIOLATIONS
+    }
+}
+
+/// The terminal rendering of one report, as one string written once.
+fn render_secret_argv(report: &SecretArgvReport) -> String {
+    use std::fmt::Write as _;
+    let mut s = String::new();
+    if !report.measured {
+        let _ = writeln!(
+            s,
+            "secret-argv: not measured: {}",
+            report.reason.as_deref().unwrap_or("")
+        );
+        return s;
+    }
+    for f in &report.findings {
+        let _ = writeln!(
+            s,
+            "{}:{}: {} reaches the command line of {} ({})",
+            f.path, f.line, f.value, f.sink, f.language
+        );
+    }
+    if let Some(f) = report.findings.first() {
+        let _ = writeln!(s, "  rule    {}", f.rule);
+        let _ = writeln!(s, "  remedy  {}", f.remedy);
+        let _ = writeln!(
+            s,
+            "secret-argv: {} secret(s) on a command line, in {} Rust source(s) and {} shell unit(s)",
+            report.findings.len(),
+            report.rust_files,
+            report.shell_files
+        );
+    } else {
+        let _ = writeln!(
+            s,
+            "secret-argv: no secret on a command line, in {} Rust source(s) and {} shell unit(s)",
+            report.rust_files, report.shell_files
+        );
+    }
+    s
 }
 
 fn report(args: QualityReportArgs) -> Result<u8> {
@@ -452,6 +543,46 @@ mod tests {
         let mut buf: Vec<u8> = Vec::new();
         render(&mut buf, answer).expect("the renderer writes");
         String::from_utf8(buf).expect("utf-8")
+    }
+
+    #[test]
+    fn a_secret_argv_report_is_rendered_and_exits_by_its_verdict() {
+        use crate::quality::secret_argv::{SecretArgvFinding, SecretArgvReport};
+        let mut r = SecretArgvReport {
+            measured: true,
+            reason: None,
+            rule: "project.a-secret-never-travels-on-a-command-line".into(),
+            rust_files: 3,
+            shell_files: 2,
+            findings: Vec::new(),
+            passes: true,
+        };
+        assert_eq!(secret_argv_exit(&r), 0);
+        assert!(render_secret_argv(&r).contains(
+            "secret-argv: no secret on a command line, in 3 Rust source(s) and 2 shell unit(s)"
+        ));
+        r.findings.push(SecretArgvFinding {
+            path: "lib/x.sh".into(),
+            line: 7,
+            language: "shell".into(),
+            value: "$GH_TOKEN".into(),
+            sink: "curl".into(),
+            rule: r.rule.clone(),
+            remedy: "stdin".into(),
+        });
+        r.passes = false;
+        assert_eq!(secret_argv_exit(&r), EXIT_VIOLATIONS);
+        let out = render_secret_argv(&r);
+        assert!(out.contains("lib/x.sh:7: $GH_TOKEN reaches the command line of curl (shell)"));
+        assert!(out.contains("  rule    project.a-secret-never-travels-on-a-command-line"));
+        assert!(out.contains("secret-argv: 1 secret(s) on a command line"));
+        r.measured = false;
+        r.reason = Some("git ls-files: not a repository".into());
+        assert_eq!(secret_argv_exit(&r), EXIT_UNMEASURED);
+        assert_eq!(
+            render_secret_argv(&r),
+            "secret-argv: not measured: git ls-files: not a repository\n"
+        );
     }
 
     fn measured(report: QualityReport, passes: bool, baselined: usize) -> QualityAnswer {

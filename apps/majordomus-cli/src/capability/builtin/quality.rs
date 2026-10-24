@@ -18,6 +18,11 @@
 //! the `rustdoc` web surface's artifact as the topology resolves it — never a path a caller
 //! names — and a tree that is not there is the `no_tree` verdict, exit 12, never a pass.
 //!
+//! `quality.secret_argv` holds the code that starts processes — the Rust of the executable
+//! and the repository's shell — to `project.a-secret-never-travels-on-a-command-line`: a value
+//! read from a credential source, or named as one, never becomes an argument of a child
+//! (I3996). A tree git cannot read is unmeasured, exit 12, never a pass.
+//!
 //! ```
 //! use majordomus_cli::capability::builtin::quality::module;
 //! let m = module();
@@ -41,11 +46,12 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::quality::rustdoc::{RustdocFindingKind, RustdocReport, Subject, Tree};
+use crate::quality::secret_argv::{self, SecretArgvReport};
 use crate::quality::{QualityReport, ViolationCode};
 use crate::web::discover::{discover, Runtime, GENERATED_ROOT};
 use crate::{capability, module};
 
-use super::get;
+use super::{get, mcp, Empty};
 
 /// The URI under which the report is read as an MCP resource.
 pub const QUALITY_URI: &str = "majordomus://quality";
@@ -351,6 +357,10 @@ fn report(ctx: &Context, input: QualityInput) -> Result<QualityAnswer, Capabilit
     })
 }
 
+fn secret_argv_check(ctx: &Context, _: Empty) -> Result<SecretArgvReport, CapabilityError> {
+    Ok(secret_argv::check(Path::new(&ctx.index.repository.root)))
+}
+
 /// The module.
 pub fn module() -> ModuleDescriptor {
     module! {
@@ -402,6 +412,21 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 8, ttl_seconds: Some(10) },
                 handler: rustdoc,
             },
+            capability! {
+                id: "quality.secret_argv",
+                title: "Refuse a secret on a command line",
+                description: "Every Rust source and every shell unit the tree would commit, read for a child process given a secret as an argument, where every user of the host reads it (ps, /proc/<pid>/cmdline): a value read from a credential source (a call or variable named as a secret, an env::var of one, a keychain or credentials-file read) or a binding filled from one, reaching .arg, .args, Command::new, a vector named argv, args or cmd, a runner's argument list, or an argument of an external shell command. Standard input, the child's environment and a 0600 file are the forms that pass. Each finding names the file, the line, the value's name (never the value), where it went and the rule; a line that says why with `secret-argv: <why>` is not one. Reads the tree and git's index only; no build and no network.",
+                input: Empty,
+                output: SecretArgvReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_quality_secret_argv"),
+                    http: get("/api/v1/quality/secret-argv"),
+                    cli: Some(CliExposure { path: vec!["quality".into(), "secret-argv".into()] }),
+                },
+                tags: ["quality", "security", "rust", "shell"],
+                handler: secret_argv_check,
+            },
         ],
     }
 }
@@ -422,7 +447,10 @@ mod tests {
             .iter()
             .map(|e| e.capability.id.as_str())
             .collect();
-        assert_eq!(ids, ["quality.report", "quality.rustdoc"]);
+        assert_eq!(
+            ids,
+            ["quality.report", "quality.rustdoc", "quality.secret_argv"]
+        );
         let e = &m.capabilities[0].capability.exposure;
         assert_eq!(
             e.mcp.as_ref().and_then(|m| m.tool.as_deref()),

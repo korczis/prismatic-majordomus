@@ -138,6 +138,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
 | [`majordomus quality rustdoc`](#majordomus-quality-rustdoc) | `/docs/cli/quality/rustdoc/` | Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked |
+| [`majordomus quality secret-argv`](#majordomus-quality-secret-argv) | `/docs/cli/quality/secret-argv/` | Refuse a secret handed to a child process on its command line, in the Rust and the shell |
 | [`majordomus run`](#majordomus-run) | `/docs/cli/run/` | Run a capability as an execution and follow it: its steps, its progress and its output as they happen |
 | [`majordomus executions`](#majordomus-executions) | `/docs/cli/executions/` | The executions of the server serving this repository: what has run, what is running, and what each one said |
 | [`majordomus executions list`](#majordomus-executions-list) | `/docs/cli/executions/list/` | Every execution the server remembers, newest first |
@@ -3933,7 +3934,7 @@ Examples:
 
 What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
 
-Subcommands: [`majordomus quality report`](#majordomus-quality-report), [`majordomus quality rustdoc`](#majordomus-quality-rustdoc).
+Subcommands: [`majordomus quality report`](#majordomus-quality-report), [`majordomus quality rustdoc`](#majordomus-quality-rustdoc), [`majordomus quality secret-argv`](#majordomus-quality-secret-argv).
 
 ```text
 majordomus quality <COMMAND>
@@ -4018,6 +4019,41 @@ Examples:
   ```
 
   Verified: exits 12.
+
+<a id="majordomus-quality-secret-argv"></a>
+## `majordomus quality secret-argv`
+
+Refuse a secret handed to a child process on its command line, in the Rust and the shell
+
+```text
+majordomus quality secret-argv [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether any code hands a child a secret on its command line** — Every Rust source and shell unit of the tree read for a value from a credential source that becomes an argument of a child process, where every user of the host can read it. Exits 0 when there is none, 10 with findings (each naming the file, the line, the value's name and the rule), and 12 when the tree cannot be read. The repository the examples run in has nothing to find.
+
+  ```console
+  $ majordomus quality secret-argv
+  ```
+
+  Verified: exits 0; prints secret-argv: no secret on a command line.
+
+- **The same answer as the API and MCP give it** — The typed report: whether the tree was read, how many Rust sources and shell units, every finding, and the verdict, exactly as GET /api/v1/quality/secret-argv and the majordomus_quality_secret_argv tool return it.
+
+  ```console
+  $ majordomus quality secret-argv --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /measured, /passes, /findings, /rule.
 
 <a id="majordomus-run"></a>
 ## `majordomus run`
