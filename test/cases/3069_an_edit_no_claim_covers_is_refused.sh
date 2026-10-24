@@ -26,7 +26,7 @@ sed -i.bak 's/^  edits_require_claim: false/  edits_require_claim: true/' .ai/re
 grep -q '^  edits_require_claim: true' .ai/repo/policy.yaml || { echo "    the fixture's policy did not turn the guard on"; exit 1; }
 mkdir -p .ai/repo/mesh lib docs
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
 printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: case-3069\n' >> .ai/repo/mesh/majordomus.yaml
 echo a > lib/a && echo d > docs/d && git add -A && git commit -qm base
 mkdir -p "$T/state" "$T/bin" "$T/elsewhere"

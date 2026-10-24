@@ -1,11 +1,11 @@
 ---
 name: mj-mesh
-description: "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The discovered nodes; One runtime; Who…"
+description: "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:mesh; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 
 # Majordomus `mesh`
 
@@ -18,6 +18,7 @@ $ARGUMENTS
 | `mesh.claim` | Claim a scope across the mesh | `majordomus_mesh_claim` | — | changes |
 | `mesh.cooperation` | Cooperation, at a glance | `majordomus_mesh_cooperation` | — | reads |
 | `mesh.doctor` | The mesh self-check | `majordomus_mesh_doctor` | `majordomus mesh doctor` | reads |
+| `mesh.enrol` | Enrol this machine in the mesh | `majordomus_mesh_enrol` | `majordomus mesh enrol` | changes |
 | `mesh.events` | The cooperation journal | `majordomus_mesh_events` | — | reads |
 | `mesh.firewall` | The host firewall, as the mesh needs it | `majordomus_mesh_firewall` | `majordomus mesh firewall` | reads |
 | `mesh.handover.consume` | Consume a handover from the mesh | `majordomus_mesh_handover_consume` | — | changes |

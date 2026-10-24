@@ -80,6 +80,7 @@ mj_cmd_doctor() {
   mj_doctrine_dispatch doctor
   mj_report_environment
   mj_report_reasoning
+  mj_report_layout
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -551,6 +552,35 @@ mj_report_reasoning() {
   fi
   if [ -n "$check" ] && [ "$(printf '%s' "$check" | jq -r '.checks | index("ci") == null')" = true ]; then
     mj_info reasoning "-" "ci, claims: not run; they judge Majordomus's own workflows and documents and apply where project.advisors-are-optional is declared (majordomus reasoning check)"
+  fi
+  return 0
+}
+
+# The boundary between the layer's halves, judged by the executable against the layouts their
+# contracts declare (I2871): a tracked file the ignore rules match under a contract that
+# excludes runtime state, or a copy of authored knowledge in the local half. Exit 10 is the
+# check's verdict on a finding, not a failure to run; an empty answer is.
+mj_report_layout() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share report
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ]; then
+    mj_info layout "-" "the executable is not built, so the layout boundary is not judged here (majordomus layout check)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  report="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+               "$bin" layout check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  if [ -z "$report" ] || [ "$(printf '%s' "$report" | jq -r '.measured')" != true ]; then
+    mj_info layout "-" "the layout boundary could not be judged (majordomus layout check)"
+  elif [ "$(printf '%s' "$report" | jq -r '.passes')" = true ]; then
+    mj_ok layout "-" "$(printf '%s' "$report" | jq -r '"layout check: \(.checked) path(s) judged against their declared layouts; no finding"')"
+  else
+    printf '%s' "$report" | jq -r '.findings[] | [.path, .contract, .excludes, .reason] | @tsv' | \
+      while IFS="$(printf '\t')" read -r path contract excludes reason; do
+        mj_fail layout "$path" "violates $contract: excludes $excludes; $reason" "majordomus layout check"
+      done
   fi
   return 0
 }

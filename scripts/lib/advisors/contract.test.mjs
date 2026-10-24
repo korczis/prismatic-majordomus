@@ -5,11 +5,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import {
-  AdvisorFailure, buildPrompt, consultOne, httpFailure, normalise, scrub, STATUSES,
+  ANSWER_SCHEMA, AdvisorFailure, buildPrompt, consultOne, httpFailure, normalise, scrub, STATUSES,
 } from './contract.mjs';
 import { consultSelected, loadAdapter } from './driver.mjs';
 
@@ -58,6 +58,15 @@ function fakeSpawn({ stdout = '', stderr = '', code = 0, error, delayMs = 0 }) {
       child.emit('close', code);
     }, delayMs);
     return child;
+  };
+}
+
+// Codex as the adapter runs it: the final message goes to the file `-o` names, and stdout
+// carries only progress.
+function codexSpawn({ answer, stdout = 'progress…' }) {
+  return (exe, args) => {
+    writeFileSync(args[args.indexOf('-o') + 1], answer);
+    return fakeSpawn({ stdout })(exe, args);
   };
 }
 
@@ -243,7 +252,7 @@ test('cli adapters: output, absent executable, authentication and rate limits', 
   const codex = await loadAdapter('codex-exec');
   const cli = { id: 'c', executable: 'tool' };
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ stdout: ANSWER }) })).status, 'completed');
-  assert.equal((await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ stdout: ANSWER }) })).status, 'completed');
+  assert.equal((await consultOne(codex, cli, 'q', { spawn: codexSpawn({ answer: ANSWER }) })).status, 'completed');
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ error: 'ENOENT' }) })).status, 'unavailable');
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ code: 1, stderr: 'Error: 401 Unauthorized' }) })).status, 'auth_failed');
   assert.equal((await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ code: 1, stderr: 'rate limit exceeded' }) })).status, 'rate_limited');
@@ -251,9 +260,47 @@ test('cli adapters: output, absent executable, authentication and rate limits', 
   assert.equal((await consultOne(gemini, cli, 'q', { timeoutMs: 20, spawn: fakeSpawn({ stdout: ANSWER, delayMs: 500 }) })).status, 'timeout');
   // codex runs read-only
   let seen;
-  const spy = (exe, args) => { seen = args; return fakeSpawn({ stdout: ANSWER })(exe, args); };
+  const spy = (exe, args) => { seen = args; return codexSpawn({ answer: ANSWER })(exe, args); };
   await consultOne(codex, cli, 'q', { spawn: spy });
   assert.ok(seen.includes('read-only'));
+});
+
+test('codex adapter: the final message is held to the answer schema and read from its file alone', async () => {
+  const codex = await loadAdapter('codex-exec');
+  const cli = { id: 'c', executable: 'tool' };
+  // the schema it is handed is the answer's, strict in the subset Codex enforces
+  let schema;
+  const spy = (exe, args) => {
+    const at = args.indexOf('--output-schema');
+    assert.ok(at > 0, `no --output-schema in ${args.join(' ')}`);
+    schema = JSON.parse(readFileSync(args[at + 1], 'utf8'));
+    return codexSpawn({ answer: ANSWER })(exe, args);
+  };
+  assert.equal((await consultOne(codex, cli, 'q', { spawn: spy })).status, 'completed');
+  assert.deepEqual(schema, JSON.parse(JSON.stringify(ANSWER_SCHEMA)));
+  assert.equal(schema.additionalProperties, false);
+  assert.deepEqual([...schema.required].sort(), Object.keys(schema.properties).sort());
+  // the stances and confidences the schema allows are the ones normalise accepts
+  for (const stance of schema.properties.stance.enum) {
+    assert.equal(normalise(JSON.stringify({ ...JSON.parse(ANSWER), stance })).stance, stance);
+  }
+  // an exit 0 that wrote no final message is empty, however answer-like stdout looks
+  const silent = await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ stdout: `progress… ${ANSWER}` }) });
+  assert.equal(silent.status, 'empty');
+  assert.match(silent.diagnostic ?? silent.reason ?? JSON.stringify(silent), /wrote no final message/);
+  // a final message that is not the answer is still judged by normalise, not by the schema
+  assert.equal((await consultOne(codex, cli, 'q', { spawn: codexSpawn({ answer: 'I cannot help with that.' }) })).status, 'malformed');
+  // a client too old for --output-schema fails as an error that names it, never as an answer
+  // (stderr as codex-cli 0.163.0 prints it for an argument it does not know, captured
+  // 2026-10-22 with the flag renamed: the cause first, usage and "try '--help'" last)
+  const old = fakeSpawn({ code: 2, stderr: [
+    "error: unexpected argument '--output-schema' found", '',
+    "  tip: to pass '--output-schema' as a value, use '-- --output-schema'", '',
+    'Usage: codex exec [OPTIONS] [PROMPT]', '       codex exec [OPTIONS] <COMMAND> [ARGS]', '',
+    "For more information, try '--help'.", ''].join('\n') });
+  const r = await consultOne(codex, cli, 'q', { spawn: old });
+  assert.equal(r.status, 'error');
+  assert.match(r.diagnostic, /exited 2: error: unexpected argument '--output-schema' found/);
 });
 
 test('peer adapter: a review request answered through the mesh', async () => {

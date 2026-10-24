@@ -1,7 +1,7 @@
 +++
 title = "landing-survives-any-session — Landing green work survives any session, any restart and any machine"
 description = "Landing green work on master never waits on a person or on one session staying alive."
-weight = 103
+weight = 106
 template = "milestone.html"
 [extra]
 plan_id = "landing-survives-any-session"
