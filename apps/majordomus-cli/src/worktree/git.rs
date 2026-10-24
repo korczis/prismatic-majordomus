@@ -262,8 +262,18 @@ fn wait_bounded(cmd: &mut Command, timeout: Duration) -> std::io::Result<Finishe
             bytes
         })
     };
-    let out = drain(child.stdout.take().map(|p| Box::new(p) as Box<dyn Read + Send>));
-    let err = drain(child.stderr.take().map(|p| Box::new(p) as Box<dyn Read + Send>));
+    let out = drain(
+        child
+            .stdout
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
+    let err = drain(
+        child
+            .stderr
+            .take()
+            .map(|p| Box::new(p) as Box<dyn Read + Send>),
+    );
     let deadline = Instant::now() + timeout;
     let waited = loop {
         match child.try_wait() {
@@ -315,14 +325,16 @@ pub fn run_bounded<S: AsRef<OsStr>>(cwd: &Path, args: &[S], timeout: Duration) -
             stderr,
             status: finished.code,
         }),
-        None => Err(WorktreeError::GitCommandFailed {
-            command,
-            status: format!("killed after {}s without finishing", timeout.as_secs()),
-            stderr: format!(
+        None => {
+            Err(WorktreeError::GitCommandFailed {
+                command,
+                status: format!("killed after {}s without finishing", timeout.as_secs()),
+                stderr: format!(
                 "{}; a registration it may have left half-made is cleared by `git worktree prune`",
                 if stderr.is_empty() { "git said nothing" } else { stderr.as_str() }
             ),
-        }),
+            })
+        }
         Some(_) => Err(WorktreeError::GitCommandFailed {
             command,
             status: finished
