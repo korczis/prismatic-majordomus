@@ -643,6 +643,28 @@ pub fn offers_of(file: &NodeFile, own_node: &str, budget: Duration) -> Vec<Offer
 mod tests {
     use super::*;
 
+    /// A loopback port nothing listens on: bound, released, then asked and found refusing.
+    /// A released port 0 can be taken by another test's listener before the caller probes
+    /// it — under coverage thousands of tests bind port 0 at once, and that is how
+    /// "nothing listens" read as Unknown or as connected — so a port is only handed out
+    /// once a connection to it has been refused. Every closed-port test of the build cache
+    /// asks here.
+    pub(super) fn closed_port() -> u16 {
+        for _ in 0..20 {
+            let port = std::net::TcpListener::bind("127.0.0.1:0")
+                .expect("binds")
+                .local_addr()
+                .expect("addr")
+                .port();
+            let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+            match std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(200)) {
+                Err(e) if e.kind() == std::io::ErrorKind::ConnectionRefused => return port,
+                _ => continue,
+            }
+        }
+        panic!("no loopback port refused a connection in 20 tries");
+    }
+
     fn offer(node: &str) -> Offer {
         Offer {
             node: node.into(),
@@ -873,27 +895,9 @@ mod tests {
 
     #[test]
     fn a_closed_port_is_unhealthy_and_a_name_or_a_non_url_is_unknown_never_healthy() {
-        // a port nothing listens on: bind, note it, drop the listener. Another test's listener
-        // can take the freed port before the probe arrives (under coverage, thousands of tests
-        // bind port 0 at once), and the probe then waits on it and says Unknown. So the probe
-        // asks fresh ports: a closed one answers Unhealthy at once, and a probe that never
-        // does fails every attempt.
-        let mut answers = Vec::new();
-        for _ in 0..5 {
-            let port = {
-                let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
-                l.local_addr().expect("addr").port()
-            };
-            answers.push(probe_health(
-                &format!("http://127.0.0.1:{port}"),
-                "/x",
-                PROBE_BUDGET,
-            ));
-            if answers.last() == Some(&Health::Unhealthy) {
-                break;
-            }
-        }
-        assert_eq!(answers.last(), Some(&Health::Unhealthy), "{answers:?}");
+        // a port nothing listens on
+        let closed = format!("http://127.0.0.1:{}", closed_port());
+        assert_eq!(probe_health(&closed, "/x", PROBE_BUDGET), Health::Unhealthy);
         // a name would need DNS, which a probe never does
         assert_eq!(
             probe_health("http://jetson-tx2:9000", "/x", PROBE_BUDGET),
