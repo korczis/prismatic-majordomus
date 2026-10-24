@@ -68282,6 +68282,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I3998",
+        "kind": "issue",
+        "label": "I3998",
+        "summary": "The cockpit Blackboard shows each worker's cross-session address again",
+        "route": "/cockpit/objects/issue/i3998",
+        "source": ".ai/repo/project/issues/I3998.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus_blackboard carries address on a worker whose board row has one and leaves it out of one that has none",
+            "The cockpit Workers table shows the address line, or no address",
+            "The messaging token appears on no surface"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "BlackboardWorker has no address field; the Workers table has no address column; the blackboard projection ignores Peer::address.",
+          "depends_on": [],
+          "evidence_required": [
+            "trace_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "The address of a mesh-only session, which the mesh record does not carry"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "test/cases/3957_every_process_is_traced_to_its_session.sh",
+            ".ai/repo/project/issues/I3998.yaml"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+          ],
+          "slug": "the-blackboard-shows-the-address",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 3957_every_process_is_traced_to_its_session"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -129371,6 +129413,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3998",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3998",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -140847,8 +140899,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3921,
-      "edges": 9060,
+      "nodes": 3922,
+      "edges": 9062,
       "acyclic": false,
       "truncated": false
     }

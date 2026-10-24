@@ -15599,6 +15599,11 @@ components:
           format: uint64
           minimum: 0
           description: "Milliseconds since its runtime last beat. A beat is liveness, not work done."
+        address:
+          anyOf:
+            - "$ref": "#/components/schemas/PeerAddress"
+            - type: "null"
+          description: "Where the worker can be reached from outside its connection: the board row's own\n`PeerAddress` (machine, process, provider session, messaging socket), never a second\nshape and never the messaging token. Absent for a mesh-only worker and for a client that\nexposes none of it."
         claims:
           type: array
           items:

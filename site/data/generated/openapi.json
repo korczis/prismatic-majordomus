@@ -868,7 +868,7 @@
     "schema-PathChange": "docs/api/commit/",
     "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
-    "schema-PeerAddress": "docs/api/peers/",
+    "schema-PeerAddress": "docs/api/shared/",
     "schema-PeerCheckout": "docs/api/peers/",
     "schema-PeerDetail": "docs/api/mesh/",
     "schema-PeerId": "docs/api/shared/",
@@ -2300,7 +2300,7 @@
     "PathChange": "commit",
     "PathOverlap": "integration",
     "Peer": "peers",
-    "PeerAddress": "peers",
+    "PeerAddress": "shared",
     "PeerCheckout": "peers",
     "PeerDetail": "mesh",
     "PeerId": "shared",
@@ -5953,6 +5953,15 @@
           "refs": [],
           "required": false,
           "type": "integer | null"
+        },
+        {
+          "description": "Where the worker can be reached from outside its connection: the board row's own\n`PeerAddress` (machine, process, provider session, messaging socket), never a second\nshape and never the messaging token. Absent for a mesh-only worker and for a client that\nexposes none of it.",
+          "name": "address",
+          "refs": [
+            "PeerAddress"
+          ],
+          "required": false,
+          "type": "PeerAddress | null"
         },
         {
           "description": "Its claims, board announcements and live mesh claims alike.",
@@ -39375,7 +39384,7 @@
     },
     {
       "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```",
-      "home": "peers",
+      "home": "shared",
       "is_enum": false,
       "name": "PeerAddress",
       "properties": [
@@ -39419,6 +39428,7 @@
       "used_by": [],
       "used_by_schemas": [
         "Announced",
+        "BlackboardWorker",
         "Peer"
       ],
       "values": [],
