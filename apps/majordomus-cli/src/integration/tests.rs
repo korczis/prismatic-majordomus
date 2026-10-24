@@ -8892,6 +8892,20 @@ fn a_continuous_drain_ends_when_its_claim_is_lost() {
     assert!(trail.iter().any(|a| a == "lease_lost"), "{trail:?}");
 }
 
+/// An observer that meets the record emptied by a renewal reads it again; a record that never
+/// reads as a holder is shown, with no holder, after the last attempt.
+#[test]
+fn a_record_that_never_reads_as_a_holder_is_shown_without_one() {
+    let root = scratch();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, "").unwrap();
+    let read = drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .unwrap();
+    assert!(read.holder.is_none(), "{read:?}");
+}
+
 /// Progress rewrites the lease's record with a newer `progressed_at`, and the record is still
 /// the lease's after it: renewed, kept alive, and removed when the lease is given back — the
 /// keep-alive never writes back the record a progress replaced.

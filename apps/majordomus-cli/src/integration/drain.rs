@@ -360,6 +360,10 @@ fn names_file(path: &Path, file: &fs::File) -> bool {
 pub const KEEP_ALIVE_EVERY: Duration = Duration::from_secs(60);
 /// How promptly a keep-alive notices it was asked to stop.
 const KEEP_ALIVE_POLL: Duration = Duration::from_millis(200);
+/// How many times an observer reads a record that does not read as a holder, and how long
+/// it waits between: a renewal rewrites the record in two steps.
+const LEASE_READ_ATTEMPTS: u32 = 5;
+const LEASE_READ_RETRY: Duration = Duration::from_millis(2);
 
 /// Replace the holder record through the locked file, never the path: a path written to
 /// after something removed it would be a new, unlocked file a second executor could take.
@@ -601,16 +605,26 @@ impl IntegrationLease {
     /// `None` when nobody does.
     pub fn read(root: &Path, base: &str) -> Result<Option<IntegrationLeaseState>, String> {
         let path = Self::path_for(&common_dir(root)?, base);
-        let Ok(text) = fs::read_to_string(&path) else {
-            return Ok(None);
-        };
+        // `write_record` empties the file before it writes, so a read can meet the record
+        // empty or half written while its holder renews it: such a read reads it again
+        let mut holder = None;
+        for attempt in 1..=LEASE_READ_ATTEMPTS {
+            let Ok(text) = fs::read_to_string(&path) else {
+                return Ok(None);
+            };
+            holder = serde_json::from_str(text.trim()).ok();
+            if holder.is_some() || attempt == LEASE_READ_ATTEMPTS {
+                break;
+            }
+            std::thread::sleep(LEASE_READ_RETRY);
+        }
         let age = fs::metadata(&path)
             .and_then(|m| m.modified())
             .ok()
             .and_then(|m| SystemTime::now().duration_since(m).ok())
             .unwrap_or_default();
         Ok(Some(IntegrationLeaseState {
-            holder: serde_json::from_str(text.trim()).ok(),
+            holder,
             renewed_seconds_ago: age.as_secs(),
             stale: age > LEASE_STALE_AFTER,
         }))
