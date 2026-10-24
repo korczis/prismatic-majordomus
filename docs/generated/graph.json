@@ -1033,6 +1033,15 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.beat",
+        "kind": "capability",
+        "label": "mesh.beat",
+        "summary": "Say a session is making progress",
+        "route": "/cockpit/capabilities/mesh.beat",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.claim",
         "kind": "capability",
         "label": "mesh.claim",
@@ -67733,6 +67742,71 @@
         }
       },
       {
+        "id": "majordomus://issue/I3990",
+        "kind": "issue",
+        "label": "I3990",
+        "summary": "An exclusive mesh claim lives by its holder's progress: a session stuck on a dialog, hung or crashed stops refusing others while its server beats on",
+        "route": "/cockpit/objects/issue/i3990",
+        "source": ".ai/repo/project/issues/I3990.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "evidence_required": [
+            "a_claim_lapses_when_its_session_stops_progressing"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Adding session_ttl_seconds to .ai/repo/mesh/majordomus.yaml: an older executable refuses a key it does not know",
+            "A new EVENT_VERSION: an older runtime stores and relays session_beat opaque and keeps the stream rule",
+            "Closing a silent session: an idle session holding nothing is healthy",
+            "Take-over or fencing of a suspended claim's resumed holder: waits for the epoch of I3174",
+            "The integration lease: I3991",
+            "A monitor signal for a suspension: it is a reading of time, not a journal event; mesh.state and the board show it"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/monitor/mesh.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_sync_bound.rs",
+            "apps/majordomus-cli/tests/mesh_trust_reload.rs",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+            "scripts/ci/mesh-check",
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+            "docs/MESH.md",
+            "docs/claims/mesh-liveness-expiry.md",
+            "site/content/guarantees/mesh-liveness-expiry.md",
+            ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ],
+          "slug": "a-claim-lives-by-its-holders-progress",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh:: peers:: mcp::protocol monitor::mesh",
+            "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing 3051_an_unlisted_event_field_fails_the_mesh_check",
+            "bash scripts/ci/mesh-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3995",
         "kind": "issue",
         "label": "I3995",
@@ -79519,6 +79593,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "rule",
+        "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "summary": "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat",
+        "route": "/cockpit/objects/rule/project-an-exclusive-claim-lives-by-its-holders-progress-1",
+        "source": ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.mesh-cooperation-is-authenticated@1"
+          ],
+          "tags": [
+            "mesh",
+            "cooperation",
+            "liveness",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "rule",
         "label": "project.an-expedited-landing-is-the-owners-word@1",
@@ -81272,7 +81367,8 @@
             "project.integration-follows-the-current-master@3",
             "project.an-expedited-landing-is-the-owners-word@1",
             "project.work-is-claimed-before-it-is-built@1",
-            "project.mesh-cooperation-is-authenticated@1"
+            "project.mesh-cooperation-is-authenticated@1",
+            "project.an-exclusive-claim-lives-by-its-holders-progress@1"
           ],
           "tags": [
             "process",
@@ -90859,6 +90955,13 @@
         "source": "test/cases/3970_a_pull_request_carries_its_metadata.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+        "kind": "test",
+        "label": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+        "route": "/cockpit/objects/test/test-cases-3990-a-claim-lapses-when-its-session-stops-progressing-sh",
+        "source": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
         "kind": "test",
         "label": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
@@ -96924,6 +97027,21 @@
       },
       {
         "source": "capability:mcp.projection",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -128618,6 +128736,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3990",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3990",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3995",
         "target": "kind:issue",
         "kind": "is_a"
@@ -130998,6 +131126,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -131986,6 +132124,11 @@
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "target": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
@@ -134914,6 +135057,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3970_a_pull_request_carries_its_metadata.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -139529,6 +139677,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.beat",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.claim",
         "kind": "composes"
       },
@@ -140059,8 +140212,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3898,
-      "edges": 9004,
+      "nodes": 3902,
+      "edges": 9014,
       "acyclic": false,
       "truncated": false
     }

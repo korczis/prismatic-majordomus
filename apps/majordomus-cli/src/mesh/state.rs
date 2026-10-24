@@ -39,7 +39,7 @@ use serde::{Deserialize, Serialize};
 
 use super::journal::{
     canonical_json, causal_key, ClaimMode, EventBody, HandoverBody, MeshEvent, SessionInfo,
-    StreamId, StreamLiveness,
+    SessionProgress, StreamId, StreamLiveness,
 };
 
 /// A session's standing, as every runtime of the mesh reads it. The distinction that
@@ -114,11 +114,11 @@ pub struct SessionView {
     pub updated_lamport: u64,
 }
 
-/// A claim's standing, and — where it ended or lost — what ended it. The two variants that
+/// A claim's standing, and — where it ended, lost or was suspended — why. The variants that
 /// carry a string exist because the bare verdict is not actionable: a worker told its claim
-/// expired needs to know whether its session closed or its runtime stopped beating, and one
-/// told its claim is conflicted needs the key of the claim that beat it, which is the same
-/// key on every runtime.
+/// expired needs to know whether its session closed or its runtime stopped beating, one told
+/// its claim is conflicted needs the key of the claim that beat it, which is the same key on
+/// every runtime, and one told its claim is suspended needs the ttl its holder missed.
 ///
 /// ```
 /// use majordomus_cli::mesh::state::ClaimState;
@@ -143,13 +143,20 @@ pub enum ClaimState {
     Expired(String),
     /// Live, exclusive, and beaten to its scope by the claim whose key this names.
     Conflicted(String),
+    /// Exclusive, unreleased and of an open session on a beating runtime, but its holder
+    /// stopped making progress: no session beat within its ttl (I3990). It refuses nobody
+    /// while it reads so, and holds again the moment its session beats. Suspension only
+    /// stops the refusal and says so — nobody takes the scope over and nothing is fenced;
+    /// that waits for an epoch a resumed holder can be told it lost (I3174).
+    Suspended(String),
 }
 
 impl ClaimState {
     /// Whether the claim is live (held or conflicted). A conflicted claim counts as live
     /// because it has not gone away: its holder is still working, and the next claim over
     /// that scope has to meet it too. Only a release, a closed session or an expired
-    /// runtime ends a claim.
+    /// runtime ends a claim; a suspended one has not ended, but it is not live either — it
+    /// excludes nobody until its holder makes progress again (I3990).
     ///
     /// ```
     /// use majordomus_cli::mesh::state::ClaimState;
@@ -158,6 +165,7 @@ impl ClaimState {
     /// assert!(ClaimState::Conflicted("s/c1".into()).is_live(), "losing is not ending");
     /// assert!(!ClaimState::Released.is_live());
     /// assert!(!ClaimState::Expired("its runtime stopped beating".into()).is_live());
+    /// assert!(!ClaimState::Suspended("its holder stopped making progress".into()).is_live());
     /// ```
     pub fn is_live(&self) -> bool {
         matches!(self, ClaimState::Held | ClaimState::Conflicted(_))
@@ -547,6 +555,41 @@ pub fn fold(
     events: &[MeshEvent],
     liveness: &dyn Fn(&StreamId) -> StreamLiveness,
 ) -> CooperationState {
+    fold_with(events, liveness, &|_| SessionProgress::Unreported)
+}
+
+/// [`fold`], with each session's progress as well as each stream's liveness (I3990).
+/// `progress` answers for a session key (`<stream>/<session>`); a session it calls
+/// [`SessionProgress::Silent`] has its held exclusive claims suspended though its runtime
+/// beats, which stops a worker stuck on a dialog, hung or crashed behind a server that is
+/// still up from refusing everyone else its scope; its advisory claims and the session
+/// itself are left as they are. Like liveness it is a local observation passed in, so the fold stays
+/// pure; and the verdict's text names the ttl and not the age, so the digest of a silent
+/// session reads the same on every call.
+///
+/// ```
+/// use std::sync::Arc;
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionProgress, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold_with, ClaimState};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
+///     .unwrap();
+///
+/// let silent = |_: &str| SessionProgress::Silent { ttl_seconds: 600, age: Duration::from_secs(700) };
+/// let state = fold_with(&j.events(), &|_| StreamLiveness::Own, &silent);
+/// assert!(matches!(&state.claims[0].state, ClaimState::Suspended(why) if why.contains("progress")));
+/// assert!(!state.claims[0].state.is_live(), "a suspended claim refuses nobody");
+/// ```
+pub fn fold_with(
+    events: &[MeshEvent],
+    liveness: &dyn Fn(&StreamId) -> StreamLiveness,
+    progress: &dyn Fn(&str) -> SessionProgress,
+) -> CooperationState {
     // Keyed by the causal position, so the map both orders and deduplicates: an event is
     // identified by `(stream, seq)`, and the same event twice is one entry.
     let ordered: Vec<&MeshEvent> = events
@@ -599,6 +642,9 @@ pub fn fold(
                     view.updated_lamport = event.lamport;
                 }
             }
+            // Progress is not in the events' meaning but in when each runtime stored them:
+            // the caller's `progress` reads it, as `liveness` reads a stream's beat.
+            EventBody::SessionBeat { .. } => {}
             EventBody::ClaimAcquired {
                 claim,
                 session,
@@ -625,7 +671,7 @@ pub fn fold(
                     },
                 );
             }
-            EventBody::ClaimReleased { claim } => {
+            EventBody::ClaimReleased { claim, .. } => {
                 if let Some(view) = claims.get_mut(&key(&claim)) {
                     view.state = ClaimState::Released;
                 }
@@ -753,6 +799,20 @@ pub fn fold(
             if session.state != SessionState::Active {
                 view.state = ClaimState::Expired("its session closed".into());
             }
+        }
+        if view.state != ClaimState::Held || view.mode != ClaimMode::Exclusive {
+            continue;
+        }
+        if let SessionProgress::Silent { ttl_seconds, .. } = progress(&view.session) {
+            // The runtime beats and the session is open, yet the worker behind it has done
+            // no real work for longer than its ttl: stuck on a dialog, hung, or gone without
+            // its server noticing. Its exclusive claim stops refusing — suspended, not ended:
+            // the session is untouched, an advisory claim is untouched, and the claim
+            // excludes again the moment its session beats. The age stays out of the text so
+            // the digest of the same silence is the same on every read (I3990).
+            view.state = ClaimState::Suspended(format!(
+                "its holder stopped making progress: no beat for over {ttl_seconds}s"
+            ));
         }
     }
 
@@ -1007,6 +1067,134 @@ mod tests {
         );
     }
 
+    /// A holds `board-p1`'s open session, its exclusive claim `c1` over `apps`, its advisory
+    /// claim `c2` over `docs` and one session beat with an 8 s ttl, and B has them all.
+    /// `progress` reads B's journal as if `after` had passed since B stored them, with the
+    /// 30 s grace a foreign stream is given.
+    fn beat_at_a_read_at_b(after: std::time::Duration) -> (Journal, Journal, CooperationState) {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        a.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named("board-p1", "test"),
+        })
+        .unwrap();
+        claim(&a, "c1", "board-p1", &["apps"], ClaimMode::Exclusive);
+        claim(&a, "c2", "board-p1", &["docs"], ClaimMode::Advisory);
+        a.append_own(EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: None,
+        })
+        .unwrap();
+        sync(&a, &b);
+        let now = std::time::Instant::now() + after;
+        let grace = std::time::Duration::from_secs(30);
+        let state = fold_with(&b.events(), &all_live, &|k| {
+            b.session_progress_at(k, grace, now)
+        });
+        (a, b, state)
+    }
+
+    fn claim_named<'a>(state: &'a CooperationState, local: &str) -> &'a ClaimView {
+        state
+            .claims
+            .iter()
+            .find(|c| c.key.ends_with(&format!("/{local}")))
+            .expect("the claim is folded")
+    }
+
+    #[test]
+    fn a_silent_exclusive_claim_is_suspended_while_its_runtime_beats() {
+        let (_, _, state) = beat_at_a_read_at_b(std::time::Duration::from_secs(40));
+        let ClaimState::Suspended(why) = &claim_named(&state, "c1").state else {
+            panic!(
+                "a silent session's exclusive claim is suspended: {:?}",
+                state.claims
+            );
+        };
+        assert!(why.contains("stopped making progress"), "{why}");
+        assert!(why.contains("8s"), "the ttl is named: {why}");
+        // the advisory claim and the session itself are left as they are
+        assert_eq!(claim_named(&state, "c2").state, ClaimState::Held);
+        assert_eq!(state.sessions[0].state, SessionState::Active);
+    }
+
+    #[test]
+    fn a_beat_within_its_ttl_holds_the_claim() {
+        let (_, _, state) = beat_at_a_read_at_b(std::time::Duration::from_secs(1));
+        assert_eq!(claim_named(&state, "c1").state, ClaimState::Held);
+        // past the ttl but within the grace a relayed beat is owed, it still holds
+        let (_, _, late) = beat_at_a_read_at_b(std::time::Duration::from_secs(20));
+        assert_eq!(claim_named(&late, "c1").state, ClaimState::Held);
+    }
+
+    #[test]
+    fn a_session_that_never_beat_keeps_the_stream_rule() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        claim(&a, "c1", "legacy", &["apps"], ClaimMode::Exclusive);
+        sync(&a, &b);
+        let much_later = std::time::Instant::now() + std::time::Duration::from_secs(86_400);
+        let grace = std::time::Duration::from_secs(30);
+        let progress = |k: &str| b.session_progress_at(k, grace, much_later);
+        let live = fold_with(&b.events(), &all_live, &progress);
+        assert_eq!(live.claims[0].state, ClaimState::Held, "a day of nothing");
+        let dead = fold_with(&b.events(), &|_| StreamLiveness::Expired, &progress);
+        assert_eq!(
+            dead.claims[0].state,
+            ClaimState::Expired("its runtime stopped beating".into())
+        );
+        // and a beat of ttl 0 asks for exactly that rule
+        a.append_own(EventBody::SessionBeat {
+            session: "legacy".into(),
+            ttl_seconds: 0,
+            phase: None,
+        })
+        .unwrap();
+        sync(&a, &b);
+        let asked = fold_with(&b.events(), &all_live, &progress);
+        assert_eq!(asked.claims[0].state, ClaimState::Held);
+        assert_eq!(asked.opaque_events, 0, "a session beat is a known kind");
+    }
+
+    #[test]
+    fn silence_reads_the_same_digest_twice() {
+        let (_, b, _) = beat_at_a_read_at_b(std::time::Duration::from_secs(0));
+        let grace = std::time::Duration::from_secs(30);
+        let at = |secs: u64| {
+            let now = std::time::Instant::now() + std::time::Duration::from_secs(secs);
+            fold_with(&b.events(), &all_live, &|k| {
+                b.session_progress_at(k, grace, now)
+            })
+        };
+        let (first, second) = (at(40), at(400));
+        assert!(matches!(
+            claim_named(&first, "c1").state,
+            ClaimState::Suspended(_)
+        ));
+        assert_eq!(
+            first.digest, second.digest,
+            "how long the silence has lasted is not state"
+        );
+    }
+
+    #[test]
+    fn a_silent_exclusive_claim_refuses_nobody() {
+        let (_, b, held) = beat_at_a_read_at_b(std::time::Duration::from_secs(1));
+        let mine = format!("{}/board-p2", b.own_stream());
+        assert_eq!(
+            admission_conflicts(&held, &mine, &["apps".into()], ClaimMode::Exclusive).len(),
+            1,
+            "while it beats, the scope is its holder's"
+        );
+        let (_, b, silent) = beat_at_a_read_at_b(std::time::Duration::from_secs(40));
+        let mine = format!("{}/board-p2", b.own_stream());
+        assert!(
+            admission_conflicts(&silent, &mine, &["apps".into()], ClaimMode::Exclusive).is_empty(),
+            "a stalled holder no longer excludes"
+        );
+    }
+
     #[test]
     fn concurrent_claims_name_the_same_winner_everywhere() {
         // Two sides of a partition claim the same scope; after healing, both runtimes fold
@@ -1052,8 +1240,11 @@ mod tests {
             info: SessionInfo::named("s2", "test"),
         })
         .unwrap();
-        a.append_own(EventBody::ClaimReleased { claim: "c1".into() })
-            .unwrap();
+        a.append_own(EventBody::ClaimReleased {
+            claim: "c1".into(),
+            reason: None,
+        })
+        .unwrap();
         a.append_own(EventBody::SessionClosed {
             session: "s2".into(),
         })
@@ -1346,7 +1537,7 @@ mod tests {
             claim(&b, "c1", "s1", &["apps/majordomus-cli"], ClaimMode::Exclusive);
             claim(&a, "c2", "s1", &["docs"], ClaimMode::Advisory);
             claim(&b, "c2", "s2", &["docs/MESH.md"], ClaimMode::Advisory);
-            a.append_own(EventBody::ClaimReleased { claim: "c2".into() }).unwrap();
+            a.append_own(EventBody::ClaimReleased { claim: "c2".into(), reason: None }).unwrap();
             b.append_own(EventBody::SessionOpened { info: SessionInfo::named("s2", "t") }).unwrap();
             a.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "t") }).unwrap();
             b.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();

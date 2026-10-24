@@ -253,7 +253,7 @@ the network's otherwise — run links on a private network or an overlay (a tail
 
 ## Presence, heartbeats and expiry
 
-Two layers, deliberately separate:
+Three layers, deliberately separate:
 
 - **Links** are this runtime's connections. Every heartbeat (`cooperation.heartbeat_seconds`,
   default 5) the dialer runs one sync round. A link is `connected` with an exchange within
@@ -269,12 +269,55 @@ Two layers, deliberately separate:
   never mint one, and the age it reports is clamped to the expiry. Freshness is computed on each runtime's own monotonic clock — no two
   machines' wall clocks are compared. A reloaded journal restores events but no freshness,
   so a restart resurrects nobody's ownership.
+- **Sessions** make progress while their worker does real work (I3990). A stream that beats
+  proves its runtime is up and nothing about the worker behind one of its sessions: a session
+  stuck on a permission dialog, hung or crashed behind a live server used to keep every
+  exclusive claim it held for as long as that server ran — the 5d executor held the
+  integration lease for hours and never answered (2026-10-22). Real work is an MCP request of
+  any method but `ping` and `notifications/*` (over stdio or plain HTTP alike), a board
+  announcement, a claim, or an explicit `majordomus mesh beat --session <id> --phase <text>
+  [--pid <n>]` (`mesh.beat`) from a long-running process; the stdio bridge pings every 20 s
+  whatever its client is doing, so a ping is never progress, while a phase that names a wait
+  (`waiting on CI run 123`) is — a process waiting on something outside itself is working.
+  While a board session (`board-<peer>`) holds a live claim and works, its runtime writes a
+  `session_beat` event carrying the session's ttl (`cooperation.session_ttl_seconds`, default
+  600, at least four heartbeats, at most 3600, `0` turns the rule off): at once when it
+  claims, then at most once a quarter of the ttl, and only after new work; `mesh beat` writes
+  one with its phase (redacted, one line), and a repeat inside a quarter of the ttl with the
+  same phase writes nothing. Every runtime ages the newest beat from the moment it stored it,
+  on its own clock — the holder against the ttl, every other runtime against the ttl plus the
+  expiry — and a held **exclusive** claim whose session's beat is older than that is
+  **suspended**: `its holder stopped making progress: no beat for over <ttl>s`. A suspended
+  claim refuses nobody and is counted and shown as such (`mesh.state`, `mesh.peers` with the
+  session's `progress_ms` and `phase`, the Cockpit, `/ui/mesh`); nothing is written to make it
+  so, the session stays open, an advisory claim is untouched, and the claim holds again at
+  its session's next beat. Suspension is advisory-first: it stops the refusal and says so, and
+  nothing more — no take-over, no fencing. A holder that resumes after another session was
+  admitted to its scope does not get it back: its next beat releases the suspended claim
+  instead of re-arming it (below); fencing a holder that goes on writing without beating
+  waits for an epoch (I3174). A session that never beat — a `mesh claim --session` from the command line that never runs `mesh beat`,
+  every session of a runtime older than this layer — keeps the stream rule alone, and a beat
+  with ttl `0` asks for exactly that. A runtime writes at most one beat per session a quarter of the ttl however
+  often `mesh beat` is called — a new phase inside the interval is held and shown, and the
+  next beat carries it — and at most `8 × ceil(3600 s / (ttl / 4))` beats an hour, sized for
+  eight exclusive holders at full rate; past that it withholds beats, the claims it cannot
+  beat for suspend, and it says so in its log and in `mesh doctor`'s `session_beats` check —
+  never silently. Only a session holding a live exclusive claim is beaten for: an advisory
+  claim refuses nobody and costs no beat. When a holder resumes after another session was
+  admitted over its suspended claim, its next beat does not re-arm the claim: its runtime
+  writes `claim_released` with the reason `suspended while its holder made no progress, and
+  another session was admitted to its scope`, and the holder claims again through admission
+  — so two sessions never both hold one scope. A restarted reader counts the beats its
+  journal reloads as stored at the restart, exactly as it counts a stream it relearns
+  (`learned_at`): a session silent before the restart reads as progressing for at most its
+  ttl plus the expiry after it. The key is left out of the repository's declaration on
+  purpose: an older executable refuses a key it does not know.
 
 ## Events, ordering and deduplication
 
 Everything cooperative is an event of the journal: `session_opened`, `session_closed`,
 `claim_acquired`, `claim_released`, `handover_published`, `handover_consumed`,
-`review_requested`, `review_answered`, `review_withdrawn`. A person or an agent reads the journal folded, not raw, through `majordomus monitor`
+`review_requested`, `review_answered`, `review_withdrawn`, and `session_beat` (a working session's progress and phase, left out of `mesh events` unless `--beats` asks and never a monitor signal). A person or an agent reads the journal folded, not raw, through `majordomus monitor`
 (`docs/MONITOR.md`, ADR 0133). It drops a board session's unchanged re-projection on each
 heartbeat, marks what names the reader, and pages with the full causal key rather than the
 Lamport stamp alone. An event carries its stream, a dense sequence, a
@@ -359,9 +402,12 @@ A claim is a scope — repository-relative paths — held by a session, `exclusi
 or `advisory`. Paths meet by `peers::claims_meet`, the peer board's own predicate: `apps`
 meets `apps/majordomus-cli`; `app` does not.
 
-- A claim **holds** while it is unreleased, its session is open, and its stream's beat rose
+- A claim **holds** while it is unreleased, its session is open, its stream's beat rose
   within the expiry. That is the lease: it is renewed by the holder's heartbeat and expires on
-  every runtime on its own when the holder stops beating. There is no separate lease table.
+  every runtime on its own when the holder stops beating. An exclusive claim of a session that
+  ever beat is, in addition, **suspended** — still held, refusing nobody — while that
+  session's newest beat is older than its ttl (the holder) or its ttl and the expiry (everyone
+  else), and holds again at its next beat (I3990). There is no separate lease table.
 - **Admission:** `mesh.claim` refuses an exclusive claim that meets a live exclusive claim of
   another session known to this runtime — `claim_conflict`, naming the claims it meets.
 - **Concurrency:** two exclusive claims made where neither runtime could see the other (a
@@ -577,6 +623,7 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
@@ -900,11 +947,12 @@ majordomus mesh peers             # machines → runtimes → active sessions, e
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
 majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
 majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
-majordomus mesh events            # the journal from the beginning; --cursor <next> resumes
+majordomus mesh events            # the journal from the beginning; --cursor <next> resumes; --beats includes the session beats
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
 majordomus mesh release <claim-key>
+majordomus mesh beat --session lander --phase waiting-on-ci   # keep lander's exclusive claims excluding while it waits
 majordomus mesh handover publish --issue '#184'
 majordomus mesh handover consume <id> --session s2
 majordomus mesh review request feature/x --session s1 --reviewer <runtime>

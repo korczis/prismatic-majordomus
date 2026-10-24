@@ -3627,6 +3627,7 @@ pub fn mesh(ctx: &Context) -> Page {
                                         crate::mesh::state::ClaimState::Released => "released".to_string(),
                                         crate::mesh::state::ClaimState::Expired(why) => format!("expired: {why}"),
                                         crate::mesh::state::ClaimState::Conflicted(w) => format!("conflicted with {w}"),
+                                        crate::mesh::state::ClaimState::Suspended(why) => format!("suspended: {why}"),
                                     };
                                     format!("{} [{:?}, {st}]", c.scope.join(", "), c.mode).to_lowercase()
                                 })
@@ -8544,6 +8545,41 @@ mod tests {
         let html = page.main.render();
         assert!(html.contains("mesh.peers"), "{html}");
         assert!(html.contains("did not answer"), "{html}");
+    }
+
+    /// A claim whose holder stopped making progress is drawn suspended, with the ttl it
+    /// missed, beside the scope it no longer excludes anybody from (I3990).
+    #[test]
+    fn a_mesh_page_draws_a_silent_holders_claim_suspended_and_says_why() {
+        use crate::mesh::journal::{ClaimMode, EventBody, SessionInfo};
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = context_without(&repo, &[]);
+        let c = crate::mesh::testing::cooperation();
+        crate::mesh::testing::attach(&ctx, std::sync::Arc::clone(&c));
+        c.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        // the shortest ttl a beat may carry, and a moment past it
+        c.journal()
+            .append_own(EventBody::SessionBeat {
+                session: "lander".into(),
+                ttl_seconds: 1,
+                phase: None,
+            })
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(1_100));
+        let page = mesh(&ctx);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(
+            html.contains("integration [exclusive, suspended: its holder stopped making progress"),
+            "{html}"
+        );
     }
 
     /// Where an entity changed: the page says why there is nothing to list where git cannot

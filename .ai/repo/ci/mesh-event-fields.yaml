@@ -33,6 +33,10 @@ fields:
   # ------------------------------------------------------------- EventBody variants
   EventBody.SessionOpened.info: clear
   EventBody.SessionClosed.session: clear
+  EventBody.SessionBeat.session: clear
+  EventBody.SessionBeat.ttl_seconds: clear
+  # mesh::cooperation::beat passes the phase through redact_secrets before signing (I3990)
+  EventBody.SessionBeat.phase: redacted
   EventBody.ClaimAcquired.claim: clear
   EventBody.ClaimAcquired.session: clear
   EventBody.ClaimAcquired.scope: clear
@@ -40,6 +44,8 @@ fields:
   EventBody.ClaimAcquired.mode: clear
   EventBody.ClaimAcquired.issue: clear
   EventBody.ClaimReleased.claim: clear
+  # a fixed sentence its own runtime writes when it releases an overtaken suspended claim (I3990)
+  EventBody.ClaimReleased.reason: clear
   EventBody.HandoverPublished.handover: clear
   EventBody.HandoverConsumed.handover: clear
   EventBody.HandoverConsumed.session: clear

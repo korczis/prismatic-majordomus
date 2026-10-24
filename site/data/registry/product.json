@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "ede5e092b6f55bfc588e7c8f747b15bb44aca1cdecc41668a22f8b30688ba3f2",
+  "fingerprint": "409bb151e6a208b4aac2c08f808265fc9230d9c2ac6ac495bd11dfd3ad4f6f8a",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 79,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 142,
+        "capabilities": 143,
         "moments": 38
       },
       "evidence": {
@@ -5574,6 +5574,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -5894,10 +5902,10 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 25,
-        "mcp_tools": 22,
+        "capabilities": 26,
+        "mcp_tools": 23,
         "mcp_resources": 2,
-        "http_routes": 24,
+        "http_routes": 25,
         "cli_paths": 5,
         "commands": 0,
         "objects": 1,
@@ -7998,7 +8006,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 189
+          "objects": 190
         }
       ],
       "rule_refs": [
@@ -8374,11 +8382,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 191,
+        "mcp_resources": 192,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 189,
+        "objects": 190,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9579,6 +9587,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -10332,10 +10348,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 64,
-        "mcp_tools": 57,
+        "capabilities": 65,
+        "mcp_tools": 58,
         "mcp_resources": 9,
-        "http_routes": 61,
+        "http_routes": 62,
         "cli_paths": 21,
         "commands": 0,
         "objects": 1,
@@ -10796,6 +10812,14 @@
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
             {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
@@ -11754,10 +11778,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 104,
-        "mcp_tools": 94,
+        "capabilities": 105,
+        "mcp_tools": 95,
         "mcp_resources": 16,
-        "http_routes": 100,
+        "http_routes": 101,
         "cli_paths": 45,
         "commands": 0,
         "objects": 0,
@@ -13311,7 +13335,7 @@
         },
         {
           "name": "issue",
-          "objects": 978
+          "objects": 979
         },
         {
           "name": "intent",
@@ -13521,11 +13545,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1162,
+        "mcp_resources": 1163,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1159,
+        "objects": 1160,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17458,7 +17482,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (978)",
+        "title": "issue (979)",
         "features": [
           "planning"
         ]
@@ -17521,7 +17545,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (189)",
+        "title": "rule (190)",
         "features": [
           "doctrine"
         ]
@@ -18493,17 +18517,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3438,
-    "builtin": 213,
-    "declarative": 3225,
+    "capabilities": 3442,
+    "builtin": 214,
+    "declarative": 3228,
     "modules": 60,
-    "mcp_tools": 201,
-    "mcp_resources": 3280,
-    "http_routes": 207,
-    "cli_commands": 214,
+    "mcp_tools": 202,
+    "mcp_resources": 3283,
+    "http_routes": 208,
+    "cli_commands": 215,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3225,
+    "objects": 3228,
     "by_kind": {
       "adr": 162,
       "application": 5,
@@ -18522,7 +18546,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 38,
-      "issue": 978,
+      "issue": 979,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 106,
@@ -18531,12 +18555,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 36,
-      "rule": 189,
+      "rule": 190,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 628,
+      "test": 629,
       "use-case": 49,
       "workspace": 1
     },

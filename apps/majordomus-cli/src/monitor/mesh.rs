@@ -224,15 +224,18 @@ impl Memory {
                 s.paths = scope;
                 s
             }
-            EventBody::ClaimReleased { claim } => {
+            EventBody::ClaimReleased { claim, reason } => {
                 let (st, session, _) = self.claims.remove(&claim)?;
                 let name = self.name_of(&st, &session);
+                // a release its runtime decided says why: a suspended claim another session
+                // took the scope of while its holder was silent (I3990)
+                let why = reason.map(|r| format!(": {r}")).unwrap_or_default();
                 let mut s = MonitorSignal::new(
                     event.at,
                     MonitorSource::Mesh,
                     "released",
                     MonitorSeverity::Info,
-                    &format!("{name} released claim {claim}"),
+                    &format!("{name} released claim {claim}{why}"),
                 );
                 s.session = Some(session);
                 s.actor = Some(name);
@@ -375,6 +378,10 @@ impl Memory {
             }
             // read raw above, before the body is typed: a withdrawal never reaches this match
             EventBody::ReviewWithdrawn { .. } => return None,
+            // a session beat is heartbeat noise: a working session says nothing new by it
+            // (I3990); a suspended claim is a reading of time, shown by mesh.state and the
+            // board, not an event this stream could carry
+            EventBody::SessionBeat { .. } => return None,
         };
         signal.machine = Some(machine);
         Some(signal)
@@ -656,6 +663,48 @@ mod tests {
             .summary
             .starts_with("1b (board-p1) released"));
         assert_eq!(read.suppressed, 2);
+    }
+
+    /// A release its runtime decided says why — the holder's suspended claim another session
+    /// took the scope of while it was silent — and a session beat is heartbeat noise: it is
+    /// suppressed, never a signal (I3990).
+    #[test]
+    fn a_decided_release_says_why_and_a_session_beat_is_no_signal() {
+        let events = vec![
+            opened(1, "board-p1", "x", "a"),
+            event(
+                2,
+                2,
+                json!({"kind": "claim_acquired", "claim": "c-1", "session": "board-p1",
+                "scope": ["integration"], "mode": "exclusive"}),
+            ),
+            event(
+                3,
+                3,
+                json!({"kind": "session_beat", "session": "board-p1", "ttl_seconds": 600,
+                "phase": "waiting on CI run 42"}),
+            ),
+            event(
+                4,
+                4,
+                json!({"kind": "claim_released", "claim": "c-1",
+                "reason": crate::mesh::cooperation::OVERTAKEN}),
+            ),
+        ];
+        let reader = Reader::default();
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        let kinds: Vec<&str> = read.signals.iter().map(|(_, s)| s.kind.as_str()).collect();
+        assert_eq!(kinds, vec!["session_joined", "claimed", "released"]);
+        assert_eq!(read.suppressed, 1, "the beat");
+        let released = &read.signals[2].1.summary;
+        assert!(
+            released.ends_with(&format!(
+                "released claim c-1: {}",
+                crate::mesh::cooperation::OVERTAKEN
+            )),
+            "{released}"
+        );
     }
 
     #[test]

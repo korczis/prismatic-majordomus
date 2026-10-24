@@ -1,6 +1,6 @@
 ---
 name: mj-mesh
-description: "Majordomus mesh: Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This machine's node identity; The…"
+description: "Majordomus mesh: Say a session is making progress; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `mesh.beat` | Say a session is making progress | `majordomus_mesh_beat` | — | changes |
 | `mesh.claim` | Claim a scope across the mesh | `majordomus_mesh_claim` | — | changes |
 | `mesh.cooperation` | Cooperation, at a glance | `majordomus_mesh_cooperation` | — | reads |
 | `mesh.doctor` | The mesh self-check | `majordomus_mesh_doctor` | `majordomus mesh doctor` | reads |

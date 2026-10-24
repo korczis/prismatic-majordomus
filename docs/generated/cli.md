@@ -166,6 +166,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh verify`](#majordomus-mesh-verify) | `/docs/cli/mesh/verify/` | Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails |
 | [`majordomus mesh claim`](#majordomus-mesh-claim) | `/docs/cli/mesh/claim/` | Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them |
 | [`majordomus mesh release`](#majordomus-mesh-release) | `/docs/cli/mesh/release/` | Release a claim this server's current run holds |
+| [`majordomus mesh beat`](#majordomus-mesh-beat) | `/docs/cli/mesh/beat/` | Say a session is making progress, and what it is doing, so its exclusive claims keep excluding |
 | [`majordomus mesh session`](#majordomus-mesh-session) | `/docs/cli/mesh/session/` | Open, update or close a session on the mesh |
 | [`majordomus mesh session open`](#majordomus-mesh-session-open) | `/docs/cli/mesh/session/open/` | Open or update a session: what it is, what it does, where |
 | [`majordomus mesh session close`](#majordomus-mesh-session-close) | `/docs/cli/mesh/session/close/` | Close a session; its claims end with it on every linked runtime |
@@ -4384,7 +4385,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh beat`](#majordomus-mesh-beat), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review).
 
 ```text
 majordomus mesh <COMMAND>
@@ -4708,6 +4709,7 @@ majordomus mesh events [OPTIONS]
 | `--cursor` | `<CURSOR>` | — | Resume after the cursor the previous answer printed: every event exactly once |
 | `--limit` | `<LIMIT>` | — | At most this many (default 100, at most 1000) |
 | `--newest` | flag | — | The newest events instead of the first ones after `--after` |
+| `--beats` | flag | — | Include the session beats a working session's runtime writes, hidden by default |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4808,6 +4810,36 @@ Examples:
 
   ```console
   $ majordomus mesh release stream/c-000000000000
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-beat"></a>
+## `majordomus mesh beat`
+
+Say a session is making progress, and what it is doing, so its exclusive claims keep excluding
+
+```text
+majordomus mesh beat [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--session` | `<SESSION>` | required | The session making progress, as it was claimed under |
+| `--phase` | `<PHASE>` | — | What it is doing, one line: `waiting on CI run 123` |
+| `--pid` | `<PID>` | — | The running process of this machine the beat speaks for |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Keep a waiting session's exclusive claims excluding** — A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.
+
+  ```console
+  $ majordomus mesh beat --session lander --phase waiting-on-ci
   ```
 
   Verified: exits 10.

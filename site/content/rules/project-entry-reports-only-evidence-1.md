@@ -1,7 +1,7 @@
 +++
 title = "Entering the repository reports only what evidence proves"
 description = "Entering the repository reports only what evidence proves"
-weight = 105
+weight = 106
 [extra]
 kind = "rule"
 slug = "project-entry-reports-only-evidence-1"

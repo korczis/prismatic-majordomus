@@ -834,6 +834,8 @@ pub enum MeshCommand {
     Claim(MeshClaimArgs),
     /// Release a claim this server's current run holds
     Release(MeshReleaseArgs),
+    /// Say a session is making progress, and what it is doing, so its exclusive claims keep excluding
+    Beat(MeshBeatArgs),
     /// Open, update or close a session on the mesh
     Session(MeshSessionArgs),
     /// Publish a handover of this checkout to the mesh, or consume one another runtime published
@@ -1013,6 +1015,9 @@ pub struct MeshEventsArgs {
     /// The newest events instead of the first ones after `--after`
     #[arg(long)]
     pub newest: bool,
+    /// Include the session beats a working session's runtime writes, hidden by default
+    #[arg(long)]
+    pub beats: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1194,6 +1199,42 @@ pub struct MeshClaimArgs {
 pub struct MeshReleaseArgs {
     /// The claim's key, `<stream>/<claim>`, as `mesh claim` printed it
     pub claim: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh beat`: a long-running process says its session is making progress, and what it is
+/// doing (I3990). A session that has beaten lives by its beats — its exclusive claims are
+/// suspended, refusing nobody, once no beat arrives within the declared progress ttl — so a
+/// lander waiting on a CI run beats with `--phase "waiting on CI run 123"` while it waits.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshBeatArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "beat", "--session", "lander",
+///     "--phase", "waiting on CI", "--pid", "4242"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
+/// assert_eq!(beat.session, "lander");
+/// assert_eq!(beat.phase.as_deref(), Some("waiting on CI"));
+/// assert_eq!(beat.pid, Some(4242));
+///
+/// // a beat speaks for a named session
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat"]).is_err());
+/// ```
+pub struct MeshBeatArgs {
+    /// The session making progress, as it was claimed under
+    #[arg(long)]
+    pub session: String,
+    /// What it is doing, one line: `waiting on CI run 123`
+    #[arg(long)]
+    pub phase: Option<String>,
+    /// The running process of this machine the beat speaks for
+    #[arg(long)]
+    pub pid: Option<u32>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -7694,6 +7735,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Release a claim this server holds",
             description: "Only the holder's current run releases a claim; a dead holder's claim expires instead. Without a running server there is nothing to release, and the command exits 10.",
             argv: &["mesh", "release", "stream/c-000000000000"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh beat",
+        examples: &[ExampleDoc {
+            id: "mesh-beat",
+            title: "Keep a waiting session's exclusive claims excluding",
+            description: "A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.",
+            argv: &["mesh", "beat", "--session", "lander", "--phase", "waiting-on-ci"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],
