@@ -55969,7 +55969,11 @@
             "doctor's retention check (I1303) reports the imported store against its cap",
             "majordomus workspaces (I1308) reports chatgpt-majordomus as synced with checkpoint age, conversation and message counts and I1305's support level from .ai/local/workspaces/chatgpt-majordomus/",
             "I1306's resume-and-repeat case runs green against the imported store",
-            "The store records the 2026-10-18 acquisition as made through an unverified local transport, so no record claims an integrity check it did not have"
+            "The store records the 2026-10-18 acquisition as made through an unverified local transport, so no record claims an integrity check it did not have",
+            "A later acquisition is reconciled as a dated delta against the existing source inventory; historical and current coverage counts are not added as though they were disjoint conversations",
+            "Coverage distinguishes indexed, fetched and readable message bodies; unresolved content references are reported as gaps, never empty messages or proof of full reading",
+            "No upstream message, parent or branch identifier is invented for a flattened capture; ambiguous positional citations remain unresolved until I3284 can pin them",
+            "The 297 indexed / 234 stored / 63 not fetched baseline is reconciled explicitly before any summary claims all 297 conversations were read in full"
           ],
           "created_at": "2026-10-18",
           "depends_on": [
@@ -55994,7 +55998,7 @@
             "what-a-workspace-decides-reaches-the-repository-with-its-source#the-store-holds-the-workspace"
           ],
           "slug": "the-import-is-the-first-sync",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-22",
           "validation": [
             "bin/majordomus doctor",
             "bash test/run.sh 93_workspace_kind",
@@ -56312,7 +56316,9 @@
             "A request through the vendor listener runs a read capability and is refused a repository_mutation one",
             "A request arriving on the loopback listener with a forwarding header is refused remote-only reads' privileges, not granted loopback ones",
             "No credential appears in output or logs",
-            "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller"
+            "An ADR amending ADR 0126 defines how a vendor reader authenticates (OAuth for a ChatGPT or a claude.ai connector) before the vendor listener admits any caller",
+            "A successful local loopback MCP read or native subscription account probe is not accepted as evidence that a remote vendor connector authenticates or can reach the listener",
+            "The vendor listener never exposes native-client subscription credentials, local workspace message bodies or a credential-bearing provider proxy"
           ],
           "created_at": "2026-10-18",
           "current_state": "MCP over HTTP exists on the shared server; I2123 (runtime-trust) covers remote reads; nothing declares a vendor caller.",
@@ -56341,7 +56347,7 @@
             "what-a-workspace-decides-reaches-the-repository-with-its-source#a-vendor-reads-and-never-writes"
           ],
           "slug": "a-workspace-reads-the-plan",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-22",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_host"
@@ -56359,7 +56365,10 @@
           "acceptance_criteria": [
             "A proposal from the vendor caller lands as a proposed intent whose provenance is the workspace reference",
             "A proposal carrying conversation text beyond the declared fields is refused",
-            "Without the ADR amendment the call is refused as today"
+            "Without the ADR amendment the call is refused as today",
+            "Local native-client execution and remote workspace proposals retain separate caller identities and trust decisions; a working local subscription does not authorise remote mutation",
+            "A proposal preserves its source reference and request identity; an unknown mutation outcome is reconciled before retry, rather than blindly replayed",
+            "Authentication, allowance and unavailable-client failures are explicit; a subscription path never silently falls back to a separately billed API"
           ],
           "created_at": "2026-10-18",
           "current_state": "intent.propose exists (ADR 0144, majordomus_intent_propose, effect repository_mutation) and is refused beyond loopback by ADR 0126.",
@@ -56388,7 +56397,7 @@
             "what-a-workspace-decides-reaches-the-repository-with-its-source#a-proposal-names-its-source"
           ],
           "slug": "a-workspace-proposes-an-intent",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-22",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
@@ -56565,7 +56574,7 @@
             "every-sessions-usage-is-observed#cumulative-is-never-summed"
           ],
           "slug": "codex-usage-is-read",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-22",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::usage",
             "majordomus plan validate"
@@ -66911,7 +66920,7 @@
         "status": "verified",
         "facts": {
           "class": "constraint",
-          "date": "2026-10-18",
+          "date": "2026-10-22",
           "epistemics": "observed",
           "tags": [
             "providers-economics",
@@ -92868,7 +92877,7 @@
             "files.read"
           ],
           "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
+          "updated_at": "2026-10-22"
         }
       },
       {
