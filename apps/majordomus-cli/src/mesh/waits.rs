@@ -118,8 +118,8 @@ impl Routing {
 /// One wait of the executable on another session or runtime.
 ///
 /// ```
-/// use majordomus_cli::mesh::waits::{find, PEER_WAITS};
-/// let queue = find("offload.queue").unwrap();
+/// use majordomus_cli::mesh::waits::{find, PeerWait, PEER_WAITS};
+/// let queue: &PeerWait = find("offload.queue").unwrap();
 /// assert_eq!(queue.id, "offload.queue");
 /// assert!(!queue.waits_for.is_empty() && !queue.at_bound.is_empty());
 /// // every entry names the source file it lives in
