@@ -67778,6 +67778,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I4199",
+        "kind": "issue",
+        "label": "I4199",
+        "summary": "A case that compiles the crate runs alone or caps cargo, so the cases beside it are never starved past their bounds",
+        "route": "/cockpit/objects/issue/i4199",
+        "source": ".ai/repo/project/issues/I4199.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "77_rust_evidence declares '# majordomus-exclusive:' with its reason",
+            "76 and 493 run their cargo test with CARGO_BUILD_JOBS=2 and RUST_TEST_THREADS=2",
+            "Case 4199 passes on the tree and, on a fixture, flags exactly an uncapped compile while a capped one, an exclusive one and cargo written only as text pass"
+          ],
+          "created_at": "2026-10-24",
+          "depends_on": [],
+          "evidence_required": [
+            "compiling_cases_run_alone_or_capped",
+            "case_431_within_its_bound"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Raising any case's declared bound",
+            "The gate model's lanes and tiers"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4199.yaml",
+            "test/cases/77_rust_evidence.sh",
+            "test/cases/76_capabilities_projections.sh",
+            "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+            "test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh"
+          ],
+          "serves": [],
+          "slug": "a-case-that-compiles-never-starves-its-neighbours",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours 431_economics_claims_gated",
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -90823,6 +90866,13 @@
         "label": "test/cases/417_the_suite_finishes_inside_its_bound.sh",
         "route": "/cockpit/objects/test/test-cases-417-the-suite-finishes-inside-its-bound-sh",
         "source": "test/cases/417_the_suite_finishes_inside_its_bound.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh",
+        "kind": "test",
+        "label": "test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh",
+        "route": "/cockpit/objects/test/test-cases-4199-a-case-that-compiles-never-starves-its-neighbours-sh",
+        "source": "test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh"
       },
       {
         "id": "majordomus://test/test/cases/41_project_status.sh",
@@ -128489,6 +128539,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4199",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4199",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -134819,6 +134879,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/41_project_status.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -139885,8 +139950,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3894,
-      "edges": 8997,
+      "nodes": 3896,
+      "edges": 9000,
       "acyclic": false,
       "truncated": false
     }

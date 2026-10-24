@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "4766d3126021667d7535bd3764fe6670a2bb1242c4f11db12db20ca3fe4cfac9",
+    "fingerprint": "21f6c9234c644b319b0451757008b6e66633b35d34ad1b88a44e85500df87612",
     "summary": {
-      "total": 3434,
+      "total": 3436,
       "builtin": 213,
-      "declarative": 3221,
+      "declarative": 3223,
       "by_kind": {
         "command": 33,
         "query": 180,
-        "resource": 3221
+        "resource": 3223
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 58,
-        "implemented": 3231
+        "implemented": 3233
       },
       "mcp_tools": 201,
-      "mcp_resources": 3276,
+      "mcp_resources": 3278,
       "http_routes": 207,
       "cli_commands": 116,
       "modules": 94,
@@ -88434,7 +88434,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 975,
+        "capabilities": 976,
         "capability_ids": []
       },
       {
@@ -89027,7 +89027,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 627,
+        "capabilities": 628,
         "capability_ids": []
       },
       {
@@ -89119,7 +89119,7 @@
     ]
   },
   "index": {
-    "fingerprint": "533bf42316c11e0cffcdea9971d02726932806ba200116e5a6b9abe7b1ad5d11",
+    "fingerprint": "b9fa5d54861e6ae11e0bb926640fd3e70bf1f8559101eafed55971b90620bb02",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89159,7 +89159,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 38,
-      "issue": 975,
+      "issue": 976,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 106,
@@ -89173,7 +89173,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 627,
+      "test": 628,
       "use-case": 49,
       "workspace": 1
     },
@@ -96486,7 +96486,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 899211
+        "bytes": 903406
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -111074,6 +111074,17 @@
         "bytes": 3073
       },
       {
+        "uri": "majordomus://issue/I4199",
+        "kind": "issue",
+        "identity": "I4199",
+        "title": "A case that compiles the crate runs alone or caps cargo, so the cases beside it are never starved past their bounds",
+        "description": "Run 77_rust_evidence alone (its doc-example and benchmark builds take every core), cap cargo at two jobs and two test threads in the two light compiling cases (76_capabilities_projections, 493_mesh_compaction_keeps_what_is_live), and hold the rule with case 4199: a case whose script runs cargo test, bench or build on a manifest declares '# majordomus-exclusive:' or carries CARGO_BUILD_JOBS on that line.",
+        "path": ".ai/repo/project/issues/I4199.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2983
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -121674,6 +121685,14 @@
         "bytes": 7338
       },
       {
+        "uri": "majordomus://test/test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh",
+        "kind": "test",
+        "identity": "test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh",
+        "path": "test/cases/4199_a_case_that_compiles_never_starves_its_neighbours.sh",
+        "source_class": "case",
+        "bytes": 3046
+      },
+      {
         "uri": "majordomus://test/test/cases/41_project_status.sh",
         "kind": "test",
         "identity": "test/cases/41_project_status.sh",
@@ -121823,7 +121842,7 @@
         "identity": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
         "path": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
         "source_class": "case",
-        "bytes": 2540
+        "bytes": 2679
       },
       {
         "uri": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
@@ -122599,7 +122618,7 @@
         "identity": "test/cases/76_capabilities_projections.sh",
         "path": "test/cases/76_capabilities_projections.sh",
         "source_class": "case",
-        "bytes": 8739
+        "bytes": 8880
       },
       {
         "uri": "majordomus://test/test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
@@ -122615,7 +122634,7 @@
         "identity": "test/cases/77_rust_evidence.sh",
         "path": "test/cases/77_rust_evidence.sh",
         "source_class": "case",
-        "bytes": 21119
+        "bytes": 21306
       },
       {
         "uri": "majordomus://test/test/cases/790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it.sh",
@@ -124244,7 +124263,7 @@
       "identity": [
         "id"
       ],
-      "objects": 975
+      "objects": 976
     },
     {
       "name": "knowledge",
@@ -124406,7 +124425,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 627
+      "objects": 628
     },
     {
       "name": "use-case",
