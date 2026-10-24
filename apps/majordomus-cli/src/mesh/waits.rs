@@ -38,6 +38,17 @@
 use std::time::Duration;
 
 /// How long a wait may last.
+///
+/// ```
+/// use majordomus_cli::mesh::waits::{find, Bound};
+/// // the offload queue is bounded by a key of its declaration, with a default
+/// match find("offload.queue").unwrap().bound {
+///     Bound::Declared { default_seconds, .. } => assert_eq!(default_seconds, 14_400),
+///     other => panic!("expected a declared bound, got {other:?}"),
+/// }
+/// // a claim admission answers at once
+/// assert_eq!(find("mesh.claim.admission").unwrap().bound, Bound::NoWait);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Bound {
     /// The executable never waits here: the call answers at once, with a refusal that names
@@ -64,6 +75,13 @@ pub enum Bound {
 }
 
 /// Where a wait goes when its bound is reached.
+///
+/// ```
+/// use majordomus_cli::mesh::waits::{find, Routing};
+/// // a full offload queue sends the work to another host
+/// assert_eq!(find("offload.queue").unwrap().routing, Routing::AnotherHost);
+/// assert_eq!(Routing::AnotherHost.as_str(), "another host");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Routing {
     /// The holder is taken for gone and its place is taken over.
@@ -98,6 +116,15 @@ impl Routing {
 }
 
 /// One wait of the executable on another session or runtime.
+///
+/// ```
+/// use majordomus_cli::mesh::waits::{find, PEER_WAITS};
+/// let queue = find("offload.queue").unwrap();
+/// assert_eq!(queue.id, "offload.queue");
+/// assert!(!queue.waits_for.is_empty() && !queue.at_bound.is_empty());
+/// // every entry names the source file it lives in
+/// assert!(PEER_WAITS.iter().all(|w| w.site.ends_with(".rs")));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PeerWait {
     /// A stable name, used in reports, in the doctor and in `docs/MESH.md`.
