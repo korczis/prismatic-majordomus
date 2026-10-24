@@ -82,6 +82,14 @@ jq -e '.outcome == "implement" and (.done | not)
   and .intent == null' "$W/first.json" >/dev/null \
   || { note "the whole plan's order is not devtask.implement for plan.next's issue, with the other free issue beside it, due in five minutes:"; cat "$W/first.json"; }
 key="$(jq -r .key "$W/first.json")"
+# the same capability over MCP, as a client calls it, answers the same order
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case4005","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_proceed_step","arguments":{"at":"%s","local":true}}}\n' "$AT"
+} | "$RB" mcp 2>"$W/mcp.err" | tail -n 1 | jq '.result.structuredContent' > "$W/mcp.json" \
+  || note "proceed.step could not be asked over MCP"
+[ "$(jq -r .key "$W/mcp.json")" = "$key" ] && jq -e '.do.input.issue == "I0001"' "$W/mcp.json" >/dev/null \
+  || { note "the MCP tool majordomus_proceed_step answered another order:"; cat "$W/mcp.json"; }
 step --at 2026-10-23T10:04:59Z
 [ "$(q .key)" = "$key" ] && [ "$(q .next_due_at)" = 2026-10-23T10:05:00Z ] \
   || note "a moment inside the same interval answered another order: $(q .key) $(q .next_due_at)"

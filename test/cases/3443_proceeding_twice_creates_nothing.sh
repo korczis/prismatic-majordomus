@@ -124,7 +124,7 @@ take() { # <checkout> <session>
 }
 steps() { jq -c '[.steps[] | "\(.[0])=\(.[1])"]' "$S/out"; }
 held() { # live exclusive claims of a session on the primary server
-  curl -s "$url/api/v1/mesh/state?view=full&claims=live&session=$1" \
+  curl -s --max-time 20 "$url/api/v1/mesh/state?view=full&claims=live&session=$1" \
     | jq '[.state.claims[] | select(.mode == "exclusive" and .state.state == "held")] | length'
 }
 worktrees() { git -C "$R" worktree list | wc -l | tr -d ' '; }

@@ -12,7 +12,8 @@
 #   3. a second allocation of a kind is one past the first: the journal's reservation is spent;
 #   4. six allocations at once, from six sessions, answer six different numbers;
 #   5. a number already claimed on its key is spent for every later allocation;
-#   6. nothing in the repository is written.
+#   6. the MCP tool majordomus_plan_allocate answers from the same sources;
+#   7. nothing in the repository is written.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq not installed"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -88,7 +89,18 @@ alloc case --session d
 jq -e '.value == "61" and (.sources[] | select(.source == "mesh") | .highest == 60)' "$S/out" >/dev/null \
   || { echo "    a number claimed on its key was not spent:"; cat "$S/out"; exit 1; }
 
-# ---------------------------------------------------------------- 6. nothing is written
+# ---------------------------------------------------------------- 6. the same capability over MCP
+# plan.allocate is the capability `mesh allocate` projects; a client calling its tool is answered
+# from the same surveyed sources
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case3440","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_plan_allocate","arguments":{"kind":"case","session":"e"}}}\n'
+} | ( cd "$R" && "$RB" mcp 2>"$S/mcp.err" ) | tail -n 1 | jq '.result.structuredContent' > "$S/mcp.json" \
+  || { echo "    plan.allocate could not be asked over MCP:"; cat "$S/mcp.err"; exit 1; }
+jq -e '(.sources | length > 0) and ([.sources[].source] | index("tree") != null)' "$S/mcp.json" >/dev/null \
+  || { echo "    the MCP tool majordomus_plan_allocate did not answer an allocation:"; cat "$S/mcp.json"; tail -5 "$S/mcp.err"; exit 1; }
+
+# ---------------------------------------------------------------- 7. nothing is written
 [ "$(git -C "$R" status --porcelain)" = "$before" ] \
   || { echo "    an allocation wrote to the repository:"; git -C "$R" status --porcelain; exit 1; }
 exit 0
