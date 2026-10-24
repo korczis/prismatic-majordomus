@@ -505,6 +505,32 @@ mod tests {
         );
     }
 
+    /// A progress ttl a working session could lapse inside — under four heartbeats, so one
+    /// lost round between two beats would suspend its claims — and one past the hour a beat
+    /// may carry are each refused, naming the bound; zero turns the rule off (I3990).
+    #[test]
+    fn a_session_ttl_under_four_heartbeats_or_over_an_hour_is_refused() {
+        let with = |session_ttl_seconds: u64| CooperationConfig {
+            heartbeat_seconds: 5,
+            expiry_seconds: 15,
+            session_ttl_seconds,
+            ..CooperationConfig::default()
+        };
+        let racing = with(19).validate().unwrap_err();
+        assert!(
+            racing.contains("session_ttl_seconds 19 is under four heartbeats (20)"),
+            "{racing}"
+        );
+        assert!(with(20).validate().is_ok(), "four heartbeats is enough");
+        let endless = with(3601).validate().unwrap_err();
+        assert!(
+            endless.contains("session_ttl_seconds 3601 is over 3600 (an hour)"),
+            "{endless}"
+        );
+        assert!(with(3600).validate().is_ok(), "an hour is the bound itself");
+        assert!(with(0).validate().is_ok(), "zero turns the rule off");
+    }
+
     #[test]
     fn a_minimal_declaration_parses_with_safe_defaults() {
         let config = MeshConfig::parse(&object(serde_json::json!({

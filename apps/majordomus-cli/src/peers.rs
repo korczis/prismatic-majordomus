@@ -1101,6 +1101,18 @@ mod tests {
         assert!(board.list().is_empty(), "a connection is not news");
     }
 
+    /// Progress is recorded for a peer on the board alone: a late request of one that left
+    /// without a word puts nothing back and gives nobody's claims anything to live by (I3990).
+    #[test]
+    fn progress_of_a_peer_no_longer_on_the_board_records_nothing() {
+        let board = PeerBoard::new();
+        let gone = board.attach(Transport::Http);
+        board.detach(&gone);
+        board.progress(&gone);
+        assert!(board.progressed_at(&gone).is_none());
+        assert!(board.list().is_empty(), "progress brings nobody back");
+    }
+
     #[test]
     fn a_returning_peer_that_announces_again_is_attached_once_more() {
         let board = PeerBoard::new();

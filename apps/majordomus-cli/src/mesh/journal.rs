@@ -3416,6 +3416,100 @@ mod tests {
         );
     }
 
+    /// A beat names its session by the identifier the session opened under, and a release
+    /// its claim by the claim's: neither is free text. The reason a runtime gives for a
+    /// release it decided is one bounded line (I3990), and the typed body's kind is the
+    /// wire word a peer reads.
+    #[test]
+    fn a_beat_and_a_release_name_identifiers_and_a_release_reason_is_one_line() {
+        let beat = EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        assert_eq!(beat.kind(), "session_beat");
+        assert!(KNOWN_KINDS.contains(&beat.kind()));
+        assert!(beat.validate().is_ok());
+        let unnamed = EventBody::SessionBeat {
+            session: "two words".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        let refused = unnamed.validate().unwrap_err();
+        assert!(
+            refused.contains("session 'two words' is not an identifier"),
+            "{refused}"
+        );
+
+        let released = |claim: &str, reason: Option<&str>| EventBody::ClaimReleased {
+            claim: claim.into(),
+            reason: reason.map(Into::into),
+        };
+        assert!(released("c-1", Some("overtaken while silent"))
+            .validate()
+            .is_ok());
+        let unclaimed = released("not/a claim", None).validate().unwrap_err();
+        assert!(
+            unclaimed.contains("claim 'not/a claim' is not an identifier"),
+            "{unclaimed}"
+        );
+        let two_lines = released("c-1", Some("overtaken\nwhile silent"))
+            .validate()
+            .unwrap_err();
+        assert!(
+            two_lines.contains("reason is over 256 bytes"),
+            "{two_lines}"
+        );
+        let long = "x".repeat(257);
+        assert!(released("c-1", Some(&long)).validate().is_err());
+    }
+
+    /// Progress is read of a session key `<stream>/<session>` alone: a key without a stream,
+    /// with one that is not a stream id, of a stream this journal never heard or of a session
+    /// that never beat has no beat age and is unreported — judged by its stream, as before
+    /// I3990 — and only a silent session's claims stop holding.
+    #[test]
+    fn a_key_that_names_no_beaten_session_is_unreported_and_has_no_beat_age() {
+        let j = journal("0000000000000001");
+        j.append_own(EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: 600,
+            phase: Some("waiting on CI".into()),
+        })
+        .unwrap();
+        let own = format!("{}/s1", j.own_stream());
+        assert_eq!(
+            j.session_progress(&own, Duration::ZERO),
+            SessionProgress::Within
+        );
+        assert!(j.session_beat_age(&own).is_some());
+        let stranger = journal("0000000000000002");
+        let elsewhere = format!("{}/s1", stranger.own_stream());
+        for key in [
+            "s1".to_string(),
+            "not-a-stream/s1".to_string(),
+            elsewhere,
+            format!("{}/s2", j.own_stream()),
+        ] {
+            assert_eq!(
+                j.session_progress(&key, Duration::ZERO),
+                SessionProgress::Unreported,
+                "{key}"
+            );
+            assert!(j.session_beat_age(&key).is_none(), "{key}");
+        }
+        assert!(SessionProgress::Within.holds());
+        assert!(
+            SessionProgress::Unreported.holds(),
+            "the stream rule decides"
+        );
+        let silent = SessionProgress::Silent {
+            ttl_seconds: 8,
+            age: Duration::from_secs(9),
+        };
+        assert!(!silent.holds());
+    }
+
     #[test]
     fn own_events_are_dense_signed_and_lamport_stamped() {
         let j = journal("0000000000000001");
