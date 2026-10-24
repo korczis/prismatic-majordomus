@@ -940,6 +940,32 @@ mod tests {
         )]
     }
 
+    /// A claim whose holder went silent past its progress ttl is counted as suspended — on
+    /// the whole mesh and on its runtime — and neither as held nor as ended: it refuses
+    /// nobody, but it has not gone away (I3990).
+    #[test]
+    fn a_silent_holders_exclusive_claim_is_counted_suspended() {
+        use crate::mesh::journal::SessionProgress;
+        let j = journal();
+        j.append_own(EventBody::SessionOpened {
+            info: SessionInfo::named("s1", "claude-code"),
+        })
+        .unwrap();
+        claim(&j, "c1", "s1", "land the train");
+        let silent = |_: &str| SessionProgress::Silent {
+            ttl_seconds: 8,
+            age: std::time::Duration::from_secs(9),
+        };
+        let state = crate::mesh::state::fold_with(&j.events(), &|_| StreamLiveness::Own, &silent);
+        let summary = summarize(&state, &streams(&state));
+        let suspended = ClaimCounts {
+            suspended: 1,
+            ..ClaimCounts::default()
+        };
+        assert_eq!(summary.claims, suspended);
+        assert_eq!(summary.runtimes[0].claims, suspended);
+    }
+
     /// Claims with no session: an advisory one, an exclusive one it overlaps, and an
     /// exclusive one the second beats to its scope; and a review with a scope.
     fn overlapping() -> CooperationState {

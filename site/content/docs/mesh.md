@@ -116,6 +116,25 @@ skip → trust policy) into one registry keyed by node and runtime. Envelopes ar
 bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
 identities and version; never a secret, a path or repository content.
 
+A tailnet is a discovery source too. When the declaration's `tailscale.enabled` is on (the
+default), the Tailscale provider reads `tailscale status --json` every `interval_seconds`
+(60) and asks every peer listed online as a rendezvous at
+`http://<tailnet address>:<port>` (port 8791 unless declared). What comes back is the same
+signed `mesh.register` answer a declared rendezvous gives, through the same verification
+path, so the provider proposes addresses and decides nothing: a machine that joins the
+tailnet is found with no address written by hand, and the trust list still decides what
+links. Without the Tailscale CLI the provider is listed `stopped` with the reason, which is
+no fault, so `mesh doctor` never fails a repository whose machines do not run Tailscale. A
+CLI that is there and answers an error is listed `failed`; the others run on either way.
+
+```yaml
+tailscale:
+  enabled: true        # the default
+  port: 8791           # where a peer's server answers mesh.register
+  interval_seconds: 60
+  command: tailscale   # the CLI to ask
+```
+
 Discovery protocol **2** added the runtime slot. A version-2 reader reads version 1 (as the
 node's unnamed runtime); a version-1 reader refuses version 2 and counts it as `version`, so
 a mixed fleet shows the mismatch instead of going quiet.
@@ -196,9 +215,12 @@ admits it only if, in the order the code checks:
    another runtime of the repository is refused `misaddressed`;
 8. the peer's repository identity equals its own;
 9. the peer's key is trusted by its policy;
-10. the nonce has not been answered before. It is checked last on purpose: the replay cache
-    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
-    fill it nor evict a real peer's nonce.
+10. the hello is no older than the one that made the peer's live link, and its nonce has not
+    been answered before. Both are checked last on purpose: the replay cache holds only nonces
+    of trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a
+    real peer's nonce. The age check is what the cache cannot be after a restart: a hello
+    captured before this runtime restarted, replayed within the skew window once the peer has
+    linked again, is refused `replay` rather than displacing that link.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -290,6 +312,24 @@ Three layers, deliberately separate:
   (`learned_at`): a session silent before the restart reads as progressing for at most its
   ttl plus the expiry after it. The key is left out of the repository's declaration on
   purpose: an older executable refuses a key it does not know.
+- **A session waiting on a person says so** (I3992). A beat whose phase opens with `blocked:`
+  — `blocked: permission dialog (Claude needs your permission to use Bash)`, `blocked:
+  awaiting input` — marks the session as waiting on a person, so that peers and the landing
+  seat see it within seconds, and why, instead of reading a ttl's silence. A mark is
+  information and never progress: it moves no session's progress clock on any runtime that
+  knows marks, so a session that worked and then only waits is suspended by its ttl exactly
+  as before, however often it says so, and a session that only ever waited starts no clock
+  and keeps the stream rule; it re-arms and releases nothing. A mark is written at once —
+  inside the interval, and for a session holding no exclusive claim too — and saying the same
+  wait again writes nothing. The first beat after it that is not a wait is the session's next
+  real work: it clears the mark at once, is progress, and progress keeps its interval after
+  it. Marks and their clears are counted in a window of their own, of the same size as the
+  progress beats', so that a session whose turns end often cannot spend the beats that keep
+  other sessions' claims excluding; past it a mark is withheld, logged, and still shown by
+  the runtime that holds it. `mesh.peers` carries the reason as `blocked` beside the
+  `phase`, and `mesh peers`, the Cockpit and `/ui/mesh` show it with the session. A runtime
+  older than marks reads a mark as a phase like any other, so on it a mark keeps the claims
+  of a session that is already waiting for up to one more ttl.
 
 ## Events, ordering and deduplication
 
@@ -526,6 +566,18 @@ once. The id is the provider's own, so anything holding the provider's payload n
 same session. With no ready server, or a mesh that does not run, nothing is opened and the
 event is unaffected.
 
+A client that crashes or is killed never fires its end event, and its session would stay
+active, with every exclusive claim under it blocking, for as long as its runtime beats
+(I3810). So the start event opens the session with `--client-pid auto`: the executable walks
+up from itself past shells and Majordomus' launchers to the client that ran the hook, and the
+session carries that process's pid and start time (`client_pid`, `client_started`). About once
+a minute the runtime holding the session asks its own machine's process table whether that
+process still exists with that start time, and closes the session once when it does not — a pid
+the system has given to another process does not count as the client. Nothing is compared
+across machines: the process, the table and the clock are all the holding runtime's. A session
+opened without a client process (`mesh session open` by hand, a claim's implicit session) is
+left as before.
+
 A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
 an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
 issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
@@ -579,6 +631,31 @@ reads its hooks when it starts:
 The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
 edit is let through.
 
+A provider session that waits on a person says so on the mesh (I3992). The hook
+`.claude/hooks/majordomus-session-wait` hands each payload to `majordomus mesh beat --hook
+claude-code`, which reads the session (`claude-code-<session id>`, the one the start event
+opened) and the event out of it and beats for it on this checkout's ready server: a permission
+dialog, an MCP server's question or an idle prompt (`Notification`) and the end of a turn
+(`Stop`) mark it `blocked: …` with the reason, and its next prompt (`UserPromptSubmit`) or tool
+call (`PreToolUse`) is real work, which clears the mark. Since a provider session beats on its
+tool calls, an exclusive claim held under its own id lives by its progress like a board
+session's (I3990). The command builds no index — it runs before every tool call, in about
+twenty milliseconds — prints nothing and exits 0 whatever happens: no payload, an event that is
+no beat, no executable, no server, a refusal. Like the edit guard it is not written by
+`capture install` and not wired in this repository's `.claude/settings.json` yet; a person
+wires it by hand, as above, and starts a new session:
+
+```json
+"Notification": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"Stop": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"PreToolUse": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ]
+```
+
+and the same handler beside `majordomus-capture` in the existing `UserPromptSubmit` group.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
@@ -589,7 +666,7 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
-| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no progress beat is written — where the provider's wait hook is wired, the dialog writes a `blocked: permission dialog` mark at once, which every peer sees and which is not progress either (I3992); once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
@@ -661,7 +738,7 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime, and a hello older than the one that made the peer's live link cannot replace it, even after a restart emptied the cache (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |
@@ -740,9 +817,10 @@ would be written into the other checkout.
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
-this repository's reviewed decision, not the tool's default: the skeleton a new repository
-starts from ships no declaration, and nothing opens there until its own operator commits one
-(the guarantee `mesh-off-by-default`).
+this repository's reviewed decision about who is listed. The tool's default is the same shape
+with an empty trust list: `majordomus init` seeds `mesh.yaml` in `.ai/repo/mesh/`, enabled and
+`deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
+is committed (ADR 0137; the guarantee `mesh-off-by-default`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -948,13 +1026,14 @@ majordomus mesh doctor            # prerequisites, the host firewall, and the se
 majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
 sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
+majordomus mesh enrol             # list this machine's key in trust.allow, once; then commit
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
 majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
 majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
 majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
-majordomus mesh events --after 0  # the journal; --beats includes the session beats
+majordomus mesh events            # the journal from the beginning; --cursor <next> resumes; --beats includes the session beats
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
@@ -969,8 +1048,26 @@ majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by
 
 Every command has `--format json`, which prints the capability's answer unchanged.
 
+**Paging the raw journal.** `mesh events` walks the journal by arrival. Each answer carries a
+`cursor`, `<instance>:<n>`: the run of the runtime that answered it and the arrival number
+of the last event it returned. The CLI prints it as `next --cursor …`. Passing it back as
+`cursor` returns what that run applied since then. A walk resumed from every answered cursor
+returns each event of the journal exactly once. That includes an event from a runtime that
+was partitioned away and kept stamping with its own Lamport clock: when the link returns,
+its event arrives stamped at or below a position the walk already passed, and is still
+returned once, however often it is delivered. Events are numbered when they are applied to
+their stream, never when received, and a duplicate is never applied twice. The test is
+`events_resume_across_partition_test` (`cargo test --lib mesh::journal`).
+
+A cursor is ~20 bytes whatever the journal holds, but it names positions of one run only. A
+restarted server refuses an older run's cursor as `stale_cursor`, and the reader walks again
+from the beginning. A stream that compaction drops leaves its numbers unanswered, never a
+short page. `after=<lamport>` is still accepted and walks by stamp, which never returns an
+event stamped at or below it that arrives later; `newest` answers the journal's last events
+and the cursor of everything held, from which a reader follows what comes next.
+
 **HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
-`/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
+`/peers`, `/peer?runtime=`, `/state`, `/events?cursor=&after=&limit=&newest=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
 `/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.

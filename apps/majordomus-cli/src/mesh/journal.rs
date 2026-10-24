@@ -90,6 +90,53 @@ pub const MAX_SESSION_TTL_SECONDS: u32 = 3600;
 /// on, never a log.
 pub const MAX_PHASE_BYTES: usize = 160;
 
+/// How a phase opens when it names a wait on a person — `blocked: permission dialog`,
+/// `blocked: awaiting input` — rather than work (I3992).
+pub const BLOCKED_PHASE_PREFIX: &str = "blocked:";
+
+/// Whether a session beat's phase says the session waits on a person (I3992): it opens
+/// with [`BLOCKED_PHASE_PREFIX`]. Such a beat is a mark and not progress — it never moves
+/// the session's progress clock, so a session waiting on a dialog is still judged by the
+/// last time it worked, and its exclusive claims suspend by the ttl exactly as they would
+/// without the mark. A wait on anything else (`waiting on CI run 123`) is progress.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::waits_on_a_person;
+/// assert!(waits_on_a_person("blocked: permission dialog"));
+/// assert!(waits_on_a_person("  blocked: awaiting input (pid 42)"));
+/// assert!(!waits_on_a_person("waiting on CI run 123"), "a wait on a machine is work");
+/// assert!(!waits_on_a_person("unblocked: resumed"));
+/// ```
+pub fn waits_on_a_person(phase: &str) -> bool {
+    phase.trim_start().starts_with(BLOCKED_PHASE_PREFIX)
+}
+
+/// The reason a phase gives for waiting on a person — what follows `blocked:` — or `None`
+/// when the phase names work (I3992).
+///
+/// ```
+/// use majordomus_cli::mesh::journal::blocked_reason;
+/// assert_eq!(blocked_reason(Some("blocked: permission dialog")).as_deref(), Some("permission dialog"));
+/// assert_eq!(blocked_reason(Some("blocked:")).as_deref(), Some("a person"), "a wait with no reason");
+/// assert_eq!(blocked_reason(Some("waiting on CI run 123")), None);
+/// assert_eq!(blocked_reason(None), None);
+/// ```
+pub fn blocked_reason(phase: Option<&str>) -> Option<String> {
+    let phase = phase?.trim_start();
+    if !waits_on_a_person(phase) {
+        return None;
+    }
+    let reason = phase[BLOCKED_PHASE_PREFIX.len()..].trim();
+    Some(
+        if reason.is_empty() {
+            "a person"
+        } else {
+            reason
+        }
+        .to_string(),
+    )
+}
+
 /// The most streams one node may occupy: runtime and instance ids are free to invent, so a
 /// single trusted key must not be able to fill the stream table.
 pub const MAX_STREAMS_PER_NODE: usize = 64;
@@ -397,6 +444,16 @@ pub struct SessionInfo {
     /// The context revision the session works from (a digest the context compiler names).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    /// The client process the session belongs to, on the machine of the runtime holding it.
+    /// A client that crashes never says goodbye, so this is what lets that runtime close the
+    /// session for it once the process is gone (I3810).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_pid: Option<u32>,
+    /// When that process started, as the machine's process table reports it. Compared only
+    /// for equality and only on that machine, so a pid the system handed to another process
+    /// is never taken for the client, and no two clocks are ever compared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_started: Option<String>,
 }
 
 impl SessionInfo {
@@ -577,7 +634,9 @@ pub enum EventBody {
         ttl_seconds: u32,
         /// What the session is doing, when it said: `waiting on CI run 123`, `holding the
         /// build lock`. A phase is progress too — a process that waits on something
-        /// outside itself is working — and every surface shows it beside the session.
+        /// outside itself is working — and every surface shows it beside the session. The
+        /// one exception is a wait on a person (`blocked: permission dialog`, see
+        /// [`waits_on_a_person`]): a mark that moves no progress clock (I3992).
         #[serde(default, skip_serializing_if = "Option::is_none")]
         phase: Option<String>,
     },
@@ -1028,6 +1087,109 @@ pub struct MeshEvent {
 pub fn causal_key(event: &MeshEvent) -> (u64, StreamId, u64) {
     (event.lamport, event.stream.clone(), event.seq)
 }
+
+/// Where a walk of the journal stands: the run of the runtime that answered it and the last
+/// arrival number it returned ([`Journal::events_since`]). It is written `<instance>:<n>`,
+/// the instance being the 16 hex digits of that run, so it fits a command line and a query
+/// string however many streams the journal holds.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::Cursor;
+///
+/// let c: Cursor = "0123456789abcdef:42".parse().unwrap();
+/// assert_eq!(c.arrival(), 42);
+/// assert_eq!(c.to_string(), "0123456789abcdef:42");
+/// assert!("42".parse::<Cursor>().is_err(), "a Lamport stamp is not a cursor");
+/// assert!("0123456789ABCDEF:1".parse::<Cursor>().is_err(), "lowercase hex only");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cursor {
+    instance: String,
+    arrival: u64,
+}
+
+impl Cursor {
+    /// The last arrival number the walk returned.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::Cursor;
+    ///
+    /// assert_eq!("0123456789abcdef:7".parse::<Cursor>().unwrap().arrival(), 7);
+    /// ```
+    pub fn arrival(&self) -> u64 {
+        self.arrival
+    }
+}
+
+impl std::fmt::Display for Cursor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.instance, self.arrival)
+    }
+}
+
+impl std::str::FromStr for Cursor {
+    type Err = CursorError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let malformed = || CursorError::Malformed(s.to_string());
+        let (instance, arrival) = s.split_once(':').ok_or_else(malformed)?;
+        if instance.len() != 16
+            || !instance
+                .bytes()
+                .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+        {
+            return Err(malformed());
+        }
+        let arrival = arrival.parse().map_err(|_| malformed())?;
+        Ok(Cursor {
+            instance: instance.to_string(),
+            arrival,
+        })
+    }
+}
+
+/// Why a cursor was not walked.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::{Cursor, CursorError};
+///
+/// let e = "nope".parse::<Cursor>().unwrap_err();
+/// assert!(matches!(e, CursorError::Malformed(_)));
+/// assert!(e.to_string().contains("nope"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CursorError {
+    /// Not `<16 lowercase hex>:<number>`.
+    Malformed(String),
+    /// Issued by another run: its arrival numbers name nothing in this one. The reader
+    /// starts again from the beginning, or from a Lamport stamp.
+    Stale {
+        /// The run that issued the cursor.
+        issued_by: String,
+        /// The run answering now.
+        current: String,
+    },
+}
+
+impl std::fmt::Display for CursorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CursorError::Malformed(s) => {
+                write!(
+                    f,
+                    "'{s}' is not a cursor: expected <16 hex digits>:<arrival>"
+                )
+            }
+            CursorError::Stale { issued_by, current } => write!(
+                f,
+                "stale_cursor: the cursor was issued by run {issued_by} and this is run \
+                 {current}; walk again from the beginning, or from a Lamport stamp with after"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for CursorError {}
 
 /// The canonical bytes of a JSON value: object keys sorted at every depth, no whitespace.
 /// Signer and verifier compute it identically regardless of how either parser orders keys.
@@ -1570,6 +1732,10 @@ impl StreamLog {
     }
 
     /// Remember a session beat the stream carries, if `event` is one, as stored now.
+    ///
+    /// A beat whose phase waits on a person ([`waits_on_a_person`]) is a mark, not progress
+    /// (I3992): it replaces the phase and leaves the clock where the session's last progress
+    /// put it, and a session with no clock gets none — ttl 0, judged by its stream as before.
     fn note_session_beat(&mut self, event: &MeshEvent) {
         if event.kind() != "session_beat" {
             return;
@@ -1580,8 +1746,18 @@ impl StreamLog {
             phase,
         }) = event.body()
         {
-            self.session_beats
-                .insert(session, (Instant::now(), ttl_seconds, phase));
+            let mark = phase.as_deref().is_some_and(waits_on_a_person);
+            match self.session_beats.get_mut(&session) {
+                Some(entry) if mark => entry.2 = phase,
+                None if mark => {
+                    self.session_beats
+                        .insert(session, (Instant::now(), 0, phase));
+                }
+                _ => {
+                    self.session_beats
+                        .insert(session, (Instant::now(), ttl_seconds, phase));
+                }
+            }
         }
     }
 
@@ -1628,6 +1804,19 @@ struct Inner {
     streams: BTreeMap<StreamId, StreamLog>,
     lamport: u64,
     tallies: JournalTallies,
+    /// Every held event by the order this run applied it, `(stream, seq)` under its arrival
+    /// number: what a [`Cursor`] walks. An event gets its number when it is applied to its
+    /// stream, not when it is received, so one waiting for its gap is numbered after it.
+    arrivals: BTreeMap<u64, (StreamId, u64)>,
+    /// The last arrival number given; numbers are never reused within a run.
+    arrived: u64,
+}
+
+impl Inner {
+    fn arrive(&mut self, stream: &StreamId, seq: u64) {
+        self.arrived += 1;
+        self.arrivals.insert(self.arrived, (stream.clone(), seq));
+    }
 }
 
 /// The journal of one runtime. `Mutex<BTreeMap>`: a handful of events a second, and a
@@ -1801,6 +1990,8 @@ impl Journal {
                 streams,
                 lamport: 0,
                 tallies: JournalTallies::default(),
+                arrivals: BTreeMap::new(),
+                arrived: 0,
             }),
             rotation: std::sync::atomic::AtomicUsize::new(0),
             reloaded: IngestReport::default(),
@@ -1998,8 +2189,10 @@ impl Journal {
         let log = inner.streams.get_mut(&self.own).expect("own stream");
         log.note_session_beat(&event);
         log.events.insert(seq, event.clone());
+        inner.arrive(&self.own, seq);
         inner.tallies.written += 1;
         let durability = self.persist(std::slice::from_ref(&event));
+        crate::change::BLACKBOARD.advance();
         Ok(Appended { event, durability })
     }
 
@@ -2363,6 +2556,9 @@ impl Journal {
             }
         }
         self.persist(&stored);
+        if !stored.is_empty() {
+            crate::change::BLACKBOARD.advance();
+        }
         report
     }
 
@@ -2497,6 +2693,9 @@ impl Journal {
         }
         let max_lamport = applied.iter().map(|e| e.lamport).max().unwrap_or(lamport);
         inner.lamport = inner.lamport.max(max_lamport);
+        for e in &applied {
+            inner.arrive(&e.stream, e.seq);
+        }
         report.accepted += applied.len() as u64;
         if count {
             inner.tallies.received += applied.len() as u64;
@@ -2657,8 +2856,10 @@ impl Journal {
     }
 
     /// How long ago, on this runtime's clock, it stored the newest session beat of `key`
-    /// (`<stream>/<session>`), and the phase it named; `None` when the session never beat.
-    /// What a surface shows as a session's progress (I3990).
+    /// (`<stream>/<session>`) that was progress, and the phase its newest beat named; `None`
+    /// when the session never beat. What a surface shows as a session's progress (I3990).
+    /// The age is `None` for a session that only ever said it waits on a person (I3992): a
+    /// mark is not progress, so it starts no clock.
     ///
     /// ```
     /// use std::sync::Arc;
@@ -2670,16 +2871,21 @@ impl Journal {
     /// let key = format!("{}/s1", j.own_stream());
     /// assert!(j.session_beat_age(&key).is_none());
     /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600,
+    ///     phase: Some("blocked: permission dialog".into()) }).unwrap();
+    /// let (age, phase) = j.session_beat_age(&key).unwrap();
+    /// assert_eq!((age, phase.as_deref()), (None, Some("blocked: permission dialog")));
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600,
     ///     phase: Some("waiting on CI".into()) }).unwrap();
-    /// let (_, phase) = j.session_beat_age(&key).unwrap();
+    /// let (age, phase) = j.session_beat_age(&key).unwrap();
+    /// assert!(age.is_some());
     /// assert_eq!(phase.as_deref(), Some("waiting on CI"));
     /// ```
-    pub fn session_beat_age(&self, key: &str) -> Option<(Duration, Option<String>)> {
+    pub fn session_beat_age(&self, key: &str) -> Option<(Option<Duration>, Option<String>)> {
         let (stream, session) = key.split_once('/')?;
         let stream = StreamId::parse(stream)?;
         let inner = self.inner.lock().expect("journal lock");
-        let (stored, _, phase) = inner.streams.get(&stream)?.session_beats.get(session)?;
-        Some((stored.elapsed(), phase.clone()))
+        let (stored, ttl, phase) = inner.streams.get(&stream)?.session_beats.get(session)?;
+        Some(((*ttl > 0).then(|| stored.elapsed()), phase.clone()))
     }
 
     /// [`Journal::session_progress`] measured at `now`: what the tests use to age a beat
@@ -2800,6 +3006,127 @@ impl Journal {
         ordered.into_iter().take(page).collect()
     }
 
+    /// At most `limit` events this run applied after `cursor`, in Lamport order, and the
+    /// cursor of the next page; the whole journal from the beginning when `cursor` is `None`.
+    ///
+    /// The walk is by arrival, not by stamp, and that is what makes it complete: a runtime
+    /// partitioned away keeps stamping with its own clock, so when the link returns its
+    /// events arrive stamped at or below a position a stamp walk already passed
+    /// ([`Journal::events_after`] never returns them). Every event is numbered when it is
+    /// applied to its stream, and a duplicate is never applied twice, so a walk resumed from
+    /// each answered cursor returns every event of the journal exactly once, the late ones
+    /// included. Numbers belong to this run: a cursor another run issued is refused with
+    /// [`CursorError::Stale`], never read as a position it does not name.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// let (first, cursor) = j.events_since(None, 1).unwrap();
+    /// assert_eq!(first.len(), 1, "one page");
+    /// let (rest, end) = j.events_since(Some(&cursor), 100).unwrap();
+    /// assert_eq!(rest.len(), 1, "resumed where the reader left off");
+    /// assert!(j.events_since(Some(&end), 100).unwrap().0.is_empty(), "and nothing twice");
+    /// ```
+    pub fn events_since(
+        &self,
+        cursor: Option<&Cursor>,
+        limit: usize,
+    ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
+        self.events_since_shown(cursor, limit, |_| true)
+    }
+
+    /// [`Journal::events_since`] of only the events `shown` keeps: an event it leaves out
+    /// moves the cursor past it without counting toward `limit`, so a page is short only at
+    /// the end of the journal and a walk resumed from each cursor still misses none. This is
+    /// how `mesh.events` leaves the session beats out of a walk by cursor (I3990).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 60,
+    ///     phase: None }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    ///
+    /// let no_beats = |e: &MeshEvent| e.kind() != "session_beat";
+    /// let (first, cursor) = j.events_since_shown(None, 1, no_beats).unwrap();
+    /// assert_eq!(first.len(), 1, "the beat is passed over, not counted");
+    /// assert_eq!(first[0].kind(), "session_closed");
+    /// assert!(j.events_since_shown(Some(&cursor), 100, no_beats).unwrap().0.is_empty());
+    /// ```
+    pub fn events_since_shown(
+        &self,
+        cursor: Option<&Cursor>,
+        limit: usize,
+        shown: impl Fn(&MeshEvent) -> bool,
+    ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
+        let instance = self.own.instance();
+        let from = match cursor {
+            Some(c) if c.instance != instance => {
+                return Err(CursorError::Stale {
+                    issued_by: c.instance.clone(),
+                    current: instance.to_string(),
+                });
+            }
+            Some(c) => c.arrival,
+            None => 0,
+        };
+        let inner = self.inner.lock().expect("journal lock");
+        let mut last = from;
+        let mut page = Vec::new();
+        for (&arrival, (stream, seq)) in inner.arrivals.range(from.saturating_add(1)..) {
+            if page.len() >= limit {
+                break;
+            }
+            page.extend(
+                inner
+                    .streams
+                    .get(stream)
+                    .and_then(|l| l.events.get(seq))
+                    .filter(|e| shown(e))
+                    .cloned(),
+            );
+            last = arrival;
+        }
+        page.sort_by_cached_key(causal_key);
+        let next = Cursor {
+            instance: instance.to_string(),
+            arrival: last,
+        };
+        Ok((page, next))
+    }
+
+    /// The cursor that names everything this run has applied so far: where a reader who has
+    /// just read the journal as it stands resumes, so that only what comes next is returned.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let head = j.head_cursor();
+    /// assert!(j.events_since(Some(&head), 100).unwrap().0.is_empty());
+    /// ```
+    pub fn head_cursor(&self) -> Cursor {
+        Cursor {
+            instance: self.own.instance().to_string(),
+            arrival: self.inner.lock().expect("journal lock").arrived,
+        }
+    }
+
     /// Drop every stream that has been expired for longer than `retention` and that nothing
     /// still needs, when the journal is over its bound or `force` is set; the file is
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
@@ -2913,6 +3240,10 @@ impl Journal {
         };
         let dead = unneeded(&inner.streams, due, &offer_lapsed);
         let mut dropped = 0u64;
+        let gone: BTreeSet<StreamId> = dead.iter().cloned().collect();
+        inner
+            .arrivals
+            .retain(|_, (stream, _)| !gone.contains(stream));
         for id in dead {
             if let Some(log) = inner.streams.remove(&id) {
                 dropped += log.events.len() as u64;
@@ -3414,6 +3745,154 @@ mod tests {
                 phase: None
             }
         );
+    }
+
+    /// I3992: a beat that says the session waits on a person replaces the phase on the
+    /// writer and on every reader, and moves no progress clock — a session that only ever
+    /// said it waits gets none, and is judged by its stream as before. The next beat that
+    /// is progress clears the mark and restarts the clock.
+    #[test]
+    fn a_wait_on_a_person_is_shown_and_is_not_progress() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        let beat = |session: &str, phase: Option<&str>| EventBody::SessionBeat {
+            session: session.into(),
+            ttl_seconds: 8,
+            phase: phase.map(str::to_string),
+        };
+        let worker = format!("{}/worker", a.own_stream());
+        let idle = format!("{}/idle", a.own_stream());
+        a.append_own(beat("worker", Some("editing"))).unwrap();
+        std::thread::sleep(Duration::from_millis(30));
+        a.append_own(beat("worker", Some("blocked: permission dialog")))
+            .unwrap();
+        a.append_own(beat("idle", Some("blocked: awaiting input")))
+            .unwrap();
+        b.ingest(&a.missing_for(&b.marks(), 1 << 20), &accept_all);
+        for j in [&a, &b] {
+            let (age, phase) = j.session_beat_age(&worker).unwrap();
+            assert_eq!(phase.as_deref(), Some("blocked: permission dialog"));
+            if std::ptr::eq(j, &a) {
+                assert!(
+                    age.unwrap() >= Duration::from_millis(30),
+                    "the mark did not move the clock the progress set"
+                );
+            }
+            let (age, phase) = j.session_beat_age(&idle).unwrap();
+            assert_eq!(
+                (age, phase.as_deref()),
+                (None, Some("blocked: awaiting input"))
+            );
+            assert_eq!(
+                j.session_progress(&idle, Duration::ZERO),
+                SessionProgress::Unreported,
+                "a mark starts no clock"
+            );
+        }
+        // the next real work clears the mark and is progress again
+        a.append_own(beat("worker", None)).unwrap();
+        let (age, phase) = a.session_beat_age(&worker).unwrap();
+        assert!(age.unwrap() < Duration::from_millis(30));
+        assert_eq!(phase, None);
+        a.append_own(beat("idle", None)).unwrap();
+        assert_eq!(
+            a.session_progress(&idle, Duration::ZERO),
+            SessionProgress::Within
+        );
+    }
+
+    /// A beat names its session by the identifier the session opened under, and a release
+    /// its claim by the claim's: neither is free text. The reason a runtime gives for a
+    /// release it decided is one bounded line (I3990), and the typed body's kind is the
+    /// wire word a peer reads.
+    #[test]
+    fn a_beat_and_a_release_name_identifiers_and_a_release_reason_is_one_line() {
+        let beat = EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        assert_eq!(beat.kind(), "session_beat");
+        assert!(KNOWN_KINDS.contains(&beat.kind()));
+        assert!(beat.validate().is_ok());
+        let unnamed = EventBody::SessionBeat {
+            session: "two words".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        let refused = unnamed.validate().unwrap_err();
+        assert!(
+            refused.contains("session 'two words' is not an identifier"),
+            "{refused}"
+        );
+
+        let released = |claim: &str, reason: Option<&str>| EventBody::ClaimReleased {
+            claim: claim.into(),
+            reason: reason.map(Into::into),
+        };
+        assert!(released("c-1", Some("overtaken while silent"))
+            .validate()
+            .is_ok());
+        let unclaimed = released("not/a claim", None).validate().unwrap_err();
+        assert!(
+            unclaimed.contains("claim 'not/a claim' is not an identifier"),
+            "{unclaimed}"
+        );
+        let two_lines = released("c-1", Some("overtaken\nwhile silent"))
+            .validate()
+            .unwrap_err();
+        assert!(
+            two_lines.contains("reason is over 256 bytes"),
+            "{two_lines}"
+        );
+        let long = "x".repeat(257);
+        assert!(released("c-1", Some(&long)).validate().is_err());
+    }
+
+    /// Progress is read of a session key `<stream>/<session>` alone: a key without a stream,
+    /// with one that is not a stream id, of a stream this journal never heard or of a session
+    /// that never beat has no beat age and is unreported — judged by its stream, as before
+    /// I3990 — and only a silent session's claims stop holding.
+    #[test]
+    fn a_key_that_names_no_beaten_session_is_unreported_and_has_no_beat_age() {
+        let j = journal("0000000000000001");
+        j.append_own(EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: 600,
+            phase: Some("waiting on CI".into()),
+        })
+        .unwrap();
+        let own = format!("{}/s1", j.own_stream());
+        assert_eq!(
+            j.session_progress(&own, Duration::ZERO),
+            SessionProgress::Within
+        );
+        assert!(j.session_beat_age(&own).is_some());
+        let stranger = journal("0000000000000002");
+        let elsewhere = format!("{}/s1", stranger.own_stream());
+        for key in [
+            "s1".to_string(),
+            "not-a-stream/s1".to_string(),
+            elsewhere,
+            format!("{}/s2", j.own_stream()),
+        ] {
+            assert_eq!(
+                j.session_progress(&key, Duration::ZERO),
+                SessionProgress::Unreported,
+                "{key}"
+            );
+            assert!(j.session_beat_age(&key).is_none(), "{key}");
+        }
+        assert!(SessionProgress::Within.holds());
+        assert!(
+            SessionProgress::Unreported.holds(),
+            "the stream rule decides"
+        );
+        let silent = SessionProgress::Silent {
+            ttl_seconds: 8,
+            age: Duration::from_secs(9),
+        };
+        assert!(!silent.holds());
     }
 
     #[test]
@@ -4001,6 +4480,205 @@ mod tests {
         assert_eq!(
             read, all,
             "every event once, in order, however small the page"
+        );
+    }
+
+    /// I2733: a runtime partitioned away keeps stamping with its own clock, so its event
+    /// arrives stamped below a position the reader's walk already passed. A walk by stamp
+    /// never returns it; a walk by cursor returns it once, however often it is delivered.
+    #[test]
+    fn events_resume_across_partition_test() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        // linked: A holds B's first event
+        opened(&b, "b1");
+        a.ingest(&b.missing_for(&a.marks(), usize::MAX), &accept_all);
+        // A's own work moves its clock well past B's
+        for n in 0..5 {
+            opened(&a, &format!("a{n}"));
+        }
+        // a reader walks A one event at a time, past B's stamp, to the end
+        let mut read = Vec::new();
+        let mut cursor = None;
+        let mut after = 0;
+        loop {
+            let (page, next) = a.events_since(cursor.as_ref(), 1).unwrap();
+            cursor = Some(next);
+            let Some(last) = page.last() else { break };
+            after = after.max(last.lamport);
+            read.extend(page);
+        }
+        assert_eq!(read.len(), 6, "B's first event and A's five");
+        // the link is cut: B writes under its own clock, below the walk's stamp
+        let late = opened(&b, "b2");
+        assert!(
+            late.lamport <= after,
+            "the fixture is a late stamp, or it proves nothing"
+        );
+        // the link returns, and the late event arrives twice
+        for _ in 0..2 {
+            a.ingest(&b.missing_for(&a.marks(), usize::MAX), &accept_all);
+            a.ingest(std::slice::from_ref(&late), &accept_all);
+        }
+        assert!(
+            a.events_after(after, usize::MAX).is_empty(),
+            "the gap the cursor closes: a walk by stamp never sees it"
+        );
+        let (page, next) = a.events_since(cursor.as_ref(), 1).unwrap();
+        assert_eq!(
+            page,
+            vec![late.clone()],
+            "the resumed walk returns the late event"
+        );
+        let (rest, _) = a.events_since(Some(&next), usize::MAX).unwrap();
+        assert!(rest.is_empty(), "and nothing a second time: {rest:?}");
+        read.extend(page);
+        // over the whole walk, every event of the journal exactly once
+        let mut walked: Vec<_> = read.iter().map(|e| (e.stream.clone(), e.seq)).collect();
+        walked.sort();
+        let mut held: Vec<_> = a
+            .events()
+            .iter()
+            .map(|e| (e.stream.clone(), e.seq))
+            .collect();
+        held.sort();
+        assert_eq!(walked, held);
+    }
+
+    #[test]
+    fn a_cursor_of_another_run_is_refused_and_a_dropped_stream_leaves_no_hole() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let open = |runtime: &str| {
+            Journal::open(
+                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime,
+                "repo".into(),
+                Some(path.clone()),
+            )
+            .unwrap()
+        };
+        let first = open("0000000000000001");
+        opened(&first, "s1");
+        let (_, cursor) = first.events_since(None, 100).unwrap();
+        drop(first);
+        // the same runtime restarted: a new run, whose numbers the old cursor does not name
+        let again = open("0000000000000001");
+        match again.events_since(Some(&cursor), 100) {
+            Err(CursorError::Stale { issued_by, current }) => assert_ne!(issued_by, current),
+            other => panic!("a stale cursor was walked: {other:?}"),
+        }
+        // the restarted run numbers what it reloaded, so a walk from the start reads it all
+        assert_eq!(again.events_since(None, 100).unwrap().0.len(), 1);
+
+        // a stream compaction drops leaves its numbers unanswered, never a page cut short
+        let b = journal("0000000000000002");
+        let c = journal("0000000000000003");
+        opened(&c, "gone");
+        b.ingest(&c.missing_for(&b.marks(), usize::MAX), &accept_all);
+        opened(&b, "kept");
+        assert_eq!(
+            b.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, true),
+            1
+        );
+        let (page, _) = b.events_since(None, 1).unwrap();
+        assert_eq!(
+            page.len(),
+            1,
+            "the kept event, not an empty page for the dropped one"
+        );
+        assert_eq!(page[0].stream, b.own);
+    }
+
+    /// A cursor written out reads back as the same run and arrival; anything that is not
+    /// sixteen lowercase hex digits, a colon and a number is malformed, and every refusal
+    /// names what was given and what to do instead.
+    #[test]
+    fn a_cursor_reads_back_as_written_and_every_refusal_says_why() {
+        let j = journal("0000000000000001");
+        opened(&j, "s1");
+        opened(&j, "s2");
+        let head = j.head_cursor();
+        assert_eq!(head.arrival(), 2);
+        let back: Cursor = head.to_string().parse().unwrap();
+        assert_eq!(back, head);
+        assert!(j.events_since(Some(&back), 10).unwrap().0.is_empty());
+
+        for bad in [
+            "",
+            "0123456789abcdef",
+            "0123456789abcde:1",
+            "0123456789abcdeg:1",
+            "0123456789ABCDEF:1",
+            "0123456789abcdef:",
+            "0123456789abcdef:-1",
+        ] {
+            let e = bad.parse::<Cursor>().expect_err(bad);
+            assert_eq!(e, CursorError::Malformed(bad.into()));
+            let said = e.to_string();
+            assert!(
+                said.contains(&format!("'{bad}'")) && said.contains("<16 hex digits>:<arrival>"),
+                "{said}"
+            );
+        }
+
+        let stale = CursorError::Stale {
+            issued_by: "0000000000000001".into(),
+            current: "0000000000000002".into(),
+        };
+        let said = stale.to_string();
+        assert!(said.starts_with("stale_cursor:"), "{said}");
+        assert!(
+            said.contains("issued by run 0000000000000001")
+                && said.contains("this is run 0000000000000002"),
+            "{said}"
+        );
+        assert!(said.contains("from a Lamport stamp with after"), "{said}");
+    }
+
+    /// Pull every event `from` holds that `into` lacks, as one sync round does.
+    fn synced(into: &Journal, from: &Journal) {
+        into.merge_marks(&from.marks(), &|_| true, Duration::from_secs(30));
+        into.ingest(&from.missing_for(&into.marks(), usize::MAX), &accept_all);
+    }
+
+    #[test]
+    fn paging_while_events_arrive_returns_every_event_exactly_once() {
+        // two runtimes that wrote concurrently, so the journal opens on a tie
+        let reader = journal("0000000000000001");
+        for runtime in ["0000000000000002", "0000000000000003"] {
+            let writer = journal(runtime);
+            opened(&writer, "s1");
+            opened(&writer, "s2");
+            synced(&reader, &writer);
+        }
+        // a runtime that hears everything and keeps writing while the reader pages
+        let late = journal("0000000000000004");
+        let mut read = Vec::new();
+        let mut after = 0;
+        for round in 0.. {
+            let page = reader.events_after(after, 1);
+            assert_eq!(
+                reader.events_after(after, 1),
+                page,
+                "the cursor is stable: asking again with it answers the same page"
+            );
+            let Some(last) = page.last() else { break };
+            after = last.lamport;
+            read.extend(page);
+            if round < 3 {
+                // between pages: one event of the reader's own and one heard from a peer
+                opened(&reader, &format!("own-{round}"));
+                synced(&late, &reader);
+                opened(&late, &format!("late-{round}"));
+                synced(&reader, &late);
+            }
+        }
+        let all = reader.events_after(0, usize::MAX);
+        assert_eq!(all.len(), 4 + 3 + 3, "the fixture appended between pages");
+        assert_eq!(
+            read, all,
+            "every event once, in causal order, though the journal grew while it was paged"
         );
     }
 

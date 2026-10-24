@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.6"
+    "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "474bc166e58000c2b4a7d0c29a3cbb04d54deb5cac210a81ea1d333f18195b4e",
+  "fingerprint": "e25ff71758d4ee1ac313df766767a54e6d0ca7e8ee36ab0b56999a5dd6faf366",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,7 +13,7 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 58,
+    "modules": 60,
     "modules_covered": 58,
     "commands": 30,
     "commands_covered": 30,
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 79,
         "moments": 17
       },
       "evidence": {
@@ -2146,7 +2146,7 @@
         "use_cases": 4,
         "rules": 13,
         "enforced_rules": 10,
-        "capabilities": 10,
+        "capabilities": 11,
         "moments": 19
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 140,
+        "capabilities": 143,
         "moments": 38
       },
       "evidence": {
@@ -5607,6 +5607,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -5893,11 +5902,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 25,
-        "mcp_tools": 22,
+        "capabilities": 26,
+        "mcp_tools": 23,
         "mcp_resources": 2,
-        "http_routes": 24,
-        "cli_paths": 4,
+        "http_routes": 25,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -6186,6 +6195,15 @@
               "resource": "majordomus://economics",
               "route": "GET /api/v1/economics",
               "cli": "majordomus economics summary"
+            },
+            {
+              "id": "economics.tasks",
+              "title": "Each task's delivery economics",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_tasks",
+              "route": "GET /api/v1/economics/tasks",
+              "cli": "majordomus economics tasks"
             }
           ]
         }
@@ -6238,11 +6256,11 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 4,
-        "mcp_tools": 4,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 1,
-        "http_routes": 4,
-        "cli_paths": 4,
+        "http_routes": 5,
+        "cli_paths": 5,
         "commands": 0,
         "objects": 0,
         "rules": 0,
@@ -7468,7 +7486,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 160
+          "objects": 162
         },
         {
           "name": "knowledge",
@@ -7476,7 +7494,7 @@
         },
         {
           "name": "document",
-          "objects": 350
+          "objects": 352
         }
       ],
       "rule_refs": [
@@ -7749,11 +7767,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 571,
+        "mcp_resources": 575,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 568,
+        "objects": 572,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9602,6 +9620,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -10058,6 +10085,15 @@
               "resource": "majordomus://economics",
               "route": "GET /api/v1/economics",
               "cli": "majordomus economics summary"
+            },
+            {
+              "id": "economics.tasks",
+              "title": "Each task's delivery economics",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_tasks",
+              "route": "GET /api/v1/economics/tasks",
+              "cli": "majordomus economics tasks"
             }
           ]
         },
@@ -10312,11 +10348,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 63,
-        "mcp_tools": 56,
+        "capabilities": 65,
+        "mcp_tools": 58,
         "mcp_resources": 9,
-        "http_routes": 60,
-        "cli_paths": 19,
+        "http_routes": 62,
+        "cli_paths": 21,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10810,6 +10846,15 @@
               "cli": "majordomus mesh doctor"
             },
             {
+              "id": "mesh.enrol",
+              "title": "Enrol this machine in the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_enrol",
+              "route": "POST /api/v1/mesh/enrol",
+              "cli": "majordomus mesh enrol"
+            },
+            {
               "id": "mesh.events",
               "title": "The cooperation journal",
               "kind": "query",
@@ -11122,6 +11167,13 @@
               "tool": "majordomus_delivery",
               "route": "GET /api/v1/delivery",
               "cli": "majordomus delivery report"
+            },
+            {
+              "id": "delivery.trends",
+              "title": "How CI runs trend",
+              "kind": "query",
+              "stability": "experimental",
+              "route": "GET /api/v1/delivery/trends"
             }
           ]
         },
@@ -11726,11 +11778,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 103,
-        "mcp_tools": 94,
+        "capabilities": 105,
+        "mcp_tools": 95,
         "mcp_resources": 16,
-        "http_routes": 99,
-        "cli_paths": 44,
+        "http_routes": 101,
+        "cli_paths": 45,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -12716,7 +12768,7 @@
         },
         {
           "name": "release-record",
-          "objects": 35
+          "objects": 36
         }
       ],
       "rule_refs": [
@@ -12884,11 +12936,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 37,
+        "mcp_resources": 38,
         "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 36,
+        "objects": 37,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 3,
@@ -13279,15 +13331,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 102
+          "objects": 106
         },
         {
           "name": "issue",
-          "objects": 903
+          "objects": 982
         },
         {
           "name": "intent",
-          "objects": 35
+          "objects": 38
         },
         {
           "name": "gap",
@@ -13295,7 +13347,7 @@
         },
         {
           "name": "critique",
-          "objects": 31
+          "objects": 33
         }
       ],
       "rule_refs": [
@@ -13493,11 +13545,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1078,
+        "mcp_resources": 1166,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1075,
+        "objects": 1163,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -15680,6 +15732,13 @@
               "tool": "majordomus_delivery",
               "route": "GET /api/v1/delivery",
               "cli": "majordomus delivery report"
+            },
+            {
+              "id": "delivery.trends",
+              "title": "How CI runs trend",
+              "kind": "query",
+              "stability": "experimental",
+              "route": "GET /api/v1/delivery/trends"
             }
           ]
         }
@@ -15729,10 +15788,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 7,
+        "capabilities": 8,
         "mcp_tools": 6,
         "mcp_resources": 2,
-        "http_routes": 6,
+        "http_routes": 7,
         "cli_paths": 3,
         "commands": 0,
         "objects": 1,
@@ -16651,6 +16710,11 @@
         ]
       },
       {
+        "id": "blackboard",
+        "title": "The peer blackboard",
+        "features": []
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "features": [
@@ -16866,6 +16930,11 @@
         "features": [
           "knowledge"
         ]
+      },
+      {
+        "id": "layout",
+        "title": "Layer layout",
+        "features": []
       },
       {
         "id": "lifecycle",
@@ -17308,7 +17377,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (160)",
+        "title": "adr (162)",
         "features": [
           "knowledge"
         ]
@@ -17357,7 +17426,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (31)",
+        "title": "critique (33)",
         "features": [
           "planning"
         ]
@@ -17406,14 +17475,14 @@
       },
       {
         "id": "intent",
-        "title": "intent (35)",
+        "title": "intent (38)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (903)",
+        "title": "issue (982)",
         "features": [
           "planning"
         ]
@@ -17434,7 +17503,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (102)",
+        "title": "milestone (106)",
         "features": [
           "planning"
         ]
@@ -17469,7 +17538,7 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (35)",
+        "title": "release-record (36)",
         "features": [
           "install"
         ]
@@ -18448,50 +18517,50 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3323,
-    "builtin": 209,
-    "declarative": 3114,
-    "modules": 58,
-    "mcp_tools": 198,
-    "mcp_resources": 3169,
-    "http_routes": 203,
-    "cli_commands": 211,
+    "capabilities": 3448,
+    "builtin": 214,
+    "declarative": 3234,
+    "modules": 60,
+    "mcp_tools": 202,
+    "mcp_resources": 3289,
+    "http_routes": 208,
+    "cli_commands": 215,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3114,
+    "objects": 3234,
     "by_kind": {
-      "adr": 160,
+      "adr": 162,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 31,
+      "critique": 33,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 350,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 35,
-      "issue": 903,
+      "intent": 38,
+      "issue": 982,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 102,
+      "milestone": 106,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 35,
+      "release-record": 36,
       "rule": 190,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 605,
+      "test": 632,
       "use-case": 49,
       "workspace": 1
     },

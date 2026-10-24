@@ -47,6 +47,7 @@ pub mod broadcast;
 pub mod config;
 pub mod cooperation;
 pub mod doctor;
+pub mod enrol;
 pub mod firewall;
 pub mod handover;
 pub mod identity;
@@ -62,6 +63,7 @@ pub mod rendezvous;
 pub mod repository;
 pub mod root;
 pub mod state;
+pub mod tailscale;
 pub mod trust;
 pub mod waits;
 

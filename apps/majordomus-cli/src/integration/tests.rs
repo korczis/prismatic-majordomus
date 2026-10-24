@@ -471,7 +471,6 @@ impl Integrator for World {
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
         self.merge_calls += 1;
-        assert_eq!(method, "merge", "the repository's merge method");
         if self.merge_refuses.contains(&pr) {
             return Err(
                 "Pull request is not mergeable: the base branch policy prohibits the merge".into(),
@@ -499,12 +498,23 @@ impl Integrator for World {
             self.open[i].labels.is_empty(),
             "merged a pull request that carries a label"
         );
+        // a head that contains master is fast-forwarded to; only one that carries it is merged
+        let fast_forward = self.open[i].contains == self.master;
+        assert_eq!(
+            method,
+            ["merge", drain::FAST_FORWARD][usize::from(fast_forward)],
+            "the landing method of #{pr}"
+        );
         if self.answer_lost_before_landing.contains(&pr) {
             return Err("Post https://api.github.com/graphql: timed out".into());
         }
         if self.foreign_merge_before.contains(&pr) {
-            // another change lands first; the forge then merges this one on top of it
+            // another change lands first; a fast-forward is then refused, as the forge does,
+            // and a merge is made on top of it
             self.master += 1;
+            if fast_forward {
+                return Err("gh: Update is not a fast forward (HTTP 422)".into());
+            }
         }
         let head = self.open[i].head.clone();
         self.merged_onto.insert(pr, (master_sha(self.master), head));
@@ -5340,7 +5350,8 @@ fn the_merge_method_is_a_merge_commit_and_never_another() {
         .into_iter()
         .find(|e| e.action.as_str() == "merge_attempted")
         .expect("merge_attempted");
-    assert_eq!(attempted.detail, "--merge");
+    // a head that contains master is fast-forwarded to, whatever merge commits are allowed
+    assert_eq!(attempted.detail, "--fast-forward");
 }
 
 #[test]
@@ -6302,8 +6313,11 @@ fn asked(root: &std::path::Path, pr: u64, master: &str, head: &str) {
     .unwrap();
 }
 
+/// A fast-forward the forge refuses because master moved after the decision is a stale
+/// decision, not an unverified landing: the drain goes on, observes again and decides from
+/// the new master, where neither head contains master any more (I3910).
 #[test]
-fn a_foreign_merge_between_decision_and_merge_fails_verification() {
+fn a_fast_forward_refused_because_master_moved_is_decided_again() {
     let root = scratch();
     let mut w = World {
         open: vec![sim(1), sim(2)],
@@ -6312,14 +6326,51 @@ fn a_foreign_merge_between_decision_and_merge_fails_verification() {
     };
     let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
     assert!(report.merged.is_empty(), "{report:?}");
+    match report.steps.first() {
+        Some(DrainStepOutcome::MergeRefused { pr: 1, class, .. }) => {
+            assert_eq!(*class, drain::FailureClass::Stale)
+        }
+        other => panic!("expected a stale refusal, got {other:?}"),
+    }
+    assert!(
+        matches!(report.steps.last(), Some(DrainStepOutcome::Idle { .. })),
+        "{report:?}"
+    );
+    assert_eq!(w.merge_calls, 1);
+    let actions = trail_actions(&root);
+    assert!(
+        !actions.iter().any(|a| a == "verification_failed"),
+        "{actions:?}"
+    );
+    assert_eq!(drain::halted_by(&root), None, "nothing waits for a person");
+}
+
+/// A merge commit made onto a master another change reached first is caught by its parents:
+/// the head that carries master is merged, and what landed is not what was decided.
+#[test]
+fn a_foreign_merge_between_decision_and_merge_fails_verification() {
+    let root = scratch();
+    let mut above = sim(2);
+    above.carries = vec![1];
+    let mut w = World {
+        open: vec![sim(1), above],
+        foreign_merge_before: [2].into(),
+        ..Default::default()
+    };
+    assert_eq!(
+        drain::drain(&root, &mut w, 1, false, false).unwrap().merged,
+        [1]
+    );
+    let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
+    assert!(report.merged.is_empty(), "{report:?}");
     match report.steps.last() {
-        Some(DrainStepOutcome::VerificationFailed { pr: 1, reason }) => {
+        Some(DrainStepOutcome::VerificationFailed { pr: 2, reason }) => {
             assert!(reason.contains("unexpected_master"), "{reason}")
         }
         other => panic!("expected a failed verification, got {other:?}"),
     }
-    // the drain stopped there: #2 was not merged onto a master nobody verified
-    assert_eq!(w.merge_calls, 1);
+    // the drain stopped there: nothing else was merged onto a master nobody verified
+    assert_eq!(w.merge_calls, 2);
     assert_eq!(trail_actions(&root).last().unwrap(), "verification_failed");
 }
 
@@ -6387,7 +6438,7 @@ fn reconcile_closes_an_interrupted_merge_that_landed() {
         ..Default::default()
     };
     // the last executor asked, the forge merged, and the executor stopped before verifying
-    Integrator::merge(&mut w, 1, "h1.0", "merge").unwrap();
+    Integrator::merge(&mut w, 1, "h1.0", drain::FAST_FORWARD).unwrap();
     asked(&root, 1, "m0", "h1.0");
     let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
     assert!(
@@ -8839,6 +8890,20 @@ fn a_continuous_drain_ends_when_its_claim_is_lost() {
     let trail = trail_actions(&root);
     assert_eq!(trail.last().map(String::as_str), Some("continuous_stopped"));
     assert!(trail.iter().any(|a| a == "lease_lost"), "{trail:?}");
+}
+
+/// An observer that meets the record emptied by a renewal reads it again; a record that never
+/// reads as a holder is shown, with no holder, after the last attempt.
+#[test]
+fn a_record_that_never_reads_as_a_holder_is_shown_without_one() {
+    let root = scratch();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, "").unwrap();
+    let read = drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .unwrap();
+    assert!(read.holder.is_none(), "{read:?}");
 }
 
 /// Progress rewrites the lease's record with a newer `progressed_at`, and the record is still

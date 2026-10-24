@@ -1,0 +1,154 @@
+name: majordomus-bin
+description: >-
+  The debug executable and the rustdoc surface of this commit, taken from the jobs that built
+  them once (the `build` and `rustdoc-surface` jobs of validate.yml, I3939) instead of built
+  again in every job that drives them. The executable is downloaded as the artifact
+  `majordomus-exe`, its provenance (majordomus-cli.json: commit, target, toolchain, the
+  Cargo.lock digest) is read against this checkout, and it is put where cargo would have put
+  it, apps/majordomus-cli/target/debug/majordomus, with MAJORDOMUS_BIN exported to the rest of
+  the job. The rustdoc surface is the artifact `rustdoc-surface`, unpacked to
+  target/web/rustdoc once its surface.json names this commit.
+
+  Falling back is part of the contract, never an error: when an artifact is missing (the
+  producing job failed or was not planned), or names another commit (the pull request's merge
+  commit moved between the two jobs), or another Cargo.lock, the step builds it the old way
+  — `cargo build` for the executable, ./.github/actions/rustdoc for the surface — and says so.
+  A download is therefore an optimisation that can only make a job faster, never a job that
+  cannot start. This is a composite action, and not a download step in each job, because the
+  downloads are allowed to fail (`continue-on-error`) and validate.yml allows no step to
+  (test/cases/26_ci_wiring.sh), and because the evidence job's first `download-artifact`
+  step is the one test/cases/357 reads.
+inputs:
+  exe:
+    description: whether the job needs the executable ("true" or "false")
+    required: false
+    default: "false"
+  rustdoc:
+    description: whether the job needs the rustdoc surface in target/web/rustdoc
+    required: false
+    default: "false"
+  setup:
+    description: >-
+      whether the fallback may set up the toolchain and the build cache (./.github/actions/
+      setup-rust) when it has to build. A job that has already run setup-rust passes "false";
+      a job that has not leaves it, and then sets nothing up at all when both downloads hold.
+    required: false
+    default: "true"
+  timings:
+    description: the calling job's timings file, handed to ./.github/actions/rustdoc when it has to build
+    required: false
+    default: ""
+outputs:
+  exe-source:
+    description: where the executable came from, "download" or "build" (empty when not asked for)
+    value: ${{ steps.exe.outputs.source }}
+  rustdoc-source:
+    description: where the rustdoc surface came from, "download" or "build" (empty when not asked for)
+    value: ${{ steps.doc.outputs.source }}
+  cache-hit:
+    description: whether the build cache was restored from an exact key (empty when nothing was set up here)
+    value: ${{ steps.toolchain.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - id: exe-download
+      if: inputs.exe == 'true'
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: majordomus-exe
+        path: ${{ runner.temp }}/majordomus-exe
+    - id: exe
+      if: inputs.exe == 'true'
+      shell: bash
+      env:
+        DOWNLOADED: ${{ steps.exe-download.outcome }}
+        DIR: ${{ runner.temp }}/majordomus-exe
+      run: |
+        reason=""
+        want="$(git rev-parse HEAD)"
+        if [ "$DOWNLOADED" != success ]; then
+          reason="the artifact majordomus-exe was not downloaded ($DOWNLOADED)"
+        elif [ ! -f "$DIR/majordomus" ] || [ ! -f "$DIR/majordomus-cli.json" ]; then
+          reason="the artifact holds no executable or no provenance"
+        else
+          got="$(jq -r '.commit // ""' "$DIR/majordomus-cli.json" 2>/dev/null)"
+          lock="$(jq -r '.cargo_lock_sha256 // ""' "$DIR/majordomus-cli.json" 2>/dev/null)"
+          have="$(sha256sum apps/majordomus-cli/Cargo.lock | cut -d' ' -f1)"
+          if [ "$got" != "$want" ]; then
+            reason="the executable was built from '$got', this checkout is at $want"
+          elif [ "$lock" != "$have" ]; then
+            reason="the executable was built against another Cargo.lock"
+          fi
+        fi
+        if [ -z "$reason" ]; then
+          dest="$PWD/apps/majordomus-cli/target/debug"
+          mkdir -p "$dest"
+          cp "$DIR/majordomus" "$dest/majordomus"
+          # upload-artifact keeps no file mode
+          chmod +x "$dest/majordomus"
+          echo "MAJORDOMUS_BIN=$dest/majordomus" >> "$GITHUB_ENV"
+          echo "source=download" >> "$GITHUB_OUTPUT"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::the executable of $want was downloaded, not built"
+        else
+          echo "source=build" >> "$GITHUB_OUTPUT"
+          echo "ok=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::the executable is built here: $reason"
+        fi
+    - id: doc-download
+      if: inputs.rustdoc == 'true'
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: rustdoc-surface
+        path: ${{ runner.temp }}/rustdoc-surface
+    - id: doc
+      if: inputs.rustdoc == 'true'
+      shell: bash
+      env:
+        DOWNLOADED: ${{ steps.doc-download.outcome }}
+        DIR: ${{ runner.temp }}/rustdoc-surface
+        OUT: ${{ runner.temp }}/rustdoc-unpacked
+      run: |
+        reason=""
+        want="$(git rev-parse HEAD)"
+        rm -rf "$OUT"; mkdir -p "$OUT"
+        if [ "$DOWNLOADED" != success ]; then
+          reason="the artifact rustdoc-surface was not downloaded ($DOWNLOADED)"
+        elif ! tar -C "$OUT" -xzf "$DIR/rustdoc-surface.tgz" 2>/dev/null; then
+          reason="the artifact holds no readable rustdoc-surface.tgz"
+        elif [ ! -f "$OUT/rustdoc/index.html" ] || [ ! -f "$OUT/rustdoc/surface.json" ]; then
+          reason="the surface holds no index.html or no surface.json"
+        else
+          got="$(jq -r '.built_from // ""' "$OUT/rustdoc/surface.json" 2>/dev/null)"
+          [ "$got" = "$want" ] || reason="the surface was built from '$got', this checkout is at $want"
+        fi
+        if [ -z "$reason" ]; then
+          mkdir -p target/web
+          rm -rf target/web/rustdoc
+          mv "$OUT/rustdoc" target/web/rustdoc
+          echo "source=download" >> "$GITHUB_OUTPUT"
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "::notice::the rustdoc surface of $want was downloaded, not built"
+        else
+          echo "source=build" >> "$GITHUB_OUTPUT"
+          echo "ok=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::the rustdoc surface is built here: $reason"
+        fi
+    # the toolchain and the cache, once, and only when something has to be built
+    - id: toolchain
+      if: inputs.setup == 'true' && ((inputs.exe == 'true' && steps.exe.outputs.ok != 'true') || (inputs.rustdoc == 'true' && steps.doc.outputs.ok != 'true'))
+      uses: ./.github/actions/setup-rust
+    - name: the executable, built here after all
+      if: inputs.exe == 'true' && steps.exe.outputs.ok != 'true'
+      shell: bash
+      run: |
+        RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+        echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+    - name: the crate's Rust API reference, built here after all
+      if: inputs.rustdoc == 'true' && steps.doc.outputs.ok != 'true'
+      uses: ./.github/actions/rustdoc
+      with:
+        setup: "false"
+        timings: ${{ inputs.timings }}
