@@ -46,8 +46,8 @@ Most of what is served reads. Every capability carries its effect in the registr
 a change to the answering runtime's own state (the peer board, the mesh journal, the
 evidence ledger), or a change to the repository. The ones that write the repository are
 `continuity.publish`, `continuity.resume`, `continuity.sync`, `devtask.implement`,
-`executions.start`, `intents.propose`, `mesh.enrol`, `plan.transition`,
-`reasoning.record`, `recover.orphans` and `worktree.create`;
+`executions.start`, `intents.propose`, `mesh.enrol`,
+`plan.transition`, `reasoning.record`, `recover.orphans` and `worktree.create`;
 the `initialize` instructions every client reads name them from the registry, and case
 3363 refuses this page when its list and the registry's differ, because a sentence that
 promises a read-only surface is exactly the sentence an agent acts on. There is no
