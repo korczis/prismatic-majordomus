@@ -55,7 +55,9 @@ borrowed || fail "an executable of this exact crate was not used: $(cat "$CALLS"
 grep -q "whose crate this tree carries unchanged; the gates run it" "$T/out" || fail "no line says the executable is used: $(cat "$T/out")"
 
 # ---------------------------------------------------------------- 2. the commit from a shared cache path
-MAJORDOMUS_BIN="$T/cache/majordomus-master-bin/$built/majordomus" push
+# the commit is read from the path alone: a MAJORDOMUS_BIN_COMMIT the pusher exported is not this
+# fixture's, and would name another commit
+(unset MAJORDOMUS_BIN_COMMIT; MAJORDOMUS_BIN="$T/cache/majordomus-master-bin/$built/majordomus" push)
 borrowed || fail "the build commit was not read from the cache path: $(cat "$CALLS")"
 
 # ---------------------------------------------------------------- 3. the crate edited
