@@ -1,0 +1,27 @@
+id: I3794
+milestone: one-kit-on-every-surface
+title: "The interaction probe drives the controls of /ui and the Cockpit as it drives the site's"
+slug: the-probe-drives-every-surface
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Point scripts/interaction-probe at the pages the executable serves (/ui and /cockpit) as well as the built site, so every control claimed by an interaction spec is driven on every surface it appears on, not only on the site."
+why: "On 2026-10-20 interaction-probe drove the built site only; ui-audit checked /ui and the Cockpit for landmarks, names and console errors but no spec exercised a control's behaviour there, so a copy button or tab that works on the site and fails on /ui passes every gate."
+current_state: "interaction-probe: site only, sharded by I3602. ui-audit: structure and accessibility on all three surfaces."
+desired_state: "interaction-probe serves the executable and drives every spec's controls on /ui and the Cockpit too, in the same shards; a control on those surfaces with no spec is a finding, as on the site."
+scope:
+  - "scripts/interaction-probe"
+  - "scripts/lib/interaction-specs"
+  - "scripts/ci/interaction-check"
+  - "test/cases/3794_the_probe_drives_every_surface.sh"
+depends_on: [I3793]
+acceptance_criteria:
+  - "interaction-probe reports controls driven on /ui and /cockpit pages, by spec"
+  - "A broken control on /ui fails the probe, naming page and control"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh 3794_the_probe_drives_every_surface"
+evidence_required:
+  - "probe_drives_every_surface_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

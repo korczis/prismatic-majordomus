@@ -43,6 +43,13 @@ H
   budget="$(mj_pol context.always_loaded_budget_lines)"
   while [ -n "$(mj_pol "projections.$i.target")" ]; do
     tgt="$(mj_pol "projections.$i.target")"; prov="$(mj_pol "projections.$i.provider")"
+    # A target is a path inside the repository. `../x` or `/x` would be written outside it
+    # by the `$MJ_ROOT/$tgt` below; refuse it while planning, before anything is written
+    # (I2871, found by I1101's survey).
+    if ! mj_norm_path "$tgt" >/dev/null; then
+      mj_fail projection "$tgt" "is not a path inside the repository (no .. and not absolute); nothing written" "grep -n 'target:' $MJ_POLICY_FILE"
+      rm -rf "$tmp"; exit "$MJ_EX_CONTRACT"
+    fi
     mode="$(mj_projection_mode "$i")"
     case "$mode" in file|region) ;;
       *) rm -rf "$tmp"; mj_die "$MJ_EX_CONTRACT" "projection $tgt: unknown mode '$mode' (file | region)" ;;

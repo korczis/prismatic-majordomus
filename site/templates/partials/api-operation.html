@@ -65,7 +65,7 @@
         <tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold {% if r.status == "200" %}text-fg-success-strong{% else %}text-heading{% endif %}">{{ r.status }}</td>
           <td class="px-3 py-2 font-mono">{% if r.schema %}<a href="{{ api_root }}{{ api.schema_homes[r.schema] }}/#schema-{{ r.schema }}" class="text-fg-brand hover:underline">{{ r.schema }}</a>{% endif %}</td>
-          <td class="px-3 py-2 text-body">{{ r.description | markdown(inline=true) | safe }}</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ r.description | markdown(inline=true) | safe }}</div></td>
         </tr>
         {%- endfor -%}
       </tbody>

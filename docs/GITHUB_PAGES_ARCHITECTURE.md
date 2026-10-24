@@ -438,6 +438,16 @@ scripts/site-translate import DIR/*.json             # admit filled batches into
 A translation is admitted only when it carries every placeholder of its English exactly once,
 nested the same way; anything else is refused and the English is served.
 
+**A value inside a sentence.** The memory keys a segment by its whole text, digits included,
+so a sentence that carries a count, a date or a version gets a new key each time the value
+changes, and its copy falls back to English until the memory is filled again. Until a number
+in a segment is a placeholder of its own (I3758), a template wraps each derived value in an
+inline element the pass does not enter: `<data value="…">`, or a `<span translate="no">`. That
+element stands in the segment as a void placeholder, so the words around it keep one key
+whatever the value is. The plan's figures are written this way
+(`site/templates/plan-section.html`); a block element marked `translate="no"` is a boundary
+instead, and splits the sentence in two.
+
 **The reader's language.** The switch is Flowbite's navbar language dropdown: every language
 named in itself, `lang` and `hreflang` on each link, `aria-current` on the one being read. A
 reader who arrives from outside the site on an English page, has chosen nothing and whose browser

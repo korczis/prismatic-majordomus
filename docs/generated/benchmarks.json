@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.6",
+  "generator": "majordomus-cli 1.0.0-alpha.8",
   "coverage": [
     {
       "scope": "direct",
-      "required": 209,
-      "covered": 176,
+      "required": 214,
+      "covered": 180,
       "missing": 0,
-      "waived": 33,
+      "waived": 34,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 203,
-      "covered": 176,
+      "required": 208,
+      "covered": 180,
       "missing": 0,
-      "waived": 27,
+      "waived": 28,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 198,
-      "covered": 172,
+      "required": 202,
+      "covered": 175,
       "missing": 0,
-      "waived": 26,
+      "waived": 27,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 624,
-      "covered": 538,
+      "required": 638,
+      "covered": 549,
       "missing": 0,
-      "waived": 86,
+      "waived": 89,
       "inapplicable": 0
     }
   ],
@@ -56,6 +56,19 @@
       "cases": [
         "all",
         "one-encoding"
+      ]
+    },
+    {
+      "id": "blackboard.snapshot",
+      "module": "blackboard",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "this-checkout",
+        "addressed"
       ]
     },
     {
@@ -328,6 +341,18 @@
       "mcp": "waived",
       "http": "waived",
       "cases": []
+    },
+    {
+      "id": "delivery.trends",
+      "module": "delivery",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
     },
     {
       "id": "deploy.check",
@@ -625,6 +650,19 @@
       "cases": [
         "default",
         "narrowed"
+      ]
+    },
+    {
+      "id": "economics.tasks",
+      "module": "economics",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "window"
       ]
     },
     {
@@ -1214,6 +1252,18 @@
       ]
     },
     {
+      "id": "layout.check",
+      "module": "layout",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "lifecycle.closed",
       "module": "lifecycle",
       "kind": "query",
@@ -1319,6 +1369,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.enrol",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "mesh.events",
@@ -2697,6 +2757,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.ui.peers",
+      "route": "/ui/peers",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
       "key": "system.http.ui.delivery",
       "route": "/ui/delivery",
       "view": "pinned",
@@ -2705,6 +2771,12 @@
     {
       "key": "system.http.ui.deployments",
       "route": "/ui/deployments",
+      "view": "pinned",
+      "deferred": false
+    },
+    {
+      "key": "system.http.ui.trends",
+      "route": "/ui/trends",
       "view": "pinned",
       "deferred": false
     },
@@ -2799,6 +2871,12 @@
       "deferred": false
     },
     {
+      "key": "system.http.live.ui.peers",
+      "route": "/ui/peers",
+      "view": "live",
+      "deferred": false
+    },
+    {
       "key": "system.http.live.ui.delivery",
       "route": "/ui/delivery",
       "view": "live",
@@ -2807,6 +2885,12 @@
     {
       "key": "system.http.live.ui.deployments",
       "route": "/ui/deployments",
+      "view": "live",
+      "deferred": false
+    },
+    {
+      "key": "system.http.live.ui.trends",
+      "route": "/ui/trends",
       "view": "live",
       "deferred": false
     },

@@ -1,0 +1,33 @@
+id: I3962
+milestone: mcp-transports-are-reliable
+title: "The codex advisor's final message is held to the answer schema and read from its file alone"
+slug: the-codex-advisor-answers-to-a-schema
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Pass the answer's JSON Schema to codex exec with --output-schema, built in contract.mjs from the stances and confidences normalise accepts, and treat an exit 0 that wrote no -o file as empty instead of parsing stdout."
+why: "The codex-exec adapter asked for the answer shape only in the prompt, and when -o wrote nothing it parsed stdout, which carries Codex's progress and events, by cutting from its first { to its last }. Codex 0.163 supports --output-schema. Found by the native-acceleration pack's P03 discovery in session 54f32bb3; no paid call was made."
+current_state: "scripts/lib/advisors/codex-exec.mjs runs codex exec without --output-schema and falls back to run.stdout when the -o file is absent."
+desired_state: "codex exec is handed the answer's schema; only the -o file is an answer; a missing file is empty, a refusal is malformed by normalise, and a client too old for --output-schema fails as an error that names it."
+scope:
+  - "scripts/lib/advisors/codex-exec.mjs"
+  - "scripts/lib/advisors/contract.mjs"
+  - "scripts/lib/advisors/process.mjs"
+  - "scripts/lib/advisors/contract.test.mjs"
+non_scope:
+  - "The gemini-cli adapter, whose JSON envelope does not enforce a schema on the response"
+  - "A live model call, which needs an authorised budget"
+depends_on: []
+acceptance_criteria:
+  - "codex exec is invoked with --output-schema naming a file whose content is ANSWER_SCHEMA: every property required, none added, the enums those normalise accepts"
+  - "An exit 0 that wrote no -o file is empty, even when stdout holds an answer-shaped JSON object"
+  - "A final message that is not the answer is judged by normalise and is malformed"
+  - "A client that refuses --output-schema is an error whose diagnostic names it: a failed run's diagnostic is the client's own error: line, not the usage and try '--help' lines an argument parser ends with (stderr captured from codex-cli 0.163.0)"
+validation:
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "bash test/run.sh 731_advisor_transport_contract"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "advisor_transport_contract"
+created_at: 2026-10-22
+updated_at: 2026-10-22
