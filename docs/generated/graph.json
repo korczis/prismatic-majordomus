@@ -67867,6 +67867,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4222",
+        "kind": "issue",
+        "label": "I4222",
+        "summary": "A forge reply cut off on its way is asked again, and the declarations are read in smaller pages",
+        "route": "/cockpit/objects/issue/i4222",
+        "source": ".ai/repo/project/issues/I4222.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "retry::transient holds 'unexpected end of JSON input' as an outage; a 401, a 404 and a refusal are still answers",
+            "Case 742: a pr list cut off once is asked exactly twice, the refresh exits 0 and records the observation; the four outage and refusal sections still hold",
+            "The declarations read asks n=25"
+          ],
+          "created_at": "2026-10-24",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Replacing gh pr list with a paged GraphQL read of its own; gh already pages it at a hundred",
+            "Retrying a merge: a merge that timed out may have landed, and it is still never asked again"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "A forge that keeps cutting replies off now takes about 14 s of backoff before the observation fails, as for any outage. A declarations read of 120 open pull requests takes five pages instead of three.",
+          "scope": [
+            "apps/majordomus-cli/src/integration/retry.rs",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            ".ai/repo/project/issues/I4222.yaml"
+          ],
+          "serves": [],
+          "slug": "a-truncated-forge-reply-is-retried",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "cargo test --lib integration::retry integration::forge::tests::the_forge_is_asked_exactly_this",
+            "bash test/run.sh 742_only_an_outage_is_asked_again"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -128605,6 +128647,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4222",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4222",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -140006,8 +140058,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3897,
-      "edges": 9002,
+      "nodes": 3898,
+      "edges": 9004,
       "acyclic": false,
       "truncated": false
     }
