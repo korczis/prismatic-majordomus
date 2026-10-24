@@ -604,7 +604,7 @@ gates:
   - id: portable-core
     job: structure
     lane: proof
-    runs: rustup target add wasm32-unknown-unknown >/dev/null 2>&1; cargo test --quiet --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && cargo build --quiet --release --target wasm32-unknown-unknown --manifest-path apps/majordomus-core/Cargo.toml --target-dir apps/majordomus-core/target && node apps/majordomus-core/tests/wasm-parity.mjs apps/majordomus-core/target/wasm32-unknown-unknown/release/majordomus_core.wasm apps/majordomus-core/fixtures/canonical-digest.v1.json
+    runs: scripts/rust-check --portable-core
     summary: the portable core answers the shared canonical-digest fixture on the host and, built for wasm32 and executed, in the module a browser loads (ADR 0170)
 
   - id: crate-boundary

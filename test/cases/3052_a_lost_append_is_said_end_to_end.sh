@@ -18,7 +18,7 @@
 # The bound (MAX_RELOAD_BYTES, 64 MiB) is a constant, not a setting, so the oversized file is
 # made here: blank lines, which a reload skips, so the only finding is the unread tail. One
 # repository, one node identity under $T, one server on loopback at a time, stopped by the
-# pid this case started. Nothing is dialed: no seed, no hub, multicast off.
+# pid this case started. Nothing is dialed: no seed, no hub, multicast and the tailnet off.
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -40,7 +40,7 @@ mkdir -p "$R" "$STATE"
   mkdir -p lib && for f in a b c d e; do echo "$f" > "lib/$f"; done
   mkdir -p .ai/repo/mesh
   printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-  printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+  printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
   printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 4\n  repository: case-3052\n' >> .ai/repo/mesh/majordomus.yaml
   # committed on the trunk: trust on first use is honoured only from the trunk's copy
   git add -A && git commit -qm "base, with the mesh declared"
