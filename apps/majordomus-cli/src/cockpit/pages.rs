@@ -3297,6 +3297,17 @@ pub fn models(ctx: &Context) -> Page {
     )
 }
 
+/// How the mesh page names a node's trust: by whom it is trusted, why it was rejected, or
+/// the key that succeeded it.
+fn trust_label(trust: &crate::mesh::TrustState) -> String {
+    match trust {
+        crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
+        crate::mesh::TrustState::Observed => "observed".to_string(),
+        crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
+        crate::mesh::TrustState::Retired(by) => format!("retired: succeeded by {by}"),
+    }
+}
+
 /// The mesh: the discovered nodes of this process's runtime, the providers that heard
 /// them, and why the mesh is or is not running. Everything on this page is the same
 /// `mesh.status` and `mesh.nodes` every other surface renders; the Cockpit holds no
@@ -3406,12 +3417,7 @@ pub fn mesh(ctx: &Context) -> Page {
         .nodes
         .iter()
         .map(|n| {
-            let trust = match &n.trust {
-                crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
-                crate::mesh::TrustState::Observed => "observed".to_string(),
-                crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
-                crate::mesh::TrustState::Retired(by) => format!("retired: succeeded by {by}"),
-            };
+            let trust = trust_label(&n.trust);
             let presence = match n.presence {
                 crate::mesh::Presence::Present => "present",
                 crate::mesh::Presence::Absent => "absent",
@@ -8547,32 +8553,23 @@ mod tests {
         assert!(html.contains("did not answer"), "{html}");
     }
 
-    /// A node whose key was handed on to a successor is listed as retired, with the key that
-    /// succeeded it, not as observed or trusted.
+    /// Each trust a node can hold is named on the mesh page: by whom it is trusted, why it was
+    /// rejected, and for a retired node the key that succeeded it.
     #[test]
-    fn a_mesh_page_says_a_node_is_retired_and_by_whom() {
-        use crate::mesh::identity::NodeIdentity;
-        use crate::mesh::protocol::advertise;
-        use crate::mesh::registry::MeshSource;
-        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
-        let ctx = repo.context().expect("a context");
-        let dir = tempfile::tempdir().unwrap();
-        let id = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
-        let env = advertise(&id, 1, &[], &["http".into()], &[], "0.5.0");
-        assert!(ctx.mesh.registry().observe(
-            &env.adv,
-            id.public.node_id.clone(),
-            crate::mesh::TrustState::Retired("successorkey".into()),
-            MeshSource::UdpMulticast,
-            "127.0.0.1:7741",
-            serde_json::Value::Null,
-        ));
-        let page = mesh(&ctx);
-        assert_eq!(page.status, 200);
-        let html = page.main.render();
-        assert!(
-            html.contains("retired: succeeded by successorkey"),
-            "{html}"
+    fn every_trust_a_node_holds_is_named_and_a_retired_one_by_its_successor() {
+        use crate::mesh::TrustState;
+        assert_eq!(
+            trust_label(&TrustState::Trusted("tofu".into())),
+            "trusted (tofu)"
+        );
+        assert_eq!(trust_label(&TrustState::Observed), "observed");
+        assert_eq!(
+            trust_label(&TrustState::Rejected("key changed".into())),
+            "rejected: key changed"
+        );
+        assert_eq!(
+            trust_label(&TrustState::Retired("successorkey".into())),
+            "retired: succeeded by successorkey"
         );
     }
 

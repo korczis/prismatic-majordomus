@@ -86,6 +86,19 @@ jq -r '.questions[].id' "$S/completion.json" | cmp -s - "$S/questions.want" \
 jq -e '(.problems // []) == [] and (.unanswered_gates // []) == [] and .source == "share/completion.yaml" and (.outline | length) > 0' "$S/completion.json" >/dev/null \
   || bad "majordomus_completion_policy reports a problem, a gate this repository never answers, or no outline:" "$S/completion.json"
 
+# ---------------------------------------------------------------- 3c. gates.state
+# Every gate's state at this checkout's commit, from .ai/repo/ci/gates.yaml: one entry per
+# gate it counts, each a gate the file declares, each with a status the tallies add up. What
+# the ledger holds is this machine's and is not asserted.
+answer majordomus_gate_state '{}' "$S/gatestate.json"
+head="$(git -C "$ROOT" rev-parse HEAD)"
+jq -e --arg h "$head" '.source == ".ai/repo/ci/gates.yaml" and .head == $h and .count > 0 and (.gates | length) == .count and ([.tallies[]] | add) == .count' "$S/gatestate.json" >/dev/null \
+  || bad "majordomus_gate_state does not answer with one state per gate of .ai/repo/ci/gates.yaml at HEAD $head:" "$S/gatestate.json"
+jq -r '.gates[].id' "$S/gatestate.json" | while IFS= read -r id; do
+  grep -qE "^  - id: ${id}\$" "$ROOT/.ai/repo/ci/gates.yaml" \
+    || bad "majordomus_gate_state names a gate .ai/repo/ci/gates.yaml does not declare: $id"
+done
+
 # ---------------------------------------------------------------- 4. executions.cancel
 # One of the two sampled capabilities that are not reads (4b is the other). It is asked to refuse, and a refusal is a
 # result with isError, never a transport error — the crate's own contract.

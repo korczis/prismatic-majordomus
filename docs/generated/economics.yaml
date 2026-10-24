@@ -154,23 +154,23 @@ metrics:
     unit: ratio
     formula: "median over seeds of 1 - selected_tokens / candidate_tokens, where candidates are the distinct files the compiler judged relevant to the work (selected, or left out only for budget) and selected are those it put in the budget, counted with the named tokenizer; files it judged irrelevant are reported, never divided by"
     not: "not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything"
-    value: 0.979701046392
+    value: 0.980753440324
     status: measured
-    n: 888
+    n: 1024
     distribution:
-      n: 888
-      mean: 0.864419371827
-      median: 0.979701046392
-      p25: 0.833006088429
-      p75: 0.983386731112
-      p95: 0.987394670029
+      n: 1024
+      mean: 0.863613043484
+      median: 0.980753440324
+      p25: 0.827815849205
+      p75: 0.984657960712
+      p95: 0.987720957102
       min: 0.0
-      max: 0.988271940824
-      sd: 0.221126492697
+      max: 0.989131959384
+      sd: 0.223912058146
     interval:
       level_bp: 9500
-      low: 0.979244137072
-      high: 0.979761826632
+      low: 0.980334412971
+      high: 0.980913090081
       method: "percentile bootstrap of the median, each value resampled independently with replacement"
       resamples: 10000
       seed: 20260924
@@ -473,6 +473,7 @@ metrics:
       - I2140
       - I2145
       - I2147
+      - I2148
       - I2151
       - I2156
       - I2157
@@ -547,6 +548,7 @@ metrics:
       - I2531
       - I2532
       - I2533
+      - I2588
       - I2601
       - I2652
       - I2653
@@ -569,6 +571,10 @@ metrics:
       - I2678
       - I2679
       - I2680
+      - I2690
+      - I2691
+      - I2692
+      - I2693
       - I2694
       - I2695
       - I2696
@@ -599,6 +605,7 @@ metrics:
       - I2723
       - I2724
       - I2731
+      - I2732
       - I2733
       - I2734
       - I2735
@@ -614,10 +621,12 @@ metrics:
       - I2749
       - I2750
       - I2760
+      - I2761
       - I2770
       - I2780
       - I2781
       - I2783
+      - I2784
       - I2786
       - I2787
       - I2789
@@ -643,6 +652,14 @@ metrics:
       - I2853
       - I2863
       - I2864
+      - I2865
+      - I2866
+      - I2867
+      - I2870
+      - I2871
+      - I2872
+      - I2873
+      - I2874
       - I2882
       - I2900
       - I2901
@@ -672,9 +689,17 @@ metrics:
       - I2965
       - I2966
       - I2967
+      - I2980
+      - I2981
+      - I2982
+      - I2983
+      - I2984
+      - I2985
       - I2987
       - I2993
       - I2995
+      - I2998
+      - I2999
       - I3000
       - I3001
       - I3002
@@ -686,6 +711,10 @@ metrics:
       - I3009
       - I3010
       - I3013
+      - I3014
+      - I3015
+      - I3016
+      - I3017
       - I3018
       - I3020
       - I3021
@@ -694,9 +723,11 @@ metrics:
       - I3024
       - I3025
       - I3060
+      - I3061
       - I3070
       - I3071
       - I3072
+      - I3073
       - I3074
       - I3075
       - I3076
@@ -707,7 +738,11 @@ metrics:
       - I3081
       - I3082
       - I3083
+      - I3084
+      - I3085
+      - I3086
       - I3087
+      - I3088
       - I3089
       - I3090
       - I3091
@@ -1017,6 +1052,18 @@ metrics:
       - I3448
       - I3449
       - I3602
+      - I3606
+      - I3607
+      - I3608
+      - I3609
+      - I3660
+      - I3661
+      - I3662
+      - I3663
+      - I3664
+      - I3665
+      - I3666
+      - I3667
       - I3750
       - I3751
       - I3752
@@ -1043,6 +1090,18 @@ metrics:
       - I3773
       - I3774
       - I3775
+      - I3777
+      - I3790
+      - I3791
+      - I3792
+      - I3793
+      - I3794
+      - I3795
+      - I3796
+      - I3797
+      - I3798
+      - I3799
+      - I3810
       - I3820
       - I3821
       - I3822
@@ -1062,12 +1121,89 @@ metrics:
       - I3837
       - I3838
       - I3839
+      - I3840
       - I3841
       - I3842
+      - I3843
+      - I3860
+      - I3861
+      - I3862
+      - I3902
+      - I3903
+      - I3910
+      - I3911
+      - I3912
+      - I3913
+      - I3914
+      - I3915
+      - I3916
+      - I3917
+      - I3918
+      - I3919
+      - I3920
+      - I3930
+      - I3931
+      - I3932
+      - I3933
+      - I3934
+      - I3935
+      - I3936
+      - I3937
+      - I3938
+      - I3939
+      - I3940
+      - I3941
+      - I3942
+      - I3943
+      - I3944
+      - I3945
+      - I3946
+      - I3947
+      - I3949
+      - I3950
+      - I3951
+      - I3952
+      - I3953
+      - I3955
+      - I3956
+      - I3957
+      - I3959
+      - I3960
+      - I3961
+      - I3962
+      - I3963
+      - I3970
+      - I3971
+      - I3972
+      - I3973
+      - I3974
+      - I3975
+      - I3976
+      - I3977
+      - I3978
+      - I3979
+      - I3995
+      - I3999
+      - I4000
+      - I4001
+      - I4002
+      - I4003
+      - I4004
+      - I4005
+      - I4006
+      - I4007
+      - I4008
+      - I4009
+      - I4012
+      - I4013
+      - I4154
+      - I4155
+      - I4199
+      - I4200
     warnings:
       - "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model"
       - "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving"
-      - "stale: a measured mechanism changed since this record"
+      - "dirty: this record was measured from a working tree with uncommitted changes"
   - id: context_cost_model_error
     title: "Error of the compiler's bytes-over-four cost model"
     class: derived
@@ -1075,9 +1211,9 @@ metrics:
     unit: ratio
     formula: "counted selected tokens / the compiler's own estimate of them - 1, over all seeds"
     not: "not a saving: it says how far the budget's unit is from counted tokens"
-    value: 0.027730584208
+    value: 0.03053691227
     status: measured
-    n: 888
+    n: 1024
     suite: context
     evidence:
       - I0001
@@ -1377,6 +1513,7 @@ metrics:
       - I2140
       - I2145
       - I2147
+      - I2148
       - I2151
       - I2156
       - I2157
@@ -1451,6 +1588,7 @@ metrics:
       - I2531
       - I2532
       - I2533
+      - I2588
       - I2601
       - I2652
       - I2653
@@ -1473,6 +1611,10 @@ metrics:
       - I2678
       - I2679
       - I2680
+      - I2690
+      - I2691
+      - I2692
+      - I2693
       - I2694
       - I2695
       - I2696
@@ -1503,6 +1645,7 @@ metrics:
       - I2723
       - I2724
       - I2731
+      - I2732
       - I2733
       - I2734
       - I2735
@@ -1518,10 +1661,12 @@ metrics:
       - I2749
       - I2750
       - I2760
+      - I2761
       - I2770
       - I2780
       - I2781
       - I2783
+      - I2784
       - I2786
       - I2787
       - I2789
@@ -1547,6 +1692,14 @@ metrics:
       - I2853
       - I2863
       - I2864
+      - I2865
+      - I2866
+      - I2867
+      - I2870
+      - I2871
+      - I2872
+      - I2873
+      - I2874
       - I2882
       - I2900
       - I2901
@@ -1576,9 +1729,17 @@ metrics:
       - I2965
       - I2966
       - I2967
+      - I2980
+      - I2981
+      - I2982
+      - I2983
+      - I2984
+      - I2985
       - I2987
       - I2993
       - I2995
+      - I2998
+      - I2999
       - I3000
       - I3001
       - I3002
@@ -1590,6 +1751,10 @@ metrics:
       - I3009
       - I3010
       - I3013
+      - I3014
+      - I3015
+      - I3016
+      - I3017
       - I3018
       - I3020
       - I3021
@@ -1598,9 +1763,11 @@ metrics:
       - I3024
       - I3025
       - I3060
+      - I3061
       - I3070
       - I3071
       - I3072
+      - I3073
       - I3074
       - I3075
       - I3076
@@ -1611,7 +1778,11 @@ metrics:
       - I3081
       - I3082
       - I3083
+      - I3084
+      - I3085
+      - I3086
       - I3087
+      - I3088
       - I3089
       - I3090
       - I3091
@@ -1921,6 +2092,18 @@ metrics:
       - I3448
       - I3449
       - I3602
+      - I3606
+      - I3607
+      - I3608
+      - I3609
+      - I3660
+      - I3661
+      - I3662
+      - I3663
+      - I3664
+      - I3665
+      - I3666
+      - I3667
       - I3750
       - I3751
       - I3752
@@ -1947,6 +2130,18 @@ metrics:
       - I3773
       - I3774
       - I3775
+      - I3777
+      - I3790
+      - I3791
+      - I3792
+      - I3793
+      - I3794
+      - I3795
+      - I3796
+      - I3797
+      - I3798
+      - I3799
+      - I3810
       - I3820
       - I3821
       - I3822
@@ -1966,18 +2161,94 @@ metrics:
       - I3837
       - I3838
       - I3839
+      - I3840
       - I3841
       - I3842
+      - I3843
+      - I3860
+      - I3861
+      - I3862
+      - I3902
+      - I3903
+      - I3910
+      - I3911
+      - I3912
+      - I3913
+      - I3914
+      - I3915
+      - I3916
+      - I3917
+      - I3918
+      - I3919
+      - I3920
+      - I3930
+      - I3931
+      - I3932
+      - I3933
+      - I3934
+      - I3935
+      - I3936
+      - I3937
+      - I3938
+      - I3939
+      - I3940
+      - I3941
+      - I3942
+      - I3943
+      - I3944
+      - I3945
+      - I3946
+      - I3947
+      - I3949
+      - I3950
+      - I3951
+      - I3952
+      - I3953
+      - I3955
+      - I3956
+      - I3957
+      - I3959
+      - I3960
+      - I3961
+      - I3962
+      - I3963
+      - I3970
+      - I3971
+      - I3972
+      - I3973
+      - I3974
+      - I3975
+      - I3976
+      - I3977
+      - I3978
+      - I3979
+      - I3995
+      - I3999
+      - I4000
+      - I4001
+      - I4002
+      - I4003
+      - I4004
+      - I4005
+      - I4006
+      - I4007
+      - I4008
+      - I4009
+      - I4012
+      - I4013
+      - I4154
+      - I4155
+      - I4199
+      - I4200
     warnings:
-      - "stale: a measured mechanism changed since this record"
+      - "dirty: this record was measured from a working tree with uncommitted changes"
 suites:
   - id: context
     kind: context
     version: 1
     title: "Context selection, counted"
-    freshness: stale
-    freshness_detail: "1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml"
-    runs: 12
+    freshness: current
+    runs: 13
     pairs:
       declared: 0
       attempted: 0
@@ -1999,6 +2270,7 @@ suites:
       - c453f536afafb9d22a7f6501b7ff10f0307dc8a0
       - d446499470fecdc3454c1d04297bf3f4b706b5ec
       - f48de8a909081bf8e265a1afc04fceabe7b2a08b
+      - fb5bc095c47e876b85b5c5530529ebb8a4d45387
     harnesses: []
     models_reported: []
   - id: pilot
@@ -2134,20 +2406,22 @@ pairs:
       - the control run is not recorded
 segments: []
 context:
-  revision: 174b97284f65471eca99f7522d1425b3073e96f7
-  measured_at: "2026-10-23T00:22:43Z"
+  revision: fb5bc095c47e876b85b5c5530529ebb8a4d45387
+  measured_at: "2026-10-24T13:07:51Z"
   tokenizer:
     encoding: o200k_base
     implementation: tiktoken-rs 0.12.0
-  seeds: 888
-  candidate_tokens: 1038352684
-  considered_tokens: 1038352684
-  selected_tokens: 25521945
-  estimated_selected_tokens: 24833303
+  seeds: 1024
+  candidate_tokens: 1301181932
+  considered_tokens: 1301237090
+  selected_tokens: 30122967
+  estimated_selected_tokens: 29230362
   excluded_tokens:
-    budget: 1012830739
+    budget: 1271058965
+    stale: 45648
+    superseded: 9510
     unresolved: 0
-  seeds_over_budget_counted: 730
+  seeds_over_budget_counted: 888
   budget_tokens: 24000
 history:
   - suite: context
@@ -2234,6 +2508,13 @@ history:
     metric: context_reduction_ratio
     value: 0.979701046392
     n: 888
+  - suite: context
+    methodology: 1
+    revision: fb5bc095c47e876b85b5c5530529ebb8a4d45387
+    at: "2026-10-24T13:07:51Z"
+    metric: context_reduction_ratio
+    value: 0.980753440324
+    n: 1024
 variants:
   - id: baseline
     role: control
