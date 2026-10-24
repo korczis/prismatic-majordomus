@@ -62,6 +62,18 @@ satisfaction:
 Y
 commit "declare the plan and the intent"
 
+# the skeleton declares an enabled mesh, and no server runs here: the decision is provisional,
+# so the step orders nothing, waits and says why (exit 10)
+step --at 2026-10-23T10:00:00Z
+[ "$rc" = 10 ] && [ "$(q .outcome)" = wait ] && [ "$(q .do)" = null ] && q .reason | grep -q 'provisional' \
+  || { note "a step over an unread declared mesh did not wait (exit $rc):"; cat "$W/out"; }
+# the rest is about the order, not the mesh: this fixture declares none
+mesh_decl=.ai/repo/mesh/mesh.yaml
+if [ -f "$mesh_decl" ]; then
+  sed 's/^enabled: true$/enabled: false/' "$mesh_decl" > "$W/mesh.yaml" && cp "$W/mesh.yaml" "$mesh_decl"
+  commit "no mesh here"
+fi
+
 AT=2026-10-23T10:00:00Z
 
 # ---------------------------------------------------------------- 1. the same state, the same order
