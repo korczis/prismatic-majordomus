@@ -1,0 +1,34 @@
+id: I3937
+milestone: ci-critical-path
+title: A gate whose cases the planned suite runs is not planned beside it
+slug: a-gate-the-suite-runs-is-not-planned-twice
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Declare in the CI model that release-record-cases and plan-record-cases are subsumed by shell-suite, and make scripts/ci-plan leave a gate out of every plan that also plans the gate which subsumes it, saying why, so the full plan stops running the same cases on the rust job's third lane that the suite runs on its shards."
+why: "Both gates exist for the record shapes, which do not run the suite; their own comments say the suite runs the same cases. A plan that selects the suite (the full plan of a master push, the schedule, ci:full) still planned them, so in run 39762797718 rust lane 3 ran plan-record-cases for 1602 s and release-record-cases for 425 s, about 34 minutes of a lane of 60-84 minutes, and that lane became the critical path once the suite shards were balanced. Skipping them in the workflow instead would read as a missing receipt or a silent pass; the milestone requires that every gate a change skips names the impact rule that skipped it."
+current_state: "scripts/ci-plan plans release-record-cases and plan-record-cases in every full plan next to shell-suite, which runs the same ~80 cases; nothing in the model relates the gates."
+desired_state: "A gate may declare `subsumed-by: <gate>` in .ai/repo/ci/gates.yaml; the planner drops it, after implies and requires, when that gate is in the plan, and the plan JSON, text and github outputs show it as not selected with the reason; the record shapes, which do not plan the suite, plan both gates exactly as before; a subsumed-by that names no gate, the gate itself or a gate that is itself subsumed is refused by --check."
+scope:
+  - ".ai/repo/ci/gates.yaml"
+  - "scripts/ci-plan"
+  - "test/cases/94_ci_plan.sh"
+  - ".ai/repo/project/issues/I3937.yaml"
+non_scope:
+  - "apps/majordomus-cli/src/gates/model.rs: the executable's reader ignores the field and plans the wider set, as it already plans no shape"
+  - "Skipping a step in .github/workflows/validate.yml: the plan decides, the workflow only reads its outputs"
+  - "Removing, skipping or making advisory any case: the suite runs every case the dropped gates named"
+acceptance_criteria:
+  - "The full plan selects shell-suite and neither release-record-cases nor plan-record-cases, and each says it was subsumed by shell-suite in the JSON, text and github outputs"
+  - "A change of the release-record or plan-record shape still plans its case gate and not the suite"
+  - "Without the declaration the full plan plans both gates (the case is not vacuous), and a subsumed-by naming a missing gate, itself or a subsumed gate is refused by scripts/ci-plan --check"
+  - "No gate other than the on-demand ones and the two subsumed ones leaves the full plan"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 94_ci_plan 26_ci_wiring 721_the_suite_shards_are_the_whole_suite"
+  - "scripts/ci-plan --check"
+  - "scripts/ci-plan --full --format text | grep record-cases"
+evidence_required:
+  - "a_gate_the_suite_runs_is_not_planned_twice_test"
+depends_on: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

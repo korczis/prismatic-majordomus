@@ -28,7 +28,9 @@ use crate::mesh::cooperation::{
     Written,
 };
 use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
-use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
+use crate::mesh::journal::{
+    ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId, StreamLiveness,
+};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
 use crate::mesh::rendezvous::REGISTER_PATH;
@@ -118,6 +120,110 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<MeshIdentityReport, Capability
             identity: None,
             error: Some(e.to_string()),
         }),
+    }
+}
+
+// ---------------------------------------------------------------- mesh.enrol
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `mesh.enrol`: which declaration, which key, and whether it changed.
+pub struct MeshEnrolment {
+    /// The declaration file, repository-relative.
+    pub path: String,
+    /// This machine's public key: what is listed, never a secret.
+    pub key: String,
+    /// Whether the key was added now; `false` when it was listed already.
+    pub added: bool,
+    /// What to do next: commit the file, or nothing.
+    pub next: String,
+}
+
+/// The name a machine's allowlist entry carries: its node id, its host name and its
+/// platform, the shape a person writes by hand ("641bdb94 — a MacBook (macos aarch64)").
+fn machine_label(identity: &PublicIdentity) -> String {
+    let host = std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "this machine".into());
+    format!(
+        "{} — {host} ({} {})",
+        identity.display_name,
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    )
+}
+
+fn mesh_enrol(ctx: &Context, _: Empty) -> Result<MeshEnrolment, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let object = ctx
+        .index
+        .objects
+        .iter()
+        .find(|o| o.kind == crate::mesh::KIND)
+        .ok_or_else(|| {
+            CapabilityError::NotFound(
+                "this repository declares no mesh: `majordomus init --extend` seeds .ai/repo/mesh/mesh.yaml".into(),
+            )
+        })?;
+    let relative = object.provenance.path.clone();
+    let path = root.join(&relative);
+    let identity_path = default_identity_path().ok_or_else(|| {
+        CapabilityError::Refused(
+            "no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity".into(),
+        )
+    })?;
+    let identity = NodeIdentity::load_or_create(&identity_path)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let key = identity.public.public_key.clone();
+    // read, edit and write as one step: the index has read and parsed this declaration
+    // already, so in practice only the write can fail, and every failure names the file
+    let added = std::fs::read_to_string(&path)
+        .map_err(io_reason)
+        .and_then(|text| crate::mesh::enrol::enrol(&text, &key, &machine_label(&identity.public)))
+        .and_then(|edited| write_enrolled(&path, edited))
+        .map_err(|e| CapabilityError::Internal(format!("{relative}: {e}")))?;
+    Ok(if added {
+        MeshEnrolment {
+            next: format!(
+                "commit {relative}, so every machine that pulls it trusts this one; restart this checkout's server (`majordomus serve stop`, then `majordomus serve ensure`) to open the mesh here"
+            ),
+            path: relative,
+            key,
+            added: true,
+        }
+    } else {
+        MeshEnrolment {
+            path: relative,
+            key,
+            added: false,
+            next: "nothing: this machine's key is listed already".into(),
+        }
+    })
+}
+
+/// Write an enrolled declaration over `path`: whether a key was added, `false` when the
+/// declaration listed it already and nothing was written.
+fn write_enrolled(path: &std::path::Path, edited: Option<String>) -> Result<bool, String> {
+    match edited {
+        None => Ok(false),
+        Some(text) => std::fs::write(path, text).map(|()| true).map_err(io_reason),
+    }
+}
+
+/// An I/O failure as the reason a capability gives.
+fn io_reason(e: std::io::Error) -> String {
+    e.to_string()
+}
+
+/// How a cursor the reader cannot use is refused: one of another run is stale, and one that
+/// is not a cursor is invalid input.
+fn cursor_refusal(e: CursorError) -> CapabilityError {
+    match e {
+        CursorError::Stale { .. } => CapabilityError::Refused(e.to_string()),
+        CursorError::Malformed(_) => CapabilityError::InvalidInput(e.to_string()),
     }
 }
 
@@ -737,9 +843,17 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
 #[serde(deny_unknown_fields)]
 /// The input of `mesh.events`.
 pub struct MeshEventsInput {
-    /// Only events whose Lamport stamp is above this.
+    /// Only events whose Lamport stamp is above this: a walk by stamp, which never returns
+    /// an event a partitioned runtime stamped at or below it and delivered later. Prefer
+    /// `cursor`, which returns those too.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after: Option<u64>,
+    /// The `cursor` the previous page answered: the next page is what this run of the
+    /// runtime applied after it, every event exactly once across the whole walk, a late one
+    /// from a healed partition included (I2733). A cursor another run issued is refused as
+    /// `stale_cursor`. Without `cursor` and `after` the walk starts at the beginning.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
     /// At most this many (default 100, at most 1000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u64>,
@@ -752,7 +866,9 @@ pub struct MeshEventsInput {
     /// Include the `session_beat` events, which are left out by default: a working session's
     /// runtime writes one every few minutes to keep its claims alive (I3990), and a reader
     /// of the journal wants what sessions did rather than that they are still doing it.
-    /// The page's `lamport` counts the beats it left out, so paging misses nothing either way.
+    /// A walk by `after` cuts its page before the beats leave it, so its `lamport` resumes
+    /// after them; a walk by `cursor` passes them over without counting them toward `limit`.
+    /// Paging misses nothing either way.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub beats: Option<bool>,
 }
@@ -763,6 +879,7 @@ impl BenchmarkCases for MeshEventsInput {
             "default",
             MeshEventsInput {
                 after: None,
+                cursor: None,
                 limit: Some(100),
                 newest: None,
                 beats: None,
@@ -778,11 +895,14 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The `after` of the next page: the stamp of the last event this page read — carried,
-    /// or a session beat it left out — or the `after` that was asked when it read none. A
-    /// page never ends inside a run of equal stamps, so resuming after it misses nothing
-    /// (I2140).
+    /// The `after` of the next page of a walk by stamp: the stamp of the last event this
+    /// page read — carried, or a session beat it left out — or the `after` that was asked
+    /// when it read none. A page never ends inside a run of equal stamps (I2140).
     pub lamport: u64,
+    /// The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly
+    /// after what this page returned (I2733). Absent from an answer to a walk by `after`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
 }
@@ -793,32 +913,53 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
             active: false,
             count: 0,
             lamport: 0,
+            cursor: None,
             events: Vec::new(),
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
+    if input.after.is_some() && input.cursor.is_some() {
+        return Err(CapabilityError::InvalidInput(
+            "after and cursor are two different walks: pass one of them".into(),
+        ));
+    }
     let after = input.after.unwrap_or(0);
     let shown = |e: &MeshEvent| input.beats == Some(true) || e.kind() != "session_beat";
-    let (events, lamport) = if input.newest == Some(true) {
+    let (events, lamport, cursor) = if input.newest == Some(true) {
         // the whole tail above `after`, in order, and then its end: the journal is in memory
         // and bounded by its own retention, so this is a walk and not a second index
+        let head = c.journal().head_cursor();
         let mut all = c.journal().events_after(after, usize::MAX);
         let lamport = all.last().map_or(after, |e| e.lamport);
         all.retain(|e| shown(e));
         let from = all.len().saturating_sub(limit);
         all.drain(..from);
-        (all, lamport)
-    } else {
+        (all, lamport, Some(head))
+    } else if input.after.is_some() {
         // the page is cut before the beats leave it, so its `lamport` resumes after them
         let mut page = c.journal().events_after(after, limit);
         let lamport = page.last().map_or(after, |e| e.lamport);
         page.retain(|e| shown(e));
-        (page, lamport)
+        (page, lamport, None)
+    } else {
+        let from = match &input.cursor {
+            Some(text) => Some(text.parse::<Cursor>().map_err(cursor_refusal)?),
+            None => None,
+        };
+        // a beat left out moves the cursor past it without taking a place on the page, so a
+        // page is short only at the end of the journal and the walk still misses nothing
+        let (page, next) = c
+            .journal()
+            .events_since_shown(from.as_ref(), limit, shown)
+            .map_err(cursor_refusal)?;
+        let lamport = page.last().map_or(after, |e| e.lamport);
+        (page, lamport, Some(next))
     };
     Ok(EventList {
         active: true,
         count: events.len(),
         lamport,
+        cursor: cursor.map(|c| c.to_string()),
         events,
     })
 }
@@ -876,6 +1017,13 @@ pub struct SessionInput {
     /// The context revision it works from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    /// The client process the session belongs to, on this machine: the runtime closes the
+    /// session once that process has ended (I3810).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_pid: Option<u32>,
+    /// When that process started, as this machine's process table reports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_started: Option<String>,
 }
 
 impl BenchmarkCases for SessionInput {
@@ -894,6 +1042,8 @@ impl BenchmarkCases for SessionInput {
                 head: None,
                 dirty: None,
                 context: None,
+                client_pid: None,
+                client_started: None,
             },
         )]
     }
@@ -915,6 +1065,8 @@ fn mesh_session_open(ctx: &Context, input: SessionInput) -> Result<Written, Capa
         head: input.head,
         dirty: input.dirty,
         context: input.context,
+        client_pid: input.client_pid,
+        client_started: input.client_started,
     })
     .map_err(map_error)
 }
@@ -1435,6 +1587,24 @@ pub fn module() -> ModuleDescriptor {
             // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
             .reads_only_locally(),
             capability! {
+                id: "mesh.enrol",
+                kind: CapabilityKind::Command,
+                title: "Enrol this machine in the mesh",
+                description: "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+                input: Empty,
+                output: MeshEnrolment,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_enrol"),
+                    http: post("/api/v1/mesh/enrol"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "enrol".into()] }),
+                },
+                tags: ["mesh", "identity", "trust"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_enrol,
+            }
+            .writes_repository(),
+            capability! {
                 id: "mesh.identity",
                 title: "This machine's node identity",
                 description: "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
@@ -1573,7 +1743,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.events",
                 title: "The cooperation journal",
-                description: "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
+                description: "The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp.",
                 input: MeshEventsInput,
                 output: EventList,
                 stability: Stability::Experimental,
@@ -1776,6 +1946,11 @@ mod tests {
                 "/api/v1/mesh/nodes",
             ),
             (
+                "mesh.enrol",
+                Some("majordomus_mesh_enrol"),
+                "/api/v1/mesh/enrol",
+            ),
+            (
                 "mesh.identity",
                 Some("majordomus_mesh_identity"),
                 "/api/v1/mesh/identity",
@@ -1949,10 +2124,12 @@ mod tests {
                     ),
                 }
             }
-            assert_ne!(
-                c.execution.effect,
-                crate::capability::model::Effect::RepositoryMutation,
-                "{}: the mesh writes no tracked file",
+            // one tracked file is written, by one capability: the declaration's trust list,
+            // by `mesh.enrol` (ADR 0137); nothing the mesh hears ever writes the repository
+            assert_eq!(
+                c.execution.effect == crate::capability::model::Effect::RepositoryMutation,
+                c.id.as_str() == "mesh.enrol",
+                "{}: only enrolment writes a tracked file",
                 c.id
             );
         }
@@ -2227,5 +2404,87 @@ mod tests {
                 "{session:?}"
             );
         }
+    }
+
+    /// Every walk of `mesh.events` leaves the session beats out unless asked for them, and
+    /// misses nothing for it: a walk by cursor passes a beat over without giving it a place
+    /// on the page, a walk by `after` cuts its page first, and the newest page counts it in
+    /// its `lamport` (I3990, I2733).
+    #[test]
+    fn every_walk_of_the_events_leaves_the_beats_out_and_misses_nothing() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let claim = |scope: &str| {
+            c.claim(
+                &SessionInfo::named("lander", "cli"),
+                vec![scope.into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        };
+        claim("integration");
+        c.beat("lander", Some("waiting on CI run 42".into()), None)
+            .unwrap();
+        claim("release");
+        let ask = |after: Option<u64>, cursor: Option<String>, newest, beats| {
+            mesh_events(
+                &ctx,
+                MeshEventsInput {
+                    after,
+                    cursor,
+                    limit: Some(1),
+                    newest,
+                    beats,
+                },
+            )
+            .unwrap()
+        };
+        let kinds = |beats: Option<bool>| {
+            let (mut kinds, mut cursor) = (Vec::new(), None);
+            loop {
+                let page = ask(None, cursor, None, beats);
+                cursor = page.cursor.clone();
+                if page.events.is_empty() {
+                    return kinds;
+                }
+                assert_eq!(page.count, 1, "a page is full until the journal ends");
+                kinds.extend(page.events.iter().map(|e| e.kind().to_string()));
+            }
+        };
+        let hidden = kinds(None);
+        let all = kinds(Some(true));
+        assert!(all.iter().any(|k| k == "session_beat"), "{all:?}");
+        assert!(!hidden.iter().any(|k| k == "session_beat"), "{hidden:?}");
+        let without: Vec<_> = all.iter().filter(|k| *k != "session_beat").collect();
+        assert_eq!(
+            hidden.iter().collect::<Vec<_>>(),
+            without,
+            "nothing else is missed"
+        );
+
+        // by stamp: a page holding only a beat is empty and still moves `lamport` past it
+        let beat_at = c
+            .journal()
+            .events_after(0, usize::MAX)
+            .iter()
+            .find(|e| e.kind() == "session_beat")
+            .map(|e| e.lamport)
+            .expect("the beat is in the journal");
+        let page = ask(Some(beat_at - 1), None, None, None);
+        assert_eq!((page.count, page.lamport, page.cursor), (0, beat_at, None));
+        let page = ask(Some(beat_at - 1), None, None, Some(true));
+        assert_eq!(page.events[0].kind(), "session_beat");
+
+        // the newest page: the beat is not on it, and its stamp is the journal's newest
+        let newest = ask(None, None, Some(true), None);
+        assert_eq!(newest.count, 1);
+        assert!(
+            newest.cursor.is_some(),
+            "the newest page names where to resume"
+        );
+        assert_eq!(newest.events[0].kind(), "claim_acquired");
     }
 }

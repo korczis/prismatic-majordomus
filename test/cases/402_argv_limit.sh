@@ -58,6 +58,14 @@ expect_grep 'scripts/gen:3'
 t="$(fixture B3 'jq -Rn --rawfile files "$LINK_TRACKED" "[inputs]"')"
 MJ_ROOT="$t" expect_exit 0 "$GATE"
 
+# 3c. a helper can return a growing collection without naming a file. The complete
+# issue graph crossed 131072 bytes on train 4 even after the arrays used slurpfile.
+t="$(fixture B4 'jq -n --arg mermaid "$(mj_project_mermaid)" "."')"
+MJ_ROOT="$t" expect_exit 10 "$GATE"
+expect_grep 'scripts/gen:3'
+t="$(fixture B5 'jq -n --rawfile mermaid "$STAGE/plan-mermaid.txt" "."')"
+MJ_ROOT="$t" expect_exit 0 "$GATE"
+
 # 4. the correction is accepted — this is what the fixed generator does
 t="$(fixture C 'jq -S --slurpfile caps "$OUT/capabilities.json" -f x.jq "$REG" > out.json')"
 MJ_ROOT="$t" expect_exit 0 "$GATE"

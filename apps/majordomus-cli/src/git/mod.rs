@@ -313,6 +313,92 @@ pub fn read_only(root: &Path) -> Command {
     cmd
 }
 
+/// One commit of a file's history: its id, its committer date in ISO 8601, and its subject.
+pub type FileCommit = (String, String, String);
+
+/// The commits that changed `path`, newest first and across renames, as [`FileCommit`]s: at
+/// most `bound` of them, with whether more exist (I3314).
+///
+/// `None` when git cannot answer, as in a directory that is no repository or one whose
+/// branch has no commit yet. An empty list is a file no commit has touched. Read through
+/// [`read_only`], so asking moves nothing.
+///
+/// In a shallow clone the boundary commit appears to add every file it holds, which is not
+/// a change anybody made: the list stops before it and says it was cut, so an empty list
+/// that is cut means the commit that last changed the file is not in this clone.
+///
+/// ```
+/// use majordomus_cli::git::file_history;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let ok = Command::new("git").arg("-C").arg(dir.path()).args(args).status().unwrap();
+///     assert!(ok.success());
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// assert_eq!(file_history(dir.path(), "a.md", 5), None, "no commit, no history");
+/// for n in 1..=3 {
+///     std::fs::write(dir.path().join("a.md"), n.to_string()).unwrap();
+///     git(&["add", "a.md"]);
+///     git(&["commit", "-qm", &format!("change {n}")]);
+/// }
+/// let (commits, cut) = file_history(dir.path(), "a.md", 2).unwrap();
+/// assert_eq!(commits.len(), 2);
+/// assert!(cut, "a third commit exists past the bound");
+/// assert_eq!(commits[0].2, "change 3", "newest first");
+/// assert!(file_history(dir.path(), "never.md", 2).unwrap().0.is_empty());
+/// ```
+pub fn file_history(root: &Path, path: &str, bound: usize) -> Option<(Vec<FileCommit>, bool)> {
+    let out = read_only(root)
+        .args(["log", "--follow", "--no-color"])
+        .arg(format!("--max-count={}", bound + 1))
+        .args(["--format=%H%x1f%cI%x1f%s", "--", path])
+        .output()
+        .ok()
+        .filter(|out| out.status.success())?;
+    let mut commits = history_lines(&String::from_utf8_lossy(&out.stdout));
+    let mut cut = commits.len() > bound;
+    commits.truncate(bound);
+    let boundary = shallow_boundary(root);
+    if let Some(at) = commits.iter().position(|(c, _, _)| boundary.contains(c)) {
+        commits.truncate(at);
+        cut = true;
+    }
+    Some((commits, cut))
+}
+
+/// The [`FileCommit`]s of `git log --format=%H%x1f%cI%x1f%s` output, one per line; a line
+/// with no separator is not a commit and is skipped, and a missing subject reads as empty.
+fn history_lines(text: &str) -> Vec<FileCommit> {
+    text.lines()
+        .filter_map(|line| {
+            let (commit, rest) = line.split_once('\u{1f}')?;
+            let (when, subject) = rest.split_once('\u{1f}').unwrap_or((rest, ""));
+            Some((commit.to_string(), when.to_string(), subject.to_string()))
+        })
+        .collect()
+}
+
+/// The commits a shallow clone was cut at, from its `shallow` file; none in a full clone, and
+/// none where git cannot say where that file is.
+fn shallow_boundary(root: &Path) -> Vec<String> {
+    read_only(root)
+        .args([
+            "rev-parse",
+            "--path-format=absolute",
+            "--git-path",
+            "shallow",
+        ])
+        .output()
+        .ok()
+        .and_then(|out| std::fs::read_to_string(String::from_utf8_lossy(&out.stdout).trim()).ok())
+        .map(|text| text.lines().map(str::to_string).collect())
+        .unwrap_or_default()
+}
+
 fn ls_files_with(root: &Path, pathspecs: &[&str]) -> Result<Vec<String>> {
     let out = read_only(root)
         .args(["ls-files", "-z", "--"])
@@ -603,10 +689,79 @@ mod tests {
         }
     }
 
+    /// In a shallow clone the boundary commit appears to add every file it holds: the
+    /// history stops before it and says it was cut, while a full clone has no boundary.
+    #[test]
+    fn a_shallow_clone_cuts_a_files_history_at_its_boundary() {
+        let full = repo(&["a.md", "b.md"]);
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git").arg("-C").arg(dir).args(args).output();
+            assert!(out.unwrap().status.success(), "git {args:?}");
+        };
+        for (path, subject) in [("b.md", "change b"), ("a.md", "change a")] {
+            write(&full, path);
+            git(full.path(), &["commit", "-qam", subject]);
+        }
+        let parent = tempfile::tempdir().unwrap();
+        let shallow = parent.path().join("shallow");
+        let source = format!("file://{}", full.path().display());
+        let clone = [
+            "clone",
+            "-q",
+            "--depth",
+            "2",
+            source.as_str(),
+            shallow.to_str().unwrap(),
+        ];
+        git(parent.path(), &clone);
+
+        assert!(shallow_boundary(full.path()).is_empty(), "a full clone");
+        assert_eq!(shallow_boundary(&shallow).len(), 1, "one boundary commit");
+        let (commits, cut) = file_history(full.path(), "a.md", 10).unwrap();
+        assert_eq!(commits.len(), 2);
+        assert!(!cut, "a full clone holds every commit");
+
+        let (commits, cut) = file_history(&shallow, "a.md", 10).unwrap();
+        let subjects: Vec<&str> = commits.iter().map(|(_, _, s)| s.as_str()).collect();
+        assert_eq!(subjects, ["change a"], "the boundary commit is not listed");
+        assert!(cut, "the clone was cut");
+        let (commits, cut) = file_history(&shallow, "b.md", 10).unwrap();
+        assert!(commits.is_empty(), "b.md last changed at the boundary");
+        assert!(
+            cut,
+            "an empty list that is cut: the change is not in this clone"
+        );
+    }
+
     #[test]
     fn a_path_that_is_not_a_work_tree_is_unknown() {
         let dir = tempfile::tempdir().unwrap();
         let missing = dir.path().join("absent");
         assert_eq!(working_tree_excluding(&missing, &[], &["dist"]), "unknown");
+    }
+
+    /// A log line is a commit only when it carries the separator; a subject may be missing,
+    /// and a subject holding the separator keeps it.
+    #[test]
+    fn a_history_line_is_a_commit_only_when_it_is_one() {
+        let text = "a\u{1f}2026-10-22T10:00:00Z\u{1f}fix: one\nnot a commit\nb\u{1f}2026-10-21T10:00:00Z\nc\u{1f}t\u{1f}s\u{1f}x\n";
+        assert_eq!(
+            history_lines(text),
+            vec![
+                ("a".into(), "2026-10-22T10:00:00Z".into(), "fix: one".into()),
+                ("b".into(), "2026-10-21T10:00:00Z".into(), String::new()),
+                ("c".into(), "t".into(), "s\u{1f}x".into()),
+            ]
+        );
+    }
+
+    /// Outside any repository git answers with a failure, and a file has no history there, nor
+    /// a shallow boundary.
+    #[test]
+    fn outside_a_repository_a_file_has_no_history_and_no_boundary() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("missing");
+        assert_eq!(file_history(&missing, "a.md", 2), None);
+        assert!(shallow_boundary(&missing).is_empty());
     }
 }

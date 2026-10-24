@@ -102,6 +102,25 @@ skip → trust policy) into one registry keyed by node and runtime. Envelopes ar
 bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
 identities and version; never a secret, a path or repository content.
 
+A tailnet is a discovery source too. When the declaration's `tailscale.enabled` is on (the
+default), the Tailscale provider reads `tailscale status --json` every `interval_seconds`
+(60) and asks every peer listed online as a rendezvous at
+`http://<tailnet address>:<port>` (port 8791 unless declared). What comes back is the same
+signed `mesh.register` answer a declared rendezvous gives, through the same verification
+path, so the provider proposes addresses and decides nothing: a machine that joins the
+tailnet is found with no address written by hand, and the trust list still decides what
+links. Without the Tailscale CLI the provider is listed `stopped` with the reason, which is
+no fault, so `mesh doctor` never fails a repository whose machines do not run Tailscale. A
+CLI that is there and answers an error is listed `failed`; the others run on either way.
+
+```yaml
+tailscale:
+  enabled: true        # the default
+  port: 8791           # where a peer's server answers mesh.register
+  interval_seconds: 60
+  command: tailscale   # the CLI to ask
+```
+
 Discovery protocol **2** added the runtime slot. A version-2 reader reads version 1 (as the
 node's unnamed runtime); a version-1 reader refuses version 2 and counts it as `version`, so
 a mixed fleet shows the mismatch instead of going quiet.
@@ -177,9 +196,12 @@ admits it only if, in the order the code checks:
    another runtime of the repository is refused `misaddressed`;
 8. the peer's repository identity equals its own;
 9. the peer's key is trusted by its policy;
-10. the nonce has not been answered before. It is checked last on purpose: the replay cache
-    holds only nonces of trusted keys of this repository, so a stranger's hellos can neither
-    fill it nor evict a real peer's nonce.
+10. the hello is no older than the one that made the peer's live link, and its nonce has not
+    been answered before. Both are checked last on purpose: the replay cache holds only nonces
+    of trusted keys of this repository, so a stranger's hellos can neither fill it nor evict a
+    real peer's nonce. The age check is what the cache cannot be after a restart: a hello
+    captured before this runtime restarted, replayed within the skew window once the peer has
+    linked again, is refused `replay` rather than displacing that link.
 
 A hello without `to` — from a seed, a first contact, or a release before it — is still
 admitted, and is protected from replay to another runtime only by the per-runtime nonce cache
@@ -502,6 +524,18 @@ once. The id is the provider's own, so anything holding the provider's payload n
 same session. With no ready server, or a mesh that does not run, nothing is opened and the
 event is unaffected.
 
+A client that crashes or is killed never fires its end event, and its session would stay
+active, with every exclusive claim under it blocking, for as long as its runtime beats
+(I3810). So the start event opens the session with `--client-pid auto`: the executable walks
+up from itself past shells and Majordomus' launchers to the client that ran the hook, and the
+session carries that process's pid and start time (`client_pid`, `client_started`). About once
+a minute the runtime holding the session asks its own machine's process table whether that
+process still exists with that start time, and closes the session once when it does not — a pid
+the system has given to another process does not count as the client. Nothing is compared
+across machines: the process, the table and the clock are all the holding runtime's. A session
+opened without a client process (`mesh session open` by hand, a claim's implicit session) is
+left as before.
+
 A task is on the mesh while it works (I2288). `majordomus start` claims the task's scope as
 an advisory claim of the mesh session `task-<id>`, with the task's title as its intent and its
 issue, and keeps the claim's key on the task record as `mesh_claim`; `finish` closes that
@@ -587,7 +621,7 @@ What the mesh defends against, and how:
 | threat | answer |
 |---|---|
 | forged advertisement, hello, welcome, sync or event | Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried |
-| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime (I2132) |
+| replayed hello or sync round | nonce cache; per-link rising counter; per-instance sequence for advertisements and events; a hello that names its recipient is refused `misaddressed` by every other runtime, and a hello older than the one that made the peer's live link cannot replace it, even after a restart emptied the cache (I2132) |
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a key withdrawn from `trust.allow`, then a restart | the journal file is input: a reloaded event passes the checks and the trust decision a received one does, and what is refused is reported by reason (`untrusted`); only this machine's own key needs no allowing |
@@ -663,9 +697,10 @@ would be written into the other checkout.
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
 `enabled: true`, so every server of every worktree of it announces, listens and links. That is
-this repository's reviewed decision, not the tool's default: the skeleton a new repository
-starts from ships no declaration, and nothing opens there until its own operator commits one
-(the guarantee `mesh-off-by-default`).
+this repository's reviewed decision about who is listed. The tool's default is the same shape
+with an empty trust list: `majordomus init` seeds `mesh.yaml` in `.ai/repo/mesh/`, enabled and
+`deny_unknown`, so nothing opens until a machine runs `majordomus mesh enrol` and the change
+is committed (ADR 0137; the guarantee `mesh-off-by-default`).
 
 | | declared |
 |---|---|
@@ -856,13 +891,14 @@ majordomus mesh doctor            # prerequisites, the host firewall, and the se
 majordomus mesh firewall          # what the host firewall must admit, whether it does, and the commands; exits 10 when it does not
 sudo majordomus mesh firewall apply   # admit it; needs root, refuses without
 majordomus mesh identity          # this machine's key, for trust.allow
+majordomus mesh enrol             # list this machine's key in trust.allow, once; then commit
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
 majordomus mesh peers             # machines → runtimes → active sessions, each link's state; --full for all
 majordomus mesh peer <runtime>    # one runtime; exits 10 when unknown
 majordomus mesh state             # counts, each runtime's newest claim, open reviews, untaken handovers, digest
 majordomus mesh state --full --live-claims   # every held claim; --after, --session, --runtime narrow
-majordomus mesh events --after 0  # the journal; --beats includes the session beats
+majordomus mesh events            # the journal from the beginning; --cursor <next> resumes; --beats includes the session beats
 majordomus mesh verify            # a live round with every dialed peer, convergence; exits 10 on failure
 majordomus mesh session open --session s1 --client codex --issue '#184'
 majordomus mesh claim apps/majordomus-cli --session s1 --issue '#184'   # exits 10 on claim_conflict
@@ -877,8 +913,26 @@ majordomus mesh review withdraw <request-key> --session s1 --note 'superseded by
 
 Every command has `--format json`, which prints the capability's answer unchanged.
 
+**Paging the raw journal.** `mesh events` walks the journal by arrival. Each answer carries a
+`cursor`, `<instance>:<n>`: the run of the runtime that answered it and the arrival number
+of the last event it returned. The CLI prints it as `next --cursor …`. Passing it back as
+`cursor` returns what that run applied since then. A walk resumed from every answered cursor
+returns each event of the journal exactly once. That includes an event from a runtime that
+was partitioned away and kept stamping with its own Lamport clock: when the link returns,
+its event arrives stamped at or below a position the walk already passed, and is still
+returned once, however often it is delivered. Events are numbered when they are applied to
+their stream, never when received, and a duplicate is never applied twice. The test is
+`events_resume_across_partition_test` (`cargo test --lib mesh::journal`).
+
+A cursor is ~20 bytes whatever the journal holds, but it names positions of one run only. A
+restarted server refuses an older run's cursor as `stale_cursor`, and the reader walks again
+from the beginning. A stream that compaction drops leaves its numbers unanswered, never a
+short page. `after=<lamport>` is still accepted and walks by stamp, which never returns an
+event stamped at or below it that arrives later; `newest` answers the journal's last events
+and the cursor of everything held, from which a reader follows what comes next.
+
 **HTTP and OpenAPI.** `GET /api/v1/mesh`, `/nodes`, `/identity`, `/doctor`, `/firewall?port=`, `/cooperation`,
-`/peers`, `/peer?runtime=`, `/state`, `/events?after=&limit=`; `POST /api/v1/mesh/register`,
+`/peers`, `/peer?runtime=`, `/state`, `/events?cursor=&after=&limit=&newest=`; `POST /api/v1/mesh/register`,
 `/verify`, `/sessions`, `/sessions/close`, `/claims`, `/claims/release`, `/handovers`,
 `/handovers/consume`, `/reviews`, `/reviews/answer`, `/reviews/withdraw`, `/link/hello`, `/link/sync`. The schemas
 are in `/openapi.json`, generated from the capability declarations.

@@ -460,6 +460,9 @@ mj_git_label() {
   cur_head="$(mj_git_head)"; cur_branch="$(mj_git_branch)"
   if [ "$rec_branch" != "$cur_branch" ]; then printf 'different_context'; return; fi
   if [ "$rec_head" = "$cur_head" ]; then printf 'exact'; return; fi
+  # NONE is a task started before the first commit (mj_git_head): an empty history is an
+  # ancestor of every commit on its branch, and merge-base cannot be asked about a non-revision.
+  if [ "$rec_head" = NONE ]; then printf 'advanced'; return; fi
   if mj_git merge-base --is-ancestor "$rec_head" "$cur_head" 2>/dev/null; then printf 'advanced'; return; fi
   printf 'diverged'
 }
@@ -1088,7 +1091,8 @@ mj_event_requires() {
 # inside a string is not one either.
 MJ_LEDGER_ENVELOPE_KEYS='ts event head branch by session'
 
-# mj_ledger_append event 'extra json fields without braces'
+# mj_ledger_append event 'extra json fields without braces' [resolved-session]
+# A third argument, including empty, reuses attribution prepared before a record was written.
 # The event must be one share/events.yaml declares, must carry the payload keys that entry
 # requires, and must not carry a key from the envelope. All three are internal errors rather
 # than findings: a command that writes an event the vocabulary does not define, or that
@@ -1111,7 +1115,7 @@ mj_ledger_append() {
     esac
   done
   line="{\"ts\":\"$(mj_now)\",\"event\":\"$ev\",\"head\":\"$(mj_git_head)\",\"branch\":\"$(mj_json_esc "$(mj_git_branch)")\",\"by\":\"majordomus/$MJ_VERSION\""
-  sid="$(mj_open_session_id)"
+  if [ "$#" -ge 3 ]; then sid="$3"; else sid="$(mj_open_session_id)"; fi
   [ -n "$sid" ] && line="$line,\"session\":\"$sid\""
   [ -n "$extra" ] && line="$line,$extra"
   # the local half is never tracked, so a second worktree of the same repository starts
@@ -1213,12 +1217,75 @@ mj_session_here_file() {
 # for real. A line with no session belongs to no episode, which is the honest answer for
 # work done outside one: sessions are optional, and nothing is attributed by proximity.
 mj_open_session_id() {
-  local f w
-  f="$(mj_session_here_file)"
+  local f w k candidate="" n=0
+  k="${MJ_SESSION_KEY:-}"
+  [ -n "$k" ] || k="$(mj_provider_session_env)"
+  if [ -n "$k" ]; then
+    # An explicit identity names its own episode or none, never the checkout's pointer.
+    f="$(mj_session_key_file "$k")"
+  else
+    # Preserve the unambiguous single-episode case. The pointer is still useful for
+    # status, but the last of several open episodes is not a writer's identity.
+    for f in "$(mj_session_open_dir)"/*.yaml; do
+      [ -f "$f" ] || continue
+      w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+      [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+      candidate="$f"; n=$((n+1))
+    done
+    [ "$n" = 1 ] || return 0
+    f="$candidate"
+  fi
   [ -f "$f" ] || return 0
   w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
   [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
   sed -n 's/^session_id: //p' "$f" | head -n 1
+}
+
+# The one task.started event is the evidence of who opened a task. Missing or ambiguous
+# history supplies no identity.
+mj_task_opening_session() {
+  [ -f "$MJ_STATE_DIR/ledger.jsonl" ] || return 0
+  awk -v id="$1" "$MJ_LEDGER_FIELD_AWK"'
+    mjfield($0, "event") == "task.started" && mjfield($0, "task_id") == id {
+      n++; session = mjfield($0, "session")
+    }
+    END { if (n == 1 && session != "") print session }
+  ' "$MJ_STATE_DIR/ledger.jsonl"
+}
+
+# Whether an episode is still open in this checkout: its open record names that session.
+mj_session_is_open() {
+  local f w
+  for f in "$(mj_session_open_dir)"/*.yaml; do
+    [ -f "$f" ] || continue
+    w="$(sed -n 's/^worktree: //p' "$f" | head -n 1)"
+    [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && continue
+    [ "$(sed -n 's/^session_id: //p' "$f" | head -n 1)" = "$1" ] && return 0
+  done
+  return 1
+}
+
+# Prepare the envelope and optional task relation once, before a durable record is
+# published. The same values reach its event, front matter and derived body (ADR 0164).
+# The active task is the caller's unless another episode that is still open opened it:
+# that is the one case a record could be filed under somebody else's work. A task whose
+# opener has closed, or whose opening names no episode, has no live owner, and the caller
+# continuing it (a second sitting, a handover across providers) carries it on.
+MJ_RECORD_SESSION=""; MJ_RECORD_TASK=""; MJ_RECORD_PROFILE=""; MJ_RECORD_OWNER=""
+mj_record_attribution() {
+  MJ_RECORD_SESSION="$(mj_open_session_id)"
+  MJ_RECORD_TASK=""; MJ_RECORD_PROFILE=""; MJ_RECORD_OWNER=""
+  mj_load_current || return 0
+  local id w opened
+  w="$(mj_cur worktree)"
+  [ -n "$w" ] && [ "$w" != "$MJ_ROOT" ] && return 0
+  id="$(mj_cur id)"; [ -n "$id" ] || return 0
+  opened="$(mj_task_opening_session "$id")"
+  if [ -n "$opened" ] && [ "$opened" != "$MJ_RECORD_SESSION" ] && mj_session_is_open "$opened"; then
+    return 0
+  fi
+  MJ_RECORD_TASK="$id"
+  MJ_RECORD_PROFILE="$(mj_cur profile)"; MJ_RECORD_OWNER="$(mj_cur owner)"
 }
 
 # ---------------------------------------------------------------- current task
@@ -1954,9 +2021,28 @@ mj_mesh_task_release() { # <task id>
 mj_mesh_declared_enabled() {
   local f
   for f in $(mj_git ls-files -- '.ai/repo/mesh/*.yaml' '.ai/repo/mesh/*.yml' 2>/dev/null); do
-    grep -qE '^enabled:[[:space:]]*true[[:space:]]*$' "$MJ_ROOT/$f" 2>/dev/null && return 0
+    mj_mesh_declaration_open "$MJ_ROOT/$f" && return 0
   done
   return 1
+}
+
+# Whether one declaration opens a mesh for some machine: `enabled: true`, and either
+# `trust.policy: tofu` or at least one key in `trust.allow`. A declaration closed to everyone
+# (deny_unknown, the default, with nobody listed: the seed `init` writes since I2412) runs no
+# mesh on any machine, so nothing can be claimed on it — the same rule as
+# mesh::manager::closed_to and guard::mesh_declared_enabled.
+mj_mesh_declaration_open() { # <file>
+  awk '
+    /^enabled:[[:space:]]*true[[:space:]]*$/ { enabled = 1 }
+    /^trust:[[:space:]]*$/ { trust = 1; allow = 0; next }
+    trust && /^[^[:space:]#]/ { trust = 0; allow = 0 }
+    trust && /^[[:space:]]+policy:[[:space:]]*tofu[[:space:]]*$/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*\[[[:space:]]*[^][:space:]]/ { open = 1 }
+    trust && /^[[:space:]]+allow:[[:space:]]*$/ { allow = 1; next }
+    trust && allow && /^[[:space:]]+-[[:space:]]*[^[:space:]]/ { open = 1 }
+    trust && allow && /^[[:space:]]+[A-Za-z_]+:/ { allow = 0 }
+    END { exit !(enabled && open) }
+  ' "$1" 2>/dev/null
 }
 
 # A task works on the mesh (I2289, project.a-task-works-on-the-mesh). On a repository that

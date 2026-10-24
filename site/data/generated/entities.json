@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 160,
+      "count": 162,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 160
+      "count": 162
     },
     {
       "kind": "application",
@@ -93,7 +93,7 @@
       "route": null,
       "title": null,
       "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-      "count": 31
+      "count": 33
     },
     {
       "kind": "deployment",
@@ -125,7 +125,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 350
+      "count": 352
     },
     {
       "kind": "domain",
@@ -165,7 +165,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-      "count": 35
+      "count": 38
     },
     {
       "kind": "issue",
@@ -173,7 +173,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 899
+      "count": 978
     },
     {
       "kind": "knowledge",
@@ -197,7 +197,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 102
+      "count": 106
     },
     {
       "kind": "moment",
@@ -237,7 +237,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 35
+      "count": 36
     },
     {
       "kind": "rule",
@@ -285,7 +285,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 603
+      "count": 629
     },
     {
       "kind": "use-case",
@@ -3116,6 +3116,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0164/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0176",
+          "kind": "adr",
+          "route": "/adrs/adr-0176/",
+          "external": false
         }
       ]
     },
@@ -3613,6 +3620,13 @@
           "label": "adr-0220",
           "kind": "adr",
           "route": "/adrs/adr-0220/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0221",
+          "kind": "adr",
+          "route": "/adrs/adr-0221/",
           "external": false
         }
       ]
@@ -4209,6 +4223,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0199/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0221",
+          "kind": "adr",
+          "route": "/adrs/adr-0221/",
+          "external": false
         }
       ]
     },
@@ -4444,6 +4465,13 @@
           "label": "adr-0163",
           "kind": "adr",
           "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0176",
+          "kind": "adr",
+          "route": "/adrs/adr-0176/",
           "external": false
         },
         {
@@ -6819,9 +6847,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.homepage-tells-a-declared-story@1",
+          "label": "project.homepage-tells-a-declared-story@2",
           "kind": "rule",
-          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "route": "/rules/project-homepage-tells-a-declared-story-2/",
           "external": false
         },
         {
@@ -7800,6 +7828,13 @@
       "referenced_by": [
         {
           "edge": "put_in_force",
+          "label": "adr-0176",
+          "kind": "adr",
+          "route": "/adrs/adr-0176/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0209",
           "kind": "adr",
           "route": "/adrs/adr-0209/",
@@ -8341,6 +8376,13 @@
           "label": "adr-0147",
           "kind": "adr",
           "route": "/adrs/adr-0147/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0176",
+          "kind": "adr",
+          "route": "/adrs/adr-0176/",
           "external": false
         },
         {
@@ -8993,9 +9035,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.homepage-tells-a-declared-story@1",
+          "label": "project.homepage-tells-a-declared-story@2",
           "kind": "rule",
-          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "route": "/rules/project-homepage-tells-a-declared-story-2/",
           "external": false
         },
         {
@@ -9289,6 +9331,13 @@
           "label": "adr-0163",
           "kind": "adr",
           "route": "/adrs/adr-0163/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0176",
+          "kind": "adr",
+          "route": "/adrs/adr-0176/",
           "external": false
         },
         {
@@ -9603,7 +9652,7 @@
       "slug": "adr-0164",
       "cockpit": "/cockpit/objects/adr/adr-0164",
       "title": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
-      "status": "proposed",
+      "status": "accepted",
       "tags": [
         "sessions",
         "attribution",
@@ -10253,6 +10302,75 @@
           "edge": "put_in_force",
           "label": "I2826",
           "kind": "issue",
+          "route": "/plan/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0176",
+      "identity": "adr-0176",
+      "slug": "adr-0176",
+      "cockpit": "/cockpit/objects/adr/adr-0176",
+      "title": "The peer blackboard is one projection of the board, the journal and the monitor, pushed over one socket",
+      "status": "proposed",
+      "tags": [
+        "peers",
+        "mesh",
+        "monitor",
+        "websocket",
+        "ui"
+      ],
+      "source": ".ai/repo/adrs/0176-the-blackboard-is-one-projection-pushed-over-one-socket.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/blackboard.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0133",
+          "kind": "adr",
+          "route": "/adrs/adr-0133/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0141",
+          "kind": "adr",
+          "route": "/adrs/adr-0141/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0158",
+          "kind": "adr",
+          "route": "/adrs/adr-0158/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "peer-blackboard",
+          "kind": "milestone",
           "route": "/plan/",
           "external": false
         }
@@ -13083,9 +13201,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.homepage-tells-a-declared-story@1",
+          "label": "project.homepage-tells-a-declared-story@2",
           "kind": "rule",
-          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "route": "/rules/project-homepage-tells-a-declared-story-2/",
           "external": false
         }
       ],
@@ -14225,6 +14343,66 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/491_the_mesh_is_on_here.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0221",
+      "identity": "adr-0221",
+      "slug": "adr-0221",
+      "cockpit": "/cockpit/objects/adr/adr-0221",
+      "title": "Init declares the mesh, closed until a machine is enrolled",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "init",
+        "trust"
+      ],
+      "source": ".ai/repo/adrs/0221-init-declares-the-mesh-closed-until-a-machine-is-enrolled.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/enrol.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/manager.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/skeleton/ai/repo/mesh/mesh.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/01_init.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -18711,9 +18889,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.homepage-tells-a-declared-story@1",
+          "label": "project.homepage-tells-a-declared-story@2",
           "kind": "rule",
-          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "route": "/rules/project-homepage-tells-a-declared-story-2/",
           "external": false
         },
         {
@@ -19981,19 +20159,19 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.the-projection-is-applied-at-landing@1",
+          "label": "project.the-projection-is-applied-at-landing@2",
           "kind": "rule",
-          "route": "/rules/project-the-projection-is-applied-at-landing-1/",
+          "route": "/rules/project-the-projection-is-applied-at-landing-2/",
           "external": false
         }
       ]
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.homepage-tells-a-declared-story@1",
-      "identity": "project.homepage-tells-a-declared-story@1",
-      "slug": "project-homepage-tells-a-declared-story-1",
-      "cockpit": "/cockpit/objects/rule/project-homepage-tells-a-declared-story-1",
+      "id": "majordomus://rule/project.homepage-tells-a-declared-story@2",
+      "identity": "project.homepage-tells-a-declared-story@2",
+      "slug": "project-homepage-tells-a-declared-story-2",
+      "cockpit": "/cockpit/objects/rule/project-homepage-tells-a-declared-story-2",
       "title": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
       "status": "active",
       "tags": [
@@ -20003,7 +20181,7 @@
         "projections",
         "documentation"
       ],
-      "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+      "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -20917,9 +21095,9 @@
       "referenced_by": [
         {
           "edge": "depends_on",
-          "label": "project.homepage-tells-a-declared-story@1",
+          "label": "project.homepage-tells-a-declared-story@2",
           "kind": "rule",
-          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "route": "/rules/project-homepage-tells-a-declared-story-2/",
           "external": false
         },
         {
@@ -21227,9 +21405,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.the-projection-is-applied-at-landing@1",
+          "label": "project.the-projection-is-applied-at-landing@2",
           "kind": "rule",
-          "route": "/rules/project-the-projection-is-applied-at-landing-1/",
+          "route": "/rules/project-the-projection-is-applied-at-landing-2/",
           "external": false
         },
         {
@@ -23082,10 +23260,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.the-projection-is-applied-at-landing@1",
-      "identity": "project.the-projection-is-applied-at-landing@1",
-      "slug": "project-the-projection-is-applied-at-landing-1",
-      "cockpit": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-1",
+      "id": "majordomus://rule/project.the-projection-is-applied-at-landing@2",
+      "identity": "project.the-projection-is-applied-at-landing@2",
+      "slug": "project-the-projection-is-applied-at-landing-2",
+      "cockpit": "/cockpit/objects/rule/project-the-projection-is-applied-at-landing-2",
       "title": "A landing that changes what GitHub shows applies the change itself",
       "status": "active",
       "tags": [
@@ -23095,7 +23273,7 @@
         "landing",
         "ci"
       ],
-      "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v1.md",
+      "source": ".ai/repo/rules/project/the-projection-is-applied-at-landing.v2.md",
       "references": [
         {
           "edge": "depends_on",
