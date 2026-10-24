@@ -285,6 +285,8 @@ struct Outbound {
 struct Inbound {
     link: String,
     counter: u64,
+    /// The timestamp of the hello that made this link: an older hello cannot replace it.
+    hello_ts: u64,
 }
 
 struct PeerLink {
@@ -1183,8 +1185,10 @@ pub const MAX_TARGETS_PER_NODE: usize = 8;
 
 /// `text` cut to at most `max` bytes on a character boundary, with control characters
 /// removed: what the journal's single-line bounds accept, so a projection never fails
-/// validation on a long or multi-byte title and silently retries forever.
-fn clip(text: &str, max: usize) -> String {
+/// validation on a long or multi-byte title and silently retries forever. A reader that
+/// matches a projection against what it was projected from cuts the same way (the
+/// blackboard's join).
+pub(crate) fn clip(text: &str, max: usize) -> String {
     let mut out = String::new();
     for c in text.chars().filter(|c| !c.is_control()) {
         if out.len() + c.len_utf8() > max {
@@ -1554,6 +1558,9 @@ impl Cooperation {
                     me.project_board();
                     me.reconcile_workers();
                     me.expire_links();
+                    if tick % 12 == 11 {
+                        me.close_ended_clients();
+                    }
                     if tick % 60 == 59 {
                         me.journal
                             .compact(me.expiry(), PEER_RETENTION, HANDOVER_RETENTION, false);
@@ -1980,6 +1987,23 @@ impl Cooperation {
             table
                 .nonces
                 .retain(|_, ts| now.saturating_sub(*ts) <= 2 * MAX_LINK_SKEW_SECONDS);
+            // The cache is memory, so a restart forgets it; the link a peer made since is what
+            // a hello captured before the restart would displace. A hello older than the one
+            // that made the peer's live link cannot replace it (one runtime key is one
+            // checkout on one machine, so its hellos carry one clock).
+            let established = table
+                .peers
+                .get(&runtime_key)
+                .and_then(|peer| peer.inbound.as_ref())
+                .map(|inbound| inbound.hello_ts);
+            if established.is_some_and(|ts| hello.ts < ts) {
+                drop(table);
+                return self.refuse_in(
+                    RefusalCode::Replay,
+                    "this hello is older than the one that made the peer's live link".into(),
+                    runtime,
+                );
+            }
             let key = (hello.card.pk.clone(), hello.nonce.clone());
             if table.nonces.contains_key(&key) {
                 drop(table);
@@ -2053,6 +2077,7 @@ impl Cooperation {
             peer.inbound = Some(Inbound {
                 link: link.clone(),
                 counter: 0,
+                hello_ts: hello.ts,
             });
             peer.last_exchange = Some(Instant::now());
             peer.handshakes += 1;
@@ -3498,6 +3523,82 @@ impl Cooperation {
         )
     }
 
+    /// Close every open session of this runtime whose client process has ended, and answer
+    /// the ids it closed (I3810).
+    ///
+    /// A session says goodbye in its client's end hook, and a client that crashes or is
+    /// killed never runs it: the session stayed active for as long as this runtime beat, and
+    /// every exclusive claim under it blocked every other worker. A session that named its
+    /// client process (`client_pid`, `client_started`) is closed here once that process is
+    /// gone — or once its pid belongs to a process that started at another time. A session
+    /// that named none is left exactly as before. Only this runtime's own sessions are
+    /// judged: the process belongs to this machine, and so does the clock it is read on.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::SessionInfo;
+    ///
+    /// let gone = SessionInfo { client_pid: Some(41), client_started: Some("then".into()),
+    ///     ..SessionInfo::named("gone", "claude-code") };
+    /// let here = SessionInfo { client_pid: Some(42), client_started: Some("now".into()),
+    ///     ..SessionInfo::named("here", "claude-code") };
+    /// cooperation.open_session(gone).unwrap();
+    /// cooperation.open_session(here).unwrap();
+    /// cooperation.open_session(SessionInfo::named("unnamed", "cli")).unwrap();
+    ///
+    /// let alive = |pid: u32, started: Option<&str>| pid == 42 && started == Some("now");
+    /// assert_eq!(cooperation.close_ended_clients_with(&alive), ["gone"]);
+    /// assert!(cooperation.close_ended_clients_with(&alive).is_empty(), "closed once");
+    /// ```
+    pub fn close_ended_clients_with(
+        &self,
+        alive: &dyn Fn(u32, Option<&str>) -> bool,
+    ) -> Vec<String> {
+        let state = self.state();
+        let ended: Vec<String> = state
+            .sessions
+            .iter()
+            .filter(|s| s.state == super::state::SessionState::Active)
+            .filter(|s| s.key == self.own(&s.info.session))
+            .filter(|s| {
+                s.info
+                    .client_pid
+                    .is_some_and(|pid| !alive(pid, s.info.client_started.as_deref()))
+            })
+            .map(|s| s.info.session.clone())
+            .collect();
+        ended
+            .into_iter()
+            .filter(|session| {
+                // a session the supervisor found is one the state holds under that name, so
+                // closing it is not refused; what it answered is logged either way
+                let closed = self.close_session(session);
+                tracing::info!(runtime_id = %self.own_key, session_id = %session, closed = closed.is_ok(), error = ?closed.as_ref().err(), "a mesh session whose client process has ended");
+                closed.is_ok()
+            })
+            .collect()
+    }
+
+    /// [`Self::close_ended_clients_with`], judged by this machine's process table.
+    pub(crate) fn close_ended_clients(&self) -> Vec<String> {
+        self.close_ended_clients_with(&|pid, started| {
+            process_facts(pid).is_some_and(|p| started.is_none_or(|s| s == p.started))
+        })
+    }
+
     /// Claim a scope for a session of this runtime. An exclusive claim that meets a live
     /// exclusive claim of another session — on any runtime this one has heard — is
     /// refused with the claims it meets; the session is opened first if it is new.
@@ -4078,6 +4179,129 @@ fn rejections_check(storms: &[(String, Rejection, u64, u64)]) -> MeshVerifyCheck
     }
 }
 
+/// One process of this machine as its process table reports it.
+///
+/// Two readings are one process exactly when they are equal: a pid the system handed to
+/// a later process carries another start time (I3810).
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::{process_facts, ProcessFacts};
+///
+/// let me: ProcessFacts = process_facts(std::process::id()).expect("this process exists");
+/// let reused = ProcessFacts { started: "Mon Jan  1 00:00:00 1990".into(), ..me.clone() };
+/// assert_ne!(me, reused, "the same pid, another process");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ProcessFacts {
+    /// Its parent's pid.
+    pub ppid: u32,
+    /// When it started, as `ps -o lstart=` prints it in the C locale: an identity compared
+    /// for equality on this machine, never a time compared with another clock.
+    pub started: String,
+    /// What it runs, as `ps -o comm=` prints it.
+    pub command: String,
+}
+
+/// The process `pid` of this machine, or `None` when there is no such process.
+///
+/// Read through `ps`, which macOS and Linux both carry with the same columns, so that the
+/// session that names its client and the runtime that later asks whether that client is
+/// still there read the start time with one instrument and the same format.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::process_facts;
+///
+/// let me = process_facts(std::process::id()).expect("this process exists");
+/// assert!(!me.started.is_empty() && me.ppid > 0);
+/// assert_eq!(process_facts(std::process::id()), Some(me), "the same reading twice");
+/// ```
+pub fn process_facts(pid: u32) -> Option<ProcessFacts> {
+    let out = std::process::Command::new("ps")
+        .env("LC_ALL", "C")
+        .args(["-o", "ppid=,lstart=,comm=", "-p", &pid.to_string()])
+        .output()
+        .ok()
+        .filter(|out| out.status.success())?;
+    parse_process_line(&String::from_utf8_lossy(&out.stdout))
+}
+
+/// `"  412 Tue Oct 21 04:23:01 2026 /usr/local/bin/claude"`: the parent, the five words of
+/// the start and the rest as the command.
+fn parse_process_line(line: &str) -> Option<ProcessFacts> {
+    let mut words = line.split_whitespace();
+    let ppid = words.next()?.parse().ok()?;
+    let started: Vec<&str> = words.by_ref().take(5).collect();
+    if started.len() < 5 {
+        return None;
+    }
+    let command = words.collect::<Vec<_>>().join(" ");
+    Some(ProcessFacts {
+        ppid,
+        started: started.join(" "),
+        command,
+    })
+}
+
+/// The commands that stand between a client and the executable it ran: shells and
+/// Majordomus' own launchers. The client is the first ancestor that is none of them.
+const CLIENT_WRAPPERS: &[&str] = &[
+    "sh",
+    "bash",
+    "zsh",
+    "dash",
+    "ksh",
+    "fish",
+    "env",
+    "nice",
+    "nohup",
+    "timeout",
+    "gtimeout",
+    "direnv",
+    "majordomus",
+    "majordomus-cli",
+    "majordomus-mcp",
+];
+
+/// The client this executable was started for, `(pid, started)`: the nearest ancestor that
+/// is not a shell or a Majordomus launcher (`CLIENT_WRAPPERS`). A session hook is run by
+/// its client through a shell and `bin/majordomus`, so this is the Claude Code, Codex or
+/// Gemini process whose end should close the session it opened. `None` when the walk
+/// reaches the system's first process without meeting one.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::{client_process, process_facts};
+///
+/// // whatever runs this test is an ancestor that is no shell: cargo, or the harness
+/// if let Some((pid, started)) = client_process() {
+///     assert_eq!(process_facts(pid).map(|p| p.started), Some(started));
+/// }
+/// ```
+pub fn client_process() -> Option<(u32, String)> {
+    client_of(std::process::id(), &process_facts)
+}
+
+/// [`client_process`] over any process table.
+fn client_of(from: u32, table: &dyn Fn(u32) -> Option<ProcessFacts>) -> Option<(u32, String)> {
+    let mut pid = table(from)?.ppid;
+    for _ in 0..32 {
+        if pid <= 1 {
+            return None;
+        }
+        let facts = table(pid)?;
+        let name = facts
+            .command
+            .rsplit('/')
+            .next()
+            .unwrap_or_default()
+            .trim_start_matches('-');
+        if !CLIENT_WRAPPERS.contains(&name) {
+            return Some((pid, facts.started));
+        }
+        pid = facts.ppid;
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -4350,6 +4574,181 @@ mod tests {
 
     fn session(name: &str) -> SessionInfo {
         SessionInfo::named(name, "test")
+    }
+
+    #[test]
+    fn a_gone_clients_mesh_session_is_closed_test() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let mut client = std::process::Command::new("sleep")
+            .arg("60")
+            .spawn()
+            .expect("a stand-in client");
+        let started = process_facts(client.id()).expect("it runs").started;
+        let named = SessionInfo {
+            client_pid: Some(client.id()),
+            client_started: Some(started),
+            ..SessionInfo::named("claude-code-x", "claude-code")
+        };
+        a.open_session(named.clone()).unwrap();
+        a.claim(
+            &named,
+            vec!["apps".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        // a session that named no client is left exactly as before
+        a.open_session(SessionInfo::named("unnamed", "cli"))
+            .unwrap();
+
+        // the client is alive: nothing is closed, the claim holds
+        assert!(a.close_ended_clients().is_empty());
+        assert!(a.state().claims[0].state.is_live());
+
+        // the client ends without a word: its session is closed once, and its claim ends
+        client.kill().unwrap();
+        client.wait().unwrap();
+        assert_eq!(a.close_ended_clients(), ["claude-code-x"]);
+        assert!(a.close_ended_clients().is_empty(), "closed once");
+        let state = a.state();
+        assert!(
+            !state.claims[0].state.is_live(),
+            "{:?}",
+            state.claims[0].state
+        );
+        let unnamed = state
+            .sessions
+            .iter()
+            .find(|s| s.info.session == "unnamed")
+            .unwrap();
+        assert_eq!(unnamed.state, crate::mesh::state::SessionState::Active);
+
+        // a pid the system gave to another process is not the client
+        let reused = SessionInfo {
+            client_pid: Some(std::process::id()),
+            client_started: Some("Mon Jan  1 00:00:00 1990".into()),
+            ..SessionInfo::named("reused", "claude-code")
+        };
+        a.open_session(reused).unwrap();
+        assert_eq!(a.close_ended_clients(), ["reused"]);
+    }
+
+    #[test]
+    fn the_client_is_the_first_ancestor_that_is_no_shell() {
+        let line = parse_process_line(" 412 Tue Oct  1 04:23:01 2026 /usr/local/bin/claude\n");
+        assert_eq!(
+            line,
+            Some(ProcessFacts {
+                ppid: 412,
+                started: "Tue Oct 1 04:23:01 2026".into(),
+                command: "/usr/local/bin/claude".into(),
+            })
+        );
+        assert_eq!(parse_process_line(""), None);
+        assert_eq!(parse_process_line("12 Tue Oct"), None, "a start cut short");
+
+        let table = |pid: u32| {
+            let (ppid, command) = match pid {
+                50 => (40, "/opt/homebrew/bin/majordomus-cli"),
+                40 => (30, "bash"),
+                30 => (20, "/bin/sh"),
+                20 => (10, "/opt/claude/claude"),
+                10 => (1, "-zsh"),
+                _ => return None,
+            };
+            Some(ProcessFacts {
+                ppid,
+                started: format!("start of {pid}"),
+                command: command.into(),
+            })
+        };
+        assert_eq!(client_of(50, &table), Some((20, "start of 20".into())));
+        // nothing but shells up to the first process: no client
+        let shells = |pid: u32| {
+            table(pid).map(|facts| match pid {
+                20 => ProcessFacts {
+                    ppid: 1,
+                    command: "zsh".into(),
+                    ..facts
+                },
+                _ => facts,
+            })
+        };
+        assert_eq!(client_of(50, &shells), None);
+    }
+
+    /// A line whose parent is not a number is no process, and a walk finds no client when
+    /// the table lacks where it starts, lacks a process on the way, or never ends.
+    #[test]
+    fn a_walk_with_a_gap_or_without_an_end_finds_no_client() {
+        assert_eq!(
+            parse_process_line("init Tue Oct  1 04:23:01 2026 /sbin/launchd"),
+            None
+        );
+        let table = |pid: u32| {
+            (pid == 50).then(|| ProcessFacts {
+                ppid: 40,
+                started: "start of 50".into(),
+                command: "bash".into(),
+            })
+        };
+        assert_eq!(client_of(7, &table), None, "the start is not in the table");
+        assert_eq!(
+            client_of(50, &table),
+            None,
+            "its parent is not in the table"
+        );
+        let looping = |pid: u32| {
+            Some(ProcessFacts {
+                ppid: if pid == 60 { 61 } else { 60 },
+                started: format!("start of {pid}"),
+                command: "/bin/sh".into(),
+            })
+        };
+        assert_eq!(
+            client_of(60, &looping),
+            None,
+            "two shells that parent each other"
+        );
+    }
+
+    /// The client of this test process is an ancestor read from this machine's process
+    /// table: never this process itself, and named with the start `ps` reports for it.
+    #[test]
+    fn the_client_of_this_process_is_an_ancestor_named_with_its_start() {
+        if let Some((pid, started)) = client_process() {
+            assert_ne!(pid, std::process::id());
+            assert_eq!(process_facts(pid).map(|p| p.started), Some(started));
+        }
+    }
+
+    /// The supervisor closes a session whose client has ended on its own, every twelfth
+    /// beat, with nobody asking it to.
+    #[test]
+    fn the_supervisor_closes_a_session_whose_client_has_ended() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        a.open_session(SessionInfo {
+            client_pid: Some(std::process::id()),
+            client_started: Some("Mon Jan  1 00:00:00 1990".into()),
+            ..SessionInfo::named("ended", "claude-code")
+        })
+        .unwrap();
+        let closed = |c: &Cooperation| {
+            c.state().sessions.iter().any(|s| {
+                s.info.session == "ended" && s.state == crate::mesh::state::SessionState::Closed
+            })
+        };
+        assert!(!closed(&a));
+        a.start();
+        let deadline = Instant::now() + Duration::from_secs(40);
+        while !closed(&a) && Instant::now() < deadline {
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        a.stop();
+        assert!(closed(&a), "{:?}", a.state().sessions);
     }
 
     #[test]
@@ -4637,6 +5036,70 @@ mod tests {
             matches!(wrong, Err(RoundError::Refused(ref r)) if r.code == RefusalCode::Misaddressed),
             "{wrong:?}"
         );
+    }
+
+    #[test]
+    fn a_hello_replayed_after_a_restart_cannot_displace_the_link_a_newer_one_made() {
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        // a hello B addressed to A thirty seconds ago, captured on its way: inside the skew
+        // window, and A answers it once
+        let captured = sign(
+            &b.identity,
+            Domain::Hello,
+            serde_json::to_value(&Hello {
+                proto_min: LINK_PROTOCOL_MIN,
+                proto_max: LINK_PROTOCOL_MAX,
+                card: b.card.clone(),
+                nonce: fresh_token(),
+                ts: crate::mesh::protocol::now() - 30,
+                to: Some(a.runtime_key().to_string()),
+            })
+            .unwrap(),
+        );
+        assert!(a.accept_hello(&captured).refusal.is_none());
+        // A restarts: the same key and runtime, and a replay cache that remembers nothing
+        let identity = Arc::clone(&a.identity);
+        drop(a);
+        let a = Cooperation::new(CooperationSetup {
+            identity,
+            runtime: crate::mesh::repository::runtime_id("a:1"),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig::default(),
+            trust: TrustConfig {
+                policy: TrustPolicy::Tofu,
+                allow: vec![],
+            },
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: None,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        net.runtimes
+            .lock()
+            .unwrap()
+            .insert("a:1".into(), Arc::downgrade(&a));
+        // B links to the restarted A with a fresh hello, and the link carries a sync
+        b.dial_to(Some(a.runtime_key()), &["a:1".into()])
+            .expect("linked again");
+        assert!(b.sync_with(a.runtime_key()).is_ok());
+        let reconnects = a.counters.reconnects.load(Ordering::Relaxed);
+        // the captured hello, replayed: A's cache has never seen its nonce, and it is refused
+        // all the same, because it is older than the hello that made the link it would replace
+        let refusal = a.accept_hello(&captured).refusal.expect("refused");
+        assert_eq!(refusal.code, RefusalCode::Replay, "{refusal:?}");
+        // and the link B holds is the one A still serves
+        assert!(
+            b.sync_with(a.runtime_key()).is_ok(),
+            "the established link was not displaced"
+        );
+        assert_eq!(a.counters.reconnects.load(Ordering::Relaxed), reconnects);
+        assert_eq!(a.peers().len(), 1);
     }
 
     #[test]

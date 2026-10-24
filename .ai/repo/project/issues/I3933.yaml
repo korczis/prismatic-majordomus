@@ -1,0 +1,40 @@
+id: I3933
+milestone: measurements-are-tracked-over-time
+title: Every master run's coverage and CI cost join a derived series that the site and the Cockpit draw
+slug: coverage-and-ci-cost-are-a-series
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Keep one row per master run of the coverage totals (lines, functions, regions per crate) and the CI cost (each job's queued and run minutes, each gate's verdict) as a derived series published with the site's data, and draw it as trend graphs on the site and in the Cockpit."
+why: "Nothing kept either quantity past 14 days, so a slow regression — a job that grows a minute a week, a crate whose coverage drifts down within the floor, a gate whose pass rate falls — is seen only by a person reading runs. On 2026-10-22 the suite's deal record was 12 days stale and cost tens of minutes per run before anyone measured it."
+current_state: "The coverage job keeps rust-coverage's --summary-json of its one measurement as the coverage-summary artifact for 90 days on every run that is not a pull request's; `scripts/pages trends` reads master's last completed validate runs from the forge at publish time (their jobs' queued and run seconds, and each run's own summary, or coverage null once it has expired) into site/data/trends.json, a gitignored deployment input like evidence.json; /trends/ draws coverage and CI cost per run with the site's chart component and lists each job's median. The Cockpit does not draw the series yet, and no case compares a run's series figures with ci-timings."
+desired_state: "Every master run's coverage totals and CI cost are a series read from the runs themselves at each publication, with no state carried between publications and no ref read; the site and the Cockpit draw it, and its figures are the gate's and ci-timings' for the same run."
+scope:
+  - .github/workflows/validate.yml
+  - .github/workflows/pages.yml
+  - .gitignore
+  - scripts/pages
+  - site/content-src/trends.md
+  - site/content/trends.md
+  - site/templates/trends.html
+  - site/data/nav.toml
+  - apps/majordomus-cli/src/ui
+  - test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh
+  - .ai/repo/project/issues/I3933.yaml
+  - .ai/repo/project/milestones/measurements-are-tracked-over-time.yaml
+non_scope:
+  - A store outside the repository's own publication
+  - The homepage's proof figure (I3916, I3917)
+depends_on:
+  - I3932
+acceptance_criteria:
+  - A master run's coverage totals and CI cost are in the series with no command run by a person
+  - The series' figures equal the gate's and ci-timings' for the same run, shown by a case
+  - The site and the Cockpit draw the series
+validation:
+  - bin/majordomus plan validate
+evidence_required:
+  - suite
+risk: "Derived data must not read refs (it reads the run's own artifacts), and the pages path is shared with the homepage work; coordinate with its owner before touching scripts/pages."
+created_at: 2026-10-22
+updated_at: 2026-10-22

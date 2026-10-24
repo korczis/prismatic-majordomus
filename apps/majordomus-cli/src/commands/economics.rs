@@ -18,7 +18,7 @@ use crate::capability::CapabilityError;
 use crate::cli::{
     EconomicsArgs, EconomicsCheckArgs, EconomicsCommand, EconomicsExplainArgs,
     EconomicsMeasureArgs, EconomicsReferencesArgs, EconomicsRunArgs, EconomicsRunsArgs,
-    EconomicsSummaryArgs, OutputFormat, RepoArgs,
+    EconomicsSummaryArgs, EconomicsTasksArgs, OutputFormat, RepoArgs,
 };
 use crate::economics::claims::EconomicsCheckReport;
 use crate::economics::model::{
@@ -26,6 +26,7 @@ use crate::economics::model::{
 };
 use crate::economics::report::{amount, interval_text, words};
 use crate::economics::stats::percent_text;
+use crate::economics::tasks::{TaskEconomicsList, TaskEconomicsState};
 use crate::economics::{self, runner};
 use crate::error::{Error, Result};
 
@@ -40,6 +41,7 @@ pub fn run(args: EconomicsArgs) -> Result<u8> {
         EconomicsCommand::Explain(a) => explain(a),
         EconomicsCommand::Runs(a) => runs(a),
         EconomicsCommand::Check(a) => check(a),
+        EconomicsCommand::Tasks(a) => tasks(a),
         EconomicsCommand::Measure(a) => measure(a),
         EconomicsCommand::Run(a) => live(a),
         EconomicsCommand::References(a) => references(a),
@@ -415,6 +417,56 @@ fn runs(a: EconomicsRunsArgs) -> Result<u8> {
         writeln!(out, "WARN {d}").map_err(Error::Transport)?;
     }
     Ok(0)
+}
+
+fn tasks(a: EconomicsTasksArgs) -> Result<u8> {
+    let value = ask(
+        &a.repo,
+        &["economics", "tasks"],
+        json!({ "since": a.since, "until": a.until }),
+    )?;
+    if let OutputFormat::Json = a.format {
+        print_json(&value)?;
+        return Ok(0);
+    }
+    // the whole text is rendered before a byte is written, so a reply that cannot be read and
+    // an output that cannot be written are one failure of the command
+    read::<TaskEconomicsList>(&value, "economics.tasks")
+        .map(|l| tasks_text(&l))
+        .and_then(|text| write!(std::io::stdout().lock(), "{text}").map_err(Error::Transport))?;
+    Ok(0)
+}
+
+/// The text form of `economics tasks`: one line per task, one per checkout not read, and what
+/// is not observed yet.
+fn tasks_text(l: &TaskEconomicsList) -> String {
+    let mut text = format!(
+        "{} task(s) from {} ledger file(s)\n",
+        l.count,
+        l.ledgers.len()
+    );
+    for t in &l.tasks {
+        text.push_str(&format!(
+            "  {:<24} {:<8} {:<12} {:>8}  {} refusal(s)  {} episode(s)  {}\n",
+            t.task_id,
+            match t.state {
+                TaskEconomicsState::Finished => "finished",
+                TaskEconomicsState::Open => "open",
+            },
+            t.outcome,
+            t.wall_seconds
+                .map(|s| format!("{s}s"))
+                .unwrap_or_else(|| "—".into()),
+            t.refusals,
+            t.episodes.len(),
+            t.issue.as_deref().unwrap_or("")
+        ));
+    }
+    for u in &l.unread {
+        text.push_str(&format!("NOT READ {}: {}\n", u.checkout, u.reason));
+    }
+    text.push_str("interventions, CI reruns, spend and acceptance are not observed yet; each record names its supplier\n");
+    text
 }
 
 fn check(a: EconomicsCheckArgs) -> Result<u8> {

@@ -967,6 +967,51 @@ impl ExecutionStore {
         self.lock().records.get(id).map(|r| r.snapshot.clone())
     }
 
+    /// The execution an idempotency key started for one capability of one repository, as it
+    /// stands now, while this store holds it (I4003).
+    ///
+    /// The lookup [`Self::create_once`] makes under its lock, asked without creating
+    /// anything: what a composition that must answer a repeated request before it does any
+    /// work of its own — `devtask.implement` creates a worktree before it starts — asks
+    /// first. It is the same index, so the two can never disagree about what a key started.
+    ///
+    /// ```
+    /// use majordomus_cli::execution::{Actor, ActorKind, ExecutionId, ExecutionStore};
+    /// use majordomus_cli::execution::{Idempotency, IdempotencyKey, Limits, RepositoryRef, Seed};
+    /// let store = ExecutionStore::new(Limits::default());
+    /// let key = IdempotencyKey::parse("click-1").unwrap();
+    /// let seed = Seed {
+    ///     capability: "executions.demonstrate",
+    ///     title: "Demonstrate an execution",
+    ///     input: serde_json::json!({ "steps": 1 }),
+    ///     cancellable: true,
+    ///     actor: Actor::of(ActorKind::Internal),
+    ///     repository: RepositoryRef { name: "r".into(), id: "repo".into(), branch: None },
+    /// };
+    /// let held = Idempotency { key: key.clone(), digest: "d".into() };
+    /// assert!(store.keyed("repo", "executions.demonstrate", &key).is_none());
+    /// let id = ExecutionId::fresh();
+    /// store.create_once(id.clone(), seed, Some(held)).unwrap();
+    /// assert_eq!(store.keyed("repo", "executions.demonstrate", &key).unwrap().id, id);
+    /// // a key is scoped to its repository and its capability
+    /// assert!(store.keyed("other", "executions.demonstrate", &key).is_none());
+    /// assert!(store.keyed("repo", "health.report", &key).is_none());
+    /// ```
+    pub fn keyed(
+        &self,
+        repository: &str,
+        capability: &str,
+        key: &IdempotencyKey,
+    ) -> Option<Execution> {
+        let inner = self.lock();
+        let scope: KeyScope = (repository.to_string(), capability.to_string(), key.clone());
+        inner
+            .keys
+            .get(&scope)
+            .and_then(|id| inner.records.get(id))
+            .map(|r| r.snapshot.clone())
+    }
+
     /// Every execution this process remembers, newest first, optionally narrowed.
     pub fn list(
         &self,
@@ -2241,6 +2286,56 @@ mod tests {
                 Ok(Admission::Created(_))
             ),
             "a forgotten execution's key is free, whatever input it is sent with now"
+        );
+    }
+
+    #[test]
+    fn a_key_is_looked_up_without_creating_and_forgotten_with_its_execution() {
+        let store = ExecutionStore::new(Limits {
+            max_executions: 1,
+            ..Limits::default()
+        });
+        let key = IdempotencyKey::parse("k").unwrap();
+        assert!(
+            store.keyed("id", "demo.x", &key).is_none(),
+            "nothing started yet"
+        );
+        let first = ExecutionId::fresh();
+        store
+            .create_once(first.clone(), seed_in("id", "demo.x"), keyed("k", "a"))
+            .unwrap();
+        assert_eq!(
+            store.keyed("id", "demo.x", &key).map(|e| e.id),
+            Some(first.clone())
+        );
+        assert_eq!(store.len(), 1, "a lookup creates nothing");
+        assert!(
+            store.keyed("other", "demo.x", &key).is_none(),
+            "another repository"
+        );
+        assert!(
+            store.keyed("id", "demo.y", &key).is_none(),
+            "another capability"
+        );
+        store.publish(&first, EventPayload::Started);
+        store.publish(
+            &first,
+            EventPayload::Completed {
+                output: Value::Null,
+            },
+        );
+        assert_eq!(
+            store.keyed("id", "demo.x", &key).map(|e| e.state),
+            Some(ExecutionState::Succeeded),
+            "a finished execution is still answered, as it stands now"
+        );
+        // an execution without a key is never found under one
+        store
+            .create_once(ExecutionId::fresh(), seed_in("id", "demo.x"), None)
+            .unwrap();
+        assert!(
+            store.keyed("id", "demo.x", &key).is_none(),
+            "the keyed one was pushed out of the bound, and its key with it"
         );
     }
 }

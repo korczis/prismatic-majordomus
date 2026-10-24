@@ -383,12 +383,7 @@ impl Server {
         if let Some(peer) = self.surface.peer() {
             let board = &self.surface.context().peers;
             text.push_str(&format!(
-                // Only this checkout's board is named here: the gathered one costs a lease
-                // read and a probe per registered checkout, and `initialize` is on the path
-                // of every client's first millisecond. The words point at the capability
-                // that pays for the wide answer rather than paying for it here.
-                " You are peer {peer} on this checkout's board; attached here: {}. majordomus_peers lists every worker of this repository — this board and the board of every other checkout of it, each peer stamped with the worktree it is working in; call majordomus_announce with your intent and the paths you expect to touch so that the other clients (Claude, Codex, Gemini, ...) can avoid colliding with you.",
-                board.summary()
+                " You are peer {peer} on this checkout's board. majordomus_peers lists every worker of this repository — this board and the board of every other checkout of it, each peer stamped with the worktree it is working in; call majordomus_announce with your intent and the paths you expect to touch so that the other clients (Claude, Codex, Gemini, ...) can avoid colliding with you."
             ));
             // The nudge that matters is delivered here, on every initialize, which is also
             // every reconnect. A session whose transport was re-established keeps its work
@@ -420,6 +415,13 @@ impl Server {
                     " {departed} peer(s) on the board have gone but their announcements stand: what they claimed is still claimed until somebody says otherwise."
                 ));
             }
+            // The board itself comes last, and bounded (`PeerBoard::summary`): a client cuts
+            // the instructions it is handed, and on 2026-10-22 the cut fell inside a 6 kB
+            // board line, so the sentences above — the ones about this caller — were the
+            // ones lost. Only this checkout's board is named here: the gathered one costs a
+            // lease read and a probe per registered checkout, and `initialize` is on the
+            // path of every client's first millisecond.
+            text.push_str(&format!(" Attached here: {}.", board.summary()));
         }
         text
     }
@@ -573,6 +575,41 @@ mod tests {
         fixture::git(repo.root(), &["merge", "-q", "--ff-only", "origin/master"]);
         let text = server().instructions();
         assert!(!text.contains("This server serves a tree"), "{text}");
+    }
+
+    /// A client cuts the instructions it is handed, so what is said about the caller comes
+    /// before the board, and the board is bounded: with twelve peers holding five long
+    /// claims each, the nudge to announce is still read and the board is not what fills
+    /// the instructions.
+    #[test]
+    fn the_caller_is_told_about_itself_before_the_board_is_listed() {
+        use crate::peers::Transport;
+        use crate::worktree::trunk::fixture;
+        let (repo, _origin) = fixture::layered(0, None);
+        let surface = crate::mcp::surface::Surface::new(repo.context().expect("a context"));
+        let board = surface.context().peers.clone();
+        let long = "a claim whose intent runs on for a long time and says a great deal ".repeat(6);
+        for _ in 0..12 {
+            let other = board.attach(Transport::Http);
+            for c in 0..5 {
+                board.announce_claim(&other, Some(&format!("c{c}")), &long, vec![]);
+            }
+        }
+        let me = board.attach(Transport::Http);
+        let text = Server::new(surface.for_peer(me.clone()), "test").instructions();
+        let nudge = text.find(" You have not announced anything.").expect(&text);
+        let listed = text.find(" Attached here: ").expect(&text);
+        assert!(
+            nudge < listed,
+            "the caller's own sentence comes first: {text}"
+        );
+        let board_line = &text[listed..];
+        assert!(
+            board_line.chars().count() < crate::peers::SUMMARY_LINE + 200,
+            "the board line is bounded ({} chars): {board_line}",
+            board_line.chars().count()
+        );
+        assert!(board_line.contains("majordomus_peers"), "{board_line}");
     }
 
     /// The `initialize` instructions are the one thing every client reads before it does

@@ -957,11 +957,11 @@ one that can also say what was true.
 - `--list` lists this worktree's checkpoints, newest first, with each one's git label.
 
 A checkpoint belongs to the **episode**, not to a task. It is written whether or not a task
-is open and whatever outcome the last one reached; the record's `task_id` is the task when
-there is one and `none` otherwise, and the ledger event omits the field entirely rather than
-writing a literal `none` that every reader of that event would collect as a task by that
-name. Only the task's own `checkpoint_at` is left alone when the task is over, because that
-field is the task's.
+is open and whatever outcome the last one reached. It relates the active task unless a
+different, still-open episode opened that task (ADR 0164); then its Markdown `task_id` is
+`none`, its ledger event omits `task_id`, and it leaves the task's `checkpoint_at` alone.
+`check --checkpoint` uses the same rule. A derived checkpoint uses that same prepared
+relation for its body; it cannot describe another episode's task as its own.
 
 This refused with `12` (no active task) and `15` (the task is no longer active) until ADR
 0052. Those two refusals are the 2026-09-05 outage: a task marked `handed_over` and never
@@ -1011,7 +1011,7 @@ $ majordomus history --task t-20260903193012-a4f1
 
 Record or read durable decisions. One append-only file: `state/decisions.md`.
 
-`decision add "<what>" --why "<why>"` appends an entry with the task id and git head
+`decision add "<what>" --why "<why>"` appends an entry with the task relation and git head
 computed. `--why` is required: a decision with no recorded reason cannot be reviewed later,
 only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
 
@@ -1023,6 +1023,16 @@ decision. `decision list` marks a replaced entry with `Superseded by: <title>`.
 
 `decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show
 "<text>"` prints the first entry whose title contains that text, or exits `12`.
+
+Decisions, questions, checkpoints, handovers and `knowledge observe` prepare attribution
+once. An explicit caller identity resolves its own open episode or none; an unknown identity
+never borrows the checkout's pointer. With no supplied identity, exactly one local open
+episode is unambiguous; zero or several produce an event with no `session`, and status may
+still show the pointer as a guess. A record relates the active task unless a different
+episode that is still open opened it (its `task.started` event names that episode); a task
+whose opener closed, or that opened outside an episode, is carried on by whoever continues
+it, and a handover never closes another live episode's task. Markdown uses `none` for an
+absent task; the event omits `task_id`. The record is still written.
 
 The `deep-work` profile sets `verification.decision_record_required: true`; `finish` then
 refuses `completed` unless an entry names the task.
@@ -1041,12 +1051,15 @@ Open, resolve and list the questions that block acceptance. One mutable index:
 `state/open-questions.md`.
 
 Unresolved questions are explicit state, not prose inside a handover, because
-`finish --outcome completed` refuses while any entry names the active task. That gate is
+`finish --outcome completed` refuses while any unresolved entry exists here, including an
+entry without a task relation. That gate is
 the reason the file has a machine-written line format, and the reason `check`, `doctor` and
 `watch` fail on an entry that does not parse: a gate that cannot read an entry is a gate
 that can be bypassed by mistyping one.
 
 - `question add "<question>"` appends `- [unresolved] <task id> — <question> (<date>)`.
+  The task is `none` when a different, still-open episode opened the active task; a
+  question does not require an active task.
 - `question resolve <n|"<text>"> --answer "<answer>"` rewrites that one line to
   `[resolved <date>]` and appends the answer. `n` is the number `question list` printed.
   `--answer` is required, and an ambiguous selector is refused rather than guessed.
@@ -1058,6 +1071,8 @@ that can be bypassed by mistyping one.
 
 Resolving edits the index because an index of what is still open must not accumulate. The
 append-only record of every opening and resolution, with its answer, is the ledger.
+Resolution preserves the index entry's original task token. Its ledger event describes
+the resolving caller and relates that caller's active task only when attributable.
 
 ```
 $ majordomus question add "Does the legacy mobile callback still require the old URI form?"

@@ -15,6 +15,12 @@
 #                                            and a bound alone is never overdue, in doctor either
 #   a tag pushed past the record             current: releasing is never reported as owed
 #   a fix past an unrecorded tag             the version is not decided, and the answer says why
+#   a release that carries its registry      the version decided is the one release version
+#                                            answers there (ADR 0051)
+#   a fresh clone of the origin              owed, the commit time an upper bound it labels "at
+#                                            most": git clone writes no reflog for the remote-
+#                                            tracking trunk, while the clone it came from reads
+#                                            the landing in its reflog (I3076)
 #   a clone with no remote                   unknown, and doctor says what it cannot measure
 #
 # A landing is dated by the reflog of the remote-tracking trunk, so each push here records its
@@ -186,6 +192,51 @@ field "$c" .next_unmeasured | grep -qF 'v0.1.1 has no release record yet' \
   || { echo "    the version was not refused for an unrecorded release: $c"; exit 1; }
 [ "$(field "$c" '.next // "none"')" = none ] || { echo "    a version was decided from an unrecorded release: $c"; exit 1; }
 echo "    the version is not decided from an unrecorded release, and the answer says why"
+
+# ---------------------------------------------------------------- 5b. a version decided
+# A release whose commit carries the contract it published, as case 743's fixture does: the
+# executable's own registry and a declared version. A fix behind the boundary lands after it,
+# and the version release.currency decides is the one release version answers there.
+mkdir -p apps/majordomus-cli docs/generated share
+printf '[package]\nname = "fixture"\nversion = "0.2.0"\nedition = "2021"\n' > apps/majordomus-cli/Cargo.toml
+printf '# GENERATED FILE — DO NOT EDIT DIRECTLY\nversion=0.2.0\n' > share/version.txt
+"$RB" generate registry >/dev/null 2>&1 || { echo "    generate registry failed in the fixture"; exit 1; }
+[ -f docs/generated/registry.json ] || { echo "    generate registry wrote no registry"; exit 1; }
+git add -A >/dev/null && git commit -qm "chore(release): the surface v0.2.0 published"
+git tag v0.2.0
+record 0.2.0 v0.2.0 "$(git rev-parse HEAD)"
+git add -A >/dev/null && git commit -qm "chore(release): record v0.2.0"
+push
+published="$(git rev-parse HEAD)"
+land "fix: a repair behind the boundary" 600
+c="$(currency '{}')"
+"$RB" release version --format json > "$S/version.json" 2>/dev/null || true
+next="$(jq -r '.next // "none"' "$S/version.json")"
+[ "$next" = 0.2.1 ] || { echo "    release version does not decide the patch above v0.2.0:"; cat "$S/version.json"; exit 1; }
+[ "$(field "$c" '.next // "none"')" = "$next" ] && [ "$(field "$c" '.next_unmeasured // "none"')" = none ] \
+  || { echo "    release.currency did not decide release version's $next: $c"; exit 1; }
+echo "    over a release that carries its registry, the version decided is release version's $next"
+
+# ---------------------------------------------------------------- 5c. a fresh clone: a labelled bound
+# A clone made after a landing holds no reflog of its remote-tracking trunk, because git clone
+# writes none for it: what a CI runner or a new host reads. There the commit time is the only
+# reading, and the answer gives it as an upper bound.
+git reset -q --hard "$published"
+land "fix: composed two hours before it landed" 7200 3600
+c="$(currency)"
+w="$(field "$c" .waited_seconds)"
+[ "$(field "$c" .landed_at)" = reflog ] && [ "$w" -ge 3500 ] && [ "$w" -lt 4000 ] \
+  || { echo "    the clone that saw the landing does not date it by its reflog: $c"; exit 1; }
+git clone -q "$S/origin.git" "$S/fresh" || { echo "    the fresh clone failed"; exit 1; }
+f="$(cd "$S/fresh" && currency)"
+w="$(field "$f" .waited_seconds)"
+[ "$(field "$f" .stance)" = owed ] && [ "$(field "$f" .landed_at)" = commit ] \
+  || { echo "    a fresh clone does not bound the wait by the commit time: $f"; exit 1; }
+[ "$w" -ge 7100 ] && [ "$w" -lt 7600 ] || { echo "    the fresh clone's bound is not the commit's age: $f"; exit 1; }
+field "$f" .summary | grep -qF 'for at most 2 h' \
+  && field "$f" .summary | grep -qF 'this clone holds no record of when it landed' \
+  || { echo "    the fresh clone's answer does not label its bound: $f"; exit 1; }
+echo "    a fresh clone bounds the wait by the commit time and says so, where its origin's clone reads the reflog"
 
 # ---------------------------------------------------------------- 6. no remote
 git remote remove origin

@@ -81,6 +81,13 @@ case "$1 $2" in
       && git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #$n" \
       && git push -q origin HEAD:master || exit 1
     touch "$S/merged-$n" ;;
+  "api -X")
+    # the fast-forward: master moved to the head, refused unless master is its ancestor
+    sha=""; for a in "$@"; do case "$a" in sha=*) sha="${a#sha=}" ;; esac; done
+    old="$(git -C "$O" rev-parse master)"
+    git -C "$O" merge-base --is-ancestor "$old" "$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$O" update-ref refs/heads/master "$sha" "$old" || exit 1
+    for n in $(jq -r --arg s "$sha" '.[] | select(.headRefOid == $s) | .number' "$S/prs.json"); do touch "$S/merged-$n"; done ;;
   *) echo UNEXPECTED >> "$S/log"; exit 1 ;;
 esac
 "#;
@@ -296,9 +303,9 @@ fn a_stranded_record_is_reopened_once_and_merged_when_its_check_passes() {
     assert_eq!(code, 0, "drain: {out}{err}");
     assert!(out.contains("merged #1"), "{out}");
     assert_eq!(
-        git(&f.origin, &["rev-parse", "master^2"]),
+        git(&f.origin, &["rev-parse", "master"]),
         head,
-        "the record's head is what landed"
+        "the record's head is what landed, fast-forwarded to"
     );
 }
 
