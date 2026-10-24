@@ -240,6 +240,12 @@
           "route": "/docs/cli/shell/"
         },
         {
+          "about": "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract",
+          "command": "majordomus layout",
+          "name": "layout",
+          "route": "/docs/cli/layout/"
+        },
+        {
           "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
           "command": "majordomus pack",
           "name": "pack",
@@ -256,6 +262,12 @@
           "command": "majordomus brief",
           "name": "brief",
           "route": "/docs/cli/brief/"
+        },
+        {
+          "about": "Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease",
+          "command": "majordomus blackboard",
+          "name": "blackboard",
+          "route": "/docs/cli/blackboard/"
         },
         {
           "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
@@ -2146,6 +2158,10 @@
             {
               "help": "docs/generated/graph.json and its schema: the composed graph as data",
               "name": "graph"
+            },
+            {
+              "help": "docs/generated/entities.json: the site's entity projection of the composed graph",
+              "name": "entities"
             },
             {
               "help": "The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.*",
@@ -22685,6 +22701,12 @@
           "route": "/docs/cli/mesh/identity/"
         },
         {
+          "about": "Add this machine's public key to the mesh declaration's trust list, once; commit it to join",
+          "command": "majordomus mesh enrol",
+          "name": "enrol",
+          "route": "/docs/cli/mesh/enrol/"
+        },
+        {
           "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
           "command": "majordomus mesh doctor",
           "name": "doctor",
@@ -23157,6 +23179,135 @@
       ],
       "route": "/docs/cli/mesh/identity/",
       "usage": "majordomus mesh identity [OPTIONS]"
+    },
+    {
+      "about": "Add this machine's public key to the mesh declaration's trust list, once; commit it to join",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh enrol",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "enrol"
+          ],
+          "command": "majordomus mesh enrol",
+          "description": "Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.",
+          "expectation": "exits 13",
+          "id": "mesh-enrol",
+          "setup": [],
+          "title": "Enrol this machine in the repository's mesh"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "enrol",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "enrol"
+      ],
+      "route": "/docs/cli/mesh/enrol/",
+      "usage": "majordomus mesh enrol [OPTIONS]"
     },
     {
       "about": "Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall",
@@ -24254,6 +24405,18 @@
         {
           "defaults": [],
           "global": false,
+          "help": "Resume after the cursor the previous answer printed: every event exactly once",
+          "long": "cursor",
+          "name": "cursor",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CURSOR"
+        },
+        {
+          "defaults": [],
+          "global": false,
           "help": "At most this many (default 100, at most 1000)",
           "long": "limit",
           "name": "limit",
@@ -25043,6 +25206,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "HEAD"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The client process the session belongs to: a pid, or `auto` for the nearest ancestor that is not a shell. The runtime closes the session once it has ended",
+          "long": "client-pid",
+          "name": "client_pid",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PID|auto"
         },
         {
           "defaults": [],
@@ -29284,7 +29459,7 @@
         {
           "defaults": [],
           "global": false,
-          "help": "The site's base URL (default: base_url of site/config.toml)",
+          "help": "The base URL (default: the provider URL of the deployment object --deployment names, else base_url of site/config.toml)",
           "long": "url",
           "name": "url",
           "positional": false,
@@ -29296,7 +29471,7 @@
         {
           "defaults": [],
           "global": false,
-          "help": "The identity file under the base (default build.json)",
+          "help": "The identity under the base (default: that object's liveness route, else build.json)",
           "long": "identity",
           "name": "identity",
           "positional": false,
@@ -33122,6 +33297,12 @@
           "route": "/docs/cli/economics/check/"
         },
         {
+          "about": "Each task's wall time, refusals and episodes, from every checkout's ledger; the fields nothing observes yet are named as not observed",
+          "command": "majordomus economics tasks",
+          "name": "tasks",
+          "route": "/docs/cli/economics/tasks/"
+        },
+        {
           "about": "Run a deterministic suite (no model is called) and record its measurement",
           "command": "majordomus economics measure",
           "name": "measure",
@@ -33781,6 +33962,161 @@
       ],
       "route": "/docs/cli/economics/check/",
       "usage": "majordomus economics check [OPTIONS]"
+    },
+    {
+      "about": "Each task's wall time, refusals and episodes, from every checkout's ledger; the fields nothing observes yet are named as not observed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only tasks started at or after this time (YYYY-MM-DDTHH:MM:SSZ)",
+          "long": "since",
+          "name": "since",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SINCE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only tasks started before this time (YYYY-MM-DDTHH:MM:SSZ)",
+          "long": "until",
+          "name": "until",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "UNTIL"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics tasks",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "tasks",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus economics tasks --format json",
+          "description": "One record per task from every checkout's ledger, with the fields nothing observes yet named as not observed. A repository with no ledger answers no task and lists its checkout as not read.",
+          "expectation": "exits 0; prints one JSON document carrying /count, /tasks, /ledgers, /unread",
+          "id": "economics-tasks-json",
+          "setup": [],
+          "title": "Each task's wall time and episodes"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "tasks",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "tasks"
+      ],
+      "route": "/docs/cli/economics/tasks/",
+      "usage": "majordomus economics tasks [OPTIONS]"
     },
     {
       "about": "Run a deterministic suite (no model is called) and record its measurement",
@@ -34937,6 +35273,254 @@
       "usage": "majordomus shell check [OPTIONS]"
     },
     {
+      "about": "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read",
+          "command": "majordomus layout check",
+          "name": "check",
+          "route": "/docs/cli/layout/check/"
+        }
+      ],
+      "command": "majordomus layout",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "layout",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "layout"
+      ],
+      "route": "/docs/cli/layout/",
+      "usage": "majordomus layout [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus layout",
+          "name": "layout",
+          "route": "/docs/cli/layout/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus layout check",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "layout",
+            "check",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus layout check --format json",
+          "description": "How many paths were judged and every path a declared layout excludes, each named with the contract it violates, as `/checked`, `/findings` and `/passes`. The exit code is the verdict: 0 when the boundary holds, 10 on a finding, and 12 when the halves could not be read, which is not a pass. Only what a contract declares is judged, so a repository whose contracts declare no layout passes with nothing found.",
+          "expectation": "exits 0; prints \"checked\", \"findings\", \"passes\"",
+          "id": "layout-check-json",
+          "setup": [],
+          "title": "Both halves of the layer against their declared layouts"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "check",
+      "parent_route": "/docs/cli/layout/",
+      "path": [
+        "majordomus",
+        "layout",
+        "check"
+      ],
+      "route": "/docs/cli/layout/check/",
+      "usage": "majordomus layout check [OPTIONS]"
+    },
+    {
       "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
       "ancestors": [
         {
@@ -35941,6 +36525,169 @@
       ],
       "route": "/docs/cli/brief/",
       "usage": "majordomus brief [OPTIONS]"
+    },
+    {
+      "about": "Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Read this checkout's board alone instead of every checkout's",
+          "long": "this-checkout",
+          "name": "this_checkout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "THIS_CHECKOUT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Comma-separated names of the reader, so that the signals addressed to it are marked for it",
+          "long": "for",
+          "name": "reader",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)",
+          "long": "sources",
+          "name": "sources",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LIST"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus blackboard",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "blackboard",
+            "--this-checkout",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus blackboard --this-checkout --format json",
+          "description": "The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.",
+          "expectation": "exits 0; prints one JSON document carrying /complete, /sources, /workers, /conflicts, /cursor",
+          "id": "blackboard-json",
+          "setup": [],
+          "title": "Who works on what, with what could not be read"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "blackboard",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "blackboard"
+      ],
+      "route": "/docs/cli/blackboard/",
+      "usage": "majordomus blackboard [OPTIONS]"
     },
     {
       "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
@@ -38168,13 +38915,13 @@
     }
   ],
   "counts": {
-    "arguments": 1655,
-    "commands": 240,
-    "examples": 243,
-    "runnable": 210
+    "arguments": 1687,
+    "commands": 245,
+    "examples": 247,
+    "runnable": 214
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
-  "generator_version": "1.0.0-alpha.6",
+  "generator_version": "1.0.0-alpha.8",
   "route_prefix": "/docs/cli",
   "schema": 1,
   "source": "docs/generated/cli.json"

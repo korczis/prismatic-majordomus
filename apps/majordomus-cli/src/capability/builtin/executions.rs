@@ -1085,6 +1085,7 @@ mod tests {
                 "stream.ready",
                 "stream.heartbeat",
                 "stream.lagged",
+                "stream.resync",
                 "stream.closing"
             ],
             "the control messages"

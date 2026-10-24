@@ -31,8 +31,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::worktree::{
-    migrate, CreateReport, CreateRequest, Detail, InspectReport, MigrationPlan, RepositoryTopology, StatusReport, Threshold,
-    TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
+    migrate, CreateReport, CreateRequest, Detail, InspectReport, MigrationPlan, RepositoryTopology,
+    StatusReport, Threshold, TrunkDistance, UncommittedReport, WorktreeError, WorktreeService,
 };
 use crate::{capability, module};
 
@@ -481,7 +481,10 @@ mod tests {
         for e in module().capabilities {
             let c = &e.capability;
             if c.id.as_str() == "worktree.create" {
-                assert_eq!(c.execution.effect, crate::capability::Effect::RepositoryMutation);
+                assert_eq!(
+                    c.execution.effect,
+                    crate::capability::Effect::RepositoryMutation
+                );
                 assert!(c.execution.needs_confirmation());
                 assert_eq!(
                     c.exposure.http.as_ref().map(|h| h.method.as_str()),
@@ -508,15 +511,25 @@ mod tests {
                 .args(args)
                 .output()
                 .unwrap();
-            assert!(out.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&out.stderr));
+            assert!(
+                out.status.success(),
+                "git {args:?}: {}",
+                String::from_utf8_lossy(&out.stderr)
+            );
         };
         copy_tree(fixture.root(), &repo);
         git(&repo, &["init", "-q", "-b", "master"]);
         git(&repo, &["add", "-A"]);
         git(&repo, &["commit", "-q", "-m", "init"]);
         let origin = root.join("origin.git");
-        git(&root, &["init", "-q", "--bare", "-b", "master", "origin.git"]);
-        git(&repo, &["remote", "add", "origin", &origin.to_string_lossy()]);
+        git(
+            &root,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(
+            &repo,
+            &["remote", "add", "origin", &origin.to_string_lossy()],
+        );
         git(&repo, &["push", "-q", "-u", "origin", "master"]);
         let app = crate::app::App::load(&crate::cli::RepoArgs {
             repo: Some(repo.clone()),
@@ -590,7 +603,11 @@ mod tests {
             "{refused:?}"
         );
         assert!(away.is_dir());
-        assert!(!repo.parent().unwrap().join("repo-wt/fix/elsewhere").exists());
+        assert!(!repo
+            .parent()
+            .unwrap()
+            .join("repo-wt/fix/elsewhere")
+            .exists());
 
         // a name with no place in the container is refused before git is asked
         let escape = ask("feature/../escape").unwrap_err();
