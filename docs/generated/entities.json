@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 983
+      "count": 990
     },
     {
       "kind": "knowledge",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 635
+      "count": 640
     },
     {
       "kind": "use-case",
@@ -17801,18 +17801,26 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
-      "identity": "project.a-push-runs-what-ci-would-find-first@1",
-      "slug": "project-a-push-runs-what-ci-would-find-first-1",
-      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
-      "title": "A push runs what CI would find first",
+      "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
+      "identity": "project.a-push-runs-what-ci-would-find-first@2",
+      "slug": "project-a-push-runs-what-ci-would-find-first-2",
+      "cockpit": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-2",
+      "title": "A push runs what CI would find first, and CI decides",
       "status": "active",
       "tags": [
         "ci",
         "process"
       ],
-      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
-      "references": [],
+      "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -23162,6 +23170,13 @@
           "label": "adr-0167",
           "kind": "adr",
           "route": "/adrs/adr-0167/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-push-runs-what-ci-would-find-first@2",
+          "kind": "rule",
+          "route": "/rules/project-a-push-runs-what-ci-would-find-first-2/",
           "external": false
         }
       ]

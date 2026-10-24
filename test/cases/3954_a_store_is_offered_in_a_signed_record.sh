@@ -54,7 +54,7 @@ declare_mesh() { # repo [seed-url]
   mkdir -p "$1/.ai/repo/mesh"
   {
     printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n'
-    printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n'
+    printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n'
     printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 4\n  repository: case-3954\n'
     [ -z "${2:-}" ] || printf '  seeds:\n    - %s\n' "$2"
   } > "$1/.ai/repo/mesh/majordomus.yaml"

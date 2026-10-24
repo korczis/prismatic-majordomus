@@ -739,6 +739,7 @@
     "schema-LabelEffect": "docs/api/integration/",
     "schema-LabelPolicy": "docs/api/integration/",
     "schema-LandingDecision": "docs/api/release/",
+    "schema-Lane": "docs/api/gates/",
     "schema-LayerSummary": "docs/api/environment/",
     "schema-LayoutFinding": "docs/api/layout/",
     "schema-LayoutReport": "docs/api/layout/",
@@ -1336,7 +1337,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 209,
-    "schemas": 1063,
+    "schemas": 1064,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2171,6 +2172,7 @@
     "LabelEffect": "integration",
     "LabelPolicy": "integration",
     "LandingDecision": "release",
+    "Lane": "gates",
     "LayerSummary": "environment",
     "LayoutFinding": "layout",
     "LayoutReport": "layout",
@@ -25786,6 +25788,15 @@
           "type": "string | null"
         },
         {
+          "description": "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```",
+          "name": "lane",
+          "refs": [
+            "Lane"
+          ],
+          "required": false,
+          "type": "Lane | null"
+        },
+        {
           "description": "The pathspecs a run of this gate is evidence over, derived from the classes that\nselect it. A change to any of them makes a recorded run stale.",
           "name": "inputs",
           "refs": [],
@@ -32416,6 +32427,33 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs.",
+      "home": "gates",
+      "is_enum": true,
+      "name": "Lane",
+      "properties": [],
+      "type": "\"feedback\" | \"proof\" | \"release\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "GateModelEntry"
+      ],
+      "values": [
+        {
+          "description": "Cheap, fast and decisive: a pull request's required verdict needs it green.",
+          "value": "feedback"
+        },
+        {
+          "description": "The heavy half, which judges the combined top before it lands.",
+          "value": "proof"
+        },
+        {
+          "description": "A gate only a release asks.",
+          "value": "release"
+        }
+      ],
       "variants": []
     },
     {
@@ -67092,6 +67130,13 @@
               "name": "on_demand",
               "required": false,
               "type": "boolean"
+            },
+            {
+              "description": "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with.",
+              "examples": [],
+              "name": "tier",
+              "required": false,
+              "type": "string"
             }
           ],
           "path": "/api/v1/gates/completion",

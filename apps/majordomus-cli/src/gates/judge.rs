@@ -567,7 +567,7 @@ classes:
     #[test]
     fn a_planned_gate_nothing_reported_is_queued_and_not_unknown() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let g = judge(
             &m,
             &p,
@@ -589,7 +589,7 @@ classes:
     #[test]
     fn a_failing_run_refuses_and_a_passing_one_does_not() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("build".to_string(), run(1, "aaaa"));
         let g = judge(&m, &p, &runs, &hashes(&m, "aaaa"), Some("t-1"), "now");
@@ -609,7 +609,7 @@ classes:
     #[test]
     fn a_passing_run_goes_stale_when_the_files_that_select_it_change() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("build".to_string(), run(0, "aaaa"));
         // the same run, judged against a tree that has moved on
@@ -623,7 +623,7 @@ classes:
     #[test]
     fn a_gate_whose_prerequisite_failed_is_blocked_rather_than_queued() {
         let m = model();
-        let p = plan(&m, &["site/index.md".into()], false);
+        let p = plan(&m, &["site/index.md".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("site".to_string(), run(2, "aaaa"));
         let g = judge(&m, &p, &runs, &hashes(&m, "aaaa"), Some("t-1"), "now");
@@ -640,7 +640,7 @@ classes:
     #[test]
     fn nothing_can_be_judged_without_a_task_and_that_is_unknown() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let g = judge(&m, &p, &BTreeMap::new(), &hashes(&m, "aaaa"), None, "now");
         let build = g.iter().find(|g| g.id == "build").unwrap();
         assert_eq!(build.status, GateStatus::Unknown);
@@ -650,7 +650,7 @@ classes:
     #[test]
     fn a_run_that_cannot_be_hashed_here_is_unknown_and_never_a_pass() {
         let m = model();
-        let p = plan(&m, &["apps/x.rs".into()], false);
+        let p = plan(&m, &["apps/x.rs".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("build".to_string(), run(0, "aaaa"));
         let mut h: BTreeMap<String, Option<String>> = BTreeMap::new();
@@ -692,7 +692,7 @@ classes:
     #[test]
     fn what_refuses_first_is_reported_first() {
         let m = model();
-        let p = plan(&m, &["site/index.md".into()], false);
+        let p = plan(&m, &["site/index.md".into()], false, None);
         let mut runs = BTreeMap::new();
         runs.insert("site".to_string(), run(2, "aaaa"));
         let mut g = judge(&m, &p, &runs, &hashes(&m, "aaaa"), Some("t-1"), "now");

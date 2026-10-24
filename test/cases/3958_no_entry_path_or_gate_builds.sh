@@ -168,7 +168,12 @@ git -C "$P" init -q && git -C "$P" add -A \
   && git -C "$P" -c user.email=case@example.invalid -c user.name=case commit -qm crate \
   || fail "could not build the release fixture"
 REL="$T/versions/9.9.9/bin/majordomus"
-printf '#!/bin/sh\n[ "$1" = --version ] && { echo "majordomus 9.9.9"; exit 0; }\necho "RELEASE $*"\n' > "$REL"; chmod +x "$REL"
+cat > "$REL" <<'EOF'
+#!/bin/sh
+[ "$1" = --version ] && { echo "majordomus 9.9.9"; exit 0; }
+echo "RELEASE $*"
+EOF
+chmod +x "$REL"
 # the installer's launcher, as install.sh writes it: two lines that exec the version
 printf '#!/bin/sh\nMAJORDOMUS_LAUNCHER="%s"; export MAJORDOMUS_LAUNCHER\nexec "%s" "$@"\n' \
   "$T/launcher/majordomus" "$REL" > "$T/launcher/majordomus"; chmod +x "$T/launcher/majordomus"
