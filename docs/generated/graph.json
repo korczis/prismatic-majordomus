@@ -67867,6 +67867,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4221",
+        "kind": "issue",
+        "label": "I4221",
+        "summary": "CI's Rust cache carries the shared build directory, where cargo actually compiles",
+        "route": "/cockpit/objects/issue/i4221",
+        "source": ".ai/repo/project/issues/I4221.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A job's Cache Paths list includes the runner's ~/.cargo/build-shared",
+            "A second run of a job at the same cache key compiles markedly fewer units than the first, measured by the count of Compiling lines in two runs' logs, quoted in this record",
+            "Every job that reported a cache hit still passes"
+          ],
+          "created_at": "2026-10-24",
+          "current_state": "Swatinem/rust-cache caches the registry, git checkouts and apps/majordomus-cli/target (about 50 MB). build-shared, where every dependency is compiled, is rebuilt from nothing in each job.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Sharing CARGO_TARGET_DIR between trees, which .cargo/config.toml forbids for a recorded reason",
+            "Changing build-dir locally or the cache keys"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/actions/setup-rust/action.yml",
+            ".ai/repo/project/issues/I4221.yaml"
+          ],
+          "serves": [],
+          "slug": "ci-caches-the-shared-build-dir",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "Read the coverage job log of two consecutive runs at one key: Cache Paths, Cache Size and the Compiling count"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -128605,6 +128644,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4221",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4221",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -140006,8 +140055,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3897,
-      "edges": 9002,
+      "nodes": 3898,
+      "edges": 9004,
       "acyclic": false,
       "truncated": false
     }
