@@ -244,10 +244,8 @@ fn unread_is_a_fork() -> bool {
 /// have more, and the queue says so.
 pub const OPEN_LIMIT: usize = 500;
 
-/// How many open pull requests one page of the declarations read asks for. Each carries up to a
-/// hundred cross-references with their sources' bodies, so a page of fifty was a reply the
-/// forge cut off on its way (I4222); a smaller page is a shorter reply, asked more often.
-pub const DECLARATIONS_PAGE: usize = 25;
+/// How many open pull requests one page of the declarations read asks for.
+pub const DECLARATIONS_PAGE: usize = 50;
 
 /// How many pages of one pull request's cross-references are read, a hundred each: five
 /// thousand mentions. One that more pull requests and issues mention is held, never taken to
@@ -3487,7 +3485,7 @@ mod tests {
             assert!(!query.contains('\n'), "{query}");
         }
         assert_eq!(
-            writers_args(DECLARATIONS_QUERY, "o", "r", "n=25", None),
+            writers_args(DECLARATIONS_QUERY, "o", "r", "n=50", None),
             [
                 "api",
                 "graphql",
@@ -3498,10 +3496,10 @@ mod tests {
                 "-f",
                 "name=r",
                 "-F",
-                "n=25"
+                "n=50"
             ]
         );
-        assert_eq!(format!("n={DECLARATIONS_PAGE}"), "n=25");
+        assert_eq!(format!("n={DECLARATIONS_PAGE}"), "n=50");
         assert_eq!(
             RESOLVED_FIELDS,
             "number,state,headRefOid,body,mergeCommit,baseRefName,author,isCrossRepository,changedFiles"
