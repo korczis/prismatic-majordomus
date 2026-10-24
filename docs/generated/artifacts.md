@@ -315,8 +315,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 30847 | `218816560a6fe601` |
 | `docs/generated/economics.md` | `economics` | markdown | 15306 | `bc30f295a73fb1f9` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 25727 | `8a18b827b08f8d52` |
-| `docs/generated/entities.json` | `entities` | json | 715635 | `f33d9dd9ac8aa66b` |
-| `docs/generated/graph.json` | `graph` | json | 5584176 | `4f655b6238d7d415` |
+| `docs/generated/entities.json` | `entities` | json | 715635 | `0dd819558eca5f1f` |
+| `docs/generated/graph.json` | `graph` | json | 5586442 | `0fb380f003c4fdf8` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7632 | `e5cdb0d2037a16f1` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1749 | `1860b86fae169ec5` |
 | `docs/generated/modules/blackboard.md` | `modules/blackboard` | markdown | 2539 | `660efd121c22b6f5` |
@@ -444,9 +444,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 11594 | `ef3fbdba902ebc9f` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `1dc59aaebd16174a` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 847224 | `917051b67559d86b` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `bf2ed72c9d73c805` |
-| `site/data/registry/product.json` | `site-product` | json | 774212 | `c5ffba17581e7c73` |
-| `site/data/registry/registry.json` | `site-registry` | json | 8090297 | `f12e58c136e710b7` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 111829 | `934efd54b6b03686` |
+| `site/data/registry/product.json` | `site-product` | json | 774212 | `19bb1f5c1cc65072` |
+| `site/data/registry/registry.json` | `site-registry` | json | 8091198 | `cfd038d93df4c94c` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180170 | `c576476e81155fff` |
 | `site/data/registry/why.json` | `site-why` | json | 349931 | `1a3a332612efcf8c` |
 | `site/static/favicon.svg` | `design-mark` | text | 911 | `21edd78bef10f99b` |

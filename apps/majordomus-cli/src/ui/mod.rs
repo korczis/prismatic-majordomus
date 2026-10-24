@@ -419,6 +419,7 @@ impl Ui {
                 )
                 .child(screen.main);
         }
+        let status = screen.status;
         let body = if fragment {
             screen.main.render()
         } else {
@@ -443,10 +444,10 @@ impl Ui {
                     assets_present: self.assets.present(),
                     version: self.version,
                 },
-                &screen,
+                screen,
             )
         };
-        let mut response = Response::new(screen.status, "text/html; charset=utf-8", body);
+        let mut response = Response::new(status, "text/html; charset=utf-8", body);
         for (name, value) in [
             ("Cache-Control", "no-cache"),
             ("Content-Security-Policy", crate::cockpit::csp()),
