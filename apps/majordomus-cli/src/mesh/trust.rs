@@ -397,4 +397,13 @@ mod tests {
         let state = evaluate(&TrustPolicy::Tofu, &[], "bb", Some("aa"), None);
         assert!(matches!(state, TrustState::Rejected(_)));
     }
+
+    #[test]
+    fn a_key_change_under_one_node_id_is_rejected_with_successions_in_hand() {
+        let state = evaluate_with_successions(&TrustPolicy::Tofu, &[], &[], "bb", Some("aa"), None);
+        assert_eq!(
+            state,
+            TrustState::Rejected("the node id is already bound to a different key".into())
+        );
+    }
 }

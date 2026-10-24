@@ -607,6 +607,76 @@ mod tests {
         assert_eq!(state, MonitorSourceHealth::Absent);
     }
 
+    /// A program standing in for `gh run view <id> --json jobs`: it records each id it is
+    /// asked for in `asked`, answers run 77 with two jobs and fails for any other.
+    #[cfg(unix)]
+    fn fake_gh_jobs(dir: &Path) -> PathBuf {
+        let program = dir.join("fake-gh-jobs");
+        std::fs::write(
+            &program,
+            concat!(
+                "#!/bin/sh\n",
+                "echo \"$3\" >> \"$(dirname \"$0\")/asked\"\n",
+                "[ \"$1 $2 $3\" = \"run view 77\" ] || { echo 'gh: no such run' >&2; exit 1; }\n",
+                "echo '{\"jobs\": [{\"name\": \"deploy\", \"conclusion\": \"success\"}, ",
+                "{\"name\": \"owed\", \"conclusion\": \"failure\"}]}'\n"
+            ),
+        )
+        .unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755)).unwrap();
+        program
+    }
+
+    #[test]
+    #[cfg(unix)]
+    fn only_a_failed_deploy_run_is_asked_for_its_jobs_and_one_that_cannot_be_read_keeps_its_verdict(
+    ) {
+        let dir = tempfile::tempdir().unwrap();
+        let program = fake_gh_jobs(dir.path());
+        let program = program.to_str().unwrap();
+        let runs = json!([
+            {"databaseId": 77, "status": "completed", "conclusion": "failure",
+             "workflowName": "Deploy Pages"},
+            {"databaseId": 78, "status": "completed", "conclusion": "failure",
+             "workflowName": "pages"},
+            {"databaseId": 79, "status": "completed", "conclusion": "failure",
+             "workflowName": "ci"},
+            {"databaseId": 80, "status": "completed", "conclusion": "success",
+             "workflowName": "Deploy Pages"},
+            {"databaseId": 81, "status": "in_progress", "conclusion": "",
+             "workflowName": "Deploy Pages"},
+            {"status": "completed", "conclusion": "failure", "workflowName": "Deploy Pages"}
+        ]);
+        let read = with_deploy_jobs(program, dir.path(), runs);
+        assert_eq!(
+            read[0]["jobs"],
+            json!([{"name": "deploy", "conclusion": "success"},
+                   {"name": "owed", "conclusion": "failure"}]),
+            "the failed deploy run carries its jobs"
+        );
+        assert_eq!(failed_jobs(&read[0]), ["owed"]);
+        assert!(
+            read[1].get("jobs").is_none(),
+            "a run whose jobs failed to read"
+        );
+        for (i, why) in [
+            (2, "not a deploy"),
+            (3, "succeeded"),
+            (4, "not completed"),
+            (5, "no id"),
+        ] {
+            assert!(read[i].get("jobs").is_none(), "{why}");
+        }
+        let asked = std::fs::read_to_string(dir.path().join("asked")).unwrap();
+        assert_eq!(asked.lines().collect::<Vec<_>>(), ["77", "78"]);
+        assert_eq!(
+            with_deploy_jobs(program, dir.path(), json!(null)),
+            json!(null),
+            "an answer that is no list is passed through"
+        );
+    }
+
     #[test]
     fn a_gh_that_outlives_its_budget_is_killed_and_reported() {
         let dir = std::env::temp_dir();

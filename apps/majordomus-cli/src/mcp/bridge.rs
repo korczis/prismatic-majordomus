@@ -667,8 +667,10 @@ pub fn request_json_within(
 ) -> std::io::Result<Reply> {
     let deadline = std::time::Instant::now() + bound.within;
     let first = bound.idle.min(bound.within);
-    let (mut stream, host) = connect(base_url, first)?;
-    self::bound(stream.socket(), first)?;
+    // connected and bounded in one step: a socket that cannot take its bound fails as a
+    // connection that could not be made
+    let (mut stream, host) = connect(base_url, first)
+        .and_then(|(stream, host)| self::bound(stream.socket(), first).map(|()| (stream, host)))?;
     write_request(&mut stream, &host, method, path, headers, body)?;
     let late = || {
         ReplyRefused::Late {

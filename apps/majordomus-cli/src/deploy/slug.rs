@@ -559,14 +559,16 @@ fn collect_site(
     dir: &Path,
     out: &mut BTreeMap<String, PathBuf>,
 ) -> Result<(), SlugError> {
+    // the listing is read whole, each entry with its type, so that one failure of any of them
+    // is said once, naming the directory
     let entries = std::fs::read_dir(dir)
+        .and_then(|listing| {
+            listing
+                .map(|entry| entry.and_then(|e| e.file_type().map(|kind| (e.path(), kind))))
+                .collect::<std::io::Result<Vec<_>>>()
+        })
         .map_err(|e| SlugError::Failed(format!("{} cannot be listed: {e}", dir.display())))?;
-    for entry in entries {
-        let entry = entry.map_err(|e| SlugError::Failed(format!("{}: {e}", dir.display())))?;
-        let path = entry.path();
-        let kind = entry
-            .file_type()
-            .map_err(|e| SlugError::Failed(format!("{}: {e}", path.display())))?;
+    for (path, kind) in entries {
         let rel = path
             .strip_prefix(base)
             .map_err(|_| SlugError::Failed(format!("{} left the site", path.display())))?
@@ -1947,5 +1949,175 @@ mod tests {
             assemble(&Request { site: Some(&site), ..g.request(&out, &exe) }),
             Err(SlugError::Refused(m)) if m.contains("declares no `build.site`")
         ));
+    }
+    /// A built site in a scratch directory whose surface record names the commit `aaaa…`.
+    fn bare_site(root: &Path) -> std::path::PathBuf {
+        let site = root.join("site");
+        std::fs::create_dir_all(&site).unwrap();
+        std::fs::write(site.join("index.html"), "<p>home</p>\n").unwrap();
+        std::fs::write(
+            site.join(SITE_SURFACE_FILE),
+            serde_json::json!({"built_from": "aaaaaaaaaaaa"}).to_string(),
+        )
+        .unwrap();
+        site
+    }
+
+    const SITE_COMMIT: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    /// A directory that is absent, or a file, is not a built site, and each is told apart.
+    #[test]
+    fn a_built_site_that_is_absent_or_not_a_directory_is_named() {
+        let t = tempfile::tempdir().unwrap();
+        let mut plan = Plan::default();
+        let gone = t.path().join("gone");
+        let e = plan_site(&mut plan, "site", &gone, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Missing(m) if m.contains("cannot be read")
+                && m.contains("gone")),
+            "{e:?}"
+        );
+        let file = t.path().join("file");
+        std::fs::write(&file, "x").unwrap();
+        let e = plan_site(&mut plan, "site", &file, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("is not a directory")),
+            "{e:?}"
+        );
+        assert!(plan.0.is_empty(), "nothing was planned");
+    }
+
+    /// A site without its surface record, or with one that is not JSON, is refused before any
+    /// of its files is planned.
+    #[test]
+    fn a_built_site_without_a_readable_surface_record_is_refused() {
+        let t = tempfile::tempdir().unwrap();
+        let site = bare_site(t.path());
+        let mut plan = Plan::default();
+        std::fs::write(site.join(SITE_SURFACE_FILE), "{ not json").unwrap();
+        let e = plan_site(&mut plan, "site", &site, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("is not JSON")),
+            "{e:?}"
+        );
+        std::fs::remove_file(site.join(SITE_SURFACE_FILE)).unwrap();
+        let e = plan_site(&mut plan, "site", &site, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Missing(m) if m.contains(SITE_SURFACE_FILE)
+                && m.contains("scripts/site-build")),
+            "{e:?}"
+        );
+        assert!(plan.0.is_empty());
+    }
+
+    /// A site that is sound is planned under the declared path, with a trailing slash in the
+    /// declaration ignored; a path the slug cannot hold is a failure of the assembler.
+    #[test]
+    fn a_built_site_is_planned_under_its_declared_path_and_only_there() {
+        let t = tempfile::tempdir().unwrap();
+        let site = bare_site(t.path());
+        let mut plan = Plan::default();
+        let planned = plan_site(&mut plan, "target/web/", &site, SITE_COMMIT).unwrap();
+        assert_eq!(planned.files, 2);
+        assert_eq!(planned.sha256.len(), 64);
+        let paths: Vec<&str> = plan.0.keys().map(String::as_str).collect();
+        assert_eq!(paths, ["target/web/index.html", "target/web/surface.json"]);
+
+        let mut plan = Plan::default();
+        let e = plan_site(&mut plan, "../outside", &site, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("not a relative path inside")),
+            "{e:?}"
+        );
+    }
+
+    /// A file of the site that cannot be read, and a directory that cannot be listed, fail
+    /// the slug naming the path.
+    #[cfg(unix)]
+    #[test]
+    fn a_site_file_or_directory_that_cannot_be_read_fails_naming_it() {
+        use std::os::unix::fs::PermissionsExt;
+        let t = tempfile::tempdir().unwrap();
+        let site = bare_site(t.path());
+        std::fs::create_dir_all(site.join("closed")).unwrap();
+        let locked = site.join("locked.html");
+        std::fs::write(&locked, "x").unwrap();
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o000)).unwrap();
+        // permissions do not bind a privileged process: only assert what the platform enforces
+        if std::fs::read(&locked).is_ok() {
+            return;
+        }
+        let mut plan = Plan::default();
+        let e = plan_site(&mut plan, "site", &site, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("locked.html")
+                && m.contains("cannot be read")),
+            "{e:?}"
+        );
+        std::fs::set_permissions(&locked, std::fs::Permissions::from_mode(0o644)).unwrap();
+
+        let closed = site.join("closed");
+        std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let mut plan = Plan::default();
+        let e = plan_site(&mut plan, "site", &site, SITE_COMMIT)
+            .err()
+            .unwrap();
+        std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(
+            matches!(&e, SlugError::Failed(m) if m.contains("closed")
+                && m.contains("cannot be listed")),
+            "{e:?}"
+        );
+    }
+
+    /// A file found under a directory the walk was not given as the site's base has left the
+    /// site, and is refused naming it.
+    #[test]
+    fn a_file_outside_the_site_base_has_left_the_site() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("index.html"), "<p>x</p>").unwrap();
+        let mut out = BTreeMap::new();
+        let err = collect_site(Path::new("/no/such/base"), dir.path(), &mut out).unwrap_err();
+        assert!(
+            matches!(&err, SlugError::Failed(m) if m.contains("left the site")),
+            "{err:?}"
+        );
+        assert!(out.is_empty());
+    }
+
+    /// Anything but a file or a directory (a named pipe here) is refused by name, below the
+    /// top of the site as well as at it.
+    #[cfg(unix)]
+    #[test]
+    fn a_site_that_holds_a_named_pipe_is_refused() {
+        use std::os::unix::ffi::OsStrExt;
+        let t = tempfile::tempdir().unwrap();
+        let site = bare_site(t.path());
+        std::fs::create_dir_all(site.join("deep")).unwrap();
+        let fifo = site.join("deep/pipe");
+        let c = std::ffi::CString::new(fifo.as_os_str().as_bytes()).unwrap();
+        // SAFETY: `c` is a NUL-terminated path that outlives the call
+        assert_eq!(unsafe { libc::mkfifo(c.as_ptr(), 0o600) }, 0);
+        let mut plan = Plan::default();
+        let e = plan_site(&mut plan, "site", &site, SITE_COMMIT)
+            .err()
+            .unwrap();
+        assert!(
+            matches!(&e, SlugError::Refused(m) if m.contains("`deep/pipe`")
+                && m.contains("neither a file nor a directory")),
+            "{e:?}"
+        );
     }
 }

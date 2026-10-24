@@ -871,4 +871,20 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn every_usage_seam_prints_as_the_word_it_is_declared_as() {
+        for (source, word) in [
+            (UsageSource::Otel, "otel"),
+            (UsageSource::AppServer, "app-server"),
+            (UsageSource::StreamJson, "stream-json"),
+            (UsageSource::None, "none"),
+        ] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+    }
 }

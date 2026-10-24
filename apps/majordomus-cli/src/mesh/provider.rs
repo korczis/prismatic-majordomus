@@ -365,7 +365,7 @@ pub fn jitter_ms(bound: u64) -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
+    use std::sync::{Arc, Mutex};
 
     #[test]
     fn the_beacon_signs_with_one_rising_sequence() {
@@ -400,5 +400,32 @@ mod tests {
         for _ in 0..32 {
             assert!(jitter_ms(50) < 50);
         }
+    }
+
+    #[test]
+    fn a_followed_source_replaces_the_endpoints_and_an_empty_answer_keeps_the_last() {
+        let identity = Arc::new(crate::mesh::identity::NodeIdentity::ephemeral().unwrap());
+        let beacon = Beacon::new(identity, vec!["10.0.0.1:1".into()], vec![], vec![], "t");
+        assert_eq!(
+            beacon.endpoints(),
+            ["10.0.0.1:1"],
+            "no source: the declared ones"
+        );
+        let now = Arc::new(Mutex::new(vec!["10.0.0.2:1".to_string()]));
+        let read = Arc::clone(&now);
+        beacon.follow(Arc::new(move || read.lock().unwrap().clone()));
+        assert_eq!(beacon.endpoints(), ["10.0.0.2:1"]);
+        assert_eq!(beacon.next_envelope().adv.ep, ["10.0.0.2:1"]);
+        *now.lock().unwrap() = vec![];
+        assert_eq!(
+            beacon.next_envelope().adv.ep,
+            ["10.0.0.2:1"],
+            "nothing up keeps the last"
+        );
+        assert_eq!(
+            beacon.endpoints(),
+            ["10.0.0.2:1"],
+            "an empty source falls back to the last"
+        );
     }
 }

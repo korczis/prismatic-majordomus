@@ -223,10 +223,22 @@ pub(crate) fn skill_name(path: &str) -> Option<String> {
 /// Where Claude Code reads a person's own commands and skills: `$CLAUDE_CONFIG_DIR`, else
 /// `~/.claude`. `None` when neither can be named.
 pub fn personal_dir() -> Option<std::path::PathBuf> {
-    std::env::var_os("CLAUDE_CONFIG_DIR")
+    personal_dir_from(
+        std::env::var_os("CLAUDE_CONFIG_DIR"),
+        std::env::var_os("HOME"),
+    )
+}
+
+/// [`personal_dir`] from the two variables' values, so that it is judged without changing
+/// the environment every other test reads.
+fn personal_dir_from(
+    config: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Option<std::path::PathBuf> {
+    config
         .filter(|v| !v.is_empty())
         .map(std::path::PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".claude")))
+        .or_else(|| home.map(|h| std::path::PathBuf::from(h).join(".claude")))
 }
 
 /// Every projected skill a person's own command or skill shares a name with. Claude Code
@@ -561,6 +573,11 @@ mod tests {
             Some("evolve")
         );
         assert_eq!(skill_name(".agents/skills/evolve/SKILL.md"), None);
+        assert_eq!(
+            skill_name(".claude/skills/evolve/README.md"),
+            None,
+            "a file under the skills directory that is not a SKILL.md names no skill"
+        );
         assert_eq!(skill_name(".claude/skills/a/b/SKILL.md"), None);
     }
 
@@ -583,5 +600,27 @@ mod tests {
             a.capabilities[0].artifacts,
             [".claude/skills/intent/SKILL.md"]
         );
+    }
+
+    /// `CLAUDE_CONFIG_DIR` names where a person's own commands live, unless it is empty, and
+    /// then `~/.claude` does; with neither there is no directory. Judged from the values, so
+    /// no test's environment changes under another.
+    #[test]
+    fn the_personal_directory_is_the_configured_one_unless_the_variable_is_empty() {
+        let home = || Some(std::ffi::OsString::from("/home/a"));
+        assert_eq!(
+            personal_dir_from(Some("/somewhere/claude-config".into()), home()),
+            Some(std::path::PathBuf::from("/somewhere/claude-config"))
+        );
+        assert_eq!(
+            personal_dir_from(Some("".into()), home()),
+            Some(std::path::PathBuf::from("/home/a/.claude")),
+            "an empty variable names nothing"
+        );
+        assert_eq!(
+            personal_dir_from(None, home()),
+            Some(std::path::PathBuf::from("/home/a/.claude"))
+        );
+        assert_eq!(personal_dir_from(None, None), None);
     }
 }

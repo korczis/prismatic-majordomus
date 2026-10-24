@@ -788,4 +788,63 @@ mod tests {
         assert_eq!(clock(86_399), "23:59:59");
         assert_eq!(clock(1_791_661_234), "19:40:34");
     }
+
+    #[test]
+    fn a_cursor_file_is_read_before_asking_and_rewritten_with_the_answers_cursor() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("watch.cursor");
+        std::fs::write(&file, "c-old\n").unwrap();
+        let body = a_page(vec![signal(1, "merged", "#1 merged")], "c-new", false);
+        let url = scripted(vec![(200, body)]);
+        let f = file.to_str().unwrap();
+        let code = run_with(args(&["--cursor-file", f]), at(url)).unwrap();
+        assert_eq!(code, 0);
+        assert_eq!(
+            saved_cursor(&file).as_deref(),
+            Some("c-new"),
+            "the cursor of the answer replaced the one the file held"
+        );
+    }
+
+    #[test]
+    fn a_cursor_file_that_cannot_be_written_fails_the_command() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("absent").join("watch.cursor");
+        let body = a_page(vec![signal(1, "merged", "#1 merged")], "c-new", false);
+        let url = scripted(vec![(200, body)]);
+        let f = file.to_str().unwrap();
+        let err = run_with(args(&["--cursor-file", f]), at(url)).unwrap_err();
+        assert!(matches!(err, Error::Io { .. }), "{err}");
+        assert!(!file.exists(), "nothing was written");
+    }
+
+    #[test]
+    fn a_refusal_of_a_cursor_the_file_supplied_exits_ten_and_leaves_the_file_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("watch.cursor");
+        std::fs::write(&file, "c-stale\n").unwrap();
+        let refusal = json!({"error": {"code": "invalid_input", "message": "bad cursor"}});
+        let url = scripted(vec![(400, refusal.to_string())]);
+        let f = file.to_str().unwrap();
+        let code = run_with(args(&["--cursor-file", f]), at(url)).unwrap();
+        assert_eq!(code, EXIT_REFUSED);
+        assert_eq!(
+            std::fs::read_to_string(&file).unwrap(),
+            "c-stale\n",
+            "a refused cursor is not rewritten"
+        );
+    }
+
+    #[test]
+    fn a_cursor_file_with_no_name_is_written_as_cursor_and_the_failure_is_an_io_error() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
+        // `sub/..` has no file name; the rename onto a directory fails and is reported
+        let file = dir.path().join("sub").join("..");
+        assert!(file.file_name().is_none());
+        let err = save_cursor(&file, "m1").unwrap_err();
+        assert!(matches!(err, Error::Io { .. }), "{err}");
+        let left: Vec<_> = std::fs::read_dir(dir.path()).unwrap().flatten().collect();
+        assert_eq!(left.len(), 1, "the temporary named .cursor.* was removed");
+    }
 }

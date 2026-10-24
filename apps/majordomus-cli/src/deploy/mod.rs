@@ -1055,6 +1055,28 @@ mod tests {
         }
 
         #[test]
+        fn a_path_dependency_that_does_not_resolve_or_leaves_the_repository_is_refused() {
+            let d = tree();
+            std::fs::create_dir_all(d.path().join("apps/majordomus-core")).unwrap();
+            let mut v = super::object_text();
+            v["build"]["crates"] = serde_json::json!(["apps/majordomus-core", "apps/not-here"]);
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            assert_eq!(out.len(), 1, "{out:?}");
+            assert_eq!(out[0].key, "build.crates.1", "counted within its own list");
+            assert_eq!(out[0].found, "apps/not-here");
+            assert!(out[0].problem.contains("does not have"));
+
+            let mut v = super::object_text();
+            v["build"]["inputs"] = serde_json::json!(["apps/majordomus-cli", "not/here"]);
+            v["build"]["crates"] = serde_json::json!(["../elsewhere", "/abs"]);
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            let keys: Vec<&str> = out.iter().map(|r| r.key.as_str()).collect();
+            assert_eq!(keys, ["build.inputs.1", "build.crates.0", "build.crates.1"]);
+            assert!(out[1].problem.contains("inside the repository"));
+            assert!(out[2].problem.contains("inside the repository"));
+        }
+
+        #[test]
         fn more_running_than_exist_is_refused() {
             let d = tree();
             let mut v = super::object_text();

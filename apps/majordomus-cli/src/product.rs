@@ -2451,4 +2451,98 @@ mod tests {
             "the route is derived when the model is built"
         );
     }
+
+    fn offers_with(
+        usage: &[crate::share::UsageSource],
+        evidence: &str,
+    ) -> crate::share::ProviderOffers {
+        let mut offers: crate::share::ProviderOffers = serde_json::from_str(
+            r#"{"episode":"none","episode_evidence":"x","prompts":"none","prompts_evidence":"x"}"#,
+        )
+        .unwrap();
+        offers.usage = usage.to_vec();
+        offers.usage_evidence = evidence.to_string();
+        offers
+    }
+
+    #[test]
+    fn a_usage_seam_stands_only_when_declared_alone_of_none_and_cited() {
+        use crate::share::UsageSource;
+        let cited = "https://vendor.example/telemetry, verified 2026-10-22";
+        let none = usage_finding("p", &offers_with(&[], cited)).expect("nothing declared");
+        assert_eq!(
+            none,
+            "provider 'p' declares no offers.usage; how it reports what a session consumed is a claim nobody wrote down"
+        );
+        let mixed = usage_finding(
+            "p",
+            &offers_with(&[UsageSource::Otel, UsageSource::None], cited),
+        )
+        .expect("none beside a seam");
+        assert_eq!(
+            mixed,
+            "provider 'p' declares none beside a usage seam; none is the answer only when nothing else is"
+        );
+        let uncited =
+            usage_finding("p", &offers_with(&[UsageSource::Otel], "  ")).expect("a blank citation");
+        assert_eq!(
+            uncited,
+            "provider 'p' declares offers.usage with no citation in offers.usage_evidence; a capability nobody can re-verify is refused"
+        );
+        assert_eq!(
+            usage_finding("p", &offers_with(&[UsageSource::None], cited)),
+            None
+        );
+        assert_eq!(
+            usage_finding("p", &offers_with(&[UsageSource::Otel], cited)),
+            None
+        );
+    }
+
+    #[test]
+    fn a_declared_provider_with_an_unwritten_usage_seam_is_an_error_naming_it() {
+        use crate::share::{ProviderDeclaration, UsageSource};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mut index = repo.index().unwrap();
+        let cited = "https://vendor.example/telemetry, verified 2026-10-22";
+        let declaration = |id: &str, declared: bool, offers| ProviderDeclaration {
+            id: id.to_string(),
+            title: id.to_string(),
+            template: true,
+            declared,
+            offers,
+            ..Default::default()
+        };
+        index.providers.providers = vec![
+            declaration("silent", true, offers_with(&[], "")),
+            declaration("cited", true, offers_with(&[UsageSource::Otel], cited)),
+            declaration("undeclared", false, offers_with(&[], "")),
+        ];
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(crate::capability::builtin::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let why = crate::why::Catalogue::build(&index, &registry);
+        let web = crate::web::Topology::new(crate::web::discover::native(
+            crate::web::discover::Runtime::full(),
+        ));
+        let m = ProductModel::build(&index, &registry, &why, &web);
+        let uncited: Vec<&ProductFinding> = m
+            .findings
+            .iter()
+            .filter(|f| f.code == "provider_usage_uncited")
+            .collect();
+        assert_eq!(uncited.len(), 1, "only the declared, silent provider");
+        let f = uncited[0];
+        assert_eq!(f.id.as_deref(), Some("silent"));
+        assert_eq!(f.severity, Severity::Error);
+        assert_eq!(f.path, "share/providers.yaml");
+        assert_eq!(f.field.as_deref(), Some("offers.usage"));
+        assert!(
+            f.message.contains("declares no offers.usage"),
+            "{}",
+            f.message
+        );
+    }
 }

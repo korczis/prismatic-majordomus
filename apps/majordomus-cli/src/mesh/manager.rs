@@ -1195,4 +1195,30 @@ mod tests {
         assert!(status.active);
         runtime.stop();
     }
+
+    #[test]
+    fn a_followed_source_moves_the_advertised_endpoints_of_an_active_mesh() {
+        let dir = tempfile::tempdir().unwrap();
+        let identity = Arc::new(identity_in(&dir, "self.json"));
+        let runtime = MeshRuntime::new();
+        runtime.follow_endpoints(Arc::new(|| vec!["10.0.0.9:8791".to_string()]));
+        assert!(
+            runtime.status().advertised.is_empty(),
+            "nothing is followed before an activation"
+        );
+        runtime
+            .activate_as(
+                &listed(&identity),
+                Arc::clone(&identity),
+                "0000000000000001",
+                vec!["192.168.100.96:8791".into()],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        assert_eq!(runtime.status().advertised, ["192.168.100.96:8791"]);
+        runtime.follow_endpoints(Arc::new(|| vec!["192.168.100.100:8791".to_string()]));
+        assert_eq!(runtime.status().advertised, ["192.168.100.100:8791"]);
+        runtime.stop();
+    }
 }

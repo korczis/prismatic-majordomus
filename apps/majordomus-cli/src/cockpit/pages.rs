@@ -8547,6 +8547,35 @@ mod tests {
         assert!(html.contains("did not answer"), "{html}");
     }
 
+    /// A node whose key was handed on to a successor is listed as retired, with the key that
+    /// succeeded it, not as observed or trusted.
+    #[test]
+    fn a_mesh_page_says_a_node_is_retired_and_by_whom() {
+        use crate::mesh::identity::NodeIdentity;
+        use crate::mesh::protocol::advertise;
+        use crate::mesh::registry::MeshSource;
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let dir = tempfile::tempdir().unwrap();
+        let id = NodeIdentity::load_or_create(&dir.path().join("node.json")).unwrap();
+        let env = advertise(&id, 1, &[], &["http".into()], &[], "0.5.0");
+        assert!(ctx.mesh.registry().observe(
+            &env.adv,
+            id.public.node_id.clone(),
+            crate::mesh::TrustState::Retired("successorkey".into()),
+            MeshSource::UdpMulticast,
+            "127.0.0.1:7741",
+            serde_json::Value::Null,
+        ));
+        let page = mesh(&ctx);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(
+            html.contains("retired: succeeded by successorkey"),
+            "{html}"
+        );
+    }
+
     /// Where an entity changed: the page says why there is nothing to list where git cannot
     /// answer, and says the list was cut, with the command that lists the rest, once more
     /// commits changed the file than the bound lets through.

@@ -2479,6 +2479,32 @@ mod tests {
     }
 
     #[test]
+    fn a_task_started_again_keeps_the_time_of_its_first_start() {
+        let entries = vec![
+            entry(
+                "10",
+                "task.started",
+                Some("s-a"),
+                json!({ "task_id": "t-1" }),
+            ),
+            entry(
+                "20",
+                "task.started",
+                Some("s-b"),
+                json!({ "task_id": "t-1" }),
+            ),
+        ];
+        let tasks = tasks_from_ledger(&entries, &BTreeMap::new());
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(
+            tasks[0].started_at, "10",
+            "the second start does not move it"
+        );
+        assert_eq!(tasks[0].outcome, "active");
+        assert_eq!(tasks[0].episodes.len(), 2, "both episodes are the task's");
+    }
+
+    #[test]
     fn issue_tokens_are_whole_words_each_once() {
         let ids = ["I0001".to_string(), "I0002".to_string()];
         assert_eq!(

@@ -495,4 +495,94 @@ mod tests {
         let back: RegisterAnswer = serde_json::from_str(&text).unwrap();
         assert!(back.accepted && back.candidates.is_empty());
     }
+
+    /// A canned rendezvous answering every POST with `status` and `body`; its endpoint.
+    fn canned(status: u16, body: String) -> String {
+        use std::io::{Read, Write};
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}", listener.local_addr().unwrap());
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { return };
+                let mut buffer = [0u8; 8192];
+                let _ = stream.read(&mut buffer);
+                let _ = stream.write_all(
+                    format!(
+                        "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                        body.len(),
+                        body
+                    )
+                    .as_bytes(),
+                );
+            }
+        });
+        endpoint
+    }
+
+    fn an_envelope() -> Envelope {
+        let identity = crate::mesh::identity::NodeIdentity::ephemeral().unwrap();
+        crate::mesh::protocol::advertise(&identity, 1, &["127.0.0.1:3".into()], &[], &[], "t")
+    }
+
+    fn answer_of(candidates: usize) -> String {
+        serde_json::to_string(&RegisterAnswer {
+            accepted: true,
+            refusal: None,
+            candidates: vec![an_envelope(); candidates],
+        })
+        .unwrap()
+    }
+
+    #[test]
+    fn a_status_other_than_200_is_a_status_error_naming_it() {
+        let endpoint = canned(503, String::new());
+        let error = register(&endpoint, &an_envelope()).unwrap_err();
+        match error {
+            RegisterError::Status {
+                endpoint: e,
+                status,
+            } => {
+                assert_eq!(e, endpoint);
+                assert_eq!(status, 503);
+            }
+            other => panic!("expected a status error, got {other}"),
+        }
+    }
+
+    #[test]
+    fn an_answer_over_the_candidate_bound_is_refused_as_too_many() {
+        let endpoint = canned(200, answer_of(MAX_ANSWER_CANDIDATES + 1));
+        let error = register(&endpoint, &an_envelope()).unwrap_err();
+        match error {
+            RegisterError::TooManyCandidates { endpoint: e, bound } => {
+                assert_eq!(e, endpoint);
+                assert_eq!(bound, MAX_ANSWER_CANDIDATES);
+            }
+            other => panic!("expected too many candidates, got {other}"),
+        }
+    }
+
+    #[test]
+    fn an_answer_at_the_candidate_bound_is_read_whole() {
+        let endpoint = canned(200, answer_of(MAX_ANSWER_CANDIDATES));
+        let answer = register(&endpoint, &an_envelope()).expect("at the bound is within it");
+        assert!(answer.accepted);
+        assert_eq!(answer.candidates.len(), MAX_ANSWER_CANDIDATES);
+    }
+
+    #[test]
+    fn a_body_that_is_not_an_answer_is_malformed_not_too_many() {
+        let endpoint = canned(200, "{\"accepted\": 3}".into());
+        let error = register(&endpoint, &an_envelope()).unwrap_err();
+        match error {
+            RegisterError::Malformed {
+                endpoint: e,
+                reason,
+            } => {
+                assert_eq!(e, endpoint);
+                assert!(!reason.is_empty());
+            }
+            other => panic!("expected a malformed error, got {other}"),
+        }
+    }
 }

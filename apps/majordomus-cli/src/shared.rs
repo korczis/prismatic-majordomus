@@ -835,4 +835,53 @@ mod tests {
         let reason = ctx.mesh.status().reason.unwrap_or_default();
         assert!(reason.contains(&format!("{var} is not set")), "{reason}");
     }
+
+    /// A server bound to every interface advertises the addresses the machine holds when a
+    /// beacon is cut, not the ones it held at start: the source it follows is read by
+    /// `mesh.status`.
+    #[test]
+    fn a_server_bound_to_every_interface_follows_the_interfaces_it_advertises() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let sources = fixture.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str("  - id: mesh-declaration\n    kind: mesh-declaration\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/mesh/*.yaml'\n    required: false\n");
+        std::fs::write(&sources, text).unwrap();
+        let dir = fixture.root().join(".ai/repo/mesh");
+        std::fs::create_dir_all(&dir).unwrap();
+        // the hub's key is listed, so the mesh is open to it and the server announces
+        let seed = "07".repeat(32);
+        let key = crate::mesh::NodeIdentity::from_seed_hex(&seed, "test")
+            .unwrap()
+            .public
+            .public_key;
+        std::fs::write(
+            dir.join("majordomus.yaml"),
+            format!("schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  allow:\n    - {key}\n"),
+        )
+        .unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let ctx = Arc::new(app.context);
+        // a variable no other test reads: the node key of this hub, 32 bytes of hex
+        let var = "MAJORDOMUS_TEST_T7_SHARED_NODE_SEED";
+        std::env::set_var(var, &seed);
+        let hosting = MeshHosting {
+            node_seed_env: Some(var.into()),
+            advertise: None,
+        };
+        activate_mesh(&ctx, crate::VERSION, "http://0.0.0.0:1", &hosting);
+        let status = ctx.mesh.status();
+        assert!(status.active, "{:?}", status.reason);
+        assert_eq!(
+            status.advertised,
+            crate::mesh::address::advertised_endpoints("0.0.0.0:1"),
+            "the interfaces' addresses, read again when asked"
+        );
+        ctx.mesh.stop();
+    }
 }

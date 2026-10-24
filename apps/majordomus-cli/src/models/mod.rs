@@ -896,6 +896,50 @@ models:
         assert_eq!(json["funding"][1]["evidence"]["checked"], "2026-10-21");
     }
 
+    #[test]
+    fn a_catalogue_that_is_no_mapping_or_no_catalogue_is_refused_with_a_reason() {
+        let not_yaml = ModelCatalogue::parse("- a\n- b\n").unwrap_err();
+        assert!(!not_yaml.is_empty(), "the unreadable text says why");
+        let not_a_catalogue = ModelCatalogue::parse("version: 1\nmodels: 3\n").unwrap_err();
+        assert!(
+            not_a_catalogue.contains("invalid type"),
+            "the typed parse refuses a models field that is no list: {not_a_catalogue}"
+        );
+    }
+
+    #[test]
+    fn a_vendor_without_funding_is_skipped_and_a_nameless_source_is_numbered() {
+        let c = ModelCatalogue::parse(&format!(
+            "version: 1\nvendors:\n  - id: bare\n    title: Bare\n  - id: acme\n    title: Acme\n    funding:\n\
+             \x20     - credential_env: ACME_API_KEY\n{EVIDENCE}"
+        ))
+        .unwrap();
+        assert_eq!(
+            c.diagnostics(),
+            ["vendor 'acme' funding source #1 declares no kind; it is set aside"]
+        );
+        assert!(
+            c.vendors[0].funding.is_empty(),
+            "the bare vendor holds none"
+        );
+        assert!(
+            c.vendors[1].funding.is_empty(),
+            "the unreadable source is gone"
+        );
+    }
+
+    #[test]
+    fn a_remote_source_without_a_credential_variable_is_reported() {
+        let c = with_funding(&format!(
+            "      - id: metered\n        kind: metered\n{EVIDENCE}"
+        ))
+        .unwrap();
+        assert_eq!(
+            c.diagnostics(),
+            ["vendor 'acme' funding source 'metered' names no credential variable that reaches it"]
+        );
+    }
+
     /// The distribution's own catalogue loads, and every source it declares is sound.
     #[test]
     fn the_shipped_catalogue_declares_its_funding_soundly() {

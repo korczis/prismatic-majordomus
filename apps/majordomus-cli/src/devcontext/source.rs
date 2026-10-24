@@ -353,13 +353,12 @@ fn read_guarded(
         ));
     }
     // a parent directory replaced by a link would pass the checks above: the real path is
-    // what is opened, so the real path is what must stay inside the root
-    let real = abs
-        .canonicalize()
-        .map_err(|e| format!("cannot resolve: {e}"))?;
-    if !real.starts_with(real_root) {
-        return Err("its real path leaves the repository; not read".into());
-    }
+    // what is opened, so the real path is what must stay inside the root; one that cannot be
+    // resolved is not known to stay inside it, and is refused the same way
+    let real = match abs.canonicalize() {
+        Ok(real) if real.starts_with(real_root) => real,
+        _ => return Err("its real path leaves the repository; not read".into()),
+    };
     // opened without following a final link, and judged by the handle that was opened
     // rather than by the path, so a file swapped between the checks above and the read is
     // refused instead of read
@@ -373,8 +372,15 @@ fn read_guarded(
     let file = options
         .open(&real)
         .map_err(|e| format!("cannot open without following a link: {e}"))?;
-    let opened = file.metadata().map_err(|e| format!("cannot stat: {e}"))?;
-    if !opened.is_file() {
+    let is_file = file.metadata().map(|m| m.is_file());
+    read_opened(file, is_file)
+}
+
+/// What [`read_guarded`] reads from the handle it opened, judged by that handle: refused when
+/// it is not a regular file, and when the file grew past the bound while it was read. A file
+/// swapped or grown after the checks on its path is what reaches these refusals.
+fn read_opened(file: impl Read, is_file: std::io::Result<bool>) -> Result<Vec<u8>, String> {
+    if !is_file.map_err(|e| format!("cannot stat: {e}"))? {
         return Err("not a regular file when it was opened".into());
     }
     let mut bytes = Vec::new();
@@ -651,5 +657,327 @@ mod tests {
         assert_eq!(bytes_between(&starts, 1, 1), 10);
         assert_eq!(bytes_between(&starts, 2, 2), 9);
         assert_eq!(bytes_between(&starts, 1, 2), text.len() as u64);
+    }
+
+    #[test]
+    fn a_range_past_the_last_line_ends_where_the_text_ends() {
+        let text = "fn a() {}\nfn b() {}\n";
+        let starts = line_starts(text);
+        assert_eq!(bytes_between(&starts, 2, 99), 10);
+        assert_eq!(bytes_between(&starts, 1, 99), text.len() as u64);
+    }
+
+    #[test]
+    fn every_kind_of_named_item_is_a_range_and_an_impl_macro_is_not() {
+        let text = "\
+enum E { A }
+union U { a: u8 }
+trait Tr {}
+const C: u8 = 0;
+static S: u8 = 0;
+type Alias = u8;
+mod elsewhere;
+impl Tr for &E {
+    fn by_ref(&self) {}
+}
+impl Tr for [u8] {
+    const LEN: usize = 0;
+    type Out = u8;
+    inner!();
+}
+";
+        let named: Vec<(&str, String)> = outline(text)
+            .unwrap()
+            .into_iter()
+            .map(|d| (d.item, d.symbol))
+            .collect();
+        let want: Vec<(&str, String)> = [
+            ("enum", "E"),
+            ("union", "U"),
+            ("trait", "Tr"),
+            ("const", "C"),
+            ("static", "S"),
+            ("type", "Alias"),
+            ("mod", "elsewhere"),
+            // a reference is named by what it refers to
+            ("impl fn", "<E as Tr>::by_ref"),
+            // a type without a path is named by the placeholder
+            ("impl const", "<_ as Tr>::LEN"),
+            ("impl type", "<_ as Tr>::Out"),
+        ]
+        .into_iter()
+        .map(|(i, s)| (i, s.to_string()))
+        .collect();
+        // the macro call inside the impl block is skipped, not named
+        assert_eq!(named, want);
+    }
+
+    #[test]
+    fn a_path_with_no_segment_is_named_by_a_placeholder() {
+        let mut ty: syn::Type = syn::parse_str("Budget").unwrap();
+        if let syn::Type::Path(p) = &mut ty {
+            p.path.segments.clear();
+        }
+        assert_eq!(type_name(&ty), "_");
+
+        let mut call: syn::Item = syn::parse_str("declare!();").unwrap();
+        if let syn::Item::Macro(m) = &mut call {
+            m.mac.path.segments.clear();
+        }
+        let mut imp: syn::Item = syn::parse_str("impl Shown for Budget { fn go() {} }").unwrap();
+        if let syn::Item::Impl(i) = &mut imp {
+            if let Some((_, path, _)) = &mut i.trait_ {
+                path.segments.clear();
+            }
+        }
+        let mut out = Vec::new();
+        definitions(&[call, imp], "", &mut out);
+        proc_macro2::extra::invalidate_current_thread_spans();
+        let named: Vec<(&str, &str)> = out.iter().map(|d| (d.item, d.symbol.as_str())).collect();
+        assert_eq!(
+            named,
+            [("macro call", "macro!"), ("impl fn", "<Budget as _>::go")]
+        );
+    }
+
+    use crate::devcontext::fixture::Planned;
+
+    const SCOPE: &str = "version: 1\nin:\n  - .ai/manifest.yaml\n  - .ai/README.md\n  - .ai/repo/**\n  - lib/**\n  - test/**\n  - src/**\nout:\n  paths: []\n  binary: false\n  max_bytes: 8388608\n";
+
+    fn git(root: &Path, args: &[&str]) {
+        let ok = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .env_remove("GIT_INDEX_FILE")
+            .status()
+            .expect("git runs");
+        assert!(ok.success(), "git {args:?}");
+    }
+
+    /// A repository whose scope admits `src/**`, judges no content as binary and admits
+    /// up to 8 MiB, so that the guards of [`read_guarded`] are the ones that refuse;
+    /// `files` are written and tracked.
+    fn tracked(files: &[(&str, &[u8])]) -> Planned {
+        let repo = Planned::build().expect("a repository");
+        repo.write(".ai/repo/scope.yaml", SCOPE).unwrap();
+        for (rel, bytes) in files {
+            let p = repo.root().join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, bytes).unwrap();
+        }
+        git(repo.root(), &["init", "-q"]);
+        git(repo.root(), &["add", "-A"]);
+        repo
+    }
+
+    fn selection() -> Selection {
+        Selection {
+            candidates: BTreeMap::new(),
+            unresolved: Vec::new(),
+            diagnostics: Vec::new(),
+            paths: BTreeSet::new(),
+        }
+    }
+
+    fn paths(of: &[&str]) -> BTreeSet<String> {
+        of.iter().map(|p| p.to_string()).collect()
+    }
+
+    fn reason<'a>(out: &'a Outlined, path: &str) -> &'a str {
+        out.unread
+            .iter()
+            .find(|u| u.path == path)
+            .map(|u| u.reason.as_str())
+            .unwrap_or_else(|| panic!("{path} is not unread: {:?}", out.unread))
+    }
+
+    #[test]
+    fn a_request_with_no_paths_reads_nothing() {
+        let repo = tracked(&[("src/a.rs", b"fn a() {}\n")]);
+        let ctx = repo.context().expect("a context");
+        let mut sel = selection();
+        let out = offer(&ctx, &mut sel, &BTreeSet::new(), &BTreeSet::new());
+        assert!(out.files.is_empty() && out.unread.is_empty() && out.unparsed.is_empty());
+        assert_eq!(out.truncated, 0);
+        assert!(sel.candidates.is_empty());
+    }
+
+    /// The handle a file was opened as is what decides: one that cannot be judged, is no
+    /// regular file, cannot be read, or grew past the bound is refused by name.
+    #[test]
+    fn an_opened_file_is_judged_by_its_handle() {
+        struct Broken;
+        impl Read for Broken {
+            fn read(&mut self, _: &mut [u8]) -> std::io::Result<usize> {
+                Err(std::io::Error::other("the disk went away"))
+            }
+        }
+        let stat = read_opened(&b"x"[..], Err(std::io::Error::other("gone"))).unwrap_err();
+        assert!(stat.starts_with("cannot stat: "), "{stat}");
+        assert_eq!(
+            read_opened(&b"x"[..], Ok(false)).unwrap_err(),
+            "not a regular file when it was opened"
+        );
+        let read = read_opened(Broken, Ok(true)).unwrap_err();
+        assert!(read.starts_with("cannot read: "), "{read}");
+        let grown = std::io::repeat(b'x').take(MAX_SOURCE_BYTES + 1);
+        assert_eq!(
+            read_opened(grown, Ok(true)).unwrap_err(),
+            "grew past the one-file bound while it was read"
+        );
+        assert_eq!(
+            read_opened(&b"fn a() {}"[..], Ok(true)).unwrap(),
+            b"fn a() {}"
+        );
+    }
+
+    #[test]
+    fn every_guard_names_the_file_it_refused() {
+        let huge = format!("// {}\n", "x".repeat(MAX_SOURCE_BYTES as usize));
+        let repo = tracked(&[
+            ("src/ok.rs", b"fn fine() {}\n"),
+            ("src/gone.rs", b"fn gone() {}\n"),
+            ("src/dir.rs", b"fn dir() {}\n"),
+            ("src/huge.rs", huge.as_bytes()),
+            ("src/linked/a.rs", b"fn linked() {}\n"),
+            ("src/latin1.rs", b"// caf\xe9\nfn latin() {}\n"),
+            ("src/locked.rs", b"fn locked() {}\n"),
+            ("src/LICENSE", b"text\n"),
+        ]);
+        let root = repo.root();
+        // tracked, then gone from the work tree
+        std::fs::remove_file(root.join("src/gone.rs")).unwrap();
+        // tracked as a file, a directory in the work tree
+        std::fs::remove_file(root.join("src/dir.rs")).unwrap();
+        std::fs::create_dir(root.join("src/dir.rs")).unwrap();
+        // a parent directory replaced by a link that leaves the repository
+        let outside = root.with_extension("outside");
+        std::fs::create_dir_all(&outside).unwrap();
+        std::fs::write(outside.join("a.rs"), "fn canary_outside() {}\n").unwrap();
+        std::fs::remove_dir_all(root.join("src/linked")).unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&outside, root.join("src/linked")).unwrap();
+        // readable by nobody: every check by path passes, and the open is refused
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(
+                root.join("src/locked.rs"),
+                std::fs::Permissions::from_mode(0o000),
+            )
+            .unwrap();
+        }
+
+        let ctx = repo.context().expect("a context");
+        let mut sel = selection();
+        let out = offer(&ctx, &mut sel, &paths(&["src"]), &BTreeSet::new());
+        let _ = std::fs::remove_dir_all(&outside);
+
+        assert!(
+            reason(&out, "src/gone.rs").starts_with("cannot stat: "),
+            "{out:?}"
+        );
+        assert_eq!(
+            reason(&out, "src/dir.rs"),
+            "not a regular file in the work tree"
+        );
+        assert_eq!(
+            reason(&out, "src/huge.rs"),
+            format!(
+                "{} bytes, over the {MAX_SOURCE_BYTES}-byte bound for one file",
+                huge.len()
+            )
+        );
+        #[cfg(unix)]
+        assert_eq!(
+            reason(&out, "src/linked/a.rs"),
+            "its real path leaves the repository; not read"
+        );
+        #[cfg(unix)]
+        assert!(
+            reason(&out, "src/locked.rs").starts_with("cannot open without following a link: "),
+            "{out:?}"
+        );
+        assert_eq!(reason(&out, "src/latin1.rs"), "not UTF-8 text");
+        // a file with no extension is counted under a name that says so
+        assert_eq!(out.unparsed.get("(none)"), Some(&1), "{:?}", out.unparsed);
+        // the one file every guard admits is the one outlined, and nothing outside leaks
+        let read: Vec<&str> = out.files.iter().map(|f| f.path.as_str()).collect();
+        assert_eq!(read, ["src/ok.rs"]);
+        assert!(sel.candidates.values().all(|c| !c
+            .title
+            .as_deref()
+            .unwrap_or("")
+            .contains("canary")));
+    }
+
+    #[test]
+    fn files_past_the_request_bound_are_counted_and_not_read() {
+        let names: Vec<String> = (0..MAX_SOURCE_FILES + 2)
+            .map(|i| format!("src/many/f{i:03}.rs"))
+            .collect();
+        let files: Vec<(&str, &[u8])> = names
+            .iter()
+            .map(|n| (n.as_str(), &b"fn f() {}\n"[..]))
+            .collect();
+        let repo = tracked(&files);
+        let ctx = repo.context().expect("a context");
+        let mut sel = selection();
+        let out = offer(&ctx, &mut sel, &paths(&["src/many"]), &BTreeSet::new());
+        assert_eq!(out.truncated, 2);
+        assert_eq!(out.files.len(), MAX_SOURCE_FILES);
+        assert!(out.unread.is_empty(), "{:?}", out.unread);
+    }
+
+    #[test]
+    fn a_file_no_path_names_exactly_is_reached_through_itself() {
+        let repo = tracked(&[("src/a.rs", b"fn a() {}\n")]);
+        let ctx = repo.context().expect("a context");
+        let mut sel = selection();
+        // git reads `src/` as the directory; neither `src/a.rs == src/` nor the prefix
+        // `src//` holds, so the way in is the file itself
+        let out = offer(&ctx, &mut sel, &paths(&["src/"]), &BTreeSet::new());
+        assert_eq!(out.files.len(), 1, "{out:?}");
+        let c = sel
+            .candidates
+            .get("source:src/a.rs#L1-L1")
+            .expect("the range");
+        assert_eq!(c.discovered_by[0].via.as_deref(), Some("src/a.rs"));
+    }
+
+    #[test]
+    fn a_root_that_cannot_be_resolved_is_reported_and_nothing_is_read() {
+        let repo = tracked(&[("src/a.rs", b"fn a() {}\n")]);
+        let mut index = repo.index().expect("an index");
+        // git reads an empty `-C` as the working directory, which is this crate's checkout,
+        // so the listing succeeds; the empty path itself resolves to nothing
+        index.repository.root = String::new();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(crate::capability::builtin::modules())
+            .with_index(&index)
+            .build()
+            .expect("a registry");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let mut sel = selection();
+        let out = offer(
+            &ctx,
+            &mut sel,
+            &paths(&["src/devcontext/source.rs"]),
+            &BTreeSet::new(),
+        );
+        assert_eq!(out.unread.len(), 1, "{:?}", out.unread);
+        assert_eq!(out.unread[0].path, ".");
+        assert!(
+            out.unread[0]
+                .reason
+                .starts_with("the repository root cannot be resolved: "),
+            "{:?}",
+            out.unread
+        );
+        assert!(out.files.is_empty());
+        assert!(sel.candidates.is_empty());
     }
 }

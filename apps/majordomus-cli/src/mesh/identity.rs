@@ -290,7 +290,17 @@ impl NodeIdentity {
     /// );
     /// ```
     pub fn rotate(&self, path: &Path) -> Result<(NodeIdentity, Succession), MeshError> {
-        let mut new = Self::create()?;
+        self.rotate_with(path, Self::create)
+    }
+
+    /// [`NodeIdentity::rotate`] with the successor made by `create`: a key that cannot be
+    /// made, or a successor the statement refuses, stops it before anything is written.
+    fn rotate_with(
+        &self,
+        path: &Path,
+        create: impl FnOnce() -> Result<Self, MeshError>,
+    ) -> Result<(NodeIdentity, Succession), MeshError> {
+        let mut new = create()?;
         new.public.display_name = self.public.display_name.clone();
         let at = crate::peers::rfc3339(std::time::SystemTime::now());
         let succession = Succession::sign(self, &new, &at)?;
@@ -580,6 +590,35 @@ fn write_private(path: &Path, text: &str) -> Result<(), MeshError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A rotation whose new key cannot be made fails with that error, and the file still
+    /// holds the old key.
+    #[test]
+    fn a_rotation_whose_key_cannot_be_made_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let old = NodeIdentity::load_or_create(&path).unwrap();
+        let err = old
+            .rotate_with(&path, || Err(MeshError::Identity("no OS entropy".into())))
+            .unwrap_err();
+        assert!(err.to_string().contains("no OS entropy"), "{err}");
+        let kept = NodeIdentity::load_or_create(&path).unwrap();
+        assert_eq!(kept.public.node_id, old.public.node_id);
+    }
+
+    /// A successor that is the same key is refused by the statement, and nothing is written.
+    #[test]
+    fn a_rotation_to_the_same_key_is_refused_and_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let old = NodeIdentity::load_or_create(&path).unwrap();
+        let err = old
+            .rotate_with(&path, || NodeIdentity::load_or_create(&path))
+            .unwrap_err();
+        assert!(err.to_string().contains("cannot succeed itself"), "{err}");
+        let kept = NodeIdentity::load_or_create(&path).unwrap();
+        assert_eq!(kept.public.node_id, old.public.node_id);
+    }
 
     /// A node key is owner-only from the moment it exists, whatever the umask, and a stale
     /// temp file left by an interrupted write does not lend it its mode.

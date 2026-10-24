@@ -194,6 +194,32 @@ mod tests {
         assert_eq!(v["deployment"], "hosted");
     }
 
+    /// `--site` reaches the capability: a site given to a deployment that declares none is
+    /// refused, naming `build.site`, and nothing is printed.
+    #[test]
+    fn a_site_given_to_the_deploy_command_reaches_the_capability() {
+        let repo = hosted_layer(&["hosted"]);
+        let elsewhere = tempfile::tempdir().unwrap();
+        let exe = elsewhere.path().join("exe");
+        std::fs::write(&exe, b"an executable").unwrap();
+        let mut a = args(
+            repo.root(),
+            Some("hosted"),
+            &exe,
+            &elsewhere.path().join("slug"),
+            OutputFormat::Text,
+        );
+        let DeployCommand::Slug { site, .. } = &mut a.command;
+        *site = Some(elsewhere.path().join("built").display().to_string());
+        let mut w = Vec::new();
+        let e = run_to(a, &mut w).unwrap_err();
+        assert!(
+            matches!(&e, Error::Refused { code: 15, reason } if reason.contains("build.site")),
+            "{e}"
+        );
+        assert!(w.is_empty(), "nothing is printed");
+    }
+
     /// The command is dispatched from the command line, and a refusal exits 15 with
     /// nothing printed.
     #[test]

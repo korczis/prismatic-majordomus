@@ -1312,6 +1312,31 @@ mod tests {
     use super::*;
 
     #[test]
+    fn the_coverage_totals_are_the_sums_over_its_files() {
+        let f = |whole: u64, selected: u64| SourceFile {
+            path: format!("src/{whole}.rs"),
+            digest: String::new(),
+            bytes: whole * 4,
+            whole_tokens: whole,
+            definitions: 2,
+            ranges: 2,
+            truncated: 0,
+            selected: 1,
+            selected_tokens: selected,
+            saved_tokens: whole - selected,
+        };
+        let c = SourceCoverage {
+            files: vec![f(100, 30), f(40, 10)],
+            ..Default::default()
+        };
+        assert_eq!(c.whole_tokens(), 140);
+        assert_eq!(c.selected_tokens(), 40);
+        assert_eq!(c.saved_tokens(), 100);
+        let none = SourceCoverage::default();
+        assert_eq!((none.whole_tokens(), none.selected_tokens()), (0, 0));
+    }
+
+    #[test]
     fn the_tiers_are_the_order_the_budget_spends_in() {
         // every tier appears exactly once, sorted, and each says what it is for
         let mut sorted = Tier::ORDER.to_vec();

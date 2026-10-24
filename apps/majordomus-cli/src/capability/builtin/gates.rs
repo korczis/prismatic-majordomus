@@ -858,6 +858,75 @@ mod tests {
             .any(|f| f.starts_with("the current commit could not be read")));
     }
 
+    /// A repository with two gates: `lint` is `always` (any change invalidates it) and
+    /// `docs` belongs to no class (nothing does).
+    fn two_gate_repository() -> crate::synthetic::SyntheticRepository {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let path = repo.root().join(model::MODEL_PATH);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(
+            &path,
+            "version: 1\ngates:\n  - id: lint\n    job: structure\n    runs: \"true\"\n    \
+             summary: lints\n    always: true\n  - id: docs\n    job: structure\n    \
+             runs: \"true\"\n    summary: docs\nclasses: []\n",
+        )
+        .unwrap();
+        repo
+    }
+
+    #[test]
+    fn a_gate_with_inputs_is_hashed_from_them_and_one_without_hashes_to_nothing() {
+        let repo = two_gate_repository();
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["add", "-A"]);
+        let (m, unreadable) = load_model(&root);
+        assert_eq!(unreadable, None);
+        let hashes = gate_hashes(&root, &m);
+        assert_eq!(
+            hashes["docs"],
+            Some(String::new()),
+            "no inputs, the empty hash"
+        );
+        let lint = hashes["lint"].clone().expect("an always gate is hashed");
+        assert!(!lint.is_empty(), "the tracked files were hashed");
+    }
+
+    #[test]
+    fn a_ledger_line_that_cannot_be_read_is_counted_and_said_by_the_gate_state() {
+        let repo = two_gate_repository();
+        let ledger = gates::ledger_path(repo.root());
+        std::fs::create_dir_all(ledger.parent().unwrap()).unwrap();
+        std::fs::write(&ledger, "this is not json\n{\"event\":\"task.start\"}\n").unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let report: GateStateReport = serde_json::from_value(
+            ctx.execute("gates.state", serde_json::json!({}))
+                .expect("the gate state answers"),
+        )
+        .expect("a gate state report");
+        assert!(
+            report.findings.iter().any(|f| f
+                == "1 ledger line(s) could not be read and were skipped; run `majordomus doctor`"),
+            "{:?}",
+            report.findings
+        );
+    }
+
     #[test]
     fn the_completion_answer_is_never_cached() {
         // a completion state cached for even a few seconds is a state that can say

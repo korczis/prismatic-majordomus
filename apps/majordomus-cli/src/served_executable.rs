@@ -100,11 +100,13 @@ fn ensure_copy(exe: &Path, target: &Path, now: SystemTime) -> io::Result<()> {
     fs::create_dir_all(dir)?;
     let size = fs::metadata(exe)?.len();
     if fs::metadata(target).is_err() {
-        match fs::hard_link(exe, target) {
-            Ok(()) => {}
-            Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {}
-            Err(_) => copy_into_place(exe, target, dir)?,
-        }
+        fs::hard_link(exe, target).or_else(|e| {
+            if e.kind() == io::ErrorKind::AlreadyExists {
+                Ok(())
+            } else {
+                copy_into_place(exe, target, dir)
+            }
+        })?;
     }
     if fs::metadata(target)?.len() != size {
         return Err(io::Error::other(format!(
@@ -136,8 +138,9 @@ fn named_at(meta: &fs::Metadata) -> Option<SystemTime> {
     #[cfg(unix)]
     {
         use std::os::unix::fs::MetadataExt;
-        let secs = u64::try_from(meta.ctime()).ok()?;
-        Some(SystemTime::UNIX_EPOCH + Duration::from_secs(secs))
+        u64::try_from(meta.ctime())
+            .ok()
+            .map(|secs| SystemTime::UNIX_EPOCH + Duration::from_secs(secs))
     }
     #[cfg(not(unix))]
     {
@@ -218,9 +221,8 @@ pub fn serve_from_a_copy(command: &Command) {
     if !may_hold_the_lease(command) {
         return;
     }
-    let Ok(exe) = std::env::current_exe() else {
-        return;
-    };
+    // an executable that cannot name itself names no build output, so it has no copy
+    let exe = std::env::current_exe().unwrap_or_default();
     let Some(target) = copy_target(&exe) else {
         return;
     };
@@ -410,5 +412,224 @@ mod tests {
         let target = copy_target(&exe).unwrap();
         fs::remove_file(&exe).unwrap();
         assert!(ensure_copy(&exe, &target, SystemTime::now()).is_err());
+    }
+    #[test]
+    fn an_executable_that_names_no_build_output_has_no_copy() {
+        // no parent at all
+        assert_eq!(copy_target(Path::new("/")), None);
+        // the name an executable gets when it cannot name itself
+        assert_eq!(copy_target(Path::new("")), None);
+        // a parent with no parent: a bare file name
+        assert_eq!(copy_target(Path::new("majordomus")), None);
+        // a marked build output whose path ends in `..` names no file
+        let dir = tempfile::tempdir().unwrap();
+        let exe = build_output(dir.path());
+        let dotdot = exe.parent().unwrap().join("..");
+        assert_eq!(copy_target(&dotdot), None);
+        assert!(
+            copy_target(&exe).is_some(),
+            "the marked output still is one"
+        );
+    }
+
+    #[test]
+    fn a_build_older_than_the_epoch_has_no_copy_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = build_output(dir.path());
+        let before = SystemTime::UNIX_EPOCH - Duration::from_secs(1000);
+        let set = fs::File::options()
+            .write(true)
+            .open(&exe)
+            .and_then(|f| f.set_modified(before));
+        // a filesystem that cannot hold such a time cannot produce the case either
+        if set.is_err() || fs::metadata(&exe).unwrap().modified().unwrap() >= SystemTime::UNIX_EPOCH
+        {
+            return;
+        }
+        assert_eq!(copy_target(&exe), None);
+    }
+
+    #[test]
+    fn a_copy_that_cannot_be_placed_is_an_error_naming_what_failed() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = build_output(dir.path());
+        // a target with no directory to hold it
+        let e = ensure_copy(&exe, Path::new("/"), SystemTime::now()).unwrap_err();
+        assert!(e.to_string().contains("has a directory"), "{e}");
+        // a directory that cannot be made, because a file is where it goes
+        let blocker = dir.path().join("blocker");
+        fs::write(&blocker, b"x").unwrap();
+        let e = ensure_copy(&exe, &blocker.join("served/copy"), SystemTime::now()).unwrap_err();
+        assert_ne!(e.kind(), io::ErrorKind::AlreadyExists, "{e}");
+        assert!(!blocker.join("served").exists());
+        // a "build" that cannot be linked or copied, because it is a directory
+        let served = dir.path().join("served");
+        let target = served.join("copy-1-1");
+        assert!(ensure_copy(dir.path(), &target, SystemTime::now()).is_err());
+        assert!(!target.exists(), "nothing was placed");
+        let left: Vec<_> = fs::read_dir(&served).unwrap().flatten().collect();
+        assert!(left.is_empty(), "no partial file is left behind");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_name_that_exists_but_leads_nowhere_is_not_a_whole_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = build_output(dir.path());
+        let served = dir.path().join("debug").join(SERVED_DIR);
+        fs::create_dir_all(&served).unwrap();
+        let target = served.join("majordomus-1-11");
+        // the name is taken (by a link to nothing), so the hard link finds it there and the
+        // copy is then judged by what the name leads to
+        std::os::unix::fs::symlink(dir.path().join("nowhere"), &target).unwrap();
+        let e = ensure_copy(&exe, &target, SystemTime::now()).unwrap_err();
+        assert_eq!(e.kind(), io::ErrorKind::NotFound, "{e}");
+    }
+
+    #[test]
+    fn a_path_is_a_copy_only_when_it_is_named_as_one() {
+        // no parent
+        assert_eq!(copied_from(Path::new("/")), None);
+        // a parent with no name
+        assert_eq!(copied_from(Path::new("/majordomus-1-2")), None);
+        // a copy's name that is not text
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            let name = std::ffi::OsStr::from_bytes(b"majordomus-\xff-2");
+            assert_eq!(copied_from(&Path::new("debug/served").join(name)), None);
+        }
+        // a path that ends in `..` has no file name
+        assert_eq!(copied_from(Path::new("debug/served/..")), None);
+        // no dash at all, and one dash only
+        assert_eq!(copied_from(Path::new("debug/served/majordomus")), None);
+        assert_eq!(copied_from(Path::new("debug/served/majordomus-2")), None);
+        // a size that is not digits, a time that is not, and an empty stem
+        assert_eq!(copied_from(Path::new("debug/served/majordomus-1-x")), None);
+        assert_eq!(copied_from(Path::new("debug/served/majordomus-x-1")), None);
+        assert_eq!(copied_from(Path::new("debug/served/-1-2")), None);
+        // and the shape that is one
+        assert_eq!(
+            copied_from(Path::new("debug/served/majordomus-1-2")),
+            Some(PathBuf::from("debug/majordomus"))
+        );
+    }
+
+    #[test]
+    fn pruning_a_directory_that_cannot_be_listed_leaves_it_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        let missing = dir.path().join("served");
+        prune(
+            &missing,
+            &missing.join("keep"),
+            SystemTime::now() + KEEP_FOR * 2,
+        );
+        assert!(!missing.exists(), "nothing was made");
+    }
+
+    /// The entry the child processes of the tests below run: with no mode in the environment
+    /// it does nothing, which is what an ordinary run of the suite sees.
+    #[test]
+    fn serve_from_a_copy_child_entry() {
+        use clap::Parser;
+        let Ok(mode) = std::env::var(CHILD_MODE) else {
+            return;
+        };
+        let serve = crate::cli::Cli::try_parse_from(["majordomus", "serve"])
+            .unwrap()
+            .command;
+        let exe = std::env::current_exe().unwrap();
+        match mode.as_str() {
+            "ensure-fails" => {
+                // the copy's name is taken by a file of another size
+                let target = copy_target(&exe).expect("this binary is a marked build output");
+                fs::create_dir_all(target.parent().unwrap()).unwrap();
+                fs::write(&target, b"short").unwrap();
+            }
+            #[cfg(unix)]
+            "exec-fails" => {
+                use std::os::unix::fs::PermissionsExt;
+                // the copy is a second name of this very file, which can no longer be run
+                fs::set_permissions(&exe, fs::Permissions::from_mode(0o644)).unwrap();
+            }
+            _ => {}
+        }
+        serve_from_a_copy(&serve);
+        println!("returned: {mode}");
+    }
+
+    const CHILD_MODE: &str = "MJ_SERVED_EXECUTABLE_TEST_MODE";
+
+    /// Run this test binary, copied to `exe`, as the one test that serves from a copy, in
+    /// `mode`; its status and what it wrote to standard error and output.
+    fn run_child(exe: &Path, mode: &str) -> (bool, String, String) {
+        fs::create_dir_all(exe.parent().unwrap()).unwrap();
+        fs::copy(std::env::current_exe().unwrap(), exe).unwrap();
+        let out = std::process::Command::new(exe)
+            .args([
+                "--exact",
+                "served_executable::tests::serve_from_a_copy_child_entry",
+                "--nocapture",
+                "--test-threads=1",
+            ])
+            .env(CHILD_MODE, mode)
+            .output()
+            .unwrap();
+        (
+            out.status.success(),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+            String::from_utf8_lossy(&out.stdout).into_owned(),
+        )
+    }
+
+    #[test]
+    fn a_server_that_is_no_build_output_serves_in_place_without_a_word() {
+        let dir = tempfile::tempdir().unwrap();
+        // no mark above the profile directory
+        let exe = dir.path().join("plain").join("bin").join("majordomus");
+        let (ok, err, out) = run_child(&exe, "unmarked");
+        assert!(ok, "{err}{out}");
+        assert!(out.contains("returned: unmarked"), "{out}");
+        assert!(!err.contains("majordomus: "), "{err}");
+        assert!(!exe.parent().unwrap().join(SERVED_DIR).exists());
+    }
+
+    #[test]
+    fn a_copy_that_cannot_be_made_is_said_on_stderr_and_the_server_serves_in_place() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("CACHEDIR.TAG"), "Signature: x\n").unwrap();
+        let exe = dir.path().join("debug").join("majordomus");
+        let (ok, err, out) = run_child(&exe, "ensure-fails");
+        assert!(ok, "{err}{out}");
+        assert!(out.contains("returned: ensure-fails"), "{out}");
+        assert!(err.contains("serving from "), "{err}");
+        assert!(err.contains("itself, not a copy"), "{err}");
+        assert!(err.contains("is not a whole copy of the build"), "{err}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_copy_that_cannot_be_run_is_said_on_stderr_and_the_server_serves_in_place() {
+        // permissions do not bind a privileged process, which would run the copy
+        if unsafe { libc::geteuid() } == 0 {
+            return;
+        }
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("CACHEDIR.TAG"), "Signature: x\n").unwrap();
+        let exe = dir.path().join("debug").join("majordomus");
+        let (ok, err, out) = run_child(&exe, "exec-fails");
+        assert!(ok, "{err}{out}");
+        assert!(out.contains("returned: exec-fails"), "{out}");
+        assert!(err.contains("could not run the copy "), "{err}");
+        assert!(err.contains("); serving from "), "{err}");
+        let served: Vec<_> = fs::read_dir(dir.path().join("debug").join(SERVED_DIR))
+            .unwrap()
+            .flatten()
+            .collect();
+        assert_eq!(
+            served.len(),
+            1,
+            "the copy was made, and then refused to run"
+        );
     }
 }
