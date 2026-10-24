@@ -90,6 +90,53 @@ pub const MAX_SESSION_TTL_SECONDS: u32 = 3600;
 /// on, never a log.
 pub const MAX_PHASE_BYTES: usize = 160;
 
+/// How a phase opens when it names a wait on a person — `blocked: permission dialog`,
+/// `blocked: awaiting input` — rather than work (I3992).
+pub const BLOCKED_PHASE_PREFIX: &str = "blocked:";
+
+/// Whether a session beat's phase says the session waits on a person (I3992): it opens
+/// with [`BLOCKED_PHASE_PREFIX`]. Such a beat is a mark and not progress — it never moves
+/// the session's progress clock, so a session waiting on a dialog is still judged by the
+/// last time it worked, and its exclusive claims suspend by the ttl exactly as they would
+/// without the mark. A wait on anything else (`waiting on CI run 123`) is progress.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::waits_on_a_person;
+/// assert!(waits_on_a_person("blocked: permission dialog"));
+/// assert!(waits_on_a_person("  blocked: awaiting input (pid 42)"));
+/// assert!(!waits_on_a_person("waiting on CI run 123"), "a wait on a machine is work");
+/// assert!(!waits_on_a_person("unblocked: resumed"));
+/// ```
+pub fn waits_on_a_person(phase: &str) -> bool {
+    phase.trim_start().starts_with(BLOCKED_PHASE_PREFIX)
+}
+
+/// The reason a phase gives for waiting on a person — what follows `blocked:` — or `None`
+/// when the phase names work (I3992).
+///
+/// ```
+/// use majordomus_cli::mesh::journal::blocked_reason;
+/// assert_eq!(blocked_reason(Some("blocked: permission dialog")).as_deref(), Some("permission dialog"));
+/// assert_eq!(blocked_reason(Some("blocked:")).as_deref(), Some("a person"), "a wait with no reason");
+/// assert_eq!(blocked_reason(Some("waiting on CI run 123")), None);
+/// assert_eq!(blocked_reason(None), None);
+/// ```
+pub fn blocked_reason(phase: Option<&str>) -> Option<String> {
+    let phase = phase?.trim_start();
+    if !waits_on_a_person(phase) {
+        return None;
+    }
+    let reason = phase[BLOCKED_PHASE_PREFIX.len()..].trim();
+    Some(
+        if reason.is_empty() {
+            "a person"
+        } else {
+            reason
+        }
+        .to_string(),
+    )
+}
+
 /// The most streams one node may occupy: runtime and instance ids are free to invent, so a
 /// single trusted key must not be able to fill the stream table.
 pub const MAX_STREAMS_PER_NODE: usize = 64;
@@ -587,7 +634,9 @@ pub enum EventBody {
         ttl_seconds: u32,
         /// What the session is doing, when it said: `waiting on CI run 123`, `holding the
         /// build lock`. A phase is progress too — a process that waits on something
-        /// outside itself is working — and every surface shows it beside the session.
+        /// outside itself is working — and every surface shows it beside the session. The
+        /// one exception is a wait on a person (`blocked: permission dialog`, see
+        /// [`waits_on_a_person`]): a mark that moves no progress clock (I3992).
         #[serde(default, skip_serializing_if = "Option::is_none")]
         phase: Option<String>,
     },
@@ -1683,6 +1732,10 @@ impl StreamLog {
     }
 
     /// Remember a session beat the stream carries, if `event` is one, as stored now.
+    ///
+    /// A beat whose phase waits on a person ([`waits_on_a_person`]) is a mark, not progress
+    /// (I3992): it replaces the phase and leaves the clock where the session's last progress
+    /// put it, and a session with no clock gets none — ttl 0, judged by its stream as before.
     fn note_session_beat(&mut self, event: &MeshEvent) {
         if event.kind() != "session_beat" {
             return;
@@ -1693,8 +1746,18 @@ impl StreamLog {
             phase,
         }) = event.body()
         {
-            self.session_beats
-                .insert(session, (Instant::now(), ttl_seconds, phase));
+            let mark = phase.as_deref().is_some_and(waits_on_a_person);
+            match self.session_beats.get_mut(&session) {
+                Some(entry) if mark => entry.2 = phase,
+                None if mark => {
+                    self.session_beats
+                        .insert(session, (Instant::now(), 0, phase));
+                }
+                _ => {
+                    self.session_beats
+                        .insert(session, (Instant::now(), ttl_seconds, phase));
+                }
+            }
         }
     }
 
@@ -2793,8 +2856,10 @@ impl Journal {
     }
 
     /// How long ago, on this runtime's clock, it stored the newest session beat of `key`
-    /// (`<stream>/<session>`), and the phase it named; `None` when the session never beat.
-    /// What a surface shows as a session's progress (I3990).
+    /// (`<stream>/<session>`) that was progress, and the phase its newest beat named; `None`
+    /// when the session never beat. What a surface shows as a session's progress (I3990).
+    /// The age is `None` for a session that only ever said it waits on a person (I3992): a
+    /// mark is not progress, so it starts no clock.
     ///
     /// ```
     /// use std::sync::Arc;
@@ -2806,16 +2871,21 @@ impl Journal {
     /// let key = format!("{}/s1", j.own_stream());
     /// assert!(j.session_beat_age(&key).is_none());
     /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600,
+    ///     phase: Some("blocked: permission dialog".into()) }).unwrap();
+    /// let (age, phase) = j.session_beat_age(&key).unwrap();
+    /// assert_eq!((age, phase.as_deref()), (None, Some("blocked: permission dialog")));
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600,
     ///     phase: Some("waiting on CI".into()) }).unwrap();
-    /// let (_, phase) = j.session_beat_age(&key).unwrap();
+    /// let (age, phase) = j.session_beat_age(&key).unwrap();
+    /// assert!(age.is_some());
     /// assert_eq!(phase.as_deref(), Some("waiting on CI"));
     /// ```
-    pub fn session_beat_age(&self, key: &str) -> Option<(Duration, Option<String>)> {
+    pub fn session_beat_age(&self, key: &str) -> Option<(Option<Duration>, Option<String>)> {
         let (stream, session) = key.split_once('/')?;
         let stream = StreamId::parse(stream)?;
         let inner = self.inner.lock().expect("journal lock");
-        let (stored, _, phase) = inner.streams.get(&stream)?.session_beats.get(session)?;
-        Some((stored.elapsed(), phase.clone()))
+        let (stored, ttl, phase) = inner.streams.get(&stream)?.session_beats.get(session)?;
+        Some(((*ttl > 0).then(|| stored.elapsed()), phase.clone()))
     }
 
     /// [`Journal::session_progress`] measured at `now`: what the tests use to age a beat
@@ -3674,6 +3744,60 @@ mod tests {
                 ttl_seconds: 8,
                 phase: None
             }
+        );
+    }
+
+    /// I3992: a beat that says the session waits on a person replaces the phase on the
+    /// writer and on every reader, and moves no progress clock — a session that only ever
+    /// said it waits gets none, and is judged by its stream as before. The next beat that
+    /// is progress clears the mark and restarts the clock.
+    #[test]
+    fn a_wait_on_a_person_is_shown_and_is_not_progress() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        let beat = |session: &str, phase: Option<&str>| EventBody::SessionBeat {
+            session: session.into(),
+            ttl_seconds: 8,
+            phase: phase.map(str::to_string),
+        };
+        let worker = format!("{}/worker", a.own_stream());
+        let idle = format!("{}/idle", a.own_stream());
+        a.append_own(beat("worker", Some("editing"))).unwrap();
+        std::thread::sleep(Duration::from_millis(30));
+        a.append_own(beat("worker", Some("blocked: permission dialog")))
+            .unwrap();
+        a.append_own(beat("idle", Some("blocked: awaiting input")))
+            .unwrap();
+        b.ingest(&a.missing_for(&b.marks(), 1 << 20), &accept_all);
+        for j in [&a, &b] {
+            let (age, phase) = j.session_beat_age(&worker).unwrap();
+            assert_eq!(phase.as_deref(), Some("blocked: permission dialog"));
+            if std::ptr::eq(j, &a) {
+                assert!(
+                    age.unwrap() >= Duration::from_millis(30),
+                    "the mark did not move the clock the progress set"
+                );
+            }
+            let (age, phase) = j.session_beat_age(&idle).unwrap();
+            assert_eq!(
+                (age, phase.as_deref()),
+                (None, Some("blocked: awaiting input"))
+            );
+            assert_eq!(
+                j.session_progress(&idle, Duration::ZERO),
+                SessionProgress::Unreported,
+                "a mark starts no clock"
+            );
+        }
+        // the next real work clears the mark and is progress again
+        a.append_own(beat("worker", None)).unwrap();
+        let (age, phase) = a.session_beat_age(&worker).unwrap();
+        assert!(age.unwrap() < Duration::from_millis(30));
+        assert_eq!(phase, None);
+        a.append_own(beat("idle", None)).unwrap();
+        assert_eq!(
+            a.session_progress(&idle, Duration::ZERO),
+            SessionProgress::Within
         );
     }
 

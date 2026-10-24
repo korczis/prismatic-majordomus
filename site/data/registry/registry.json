@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "83df339bdc4c0f44be42214018f533438b053290eef072f30d4c471063c6cd46",
+    "fingerprint": "21c619ef50e4497d58f1884dc1d931f90669ad716d6b59c7fd6d9f12362f6fa7",
     "summary": {
-      "total": 3446,
+      "total": 3447,
       "builtin": 214,
-      "declarative": 3232,
+      "declarative": 3233,
       "by_kind": {
         "command": 34,
         "query": 180,
-        "resource": 3232
+        "resource": 3233
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 59,
-        "implemented": 3242
+        "implemented": 3243
       },
       "mcp_tools": 202,
-      "mcp_resources": 3287,
+      "mcp_resources": 3288,
       "http_routes": 208,
       "cli_commands": 116,
       "modules": 94,
@@ -47245,7 +47245,7 @@
                   "string",
                   "null"
                 ],
-                "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+                "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it."
               },
               "pid": {
                 "type": [
@@ -51372,7 +51372,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                    "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
                   },
                   "phase": {
                     "type": [
@@ -51380,6 +51380,13 @@
                       "null"
                     ],
                     "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+                  },
+                  "blocked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
                   }
                 },
                 "required": [
@@ -52543,7 +52550,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                    "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
                   },
                   "phase": {
                     "type": [
@@ -52551,6 +52558,13 @@
                       "null"
                     ],
                     "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+                  },
+                  "blocked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
                   }
                 },
                 "required": [
@@ -89312,7 +89326,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 630,
+        "capabilities": 631,
         "capability_ids": []
       },
       {
@@ -89404,7 +89418,7 @@
     ]
   },
   "index": {
-    "fingerprint": "6dddfc817f4ab30e08406e6f070e7a37fbb706d1adf9140222f4b912c724dfb9",
+    "fingerprint": "1bf8114b2458af0a29e135f38c2d7a7c9368ba779d8a69794e66ef7651bb52c8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89458,7 +89472,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 630,
+      "test": 631,
       "use-case": 49,
       "workspace": 1
     },
@@ -96699,7 +96713,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 81631
+        "bytes": 85160
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -111378,7 +111392,7 @@
         "path": ".ai/repo/project/issues/I3992.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2512
+        "bytes": 3882
       },
       {
         "uri": "majordomus://issue/I3993",
@@ -121957,6 +121971,14 @@
         "bytes": 10890
       },
       {
+        "uri": "majordomus://test/test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "kind": "test",
+        "identity": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "path": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "source_class": "case",
+        "bytes": 7753
+      },
+      {
         "uri": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
         "kind": "test",
         "identity": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
@@ -124809,7 +124831,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 630
+      "objects": 631
     },
     {
       "name": "use-case",
@@ -146388,7 +146410,7 @@
                 "help": "The session making progress, as it was claimed under",
                 "value_name": "SESSION",
                 "takes_value": true,
-                "required": true,
+                "required": false,
                 "global": false,
                 "possible_values": [],
                 "defaults": []
@@ -146397,7 +146419,7 @@
                 "name": "phase",
                 "long": "phase",
                 "positional": false,
-                "help": "What it is doing, one line: `waiting on CI run 123`",
+                "help": "What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person",
                 "value_name": "PHASE",
                 "takes_value": true,
                 "required": false,
@@ -146411,6 +146433,18 @@
                 "positional": false,
                 "help": "The running process of this machine the beat speaks for",
                 "value_name": "PID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "hook",
+                "long": "hook",
+                "positional": false,
+                "help": "Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0",
+                "value_name": "PROVIDER",
                 "takes_value": true,
                 "required": false,
                 "global": false,

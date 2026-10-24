@@ -27,7 +27,9 @@ Record that a session of this runtime is making progress, with the phase it is i
 | `session` | string or null | no | The session making progress; the calling MCP session's own when omitted. It must be
 a session this runtime opened (a claim opens one). |
 | `phase` | string or null | no | What the session is doing, one line: `waiting on CI run 123`, `holding the build
-lock`. Redacted before it is signed, and shown beside the session everywhere. |
+lock`. Redacted before it is signed, and shown beside the session everywhere. A phase
+opening with `blocked:` says the session waits on a person (`blocked: permission
+dialog`): it is written at once, is not progress, and the next beat that is clears it. |
 | `pid` | integer or null | no | The process the beat speaks for; refused unless it is running on this machine. |
 
 Output: `Written`.
