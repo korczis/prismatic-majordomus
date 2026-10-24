@@ -1627,11 +1627,11 @@ impl Cooperation {
                             && other.state.is_live()
                             && scopes_meet(&other.scope, &claim.scope)
                     });
+                    // The release cannot be refused: the claim is this run's own and in the
+                    // fold, and the reason a constant line the journal's bounds admit.
                     if !overtaken {
                         armed += 1;
-                    } else if let Err(e) = self.release_because(&claim.key, OVERTAKEN) {
-                        tracing::warn!(runtime_id = %self.own_key, session_id = %session, claim = %claim.key, error = %e, "an overtaken suspended claim could not be released");
-                    } else {
+                    } else if self.release_because(&claim.key, OVERTAKEN).is_ok() {
                         tracing::info!(runtime_id = %self.own_key, session_id = %session, claim = %claim.key, "a suspended claim another session was admitted over is released, not re-armed");
                     }
                 }
@@ -1666,29 +1666,25 @@ impl Cooperation {
             ttl_seconds: u32::try_from(ttl.as_secs()).unwrap_or(u32::MAX),
             phase: phase.clone(),
         };
-        match self.write(body, mine) {
-            Ok(written) => {
-                {
-                    let mut window = self.beat_window.lock().expect("cooperation beat window");
-                    window.times.push_back(now);
-                    window.written += 1;
-                    window.warned = false;
-                }
-                self.beats.lock().expect("cooperation beats").insert(
-                    session.to_string(),
-                    LastBeat {
-                        at: now,
-                        phase,
-                        written: written.clone(),
-                    },
-                );
-                Some(written)
+        // The journal cannot refuse this beat: the session is one this runtime opened, so its
+        // name passed the same bound; the ttl passed the declaration's check; and the phase
+        // was clipped to one line of its bound. Only a refused write would answer `None` here.
+        self.write(body, mine).ok().inspect(|written| {
+            {
+                let mut window = self.beat_window.lock().expect("cooperation beat window");
+                window.times.push_back(now);
+                window.written += 1;
+                window.warned = false;
             }
-            Err(e) => {
-                tracing::warn!(runtime_id = %self.own_key, session_id = %session, error = %e, "a session beat was not written");
-                None
-            }
-        }
+            self.beats.lock().expect("cooperation beats").insert(
+                session.to_string(),
+                LastBeat {
+                    at: now,
+                    phase,
+                    written: written.clone(),
+                },
+            );
+        })
     }
 
     /// The session beats this runtime wrote and withheld, for `mesh doctor` (I3990).
@@ -5878,6 +5874,11 @@ mod tests {
             "{}",
             check.detail
         );
+        // asked again inside the window it is withheld again, and counted, though the
+        // warning was said once
+        assert!(a.beat_at(&over, None, None, start).is_err());
+        assert_eq!(a.session_beat_tally().withheld, 2);
+        assert_eq!(session_beats(&a).len(), limit);
         // an hour on, the window has moved
         a.beat_at(&over, None, None, start + SESSION_BEAT_WINDOW)
             .expect("the window moved");
@@ -5958,6 +5959,210 @@ mod tests {
             ),
             "it claims again through admission, which the newcomer's claim refuses"
         );
+    }
+
+    /// With the progress rule turned off (`session_ttl_seconds: 0`) nothing beats: a board
+    /// session's exclusive claim costs no beat, the heartbeat beats for nobody, and a beat
+    /// asked for is refused, saying the rule is off — its claims live by the stream rule
+    /// alone (I3990).
+    #[test]
+    fn a_runtime_with_the_progress_rule_off_beats_for_nobody() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(0, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.progress(&p);
+        let session = format!("board-{p}");
+        a.claim(
+            &SessionInfo::named(&session, "test"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        board.progress(&p);
+        a.beat_sessions_at(Instant::now() + Duration::from_secs(3600));
+        assert!(session_beats(&a).is_empty(), "{:?}", session_beats(&a));
+        let refused = a
+            .beat(&session, Some("working".into()), None)
+            .expect_err("the rule is off");
+        assert!(
+            refused.to_string().contains("the progress rule is off"),
+            "{refused}"
+        );
+        assert_eq!(a.session_beat_tally().limit, 0);
+        assert!(a.state().claims.iter().all(|c| c.state.is_live()));
+    }
+
+    /// A beat speaks for a session this runtime opened, and for a live process when it names
+    /// one: the pid is shown with the phase, or alone when the phase is blank (I3990).
+    #[test]
+    fn a_beat_names_its_live_process_beside_its_phase() {
+        let a = progress_runtime(8, None);
+        assert!(matches!(
+            a.beat("nobody", None, None),
+            Err(CooperationError::NotFound(_))
+        ));
+        a.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        let pid = std::process::id();
+        let key = format!("{}/lander", a.journal().own_stream());
+        let start = Instant::now();
+        a.beat_at(
+            "lander",
+            Some("waiting on CI run 42".into()),
+            Some(pid),
+            start,
+        )
+        .unwrap();
+        assert_eq!(
+            a.session_phase(&key),
+            Some(format!("waiting on CI run 42 (pid {pid})"))
+        );
+        // a quarter of the ttl on, a blank phase names the process alone, and is written
+        a.beat_at(
+            "lander",
+            Some("  ".into()),
+            Some(pid),
+            start + Duration::from_secs(2),
+        )
+        .unwrap();
+        assert_eq!(a.session_phase(&key), Some(format!("pid {pid}")));
+        let (_, written) = a.journal().session_beat_age(&key).unwrap();
+        assert_eq!(written, Some(format!("pid {pid}")));
+        assert_eq!(session_beats(&a).len(), 2);
+    }
+
+    /// A runtime without a board has no board peer to speak for: a session named like one is
+    /// beaten for when it asks, never at its claim or by the heartbeat (I3990).
+    #[test]
+    fn a_board_named_session_without_a_board_beats_only_when_it_asks() {
+        let a = progress_runtime(8, None);
+        a.claim(
+            &SessionInfo::named("board-p1", "test"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(session_beats(&a).is_empty(), "no peer behind it");
+        a.beat_sessions_at(Instant::now() + Duration::from_secs(4));
+        assert!(
+            session_beats(&a).is_empty(),
+            "no board to read progress from"
+        );
+        a.beat("board-p1", None, None).expect("it asks");
+        assert_eq!(session_beats(&a).len(), 1);
+    }
+
+    /// A released exclusive claim keeps nothing: a session left with released claims alone
+    /// is refused a beat, and one that claims again beats for the claim it holds (I3990).
+    #[test]
+    fn a_released_claim_arms_no_beat() {
+        let a = progress_runtime(8, None);
+        let lander = SessionInfo::named("lander", "cli");
+        let first = a
+            .claim(
+                &lander,
+                vec!["docs".into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        a.release(&first.key).unwrap();
+        assert!(
+            a.beat("lander", None, None).is_err(),
+            "a released claim is nothing to keep"
+        );
+        a.claim(
+            &lander,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        a.beat("lander", None, None)
+            .expect("the held claim is kept");
+        assert_eq!(session_beats(&a).len(), 1);
+    }
+
+    /// The heartbeat beats for a board session only on its worker's real work: one holding an
+    /// exclusive claim that never worked is left to suspend, and one whose claim reached the
+    /// journal without a beat is beaten for at its first work (I3990).
+    #[test]
+    fn the_heartbeat_beats_for_a_board_session_only_on_its_workers_progress() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        let session = format!("board-{p}");
+        a.open_session(SessionInfo::named(&session, "test"))
+            .unwrap();
+        a.journal()
+            .append_own(EventBody::ClaimAcquired {
+                claim: "c-1".into(),
+                session: session.clone(),
+                scope: vec!["integration".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+            })
+            .unwrap();
+        let start = Instant::now();
+        a.beat_sessions_at(start);
+        assert!(session_beats(&a).is_empty(), "no work, no beat");
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(1));
+        assert_eq!(
+            session_beats(&a).len(),
+            1,
+            "its first work is beaten for at once"
+        );
+    }
+
+    /// A board session that takes a second exclusive claim inside a quarter of the ttl of
+    /// its last beat writes no second beat: the beat it has keeps both claims (I3990).
+    #[test]
+    fn a_second_exclusive_claim_inside_the_interval_is_kept_by_the_last_beat() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        for path in ["integration", "docs"] {
+            a.claim(&worker, vec![path.into()], None, ClaimMode::Exclusive, None)
+                .unwrap();
+        }
+        assert_eq!(session_beats(&a).len(), 1);
+        let state = a.state();
+        assert_eq!(state.claims.len(), 2);
+        assert!(state.claims.iter().all(|c| c.state.is_live()));
+    }
+
+    /// A claim the journal refuses — a scope that leaves the repository — is refused to its
+    /// caller, and no claim is left behind to beat for.
+    #[test]
+    fn a_claim_over_a_path_outside_the_repository_is_refused_and_leaves_no_claim() {
+        let a = progress_runtime(8, None);
+        let refused = a
+            .claim(
+                &SessionInfo::named("s1", "cli"),
+                vec!["../etc".into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap_err();
+        assert!(matches!(refused, CooperationError::Invalid(_)), "{refused}");
+        assert!(a.state().claims.is_empty());
+        assert!(session_beats(&a).is_empty());
     }
 
     #[test]

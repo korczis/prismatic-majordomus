@@ -2134,4 +2134,89 @@ mod tests {
         assert_eq!(s1.claims.len(), 2, "every claim listed");
         assert_eq!(s1.claims_held, 2);
     }
+
+    /// A session that beat says in the peer tree how long ago it made progress and what it
+    /// said it was doing; one that never beat says neither (I3990).
+    #[test]
+    fn a_session_that_beat_shows_its_progress_and_phase_in_the_peer_tree() {
+        let c = cooperation();
+        for session in ["lander", "quiet"] {
+            c.claim(
+                &SessionInfo::named(session, "cli"),
+                vec![format!("{session}/x")],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        }
+        c.beat("lander", Some("waiting on CI run 42".into()), None)
+            .unwrap();
+        let tree = peer_tree(&c, &Query::default());
+        let session = |name: &str| -> SessionNode {
+            tree.machines
+                .iter()
+                .flat_map(|m| m.runtimes.iter())
+                .flat_map(|r| r.sessions.iter())
+                .find(|s| s.key.ends_with(&format!("/{name}")))
+                .cloned()
+                .expect("the session is in the tree")
+        };
+        let lander = session("lander");
+        assert!(
+            lander.progress_ms.is_some_and(|ms| ms < 60_000),
+            "{lander:?}"
+        );
+        assert_eq!(lander.phase.as_deref(), Some("waiting on CI run 42"));
+        let quiet = session("quiet");
+        assert_eq!((quiet.progress_ms, quiet.phase), (None, None));
+    }
+
+    /// Over MCP a beat speaks for the calling session alone, so one client cannot keep
+    /// another's claims excluding; the command line names the session it beats for, and a
+    /// beat is only for a session this runtime opened (I3990).
+    #[test]
+    fn a_beat_over_mcp_speaks_for_its_own_session_alone() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        c.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        let beat = |ctx: &Context, session: Option<&str>| {
+            mesh_beat(
+                ctx,
+                BeatInput {
+                    session: session.map(Into::into),
+                    phase: Some("waiting on CI run 42".into()),
+                    pid: None,
+                },
+            )
+        };
+        let written = beat(&ctx, Some("lander")).expect("the command line names its session");
+        assert!(written.key.ends_with("/lander"), "{}", written.key);
+
+        let board = crate::peers::PeerBoard::new();
+        let peer = board.attach(crate::peers::Transport::Http);
+        let mcp = ctx.for_caller(peer.clone());
+        let refused = beat(&mcp, Some("lander")).unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::Refused(m)
+                if m.starts_with("not_own:") && m.contains("not for 'lander'")),
+            "{refused}"
+        );
+        // its own session, named or not, passes the guard: this runtime never opened it
+        let own = format!("board-{peer}");
+        for session in [None, Some(own.as_str()), Some(" ")] {
+            assert!(
+                matches!(beat(&mcp, session), Err(CapabilityError::NotFound(_))),
+                "{session:?}"
+            );
+        }
+    }
 }
