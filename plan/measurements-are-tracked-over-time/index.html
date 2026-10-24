@@ -184,10 +184,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--planned relative" data-status="planned"><span aria-hidden="true">○</span>PLANNED</span>
-<span class="text-sm text-body">0 of 5 issues done</span></p>
+<span class="text-sm text-body">0 of 6 issues done</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ready</dt><dd class="mt-1 text-2xl font-semibold text-heading">3</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocked</dt><dd class="mt-1 text-2xl font-semibold text-heading">3</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">active</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -263,6 +263,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i4220/" class="text-fg-brand hover:underline">I4220</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A run that /trends/ draws is a link the site check decides by provenance</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -271,12 +279,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">measurements-are-tracked-over-time dependency graph</span><span class="font-mono text-xs text-body-subtle">from .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-measurements-are-tracked-over-time" data-diagram="measurements-are-tracked-over-time" data-nodes="I3932 I3933 I3934 I3935 I3941">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-measurements-are-tracked-over-time" data-diagram="measurements-are-tracked-over-time" data-nodes="I3932 I3933 I3934 I3935 I3941 I4220">flowchart LR
     I3932[&quot;I3932&lt;br/&gt;Coverage is exported as LCOV and Cobertura from its one measurement, and uploaded to Coveralls and Codecov when their secrets exist&quot;]:::blocked
     I3933[&quot;I3933&lt;br/&gt;Every master run&#39;s coverage and CI cost join a derived series that the site and the Cockpit draw&quot;]:::blocked
     I3934[&quot;I3934&lt;br/&gt;A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is&quot;]:::ready
     I3935[&quot;I3935&lt;br/&gt;An agent session&#39;s telemetry reaches the same OpenTelemetry endpoint, configured once and projected to every provider&quot;]:::blocked
     I3941[&quot;I3941&lt;br/&gt;The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs&quot;]:::ready
+    I4220[&quot;I4220&lt;br/&gt;A run that /trends/ draws is a link the site check decides by provenance&quot;]:::ready
     I3932 --&gt; I3933
     I3934 --&gt; I3935
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
@@ -286,11 +295,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram measurements-are-tracked-over-time" aria-controls="diagram-measurements-are-tracked-over-time" data-diagram-bar="diagram-measurements-are-tracked-over-time" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Fit the diagram to its frame" title="Fit the diagram to its frame">Fit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Expand to full screen" title="Expand to full screen">Expand</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Download SVG" title="Download SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Link: copy the address of this diagram" title="Link: copy the address of this diagram">Link</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-measurements-are-tracked-over-time"><summary>Linked from this diagram (5)</summary><ul><li><a href="https://majordomus.dev/plan/i3932/" data-node="I3932" data-kind="issue">I3932 Coverage is exported as LCOV and Cobertura from its one measurement, and uploaded to Coveralls and Codecov when their secrets exist</a></li><li><a href="https://majordomus.dev/plan/i3933/" data-node="I3933" data-kind="issue">I3933 Every master run's coverage and CI cost join a derived series that the site and the Cockpit draw</a></li><li><a href="https://majordomus.dev/plan/i3934/" data-node="I3934" data-kind="issue">I3934 A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is</a></li><li><a href="https://majordomus.dev/plan/i3935/" data-node="I3935" data-kind="issue">I3935 An agent session's telemetry reaches the same OpenTelemetry endpoint, configured once and projected to every provider</a></li><li><a href="https://majordomus.dev/plan/i3941/" data-node="I3941" data-kind="issue">I3941 The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram measurements-are-tracked-over-time" aria-controls="diagram-measurements-are-tracked-over-time" data-diagram-bar="diagram-measurements-are-tracked-over-time" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Zoom out" title="Zoom out">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Zoom in" title="Zoom in">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Fit the diagram to its frame" title="Fit the diagram to its frame">Fit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Expand to full screen" title="Expand to full screen">Expand</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Download SVG" title="Download SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Link: copy the address of this diagram" title="Link: copy the address of this diagram">Link</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-measurements-are-tracked-over-time"><summary>Linked from this diagram (6)</summary><ul><li><a href="https://majordomus.dev/plan/i3932/" data-node="I3932" data-kind="issue">I3932 Coverage is exported as LCOV and Cobertura from its one measurement, and uploaded to Coveralls and Codecov when their secrets exist</a></li><li><a href="https://majordomus.dev/plan/i3933/" data-node="I3933" data-kind="issue">I3933 Every master run's coverage and CI cost join a derived series that the site and the Cockpit draw</a></li><li><a href="https://majordomus.dev/plan/i3934/" data-node="I3934" data-kind="issue">I3934 A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is</a></li><li><a href="https://majordomus.dev/plan/i3935/" data-node="I3935" data-kind="issue">I3935 An agent session's telemetry reaches the same OpenTelemetry endpoint, configured once and projected to every provider</a></li><li><a href="https://majordomus.dev/plan/i3941/" data-node="I3941" data-kind="issue">I3941 The UI draws the trends the pages publication records: coverage and CI time per run, and the slowest jobs</a></li><li><a href="https://majordomus.dev/plan/i4220/" data-node="I4220" data-kind="issue">I4220 A run that /trends/ draws is a link the site check decides by provenance</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/.ai/repo/project/milestones/measurements-are-tracked-over-time.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/measurements-are-tracked-over-time.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show measurements-are-tracked-over-time</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/.ai/repo/project/milestones/measurements-are-tracked-over-time.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/measurements-are-tracked-over-time.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show measurements-are-tracked-over-time</code>.</p>
 </div>
 
 </div>
@@ -340,9 +349,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/563fe99a7eb73b261f475245362fbbe544e96712/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -350,7 +359,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/563fe99a7eb73b261f475245362fbbe544e96712" class="font-mono underline">563fe99</a> · inputs <span class="font-mono">25fa8654fe03</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6af2d09cb734c53c610f68841f135c11e2fc781e" class="font-mono underline">6af2d09</a> · inputs <span class="font-mono">d2bcb1fec06f</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
