@@ -31,7 +31,7 @@ use rustls::pki_types::ServerName;
 use rustls::{ClientConfig, ClientConnection, RootCertStore, StreamOwned};
 use serde_json::{json, Value};
 
-use crate::peers::ClientInfo;
+use crate::peers::{ClientInfo, PeerAddress};
 
 /// How often a bridge pings the server so that its session is not forgotten.
 pub const HEARTBEAT: Duration = Duration::from_secs(20);
@@ -716,6 +716,10 @@ pub struct Bridge {
     announcements: BTreeMap<String, Value>,
     /// How long one answer is waited for.
     timeout: Duration,
+    /// Where the worker that started this bridge can be reached, read once from this
+    /// process's environment and carried in every `initialize` it forwards, so that the
+    /// board row of its session names it (I3956).
+    address: Option<PeerAddress>,
 }
 
 impl Bridge {
@@ -742,6 +746,7 @@ impl Bridge {
             client: None,
             announcements: BTreeMap::new(),
             timeout,
+            address: PeerAddress::of_this_process(),
         }
     }
 
@@ -778,6 +783,14 @@ impl Bridge {
 
     /// Forward one message; `None` when the server had nothing to say (a notification).
     pub fn handle(&mut self, message: &Value) -> Result<Option<Value>, BridgeError> {
+        let stamped;
+        let message = match &self.address {
+            Some(address) if crate::http::mcp::is_initialize(message) => {
+                stamped = stamp_address(message, address);
+                &stamped
+            }
+            _ => message,
+        };
         if crate::http::mcp::is_initialize(message) {
             let params = first_initialize_params(message);
             self.client = Some(ClientInfo::from_initialize(&params));
@@ -979,6 +992,19 @@ fn announcement_in(message: &Value, answer: Option<&Value>) -> Option<Value> {
     )
 }
 
+/// The message with the worker's address in every `initialize` it holds (I3956).
+fn stamp_address(message: &Value, address: &PeerAddress) -> Value {
+    let mut out = message.clone();
+    match &mut out {
+        Value::Array(batch) => batch
+            .iter_mut()
+            .filter(|m| m["method"] == "initialize")
+            .for_each(|m| crate::peers::with_address(m, address)),
+        m => crate::peers::with_address(m, address),
+    }
+    out
+}
+
 fn first_initialize_params(message: &Value) -> Value {
     match message {
         Value::Array(batch) => batch
@@ -993,6 +1019,28 @@ fn first_initialize_params(message: &Value) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every `initialize` a bridge forwards carries the address of the worker that started
+    /// it, in a batch as alone; no other message is touched (I3956).
+    #[test]
+    fn a_bridge_stamps_its_workers_address_on_every_initialize() {
+        let a = PeerAddress::from_env(|_| None, Some(31), "mac").unwrap();
+        let one = json!({ "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": { "clientInfo": { "name": "c", "version": "1" } } });
+        let stamped = stamp_address(&one, &a);
+        assert_eq!(
+            PeerAddress::from_initialize(&stamped["params"]),
+            Some(a.clone())
+        );
+        assert_eq!(stamped["params"]["clientInfo"]["name"], "c");
+        let batch = json!([{ "method": "ping", "params": {} }, one]);
+        let stamped = stamp_address(&batch, &a);
+        assert!(
+            stamped[0]["params"].get("_meta").is_none(),
+            "a ping is not touched"
+        );
+        assert_eq!(PeerAddress::from_initialize(&stamped[1]["params"]), Some(a));
+    }
 
     /// A bridge remembers one announcement per claim name, so that a client holding several
     /// claims has all of them replayed after a re-attach rather than the newest one. Before

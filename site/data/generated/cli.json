@@ -22765,6 +22765,12 @@
           "command": "majordomus mesh review",
           "name": "review",
           "route": "/docs/cli/mesh/review/"
+        },
+        {
+          "about": "The mesh build cache: what each dependency install and build directory is cached under",
+          "command": "majordomus mesh build-cache",
+          "name": "build-cache",
+          "route": "/docs/cli/mesh/build-cache/"
         }
       ],
       "command": "majordomus mesh",
@@ -26509,6 +26515,701 @@
       ],
       "route": "/docs/cli/mesh/review/withdraw/",
       "usage": "majordomus mesh review withdraw [OPTIONS] <REQUEST>"
+    },
+    {
+      "about": "The mesh build cache: what each dependency install and build directory is cached under",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest",
+          "command": "majordomus mesh build-cache key",
+          "name": "key",
+          "route": "/docs/cli/mesh/build-cache/key/"
+        },
+        {
+          "about": "Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level",
+          "command": "majordomus mesh build-cache ensure",
+          "name": "ensure",
+          "route": "/docs/cli/mesh/build-cache/ensure/"
+        },
+        {
+          "about": "The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only",
+          "command": "majordomus mesh build-cache env",
+          "name": "env",
+          "route": "/docs/cli/mesh/build-cache/env/"
+        },
+        {
+          "about": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
+          "command": "majordomus mesh build-cache provision",
+          "name": "provision",
+          "route": "/docs/cli/mesh/build-cache/provision/"
+        }
+      ],
+      "command": "majordomus mesh build-cache",
+      "depth": 2,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "build-cache",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "build-cache"
+      ],
+      "route": "/docs/cli/mesh/build-cache/",
+      "usage": "majordomus mesh build-cache <COMMAND>"
+    },
+    {
+      "about": "Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh build-cache",
+          "name": "build-cache",
+          "route": "/docs/cli/mesh/build-cache/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this kind",
+          "long": "kind",
+          "name": "kind",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "The cargo build directory of a workspace: the dependencies compiled on the way, without incremental state. Restored only into a directory that is cold",
+              "name": "cargo-build-dir"
+            },
+            {
+              "help": "The `deps/` directory `mix deps.get` fills",
+              "name": "mix-deps"
+            },
+            {
+              "help": "The `node_modules/` directory `npm ci` fills",
+              "name": "npm-modules"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh build-cache key",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "build-cache",
+            "key",
+            "--kind",
+            "mix-deps"
+          ],
+          "command": "majordomus mesh build-cache key --kind mix-deps",
+          "description": "Every lockfile the repository tracks becomes a cacheable thing with a key: a schema version, the platform, the toolchain as its executables state it, and the digest of its inputs. `--kind` narrows it to one kind; a repository with no lockfile of that kind says nothing here is cacheable, and a kind whose toolchain is absent says why it has no key.",
+          "expectation": "exits 0; prints platform",
+          "id": "mesh-build-cache-key",
+          "setup": [],
+          "title": "What each lockfile's install is cached under"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "key",
+      "parent_route": "/docs/cli/mesh/build-cache/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "build-cache",
+        "key"
+      ],
+      "route": "/docs/cli/mesh/build-cache/key/",
+      "usage": "majordomus mesh build-cache key [OPTIONS]"
+    },
+    {
+      "about": "Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh build-cache",
+          "name": "build-cache",
+          "route": "/docs/cli/mesh/build-cache/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What is cached: npm-modules, mix-deps or cargo-build-dir",
+          "name": "kind",
+          "positional": true,
+          "possible_values": [
+            {
+              "help": "The cargo build directory of a workspace: the dependencies compiled on the way, without incremental state. Restored only into a directory that is cold",
+              "name": "cargo-build-dir"
+            },
+            {
+              "help": "The `deps/` directory `mix deps.get` fills",
+              "name": "mix-deps"
+            },
+            {
+              "help": "The `node_modules/` directory `npm ci` fills",
+              "name": "npm-modules"
+            }
+          ],
+          "required": true,
+          "takes_value": true,
+          "value_name": "KIND"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The directory holding the lockfile, relative to the repository (default: the only one, or the current one)",
+          "long": "dir",
+          "name": "dir",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The install or build command, after `--`: run on a miss (and for mix and cargo on every run)",
+          "name": "command",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COMMAND"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh build-cache ensure",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "build-cache",
+            "ensure",
+            "npm-modules",
+            "--",
+            "true"
+          ],
+          "command": "majordomus mesh build-cache ensure npm-modules -- true",
+          "description": "The command after `--` is what the install would run anyway. With the lockfile's key already in place nothing runs; a hit is restored from the local level or this node's store after its SHA-256 matches, and npm's install is then not run; a miss runs the command and saves what it left. A repository that tracks no such lockfile runs the command uncached and says why, as here; MAJORDOMUS_BUILD_CACHE=off bypasses every level. The exit code is the command's.",
+          "expectation": "exits 0; prints source     uncached",
+          "id": "mesh-build-cache-ensure",
+          "setup": [],
+          "title": "Run an install through the build cache"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "ensure",
+      "parent_route": "/docs/cli/mesh/build-cache/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "build-cache",
+        "ensure"
+      ],
+      "route": "/docs/cli/mesh/build-cache/ensure/",
+      "usage": "majordomus mesh build-cache ensure [OPTIONS] <KIND> [COMMAND]"
+    },
+    {
+      "about": "The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh build-cache",
+          "name": "build-cache",
+          "route": "/docs/cli/mesh/build-cache/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The sccache executable to ask (a name on PATH or a path); `sccache` when unset",
+          "long": "sccache",
+          "name": "sccache",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SCCACHE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The node file that names the store this node offers or knows; `~/.config/majordomus/build-cache.json` when unset",
+          "long": "node-file",
+          "name": "node_file",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NODE_FILE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The AWS-format credential file, mode 0600, profile `mesh-build-cache`; `~/.config/mesh-build-cache/credentials` when unset",
+          "long": "credentials",
+          "name": "credentials",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CREDENTIALS"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` is the script an `eval` reads; `json` is the full answer, with its reason",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh build-cache env",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "build-cache",
+            "env",
+            "--sccache",
+            "no-such-sccache"
+          ],
+          "command": "majordomus mesh build-cache env --sccache no-such-sccache",
+          "description": "The environment the process that starts the sccache server should have: local disk first and the selected store second, only when sccache has the chain, a credential file of mode 0600 exists and the store answers now; otherwise nothing, and the comment line says which condition did not hold. The credential is a file path, never a key. `--format json` gives the whole answer.",
+          "expectation": "exits 0; prints build cache: local-only",
+          "id": "mesh-build-cache-env",
+          "setup": [],
+          "title": "The sccache client of this node, derived"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "env",
+      "parent_route": "/docs/cli/mesh/build-cache/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "build-cache",
+        "env"
+      ],
+      "route": "/docs/cli/mesh/build-cache/env/",
+      "usage": "majordomus mesh build-cache env [OPTIONS]"
+    },
+    {
+      "about": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        },
+        {
+          "command": "majordomus mesh build-cache",
+          "name": "build-cache",
+          "route": "/docs/cli/mesh/build-cache/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Only plan (the default)",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Carry the plan out; needs root on the real root",
+          "long": "apply",
+          "name": "apply",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "APPLY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Read and write the host's paths under this directory instead of `/`",
+          "long": "root",
+          "name": "root",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "ROOT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh build-cache provision",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "build-cache",
+            "provision",
+            "--dry-run"
+          ],
+          "command": "majordomus mesh build-cache provision --dry-run",
+          "description": "The plan of the provider's host layer against what this machine holds: the disk guard and its timer, the always-restart service drop-ins, the bounded journal and container log, the identity and credential of every node and the rustc wrapper, each file marked missing, different, wrong mode or current, and the commands an apply would run. It plans only and names no secret; `--apply` as root brings the host to it, and a second apply changes nothing.",
+          "expectation": "exits 0; prints disk-guard, plan",
+          "id": "mesh-build-cache-provision",
+          "setup": [],
+          "title": "What this host still owes as a mesh build cache provider"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "provision",
+      "parent_route": "/docs/cli/mesh/build-cache/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "build-cache",
+        "provision"
+      ],
+      "route": "/docs/cli/mesh/build-cache/provision/",
+      "usage": "majordomus mesh build-cache provision [OPTIONS]"
     },
     {
       "about": "Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked",
@@ -38903,10 +39604,10 @@
     }
   ],
   "counts": {
-    "arguments": 1686,
-    "commands": 245,
-    "examples": 247,
-    "runnable": 214
+    "arguments": 1712,
+    "commands": 250,
+    "examples": 251,
+    "runnable": 218
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.8",

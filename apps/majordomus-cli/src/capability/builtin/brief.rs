@@ -609,7 +609,16 @@ fn peer_line(p: &Peer) -> String {
         .as_ref()
         .map(|a| clip(&a.intent, INTENT_CHARS))
         .unwrap_or_else(|| "announced nothing".into());
-    format!("{} {} @{branch}: {intent}", p.id.as_str(), p.client.name)
+    match &p.address {
+        // the address that reaches the worker, when its client exposed one (I3956)
+        Some(a) => format!(
+            "{} {} @{branch} [{}]: {intent}",
+            p.id.as_str(),
+            p.client.name,
+            a.line()
+        ),
+        None => format!("{} {} @{branch}: {intent}", p.id.as_str(), p.client.name),
+    }
 }
 
 fn mesh_section(ctx: &Context) -> BriefMeshSection {

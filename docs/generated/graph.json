@@ -1033,6 +1033,42 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.build_cache.ensure",
+        "kind": "capability",
+        "label": "mesh.build_cache.ensure",
+        "summary": "Restore an install before its command, and save it after",
+        "route": "/cockpit/capabilities/mesh.build_cache.ensure",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.build_cache.env",
+        "kind": "capability",
+        "label": "mesh.build_cache.env",
+        "summary": "The sccache client configuration for the store this node selected",
+        "route": "/cockpit/capabilities/mesh.build_cache.env",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.build_cache.key",
+        "kind": "capability",
+        "label": "mesh.build_cache.key",
+        "summary": "What every dependency install and build directory is cached under",
+        "route": "/cockpit/capabilities/mesh.build_cache.key",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.build_cache.provision",
+        "kind": "capability",
+        "label": "mesh.build_cache.provision",
+        "summary": "Provision this node as a mesh build cache provider",
+        "route": "/cockpit/capabilities/mesh.build_cache.provision",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.claim",
         "kind": "capability",
         "label": "mesh.claim",
@@ -8108,9 +8144,9 @@
         "summary": "A client always gets a server, and a session that is opened starts by joining the cluster",
         "route": "/cockpit/objects/adr/adr-0172",
         "source": ".ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
-        "status": "proposed",
+        "status": "superseded",
         "facts": {
-          "date": "2026-10-17",
+          "date": "2026-10-22",
           "related": [
             "file:.ai/repo/adrs/0161-a-mesh-node-follows-the-published-release.md",
             "file:.ai/repo/adrs/0043-entering-the-repository-brings-its-runtime-up.md",
@@ -8122,6 +8158,7 @@
             "test:test/cases/3177_a_client_always_gets_a_server.sh",
             "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
           ],
+          "superseded_by": "adr-0224",
           "tags": [
             "coordination",
             "mesh",
@@ -9401,6 +9438,35 @@
             "mesh",
             "init",
             "trust"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0224",
+        "kind": "adr",
+        "label": "adr-0224",
+        "summary": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+        "route": "/cockpit/objects/adr/adr-0224",
+        "source": ".ai/repo/adrs/0224-no-ordinary-command-builds.md",
+        "status": "accepted",
+        "facts": {
+          "date": "2026-10-22",
+          "related": [
+            "file:.ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
+            "file:.ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+            "file:bin/majordomus-cli",
+            "file:lib/rust_bin.sh",
+            "file:.ai/repo/ci/gates.yaml",
+            "test:test/cases/3177_a_client_always_gets_a_server.sh",
+            "test:test/cases/3221_a_bare_session_start_joins_the_cluster.sh"
+          ],
+          "supersedes": [
+            "adr-0172"
+          ],
+          "tags": [
+            "launcher",
+            "build",
+            "enforcement"
           ]
         }
       },
@@ -11949,12 +12015,11 @@
         "id": "majordomus://claim/mcp-client-always-served",
         "kind": "claim",
         "label": "mcp-client-always-served",
-        "summary": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+        "summary": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
         "route": "/cockpit/objects/claim/mcp-client-always-served",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
           "implementation": "bin/majordomus-cli",
           "responsibility": "none",
           "source": "docs/MCP.md",
@@ -11965,12 +12030,12 @@
         "id": "majordomus://claim/mcp-client-autostart",
         "kind": "claim",
         "label": "mcp-client-autostart",
-        "summary": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+        "summary": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
         "route": "/cockpit/objects/claim/mcp-client-autostart",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "claim": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
           "implementation": "bin/majordomus-mcp",
           "responsibility": "none",
           "source": "docs/MCP.md",
@@ -16020,6 +16085,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-build-reuses-what-the-mesh-already-built",
+        "kind": "critique",
+        "label": "a-build-reuses-what-the-mesh-already-built",
+        "summary": "a-build-reuses-what-the-mesh-already-built",
+        "route": "/cockpit/objects/critique/a-build-reuses-what-the-mesh-already-built",
+        "source": ".ai/repo/project/critiques/a-build-reuses-what-the-mesh-already-built.yaml",
+        "facts": {
+          "intent": "a-build-reuses-what-the-mesh-already-built",
+          "reviewed_at": "2034d4a3f0b"
+        }
+      },
+      {
         "id": "majordomus://critique/a-change-is-judged-in-minutes",
         "kind": "critique",
         "label": "a-change-is-judged-in-minutes",
@@ -16173,6 +16250,18 @@
         "facts": {
           "intent": "entry-proves-what-it-handed",
           "reviewed_at": "707a04c7ce8"
+        }
+      },
+      {
+        "id": "majordomus://critique/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "critique",
+        "label": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "summary": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "route": "/cockpit/objects/critique/every-capability-has-one-owner-and-the-cli-never-builds",
+        "source": ".ai/repo/project/critiques/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+        "facts": {
+          "intent": "every-capability-has-one-owner-and-the-cli-never-builds",
+          "reviewed_at": "2034d4a3f0b"
         }
       },
       {
@@ -16692,6 +16781,14 @@
         "summary": "The session brief — `majordomus brief`",
         "route": "/cockpit/objects/document/docs-brief-md",
         "source": "docs/BRIEF.md"
+      },
+      {
+        "id": "majordomus://document/docs/BUILD_CACHE.md",
+        "kind": "document",
+        "label": "docs/BUILD_CACHE.md",
+        "summary": "The build cache, as a person sees it",
+        "route": "/cockpit/objects/document/docs-build-cache-md",
+        "source": "docs/BUILD_CACHE.md"
       },
       {
         "id": "majordomus://document/docs/CAPABILITIES.md",
@@ -18249,7 +18346,7 @@
         "id": "majordomus://document/docs/claims/mcp-client-always-served.md",
         "kind": "document",
         "label": "docs/claims/mcp-client-always-served.md",
-        "summary": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
+        "summary": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
         "route": "/cockpit/objects/document/docs-claims-mcp-client-always-served-md",
         "source": "docs/claims/mcp-client-always-served.md"
       },
@@ -18257,7 +18354,7 @@
         "id": "majordomus://document/docs/claims/mcp-client-autostart.md",
         "kind": "document",
         "label": "docs/claims/mcp-client-autostart.md",
-        "summary": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+        "summary": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
         "route": "/cockpit/objects/document/docs-claims-mcp-client-autostart-md",
         "source": "docs/claims/mcp-client-autostart.md"
       },
@@ -21693,6 +21790,37 @@
         }
       },
       {
+        "id": "majordomus://intent/a-build-reuses-what-the-mesh-already-built",
+        "kind": "intent",
+        "label": "a-build-reuses-what-the-mesh-already-built",
+        "summary": "A build reuses what any node of its platform already built or fetched, and is exactly as correct when nothing can be reused",
+        "route": "/cockpit/objects/intent/a-build-reuses-what-the-mesh-already-built",
+        "source": ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "invariants": [
+            "A miss, a down store, a slow store, a refused credential or a corrupt entry costs time, never correctness (rule project.cache-is-invisible); the build then runs exactly as it did without the cache",
+            "A cold, a warm and a bypassed run leave the same result, and MAJORDOMUS_BUILD_CACHE=off bypasses every level (rule project.cache-is-invisible)",
+            "The key is derived from what the repository and the machine already say (lockfiles, toolchain executables, host triple, the environment that changes the output); nothing in a key is typed by hand",
+            "A store is used only when a trusted node offers it in a signed, expiring record (ADR 0157 decision 2); presence on a port is never trust",
+            "An archive is restored only after its content digest matches the one recorded when it was saved, and only inside its target directory",
+            "No credential, private address or secret appears in git, .ai, an answer, a log line, a process environment, a page or a document (ADR 0157 decision 7)",
+            "Every store and every local level is bounded by declared policy and measured by a command (rule project.accumulation-is-measured); a restore passes the same free-space floor as a build"
+          ],
+          "milestones": [
+            "builds-reuse-the-mesh-cache"
+          ],
+          "non_goals": [
+            "Distributed compilation (sccache-dist, icecream)",
+            "Mandatory mesh discovery on the derive critical path",
+            "A hit across platforms: a triple shares only with itself, except where the cached thing is platform-independent source",
+            "Writing a user's ~/.cargo/config.toml or shell profile",
+            "Reaching the store from GitHub's runners, which already cache through actions/cache"
+          ],
+          "updated_at": "2026-10-22"
+        }
+      },
+      {
         "id": "majordomus://intent/a-change-is-judged-in-minutes",
         "kind": "intent",
         "label": "a-change-is-judged-in-minutes",
@@ -22043,6 +22171,35 @@
             "Regenerating context from the preflight"
           ],
           "updated_at": "2026-10-18"
+        }
+      },
+      {
+        "id": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "intent",
+        "label": "every-capability-has-one-owner-and-the-cli-never-builds",
+        "summary": "No ordinary command does undeclared expensive work: no entry path builds implicitly, and every caller declares what a missing or stale executable means",
+        "route": "/cockpit/objects/intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "source": ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "invariants": [
+            "An ordinary command never starts a build; an explicit build or update is its own command",
+            "A fallback executable is used only when its build generation matches the tree (rule project.a-tool-that-cannot-match-the-tree-refuses); a version string is not a build",
+            "No caller passes silently on a missing or stale executable",
+            "Ownership is a projection of the existing registries (rule project.no-new-nouns, ADR 0069); only disposition, exemption and migration obligation stay hand-written",
+            "The migration itself is intent repository-automation-is-typed: its criteria are served there, not restated here",
+            "ADR 0224 (accepted 2026-10-22, superseding ADR 0172) is the decision this intent realises; I3180 is cancelled"
+          ],
+          "milestones": [
+            "ordinary-commands-never-build"
+          ],
+          "non_goals": [
+            "A blanket ban of .sh files",
+            "A mass rewrite of lib/*.sh in one change",
+            "One latency budget for help and for serve, build or deploy (a per-path --help budget is a later slice, ADR 0196)",
+            "Python as a portable layer (ADR 0069) unless an amendment admits it"
+          ],
+          "updated_at": "2026-10-22"
         }
       },
       {
@@ -36035,9 +36192,7 @@
           "acceptance_criteria": [
             "Every assertion of case 95 holds after the change, and a mutation of each relation it proves still fails it",
             "The case's cost on three GitHub runs, named, is under half of the slowest-case budget",
-            "The slowest-case budget is lowered or unchanged, never raised",
-            "No case on the feedback lane exceeds its declared p95 budget, and a case that would is decomposed or moved to the proof lane",
-            "Every case budget is derived from .ai/repo/ci/suite-durations.tsv and none is a pinned number"
+            "The slowest-case budget is lowered or unchanged, never raised"
           ],
           "created_at": "2026-10-09",
           "depends_on": [],
@@ -36045,6 +36200,9 @@
             "the_slowest_case_is_cut"
           ],
           "milestone": "ci-critical-path",
+          "non_scope": [
+            "Per-case p95 budgets on the feedback lane and budgets derived from suite-durations.tsv: moved to I2350 on 2026-10-20 with their two criteria, verbatim"
+          ],
           "parallel_safe": false,
           "priority": "p1",
           "profile": "implementation",
@@ -36058,7 +36216,7 @@
             ".ai/repo/ci/gates.yaml"
           ],
           "slug": "the-slowest-case-is-cut-not-budgeted",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-20",
           "validation": [
             "bash test/run.sh 95_executable_reference",
             "scripts/ci/suite-budget"
@@ -37574,7 +37732,9 @@
             "A change whose impact cannot be proved runs the full plan, and the plan says which path caused it",
             "A failing gate's output names the selection reason, the reproducing command and its owner",
             "Every gate in gates.yaml declares one lane of feedback, proof and release, the pull-request verdict waits on the feedback lane alone, and a combined top lands only with its proof lane green",
-            "The structure job is split into an instant tier on the feedback lane and a proof tier"
+            "The structure job is split into an instant tier on the feedback lane and a proof tier",
+            "No case on the feedback lane exceeds its declared p95 budget, and a case that would is decomposed or moved to the proof lane",
+            "Every case budget is derived from .ai/repo/ci/suite-durations.tsv and none is a pinned number"
           ],
           "created_at": "2026-10-10",
           "depends_on": [],
@@ -37600,10 +37760,14 @@
             "apps/majordomus-cli/src/gates/model.rs",
             "apps/majordomus-cli/src/gates/judge.rs",
             "docs/CI.md",
-            "scripts/ci/verdict"
+            "scripts/ci/verdict",
+            ".ai/repo/ci/suite.yaml",
+            ".ai/repo/ci/suite-durations.tsv",
+            "scripts/ci/suite-budget",
+            "test/cases"
           ],
           "slug": "one-gate-model-names-every-tier",
-          "updated_at": "2026-10-18",
+          "updated_at": "2026-10-20",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci-plan --check",
@@ -41105,10 +41269,10 @@
             "docs/MESH.md"
           ],
           "slug": "a-provider-offers-its-cache-as-an-expiring-mesh-record",
-          "updated_at": "2026-10-13",
+          "updated_at": "2026-10-22",
           "validation": [
             "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=2 bash test/run.sh 3013_a_mesh_build_cache"
+            "MJ_TEST_JOBS=2 bash test/run.sh 3954_a_store_is_offered_in_a_signed_record"
           ]
         }
       },
@@ -41163,7 +41327,6 @@
         "source": ".ai/repo/project/issues/I2673.yaml",
         "facts": {
           "created_at": "2026-10-13",
-          "current_state": "Measured on master b29cf4e487 on 2026-10-13: RUSTC_WRAPPER=sccache is set by the user's ~/.cargo/config.toml with no remote; environment/shell.rs exports nothing about it.",
           "depends_on": [
             "I2670",
             "I2672"
@@ -41182,14 +41345,21 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/environment/",
-            "docs/ENVIRONMENT.md"
+            "apps/majordomus-cli/src/mesh/build_cache/env.rs",
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "share/libexec/sccache-mesh",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/MESH.md",
+            "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh"
           ],
           "slug": "the-sccache-client-is-derived-from-the-selected-offer",
           "updated_at": "2026-10-13",
           "validation": [
             "bin/majordomus plan validate",
-            "MJ_TEST_JOBS=2 bash test/run.sh 3013_a_mesh_build_cache"
+            "MJ_TEST_JOBS=2 bash test/run.sh 3955_the_sccache_client_is_derived_from_the_selected_store"
           ]
         }
       },
@@ -43143,6 +43313,8 @@
             "An issue with a merged pull request shows merged with a link to that pull request",
             "The page names the commit and time its data was observed"
           ],
+          "completed_at": "2026-10-23T16:40:44Z",
+          "completed_event": "sha256:f1a63b93c6599eed6ed12218028844165943976ecf50eaaa649fa765018c6bea",
           "created_at": "2026-10-16",
           "current_state": "roadmap.html keeps milestones whose version is set; the issue counts are stamp-derived; nothing links a stage to its proof.",
           "depends_on": [
@@ -43169,7 +43341,9 @@
             "test/cases/3103_the_roadmap_draws_every_milestone.sh"
           ],
           "slug": "the-roadmap-draws-every-milestone",
-          "updated_at": "2026-10-16T19:11:27Z",
+          "started_at": "2026-10-23T16:31:45Z",
+          "started_event": "sha256:22058abbe05d19520e6f6fc15b6f033b97e6157006284a1cea05c65d67f6f387",
+          "updated_at": "2026-10-23T16:40:44Z",
           "validation": [
             "bash test/run.sh 12_site_build 3103_the_roadmap_draws_every_milestone"
           ],
@@ -43189,6 +43363,8 @@
             "Now names only milestones with work in flight",
             "The latest release shown is never older than the executable's own version when that version is tagged"
           ],
+          "completed_at": "2026-10-23T16:41:16Z",
+          "completed_event": "sha256:6417f7236d9532bb6ce27bed57a5ce3cd6381227a0cc3218a7dff52765541546",
           "created_at": "2026-10-16",
           "current_state": "ui/roadmap.rs reads plan.roadmap, plan.status, intents.list and plan.issues; latest release comes from the committed release records.",
           "depends_on": [
@@ -43210,7 +43386,9 @@
             "test/cases/3104_the_ui_roadmap_reads_delivery.sh"
           ],
           "slug": "the-ui-roadmap-reads-delivery",
-          "updated_at": "2026-10-16T15:46:53Z",
+          "started_at": "2026-10-23T16:32:32Z",
+          "started_event": "sha256:3dbdecba26a4e36c731dfade6d46e8e5a49a0bdfb2a7050bd30010c9a251d179",
+          "updated_at": "2026-10-23T16:41:16Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test ui_roadmap",
             "bash test/run.sh 3104_the_ui_roadmap_reads_delivery"
@@ -44270,6 +44448,8 @@
             "The site job, or each probe job, records its duration and stays under half its timeout on the measured runner",
             "A probe finding still fails the job that found it, naming the route and the width"
           ],
+          "completed_at": "2026-10-23T16:39:37Z",
+          "completed_event": "sha256:43f129692cc2ed33db89554809aa587e827457a3ba5690c6991e6fc31a6fa295",
           "created_at": "2026-10-17",
           "current_state": "One step in the site job runs scripts/site-probe with SITE_PROBE_JOBS=4 under `scripts/ci/timed --bound 2700`; the job's timeout-minutes is 65 after 71b2 (50 before).",
           "depends_on": [],
@@ -44293,7 +44473,7 @@
           "slug": "the-site-probe-is-split",
           "started_at": "2026-10-19T20:38:09Z",
           "started_event": "sha256:7604395f474418fe6074373c6cde143cf594e67ccaad786d51c022e6e43d962d",
-          "updated_at": "2026-10-19T20:38:09Z",
+          "updated_at": "2026-10-23T16:39:37Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -44653,6 +44833,8 @@
             "A stage count delivery.json does not give, a missing stage row, or none drawn as a stage is refused by homepage-check",
             "A declared status count inside a link is still read and held to plan.json"
           ],
+          "completed_at": "2026-10-23T16:38:58Z",
+          "completed_event": "sha256:0fa1035b6394a53fe59548a4d2882e4685fe7be58775ca64ced9c097b1bd390b",
           "created_at": "2026-10-18",
           "current_state": "The card counts issues by declared status, read once from plan.json at the build commit; no count is a link; homepage-check reads a count only when it is the element's first text.",
           "depends_on": [
@@ -44676,7 +44858,9 @@
             "test/cases/333_homepage_narrative.sh"
           ],
           "slug": "the-homepage-counts-delivery",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-23T16:30:43Z",
+          "started_event": "sha256:bd73ea236b6c0f84ab0aa5745137910e4a6e37a4dd3961a63eb8ed1e64c439e7",
+          "updated_at": "2026-10-23T16:38:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read"
@@ -47311,6 +47495,8 @@
             "An announcement whose text holds a template delimiter is refused with the remedy",
             "Removing either check turns its case red"
           ],
+          "completed_at": "2026-10-23T16:38:17Z",
+          "completed_event": "sha256:c863073f58496ff9d42be1bafc7bd144b6dbe9fb81246cb4e442b65f63909dff",
           "created_at": "2026-10-19",
           "current_state": "Nothing refuses a delimiter in record prose or in board text; each one is found by a red site job or a red core-check.",
           "depends_on": [],
@@ -47335,7 +47521,9 @@
             "site"
           ],
           "slug": "prose-holds-no-template-delimiter",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-23T16:29:29Z",
+          "started_event": "sha256:7b22a11e6c6a73fe19bda39929969206f909002597881abee9c31ee4136f2abe",
+          "updated_at": "2026-10-23T16:38:17Z",
           "validation": [
             "majordomus plan validate"
           ]
@@ -47394,6 +47582,8 @@
         "route": "/cockpit/objects/issue/i3013",
         "source": ".ai/repo/project/issues/I3013.yaml",
         "facts": {
+          "completed_at": "2026-10-23T16:36:36Z",
+          "completed_event": "sha256:e25c636fa3bcf42b28c9770c477b74466cd43bf402e0328cb50eee851d448661",
           "created_at": "2026-10-20",
           "depends_on": [],
           "evidence_required": [
@@ -47414,7 +47604,9 @@
             "site"
           ],
           "slug": "the-evidence-job-runs-only-when-a-lane-left-a-report",
-          "updated_at": "2026-10-20",
+          "started_at": "2026-10-23T16:26:47Z",
+          "started_event": "sha256:f10024b6b4e6e42483cfdb1c2c6eba3ef3071d27b564fc12d2cc319143a248a3",
+          "updated_at": "2026-10-23T16:36:36Z",
           "validation": [
             "bash test/run.sh 3402_a_records_only_plan_skips_the_evidence_job",
             "bash test/run.sh 26_ci_wiring",
@@ -47869,6 +48061,8 @@
             "The SessionEnd shim, given a provider session that was started, closes the episode in less than its declared timeout",
             "With the end budget forced below the optional steps' cost, the episode still closes, and the skipped checkpoint and continuation are recorded as typed failures"
           ],
+          "completed_at": "2026-10-23T16:37:26Z",
+          "completed_event": "sha256:15e2481c880e1db8e669b74fb1cfd0d114fe83dbf9f4f7ded4c461688f14749d",
           "created_at": "2026-10-19",
           "evidence_required": [
             "verified"
@@ -47883,7 +48077,9 @@
             ".ai/repo/project/issues/I3060.yaml"
           ],
           "slug": "a-session-end-hook-fits-its-budget",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-23T16:28:16Z",
+          "started_event": "sha256:f47c08a207dd7bf3732732b40792ee1670b53a167017ea8c171f388a15d320ec",
+          "updated_at": "2026-10-23T16:37:26Z",
           "validation": [
             "CI=true bash test/run.sh --no-skips 3460"
           ]
@@ -49089,6 +49285,8 @@
             "A replaced file of the same or a newer version still takes over, as before",
             "The log line of a refused takeover names both versions"
           ],
+          "completed_at": "2026-10-23T16:41:55Z",
+          "completed_event": "sha256:e71196527c778fe6252db6f7f5e45429103f7bf872dd5ffb3e190f427475845c",
           "created_at": "2026-10-20",
           "depends_on": [],
           "evidence_required": [
@@ -49109,7 +49307,7 @@
           "slug": "an-older-binary-never-takes-a-newer-lease",
           "started_at": "2026-10-21T02:42:11Z",
           "started_event": "sha256:5dc2ab5068c58f0575f1f26322907154b0b928fcde9bc52f5a8f664813f21a4d",
-          "updated_at": "2026-10-21T02:42:43Z",
+          "updated_at": "2026-10-23T16:41:55Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease"
           ],
@@ -49178,6 +49376,8 @@
             "A server of another pid answering the freed address does not fail the test",
             "A failure names the pid still answering at the address"
           ],
+          "completed_at": "2026-10-23T16:42:56Z",
+          "completed_event": "sha256:7223eed455e548fbc33dcabdb191940953e0782d9c53b30db49c17920d09c071",
           "created_at": "2026-10-21",
           "current_state": "The test waits up to 5 s for any answer at the stopped server's address to stop, so another test's server on the reused port reads as the stopped one still running.",
           "depends_on": [],
@@ -49199,7 +49399,7 @@
           "slug": "a-stopped-server-is-told-from-its-port",
           "started_at": "2026-10-21T09:32:52Z",
           "started_event": "sha256:c696b8bdb7a205ccab6f3631535b649fa5ac9e182f6cc217d6f9740637700c60",
-          "updated_at": "2026-10-21T10:20:28Z",
+          "updated_at": "2026-10-23T16:42:56Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test serve_lifecycle"
           ],
@@ -52322,6 +52522,7 @@
             "The shell returns in its banner budget while the build runs",
             "A build below the disk floor is refused and named"
           ],
+          "cancelled": true,
           "created_at": "2026-10-18",
           "depends_on": [
             "I3179"
@@ -64952,6 +65153,8 @@
             "An unverifiable certificate is refused naming the endpoint",
             "A public http endpoint is refused before connecting; loopback, private and overlay http endpoints still work"
           ],
+          "completed_at": "2026-10-23T16:40:11Z",
+          "completed_event": "sha256:c7fdc3f3b90aee798fbdaa33cab51e84cd381526fe732998256e726cd7c39d71",
           "created_at": "2026-10-21",
           "current_state": "bridge::connect accepts only http:// and opens a TcpStream; config.rs validates seeds as http://host:port; case 491 refuses any hub outside the private and overlay ranges.",
           "depends_on": [],
@@ -64984,7 +65187,9 @@
             "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
           ],
           "slug": "the-mesh-client-speaks-tls",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-23T16:33:16Z",
+          "started_event": "sha256:22b3e4f5215775ad669403c8b449f5a1f347997a2a3bb6c1c2f259fd617b2c0f",
+          "updated_at": "2026-10-23T16:40:11Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3823_the_mesh_client_speaks_tls"
           ],
@@ -65240,6 +65445,7 @@
             "A fixture push whose run-plan gate fails exits 0 with a line naming the gate and saying CI holds the verdict, and CI's validate refuses the same head",
             "A commit that moves a canonical input without regenerating is still refused by scripts/pages current",
             "An uncomputable plan (exit 12), a failed finish --check and a duplicate case number still refuse the push",
+            "doctor and rustdoc report and do not refuse; the worktree guard and the SSH permissions check still refuse",
             "doctor still finds each enforcement wired by its hook"
           ],
           "created_at": "2026-10-21",
@@ -65256,20 +65462,22 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            ".githooks",
-            "bin/majordomus-cli",
-            ".ai/repo/rules/project",
+            ".githooks/pre-commit",
+            ".githooks/pre-push",
+            "scripts/ci/run-plan",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/project/issues/I3830.yaml",
+            "docs/CLI.md",
             "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
             "test/cases/3025_abandoned_work_in_a_worktree_is_named.sh",
             "test/cases/26_ci_wiring.sh",
-            "docs/CI.md"
+            "test/cases/3948_a_local_gate_reports_and_ci_decides.sh"
           ],
           "slug": "a-local-gate-reports-and-ci-decides",
-          "updated_at": "2026-10-21",
-          "validation": [
-            "bash test/run.sh 1021_a_push_runs_what_ci_would_find_first 3830_a_local_gate_reports_and_ci_decides 26_ci_wiring",
-            "bin/majordomus plan validate"
-          ]
+          "updated_at": "2026-10-23"
         }
       },
       {
@@ -67083,6 +67291,489 @@
         }
       },
       {
+        "id": "majordomus://issue/I3946",
+        "kind": "issue",
+        "label": "I3946",
+        "summary": "Every gate of the CI model declares its lane, and both readers refuse a lane they cannot read",
+        "route": "/cockpit/objects/issue/i3946",
+        "source": ".ai/repo/project/issues/I3946.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every gate of .ai/repo/ci/gates.yaml declares a lane, the model declares the four tiers, and the header documents both and cites ADR 0186",
+            "On a copy of the model, a deleted lane, lane: fast and a tier naming lane-x are each refused by scripts/ci-plan --check (exit 10) and by the executable's gates.model, with the same text",
+            "The repository's own model passes both readers, and both readers report the same lane for every gate",
+            "The plan of the model without tiers and lanes equals the plan with them for every change set the cases ask; cases 94 and 131 pass with only new assertions added",
+            "Unit tests in model.rs pin the parse and each of the three refusals"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3944"
+          ],
+          "evidence_required": [
+            "every_gate_declares_its_lane_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Selecting gates by tier or lane: slice S4 of I2350; no plan of this repository's model changes because of this issue",
+            "Reusing a gate whose inputs did not change as inputs_unchanged (ADR 0186's other half)",
+            "Moving a gate between jobs, or splitting a gate whose cost puts it in proof (shell-lint, core-check) into a cheap and a heavy half"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/ci/gates.yaml",
+            "scripts/ci-plan",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/src/gates/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "test/cases/3946_every_gate_declares_its_lane.sh",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/131_completion_gates.sh",
+            ".ai/repo/project/issues/I3946.yaml"
+          ],
+          "slug": "every-gate-declares-its-lane",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3947",
+        "kind": "issue",
+        "label": "I3947",
+        "summary": "A plan asked at a tier selects only the lanes that tier runs, and both readers of the CI model agree on it",
+        "route": "/cockpit/objects/issue/i3947",
+        "source": ".ai/repo/project/issues/I3947.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I3946"
+          ],
+          "evidence_required": [
+            "a_tier_selects_its_lanes_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Wiring .github/workflows/validate.yml, the pre-push hook or the landing seat to a tier: slice S5 of I2350",
+            "Reusing a gate whose inputs did not change as inputs_unchanged (ADR 0186's other half)",
+            "Refusing a model in which a gate requires a gate of a lane that some tier running the requirer does not run; this model has no such pair today",
+            "Running majordomus generate for the new tier field of the gates.completion input schema; the train that carries this issue derives once"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci-plan",
+            "apps/majordomus-cli/src/gates/model.rs",
+            "apps/majordomus-cli/src/gates/mod.rs",
+            "apps/majordomus-cli/src/gates/judge.rs",
+            "apps/majordomus-cli/src/capability/builtin/gates.rs",
+            "test/cases/3947_a_tier_selects_its_lanes.sh",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/131_completion_gates.sh",
+            ".ai/repo/project/issues/I3947.yaml"
+          ],
+          "slug": "a-tier-selects-its-lanes",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 3947_a_tier_selects_its_lanes 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found",
+            "scripts/ci-plan --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3949",
+        "kind": "issue",
+        "label": "I3949",
+        "summary": "A printf piped into grep -q under pipefail is refused, and a here-string replaces it",
+        "route": "/cockpit/objects/issue/i3949",
+        "source": ".ai/repo/project/issues/I3949.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "pipefail-check over the tree before this change exits 10 and names collision-gate:89, command-graph:75, pages-check:284 and :454, and generate-site-data:771",
+            "pipefail-check over the changed tree exits 0",
+            "Case 300 writes the spelling, a comment about it, a here-string, an `||` and a script without pipefail, and only the spelling is refused"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "pipefail-check measures only the scripts that pipe under set -e without pipefail; a script that sets pipefail is never read again, and five of them pipe a printf into grep -q.",
+          "depends_on": [],
+          "desired_state": "pipefail-check exits 10 with a RACE line per site and the here-string remedy; the tree carries no such site; comments, `||`, here-strings and other readers are not findings.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Pipes into `head`, which pipefail exposes the same way only when the producer outwrites the pipe buffer; 69 sites, each to be judged by its producer",
+            "scripts/ci-plan, which pipes printf into grep -q but sets no pipefail, so its status is grep's own"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "A here-string appends one newline, which grep -q, -x and -E read the same as printf '%s\\\\n'; the two printf '%s' sites only gain a trailing newline that no anchored pattern can see.",
+          "scope": [
+            "scripts/ci/pipefail-check",
+            "scripts/ci/collision-gate",
+            "scripts/ci/command-graph",
+            "scripts/ci/pages-check",
+            "scripts/generate-site-data",
+            "test/cases/300_a_pipeline_cannot_hide_a_failure.sh",
+            ".ai/repo/project/issues/I3949.yaml"
+          ],
+          "slug": "an-early-exit-reader-reads-a-here-string",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "bash test/run.sh 300_a_pipeline_cannot_hide_a_failure",
+            "scripts/ci/pipefail-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3950",
+        "kind": "issue",
+        "label": "I3950",
+        "summary": "A cache key is a versioned triplet of platform, toolchain and inputs, derived from the host and the repository",
+        "route": "/cockpit/objects/issue/i3950",
+        "source": ".ai/repo/project/issues/I3950.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I2670"
+          ],
+          "evidence_required": [
+            "key_derivation_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Talking to a store",
+            "Restoring or saving anything"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/generated",
+            "site/content/docs",
+            "site/data",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#key-is-a-derived-triplet"
+          ],
+          "slug": "a-cache-key-is-a-derived-triplet",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3950_a_cache_key_is_a_derived_triplet"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3951",
+        "kind": "issue",
+        "label": "I3951",
+        "summary": "The mesh store is spoken natively: signed S3 requests, bounded in time, with the credential read from a private file and never answered",
+        "route": "/cockpit/objects/issue/i3951",
+        "source": ".ai/repo/project/issues/I3951.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The signature and HMAC reproduce the AWS SigV4 GET Object example and RFC 4231 byte for byte",
+            "A credential file readable by its group or others is refused, with the cause named and no value",
+            "Every network call has a bound; a store that does not answer within it is unknown, never down",
+            "A refused credential, a full store and a body cut short are distinct errors, and a cut body leaves no file"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I2670"
+          ],
+          "desired_state": "The crate can probe, read and write a store with no dependency added, and no answer, log line, error or child environment carries the secret.",
+          "evidence_required": [
+            "sigv4_vectors",
+            "store_failure_paths_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Multipart upload: an object larger than one PUT is not saved, and says so",
+            "Choosing a store (I2671, I2672) and provisioning one (I2674)"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3951_the_mesh_store_is_spoken_natively.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss",
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "the-mesh-store-is-spoken-natively",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3951_the_mesh_store_is_spoken_natively"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3952",
+        "kind": "issue",
+        "label": "I3952",
+        "summary": "A dependency install is restored before and saved after, verified by its digest, local level first and a trusted store second",
+        "route": "/cockpit/objects/issue/i3952",
+        "source": ".ai/repo/project/issues/I3952.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I3950",
+            "I3951",
+            "I2671"
+          ],
+          "evidence_required": [
+            "restore_save_case",
+            "equivalence_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Caching a workspace's own incremental compilation"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache/",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "docs/generated",
+            "site/content/docs",
+            "site/data",
+            "scripts/reap-orphans",
+            ".ai/repo/policy.yaml",
+            "share/schemas/majordomus/policy",
+            "share/skeleton/policy.yaml",
+            ".ai/repo/rules/project/cache-is-invisible.v1.md",
+            ".ai/repo/rules/project/cache-is-invisible.v2.md",
+            ".ai/repo/rules/project/no-screen-waits-for-a-source.v1.md",
+            "apps/majordomus-cli/src/policy.rs",
+            "docs/CLI.md",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3952_a_dependency_install_is_restored_and_saved.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#a-second-node-reuses",
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss",
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "a-dependency-install-is-restored-before-and-saved-after",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3952_a_dependency_install_is_restored_and_saved"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3953",
+        "kind": "issue",
+        "label": "I3953",
+        "summary": "Every local build path of the repository goes through the cache, and a gate refuses a new bypass",
+        "route": "/cockpit/objects/issue/i3953",
+        "source": ".ai/repo/project/issues/I3953.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With the store healthy when the sccache server starts, the server has it as its second level; with it down the build is local-only and succeeds",
+            "The store is probed only when a server is started, never per compilation",
+            "The gate fails on a fixture script that calls npm ci or cargo build around the choke point, and passes one that declares why",
+            "A cold node with no majordomus yet builds as before, and the cache joins once the executable exists"
+          ],
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only.",
+          "depends_on": [
+            "I3952",
+            "I2673"
+          ],
+          "evidence_required": [
+            "build_paths_case",
+            "bypass_refused_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Editing a user's cargo config or shell profile",
+            "GitHub Actions jobs"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "scripts/derive",
+            "scripts/site-build",
+            "scripts/ci/build-cache-check",
+            "apps/majordomus-cli/src/environment/",
+            ".ai/repo/rules/project/",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "test/cases/3953_every_build_path_goes_through_the_cache.sh",
+            "docs/BUILD_CACHE.md"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it",
+            "a-build-reuses-what-the-mesh-already-built#store-absent-is-only-a-miss"
+          ],
+          "slug": "every-build-path-goes-through-the-cache",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3953_every_build_path_goes_through_the_cache"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3955",
+        "kind": "issue",
+        "label": "I3955",
+        "summary": "Whether an archived cargo build directory is reused on a second node is measured before anything restores one",
+        "route": "/cockpit/objects/issue/i3955",
+        "source": ".ai/repo/project/issues/I3955.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Node B's checkout and registry are its own (new mtimes), and only the build directory travels",
+            "The result is recorded whichever way it falls; a reuse below the cost of the transfer decides against the kind"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "build_dir_reuse_measured"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Building the restore itself"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+            ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml",
+            "docs/BUILD_CACHE.md"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#reuse-is-measured-on-real-nodes"
+          ],
+          "slug": "a-build-directory-archive-is-measured-before-it-is-built",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3956",
+        "kind": "issue",
+        "label": "I3956",
+        "summary": "Every worker, and every process it starts on any machine, is traced to its session, and the board names the address that reaches it",
+        "route": "/cockpit/objects/issue/i3956",
+        "source": ".ai/repo/project/issues/I3956.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "evidence_required": [
+            "trace_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "Stopping another session's process: the trace names the owner, the owner acts"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mesh/",
+            "apps/majordomus-cli/src/offload/",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            ".claude/hooks/",
+            ".ai/repo/providers/",
+            "test/cases/3957_every_process_is_traced_to_its_session.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+          ],
+          "slug": "every-process-is-traced-to-its-session",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3957_every_process_is_traced_to_its_session"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3957",
+        "kind": "issue",
+        "label": "I3957",
+        "summary": "No entry path or gate builds: the launcher, the gates, the test harness and the just bridge call the tree's executable and fail fast or use a release of the same generation",
+        "route": "/cockpit/objects/issue/i3957",
+        "source": ".ai/repo/project/issues/I3957.yaml",
+        "facts": {
+          "created_at": "2026-10-22",
+          "current_state": "Measured on master 2034d4a3f0b: see milestone ordinary-commands-never-build.",
+          "depends_on": [],
+          "desired_state": "Zero cargo invocations from any ordinary path with the executable missing or stale; a mismatched release refused; no silent pass.",
+          "evidence_required": [
+            "zero_cargo_case"
+          ],
+          "milestone": "ordinary-commands-never-build",
+          "non_scope": [
+            "Migrating shell domain logic"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "bin/majordomus-cli",
+            "bin/majordomus-mcp",
+            "lib/rust_bin.sh",
+            "test/lib.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".claude/hooks/majordomus-edit-guard",
+            ".githooks/",
+            "apps/majordomus-cli/src/command_graph/bridge.rs",
+            ".ai/repo/project/intents/every-capability-has-one-owner-and-the-cli-never-builds.yaml",
+            "test/cases/3958_no_entry_path_or_gate_builds.sh"
+          ],
+          "serves": [
+            "every-capability-has-one-owner-and-the-cli-never-builds#no-ordinary-command-builds",
+            "every-capability-has-one-owner-and-the-cli-never-builds#fallback-is-generation-verified",
+            "every-capability-has-one-owner-and-the-cli-never-builds#every-caller-declares-its-outcome"
+          ],
+          "slug": "no-entry-path-or-gate-builds",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3958_no_entry_path_or_gate_builds"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3960",
         "kind": "issue",
         "label": "I3960",
@@ -67774,6 +68465,78 @@
           "validation": [
             "bash test/run.sh 3995_a_task_started_before_the_first_commit_finishes",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4154",
+        "kind": "issue",
+        "label": "I4154",
+        "summary": "The follow backlog test waits on the follower's cursor, not on fifty milliseconds",
+        "route": "/cockpit/objects/issue/i4154",
+        "source": ".ai/repo/project/issues/I4154.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The test passes 50 times in a row",
+            "The whole http::follow test module passes"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "The test waits for any frame and sleeps 50 ms before writing three sessions, each its own change.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Production code, which loses no change (I4155 records the caches' keys)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Holding PAGE while writing sessions: open_session never takes PAGE, which is private to follow.rs, so it cannot deadlock.",
+          "scope": [
+            "apps/majordomus-cli/src/http/follow.rs",
+            ".ai/repo/project/issues/I4154.yaml"
+          ],
+          "serves": [],
+          "slug": "the-follow-backlog-test-waits-on-the-cursor",
+          "updated_at": "2026-10-23"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4155",
+        "kind": "issue",
+        "label": "I4155",
+        "summary": "The follower's shared board and page caches are keyed by the repository they read",
+        "route": "/cockpit/objects/issue/i4155",
+        "source": ".ai/repo/project/issues/I4155.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two Contexts read through the shared caches in one process each get their own snapshot and cursor"
+          ],
+          "created_at": "2026-10-23",
+          "current_state": "BOARD and PAGE are statics keyed without the Context's identity.",
+          "depends_on": [
+            "I4154"
+          ],
+          "desired_state": "Each key names the Context (its repository root or identity), and a case or unit test reads two Contexts in one process and gets each its own answer.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "A key that is too narrow defeats the share the caches exist for; key by the Context, not by the caller.",
+          "scope": [
+            "apps/majordomus-cli/src/http/follow.rs",
+            ".ai/repo/project/issues/I4155.yaml"
+          ],
+          "serves": [],
+          "slug": "the-follow-caches-are-keyed-by-their-repository",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib http::follow::tests"
           ]
         }
       },
@@ -70668,6 +71431,52 @@
         }
       },
       {
+        "id": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "milestone",
+        "label": "builds-reuse-the-mesh-cache",
+        "summary": "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs",
+        "route": "/cockpit/objects/milestone/builds-reuse-the-mesh-cache",
+        "source": ".ai/repo/project/milestones/builds-reuse-the-mesh-cache.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every criterion of intent a-build-reuses-what-the-mesh-already-built has its proof in the tree"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [
+            "development-runtime"
+          ],
+          "desired_state": "majordomus mesh build-cache key|status|ensure|env on every surface, the store found through a trusted node's signed offer, the local build paths routed through it, and a second node's reuse measured.",
+          "evidence_required": [],
+          "non_scope": [
+            "Distributed compilation",
+            "Public exposure of the store",
+            "A second provider beside the first"
+          ],
+          "order": 181,
+          "priority": "p0",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache.rs",
+            "apps/majordomus-cli/src/mesh/build_cache",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "lib/rust_bin.sh",
+            "scripts/reap-orphans",
+            "scripts/ci/build-cache-check",
+            ".ai/repo/adrs/0157-the-mesh-offers-a-shared-build-cache.md",
+            ".ai/repo/policy.yaml",
+            "docs/BUILD_CACHE.md",
+            "docs/CLI.md"
+          ],
+          "slug": "builds-reuse-the-mesh-cache",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/campaigns-are-read-as-provenance",
         "kind": "milestone",
         "label": "campaigns-are-read-as-provenance",
@@ -72493,6 +73302,46 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/ordinary-commands-never-build",
+        "kind": "milestone",
+        "label": "ordinary-commands-never-build",
+        "summary": "No ordinary command builds: every entry path fails fast or answers through a release of the same generation",
+        "route": "/cockpit/objects/milestone/ordinary-commands-never-build",
+        "source": ".ai/repo/project/milestones/ordinary-commands-never-build.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every criterion of intent every-capability-has-one-owner-and-the-cli-never-builds that names this milestone's issues has its proof in the tree"
+          ],
+          "created_at": "2026-10-22",
+          "depends_on": [],
+          "desired_state": "A case counts zero cargo invocations across every path with the executable missing and stale, and a mismatched release is refused.",
+          "evidence_required": [],
+          "non_scope": [
+            "Migrating lib/*.sh domain logic (intent repository-automation-is-typed)"
+          ],
+          "order": 182,
+          "priority": "p0",
+          "risks": [
+            "A client that relied on the hidden rebuild now sees exit 12: the message names the one command to run"
+          ],
+          "scope": [
+            "bin/majordomus-cli",
+            "bin/majordomus-mcp",
+            "lib/rust_bin.sh",
+            "test/lib.sh",
+            ".ai/repo/ci/gates.yaml",
+            ".claude/hooks/majordomus-edit-guard",
+            "apps/majordomus-cli/src/command_graph/bridge.rs"
+          ],
+          "slug": "ordinary-commands-never-build",
+          "updated_at": "2026-10-22",
+          "validation": [
+            "majordomus plan validate",
+            "majordomus intent validate"
           ]
         }
       },
@@ -79368,16 +80217,18 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
         "kind": "rule",
-        "label": "project.a-push-runs-what-ci-would-find-first@1",
-        "summary": "A push runs what CI would find first",
-        "route": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-1",
-        "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+        "label": "project.a-push-runs-what-ci-would-find-first@2",
+        "summary": "A push runs what CI would find first, and CI decides",
+        "route": "/cockpit/objects/rule/project-a-push-runs-what-ci-would-find-first-2",
+        "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
-          "depends_on": [],
+          "depends_on": [
+            "project.the-cooperation-model-is-the-owners-word@2"
+          ],
           "tags": [
             "ci",
             "process"
@@ -79601,23 +80452,24 @@
         }
       },
       {
-        "id": "majordomus://rule/project.cache-is-invisible@1",
+        "id": "majordomus://rule/project.cache-is-invisible@2",
         "kind": "rule",
-        "label": "project.cache-is-invisible@1",
+        "label": "project.cache-is-invisible@2",
         "summary": "A cache never changes what a command observes",
-        "route": "/cockpit/objects/rule/project-cache-is-invisible-1",
-        "source": ".ai/repo/rules/project/cache-is-invisible.v1.md",
+        "route": "/cockpit/objects/rule/project-cache-is-invisible-2",
+        "source": ".ai/repo/rules/project/cache-is-invisible.v2.md",
         "status": "active",
         "facts": {
           "class": "advisory",
           "depends_on": [
             "project.derived-once@1",
-            "project.no-claim-without-test@1"
+            "project.no-claim-without-test@1",
+            "project.accumulation-is-measured@2"
           ],
-          "statement": "Cache only what is semantically safe, key it by the state version, prove it byte-identical over every read-only command, and keep a switch that turns it off.",
           "tags": [
             "performance",
-            "doctrine"
+            "doctrine",
+            "cache"
           ]
         }
       },
@@ -80661,7 +81513,7 @@
           "class": "blocking",
           "depends_on": [
             "project.ui-derived-state@1",
-            "project.cache-is-invisible@1",
+            "project.cache-is-invisible@2",
             "project.interfaces-are-projections@1"
           ],
           "tags": [
@@ -90845,6 +91697,83 @@
         "source": "test/cases/3943_a_second_gate_list_is_found.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3946_every_gate_declares_its_lane.sh",
+        "kind": "test",
+        "label": "test/cases/3946_every_gate_declares_its_lane.sh",
+        "route": "/cockpit/objects/test/test-cases-3946-every-gate-declares-its-lane-sh",
+        "source": "test/cases/3946_every_gate_declares_its_lane.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3947_a_tier_selects_its_lanes.sh",
+        "kind": "test",
+        "label": "test/cases/3947_a_tier_selects_its_lanes.sh",
+        "route": "/cockpit/objects/test/test-cases-3947-a-tier-selects-its-lanes-sh",
+        "source": "test/cases/3947_a_tier_selects_its_lanes.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+        "kind": "test",
+        "label": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+        "route": "/cockpit/objects/test/test-cases-3948-a-local-gate-reports-and-ci-decides-sh",
+        "source": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "kind": "test",
+        "label": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "route": "/cockpit/objects/test/test-cases-3950-a-cache-key-is-a-derived-triplet-sh",
+        "source": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+        "kind": "test",
+        "label": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+        "route": "/cockpit/objects/test/test-cases-3952-a-dependency-install-is-restored-and-saved-sh",
+        "source": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3953_every_build_path_goes_through_the_cache.sh",
+        "kind": "test",
+        "label": "test/cases/3953_every_build_path_goes_through_the_cache.sh",
+        "route": "/cockpit/objects/test/test-cases-3953-every-build-path-goes-through-the-cache-sh",
+        "source": "test/cases/3953_every_build_path_goes_through_the_cache.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+        "kind": "test",
+        "label": "test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+        "route": "/cockpit/objects/test/test-cases-3954-a-store-is-offered-in-a-signed-record-sh",
+        "source": "test/cases/3954_a_store_is_offered_in_a_signed_record.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "kind": "test",
+        "label": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "route": "/cockpit/objects/test/test-cases-3955-the-sccache-client-is-derived-from-the-selected-store-sh",
+        "source": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "kind": "test",
+        "label": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "route": "/cockpit/objects/test/test-cases-3956-a-node-is-provisioned-as-a-cache-provider-sh",
+        "source": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "kind": "test",
+        "label": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "route": "/cockpit/objects/test/test-cases-3957-every-process-is-traced-to-its-session-sh",
+        "source": "test/cases/3957_every_process_is_traced_to_its_session.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3958_no_entry_path_or_gate_builds.sh",
+        "kind": "test",
+        "label": "test/cases/3958_no_entry_path_or_gate_builds.sh",
+        "route": "/cockpit/objects/test/test-cases-3958-no-entry-path-or-gate-builds-sh",
+        "source": "test/cases/3958_no_entry_path_or_gate_builds.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
         "kind": "test",
         "label": "test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
@@ -90864,6 +91793,13 @@
         "label": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
         "route": "/cockpit/objects/test/test-cases-3995-a-task-started-before-the-first-commit-finishes-sh",
         "source": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-4008-a-push-that-only-deletes-plans-nothing-sh",
+        "source": "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -96925,6 +97861,66 @@
       {
         "source": "capability:mcp.projection",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.ensure",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.ensure",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.env",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.key",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.provision",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.build_cache.provision",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -104079,7 +105075,7 @@
       },
       {
         "source": "majordomus://adr/adr-0185",
-        "target": "majordomus://rule/project.cache-is-invisible@1",
+        "target": "majordomus://rule/project.cache-is-invisible@2",
         "kind": "put_in_force"
       },
       {
@@ -106225,6 +107221,51 @@
       {
         "source": "majordomus://adr/adr-0221",
         "target": "majordomus://test/test/cases/01_init.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://adr/adr-0172",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://adr/adr-0172",
+        "kind": "supersedes"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://implementation/bin/majordomus-cli",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://implementation/lib/rust_bin.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://test/test/cases/3177_a_client_always_gets_a_server.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0224",
+        "target": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
         "kind": "put_in_force"
       },
       {
@@ -111933,6 +112974,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-build-reuses-what-the-mesh-already-built",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-change-is-judged-in-minutes",
         "target": "kind:critique",
         "kind": "is_a"
@@ -111994,6 +113040,11 @@
       },
       {
         "source": "majordomus://critique/entry-proves-what-it-handed",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://critique/every-capability-has-one-owner-and-the-cli-never-builds",
         "target": "kind:critique",
         "kind": "is_a"
       },
@@ -112264,6 +113315,11 @@
       },
       {
         "source": "majordomus://document/docs/BRIEF.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/BUILD_CACHE.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -114328,6 +115384,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://intent/a-build-reuses-what-the-mesh-already-built",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://intent/a-change-is-judged-in-minutes",
         "target": "kind:intent",
         "kind": "is_a"
@@ -114389,6 +115450,11 @@
       },
       {
         "source": "majordomus://intent/entry-proves-what-it-handed",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/every-capability-has-one-owner-and-the-cli-never-builds",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -128433,6 +129499,151 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3946",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3946",
+        "target": "majordomus://issue/I3944",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3946",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3947",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3947",
+        "target": "majordomus://issue/I3946",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3947",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3949",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3949",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3950",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3950",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3950",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3951",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3951",
+        "target": "majordomus://issue/I2670",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3951",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://issue/I2671",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://issue/I3950",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://issue/I3951",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3952",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "majordomus://issue/I2673",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "majordomus://issue/I3952",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3953",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3955",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3955",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3956",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3956",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3957",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3957",
+        "target": "majordomus://milestone/ordinary-commands-never-build",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3960",
         "target": "kind:issue",
         "kind": "is_a"
@@ -128625,6 +129836,31 @@
       {
         "source": "majordomus://issue/I3995",
         "target": "majordomus://milestone/a-stranger-adopts-it-unaided",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4154",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4154",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4155",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4155",
+        "target": "majordomus://issue/I4154",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4155",
+        "target": "majordomus://milestone/ci-critical-path",
         "kind": "belongs_to"
       },
       {
@@ -129183,6 +130419,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://milestone/campaigns-are-read-as-provenance",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -129461,6 +130707,11 @@
         "source": "majordomus://milestone/operation-convergence",
         "target": "majordomus://milestone/cost-per-accepted-outcome",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/ordinary-commands-never-build",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/peer-blackboard",
@@ -130903,9 +132154,14 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
+        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
+        "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
@@ -131043,17 +132299,22 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.cache-is-invisible@1",
+        "source": "majordomus://rule/project.cache-is-invisible@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.cache-is-invisible@1",
+        "source": "majordomus://rule/project.cache-is-invisible@2",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.cache-is-invisible@2",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.cache-is-invisible@1",
+        "source": "majordomus://rule/project.cache-is-invisible@2",
         "target": "majordomus://rule/project.no-claim-without-test@1",
         "kind": "depends_on"
       },
@@ -131669,7 +132930,7 @@
       },
       {
         "source": "majordomus://rule/project.no-screen-waits-for-a-source@1",
-        "target": "majordomus://rule/project.cache-is-invisible@1",
+        "target": "majordomus://rule/project.cache-is-invisible@2",
         "kind": "depends_on"
       },
       {
@@ -134908,6 +136169,61 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3946_every_gate_declares_its_lane.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3947_a_tier_selects_its_lanes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3953_every_build_path_goes_through_the_cache.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3957_every_process_is_traced_to_its_session.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3958_no_entry_path_or_gate_builds.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134919,6 +136235,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -139529,6 +140850,26 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.build_cache.ensure",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.build_cache.env",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.build_cache.key",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.build_cache.provision",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.claim",
         "kind": "composes"
       },
@@ -140059,8 +141400,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3898,
-      "edges": 9004,
+      "nodes": 3934,
+      "edges": 9085,
       "acyclic": false,
       "truncated": false
     }

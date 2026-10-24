@@ -1027,6 +1027,7 @@ mod tests {
                 branch: Some("master".into()),
                 this_checkout: true,
             }),
+            address: None,
         }
     }
 
