@@ -67867,6 +67867,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I4220",
+        "kind": "issue",
+        "label": "I4220",
+        "summary": "A run that /trends/ draws is a link the site check decides by provenance",
+        "route": "/cockpit/objects/issue/i4220",
+        "source": ".ai/repo/project/issues/I4220.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A link to a run site/data/trends.json names is decided, and the check exits 0",
+            "A link to the run site/data/evidence.json names is still decided",
+            "A link to a run neither file names is still refused as undecidable offline (exit 10)"
+          ],
+          "created_at": "2026-10-24",
+          "current_state": "link-check builds its set of decided runs from site/data/evidence.json alone; every other Actions run link is refused.",
+          "depends_on": [],
+          "desired_state": "link-check also adds runs[].run_id of site/data/trends.json to that set. A run neither file names is still refused, and case 335 holds all three outcomes.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "non_scope": [
+            "The /trends/ template, which keeps linking each run to its forge page",
+            "Deciding any other forge path (issues, pulls, milestones) offline",
+            "The ui-snapshot job's forge read on the same run, which failed with exit 12 (the forge did not answer) and is retried by the next pages run"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "None beyond the trust already given evidence.json: both files are produced by scripts/pages from forge answers at publish time, never typed.",
+          "scope": [
+            "scripts/ci/link-check",
+            "test/cases/335_every_link_resolves.sh",
+            ".ai/repo/project/issues/I4220.yaml"
+          ],
+          "serves": [],
+          "slug": "a-trends-run-is-decided-by-provenance",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "bash test/run.sh 335_every_link_resolves"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4222",
         "kind": "issue",
         "label": "I4222",
@@ -128649,6 +128692,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4220",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4220",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4222",
         "target": "kind:issue",
         "kind": "is_a"
@@ -140060,8 +140113,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3898,
-      "edges": 9004,
+      "nodes": 3899,
+      "edges": 9006,
       "acyclic": false,
       "truncated": false
     }
