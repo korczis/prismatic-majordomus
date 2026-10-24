@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "1b179b1a949faa4bc43d49fc84a7d40d1b5dec8e2588f849e9a5580ae249e6bc",
+    "fingerprint": "41c0be0a67d3ef649d5b39a7d55c8382c26c85b399b7cbee152e595e50ac70cd",
     "summary": {
-      "total": 3436,
+      "total": 3437,
       "builtin": 213,
-      "declarative": 3223,
+      "declarative": 3224,
       "by_kind": {
         "command": 33,
         "query": 180,
-        "resource": 3223
+        "resource": 3224
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 58,
-        "implemented": 3233
+        "implemented": 3234
       },
       "mcp_tools": 201,
-      "mcp_resources": 3278,
+      "mcp_resources": 3279,
       "http_routes": 207,
       "cli_commands": 116,
       "modules": 94,
@@ -88434,7 +88434,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 976,
+        "capabilities": 977,
         "capability_ids": []
       },
       {
@@ -89119,7 +89119,7 @@
     ]
   },
   "index": {
-    "fingerprint": "306df65fffab1471a65f8dc0d88a8a4da68fb173f74e25065ec4a94bc03d980b",
+    "fingerprint": "7ed9fb2ed762edb662cc8a8e3cfd5bc0d4fab5790efbaac0ec950fb394deb715",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89159,7 +89159,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 38,
-      "issue": 976,
+      "issue": 977,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 106,
@@ -96486,7 +96486,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 903406
+        "bytes": 907369
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -111085,6 +111085,17 @@
         "bytes": 2983
       },
       {
+        "uri": "majordomus://issue/I4200",
+        "kind": "issue",
+        "identity": "I4200",
+        "title": "A warm UI screen borrows what its sources answered and writes its page once, so a plan of any size is not copied per request",
+        "description": "Make the warm request path of /ui copy nothing it already holds: read the intents, issues, waves and scope pairs through view::items (borrowed) instead of view::list (a deep copy) in ui/issues.rs, ui/idd.rs (screen, render, choice, wave_panel) and ui/intent.rs's inspector; move a screen's tree into its page in ui/shell.rs::page instead of cloning it; and escape text and attribute values straight into the page buffer in cockpit/html.rs instead of through a new String each.",
+        "path": ".ai/repo/project/issues/I4200.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3285
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -124263,7 +124274,7 @@
       "identity": [
         "id"
       ],
-      "objects": 976
+      "objects": 977
     },
     {
       "name": "knowledge",
