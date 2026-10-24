@@ -2113,9 +2113,9 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   merging. The verdict always states its subject — how many identities were added and what
   they were measured against — and when the base does not resolve it says the other refs were
   **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
-  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
-  rather than at the merge where `generate --strict` would exclude every claimant and name
-  only the identity. `ADR 0053` is the reasoning.
+  examination: the pre-commit hook prints it on the branch, and CI's core-check refuses it
+  there, rather than at the merge where `generate --strict` would exclude every claimant and
+  name only the identity. `ADR 0053` is the reasoning.
 
 - `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
   for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every

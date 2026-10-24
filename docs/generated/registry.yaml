@@ -23605,6 +23605,11 @@ capabilities:
               - boolean
               - "null"
             description: "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives."
+          tier:
+            type:
+              - string
+              - "null"
+            description: "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
         description: "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over."
         title: CompletionInput
     output:
@@ -24110,6 +24115,12 @@ capabilities:
                   - "null"
                 description: "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```"
                 default: null
+              lane:
+                anyOf:
+                  - "$ref": "#/$defs/Lane"
+                  - type: "null"
+                description: "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```"
+                default: null
               inputs:
                 type: array
                 items:
@@ -24121,6 +24132,18 @@ capabilities:
               - runs
               - inputs
             description: "```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"site-check\",\n    \"job\": \"site\",\n    \"runs\": \"scripts/site-check\",\n    \"summary\": \"the site is whole\"\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\"site/**\".into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \"site-check\");\nassert_eq!(entry.inputs, [\"site/**\"]);\n```\nOne gate of the model, with what the model implies about it."
+          Lane:
+            oneOf:
+              - type: string
+                const: feedback
+                description: "Cheap, fast and decisive: a pull request's required verdict needs it green."
+              - type: string
+                const: proof
+                description: "The heavy half, which judges the combined top before it lands."
+              - type: string
+                const: release
+                description: A gate only a release asks.
+            description: "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs."
           GateClass:
             type: object
             properties:

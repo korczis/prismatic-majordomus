@@ -18,7 +18,9 @@
 #                                                            one job's gates of a written plan
 #   scripts/ci/run-plan --before-push                        what a push owes first: the plan's
 #                                                            structure gates and the suite's
-#                                                            fast cases, within a stated bound
+#                                                            fast cases, within a stated bound;
+#                                                            planned from the commits up to
+#                                                            HEAD, not the working tree
 #
 # BEFORE A PUSH (project.a-push-runs-what-ci-would-find-first). On 2026-10-09 CI refused a
 # release twice for what a local run finds in seconds: a structure gate (economics-claims,
@@ -38,8 +40,10 @@
 #
 # Every gate left out prints one line naming it and why. The step reports its measured time
 # against MJ_PUSH_BOUND (default 180) seconds. A plan that cannot be computed, or a durations
-# file that is missing, refuses the push: what cannot be measured is not passed. There is no
-# flag that skips it, as there is no --no-verify.
+# file that is missing, refuses the push (exit 12): what cannot be measured is not passed. A
+# gate or case that fails exits 1 with its name, which the hook reports and lets through,
+# because CI runs it again and holds the verdict (I3830). There is no flag that skips the
+# step, as there is no --no-verify.
 #
 #   MJ_CI_TIMINGS=FILE   append "<job or plan><TAB><gate id><TAB>seconds" per gate
 #   MJ_CI_RECEIPTS=FILE  append "<gate id><TAB><success or failure><TAB><job>/run-plan" per
@@ -88,6 +92,16 @@ while [ $# -gt 0 ]; do
     *) rest+=("$1"); shift ;;
   esac
 done
+# A push sends commits, so its plan is computed from them, as CI computes it: the history
+# since the merge base up to HEAD (`--head HEAD`), never the working tree. ci-plan's default
+# adds `git status`, untracked files included, and on 2026-10-22 three `.merge_file_XXXXXX`
+# temporaries an interrupted merge left at the root of the primary checkout were
+# "a changed path in no class of the model": a push that only deleted remote refs ran the
+# full plan for more than 15 minutes over files it did not carry. A caller that names its
+# own paths (--head, --files, --full) keeps them.
+if [ "$before_push" = 1 ] && [ -z "$given" ]; then
+  case " ${rest[*]+"${rest[*]}"} " in *" --head "*|*" --files "*|*" --full "*) ;; *) rest+=(--head HEAD) ;; esac
+fi
 if [ -n "$given" ]; then
   [ -f "$given" ] || { echo "run-plan: $given is missing; the plan job writes it (scripts/ci-plan)" >&2; exit 12; }
   plan="$given"
@@ -216,7 +230,8 @@ if [ "$before_push" = 1 ]; then
       "$(( took - bound ))" "$( [ -f "$plan.times" ] && LC_ALL=C sort -rn "$plan.times" | head -n 3 | awk '{s=$1; $1=""; sub(/^ /,""); printf "%s%s %ss", (NR>1?", ":""), $0, s}')"
   fi
   rm -f "$plan.times"
-  if [ -n "$failed" ]; then printf '; failed:%s. CI would refuse this push for the same reason.\n' "$failed"; exit 1; fi
+  # Exit 1 is a failed gate or case; the pre-push hook reports it and CI decides (I3830).
+  if [ -n "$failed" ]; then printf '; failed:%s. CI would refuse this push for the same reason, and CI holds the verdict.\n' "$failed"; exit 1; fi
   printf '; nothing CI would find here first\n'
   exit 0
 fi
