@@ -32,9 +32,22 @@ mkdir -p "$T/state" "$T/bin"
 printf '#!/bin/sh\necho "gh: not here in this case" >&2\nexit 4\n' > "$T/bin/gh"
 chmod +x "$T/bin/gh"
 ( cd "$R" && PATH="$T/bin:$PATH" XDG_STATE_HOME="$T/state" exec "$RB" serve --port 0 --idle 0 --discovery filesystem </dev/null >"$T/serve.log" 2>&1 ) &
-PIDS="$PIDS $!"
-ready() { [ -n "$(jq -r '.url // empty' "$R/.ai/local/state/mcp/server.json" 2>/dev/null)" ]; }
-i=0; until ready; do i=$((i + 1)); [ "$i" -lt 200 ] || { cat "$T/serve.log"; exit 1; }; sleep 0.2; done
+SRV_PID=$!
+PIDS="$PIDS $SRV_PID"
+# Ready is the server answering that it is, not its lease naming a URL: a lease can name one
+# before the server serves it. The wait follows the load rather than a fixed count — a loaded
+# runner took over 40 s (lundra, six cases at a time at load 19) — and a server that exits
+# is said at once rather than at the end of the wait.
+ready() {
+  local url
+  url="$(jq -r '.url // empty' "$R/.ai/local/state/mcp/server.json" 2>/dev/null)"
+  [ -n "$url" ] && curl -sS --max-time 10 "$url/api/v1/ready" 2>/dev/null | jq -e '.ready == true' >/dev/null 2>&1
+}
+i=0; until ready; do
+  kill -0 "$SRV_PID" 2>/dev/null || { echo "    the server exited before it was ready"; cat "$T/serve.log"; exit 1; }
+  i=$((i + 1)); [ "$i" -lt 600 ] || { echo "    the server was not ready in 120 s"; cat "$T/serve.log"; exit 1; }
+  sleep 0.2
+done
 cd "$R" || exit
 
 expect_exit 0 "$RB" mesh session open --session s1 --worker 3d --intent "the runtime train"

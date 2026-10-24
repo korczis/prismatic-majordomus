@@ -400,6 +400,16 @@
       "external": false
     },
     {
+      "id": ".ai/local/cache/flat",
+      "kind": "artifact",
+      "label": "local/cache/flat",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/local/state/session-current.yaml",
       "kind": "artifact",
       "label": "local/state/session-current.yaml",
@@ -2259,6 +2269,11 @@
     {
       "source": "lib/checkpoint.sh",
       "target": ".ai/local/state/current.yaml",
+      "kind": "writes"
+    },
+    {
+      "source": "lib/common.sh",
+      "target": ".ai/local/cache/flat",
       "kind": "writes"
     },
     {

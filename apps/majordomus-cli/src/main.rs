@@ -25,6 +25,9 @@ fn main() -> ExitCode {
             };
         }
     };
+    // a process that may hold the lease runs from a copy of a build output, so that a
+    // rebuild of that output never replaces the file the lease names (I2059)
+    majordomus_cli::served_executable::serve_from_a_copy(&cli.command);
     majordomus_cli::logging::init();
     match majordomus_cli::commands::run(cli) {
         Ok(code) => ExitCode::from(code),

@@ -4,12 +4,26 @@ description = "A provider capability is declared once, with the citation it was 
 weight = 74
 [extra]
 kind = "rule"
-slug = "project-a-provider-capability-cites-its-evidence-2"
-identity = "project.a-provider-capability-cites-its-evidence@2"
+slug = "project-a-provider-capability-cites-its-evidence-3"
+identity = "project.a-provider-capability-cites-its-evidence@3"
 status = "active"
-source = ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md"
+source = ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md"
 +++
 {% raw %}
+
+## What changed in version 3, and why
+
+Version 2 declared three capabilities. ADR 0213 observes what every session consumed through
+each provider's own official seam, and the intent every-sessions-usage-is-observed needs to
+know, per provider, which seam there is before anything can receive from it (I3287). Which
+seam a vendor offers is a claim about the vendor's product like the three before it, so it is
+declared in the same block and cited the same way: `offers.usage` lists `otel`, `app-server`
+or `stream-json`, or says `none` alone, and `offers.usage_evidence` says where that was read
+and when. A seam that exists but whose coverage nobody verified is left out and named in the
+citation rather than claimed: Codex's own OpenTelemetry export is the first such case.
+`scripts/provider-evidence-check` and `majordomus product validate` refuse an uncited or
+malformed list, `lifecycle providers` and `docs/generated/providers.md` show it, and
+`test/cases/3287_a_provider_declares_its_usage_seam.sh` holds the gate to its negatives.
 
 ## What changed in version 2, and why
 
