@@ -126,7 +126,11 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 ```
 
-Requirements: bash 3.2 or newer, git, and `sha256sum` or `openssl`. Nothing else.
+The shell tool, `bin/majordomus`, is small and portable: bash 3.2 or newer, git, and
+`sha256sum` or `openssl` run it on a stock macOS or Linux. It answers `init`, `start`,
+`check`, `finish` and the other commands of the task cycle itself. Every command it does not
+know it hands to the Rust executable it ships prebuilt as `libexec/majordomus-cli`, so
+`mcp`, `serve`, `generate` and `worktree` exist only there.
 Nothing is installed into your project except `.ai/` and the files the policy names. A
 repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
 by `majordomus migrate` (preview with `--dry-run`); every other command refuses that

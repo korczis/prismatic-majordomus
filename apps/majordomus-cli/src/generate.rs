@@ -12,6 +12,8 @@
 //! artifact carries a provenance header in the form its encoding allows, and
 //! [`manifest_document`] is the index of the whole set, itself generated.
 
+mod entities;
+
 use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
@@ -124,6 +126,10 @@ pub enum Target {
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
+    /// `docs/generated/entities.json`: the site's entity projection of the composed graph
+    /// under `site/data/publication.toml` (I1007); nothing in a repository that declares no
+    /// publication.
+    Entities,
     /// Every projection of the design system (see `design::render`): the
     /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
     /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
@@ -154,6 +160,7 @@ impl Target {
         Target::Changelog,
         Target::Distribution,
         Target::Graph,
+        Target::Entities,
         Target::Deployment,
         Target::Economics,
         Target::Manifest,
@@ -191,6 +198,7 @@ impl Target {
             Target::Manifest => "manifest",
             Target::Deployment => "deployment",
             Target::Graph => "graph",
+            Target::Entities => "entities",
             Target::Design => "design",
             Target::Economics => "economics",
         }
@@ -646,6 +654,7 @@ pub fn artifacts(
             | Target::Distribution
             | Target::Deployment
             | Target::Graph
+            | Target::Entities
             | Target::Design
             | Target::Economics
             | Target::Manifest => {}
@@ -1247,14 +1256,20 @@ pub fn context_artifacts(
         })?;
         out.extend(Document::new("economics", ECONOMICS_SCHEMA, source, value).artifacts(version));
     }
-    if targets.contains(&Target::Graph) {
+    // composed once for both targets that read it: the composition is the expensive part
+    let graph = if targets.contains(&Target::Graph) || targets.contains(&Target::Entities) {
+        Some(graph_document(ctx, version)?)
+    } else {
+        None
+    };
+    if let (true, Some(graph)) = (targets.contains(&Target::Graph), &graph) {
         out.push(Artifact::verbatim(
             format!("{OUT_DIR}/graph.json"),
             "graph",
             ArtifactFormat::Json,
             Some(GRAPH_SCHEMA.to_string()),
             "the composed graph of the registry and the index",
-            graph_document(ctx, version)?,
+            graph.clone(),
         ));
         out.push(Artifact::verbatim(
             format!("{OUT_DIR}/graph.schema.json"),
@@ -1264,6 +1279,19 @@ pub fn context_artifacts(
             "the schema of the composed graph, generated from its types",
             graph_schema_document(version),
         ));
+    }
+    if let (true, Some(graph)) = (targets.contains(&Target::Entities), &graph) {
+        let root = Path::new(&ctx.index.repository.root);
+        if let Some(content) = entities_document(root, graph, version)? {
+            out.push(Artifact::verbatim(
+                format!("{OUT_DIR}/entities.json"),
+                "entities",
+                ArtifactFormat::Json,
+                None,
+                "the composed graph under site/data/publication.toml",
+                content,
+            ));
+        }
     }
     Ok(out)
 }
@@ -1518,6 +1546,73 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
         version,
         crate::graph::composed_complete(&ctx.registry, &ctx.index),
     )
+}
+
+/// The site's entity projection of a rendered composed graph (`graph`, as
+/// [`graph_document`] wrote it) under the repository's publication declaration (I1007):
+/// the projection `scripts/generate-site-data` computed in the shell, with the provenance
+/// members every generated JSON document carries after its `source`. `None` when the
+/// repository declares no publication, which is every repository without a site.
+///
+/// Refused, as the graph is, when the projection carries anything from `FORBIDDEN`.
+///
+/// ```
+/// use majordomus_cli::generate::entities_document;
+/// let root = tempfile::tempdir().unwrap();
+/// let graph = r#"{"graph": {"nodes": [
+///     {"id": "adr:0001", "kind": "adr", "label": "adr-0001", "status": "accepted",
+///      "route": "/cockpit/objects/adr/adr-0001", "source": ".ai/repo/adrs/0001.md"}
+/// ], "edges": []}}"#;
+/// // no publication declaration: a repository without a site has no projection
+/// assert_eq!(entities_document(root.path(), graph, "1.0.0").unwrap(), None);
+///
+/// let declaration = "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n";
+/// std::fs::create_dir_all(root.path().join("site/data")).unwrap();
+/// std::fs::write(root.path().join("site/data/publication.toml"), declaration).unwrap();
+/// let doc = entities_document(root.path(), graph, "1.0.0").unwrap().unwrap();
+/// let doc: serde_json::Value = serde_json::from_str(&doc).unwrap();
+/// assert_eq!(doc["generator"], "majordomus-cli 1.0.0");
+/// assert_eq!(doc["kinds"][0]["count"], 1);
+/// assert_eq!(doc["entities"][0]["slug"], "adr-0001");
+/// // a node that would publish a machine's home directory refuses the whole document
+/// let leak = graph.replace(".ai/repo/adrs/0001.md", &format!("{}someone/0001.md", "/Users/"));
+/// assert!(entities_document(root.path(), &leak, "1.0.0").is_err());
+/// ```
+pub fn entities_document(root: &Path, graph: &str, version: &str) -> Result<Option<String>> {
+    let Ok(declaration) = std::fs::read_to_string(root.join(crate::entity::PUBLICATION)) else {
+        return Ok(None);
+    };
+    let graph: Value = serde_json::from_str(graph).map_err(|e| Error::Protocol {
+        reason: format!("the composed graph does not parse as JSON: {e}"),
+    })?;
+    let projection = entities::projection(&graph, &declaration)?;
+    let mut doc = Map::new();
+    for (key, value) in projection.as_object().into_iter().flatten() {
+        doc.insert(key.clone(), value.clone());
+        if key == "source" {
+            doc.insert(
+                "generated".into(),
+                Value::String(format!(
+                    "{HEADER}; source: docs/generated/graph.json and {}; regenerate with `majordomus generate`",
+                    crate::entity::PUBLICATION
+                )),
+            );
+            doc.insert(
+                "generator".into(),
+                Value::String(format!("majordomus-cli {version}")),
+            );
+        }
+    }
+    let rendered = entities::render(&Value::Object(doc));
+    if let Some((marker, what)) = forbidden_in(&rendered) {
+        return Err(Error::Http {
+            reason: format!(
+                "the entity projection carries {what} (`{marker}`) and would publish it; \
+                 find the node of the composed graph that holds it before regenerating"
+            ),
+        });
+    }
+    Ok(Some(rendered))
 }
 
 /// [`graph_document`] over a composition already made, so the refusal of one that stopped
@@ -3617,5 +3712,161 @@ mod tests {
             }
             other => panic!("{other:?}"),
         }
+    }
+
+    /// A synthetic repository that publishes its rules as entity pages, with the arguments
+    /// an app is loaded from.
+    fn publishing_rules() -> (crate::synthetic::SyntheticRepository, crate::cli::RepoArgs) {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let declaration = repo.root().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+        )
+        .unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        (repo, args)
+    }
+
+    /// The entities target alone plans the entity projection and not the graph it is read
+    /// from; a repository that declares no publication plans nothing for it.
+    #[test]
+    fn the_entities_target_plans_the_projection_and_not_the_graph() {
+        let (repo, args) = publishing_rules();
+        let app = crate::app::App::load(&args).unwrap();
+        let planned = plan(&app, &[Target::Entities]).unwrap();
+        let paths: Vec<&str> = planned.iter().map(|a| a.path.as_str()).collect();
+        assert!(!paths.contains(&"docs/generated/graph.json"), "{paths:?}");
+        let entities = planned
+            .iter()
+            .find(|a| a.path == format!("{OUT_DIR}/entities.json"))
+            .expect("the entity projection is planned");
+        assert_eq!(entities.document, "entities");
+        assert_eq!(entities.format, ArtifactFormat::Json);
+        let doc: serde_json::Value = serde_json::from_str(&entities.content).unwrap();
+        assert_eq!(doc["kinds"][0]["kind"], "rule");
+        assert_eq!(doc["kinds"][0]["count"], repo.shape.rules);
+
+        // a declaration that names no kind refuses the target rather than plan an empty one
+        std::fs::write(repo.root().join(crate::entity::PUBLICATION), "# no kind\n").unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        assert!(
+            plan(&app, &[Target::Entities]).is_err(),
+            "a declaration of no kind"
+        );
+
+        std::fs::remove_file(repo.root().join(crate::entity::PUBLICATION)).unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        let planned = plan(&app, &[Target::Entities]).unwrap();
+        assert!(
+            planned.iter().all(|a| a.document != "entities"),
+            "no declaration, no projection"
+        );
+    }
+
+    /// A rule that depends on a rule nobody declared refuses the entities target as it
+    /// refuses the graph: the projection is read off a graph short of that edge.
+    #[test]
+    fn an_unresolved_relation_refuses_the_entities_target() {
+        let (repo, args) = publishing_rules();
+        let rule = repo.root().join(".ai/repo/rules/project/rule-0.v1.md");
+        let text = std::fs::read_to_string(&rule).unwrap();
+        std::fs::write(
+            &rule,
+            text.replace("depends_on: []", "depends_on: [project.imaginary]"),
+        )
+        .unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        match plan(&app, &[Target::Entities]) {
+            Err(Error::UnresolvedRelation { findings }) => {
+                assert!(
+                    findings.iter().any(|f| f.contains("project.imaginary")),
+                    "{findings:?}"
+                );
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    /// The entity projection is absent without a declaration, refused over a graph that is
+    /// not JSON, a declaration of no kind or a machine path, and otherwise stamped after
+    /// its `source` with the header and the generator.
+    #[test]
+    fn the_entity_projection_is_stamped_after_its_source_or_refused() {
+        let root = tempfile::tempdir().unwrap();
+        // built with json! rather than a raw string: scripts/rust-coverage finds the end of a
+        // test module by its braces, and braces in a multi-line raw string misled it
+        let graph = serde_json::json!({"graph": {"nodes": [
+            {"id": "adr:0001", "kind": "adr", "label": "adr-0001", "status": "accepted",
+             "route": "/cockpit/objects/adr/adr-0001", "source": ".ai/repo/adrs/0001.md"}
+        ], "edges": []}})
+        .to_string();
+        let graph = graph.as_str();
+        assert_eq!(
+            entities_document(root.path(), graph, "9.9.9").unwrap(),
+            None
+        );
+
+        let declaration = root.path().join(crate::entity::PUBLICATION);
+        std::fs::create_dir_all(declaration.parent().unwrap()).unwrap();
+        std::fs::write(&declaration, "# no kind yet\n").unwrap();
+        let Err(Error::Protocol { reason }) = entities_document(root.path(), graph, "9.9.9") else {
+            panic!("a declaration of no kind was projected");
+        };
+        assert!(reason.contains("declares no kind"), "{reason}");
+
+        std::fs::write(
+            &declaration,
+            "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
+        )
+        .unwrap();
+        let Err(Error::Protocol { reason }) = entities_document(root.path(), "{", "9.9.9") else {
+            panic!("a graph that is not JSON was projected");
+        };
+        assert!(reason.contains("does not parse as JSON"), "{reason}");
+
+        let rendered = entities_document(root.path(), graph, "9.9.9")
+            .unwrap()
+            .expect("a declaration projects");
+        assert!(rendered.ends_with("}\n"), "rendered as jq prints it");
+        let doc: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+        let keys: Vec<&str> = doc
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            keys,
+            [
+                "schema",
+                "source",
+                "generated",
+                "generator",
+                "kinds",
+                "catalogue",
+                "entities"
+            ],
+            "the provenance follows the source"
+        );
+        assert_eq!(doc["generator"], "majordomus-cli 9.9.9");
+        assert!(doc["generated"]
+            .as_str()
+            .is_some_and(|g| g.contains(crate::entity::PUBLICATION)));
+
+        let leak = graph.replace(
+            ".ai/repo/adrs/0001.md",
+            &format!("{}someone/0001.md", "/Users/"),
+        );
+        let Err(Error::Http { reason }) = entities_document(root.path(), &leak, "9.9.9") else {
+            panic!("a machine path was projected");
+        };
+        assert!(reason.contains("/Users/"), "{reason}");
     }
 }

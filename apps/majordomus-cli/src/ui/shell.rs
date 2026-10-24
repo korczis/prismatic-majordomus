@@ -77,8 +77,10 @@ pub struct Frame<'a> {
     pub version: &'a str,
 }
 
-/// One whole page: the frame around a screen.
-pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
+/// One whole page: the frame around a screen. The view is moved into the page, never copied:
+/// a screen's tree can hold the whole plan, and a copy of it per request is what kept /ui/issues
+/// at its warm budget (I4200).
+pub fn page(ctx: &Context, frame: &Frame<'_>, view: View) -> String {
     let head: Vec<El> = vec![
         el("link")
             .attr("rel", "stylesheet")
@@ -156,7 +158,7 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: &View) -> String {
                                         "This distribution has no share/ui/ directory, so the UI is unstyled. Run scripts/cockpit-assets.",
                                     ))
                                 })
-                                .child(view.main.clone()),
+                                .child(view.main),
                         ),
                 ),
         );
@@ -396,14 +398,14 @@ mod tests {
         let ctx = repo.context().expect("a context");
         let mut bare = frame("/ui");
         bare.assets_present = false;
-        let html = page(&ctx, &bare, &View::new("Dashboard", el("p")));
+        let html = page(&ctx, &bare, View::new("Dashboard", el("p")));
         assert!(html.contains("the UI is unstyled"), "{html}");
     }
 
     fn render(current: &str) -> String {
         let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
         let ctx = repo.context().expect("a context");
-        page(&ctx, &frame(current), &View::new("Dashboard", el("p")))
+        page(&ctx, &frame(current), View::new("Dashboard", el("p")))
     }
 
     /// Every screen is in the sidebar with its icon, the current one is marked, and the

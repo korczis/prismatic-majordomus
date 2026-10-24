@@ -4,9 +4,12 @@
 //! `.ai/repo/ci/gates.yaml` is the canonical declaration and this is a reader of it, not a
 //! second copy. `scripts/ci-plan` is the other reader; both take the same file, apply the
 //! same rules the file's own header states, and `test/cases/131_completion_gates.sh`
-//! asserts that they select the same gates for the same paths. Nothing here carries a list
-//! of gates, of jobs or of paths: a gate added to the model is answered by every surface
-//! the next time the model is read.
+//! asserts that they select the same gates for the same paths and give each gate, and the
+//! plan, the same reason in the same words: `ci-plan`'s, which case 94 and the CI logs read.
+//! The one place they part is the shapes, which this reader does not apply (the model's
+//! header says so), and the case says why it sets those plans aside. Nothing here carries a
+//! list of gates, of jobs or of paths: a gate added to the model is answered by every
+//! surface the next time the model is read.
 //!
 //! The one deliberate difference from `ci-plan`'s matcher is documented on
 //! [`Class::matches`].
@@ -87,6 +90,28 @@ pub struct GateDecl {
     #[serde(default)]
     /// Gates this one cannot run without.
     pub requires: Vec<String>,
+    #[serde(default, rename = "subsumed-by")]
+    /// The one other gate that runs everything this gate runs: a plan that selects that gate
+    /// does not select this one beside it, and says so. It is how a gate that exists for the
+    /// plans that do not run the suite (the case gates of the record shapes) stops running
+    /// the same cases a second time in a plan that does. It is decided last, after `implies`
+    /// and `requires` have closed the selection, so a subsuming gate that was only implied
+    /// still subsumes; a subsuming gate the plan does not select subsumes nothing.
+    ///
+    /// ```
+    /// use majordomus_cli::gates::GateDecl;
+    ///
+    /// let decl: GateDecl = serde_json::from_value(serde_json::json!({
+    ///     "id": "plan-record-cases",
+    ///     "job": "rust",
+    ///     "runs": "bash test/run.sh 26_ci_wiring",
+    ///     "subsumed-by": "shell-suite"
+    /// }))
+    /// .unwrap();
+    /// // the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are
+    /// assert_eq!(decl.subsumed_by.as_deref(), Some("shell-suite"));
+    /// ```
+    pub subsumed_by: Option<String>,
 }
 
 /// ```
@@ -185,7 +210,40 @@ impl GateModel {
         if model.gates.is_empty() {
             return Err(format!("{MODEL_PATH} declares no gates"));
         }
+        if let Some(problem) = model.subsumption_problems().into_iter().next() {
+            return Err(format!("{MODEL_PATH}: {problem}"));
+        }
         Ok(model)
+    }
+
+    /// What is wrong with the model's `subsumed-by` declarations, one line each; empty when
+    /// nothing is. The three things `scripts/ci-plan --check` refuses, in its words: a gate
+    /// subsumed by itself, by a gate that does not exist, and by a gate that is itself
+    /// subsumed (a chain would drop a gate for a gate the plan then drops, and nothing would
+    /// run the cases).
+    pub(crate) fn subsumption_problems(&self) -> Vec<String> {
+        let mut out = Vec::new();
+        for gate in &self.gates {
+            let Some(sub) = gate.subsumed_by.as_deref() else {
+                continue;
+            };
+            if sub == gate.id {
+                out.push(format!("gate {} is subsumed by itself", gate.id));
+            }
+            match self.gate(sub) {
+                None => out.push(format!(
+                    "gate {} is subsumed by a gate that does not exist: {sub}",
+                    gate.id
+                )),
+                Some(other) if other.subsumed_by.is_some() => out.push(format!(
+                    "gate {} is subsumed by {sub}, which is itself subsumed; a chain is not a \
+                     relation the planner applies",
+                    gate.id
+                )),
+                Some(_) => {}
+            }
+        }
+        out
     }
 
     /// One gate by id.
@@ -316,8 +374,14 @@ impl GatePlan {
 /// union, never the first match); a class whose gates are `full` and a path no class covers
 /// both escalate the whole plan; `implies` adds a gate whenever its parent is selected;
 /// `requires` names a gate a gate cannot run without, and the plan adds it; and an
-/// on-demand gate is left out of every plan that did not ask for it, the full one included.
+/// on-demand gate is left out of every plan that did not ask for it, the full one included;
+/// and, last of all, a gate whose `subsumed-by` gate is selected is dropped, because the
+/// selected gate runs every case it runs.
 ///
+/// Every reason, the plan's and each gate's, is `scripts/ci-plan`'s word for word, because a
+/// reader of a CI log and a reader of `gates done` are told one thing: a class names its
+/// classes (`class a b`), an escalation names the first three paths that escalated, in the
+/// order the change gave them, and a full plan that leaves the on-demand gates out says so.
 ///
 /// The worked example is `this_repositorys_own_model_plans_by_its_own_rules` below: it reads
 /// this repository's `.ai/repo/ci/gates.yaml` when there is one, which a doctest cannot do
@@ -333,8 +397,7 @@ pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> Ga
 
     let mut classes: BTreeMap<String, Vec<String>> = BTreeMap::new();
     let mut unclassified: Vec<String> = Vec::new();
-    let mut escalated_by: Vec<String> = Vec::new();
-    let mut from_classes: BTreeMap<String, String> = BTreeMap::new();
+    let mut from_classes: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
 
     for path in &sorted {
         let mut hit = false;
@@ -348,36 +411,53 @@ pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> Ga
                 .entry(class.id.clone())
                 .or_default()
                 .push(path.clone());
-            if class.escalates() {
-                escalated_by.push(class.id.clone());
-                continue;
-            }
             for gate in class.named() {
                 from_classes
                     .entry(gate.clone())
-                    .or_insert_with(|| format!("the class {} covers a changed path", class.id));
+                    .or_default()
+                    .insert(class.id.clone());
             }
         }
         if !hit {
             unclassified.push(path.clone());
         }
     }
-    escalated_by.dedup();
 
-    let (mode, reason) = if !escalated_by.is_empty() {
+    // The paths an escalation names are `ci-plan`'s: at most three, in the order the change
+    // gave them and not sorted, one per escalating class a path falls in. A plan of
+    // `git diff --name-only` is in git's order either way; a listed change is in its own.
+    let given = changed.iter().filter(|p| !p.trim().is_empty());
+    let escalating: Vec<&str> = given
+        .clone()
+        .flat_map(|p| {
+            model
+                .classes
+                .iter()
+                .filter(|c| c.escalates() && c.matches(p))
+                .map(move |_| p.as_str())
+        })
+        .take(3)
+        .collect();
+    let nowhere: Vec<&str> = given
+        .filter(|p| !model.classes.iter().any(|c| c.matches(p)))
+        .map(String::as_str)
+        .take(3)
+        .collect();
+
+    let (mode, mut reason) = if !escalating.is_empty() {
         (
             GatePlanMode::Full,
             format!(
                 "a changed path is in a class that escalates: {}",
-                escalated_by.join(" ")
+                escalating.join(" ")
             ),
         )
-    } else if !unclassified.is_empty() {
+    } else if !nowhere.is_empty() {
         (
             GatePlanMode::Full,
             format!(
                 "a changed path is in no class of the model: {}",
-                unclassified.join(" ")
+                nowhere.join(" ")
             ),
         )
     } else if sorted.is_empty() {
@@ -391,42 +471,64 @@ pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> Ga
             "the gates of the classes the changed paths fall in".to_string(),
         )
     };
+    // a full plan that leaves the on-demand gates out says which, in byte order as
+    // `ci-plan`'s `LC_ALL=C sort` lists them
+    let on_demand_ids: BTreeSet<&str> = model
+        .gates
+        .iter()
+        .filter(|g| g.on_demand)
+        .map(|g| g.id.as_str())
+        .collect();
+    if mode == GatePlanMode::Full && !on_demand && !on_demand_ids.is_empty() {
+        let ids: Vec<&str> = on_demand_ids.into_iter().collect();
+        reason = format!("{reason} (without the on-demand gates: {})", ids.join(" "));
+    }
 
     let mut selected: BTreeMap<String, String> = BTreeMap::new();
     let mut excluded: BTreeMap<String, String> = BTreeMap::new();
+    // the order gates entered the plan, which is the order the closure below walks them in,
+    // as `ci-plan` walks its own list: it decides which parent a gate reachable from two is
+    // said to be implied or required by
+    let mut order: Vec<String> = Vec::new();
     for gate in &model.gates {
         if gate.on_demand && !on_demand {
             excluded.insert(
                 gate.id.clone(),
-                "on demand only: its runner is not available on demand, so a plan that \
-                 selected it would wait for a verdict that never arrives"
+                "on demand only: its runner is not available on demand; the schedule, a \
+                 dispatch and a pull request labelled ci:full plan it"
                     .to_string(),
             );
             continue;
         }
-        if mode == GatePlanMode::Full {
-            selected.insert(gate.id.clone(), reason.clone());
+        let why = if mode == GatePlanMode::Full {
+            "full".to_string()
         } else if gate.always {
-            selected.insert(gate.id.clone(), "always".to_string());
-        } else if let Some(why) = from_classes.get(&gate.id) {
-            selected.insert(gate.id.clone(), why.clone());
+            "always".to_string()
+        } else if let Some(by) = from_classes.get(&gate.id) {
+            let by: Vec<&str> = by.iter().map(String::as_str).collect();
+            format!("class {}", by.join(" "))
         } else {
             excluded.insert(
                 gate.id.clone(),
-                "no class of the model covers a changed path that selects it".to_string(),
+                "no changed path in a class that needs it".to_string(),
             );
-        }
+            continue;
+        };
+        selected.insert(gate.id.clone(), why);
+        order.push(gate.id.clone());
     }
 
     // `implies` and `requires`, to a fixed point: a full Rust gate includes the registry
     // checks, and the probe cannot run without the built site
     loop {
         let mut added = false;
-        for gate in &model.gates {
-            if !selected.contains_key(&gate.id) {
+        for id in order.clone() {
+            let Some(gate) = model.gate(&id) else {
                 continue;
-            }
-            for other in gate.implies.iter().chain(gate.requires.iter()) {
+            };
+            let implied = gate.implies.iter().map(|g| (g, "implied by"));
+            let required = gate.requires.iter().map(|g| (g, "required by"));
+            for (other, how) in implied.chain(required) {
                 if selected.contains_key(other) {
                     continue;
                 }
@@ -436,19 +538,42 @@ pub(crate) fn plan(model: &GateModel, changed: &[String], on_demand: bool) -> Ga
                 if decl.on_demand && !on_demand {
                     continue;
                 }
-                let why = if gate.implies.iter().any(|g| g == other) {
-                    format!("implied by {}", gate.id)
-                } else {
-                    format!("{} cannot run without it", gate.id)
-                };
                 excluded.remove(other);
-                selected.insert(other.clone(), why);
+                selected.insert(other.clone(), format!("{how} {}", gate.id));
+                order.push(other.clone());
                 added = true;
             }
         }
         if !added {
             break;
         }
+    }
+
+    // a gate whose subsuming gate is in the plan is not planned beside it. This is the last
+    // step, after the closure and the on-demand filter, so a subsuming gate that was only
+    // implied still counts; the reason replaces the one that selected the gate, because the
+    // plan must say why a gate is absent, not why it once was present. The words are
+    // `scripts/ci-plan`'s, byte for byte, so a reader comparing the reasons agrees too.
+    let subsumed: Vec<(String, String)> = model
+        .gates
+        .iter()
+        .filter(|g| selected.contains_key(&g.id))
+        .filter_map(|g| {
+            let sub = g.subsumed_by.as_ref()?;
+            selected
+                .contains_key(sub)
+                .then(|| (g.id.clone(), sub.clone()))
+        })
+        .collect();
+    for (id, sub) in subsumed {
+        selected.remove(&id);
+        excluded.insert(
+            id,
+            format!(
+                "subsumed by {sub}: the planned {sub} runs every case this gate runs, so \
+                 planning it too would run them twice"
+            ),
+        );
     }
 
     GatePlan {
@@ -591,7 +716,7 @@ classes:
         let p = plan(&m, &["site/content/index.md".into()], false);
         assert!(p.selects("probe"));
         assert!(p.selects("site"), "probe cannot run without it");
-        assert_eq!(p.selected["site"], "the class web covers a changed path");
+        assert_eq!(p.selected["site"], "class web");
     }
 
     #[test]
@@ -619,6 +744,99 @@ classes:
         assert!(plan(&m, &[".ai/repo/ci/gates.yaml".into()], true).selects("mac"));
     }
 
+    // The reasons below are `scripts/ci-plan`'s, word for word; case 131 compares the two
+    // readers over this repository's model, and these say what each word is for.
+
+    #[test]
+    fn a_class_reason_names_every_class_that_selected_the_gate_in_byte_order() {
+        let mut m = model();
+        m.classes.push(GateClass {
+            id: "site-sources".into(),
+            paths: vec!["site/**".into()],
+            except: vec![],
+            gates: Some(GateClassSelects::Named(vec!["site".into()])),
+        });
+        let p = plan(&m, &["site/content/index.md".into()], false);
+        assert_eq!(p.selected["site"], "class site-sources web");
+        assert_eq!(p.selected["probe"], "class web");
+        assert_eq!(p.selected["lint"], "always");
+    }
+
+    #[test]
+    fn an_implied_and_a_required_gate_name_the_gate_that_brought_them() {
+        let mut m = model();
+        m.classes.push(GateClass {
+            id: "probes".into(),
+            paths: vec!["probes/**".into()],
+            except: vec![],
+            gates: Some(GateClassSelects::Named(vec!["probe".into()])),
+        });
+        let p = plan(&m, &["probes/x.sh".into(), "apps/x.rs".into()], false);
+        assert_eq!(p.selected["probe"], "class probes");
+        assert_eq!(p.selected["site"], "required by probe");
+        assert_eq!(p.selected["registry"], "implied by build");
+    }
+
+    #[test]
+    fn an_escalation_names_the_first_three_paths_in_the_order_given() {
+        let m = model();
+        let given: Vec<String> = ["d", "b", "c", "a"]
+            .iter()
+            .map(|n| format!(".ai/repo/ci/{n}"))
+            .collect();
+        let p = plan(&m, &given, false);
+        assert_eq!(
+            p.reason,
+            "a changed path is in a class that escalates: .ai/repo/ci/d .ai/repo/ci/b \
+             .ai/repo/ci/c (without the on-demand gates: mac)"
+        );
+        // every gate of a full plan is in it because the plan is full, as `ci-plan` says
+        assert_eq!(p.selected["build"], "full");
+        assert_eq!(p.selected["lint"], "full");
+        // a plan that asked for the on-demand gates has no note to add, and no trailing space
+        let p = plan(&m, &given[..1], true);
+        assert_eq!(
+            p.reason,
+            "a changed path is in a class that escalates: .ai/repo/ci/d"
+        );
+    }
+
+    #[test]
+    fn an_unclassified_escalation_names_three_paths_and_the_plan_keeps_them_all() {
+        let m = model();
+        let given: Vec<String> = ["z/1", "y/2", "x/3", "w/4"]
+            .iter()
+            .map(|p| p.to_string())
+            .collect();
+        let p = plan(&m, &given, false);
+        assert_eq!(
+            p.reason,
+            "a changed path is in no class of the model: z/1 y/2 x/3 (without the on-demand \
+             gates: mac)"
+        );
+        assert_eq!(p.unclassified, ["w/4", "x/3", "y/2", "z/1"]);
+    }
+
+    #[test]
+    fn a_gate_left_out_says_why_in_the_planners_words() {
+        let m = model();
+        let p = plan(&m, &["apps/x.rs".into()], false);
+        assert_eq!(
+            p.excluded["site"],
+            "no changed path in a class that needs it"
+        );
+        assert_eq!(
+            p.excluded["mac"],
+            "on demand only: its runner is not available on demand; the schedule, a dispatch \
+             and a pull request labelled ci:full plan it"
+        );
+        // an affected plan carries no on-demand note: it was never going to run everything
+        assert_eq!(
+            p.reason,
+            "the gates of the classes the changed paths fall in"
+        );
+    }
+
     #[test]
     fn a_class_that_names_no_gate_plans_only_what_always_runs() {
         let m = model();
@@ -626,6 +844,101 @@ classes:
         assert_eq!(p.mode, GatePlanMode::Affected, "the class covers the path");
         assert!(p.selects("lint"));
         assert!(!p.selects("build") && !p.selects("site"));
+    }
+
+    /// The fixture model with `build` subsumed by `site`, to say what the field does.
+    fn subsuming() -> GateModel {
+        let mut m = model();
+        m.gates
+            .iter_mut()
+            .find(|g| g.id == "build")
+            .unwrap()
+            .subsumed_by = Some("site".into());
+        m
+    }
+
+    #[test]
+    fn a_gate_is_not_planned_beside_the_selected_gate_that_subsumes_it() {
+        let m = subsuming();
+        // the full plan selects both; the subsumed one is dropped and says why
+        let p = plan(&m, &[".ai/repo/ci/gates.yaml".into()], false);
+        assert!(p.selects("site") && !p.selects("build"));
+        assert_eq!(
+            p.excluded["build"],
+            "subsumed by site: the planned site runs every case this gate runs, so planning \
+             it too would run them twice"
+        );
+        // a subsuming gate that is only required still subsumes: the closure comes first
+        let p = plan(
+            &m,
+            &["site/content/index.md".into(), "apps/x.rs".into()],
+            false,
+        );
+        assert_eq!(p.selected["site"], "class web");
+        assert!(!p.selects("build"));
+        // and what the dropped gate implied stays: it was selected, and so was its implied gate
+        assert!(p.selects("registry"));
+    }
+
+    #[test]
+    fn a_subsuming_gate_the_plan_does_not_select_subsumes_nothing() {
+        let m = subsuming();
+        let p = plan(&m, &["apps/majordomus-cli/src/lib.rs".into()], false);
+        assert!(!p.selects("site"), "the plan does not select the subsumer");
+        assert!(
+            p.selects("build"),
+            "so the gate is planned as without the field"
+        );
+        assert_eq!(p.selected["build"], "class rust");
+        assert!(!p.excluded.contains_key("build"));
+    }
+
+    #[test]
+    fn a_subsumption_the_planner_cannot_apply_is_refused() {
+        assert!(subsuming().subsumption_problems().is_empty());
+
+        let mut m = model();
+        m.gates[1].subsumed_by = Some("build".into());
+        let problems = m.subsumption_problems();
+        assert!(problems.contains(&"gate build is subsumed by itself".to_string()));
+
+        let mut m = model();
+        m.gates[1].subsumed_by = Some("no-such-gate".into());
+        assert_eq!(
+            m.subsumption_problems(),
+            vec!["gate build is subsumed by a gate that does not exist: no-such-gate".to_string()]
+        );
+
+        let mut m = model();
+        m.gates[1].subsumed_by = Some("site".into());
+        m.gates[4].subsumed_by = Some("registry".into());
+        let problems = m.subsumption_problems();
+        assert_eq!(problems.len(), 1);
+        assert!(problems[0].contains("gate build is subsumed by site, which is itself subsumed"));
+    }
+
+    #[test]
+    fn a_model_whose_subsumption_cannot_be_applied_is_not_loaded() {
+        let root = tempfile::tempdir().expect("a directory");
+        let path = root.path().join(MODEL_PATH);
+        std::fs::create_dir_all(path.parent().expect("a parent")).expect("a directory");
+        // `build` names a subsumer that no gate declares: the model parses and is refused
+        let text = MODEL.replace(
+            "    implies: [registry]\n",
+            "    implies: [registry]\n    subsumed-by: no-such-gate\n",
+        );
+        assert_ne!(text, MODEL, "the fixture gained the field");
+        std::fs::write(&path, &text).expect("a model");
+        let err = GateModel::load(root.path()).expect_err("the subsumption is refused");
+        assert_eq!(
+            err,
+            format!(
+                "{MODEL_PATH}: gate build is subsumed by a gate that does not exist: no-such-gate"
+            )
+        );
+        // without the field the same model loads
+        std::fs::write(&path, MODEL).expect("a model");
+        assert!(GateModel::load(root.path()).is_ok());
     }
 
     #[test]
@@ -651,6 +964,7 @@ classes:
             }
             assert!(!gate.job.is_empty() && !gate.runs.is_empty());
         }
+        assert_eq!(m.subsumption_problems(), Vec::<String>::new());
         for class in &m.classes {
             assert!(!class.paths.is_empty(), "class {} names no path", class.id);
             for gate in class.named() {

@@ -577,9 +577,12 @@ with the reason instead.
 |---|---|
 | `peers[].checkout` | the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: `p1` is the first session of *every* board, so a merged listing without it holds several `p1`s |
 | `overlaps` | every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on |
-| `boards` | one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read |
+| `covered` | how many checkouts the answer covered, listed in `boards` or counted in `omitted` |
+| `boards` | one entry per checkout the answer lists, reached or not, with its standing and the reason it was not read. Under the default `view: summary` that is this checkout, every checkout with a worker or a standing server, and every board that could not be read; `view: full` lists every covered checkout |
+| `omitted` | the covered checkouts the summary counts rather than lists, by standing (`absent`, `stale`): no server, nobody attached, no board. On 2026-10-22 that was 601 of 625, and the default answer went from 168 kB to about 18 kB |
 | `complete` | whether every board covered could be read. `false` means a checkout could not be asked — a short board is never to be mistaken for an empty repository |
-| `checkouts` | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `checkouts` (input) | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `view` (input) | `summary` (the default) or `full`, the same words as `majordomus_mesh_peers` |
 
 </div>
 

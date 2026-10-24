@@ -1,0 +1,157 @@
+intent: merging-and-referencing-are-enforced
+reviewed_at: 355a0cee79a
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session 49d5361b over the staged, uncommitted records of branch chore/merging-and-referencing-are-enforced; resolved by the author. Disposition: accept with required changes; 5 of 17 findings blocking, all 17 planned. The reviewer confirmed plan validate at 0 failures, the count of 26 issues held only by their milestone gate, and the cited file and line numbers."
+findings:
+  - id: pr-projection-contradicts-the-landing-rule
+    class: regression_risk
+    subject: "I3970"
+    finding: "A workflow on pull_request running github-sync --prs contradicts .ai/repo/ci/github.yaml's forbidden list, case 1097 (line 21), rule the-projection-is-applied-at-landing item 3 and github-sync:214-275, which refuses any tree but the trunk; a record that exists only in the head is a head's plan, which the rule says is never the shared one."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3970
+      because: "I3970 now names a separate workflow on pull_request_target that checks out the base only, moves the rule to version 2 and amends github.yaml so only the pull request's own fields may be written, reads the trunk's records alone, projects a head-only record as a plain id with no priority or milestone, and extends case 1097; the rule, github.yaml and case 1097 are in its scope and validation."
+  - id: served-issue-edge-misattributed
+    class: unproven_assumption
+    subject: "I3970"
+    finding: "issues_named is in ui/prs.rs:174 and reads only title and head_ref; delivery.rs named_by (428-450) wraps it and adds slugs; neither reads commit subjects, and shell github-sync cannot call a Rust function."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3970
+      because: "I3970 cites ui/prs.rs and delivery.rs named_by, drops commit subjects, and exposes the edge as a typed subcommand github-sync calls; ui/prs.rs is in scope."
+  - id: per-event-full-listing-rate-limit
+    class: regression_risk
+    subject: "I3970"
+    finding: "Running on opened, edited, synchronize and labeled with a full issue listing each time would bring back the rate limit and the truncation of 2026-10-22 (I3920)."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3970
+      because: "Issue numbers come from a record-to-number map the trunk run publishes, the workflow has a concurrency group per pull request, and a criterion bounds the API calls per event, read from the scripted forge's call log."
+  - id: builds-on-the-unlanded-github-sync-rewrite
+    class: regression_risk
+    subject: "I3975"
+    finding: "The short-listing guard repeats the I3920 record's criterion, I3920 exists only on chore/landing-survives-any-session with its fix on train 4, and I3970 and I3975 edit the github-sync code train 4 rewrites without being able to depend on it."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3975
+      because: "The short-listing guard is removed from I3975 and named in its non_scope as the I3920 record's; I3970 and I3975 state that they start after train 4 lands, when I3920 becomes their dependency; I3975 now depends on I3970 and I3979 so the github-sync edits are ordered."
+  - id: issue-create-guard-covers-one-provider
+    class: missed_requirement
+    subject: "I3975"
+    finding: "The only command hook is Claude Code's (.claude/settings.json, not in scope), the Codex and Gemini templates carry none, and guard.rs judges edits only; a client hook is not offloaded to GitHub."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3975
+      because: "I3975 adds a workflow on issues opened that labels and reports every unmarked issue not opened by github-actions[bot], never closing or deleting it, and puts .claude/settings.json, .ai/repo/providers and .github/workflows in scope."
+  - id: adoption-by-creation-time-has-no-data
+    class: unproven_assumption
+    subject: "I3975"
+    finding: "Adopting by creation time needs a created_at the listing does not fetch and a marker date nothing records."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3975
+      because: "I3975 first measures how many unmarked issues github-sync --check adopts; if none, the title fallback is deleted, otherwise the cutoff is the last adopted issue number, recorded in the adapter."
+  - id: commit-rule-breaks-the-count-baseline
+    class: regression_risk
+    subject: "I3976"
+    finding: "The baseline is one count (54); only 254 of 4748 subjects on master name an issue, so the debt would jump to about 4500; train merges, fix(top) and chore(release) commits match no exemption; no actor trailer exists; the hook falls back to the installed release (I3831)."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3976
+      because: "I3976 judges only commits after a recorded boundary commit, leaving the count baseline unchanged; the exemptions are checked against every shape (git-generated subjects, merge reverts, the root, commits with two or more parents), the composer and the release record step are changed to name their issues (commands/prs.rs and release.yml in scope, I3915 a dependency), and the record says the hook enforces once a release carries the rule and CI from the boundary."
+  - id: dangling-references-already-on-master
+    class: regression_risk
+    subject: "I3973"
+    finding: "62 distinct issue ids named on master have no record; a gate over every id in changed files would refuse any pull request touching them, these records included, and nothing said where the gate is wired."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3973
+      because: "I3973 judges only ids on added lines, names its id grammars (issue ids, ADR numbers, project rule ids), keeps the 62 as a baseline count that may not grow, is wired in validate.yml and declared in gates.yaml (both in scope), and has a criterion that an edit beside an old dangling id passes."
+  - id: milestone-gate-opt-out-trips-the-premature-findings
+    class: regression_risk
+    subject: "I3972"
+    finding: "An opted-out issue that starts under a blocked milestone makes the milestone ACTIVE (plan.rs:1032-1033) and fails milestone_premature (plan.rs:1080-1086, project.awk:287) and premature_execution (plan.rs:1118-1135, project.awk:311); I3757 rewrites the same gate code."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I3972
+      because: "I3972 now exempts opted-out issues from both checks in both engines, keeps such a milestone BLOCKED with the opted-out work reported beside it, adds a criterion for it, and depends on I3757."
+  - id: allocator-overlaps-existing-checks-and-misses-its-own-cause
+    class: insufficient_work
+    subject: "I3974"
+    finding: "adr check already asks other refs (case 271), the I9990 fixture is already refused by path, the board grammar ID ... TAKEN has no producer or parser, and case 271 was not validated."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3974
+      because: "I3974's first step diagnoses why adr check missed 0168 and records it; the fixtures are two file names carrying one number, for an ADR and for a case; the board source is a claim id:<kind>:<number> that next --reserve writes and the survey reads; the survey stays in lib/adr.sh and scripts/case-numbers, and case 271 is in scope and validation."
+  - id: scope-conflicts-left-unordered
+    class: insufficient_work
+    subject: "merging-and-referencing-are-enforced"
+    finding: "I3973 and I3976 share verdict.rs, I3970, I3975 and I3979 share github-sync, and I3918 and I3979 share CONTRIBUTING.md, all parallel_safe false and mostly READY in wave 0."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3976
+      because: "I3976 depends on I3973, I3975 on I3970 and I3979, and I3970 on I3979, so every shared file in this milestone is edited in order; CONTRIBUTING.md with I3918 stays a reported scope_conflict, since I3918 belongs to another plan and is already taken."
+  - id: in-review-cannot-reach-the-shell-and-collides-with-review
+    class: unproven_assumption
+    subject: "I3971"
+    finding: "The shell's plan next (lib/plan.sh:230, 262, 337) cannot read the forge cache or the board, lib/project.sh and the mesh reader were out of scope, and TaskReadiness::Review already means VERIFY."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3971
+      because: "The refinement is renamed taken; the shell asks the executable for the observed pass and labels a stamps-only answer when it is absent; lib/project.sh and mesh/state.rs are in scope, with a criterion for the shell."
+  - id: no-closing-keyword-invariant-misattributed
+    class: unproven_assumption
+    subject: "merging-and-referencing-are-enforced"
+    finding: "project.github-projection-gated never mentions closing keywords, and commit messages on master can close issues too without any judge."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3976
+      because: "The invariant now says I3970 writes the rule into the projection rule (both rules in its scope) and I3976 adds a closing_keyword rule to the commit judge, with a criterion."
+  - id: served-version-is-out-of-domain-and-its-extractor-unproven
+    class: unnecessary_work
+    subject: "I3977"
+    finding: "Serving one version is a truthful-surfaces outcome, I3449 declares no shared extractor a Rust check could call, and the one-extractor criterion had no validation."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3977
+      because: "Kept here because the owner listed it in this order and a version on a page is a reference to a release; I3977 now owns moving the extractor into a library function in served.rs that the site gate calls, with a library test holding both on one fixture; scripts/site-check is in scope."
+  - id: merged-tree-check-has-no-touched-case-selector
+    class: insufficient_work
+    subject: "I3978"
+    finding: "Nothing selects the cases a change touches, the composer of I3915 lives in commands/prs.rs which was out of scope, and rust-coverage --changed exists and was not named."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3978
+      because: "I3978 adds the selector (covers headers, changed paths and changed record ids) with its own criterion, puts commands/prs.rs in scope and names scripts/rust-coverage --changed for a fix member's coverage."
+  - id: the-convention-file-would-be-a-second-declaration
+    class: regression_risk
+    subject: "I3979"
+    finding: "Commit types are declared in release/model.rs:23-43 and hold labels in classify.rs:110-118; a labels file neither reads becomes another source; I3970's type list missed ci, style and build; the default labels claim was unverified."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3979
+      because: "The commit types and hold labels stay where they are and a library test holds the declaration equal to both (both files in scope and validated); I3970's type list now matches release/model.rs; current_state names the ten labels gh label list showed on 2026-10-22."
+  - id: validation-does-not-run-the-planned-cases
+    class: delivery_verification
+    subject: "merging-and-referencing-are-enforced"
+    finding: "Each criterion names a new case but validation runs only existing ones, and the milestone said five label families while listing four."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I3970
+      because: "A case number is taken from scripts/case-numbers next and announced when the issue starts (project.a-number-names-one-case); allocating ten numbers now would hold them for weeks. Each criterion names its planned case and carrier, each issue flips its intent criterion to evidence test when the case lands, validation now covers case 1097 for I3970, case 271 for I3974 and library tests for I3977 and I3979, and the milestone says four."

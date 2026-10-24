@@ -115,6 +115,8 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
+    Layout(LayoutArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
@@ -123,6 +125,8 @@ pub enum Command {
     Brief(BriefArgs),
     /// What this session proceeds with, and why: the READY issue nothing refuses, every one passed over with the claim or exclusive scope that refused it, and the terms of the order, from the plan, every checkout's board and every linked machine's live claims (ADR 0177)
     Proceed(ProceedArgs),
+    /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
+    Blackboard(BlackboardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -265,6 +269,42 @@ pub struct DashboardArgs {
     pub command: DashboardCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus blackboard`: the `blackboard.snapshot` capability on the command line (ADR 0176).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BlackboardArgs, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "blackboard", "--this-checkout", "--for", "1b"]).unwrap();
+/// let Command::Blackboard(args) = cli.command else { panic!("not the blackboard command") };
+/// let args: BlackboardArgs = args;
+/// assert!(args.this_checkout);
+/// assert_eq!(args.reader.as_deref(), Some("1b"));
+/// assert!(matches!(args.format, OutputFormat::Text));
+/// ```
+pub struct BlackboardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long = "this-checkout")]
+    /// Read this checkout's board alone instead of every checkout's
+    pub this_checkout: bool,
+
+    #[arg(long = "for", value_name = "NAMES")]
+    /// Comma-separated names of the reader, so that the signals addressed to it are marked for it
+    pub reader: Option<String>,
+
+    #[arg(long, value_name = "LIST")]
+    /// The monitor sources the signals are read from, a comma-separated subset of mesh, executor and github (default: mesh,executor)
+    pub sources: Option<String>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
     /// Output shape
     pub format: OutputFormat,
 }
@@ -524,6 +564,54 @@ pub enum ShellCommand {
         #[arg(long)]
         canonical: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus layout`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, LayoutArgs, LayoutCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "layout", "check", "--format", "json"]).unwrap();
+/// let Command::Layout(args) = cli.command else { panic!("not the layout command") };
+/// let args: LayoutArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, LayoutCommand::Check));
+/// ```
+pub struct LayoutArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `check`. Required: the group runs nothing of its own.
+    pub command: LayoutCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus layout`: `check` judges both halves of the layer against
+/// the layouts their contracts declare (I2871). `check` takes no arguments: what it judges
+/// is what the contracts declare, never what a caller names.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, LayoutCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "layout", "check"]).unwrap();
+/// let Command::Layout(args) = cli.command else { panic!("not the layout command") };
+/// assert!(matches!(args.command, LayoutCommand::Check));
+/// // no path to judge is accepted, and the group runs nothing of its own
+/// assert!(Cli::try_parse_from(["majordomus", "layout", "check", ".ai/local"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "layout"]).is_err());
+/// ```
+pub enum LayoutCommand {
+    /// Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read
+    Check,
 }
 
 #[derive(Debug, Args)]
@@ -820,6 +908,8 @@ pub enum MeshCommand {
     Nodes(MeshQueryArgs),
     /// This machine's node identity, public half only; absent is an answer, not an error
     Identity(MeshQueryArgs),
+    /// Add this machine's public key to the mesh declaration's trust list, once; commit it to join
+    Enrol(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, the protocol end to end, and the host firewall
     Doctor(MeshQueryArgs),
     /// What the host firewall must admit for the declared mesh and whether it does; `apply` admits it, as root
@@ -961,11 +1051,25 @@ pub struct MeshPeerArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--after` is a
-/// resume point rather than a timestamp, so a caller that remembers the last stamp it saw
-/// reads each event exactly once however the clocks of the machines involved disagree;
-/// `--limit` bounds one answer. Both are optional, and saying neither asks for the newest
-/// page under the server's own default.
+/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--cursor` is the
+/// resume point each answer prints: a walk that passes it back reads every event exactly
+/// once, an event a partitioned runtime delivered late included. `--after` is the older
+/// resume point, a Lamport stamp, which never returns an event stamped at or below it that
+/// arrives later. `--limit` bounds one answer. All are optional, and saying none walks from
+/// the beginning under the server's own default page.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand};
+///
+/// let cursor = "0123456789abcdef:7";
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events", "--cursor", cursor]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!(events.cursor.as_deref(), Some(cursor));
+/// let both = ["majordomus", "mesh", "events", "--cursor", cursor, "--after", "3"];
+/// assert!(Cli::try_parse_from(both).is_err(), "two walks at once");
+/// ```
 ///
 /// ```
 /// use clap::Parser;
@@ -994,8 +1098,11 @@ pub struct MeshPeerArgs {
 /// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
-    #[arg(long)]
+    #[arg(long, conflicts_with = "cursor")]
     pub after: Option<u64>,
+    /// Resume after the cursor the previous answer printed: every event exactly once
+    #[arg(long)]
+    pub cursor: Option<String>,
     /// At most this many (default 100, at most 1000)
     #[arg(long)]
     pub limit: Option<u64>,
@@ -1250,11 +1357,14 @@ pub struct MeshSessionArgs {
     pub command: MeshSessionCommand,
 }
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Subcommand)]
 /// The two ends of a session's life on the mesh: `open`, which announces a session and
 /// updates what it says about itself, and `close`, which ends it and with it every claim
 /// it held on every linked runtime. There is no third verb, because everything a session
-/// does between those two ends is a claim, a handover or a review.
+/// does between those two ends is a claim, a handover or a review. `open` carries every
+/// field a session says and `close` only its id; the value is parsed once per process, so
+/// the larger variant is not boxed for the smaller one's sake.
 ///
 /// ```
 /// use clap::Parser;
@@ -1301,6 +1411,17 @@ pub enum MeshSessionCommand {
 /// assert_eq!(open.worker.as_deref(), Some("documenter"));
 /// assert_eq!(open.branch.as_deref(), Some("feature/mesh-cooperation"));
 /// assert_eq!(open.task, None, "what the session does not say stays unsaid");
+/// assert_eq!(open.client_pid, None, "and a session names its client only when asked to");
+///
+/// // a session hook names the client that ran it, so its end closes the session (I3810)
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s2", "--client-pid", "auto",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// assert_eq!(open.client_pid.as_deref(), Some("auto"));
 ///
 /// // a session without an id is not a session
 /// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "open"]).is_err());
@@ -1333,6 +1454,10 @@ pub struct MeshSessionOpenArgs {
     /// The head commit
     #[arg(long)]
     pub head: Option<String>,
+    /// The client process the session belongs to: a pid, or `auto` for the nearest
+    /// ancestor that is not a shell. The runtime closes the session once it has ended
+    #[arg(long, value_name = "PID|auto")]
+    pub client_pid: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -2203,6 +2328,8 @@ pub enum EconomicsCommand {
     Runs(EconomicsRunsArgs),
     /// Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand
     Check(EconomicsCheckArgs),
+    /// Each task's wall time, refusals and episodes, from every checkout's ledger; the fields nothing observes yet are named as not observed
+    Tasks(EconomicsTasksArgs),
     /// Run a deterministic suite (no model is called) and record its measurement
     Measure(EconomicsMeasureArgs),
     /// Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage
@@ -2335,6 +2462,40 @@ pub struct EconomicsRunsArgs {
     /// Only this variant
     #[arg(long)]
     pub variant: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics tasks`. Both bounds are optional and filter by each task's
+/// `task.started` time; a task outside the window is not answered, and a ledger is read in full
+/// whatever the window.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsTasksArgs, OutputFormat};
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "economics", "tasks", "--since", "2026-10-19T00:00:00Z",
+/// ])
+/// .unwrap();
+/// let Command::Economics(e) = cli.command else { panic!("economics") };
+/// let EconomicsCommand::Tasks(t) = e.command else { panic!("tasks") };
+/// let t: EconomicsTasksArgs = t;
+/// assert_eq!(t.since.as_deref(), Some("2026-10-19T00:00:00Z"));
+/// assert!(t.until.is_none());
+/// assert_eq!(t.format, OutputFormat::Text);
+/// ```
+pub struct EconomicsTasksArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only tasks started at or after this time (YYYY-MM-DDTHH:MM:SSZ)
+    #[arg(long)]
+    pub since: Option<String>,
+    /// Only tasks started before this time (YYYY-MM-DDTHH:MM:SSZ)
+    #[arg(long)]
+    pub until: Option<String>,
 }
 
 #[derive(Debug, Args)]
@@ -3014,10 +3175,10 @@ pub enum ServedCommand {
         /// The commit expected to be served (default HEAD)
         #[arg(long)]
         commit: Option<String>,
-        /// The site's base URL (default: base_url of site/config.toml)
+        /// The base URL (default: the provider URL of the deployment object --deployment names, else base_url of site/config.toml)
         #[arg(long)]
         url: Option<String>,
-        /// The identity file under the base (default build.json)
+        /// The identity under the base (default: that object's liveness route, else build.json)
         #[arg(long)]
         identity: Option<String>,
         /// The name the observation is recorded under (default pages)
@@ -4649,6 +4810,8 @@ pub enum GenerateTarget {
     Deployment,
     /// docs/generated/graph.json and its schema: the composed graph as data
     Graph,
+    /// docs/generated/entities.json: the site's entity projection of the composed graph
+    Entities,
     /// The design system's projections, from share/design/tokens.yaml: the stylesheets
     /// both Tailwind builds import, the tokens and the declaration compiled into the crate,
     /// every copy of the brand, site/data/registry/design.json and docs/generated/design.*
@@ -5630,6 +5793,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "blackboard",
+        examples: &[ExampleDoc {
+            id: "blackboard-json",
+            title: "Who works on what, with what could not be read",
+            description: "The same answer `GET /api/v1/blackboard` and the MCP tool `majordomus_blackboard` return: every worker of the boards read and of the mesh, the claims that meet, the reviews and handovers that wait, the typed relations and the newest signals, with each source and how it was read. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the answer is composed here and its sources say what that left unread.",
+            argv: &["blackboard", "--this-checkout", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/complete", "/sources", "/workers", "/conflicts", "/cursor"]),
+        }],
+    },
+    CommandExamples {
         command: "brief",
         examples: &[ExampleDoc {
             id: "brief-line",
@@ -5726,6 +5900,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["shell", "check", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "layout check",
+        examples: &[ExampleDoc {
+            id: "layout-check-json",
+            title: "Both halves of the layer against their declared layouts",
+            description: "How many paths were judged and every path a declared layout excludes, each named with the contract it violates, as `/checked`, `/findings` and `/passes`. The exit code is the verdict: 0 when the boundary holds, 10 on a finding, and 12 when the halves could not be read, which is not a pass. Only what a contract declares is judged, so a repository whose contracts declare no layout passes with nothing found.",
+            argv: &["layout", "check", "--format", "json"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
         }],
     },
     CommandExamples {
@@ -7362,6 +7547,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "economics tasks",
+        examples: &[ExampleDoc {
+            id: "economics-tasks-json",
+            title: "Each task's wall time and episodes",
+            description: "One record per task from every checkout's ledger, with the fields nothing observes yet named as not observed. A repository with no ledger answers no task and lists its checkout as not read.",
+            argv: &["economics", "tasks", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/count", "/tasks", "/ledgers", "/unread"]),
+        }],
+    },
+    CommandExamples {
         command: "economics check",
         examples: &[ExampleDoc {
             id: "economics-check",
@@ -7512,6 +7708,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "nodes"],
             setup: &[],
             expect: Expect::StdoutContains(&["mesh"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh enrol",
+        examples: &[ExampleDoc {
+            id: "mesh-enrol",
+            title: "Enrol this machine in the repository's mesh",
+            description: "Adds this machine's public key to trust.allow under a comment naming the machine, once; a listed key changes nothing. A repository that declares no mesh is refused (exit 13) before an identity is created or a file is touched: `majordomus init --extend` seeds the declaration.",
+            argv: &["mesh", "enrol"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
         }],
     },
     CommandExamples {

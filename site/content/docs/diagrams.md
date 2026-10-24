@@ -1,7 +1,7 @@
 +++
 title = "Diagrams and charts"
 description = "diagrams and charts on the site: one viewer for every Mermaid diagram (zoom, pan, full screen, download, tracing), the addresses `#diagram-<name>` and `#diagram-<name>:<node>`, node links inferred at build from the identities the generated data carries, and charts drawn from the tables a page already renders"
-weight = 70
+weight = 71
 [extra]
 source = "docs/DIAGRAMS.md"
 +++

@@ -5,7 +5,7 @@ argument-hint: "<intent>"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: apps/majordomus-cli/src/capability/builtin/proceed.rs; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 
 # Proceed: the next step, as one work order
 

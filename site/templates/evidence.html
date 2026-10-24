@@ -49,6 +49,9 @@
   {%- endif %}
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">{{ ci.totals.executions }}</dd></div>
+    {#- the guaranteed claims this run's own executions support, the count the homepage's proof
+        band reads from this same dataset (I3916): one run, one figure, on both pages -#}
+    <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">guaranteed claims this run supports</dt>{% if ci.claims and ci.claims.measured %}<dd class="text-heading" data-ci-supported="{{ ci.claims.supported }}">{{ ci.claims.supported }} <span class="text-body-subtle">of {{ ci.claims.declared }}</span></dd>{% else %}<dd class="text-heading" data-ci-supported="unmeasured">not yet measured</dd>{% endif %}</div>
     {%- for outcome, n in ci.totals.outcomes %}
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">{{ outcome }}</dt><dd class="text-heading">{{ n }}</dd></div>
     {%- endfor %}
@@ -77,6 +80,7 @@
     No CI evidence reached this build{% if ci and ci.reason %}: {{ ci.reason }}{% endif %}.
     The claims below then show only what the ledger in the repository holds.
   </p>
+  <p class="mt-3 text-sm text-body">Guaranteed claims a recorded run supports: <span class="text-heading" data-ci-supported="unmeasured">not yet measured</span>.</p>
   {%- endif %}
 </section>
 {% include "partials/graph.html" %}
