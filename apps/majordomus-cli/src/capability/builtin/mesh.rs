@@ -2178,16 +2178,6 @@ mod tests {
     #[test]
     fn a_beat_over_mcp_speaks_for_its_own_session_alone() {
         let (_repo, ctx) = context(false);
-        let c = cooperation();
-        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
-        c.claim(
-            &SessionInfo::named("lander", "cli"),
-            vec!["integration".into()],
-            None,
-            ClaimMode::Exclusive,
-            None,
-        )
-        .unwrap();
         let beat = |ctx: &Context, session: Option<&str>| {
             mesh_beat(
                 ctx,
@@ -2198,6 +2188,25 @@ mod tests {
                 },
             )
         };
+        assert!(
+            matches!(beat(&ctx, Some("lander")), Err(CapabilityError::Refused(m))
+                if m.starts_with("not_active:")),
+            "no cooperation, nothing to beat"
+        );
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        c.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(
+            matches!(beat(&ctx, None), Err(CapabilityError::InvalidInput(_))),
+            "the command line names the session it beats for"
+        );
         let written = beat(&ctx, Some("lander")).expect("the command line names its session");
         assert!(written.key.ends_with("/lander"), "{}", written.key);
 

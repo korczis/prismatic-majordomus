@@ -1631,8 +1631,9 @@ impl Cooperation {
                     // fold, and the reason a constant line the journal's bounds admit.
                     if !overtaken {
                         armed += 1;
-                    } else if self.release_because(&claim.key, OVERTAKEN).is_ok() {
-                        tracing::info!(runtime_id = %self.own_key, session_id = %session, claim = %claim.key, "a suspended claim another session was admitted over is released, not re-armed");
+                    } else {
+                        let released = self.release_because(&claim.key, OVERTAKEN).is_ok();
+                        tracing::info!(runtime_id = %self.own_key, session_id = %session, claim = %claim.key, released, "a suspended claim another session was admitted over is released, not re-armed");
                     }
                 }
                 ClaimState::Released | ClaimState::Expired(_) => {}
@@ -6034,6 +6035,11 @@ mod tests {
         )
         .unwrap();
         assert_eq!(a.session_phase(&key), Some(format!("pid {pid}")));
+        assert_eq!(
+            a.session_phase("another-stream/lander"),
+            None,
+            "this runtime holds the phases of its own sessions alone"
+        );
         let (_, written) = a.journal().session_beat_age(&key).unwrap();
         assert_eq!(written, Some(format!("pid {pid}")));
         assert_eq!(session_beats(&a).len(), 2);
