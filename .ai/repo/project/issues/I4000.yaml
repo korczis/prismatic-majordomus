@@ -21,6 +21,7 @@ acceptance_criteria:
   - "A repeated executions.start with the same key answers the same execution id and starts no second execution"
   - "A different key, or no key, behaves as before"
   - "The key lives in the execution's own record: no new store"
+  - "The guarantee holds within one server's retention and is documented so; two concurrent starts with one key answer one id, and across a server restart the mesh claim of I4004 is what refuses the duplicate"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4000_executions_start_takes_an_idempotency_key"
 evidence_required:

@@ -6,20 +6,21 @@ priority: p1
 profile: implementation
 parallel_safe: true
 serves:
-  - a-session-proceeds-through-the-mesh#a-fresh-session-finds-the-right-work
+  - a-session-proceeds-through-the-mesh#an-implement-request-runs-once
 objective: "Declare worktree.create as a capability with a repository_mutation effect over the git calls integration/drain.rs already makes, so a worker creates a canonical worktree through the registry rather than a shell (Mission Control B5)."
 why: "Creating the worktree is a shell step of the CLI; a loop that proceeds unasked cannot do it as a declared, refusable, audited act."
 current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
 desired_state: "The acceptance criteria below hold and case 4002 proves them."
 scope:
   - "apps/majordomus-cli/src/capability/builtin"
-  - "apps/majordomus-cli/src/integration/drain.rs"
+  - "apps/majordomus-cli/src/worktree"
+  - "apps/majordomus-cli/src/commands/worktree.rs"
   - "docs/WORKTREES.md"
   - "test/cases/4002_worktree_create_is_a_typed_writing_capability.sh"
   - ".ai/repo/project/issues/I4002.yaml"
 acceptance_criteria:
   - "worktree.create plans and applies the canonical <repository>-wt/<branch> path and refuses a misplaced or existing one with a reason"
-  - "It reuses the git calls of integration/drain.rs and adds no second implementation"
+  - "It wraps WorktreeService's ensure (apps/majordomus-cli/src/worktree), the path `majordomus worktree create` takes, and adds no second implementation of worktree creation"
   - "Its declaration projects to the command, the MCP tool and the skill from one definition"
 validation:
   - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4002_worktree_create_is_a_typed_writing_capability"

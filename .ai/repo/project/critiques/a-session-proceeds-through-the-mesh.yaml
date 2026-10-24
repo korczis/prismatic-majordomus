@@ -1,0 +1,119 @@
+intent: a-session-proceeds-through-the-mesh
+reviewed_at: 8f672d83a2b
+reviewed_by: "claude-code subagent (read-only, fresh context, Plan type, same model family as the author) dispatched by session fc (0eb9c677) over the committed records of branch chore/a-session-proceeds-through-the-mesh-is-planned at 8f672d83a2b: the intent, its milestone and I4000-I4009, checked against the code on master and the unlanded /proceed stack (ADR 0177, I2972-I2977, I3040). It was given the records only, not the author's view. Resolved by the author in the same branch. Disposition: accept with required changes; 4 of 13 findings blocking, all 4 planned; 7 non-blocking planned and 2 left open with their reason. Several issues already have pull requests built before this critique (#2385, #2389, #2383, #2405, #2401, #2397, #2393, #2376): where a planned resolution amends an issue whose code exists, the checks below say whether that code already holds it."
+findings:
+  - id: devtask-implement-duplicates-proceed-take
+    class: unnecessary_work
+    subject: "I4003"
+    finding: "The statement says the plan builds on the /proceed stack rather than writing a second one, yet I4003's devtask.implement (readiness, preflight, mesh.claim, worktree, executions.start, the same request answers the same execution) is a second take path beside `proceed take` (I2974, commit 7602a4b3ec3 on feature/proceed-names-the-next-admissible-work, case 3443), which ADR 0177 decision 3 makes the one command that acts; I2976 (case 3370) already holds two-sessions-never-share-an-item and I2977 overlaps a-dead-loop-resumes. No issue names I2974, I2976 or I2977, and the stack's own intent a-session-proceeds is not mentioned."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4005
+      because: "I4005 is the issue that composes both stacks (its branch merges the stack top and #2405), so it carries the unification: its criteria now require one take path (proceed.step's do is devtask.implement, and proceed take runs the same claim, worktree and start or is retired, with cases 3443 and 3370 still passing once the stack is on master) and that a-session-proceeds names this intent as its extension or is superseded by it. The statement now says it extends a-session-proceeds and writes no second take path. The stack's issues cannot be depends_on entries while they are not on master (plan validate refuses an unknown issue), so they are named in text. Checked: I4005's commit e740f960faa already makes do devtask.implement; commands/proceed.rs still composes its own take, which is what the new criterion settles."
+  - id: unasked-proceeding-is-undecided-architecture
+    class: unproven_assumption
+    subject: "a-session-proceeds-through-the-mesh"
+    finding: "The intent has sessions proceed unasked, schedule their own next step and be woken, handed over and reaped by /watchdog, but ADR 0177 (proposed, not on master) leaves event-driven proceeding without a person's word to a later ADR, ADR 0200 (cited in governance) is proposed and not accepted by the owner, and no issue writes the ADR that would make next_due_at self-scheduling, /watchdog and reaping legitimate."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4005
+      because: "I4005 now writes that ADR (scope .ai/repo/adrs): it extends ADR 0177, decides that a session proceeds without a person's word through next_due_at and that /watchdog calls the same capability, and cites ADR 0200; its number is taken on the board when written. Until the owner accepts it, next_due_at is advisory and only a person's /loop steps again. I4009 starts only after the owner accepts that ADR and ADR 0200. The statement and the milestone's risks say so."
+  - id: statement-promises-work-no-issue-carries
+    class: missed_requirement
+    subject: "a-session-proceeds-through-the-mesh"
+    finding: "The statement promised an /issue verb, model and effort routing into the work order, fan-out and pull by other nodes, reporting, /loop and /orchestrate consuming the schedule, hook, mod and agent-definition generation per verb, skill edges declared as data, refusal of an unclaimed finish, leak detection and reach into any supervised repository; no criterion or issue carries most of them, and intent validate cannot see the gap because it checks only the criteria."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4005
+      because: "The statement is narrowed to what the seven criteria and the issues carry, and the rest moved to non_goals with where it goes: the /issue verb and /intent changes, per-verb hooks, mods and agent definitions, skill edges as data and the unclaimed-finish refusal to a follow-up intent; leak detection to I3182; adopters' repositories out; no scheduler of its own. What stays is absorbed by I4005's new criteria: each work item names models.route's model and the profile's effort, fan_out lists the independent admissible items, report is the peers.announce input, and next_due_at is consumed by /loop with no scheduler written. Checked: e740f960faa's step.rs already carries these fields."
+  - id: machine-slot-is-a-second-lock
+    class: regression_risk
+    subject: "I4006"
+    finding: "As scoped, I4006 adds a new module and docs page and ignores lib/machine_lock.sh (the machine-wide .derive.lock with its FIFO queue, dead-owner reclaim and rule project.one-derive-at-a-time) and I3825 (a build refuses to start beside five others or below 35 GiB free, in lib/rust_bin.sh, from clause 7 of the cooperation rule): built that way it is a third lock and a holder-state directory against the invariant 'no new store', and lib/rust_bin.sh, the rule and the derive lock are out of its scope."
+    blocking: true
+    resolution:
+      state: planned
+      issue: I4006
+      because: "I4006's scope now names lib/rust_bin.sh, lib/machine_lock.sh, the policy, the cooperation rule and docs/OFFLOAD.md instead of a nonexistent module and page, and its criteria require one mechanism: the slot carries I3825's refusal with the numbers read once from the policy's machine.heavy_work (clause 7), closing I3825 rather than building beside it; the derive lock stays the one derive at a time, with the slot directory beside it found the same way and scripts/reap-orphans and case 1018 reading the derive owner line unchanged; a holder record lives only while its process does. Checked: #2397 (feature/heavy-work-shares-the-machine) already puts .machine.slots beside .derive.lock, reclaims by pid and start time, reads machine.heavy_work and is taken by mj_cargo_bounded in lib/rust_bin.sh. Whether I3825 is closed as carried is the landing train's act."
+  - id: every-criterion-evidence-can-never-be-met
+    class: delivery_verification
+    subject: "a-session-proceeds-through-the-mesh"
+    finding: "Every criterion is evidence: command with ref 'majordomus intent explain a-session-proceeds-through-the-mesh', which the ledger never settles (a command criterion is NotDerivable), so the intent's verdict cannot become met; and heavy-work-shares-the-machine named only case 4006 though its idle-serve and deleting-push clauses are proved by cases 4007 and 4008."
+    blocking: false
+    resolution:
+      state: open
+      because: "The criterion now names cases 4006, 4007 and 4008. The switch to evidence: test stays open on purpose: a test ref must exist in the tree (unresolved_evidence_ref) and cases 4000-4009 live on unlanded pull requests, so each criterion moves to evidence: test with its case's path in the train that lands that case."
+  - id: idempotency-key-dies-with-the-process
+    class: unproven_assumption
+    subject: "I4000"
+    finding: "ExecutionStore is in memory and bounded (Limits::max_executions), so a key is remembered only within one server's process and retention window; a retry after a restart or eviction starts a second execution, I4007 makes restarts more frequent, and the criterion tests only a sequential repeat."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4000
+      because: "I4000 gains the criterion that the guarantee holds within one server's retention and is documented so, that two concurrent starts with one key answer one id, and that across a restart the mesh claim of I4004 is what refuses the duplicate."
+  - id: releasing-on-unknown-outcome-breaks-exclusivity
+    class: regression_risk
+    subject: "I4004"
+    finding: "I4004 released the claim on an unknown outcome, when the worker may still run, which lets a second session take the item; and 'the claim exists exactly while the run does' cannot hold for a crash, where no handler runs."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4004
+      because: "The criterion now releases on completion, failure and cancellation only; an unknown outcome keeps the claim until the outcome is verified or the holder's liveness lapses (I3990), and a crashed holder's claim is released only by that liveness. Checked: #2401's execution/claim.rs already keeps the claim on UnknownOutcome (test every_final_state_releases_the_claim_and_an_unknown_outcome_keeps_it)."
+  - id: scope-paths-that-do-not-exist-or-are-wrong
+    class: insufficient_work
+    subject: "a-session-proceeds-through-the-mesh"
+    finding: "Scopes named paths that do not exist (share/skills, src/machine, src/serve, src/hooks, docs/MACHINE.md, docs/SERVE.md, docs/HOOKS.md); I4002 reused integration/drain.rs's detached throwaway worktree instead of WorktreeService's canonical ensure, and served a-fresh-session-finds-the-right-work although creating a worktree serves running an implement request once."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4002
+      because: "Corrected: the milestone, I4005 and I4009 name .ai/repo/skills (and I4005 .claude/skills, .agents/skills, src/editors, src/commands); I4006 as in machine-slot-is-a-second-lock; I4007 names commands/serve.rs, shared.rs, lease.rs and docs/MCP.md; I4008 names scripts/ci/run-plan. I4002 wraps WorktreeService's ensure with no second implementation and serves an-implement-request-runs-once. docs/PROCEED.md stays: I4005 creates it. Checked: #2383 already projects worktree.create over WorktreeService::ensure."
+  - id: every-provider-projection-has-no-generator
+    class: surface_missing
+    subject: "I4005"
+    finding: "I4005 promised the /proceed skill of every provider generated, while a .skill() alias projected only to .claude/skills, src/editors was out of scope, and the stack's hand-authored .ai/repo/skills/proceed would collide with the alias."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4005
+      because: "I4005's scope now names src/editors, .claude/skills and .agents/skills, and a criterion requires exactly one /proceed: the hand-written skill record is removed when the alias is declared. Checked: e740f960faa removes .ai/repo/skills/proceed and writes the command skill for Claude Code and under .agents/skills."
+  - id: watchdog-rebuilds-supervision-and-assumes-it-can-wake
+    class: unnecessary_work
+    subject: "I4009"
+    finding: "I4009 overlaps nothing-in-the-mesh-waits-on-something-dead (I3182 classification, I3183 repair) without citing it, its substrate I3990-I3994 is not on master, wake is undefined (nothing can wake a session stuck on a dialog), 'never by polling' has no emitter named, and ADR 0200 restricts reaping."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4009
+      because: "I4009 now depends on I3182, starts only after I3990 and I3182 are on master and the owner accepts ADR 0200 and I4005's ADR, composes I3182's classification and I3183's repair with no reader or repairer of its own, defines wake as a board or mesh message to the holder with a recorded deadline, signals nothing to a process it does not own, and names the claim-holding server as the emitter of the overdue signal."
+  - id: idle-serve-exit-regressions
+    class: regression_risk
+    subject: "I4007"
+    finding: "Idle was defined as no lease, peer or execution, leaving out attached MCP clients, event subscribers, mesh links and open episodes, and nothing said the next client re-ensures the server."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4007
+      because: "I4007 gains the criterion that an attached MCP client, an open event stream or a running execution keeps the server alive and the next client re-ensures it. Mesh link and probe traffic deliberately do not count: on 2026-10-22 the machine's own servers kept each other alive that way (#2393's root cause), so counting them would undo the issue."
+  - id: deletion-exemption-and-surfaces
+    class: insufficient_work
+    subject: "I4008"
+    finding: "The refs/majordomus/* exemption is shell in .githooks/pre-push, not data; the issue did not say which steps a deletion skips (finish --check, case-numbers and run-plan still ran) nor cover a mixed push of deletions and refs/majordomus/* refs."
+    blocking: false
+    resolution:
+      state: planned
+      issue: I4008
+      because: "The criterion now says the exemption sits beside the refs/majordomus/* one in the hook, covers deletions plus refs/majordomus/* refs, and exits before finish --check, case-numbers and run-plan; the scope names scripts/ci/run-plan instead of a nonexistent src/hooks and docs page."
+  - id: public-surfaces-and-vocabulary-not-in-scope
+    class: surface_missing
+    subject: "a-session-proceeds-through-the-mesh"
+    finding: "I4001's new execution states are matched outside execution/ (cockpit, event stream, session state, commands and executions capability) and change the protocol and the release contract; slot, watchdog and work order are new words for project.no-new-nouns and case 28; and no observed run on the shared machine proves that heavy work shares it."
+    blocking: false
+    resolution:
+      state: open
+      because: "Left to the landing of each pull request rather than planned here: the public contract and the generated projections of I4001's states are judged by the release contract and generate --check in the train that lands #2389; the nouns by case 28 in the pre-push of I4005, I4006 and I4009; and an observed shared-machine run (slot holders named under load, idle exits, a deletion push's wall time) is evidence the train that lands I4006-I4008 records. It blocks nothing because no criterion here is claimed met before those trains."

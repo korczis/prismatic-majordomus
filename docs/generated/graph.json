@@ -15962,6 +15962,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-session-proceeds-through-the-mesh",
+        "kind": "critique",
+        "label": "a-session-proceeds-through-the-mesh",
+        "summary": "a-session-proceeds-through-the-mesh",
+        "route": "/cockpit/objects/critique/a-session-proceeds-through-the-mesh",
+        "source": ".ai/repo/project/critiques/a-session-proceeds-through-the-mesh.yaml",
+        "facts": {
+          "intent": "a-session-proceeds-through-the-mesh",
+          "reviewed_at": "8f672d83a2b"
+        }
+      },
+      {
         "id": "majordomus://critique/a-session-record-says-what-it-served",
         "kind": "critique",
         "label": "a-session-record-says-what-it-served",
@@ -21713,7 +21725,12 @@
           "non_goals": [
             "Push assignment of work to peers before I3198",
             "Changing a profile automatically from inferred routing",
-            "Editing a person's .claude/settings.json or personal commands"
+            "Editing a person's .claude/settings.json or personal commands",
+            "An /issue verb of its own, and /intent changes: a follow-up intent",
+            "Generating hooks, mods and agent definitions per verb, declaring the edges to the existing skills as data, and refusing an unclaimed finish: a follow-up intent",
+            "Detecting resource leaks: carried by nothing-in-the-mesh-waits-on-something-dead (I3182)",
+            "A scheduler of its own: next_due_at is consumed by /loop on Claude Code, and a provider without one steps when asked",
+            "Propagating the verbs into adopters' repositories through share/skeleton"
           ],
           "updated_at": "2026-10-23"
         }
@@ -64064,11 +64081,6 @@
         "route": "/cockpit/objects/issue/i4000",
         "source": ".ai/repo/project/issues/I4000.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A repeated executions.start with the same key answers the same execution id and starts no second execution",
-            "A different key, or no key, behaves as before",
-            "The key lives in the execution's own record: no new store"
-          ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
           "desired_state": "The acceptance criteria below hold and case 4000 proves them.",
@@ -64154,7 +64166,7 @@
         "facts": {
           "acceptance_criteria": [
             "worktree.create plans and applies the canonical <repository>-wt/<branch> path and refuses a misplaced or existing one with a reason",
-            "It reuses the git calls of integration/drain.rs and adds no second implementation",
+            "It wraps WorktreeService's ensure (apps/majordomus-cli/src/worktree), the path `majordomus worktree create` takes, and adds no second implementation of worktree creation",
             "Its declaration projects to the command, the MCP tool and the skill from one definition"
           ],
           "created_at": "2026-10-23",
@@ -64169,13 +64181,14 @@
           "profile": "implementation",
           "scope": [
             "apps/majordomus-cli/src/capability/builtin",
-            "apps/majordomus-cli/src/integration/drain.rs",
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/commands/worktree.rs",
             "docs/WORKTREES.md",
             "test/cases/4002_worktree_create_is_a_typed_writing_capability.sh",
             ".ai/repo/project/issues/I4002.yaml"
           ],
           "serves": [
-            "a-session-proceeds-through-the-mesh#a-fresh-session-finds-the-right-work"
+            "a-session-proceeds-through-the-mesh#an-implement-request-runs-once"
           ],
           "slug": "worktree-create-is-a-typed-writing-capability",
           "updated_at": "2026-10-23",
@@ -64241,11 +64254,6 @@
         "route": "/cockpit/objects/issue/i4004",
         "source": ".ai/repo/project/issues/I4004.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The claim exists exactly while the run does, and is released on completion, failure, cancellation and an unknown outcome",
-            "A second start for a claimed item is refused naming the holder",
-            "Fencing is not written here: it is I3174's, and this issue records the dependency"
-          ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
           "depends_on": [
@@ -64286,12 +64294,6 @@
         "route": "/cockpit/objects/issue/i4005",
         "source": ".ai/repo/project/issues/I4005.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "Repeating the step at the same state answers the same work order",
-            "An intent whose realisation is met answers done and schedules nothing (it-stops-when-the-intent-is-met)",
-            "The /proceed skill of every provider is generated and a hand edit fails generate --check",
-            "The stack I2972-I2976 and I3040 is extended, not duplicated"
-          ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
           "depends_on": [
@@ -64307,7 +64309,12 @@
           "profile": "implementation",
           "scope": [
             "apps/majordomus-cli/src/capability/builtin",
-            "share/skills",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/editors",
+            ".ai/repo/skills",
+            ".claude/skills",
+            ".agents/skills",
+            ".ai/repo/adrs",
             "docs/PROCEED.md",
             "test/cases/4005_proceed_step_is_one_idempotent_work_order.sh",
             ".ai/repo/project/issues/I4005.yaml"
@@ -64332,11 +64339,6 @@
         "route": "/cockpit/objects/issue/i4006",
         "source": ".ai/repo/project/issues/I4006.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "At most N holders run at once and below the disk floor none starts",
-            "A full queue answers within a deadline naming each holder, never waits unbounded",
-            "A holder that died releases its slot by deadline, and the slot adds no new store"
-          ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
           "desired_state": "The acceptance criteria below hold and case 4006 proves them.",
@@ -64350,8 +64352,13 @@
           "profile": "implementation",
           "scope": [
             "apps/majordomus-cli/src/capability/builtin",
-            "apps/majordomus-cli/src/machine",
-            "docs/MACHINE.md",
+            "apps/majordomus-cli/src/commands",
+            "apps/majordomus-cli/src/lib.rs",
+            "lib/rust_bin.sh",
+            "lib/machine_lock.sh",
+            ".ai/repo/policy.yaml",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
+            "docs/OFFLOAD.md",
             "test/cases/4006_machine_slot_shares_heavy_work.sh",
             ".ai/repo/project/issues/I4006.yaml"
           ],
@@ -64377,7 +64384,8 @@
           "acceptance_criteria": [
             "A serve with a lease, a peer or a running execution never exits",
             "An idle one exits after the bound and says why on stderr",
-            "The bound is policy data"
+            "The bound is policy data",
+            "An attached MCP client, an open event stream or a running execution keeps it alive, while the machine's own probes and mesh link traffic do not; the next client re-ensures it"
           ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
@@ -64391,8 +64399,10 @@
           "priority": "p1",
           "profile": "implementation",
           "scope": [
-            "apps/majordomus-cli/src/serve",
-            "docs/SERVE.md",
+            "apps/majordomus-cli/src/commands/serve.rs",
+            "apps/majordomus-cli/src/shared.rs",
+            "apps/majordomus-cli/src/lease.rs",
+            "docs/MCP.md",
             "test/cases/4007_an_idle_serve_exits_by_itself.sh",
             ".ai/repo/project/issues/I4007.yaml"
           ],
@@ -64418,7 +64428,7 @@
           "acceptance_criteria": [
             "A push of only deletions runs no plan and exits 0",
             "A push of any non-deletion ref runs the plan as before",
-            "The exemption is declared data beside the refs/majordomus/* one"
+            "The exemption sits beside the refs/majordomus/* one in the hook, covers a push of deletions plus refs/majordomus/* refs, and exits before finish --check, case-numbers and run-plan"
           ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
@@ -64433,8 +64443,7 @@
           "profile": "implementation",
           "scope": [
             ".githooks/pre-push",
-            "apps/majordomus-cli/src/hooks",
-            "docs/HOOKS.md",
+            "scripts/ci/run-plan",
             "test/cases/4008_a_push_that_only_deletes_runs_no_plan.sh",
             ".ai/repo/project/issues/I4008.yaml"
           ],
@@ -64457,16 +64466,11 @@
         "route": "/cockpit/objects/issue/i4009",
         "source": ".ai/repo/project/issues/I4009.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A suspended claim, a missed phase beat or an overdue deadline is signalled with its claim, holder and phase",
-            "Wake precedes handover precedes reap, and each is recorded",
-            "Reap by anyone but the owner or a seat is refused (ADR 0200), and only after assess-before-deleting",
-            "It depends on the liveness substrate I3990-I3994 (branch feature/a-claim-lives-by-its-holders-progress); this issue adds none of it"
-          ],
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
           "depends_on": [
-            "I4005"
+            "I4005",
+            "I3182"
           ],
           "desired_state": "The acceptance criteria below hold and case 4009 proves them.",
           "evidence_required": [
@@ -64478,7 +64482,8 @@
           "profile": "implementation",
           "scope": [
             "apps/majordomus-cli/src/capability/builtin",
-            "share/skills",
+            "apps/majordomus-cli/src/editors",
+            ".ai/repo/skills",
             "docs/PROCEED.md",
             "test/cases/4009_watchdog_wakes_hands_over_and_reaps.sh",
             ".ai/repo/project/issues/I4009.yaml"
@@ -66655,13 +66660,11 @@
           ],
           "order": 520,
           "priority": "p1",
-          "risks": [
-            "The liveness substrate I3990-I3994 and the fencing epoch I3174 are other sessions' work; I4004 and I4009 name them and write none of them.",
-            "The /proceed stack I2972-I2976 and I3040 is unpushed or unmerged; I4005 must build on it, and waits for it to land if it has not."
-          ],
           "scope": [
             "apps/majordomus-cli/src",
-            "share/skills",
+            ".ai/repo/skills",
+            ".ai/repo/adrs",
+            "lib",
             "share/schemas",
             "docs",
             ".githooks",
@@ -108014,6 +108017,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-session-proceeds-through-the-mesh",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-session-record-says-what-it-served",
         "target": "kind:critique",
         "kind": "is_a"
@@ -123720,6 +123728,11 @@
       },
       {
         "source": "majordomus://issue/I4009",
+        "target": "majordomus://issue/I3182",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4009",
         "target": "majordomus://issue/I4005",
         "kind": "depends_on"
       },
@@ -134955,8 +134968,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3779,
-      "edges": 8740,
+      "nodes": 3780,
+      "edges": 8742,
       "acyclic": false,
       "truncated": false
     }
