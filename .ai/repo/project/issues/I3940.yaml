@@ -1,0 +1,42 @@
+id: I3940
+milestone: ci-critical-path
+title: The UI audit runs as four shards side by side, and the long pole of a full run is a quarter as long
+slug: the-ui-audit-runs-in-shards
+priority: p1
+profile: debugging
+parallel_safe: true
+objective: "Run `scripts/ui audit` as four shards (MJ_UI_SHARD=<k>/4) in four jobs side by side, each driving a stride of the plan's visits, and join their results documents in one job that proves every visit was driven by exactly one shard and gives the verdict the single job gave: any finding fails."
+why: "The ui job is one serial job: about 13 minutes of setup, then `scripts/ui audit --report` takes 57-80 minutes over about 8,000 visits (runs 39762797718 and 39780445745). With the suite shards balanced (I3930) and rust lane 3 trimmed (I3937) it is the long pole of a full run. The visits are independent of each other and the repository already shards its two other browser sweeps by a stride (I2841 site-probe, I3602 interaction-probe), each with a fan-in that proves the union is the whole."
+current_state: "validate.yml's ui job builds the site and the executable, runs the warm-screen budget and the bar check, then the whole audit under a 5,400 s bound, then the browser cases; the audit judges the bar again."
+desired_state: "Four ui-shard jobs each build, then drive visits K modulo 4 of the plan (the stride scripts/site-probe --partition uses) under a 2,100 s bound and write a results document naming the visits they drove; ui-checks runs the budget, the bar and the browser cases once; the ui job downloads the shards, runs `scripts/ui union` (shards 1..4 each once, no visit twice, none missing, one plan), renders the report from the joined document and is red when a shard or ui-checks was. A shard does not judge the bar. An integration top still audits after an earlier red (I3931's rule), per shard. Expected wall: about 13 minutes of setup plus 14-20 minutes of audit plus the join, 31-37 minutes instead of 70-93."
+scope:
+  - .github/workflows/validate.yml
+  - scripts/ui
+  - scripts/lib/ui-run.mjs
+  - scripts/lib/ui-shard.mjs
+  - scripts/lib/ui-results.mjs
+  - test/cases/3940_every_ui_visit_is_driven_by_exactly_one_shard.sh
+  - .ai/repo/project/issues/I3940.yaml
+non_scope:
+  - Changing what the audit judges, which pages it visits or at which widths
+  - The gate's id, its job (`ui`) or its entry in .ai/repo/ci/gates.yaml
+  - Making a single visit faster, or the setup of the job shorter
+depends_on:
+  - I3931
+acceptance_criteria:
+  - MJ_UI_SHARD=K/N makes the audit drive the visits whose number in the plan's order is K modulo N, each in exactly one shard, deterministically; a malformed value is refused (exit 2) before a site is built or a browser opened
+  - Each shard's results document says which visits it drove, and `scripts/ui union` refuses a set with a shard missing, a visit twice or missing, or shards planned differently, and otherwise writes the document a single audit writes
+  - The bar check and the warm-screen budget run once, in ui-checks, and not in a shard
+  - Every ui-shard step is timed with a bound under its job's, the per-shard bound being derived from the measured single-audit time
+  - The ui job's verdict is the single job's; an integration top audits after an earlier red
+  - Every case that reads .github/workflows/validate.yml passes
+validation:
+  - bash test/run.sh 3940_every_ui_visit_is_driven_by_exactly_one_shard
+  - "bash test/run.sh $(grep -lE 'validate\\.yml' test/cases/*.sh | sed 's#test/cases/##; s/\\.sh$//')"
+  - actionlint .github/workflows/validate.yml
+  - scripts/ci/step-bound-check
+evidence_required:
+  - suite
+risk: "Each shard repeats the 13 minutes of setup, so four runners are busy where one was (the cost is runner minutes, not wall). The first run of ui-shard and ui-checks restores no Rust cache of its own (the cache is keyed by job), so it builds the executable cold once. The stride puts a page's widths in different shards; a visit is independent, so that is only a different report order, which the union sorts. A shard that outgrows its 2,100 s bound is a reason for a fifth shard."
+created_at: 2026-10-22
+updated_at: 2026-10-22

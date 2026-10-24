@@ -11,11 +11,10 @@ ci-plan *args:
 install-check *args:
     scripts/ci/install-check {{args}}
 
-# The gates every plan runs: shell syntax and shellcheck, then doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection and the derived site data.
+# The structure job's gates the plan selects for this working tree, run by the dispatcher CI uses; which gates those are is the model's (.ai/repo/ci/gates.yaml), not a list here.
 [group('ci')]
 ci-structure:
-    scripts/ci/shell-lint
-    scripts/ci/core-check
+    scripts/ci/run-plan --job structure
 
 # The gates the plan selects for this working tree, with the commands CI runs, in the plan's order.
 [group('ci')]

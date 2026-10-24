@@ -3,7 +3,7 @@ schema: adr/v1
 id: adr-0164
 kind: adr
 title: A durable record names the session that wrote it, and relates a task only when the task is that session's
-status: proposed
+status: accepted
 date: 2026-10-15
 tags:
   - sessions
@@ -59,17 +59,25 @@ depends on task state — a checkpoint outside a task records no task, and is st
 only when that task was opened by the same session.**
 
 1. **The attribution is the existing envelope key.** The ledger line of `decision.recorded`,
-   `question.opened` and `task.checkpoint` carries `session` as every ledger line does. No
+   `question.opened`, `question.resolved` and `task.checkpoint` carries `session` as every
+   ledger line does. No
    new field, store or identity is introduced; the provider session or worker a caller
    supplies stays inside the record it explains and its ledger line, as today.
 2. **No guess.** When the caller supplies no identity of its own and more than one episode
    is open in the checkout, the record is written with no `session` — attributed to nobody
    rather than to whoever opened an episode last. The pointer remains an answer for status
-   output, which says it is a guess; it is never written into a record as a fact.
-3. **The task is related only when it is the caller's.** A record names the active task when
-   the session in that task's `task.started` line is the caller's session. Otherwise the
-   record names no task — the `task_id`-omitted shape `lib/checkpoint.sh` already writes
-   outside a task — and is still written, as ADR 0052 requires.
+   output, which says it is a guess; it is never written into a record as a fact. An
+   explicit identity with no matching local episode resolves to none. With no supplied
+   identity, exactly one local open episode preserves the unambiguous existing path.
+3. **The task is related unless it is another live episode's.** A record names the active
+   task unless the session in that task's unique `task.started` line is a different episode
+   that is still open in the checkout — the one case in which a record could be filed under
+   somebody else's work. A task whose opener has closed, or whose opening names no episode,
+   has no live owner, and the caller continuing it carries it on: a second sitting, or a
+   handover from one provider to another (ADR 0052, ADR 0111). With no episode open at all
+   the workers cannot be told apart and the task is the caller's. Otherwise the record names
+   no task — the `task_id`-omitted shape `lib/checkpoint.sh` already writes outside a task —
+   and is still written, as ADR 0052 requires.
 4. **Nothing is refused for attribution.** A command that cannot attribute writes an
    unattributed record; it never fails for want of an identity.
 
@@ -92,15 +100,24 @@ writers are used when they add friction.
 
 ## Consequences
 
-- The implementation (the issues after I0702 in milestone M002) changes three writers and
-  the envelope resolution, adds no store, and turns case 3049's two pinned assertions red;
-  the change rewrites them to assert the attribution this record chooses.
+- I0703 covers every writer of a durable record: decisions, questions (opened and
+  resolved), checkpoints (bodied, bodyless, derived, and `check --checkpoint`), handovers
+  and `knowledge observe` share one preparation. A handover never names or closes another
+  episode's task. It adds no identity or durable store.
+- Case 3049 keeps I0701's zero-episode example: with no episode the workers are not told
+  apart, which is the cost this record accepts rather than invent an identity. Two real
+  episodes under one `$USER`, the caller's own task, unknown explicit identities and
+  anonymous calls prove the boundary; cases 61 and 388 prove a task carried across
+  episodes and providers.
 - A provider that declares no session variable gets unattributed records when several
   episodes are open, instead of misattributed ones. That is the cost this decision accepts,
   and it falls on that provider's adapter, which can declare its variable.
-- A single worker sees no change: its session opened the task, so its records name the task
-  as before.
-- Implementation conditions: the attribution is computed once, in the envelope, and read by
-  all three writers; the comparison with `task.started` reads the ledger the checkout
-  already has; a test proves an unattributed write when two episodes are open and the caller
-  supplies nothing.
+- A single worker sees no change: no other live episode opened its task.
+- Amended on acceptance (2026-10-22): the first reading, "related only when the caller
+  opened it", broke a task carried across sittings and providers; a live foreign opener is
+  the whole of the defect, so it is the whole of the exception.
+- Attribution is prepared once before publication and supplied to the ledger envelope,
+  Markdown and derived body. Comparison reads the existing opening ledger event, not
+  `$USER`, the board or a fresh identity. A checkpoint without a related task cannot
+  update the checkout task's timestamp. Question resolution keeps the original index
+  relation while its event describes the resolving caller.

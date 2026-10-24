@@ -28,11 +28,11 @@ gitq checkout -q master
 "$MJ" init >"$STATE/init.log" 2>&1 || { echo "    majordomus init failed:"; tail -5 "$STATE/init.log"; exit 1; }
 printf '[{"number":1,"title":"change 1","author":{"login":"someone"},"headRefName":"feature/1","headRefOid":"%s","baseRefName":"master","isDraft":false,"labels":[],"createdAt":"2026-09-01T00:00:00Z","updatedAt":"2026-09-01T00:00:00Z","body":"","statusCheckRollup":[{"__typename":"CheckRun","name":"ci","status":"COMPLETED","conclusion":"SUCCESS"}],"reviewDecision":"","autoMergeRequest":null,"isCrossRepository":false}]\n' "$H1" > "$STATE/prs.json"
 
-# The scripted forge. $STATE/mode says how `repo view` and `pr merge` behave:
+# The scripted forge. $STATE/mode says how `repo view` and the landing behave:
 #   flaky   — `repo view` fails with a 502 once, then answers
 #   denied  — `repo view` is refused with a 401, always
 #   down    — `repo view` fails with a 503, always
-#   mergebad — everything answers, `pr merge` fails with a 502
+#   mergebad — everything answers, the fast-forward of master (I3910) fails with a 502
 cat > "$BIN/gh" <<EOF
 #!/bin/sh
 [ -n "\${DECLARATIONS:-}" ] || echo "\$*" >> "$STATE/log"
@@ -50,7 +50,7 @@ case "\$1 \$2" in
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
   "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list") cat "$STATE/prs.json" ;;
-  "pr merge") echo "HTTP 502: Bad Gateway" >&2; exit 1 ;;
+  "pr merge"|"api -X") echo "HTTP 502: Bad Gateway" >&2; exit 1 ;;
   "pr view") echo OPEN ;;
   # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
   # this repository, and no pull request mentions it. The list is this forge's own, unlogged
@@ -87,7 +87,7 @@ case "$out" in *"attempts"*) echo "    a refusal claims to have been retried: $o
 echo mergebad > "$STATE/mode"; : > "$STATE/log"
 EV="$W/.git/majordomus/integration/events.jsonl"; rm -f "$EV"
 out="$(prs drain --max 1)" || true
-requests="$(asked 'pr merge')"
+requests="$(asked 'api -X PATCH')"
 decisions="$(grep -c '"action":"merge_attempted"' "$EV" 2>/dev/null || true)"
 [ "$requests" -ge 1 ] || { echo "    no merge was requested"; exit 1; }
 [ "$requests" = "$decisions" ] \
