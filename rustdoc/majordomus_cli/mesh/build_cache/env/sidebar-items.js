@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_REGION","PROFILE"],"enum":["Mode"],"fn":["default_credentials","default_node_file","report","script"],"struct":["EnvOptions","EnvReport","EnvVar","Sccache","Store"]};

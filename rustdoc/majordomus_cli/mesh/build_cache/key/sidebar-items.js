@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KEY_SCHEMA"],"enum":["Kind"],"struct":["KeyReport","KindKey"]};

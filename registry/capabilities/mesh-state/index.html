@@ -443,6 +443,12 @@ of that machine.</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether cooperation runs.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">build_cache</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The build-cache offers this runtime reads from the journal, and every record it does
+not read as one with why (I2671); absent when the journal holds none.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">reason</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
         <td class="px-3 py-2 font-mono text-xs text-body">no</td>
@@ -475,6 +481,167 @@ open reviews and the untaken handovers.</td>
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;BuildCacheHealth&quot;: {
+      &quot;description&quot;: &quot;How the offering node&#39;s own probe judges the store.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;healthy&quot;,
+          &quot;description&quot;: &quot;Ready and answering.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;degraded&quot;,
+          &quot;description&quot;: &quot;Answering, but something the policy cares about is wrong (low headroom, slow).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unhealthy&quot;,
+          &quot;description&quot;: &quot;Not answering, or refusing.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown&quot;,
+          &quot;description&quot;: &quot;The probe could not say: never `Healthy`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;BuildCacheNodeOffer&quot;: {
+      &quot;description&quot;: &quot;One node&#39;s offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \&quot;n1\&quot;.into(), protocol: \&quot;s3\&quot;.into(), provider: \&quot;minio\&quot;.into(),\n    scope: Scope::Lan, endpoint: \&quot;http://192.168.100.30:9000\&quot;.into(),\n    bucket: \&quot;majordomus-build-cache\&quot;.into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \&quot;n1\&quot;);\nassert!(!serde_json::to_string(&amp;offer).unwrap().contains(\&quot;secret\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;age_seconds&quot;: {
+          &quot;description&quot;: &quot;Seconds since the offer was last refreshed.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;bucket&quot;: {
+          &quot;description&quot;: &quot;The bucket the cache lives in.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;endpoint&quot;: {
+          &quot;description&quot;: &quot;The non-secret address a client connects to.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;headroom_gib&quot;: {
+          &quot;description&quot;: &quot;Free space on the data path, in GiB, when the node said.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;health&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BuildCacheHealth&quot;,
+          &quot;description&quot;: &quot;The node&#39;s own judgement of the store.&quot;
+        },
+        &quot;node&quot;: {
+          &quot;description&quot;: &quot;The offering node&#39;s id: the last tie-break, so ordering is total.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;priority&quot;: {
+          &quot;description&quot;: &quot;The offering node&#39;s own preference, higher first.&quot;,
+          &quot;format&quot;: &quot;int32&quot;,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;protocol&quot;: {
+          &quot;description&quot;: &quot;The protocol the store speaks (`s3`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;What serves it (`minio`, `garage`, ...): data, not a code path.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;rtt_ms&quot;: {
+          &quot;description&quot;: &quot;A measured round trip from the asking node, in milliseconds, when one was.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;scope&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/BuildCacheScope&quot;,
+          &quot;description&quot;: &quot;How far the endpoint is meant to be reached.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;node&quot;,
+        &quot;protocol&quot;,
+        &quot;provider&quot;,
+        &quot;scope&quot;,
+        &quot;endpoint&quot;,
+        &quot;bucket&quot;,
+        &quot;priority&quot;,
+        &quot;health&quot;,
+        &quot;age_seconds&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BuildCacheOfferReading&quot;: {
+      &quot;description&quot;: &quot;What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&amp;[], &amp;|_| true, &amp;|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;ignored&quot;: {
+          &quot;description&quot;: &quot;Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/BuildCachePassedOver&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;offers&quot;: {
+          &quot;description&quot;: &quot;The offers of trusted runtimes whose beat rose within the offer&#39;s lifetime, one per\nnode, in node order: what `super::select` takes.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/BuildCacheNodeOffer&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;offers&quot;,
+        &quot;ignored&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BuildCachePassedOver&quot;: {
+      &quot;description&quot;: &quot;An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&amp;[], &amp;Policy::default());\nlet passed: Vec&lt;PassedOver&gt; = answer.passed_over;\nassert!(passed.is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;node&quot;: {
+          &quot;description&quot;: &quot;The offer&#39;s node.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;why&quot;: {
+          &quot;description&quot;: &quot;The rule, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;node&quot;,
+        &quot;why&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;BuildCacheScope&quot;: {
+      &quot;description&quot;: &quot;How far an offer&#39;s endpoint is meant to be reached, nearest first.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host &lt; Scope::Lan &amp;&amp; Scope::Lan &lt; Scope::Mesh);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;host&quot;,
+          &quot;description&quot;: &quot;Reachable from the machine that offers it and no other.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;lan&quot;,
+          &quot;description&quot;: &quot;Reachable on the offering machine&#39;s local network.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;mesh&quot;,
+          &quot;description&quot;: &quot;Reachable by every node of the mesh.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ClaimMode&quot;: {
       &quot;description&quot;: &quot;Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \&quot;do not edit this while I\nam\&quot;, an advisory one is saying \&quot;I am here\&quot;. Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\&quot;advisory\&quot;));\n```&quot;,
       &quot;oneOf&quot;: [
@@ -1509,6 +1676,17 @@ open reviews and the untaken handovers.</td>
       &quot;description&quot;: &quot;Whether cooperation runs.&quot;,
       &quot;type&quot;: &quot;boolean&quot;
     },
+    &quot;build_cache&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/BuildCacheOfferReading&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none.&quot;
+    },
     &quot;reason&quot;: {
       &quot;description&quot;: &quot;Why not.&quot;,
       &quot;type&quot;: [
@@ -1587,7 +1765,7 @@ open reviews and the untaken handovers.</td>
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">MeshQuery</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">MeshStateAnswer</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">4a12d942f591891d6a3baf612b3e4acb6de48842c22a700b4a44bb8a7bb86a9d</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.8</dd></div>
       </dl>
     </div>
@@ -1643,9 +1821,9 @@ open reviews and the untaken handovers.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1653,7 +1831,7 @@ open reviews and the untaken handovers.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6af2d09cb734c53c610f68841f135c11e2fc781e" class="font-mono underline">6af2d09</a> · inputs <span class="font-mono">d2bcb1fec06f</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b62848cb6f5a2fa472b22d352f85a9255a447cdd" class="font-mono underline">b62848c</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

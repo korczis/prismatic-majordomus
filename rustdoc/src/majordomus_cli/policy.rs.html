@@ -178,515 +178,536 @@
 <a href=#178 id=178 data-nosnippet>178</a>    /// number nobody wrote down.
 <a href=#179 id=179 data-nosnippet>179</a>    </span><span class="attr">#[serde(default)]
 <a href=#180 id=180 data-nosnippet>180</a>    </span><span class="kw">pub </span>checkout: CheckoutPolicy,
-<a href=#181 id=181 data-nosnippet>181</a>}
-<a href=#182 id=182 data-nosnippet>182</a>
-<a href=#183 id=183 data-nosnippet>183</a><span class="doccomment">/// `checkout:` — how far a checkout may drift from the remote trunk before what it serves
-<a href=#184 id=184 data-nosnippet>184</a>/// is reported as lagging or stale (`project.a-checkout-serves-the-current-trunk`).
-<a href=#185 id=185 data-nosnippet>185</a>///
-<a href=#186 id=186 data-nosnippet>186</a>/// ```
-<a href=#187 id=187 data-nosnippet>187</a>/// use majordomus_cli::policy::CheckoutPolicy;
-<a href=#188 id=188 data-nosnippet>188</a>/// assert_eq!(CheckoutPolicy::default().trunk_distance, None, "absent is not a default");
-<a href=#189 id=189 data-nosnippet>189</a>/// let p: CheckoutPolicy = serde_json::from_str(
-<a href=#190 id=190 data-nosnippet>190</a>///     r#"{"trunk_distance": {"warn_behind": 50, "fail_behind": 300}}"#).unwrap();
-<a href=#191 id=191 data-nosnippet>191</a>/// assert_eq!(p.trunk_distance.and_then(|t| t.fail_behind), Some(300));
-<a href=#192 id=192 data-nosnippet>192</a>/// ```
-<a href=#193 id=193 data-nosnippet>193</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-<a href=#194 id=194 data-nosnippet>194</a></span><span class="kw">pub struct </span>CheckoutPolicy {
-<a href=#195 id=195 data-nosnippet>195</a>    <span class="doccomment">/// `checkout.trunk_distance:` — the commits behind the remote trunk at which a checkout
-<a href=#196 id=196 data-nosnippet>196</a>    /// is lagging (`warn_behind`) and stale (`fail_behind`).
-<a href=#197 id=197 data-nosnippet>197</a>    </span><span class="attr">#[serde(default)]
-<a href=#198 id=198 data-nosnippet>198</a>    </span><span class="kw">pub </span>trunk_distance: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::worktree::TrunkThresholds&gt;,
-<a href=#199 id=199 data-nosnippet>199</a>}
-<a href=#200 id=200 data-nosnippet>200</a>
-<a href=#201 id=201 data-nosnippet>201</a><span class="doccomment">/// How strictly a start is held to its binding.
-<a href=#202 id=202 data-nosnippet>202</a>///
-<a href=#203 id=203 data-nosnippet>203</a>/// ```
-<a href=#204 id=204 data-nosnippet>204</a>/// use majordomus_cli::policy::BindingMode;
-<a href=#205 id=205 data-nosnippet>205</a>/// // a policy that says nothing asks for nothing
-<a href=#206 id=206 data-nosnippet>206</a>/// assert_eq!(BindingMode::default(), BindingMode::Off);
-<a href=#207 id=207 data-nosnippet>207</a>/// let m: BindingMode = serde_json::from_str("\"required\"").unwrap();
-<a href=#208 id=208 data-nosnippet>208</a>/// assert_eq!(m, BindingMode::Required);
-<a href=#209 id=209 data-nosnippet>209</a>/// assert_eq!(m.as_str(), "required");
-<a href=#210 id=210 data-nosnippet>210</a>/// ```
-<a href=#211 id=211 data-nosnippet>211</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
-<a href=#212 id=212 data-nosnippet>212</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
-<a href=#213 id=213 data-nosnippet>213</a></span><span class="kw">pub enum </span>BindingMode {
-<a href=#214 id=214 data-nosnippet>214</a>    <span class="doccomment">/// Nothing is asked unless the worker names an issue, an intent or an exemption.
-<a href=#215 id=215 data-nosnippet>215</a>    </span><span class="attr">#[default]
-<a href=#216 id=216 data-nosnippet>216</a>    </span>Off,
-<a href=#217 id=217 data-nosnippet>217</a>    <span class="doccomment">/// Every start asks; a refused binding is reported and the work starts.
-<a href=#218 id=218 data-nosnippet>218</a>    </span>Advisory,
-<a href=#219 id=219 data-nosnippet>219</a>    <span class="doccomment">/// Every start asks; a refused or unreadable binding does not start.
-<a href=#220 id=220 data-nosnippet>220</a>    </span>Required,
-<a href=#221 id=221 data-nosnippet>221</a>}
-<a href=#222 id=222 data-nosnippet>222</a>
-<a href=#223 id=223 data-nosnippet>223</a><span class="kw">impl </span>BindingMode {
-<a href=#224 id=224 data-nosnippet>224</a>    <span class="doccomment">/// The word the policy file and every surface use.
-<a href=#225 id=225 data-nosnippet>225</a>    ///
-<a href=#226 id=226 data-nosnippet>226</a>    /// ```
-<a href=#227 id=227 data-nosnippet>227</a>    /// use majordomus_cli::policy::BindingMode;
-<a href=#228 id=228 data-nosnippet>228</a>    /// assert_eq!(BindingMode::Advisory.as_str(), "advisory");
-<a href=#229 id=229 data-nosnippet>229</a>    /// ```
-<a href=#230 id=230 data-nosnippet>230</a>    </span><span class="kw">pub fn </span>as_str(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
-<a href=#231 id=231 data-nosnippet>231</a>        <span class="kw">match </span><span class="self">self </span>{
-<a href=#232 id=232 data-nosnippet>232</a>            BindingMode::Off =&gt; <span class="string">"off"</span>,
-<a href=#233 id=233 data-nosnippet>233</a>            BindingMode::Advisory =&gt; <span class="string">"advisory"</span>,
-<a href=#234 id=234 data-nosnippet>234</a>            BindingMode::Required =&gt; <span class="string">"required"</span>,
-<a href=#235 id=235 data-nosnippet>235</a>        }
-<a href=#236 id=236 data-nosnippet>236</a>    }
-<a href=#237 id=237 data-nosnippet>237</a>}
-<a href=#238 id=238 data-nosnippet>238</a>
-<a href=#239 id=239 data-nosnippet>239</a><span class="doccomment">/// One exemption class: a named reason work may proceed under no intent.
-<a href=#240 id=240 data-nosnippet>240</a>///
-<a href=#241 id=241 data-nosnippet>241</a>/// ```
-<a href=#242 id=242 data-nosnippet>242</a>/// use majordomus_cli::policy::ExemptionClass;
-<a href=#243 id=243 data-nosnippet>243</a>/// let c: ExemptionClass = serde_json::from_str(
-<a href=#244 id=244 data-nosnippet>244</a>///     r#"{"id": "emergency", "description": "Restoring a broken trunk"}"#,
-<a href=#245 id=245 data-nosnippet>245</a>/// )
-<a href=#246 id=246 data-nosnippet>246</a>/// .unwrap();
-<a href=#247 id=247 data-nosnippet>247</a>/// assert_eq!(c.id, "emergency");
-<a href=#248 id=248 data-nosnippet>248</a>/// ```
-<a href=#249 id=249 data-nosnippet>249</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
-<a href=#250 id=250 data-nosnippet>250</a></span><span class="kw">pub struct </span>ExemptionClass {
-<a href=#251 id=251 data-nosnippet>251</a>    <span class="doccomment">/// The word a worker gives: `--exempt &lt;id&gt;`.
-<a href=#252 id=252 data-nosnippet>252</a>    </span><span class="kw">pub </span>id: String,
-<a href=#253 id=253 data-nosnippet>253</a>    <span class="doccomment">/// What the class is for, in one line.
-<a href=#254 id=254 data-nosnippet>254</a>    </span><span class="attr">#[serde(default)]
-<a href=#255 id=255 data-nosnippet>255</a>    </span><span class="kw">pub </span>description: String,
-<a href=#256 id=256 data-nosnippet>256</a>}
-<a href=#257 id=257 data-nosnippet>257</a>
-<a href=#258 id=258 data-nosnippet>258</a><span class="doccomment">/// `intent:` — the binding a start is held to (ADR 0111).
-<a href=#259 id=259 data-nosnippet>259</a>///
-<a href=#260 id=260 data-nosnippet>260</a>/// ```
-<a href=#261 id=261 data-nosnippet>261</a>/// use majordomus_cli::policy::{BindingMode, IntentPolicy};
-<a href=#262 id=262 data-nosnippet>262</a>/// // absent: off, and no exemption class exists to give
-<a href=#263 id=263 data-nosnippet>263</a>/// let absent = IntentPolicy::default();
-<a href=#264 id=264 data-nosnippet>264</a>/// assert_eq!(absent.binding, BindingMode::Off);
-<a href=#265 id=265 data-nosnippet>265</a>/// assert!(absent.exemption("maintenance").is_none());
-<a href=#266 id=266 data-nosnippet>266</a>/// let p: IntentPolicy = serde_json::from_str(
-<a href=#267 id=267 data-nosnippet>267</a>///     r#"{"binding": "required", "exemptions": [{"id": "maintenance"}]}"#,
-<a href=#268 id=268 data-nosnippet>268</a>/// )
-<a href=#269 id=269 data-nosnippet>269</a>/// .unwrap();
-<a href=#270 id=270 data-nosnippet>270</a>/// assert!(p.exemption("maintenance").is_some());
-<a href=#271 id=271 data-nosnippet>271</a>/// assert!(p.exemption("because-i-say-so").is_none());
-<a href=#272 id=272 data-nosnippet>272</a>/// ```
-<a href=#273 id=273 data-nosnippet>273</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
-<a href=#274 id=274 data-nosnippet>274</a></span><span class="kw">pub struct </span>IntentPolicy {
-<a href=#275 id=275 data-nosnippet>275</a>    <span class="doccomment">/// `intent.binding:` — `off`, `advisory` or `required`.
-<a href=#276 id=276 data-nosnippet>276</a>    </span><span class="attr">#[serde(default)]
-<a href=#277 id=277 data-nosnippet>277</a>    </span><span class="kw">pub </span>binding: BindingMode,
-<a href=#278 id=278 data-nosnippet>278</a>    <span class="doccomment">/// `intent.exemptions:` — the classes a worker may give instead of naming work.
-<a href=#279 id=279 data-nosnippet>279</a>    </span><span class="attr">#[serde(default)]
-<a href=#280 id=280 data-nosnippet>280</a>    </span><span class="kw">pub </span>exemptions: Vec&lt;ExemptionClass&gt;,
-<a href=#281 id=281 data-nosnippet>281</a>}
-<a href=#282 id=282 data-nosnippet>282</a>
-<a href=#283 id=283 data-nosnippet>283</a><span class="kw">impl </span>IntentPolicy {
-<a href=#284 id=284 data-nosnippet>284</a>    <span class="doccomment">/// The declared class with this id, when the policy declares one.
-<a href=#285 id=285 data-nosnippet>285</a>    ///
-<a href=#286 id=286 data-nosnippet>286</a>    /// ```
-<a href=#287 id=287 data-nosnippet>287</a>    /// use majordomus_cli::policy::IntentPolicy;
-<a href=#288 id=288 data-nosnippet>288</a>    /// assert!(IntentPolicy::default().exemption("x").is_none());
-<a href=#289 id=289 data-nosnippet>289</a>    /// ```
-<a href=#290 id=290 data-nosnippet>290</a>    </span><span class="kw">pub fn </span>exemption(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ExemptionClass&gt; {
-<a href=#291 id=291 data-nosnippet>291</a>        <span class="self">self</span>.exemptions.iter().find(|c| c.id == id)
-<a href=#292 id=292 data-nosnippet>292</a>    }
-<a href=#293 id=293 data-nosnippet>293</a>}
-<a href=#294 id=294 data-nosnippet>294</a>
-<a href=#295 id=295 data-nosnippet>295</a><span class="doccomment">/// `session:` — what the episode boundary does beyond drawing itself.
-<a href=#296 id=296 data-nosnippet>296</a>///
-<a href=#297 id=297 data-nosnippet>297</a>/// Only the half two entry paths both read is typed here. The rest of the block is carried
-<a href=#298 id=298 data-nosnippet>298</a>/// through unread, as every other key is: the policy schema owns the full shape.
-<a href=#299 id=299 data-nosnippet>299</a>///
-<a href=#300 id=300 data-nosnippet>300</a>/// ```
-<a href=#301 id=301 data-nosnippet>301</a>/// use majordomus_cli::policy::SessionPolicy;
-<a href=#302 id=302 data-nosnippet>302</a>/// // A policy that says nothing about it still converges. The default is what this
-<a href=#303 id=303 data-nosnippet>303</a>/// // repository's policy and the skeleton a new one is written from both declare, and a
-<a href=#304 id=304 data-nosnippet>304</a>/// // policy that could not be read must not silently change behaviour.
-<a href=#305 id=305 data-nosnippet>305</a>/// assert!(SessionPolicy::default().ensure_server_on_start);
-<a href=#306 id=306 data-nosnippet>306</a>/// assert!(SessionPolicy::default().knowledge_on_end);
-<a href=#307 id=307 data-nosnippet>307</a>/// assert!(SessionPolicy::default().knowledge_on_compact);
-<a href=#308 id=308 data-nosnippet>308</a>/// // and a repository that has turned one off is read as having turned it off
-<a href=#309 id=309 data-nosnippet>309</a>/// let off: SessionPolicy =
-<a href=#310 id=310 data-nosnippet>310</a>///     serde_json::from_str(r#"{"ensure_server_on_start": false, "knowledge_on_end": false}"#)
-<a href=#311 id=311 data-nosnippet>311</a>///         .expect("a session block");
-<a href=#312 id=312 data-nosnippet>312</a>/// assert!(!off.ensure_server_on_start);
-<a href=#313 id=313 data-nosnippet>313</a>/// assert!(!off.knowledge_on_end);
-<a href=#314 id=314 data-nosnippet>314</a>/// assert!(off.knowledge_on_compact, "the two switches are independent");
-<a href=#315 id=315 data-nosnippet>315</a>/// ```
-<a href=#316 id=316 data-nosnippet>316</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-<a href=#317 id=317 data-nosnippet>317</a></span><span class="kw">pub struct </span>SessionPolicy {
-<a href=#318 id=318 data-nosnippet>318</a>    <span class="doccomment">/// `session.freshness:` — how old a continuation record may be before it stops being
-<a href=#319 id=319 data-nosnippet>319</a>    /// current. A separate question from divergence, which is about git topology and says
-<a href=#320 id=320 data-nosnippet>320</a>    /// nothing about age.
-<a href=#321 id=321 data-nosnippet>321</a>    </span><span class="attr">#[serde(default)]
-<a href=#322 id=322 data-nosnippet>322</a>    </span><span class="kw">pub </span>freshness: FreshnessPolicy,
-<a href=#323 id=323 data-nosnippet>323</a>    <span class="doccomment">/// Whether entering the repository converges on a ready shared server.
-<a href=#324 id=324 data-nosnippet>324</a>    ///
-<a href=#325 id=325 data-nosnippet>325</a>    /// One switch, both entry paths: the provider's start event (ADR 0035) and the file a
-<a href=#326 id=326 data-nosnippet>326</a>    /// shell evaluates on entry (ADR 0043). It defaults to `true` because that is what
-<a href=#327 id=327 data-nosnippet>327</a>    /// this repository's policy and the skeleton a new one is written from both declare,
-<a href=#328 id=328 data-nosnippet>328</a>    /// and because a policy that could not be read must not silently change behaviour —
-<a href=#329 id=329 data-nosnippet>329</a>    /// an unreadable policy is `doctor`'s finding, not a reason to stop converging.
-<a href=#330 id=330 data-nosnippet>330</a>    </span><span class="attr">#[serde(default = <span class="string">"yes"</span>)]
-<a href=#331 id=331 data-nosnippet>331</a>    </span><span class="kw">pub </span>ensure_server_on_start: bool,
-<a href=#332 id=332 data-nosnippet>332</a>    <span class="doccomment">/// Whether closing an episode derives the knowledge it produced into candidate records
-<a href=#333 id=333 data-nosnippet>333</a>    /// under the tracked knowledge section (ADR 0091). Read here so that
-<a href=#334 id=334 data-nosnippet>334</a>    /// `knowledge_base.status` judges a silent writer only where the writer is switched on,
-<a href=#335 id=335 data-nosnippet>335</a>    /// and defaults to `true` for the reason `ensure_server_on_start` does: the policy and
-<a href=#336 id=336 data-nosnippet>336</a>    /// the skeleton both declare it, and an unreadable policy must not change behaviour.
-<a href=#337 id=337 data-nosnippet>337</a>    </span><span class="attr">#[serde(default = <span class="string">"yes"</span>)]
-<a href=#338 id=338 data-nosnippet>338</a>    </span><span class="kw">pub </span>knowledge_on_end: bool,
-<a href=#339 id=339 data-nosnippet>339</a>    <span class="doccomment">/// Whether a provider's compaction event derives the same records. Independent of
-<a href=#340 id=340 data-nosnippet>340</a>    /// `checkpoint_on_compact`: the two record different things.
-<a href=#341 id=341 data-nosnippet>341</a>    </span><span class="attr">#[serde(default = <span class="string">"yes"</span>)]
-<a href=#342 id=342 data-nosnippet>342</a>    </span><span class="kw">pub </span>knowledge_on_compact: bool,
-<a href=#343 id=343 data-nosnippet>343</a>    <span class="doccomment">/// `session.brief_interval_minutes:` — how often a session reports on itself without
-<a href=#344 id=344 data-nosnippet>344</a>    /// being asked (ADR 0136). Absent is the default `brief.session` carries; the provider
-<a href=#345 id=345 data-nosnippet>345</a>    /// mod reads the interval from that answer rather than from this file.
-<a href=#346 id=346 data-nosnippet>346</a>    </span><span class="attr">#[serde(default)]
-<a href=#347 id=347 data-nosnippet>347</a>    </span><span class="kw">pub </span>brief_interval_minutes: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#348 id=348 data-nosnippet>348</a>    <span class="doccomment">/// `session.edits_require_claim:` — whether a provider's tool may write a file of the
-<a href=#349 id=349 data-nosnippet>349</a>    /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
-<a href=#350 id=350 data-nosnippet>350</a>    /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
-<a href=#351 id=351 data-nosnippet>351</a>    /// on, because it refuses edits, and a repository that never asked for that must not
-<a href=#352 id=352 data-nosnippet>352</a>    /// find its workers stopped by an upgrade.
-<a href=#353 id=353 data-nosnippet>353</a>    </span><span class="attr">#[serde(default)]
-<a href=#354 id=354 data-nosnippet>354</a>    </span><span class="kw">pub </span>edits_require_claim: bool,
-<a href=#355 id=355 data-nosnippet>355</a>    <span class="doccomment">/// `session.stranded_after:` — how long an open episode may be silent before its client
-<a href=#356 id=356 data-nosnippet>356</a>    /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
-<a href=#357 id=357 data-nosnippet>357</a>    /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
-<a href=#358 id=358 data-nosnippet>358</a>    /// episode silent this long holds no work, and uncommitted work untouched this long
-<a href=#359 id=359 data-nosnippet>359</a>    /// that nothing holds is abandoned. Absent is absent: no reader carries a default of
-<a href=#360 id=360 data-nosnippet>360</a>    /// its own, because a second copy of the number is the drift the policy exists to stop.
-<a href=#361 id=361 data-nosnippet>361</a>    ///
-<a href=#362 id=362 data-nosnippet>362</a>    /// ```
-<a href=#363 id=363 data-nosnippet>363</a>    /// use majordomus_cli::policy::SessionPolicy;
-<a href=#364 id=364 data-nosnippet>364</a>    /// let declared: SessionPolicy =
-<a href=#365 id=365 data-nosnippet>365</a>    ///     serde_json::from_str(r#"{"stranded_after": "12h"}"#).expect("a session block");
-<a href=#366 id=366 data-nosnippet>366</a>    /// assert_eq!(declared.stranded_after.as_deref(), Some("12h"));
-<a href=#367 id=367 data-nosnippet>367</a>    /// assert_eq!(SessionPolicy::default().stranded_after, None, "absent is not a default");
-<a href=#368 id=368 data-nosnippet>368</a>    /// // a bare number is seconds, as the shell reader takes it, and never a parse failure
-<a href=#369 id=369 data-nosnippet>369</a>    /// // that would take the rest of the policy down with it
-<a href=#370 id=370 data-nosnippet>370</a>    /// let bare: SessionPolicy =
-<a href=#371 id=371 data-nosnippet>371</a>    ///     serde_json::from_str(r#"{"stranded_after": 3600}"#).expect("a session block");
-<a href=#372 id=372 data-nosnippet>372</a>    /// assert_eq!(bare.stranded_after.as_deref(), Some("3600"));
-<a href=#373 id=373 data-nosnippet>373</a>    /// ```
-<a href=#374 id=374 data-nosnippet>374</a>    </span><span class="attr">#[serde(default, deserialize_with = <span class="string">"scalar_text"</span>)]
-<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">pub </span>stranded_after: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#376 id=376 data-nosnippet>376</a>}
-<a href=#377 id=377 data-nosnippet>377</a>
-<a href=#378 id=378 data-nosnippet>378</a><span class="doccomment">/// A scalar read as the text it was written as: the subset reader hands `12h` over as a
-<a href=#379 id=379 data-nosnippet>379</a>/// string and `3600` as a number, and both are the same kind of value to a duration.
-<a href=#380 id=380 data-nosnippet>380</a></span><span class="kw">fn </span>scalar_text&lt;<span class="lifetime">'de</span>, D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;&gt;(
-<a href=#381 id=381 data-nosnippet>381</a>    d: D,
-<a href=#382 id=382 data-nosnippet>382</a>) -&gt; std::result::Result&lt;<span class="prelude-ty">Option</span>&lt;String&gt;, D::Error&gt; {
-<a href=#383 id=383 data-nosnippet>383</a>    <span class="prelude-val">Ok</span>(<span class="kw">match </span>serde_json::Value::deserialize(d)<span class="question-mark">? </span>{
-<a href=#384 id=384 data-nosnippet>384</a>        serde_json::Value::String(s) =&gt; <span class="prelude-val">Some</span>(s),
-<a href=#385 id=385 data-nosnippet>385</a>        serde_json::Value::Number(n) =&gt; <span class="prelude-val">Some</span>(n.to_string()),
-<a href=#386 id=386 data-nosnippet>386</a>        <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-<a href=#387 id=387 data-nosnippet>387</a>    })
-<a href=#388 id=388 data-nosnippet>388</a>}
-<a href=#389 id=389 data-nosnippet>389</a>
-<a href=#390 id=390 data-nosnippet>390</a><span class="kw">impl </span>Default <span class="kw">for </span>SessionPolicy {
-<a href=#391 id=391 data-nosnippet>391</a>    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-<a href=#392 id=392 data-nosnippet>392</a>        SessionPolicy {
-<a href=#393 id=393 data-nosnippet>393</a>            freshness: FreshnessPolicy::default(),
-<a href=#394 id=394 data-nosnippet>394</a>            ensure_server_on_start: <span class="bool-val">true</span>,
-<a href=#395 id=395 data-nosnippet>395</a>            knowledge_on_end: <span class="bool-val">true</span>,
-<a href=#396 id=396 data-nosnippet>396</a>            knowledge_on_compact: <span class="bool-val">true</span>,
-<a href=#397 id=397 data-nosnippet>397</a>            brief_interval_minutes: <span class="prelude-val">None</span>,
-<a href=#398 id=398 data-nosnippet>398</a>            edits_require_claim: <span class="bool-val">false</span>,
-<a href=#399 id=399 data-nosnippet>399</a>            stranded_after: <span class="prelude-val">None</span>,
-<a href=#400 id=400 data-nosnippet>400</a>        }
-<a href=#401 id=401 data-nosnippet>401</a>    }
-<a href=#402 id=402 data-nosnippet>402</a>}
-<a href=#403 id=403 data-nosnippet>403</a>
-<a href=#404 id=404 data-nosnippet>404</a><span class="kw">fn </span>yes() -&gt; bool {
-<a href=#405 id=405 data-nosnippet>405</a>    <span class="bool-val">true
-<a href=#406 id=406 data-nosnippet>406</a></span>}
-<a href=#407 id=407 data-nosnippet>407</a>
-<a href=#408 id=408 data-nosnippet>408</a><span class="doccomment">/// The policy as loaded: the typed value, where it came from, and the hash the stamps
-<a href=#409 id=409 data-nosnippet>409</a>/// carry.
-<a href=#410 id=410 data-nosnippet>410</a></span><span class="attr">#[derive(Debug, Clone)]
-<a href=#411 id=411 data-nosnippet>411</a></span><span class="kw">pub struct </span>LoadedPolicy {
-<a href=#412 id=412 data-nosnippet>412</a>    <span class="doccomment">/// The typed policy.
-<a href=#413 id=413 data-nosnippet>413</a>    </span><span class="kw">pub </span>policy: Policy,
-<a href=#414 id=414 data-nosnippet>414</a>    <span class="doccomment">/// Repository-relative path of the policy file.
-<a href=#415 id=415 data-nosnippet>415</a>    </span><span class="kw">pub </span>path: String,
-<a href=#416 id=416 data-nosnippet>416</a>    <span class="doccomment">/// SHA-256 (hex) of the [`normal_form`] of the policy file followed by that of every
-<a href=#417 id=417 data-nosnippet>417</a>    /// profile file, in name order, concatenated: exactly what the shell tool's
-<a href=#418 id=418 data-nosnippet>418</a>    /// `mj_policy_cat` hashes. A comment or a blank line does not move it (I1991).
-<a href=#419 id=419 data-nosnippet>419</a>    </span><span class="kw">pub </span>sha256: String,
-<a href=#420 id=420 data-nosnippet>420</a>}
-<a href=#421 id=421 data-nosnippet>421</a>
-<a href=#422 id=422 data-nosnippet>422</a><span class="kw">impl </span>LoadedPolicy {
-<a href=#423 id=423 data-nosnippet>423</a>    <span class="doccomment">/// Read the policy and profiles of a repository.
-<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="kw">pub fn </span>load(repository: <span class="kw-2">&amp;</span>Repository) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
-<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>rel =
-<a href=#426 id=426 data-nosnippet>426</a>            repository
-<a href=#427 id=427 data-nosnippet>427</a>                .section_path(POLICY_SECTION)
-<a href=#428 id=428 data-nosnippet>428</a>                .ok_or_else(|| Error::InvalidManifest {
-<a href=#429 id=429 data-nosnippet>429</a>                    path: repository.root().join(<span class="kw">crate</span>::repository::MANIFEST),
-<a href=#430 id=430 data-nosnippet>430</a>                    reason: <span class="macro">format!</span>(<span class="string">"the manifest names no `{POLICY_SECTION}` section"</span>),
-<a href=#431 id=431 data-nosnippet>431</a>                })<span class="question-mark">?</span>;
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="kw">let </span>path = repository.root().join(<span class="kw-2">&amp;</span>rel);
-<a href=#433 id=433 data-nosnippet>433</a>        <span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>path).map_err(|e| Error::io(<span class="kw-2">&amp;</span>path, e))<span class="question-mark">?</span>;
-<a href=#434 id=434 data-nosnippet>434</a>        <span class="kw">let </span>policy: Policy = yaml::parse_into(<span class="kw-2">&amp;</span>text).map_err(|reason| Error::InvalidPolicy {
-<a href=#435 id=435 data-nosnippet>435</a>            path: path.clone(),
-<a href=#436 id=436 data-nosnippet>436</a>            reason,
-<a href=#437 id=437 data-nosnippet>437</a>        })<span class="question-mark">?</span>;
-<a href=#438 id=438 data-nosnippet>438</a>        <span class="comment">// The one point a repository's policy is read, and therefore the one place the lease
-<a href=#439 id=439 data-nosnippet>439</a>        // timings can be declared for this process. `declare_timings` is a OnceLock set, so
-<a href=#440 id=440 data-nosnippet>440</a>        // reading the policy twice does not move a judgement already in flight.
-<a href=#441 id=441 data-nosnippet>441</a>        </span><span class="kw">crate</span>::lease::declare_timings(<span class="kw-2">&amp;</span>policy.server);
-<a href=#442 id=442 data-nosnippet>442</a>        <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
-<a href=#443 id=443 data-nosnippet>443</a>        hasher.update(normal_form(<span class="kw-2">&amp;</span>text).as_bytes());
-<a href=#444 id=444 data-nosnippet>444</a>        <span class="kw">for </span>profile <span class="kw">in </span>profile_files(repository)<span class="question-mark">? </span>{
-<a href=#445 id=445 data-nosnippet>445</a>            <span class="kw">let </span>bytes = std::fs::read(<span class="kw-2">&amp;</span>profile).map_err(|e| Error::io(<span class="kw-2">&amp;</span>profile, e))<span class="question-mark">?</span>;
-<a href=#446 id=446 data-nosnippet>446</a>            hasher.update(normal_form(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>bytes)).as_bytes());
-<a href=#447 id=447 data-nosnippet>447</a>        }
-<a href=#448 id=448 data-nosnippet>448</a>        <span class="prelude-val">Ok</span>(LoadedPolicy {
-<a href=#449 id=449 data-nosnippet>449</a>            policy,
-<a href=#450 id=450 data-nosnippet>450</a>            path: rel,
-<a href=#451 id=451 data-nosnippet>451</a>            sha256: <span class="macro">format!</span>(<span class="string">"{:x}"</span>, hasher.finalize()),
-<a href=#452 id=452 data-nosnippet>452</a>        })
-<a href=#453 id=453 data-nosnippet>453</a>    }
-<a href=#454 id=454 data-nosnippet>454</a>}
-<a href=#455 id=455 data-nosnippet>455</a>
-<a href=#456 id=456 data-nosnippet>456</a><span class="doccomment">/// The normal form of a file in the layer's YAML subset, which the policy hash covers in
-<a href=#457 id=457 data-nosnippet>457</a>/// place of its bytes: trailing spaces, tabs and carriage returns dropped; blank lines and
-<a href=#458 id=458 data-nosnippet>458</a>/// whole-line comments dropped; a trailing comment (a `#` after a space or tab) dropped
-<a href=#459 id=459 data-nosnippet>459</a>/// from a line that holds no quote, since inside a quoted scalar ` #` may be text.
-<a href=#460 id=460 data-nosnippet>460</a>/// Indentation, order and every value are kept, and every line ends in a newline.
-<a href=#461 id=461 data-nosnippet>461</a>///
-<a href=#462 id=462 data-nosnippet>462</a>/// It is the shell tool's `mj_yaml_normal` (lib/common.sh), line for line: the two must
-<a href=#463 id=463 data-nosnippet>463</a>/// agree, or each renderer would call the other's bootstraps stale. The subset refuses
-<a href=#464 id=464 data-nosnippet>464</a>/// block scalars, so no `#` line is ever content.
-<a href=#465 id=465 data-nosnippet>465</a>///
-<a href=#466 id=466 data-nosnippet>466</a>/// ```
-<a href=#467 id=467 data-nosnippet>467</a>/// use majordomus_cli::policy::normal_form;
-<a href=#468 id=468 data-nosnippet>468</a>///
-<a href=#469 id=469 data-nosnippet>469</a>/// let edited = "# a new comment\nversion: 1   # the schema\n\ncontext:\n  name: \"a #b\"\n";
-<a href=#470 id=470 data-nosnippet>470</a>/// assert_eq!(normal_form(edited), "version: 1\ncontext:\n  name: \"a #b\"\n");
-<a href=#471 id=471 data-nosnippet>471</a>/// assert_eq!(normal_form(edited), normal_form("version: 1\ncontext:\n  name: \"a #b\"\n"));
-<a href=#472 id=472 data-nosnippet>472</a>/// assert_ne!(normal_form("a: 1\n"), normal_form("a: 2\n"));
-<a href=#473 id=473 data-nosnippet>473</a>/// ```
-<a href=#474 id=474 data-nosnippet>474</a></span><span class="kw">pub fn </span>normal_form(text: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#475 id=475 data-nosnippet>475</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::with_capacity(text.len());
-<a href=#476 id=476 data-nosnippet>476</a>    <span class="kw">for </span>raw <span class="kw">in </span>text.split(<span class="string">'\n'</span>) {
-<a href=#477 id=477 data-nosnippet>477</a>        <span class="kw">let </span><span class="kw-2">mut </span>line = raw.trim_end_matches([<span class="string">' '</span>, <span class="string">'\t'</span>, <span class="string">'\r'</span>]);
-<a href=#478 id=478 data-nosnippet>478</a>        <span class="kw">let </span>body = line.trim_start_matches([<span class="string">' '</span>, <span class="string">'\t'</span>]);
-<a href=#479 id=479 data-nosnippet>479</a>        <span class="kw">if </span>body.is_empty() || body.starts_with(<span class="string">'#'</span>) {
-<a href=#480 id=480 data-nosnippet>480</a>            <span class="kw">continue</span>;
-<a href=#481 id=481 data-nosnippet>481</a>        }
-<a href=#482 id=482 data-nosnippet>482</a>        <span class="kw">if </span>!line.contains([<span class="string">'\''</span>, <span class="string">'"'</span>]) {
-<a href=#483 id=483 data-nosnippet>483</a>            <span class="kw">let </span>b = line.as_bytes();
-<a href=#484 id=484 data-nosnippet>484</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(i) =
-<a href=#485 id=485 data-nosnippet>485</a>                (<span class="number">1</span>..b.len()).find(|<span class="kw-2">&amp;</span>i| b[i] == <span class="string">b'#' </span>&amp;&amp; (b[i - <span class="number">1</span>] == <span class="string">b' ' </span>|| b[i - <span class="number">1</span>] == <span class="string">b'\t'</span>))
-<a href=#486 id=486 data-nosnippet>486</a>            {
-<a href=#487 id=487 data-nosnippet>487</a>                line = line[..i].trim_end_matches([<span class="string">' '</span>, <span class="string">'\t'</span>]);
-<a href=#488 id=488 data-nosnippet>488</a>            }
-<a href=#489 id=489 data-nosnippet>489</a>        }
-<a href=#490 id=490 data-nosnippet>490</a>        out.push_str(line);
-<a href=#491 id=491 data-nosnippet>491</a>        out.push(<span class="string">'\n'</span>);
-<a href=#492 id=492 data-nosnippet>492</a>    }
-<a href=#493 id=493 data-nosnippet>493</a>    out
-<a href=#494 id=494 data-nosnippet>494</a>}
-<a href=#495 id=495 data-nosnippet>495</a>
-<a href=#496 id=496 data-nosnippet>496</a><span class="doccomment">/// The profile files, `&lt;profiles&gt;/*.yaml`, sorted by name. An absent directory is no
-<a href=#497 id=497 data-nosnippet>497</a>/// profile, not an error.
-<a href=#498 id=498 data-nosnippet>498</a></span><span class="kw">pub fn </span>profile_files(repository: <span class="kw-2">&amp;</span>Repository) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;PathBuf&gt;&gt; {
-<a href=#499 id=499 data-nosnippet>499</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(rel) = repository.section_path(PROFILES_SECTION) <span class="kw">else </span>{
-<a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(Vec::new());
-<a href=#501 id=501 data-nosnippet>501</a>    };
-<a href=#502 id=502 data-nosnippet>502</a>    <span class="kw">let </span>dir = repository.root().join(rel);
-<a href=#503 id=503 data-nosnippet>503</a>    <span class="kw">let </span>entries = <span class="kw">match </span>std::fs::read_dir(<span class="kw-2">&amp;</span>dir) {
-<a href=#504 id=504 data-nosnippet>504</a>        <span class="prelude-val">Ok</span>(e) =&gt; e,
-<a href=#505 id=505 data-nosnippet>505</a>        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == std::io::ErrorKind::NotFound =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(Vec::new()),
-<a href=#506 id=506 data-nosnippet>506</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::io(<span class="kw-2">&amp;</span>dir, e)),
-<a href=#507 id=507 data-nosnippet>507</a>    };
-<a href=#508 id=508 data-nosnippet>508</a>    <span class="kw">let </span><span class="kw-2">mut </span>files: Vec&lt;PathBuf&gt; = entries
-<a href=#509 id=509 data-nosnippet>509</a>        .filter_map(|e| e.ok().map(|e| e.path()))
-<a href=#510 id=510 data-nosnippet>510</a>        .filter(|p| p.extension().is_some_and(|x| x == <span class="string">"yaml"</span>) &amp;&amp; p.is_file())
-<a href=#511 id=511 data-nosnippet>511</a>        .collect();
-<a href=#512 id=512 data-nosnippet>512</a>    files.sort();
-<a href=#513 id=513 data-nosnippet>513</a>    <span class="prelude-val">Ok</span>(files)
-<a href=#514 id=514 data-nosnippet>514</a>}
-<a href=#515 id=515 data-nosnippet>515</a>
-<a href=#516 id=516 data-nosnippet>516</a><span class="doccomment">/// The repository-relative directory where a repository may override a provider template.
-<a href=#517 id=517 data-nosnippet>517</a></span><span class="kw">pub fn </span>repository_providers_dir(repository: <span class="kw-2">&amp;</span>Repository) -&gt; PathBuf {
-<a href=#518 id=518 data-nosnippet>518</a>    repository
-<a href=#519 id=519 data-nosnippet>519</a>        .ai_dir()
-<a href=#520 id=520 data-nosnippet>520</a>        .join(<span class="kw-2">&amp;</span>repository.manifest().repo.path)
-<a href=#521 id=521 data-nosnippet>521</a>        .join(<span class="string">"providers"</span>)
-<a href=#522 id=522 data-nosnippet>522</a>}
-<a href=#523 id=523 data-nosnippet>523</a>
-<a href=#524 id=524 data-nosnippet>524</a><span class="doccomment">/// Hex SHA-256 of a text.
-<a href=#525 id=525 data-nosnippet>525</a></span><span class="kw">pub fn </span>sha256_hex(text: <span class="kw-2">&amp;</span>str) -&gt; String {
-<a href=#526 id=526 data-nosnippet>526</a>    <span class="kw">let </span><span class="kw-2">mut </span>h = Sha256::new();
-<a href=#527 id=527 data-nosnippet>527</a>    h.update(text.as_bytes());
-<a href=#528 id=528 data-nosnippet>528</a>    <span class="macro">format!</span>(<span class="string">"{:x}"</span>, h.finalize())
-<a href=#529 id=529 data-nosnippet>529</a>}
-<a href=#530 id=530 data-nosnippet>530</a>
-<a href=#531 id=531 data-nosnippet>531</a><span class="doccomment">/// Hex SHA-256 of arbitrary bytes: the same digest [`sha256_hex`] takes, for content that
-<a href=#532 id=532 data-nosnippet>532</a>/// is not necessarily text. A file the repository tracks may hold anything, and decoding it
-<a href=#533 id=533 data-nosnippet>533</a>/// to hash it would be a decision about its encoding that nothing here is entitled to make.
-<a href=#534 id=534 data-nosnippet>534</a>///
-<a href=#535 id=535 data-nosnippet>535</a>/// ```
-<a href=#536 id=536 data-nosnippet>536</a>/// use majordomus_cli::policy::{sha256_bytes_hex, sha256_hex};
-<a href=#537 id=537 data-nosnippet>537</a>/// assert_eq!(sha256_bytes_hex(b"majordomus"), sha256_hex("majordomus"));
-<a href=#538 id=538 data-nosnippet>538</a>/// assert_ne!(sha256_bytes_hex(&amp;[0xff, 0xfe]), sha256_bytes_hex(&amp;[0xfe, 0xff]));
-<a href=#539 id=539 data-nosnippet>539</a>/// ```
-<a href=#540 id=540 data-nosnippet>540</a></span><span class="kw">pub fn </span>sha256_bytes_hex(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
-<a href=#541 id=541 data-nosnippet>541</a>    <span class="kw">let </span><span class="kw-2">mut </span>h = Sha256::new();
-<a href=#542 id=542 data-nosnippet>542</a>    h.update(bytes);
-<a href=#543 id=543 data-nosnippet>543</a>    <span class="macro">format!</span>(<span class="string">"{:x}"</span>, h.finalize())
-<a href=#544 id=544 data-nosnippet>544</a>}
-<a href=#545 id=545 data-nosnippet>545</a>
-<a href=#546 id=546 data-nosnippet>546</a><span class="doccomment">/// A path is inside `root` after lexical normalisation: no absolute path, no `..`
-<a href=#547 id=547 data-nosnippet>547</a>/// component, nothing empty.
-<a href=#548 id=548 data-nosnippet>548</a></span><span class="kw">pub fn </span>is_safe_relative(path: <span class="kw-2">&amp;</span>str) -&gt; bool {
-<a href=#549 id=549 data-nosnippet>549</a>    <span class="kw">let </span>p = Path::new(path);
-<a href=#550 id=550 data-nosnippet>550</a>    !path.is_empty()
-<a href=#551 id=551 data-nosnippet>551</a>        &amp;&amp; !p.is_absolute()
-<a href=#552 id=552 data-nosnippet>552</a>        &amp;&amp; p.components().all(|c| {
-<a href=#553 id=553 data-nosnippet>553</a>            <span class="macro">matches!</span>(
-<a href=#554 id=554 data-nosnippet>554</a>                c,
-<a href=#555 id=555 data-nosnippet>555</a>                std::path::Component::Normal(<span class="kw">_</span>) | std::path::Component::CurDir
-<a href=#556 id=556 data-nosnippet>556</a>            )
-<a href=#557 id=557 data-nosnippet>557</a>        })
-<a href=#558 id=558 data-nosnippet>558</a>}
-<a href=#559 id=559 data-nosnippet>559</a>
-<a href=#560 id=560 data-nosnippet>560</a><span class="attr">#[cfg(test)]
-<a href=#561 id=561 data-nosnippet>561</a></span><span class="kw">mod </span>tests {
-<a href=#562 id=562 data-nosnippet>562</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#563 id=563 data-nosnippet>563</a>
-<a href=#564 id=564 data-nosnippet>564</a>    <span class="doccomment">/// `session.stranded_after` is read as the text it was written as: a duration as a
-<a href=#565 id=565 data-nosnippet>565</a>    /// string, a bare number as its digits, anything else as absent, and a value that is
-<a href=#566 id=566 data-nosnippet>566</a>    /// not even well-formed as the parse failure it is.
-<a href=#567 id=567 data-nosnippet>567</a>    </span><span class="attr">#[test]
-<a href=#568 id=568 data-nosnippet>568</a>    </span><span class="kw">fn </span>a_stranded_after_is_text_a_number_or_absent() {
-<a href=#569 id=569 data-nosnippet>569</a>        <span class="kw">let </span>read = |json: <span class="kw-2">&amp;</span>str| serde_json::from_str::&lt;SessionPolicy&gt;(json);
-<a href=#570 id=570 data-nosnippet>570</a>        <span class="kw">let </span>text = read(<span class="string">r#"{"stranded_after": "12h"}"#</span>).unwrap();
-<a href=#571 id=571 data-nosnippet>571</a>        <span class="macro">assert_eq!</span>(text.stranded_after.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"12h"</span>));
-<a href=#572 id=572 data-nosnippet>572</a>        <span class="kw">let </span>number = read(<span class="string">r#"{"stranded_after": 3600}"#</span>).unwrap();
-<a href=#573 id=573 data-nosnippet>573</a>        <span class="macro">assert_eq!</span>(number.stranded_after.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"3600"</span>));
-<a href=#574 id=574 data-nosnippet>574</a>        <span class="kw">let </span>other = read(<span class="string">r#"{"stranded_after": true}"#</span>).unwrap();
-<a href=#575 id=575 data-nosnippet>575</a>        <span class="macro">assert_eq!</span>(other.stranded_after, <span class="prelude-val">None</span>);
-<a href=#576 id=576 data-nosnippet>576</a>        <span class="macro">assert!</span>(read(<span class="string">r#"{"stranded_after": tru}"#</span>).is_err());
-<a href=#577 id=577 data-nosnippet>577</a>    }
-<a href=#578 id=578 data-nosnippet>578</a>
-<a href=#579 id=579 data-nosnippet>579</a>    <span class="attr">#[test]
-<a href=#580 id=580 data-nosnippet>580</a>    </span><span class="kw">fn </span>a_comment_or_a_blank_line_is_not_part_of_the_normal_form() {
-<a href=#581 id=581 data-nosnippet>581</a>        <span class="kw">let </span>plain = <span class="string">"version: 1\ncontext:\n  budget: 150\n  list: [a, b]\n"</span>;
-<a href=#582 id=582 data-nosnippet>582</a>        <span class="kw">let </span>commented = <span class="string">"# head\nversion: 1 # v\r\n\ncontext:   \n  # inside\n  budget: 150\t# cap\n  list: [a, b] #l\n"</span>;
-<a href=#583 id=583 data-nosnippet>583</a>        <span class="macro">assert_eq!</span>(normal_form(commented), plain);
-<a href=#584 id=584 data-nosnippet>584</a>        <span class="comment">// a quoted line keeps what follows its quote, and a `#` with no space before it is text
-<a href=#585 id=585 data-nosnippet>585</a>        </span><span class="macro">assert_eq!</span>(normal_form(<span class="string">"a: 'x' # c\n"</span>), <span class="string">"a: 'x' # c\n"</span>);
-<a href=#586 id=586 data-nosnippet>586</a>        <span class="macro">assert_eq!</span>(normal_form(<span class="string">"a: b#c\n"</span>), <span class="string">"a: b#c\n"</span>);
-<a href=#587 id=587 data-nosnippet>587</a>        <span class="comment">// the last line needs no newline, and indentation is significant
-<a href=#588 id=588 data-nosnippet>588</a>        </span><span class="macro">assert_eq!</span>(normal_form(<span class="string">"a:\n  b: 1"</span>), <span class="string">"a:\n  b: 1\n"</span>);
-<a href=#589 id=589 data-nosnippet>589</a>        <span class="macro">assert_ne!</span>(normal_form(<span class="string">"a:\n  b: 1\n"</span>), normal_form(<span class="string">"a:\nb: 1\n"</span>));
-<a href=#590 id=590 data-nosnippet>590</a>    }
-<a href=#591 id=591 data-nosnippet>591</a>
-<a href=#592 id=592 data-nosnippet>592</a>    <span class="attr">#[test]
-<a href=#593 id=593 data-nosnippet>593</a>    </span><span class="kw">fn </span>the_intent_block_is_read_from_the_policy_file_and_absent_means_off() {
-<a href=#594 id=594 data-nosnippet>594</a>        <span class="kw">let </span>absent: Policy = yaml::parse_into(<span class="string">"version: 1\n"</span>).expect(<span class="string">"a policy"</span>);
-<a href=#595 id=595 data-nosnippet>595</a>        <span class="macro">assert_eq!</span>(absent.intent.binding, BindingMode::Off);
-<a href=#596 id=596 data-nosnippet>596</a>        <span class="macro">assert!</span>(absent.intent.exemptions.is_empty());
-<a href=#597 id=597 data-nosnippet>597</a>        <span class="kw">let </span>p: Policy = yaml::parse_into(
-<a href=#598 id=598 data-nosnippet>598</a>            <span class="string">"version: 1\nintent:\n  binding: required\n  exemptions:\n    - id: emergency\n      description: Restoring a broken trunk\n    - id: maintenance\n"</span>,
-<a href=#599 id=599 data-nosnippet>599</a>        )
-<a href=#600 id=600 data-nosnippet>600</a>        .expect(<span class="string">"a policy with an intent block"</span>);
-<a href=#601 id=601 data-nosnippet>601</a>        <span class="macro">assert_eq!</span>(p.intent.binding, BindingMode::Required);
-<a href=#602 id=602 data-nosnippet>602</a>        <span class="kw">let </span>class = p.intent.exemption(<span class="string">"emergency"</span>).expect(<span class="string">"the declared class"</span>);
-<a href=#603 id=603 data-nosnippet>603</a>        <span class="macro">assert_eq!</span>(class.description, <span class="string">"Restoring a broken trunk"</span>);
-<a href=#604 id=604 data-nosnippet>604</a>        <span class="macro">assert_eq!</span>(p.intent.exemption(<span class="string">"maintenance"</span>).unwrap().description, <span class="string">""</span>);
-<a href=#605 id=605 data-nosnippet>605</a>        <span class="macro">assert!</span>(p.intent.exemption(<span class="string">"whim"</span>).is_none());
-<a href=#606 id=606 data-nosnippet>606</a>        <span class="comment">// each mode is the word the file spells it with
-<a href=#607 id=607 data-nosnippet>607</a>        </span><span class="kw">for </span>(mode, word) <span class="kw">in </span>[
-<a href=#608 id=608 data-nosnippet>608</a>            (BindingMode::Off, <span class="string">"off"</span>),
-<a href=#609 id=609 data-nosnippet>609</a>            (BindingMode::Advisory, <span class="string">"advisory"</span>),
-<a href=#610 id=610 data-nosnippet>610</a>            (BindingMode::Required, <span class="string">"required"</span>),
-<a href=#611 id=611 data-nosnippet>611</a>        ] {
-<a href=#612 id=612 data-nosnippet>612</a>            <span class="macro">assert_eq!</span>(mode.as_str(), word);
-<a href=#613 id=613 data-nosnippet>613</a>            <span class="kw">let </span>read: BindingMode = serde_json::from_value(<span class="macro">serde_json::json!</span>(word)).unwrap();
-<a href=#614 id=614 data-nosnippet>614</a>            <span class="macro">assert_eq!</span>(read, mode);
-<a href=#615 id=615 data-nosnippet>615</a>        }
-<a href=#616 id=616 data-nosnippet>616</a>    }
-<a href=#617 id=617 data-nosnippet>617</a>
-<a href=#618 id=618 data-nosnippet>618</a>    <span class="attr">#[test]
-<a href=#619 id=619 data-nosnippet>619</a>    </span><span class="kw">fn </span>projection_defaults_are_file_mode_and_not_always_loaded() {
-<a href=#620 id=620 data-nosnippet>620</a>        <span class="kw">let </span>p: Policy = yaml::parse_into(
-<a href=#621 id=621 data-nosnippet>621</a>            <span class="string">"version: 1\nprojections:\n  - provider: agents\n    target: AGENTS.md\n"</span>,
-<a href=#622 id=622 data-nosnippet>622</a>        )
-<a href=#623 id=623 data-nosnippet>623</a>        .unwrap();
-<a href=#624 id=624 data-nosnippet>624</a>        <span class="macro">assert_eq!</span>(p.projections.len(), <span class="number">1</span>);
-<a href=#625 id=625 data-nosnippet>625</a>        <span class="macro">assert_eq!</span>(p.projections[<span class="number">0</span>].mode, ProjectionMode::File);
-<a href=#626 id=626 data-nosnippet>626</a>        <span class="macro">assert!</span>(!p.projections[<span class="number">0</span>].always_loaded);
-<a href=#627 id=627 data-nosnippet>627</a>        <span class="macro">assert_eq!</span>(p.profiles.default, <span class="prelude-val">None</span>);
-<a href=#628 id=628 data-nosnippet>628</a>    }
-<a href=#629 id=629 data-nosnippet>629</a>
-<a href=#630 id=630 data-nosnippet>630</a>    <span class="attr">#[test]
-<a href=#631 id=631 data-nosnippet>631</a>    </span><span class="kw">fn </span>unknown_projection_keys_are_refused() {
-<a href=#632 id=632 data-nosnippet>632</a>        <span class="kw">let </span>r: std::result::Result&lt;Policy, String&gt; = yaml::parse_into(
-<a href=#633 id=633 data-nosnippet>633</a>            <span class="string">"projections:\n  - provider: agents\n    target: AGENTS.md\n    colour: red\n"</span>,
-<a href=#634 id=634 data-nosnippet>634</a>        );
-<a href=#635 id=635 data-nosnippet>635</a>        <span class="macro">assert!</span>(r.unwrap_err().contains(<span class="string">"colour"</span>));
-<a href=#636 id=636 data-nosnippet>636</a>    }
-<a href=#637 id=637 data-nosnippet>637</a>
-<a href=#638 id=638 data-nosnippet>638</a>    <span class="attr">#[test]
-<a href=#639 id=639 data-nosnippet>639</a>    </span><span class="kw">fn </span>safe_relative_paths() {
-<a href=#640 id=640 data-nosnippet>640</a>        <span class="macro">assert!</span>(is_safe_relative(<span class="string">"AGENTS.md"</span>));
-<a href=#641 id=641 data-nosnippet>641</a>        <span class="macro">assert!</span>(is_safe_relative(<span class="string">"docs/x/y.md"</span>));
-<a href=#642 id=642 data-nosnippet>642</a>        <span class="macro">assert!</span>(is_safe_relative(<span class="string">"./AGENTS.md"</span>));
-<a href=#643 id=643 data-nosnippet>643</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">""</span>));
-<a href=#644 id=644 data-nosnippet>644</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">"/etc/passwd"</span>));
-<a href=#645 id=645 data-nosnippet>645</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">"../x"</span>));
-<a href=#646 id=646 data-nosnippet>646</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">"a/../../x"</span>));
-<a href=#647 id=647 data-nosnippet>647</a>    }
-<a href=#648 id=648 data-nosnippet>648</a>}
-<a href=#649 id=649 data-nosnippet>649</a>
-<a href=#650 id=650 data-nosnippet>650</a><span class="doccomment">/// `server:` — what a lease contest is judged by.
-<a href=#651 id=651 data-nosnippet>651</a>///
-<a href=#652 id=652 data-nosnippet>652</a>/// Every field is optional and absent means "keep the compiled default", which is why there
-<a href=#653 id=653 data-nosnippet>653</a>/// is no reader-side default *value* here: the defaults live in one place, `lease::Timings`,
-<a href=#654 id=654 data-nosnippet>654</a>/// and this block only says which of them this repository overrides.
-<a href=#655 id=655 data-nosnippet>655</a>///
-<a href=#656 id=656 data-nosnippet>656</a>/// ```
-<a href=#657 id=657 data-nosnippet>657</a>/// use majordomus_cli::policy::ServerPolicy;
-<a href=#658 id=658 data-nosnippet>658</a>/// // a policy that predates the block: absent, not defaulted to zero
-<a href=#659 id=659 data-nosnippet>659</a>/// assert_eq!(ServerPolicy::default().probe_timeout_seconds, None);
-<a href=#660 id=660 data-nosnippet>660</a>/// let p: ServerPolicy =
-<a href=#661 id=661 data-nosnippet>661</a>///     serde_json::from_str(r#"{"probe_timeout_seconds": 5}"#).expect("a server block");
-<a href=#662 id=662 data-nosnippet>662</a>/// assert_eq!(p.probe_timeout_seconds, Some(5));
-<a href=#663 id=663 data-nosnippet>663</a>/// ```
-<a href=#664 id=664 data-nosnippet>664</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
-<a href=#665 id=665 data-nosnippet>665</a></span><span class="kw">pub struct </span>ServerPolicy {
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="doccomment">/// `server.probe_timeout_seconds:` — how long a probe waits for the current owner before
-<a href=#667 id=667 data-nosnippet>667</a>    /// that silence counts as evidence that it is gone.
-<a href=#668 id=668 data-nosnippet>668</a>    </span><span class="attr">#[serde(default)]
-<a href=#669 id=669 data-nosnippet>669</a>    </span><span class="kw">pub </span>probe_timeout_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#670 id=670 data-nosnippet>670</a>    <span class="doccomment">/// `server.bind_grace_seconds:` — how long a lease naming no URL yet is left alone,
-<a href=#671 id=671 data-nosnippet>671</a>    /// because a server writes its lease before it can serve.
-<a href=#672 id=672 data-nosnippet>672</a>    </span><span class="attr">#[serde(default)]
-<a href=#673 id=673 data-nosnippet>673</a>    </span><span class="kw">pub </span>bind_grace_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#674 id=674 data-nosnippet>674</a>    <span class="doccomment">/// `server.join_timeout_seconds:` — how long a process waits to join or create the lease
-<a href=#675 id=675 data-nosnippet>675</a>    /// file before refusing rather than waiting forever.
-<a href=#676 id=676 data-nosnippet>676</a>    </span><span class="attr">#[serde(default)]
-<a href=#677 id=677 data-nosnippet>677</a>    </span><span class="kw">pub </span>join_timeout_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#678 id=678 data-nosnippet>678</a>    <span class="doccomment">/// `server.busy_grace_seconds:` — how long a live owner that does not answer is waited
-<a href=#679 id=679 data-nosnippet>679</a>    /// on, and asked again, before its lease is taken over.
-<a href=#680 id=680 data-nosnippet>680</a>    </span><span class="attr">#[serde(default)]
-<a href=#681 id=681 data-nosnippet>681</a>    </span><span class="kw">pub </span>busy_grace_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#682 id=682 data-nosnippet>682</a>    <span class="doccomment">/// `server.read_deadline_seconds:` — how long the shared server lets a connection go
-<a href=#683 id=683 data-nosnippet>683</a>    /// without a request read in full on it before it closes the connection.
-<a href=#684 id=684 data-nosnippet>684</a>    </span><span class="attr">#[serde(default)]
-<a href=#685 id=685 data-nosnippet>685</a>    </span><span class="kw">pub </span>read_deadline_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#686 id=686 data-nosnippet>686</a>    <span class="doccomment">/// `server.idle_seconds:` — how long a server started for a checkout no client owns
-<a href=#687 id=687 data-nosnippet>687</a>    /// (`serve ensure`, a shell entering the checkout) outlives its last peer before it stops
-<a href=#688 id=688 data-nosnippet>688</a>    /// by itself. `--idle` on the command line overrides it.
+<a href=#181 id=181 data-nosnippet>181</a>    <span class="doccomment">/// `build_cache:` — the bound of this machine's local archive level of the build cache
+<a href=#182 id=182 data-nosnippet>182</a>    /// (ADR 0157, I3952). Absent keeps the executable's default.
+<a href=#183 id=183 data-nosnippet>183</a>    </span><span class="attr">#[serde(default)]
+<a href=#184 id=184 data-nosnippet>184</a>    </span><span class="kw">pub </span>build_cache: BuildCachePolicy,
+<a href=#185 id=185 data-nosnippet>185</a>}
+<a href=#186 id=186 data-nosnippet>186</a>
+<a href=#187 id=187 data-nosnippet>187</a><span class="doccomment">/// `build_cache:` — what the machine-wide archive level of `mesh build-cache ensure` may hold.
+<a href=#188 id=188 data-nosnippet>188</a>///
+<a href=#189 id=189 data-nosnippet>189</a>/// ```
+<a href=#190 id=190 data-nosnippet>190</a>/// use majordomus_cli::policy::BuildCachePolicy;
+<a href=#191 id=191 data-nosnippet>191</a>/// assert_eq!(BuildCachePolicy::default().local_max_gib, None, "absent is the default bound");
+<a href=#192 id=192 data-nosnippet>192</a>/// let p: BuildCachePolicy = serde_json::from_str(r#"{"local_max_gib": 20}"#).unwrap();
+<a href=#193 id=193 data-nosnippet>193</a>/// assert_eq!(p.local_max_gib, Some(20));
+<a href=#194 id=194 data-nosnippet>194</a>/// ```
+<a href=#195 id=195 data-nosnippet>195</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+<a href=#196 id=196 data-nosnippet>196</a></span><span class="kw">pub struct </span>BuildCachePolicy {
+<a href=#197 id=197 data-nosnippet>197</a>    <span class="doccomment">/// `build_cache.local_max_gib:` — the local level is held under this many GiB, oldest
+<a href=#198 id=198 data-nosnippet>198</a>    /// archives first, whenever an archive is added, and `scripts/reap-orphans` reduces it to
+<a href=#199 id=199 data-nosnippet>199</a>    /// the same bound.
+<a href=#200 id=200 data-nosnippet>200</a>    </span><span class="attr">#[serde(default)]
+<a href=#201 id=201 data-nosnippet>201</a>    </span><span class="kw">pub </span>local_max_gib: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#202 id=202 data-nosnippet>202</a>}
+<a href=#203 id=203 data-nosnippet>203</a>
+<a href=#204 id=204 data-nosnippet>204</a><span class="doccomment">/// `checkout:` — how far a checkout may drift from the remote trunk before what it serves
+<a href=#205 id=205 data-nosnippet>205</a>/// is reported as lagging or stale (`project.a-checkout-serves-the-current-trunk`).
+<a href=#206 id=206 data-nosnippet>206</a>///
+<a href=#207 id=207 data-nosnippet>207</a>/// ```
+<a href=#208 id=208 data-nosnippet>208</a>/// use majordomus_cli::policy::CheckoutPolicy;
+<a href=#209 id=209 data-nosnippet>209</a>/// assert_eq!(CheckoutPolicy::default().trunk_distance, None, "absent is not a default");
+<a href=#210 id=210 data-nosnippet>210</a>/// let p: CheckoutPolicy = serde_json::from_str(
+<a href=#211 id=211 data-nosnippet>211</a>///     r#"{"trunk_distance": {"warn_behind": 50, "fail_behind": 300}}"#).unwrap();
+<a href=#212 id=212 data-nosnippet>212</a>/// assert_eq!(p.trunk_distance.and_then(|t| t.fail_behind), Some(300));
+<a href=#213 id=213 data-nosnippet>213</a>/// ```
+<a href=#214 id=214 data-nosnippet>214</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+<a href=#215 id=215 data-nosnippet>215</a></span><span class="kw">pub struct </span>CheckoutPolicy {
+<a href=#216 id=216 data-nosnippet>216</a>    <span class="doccomment">/// `checkout.trunk_distance:` — the commits behind the remote trunk at which a checkout
+<a href=#217 id=217 data-nosnippet>217</a>    /// is lagging (`warn_behind`) and stale (`fail_behind`).
+<a href=#218 id=218 data-nosnippet>218</a>    </span><span class="attr">#[serde(default)]
+<a href=#219 id=219 data-nosnippet>219</a>    </span><span class="kw">pub </span>trunk_distance: <span class="prelude-ty">Option</span>&lt;<span class="kw">crate</span>::worktree::TrunkThresholds&gt;,
+<a href=#220 id=220 data-nosnippet>220</a>}
+<a href=#221 id=221 data-nosnippet>221</a>
+<a href=#222 id=222 data-nosnippet>222</a><span class="doccomment">/// How strictly a start is held to its binding.
+<a href=#223 id=223 data-nosnippet>223</a>///
+<a href=#224 id=224 data-nosnippet>224</a>/// ```
+<a href=#225 id=225 data-nosnippet>225</a>/// use majordomus_cli::policy::BindingMode;
+<a href=#226 id=226 data-nosnippet>226</a>/// // a policy that says nothing asks for nothing
+<a href=#227 id=227 data-nosnippet>227</a>/// assert_eq!(BindingMode::default(), BindingMode::Off);
+<a href=#228 id=228 data-nosnippet>228</a>/// let m: BindingMode = serde_json::from_str("\"required\"").unwrap();
+<a href=#229 id=229 data-nosnippet>229</a>/// assert_eq!(m, BindingMode::Required);
+<a href=#230 id=230 data-nosnippet>230</a>/// assert_eq!(m.as_str(), "required");
+<a href=#231 id=231 data-nosnippet>231</a>/// ```
+<a href=#232 id=232 data-nosnippet>232</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+<a href=#233 id=233 data-nosnippet>233</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#234 id=234 data-nosnippet>234</a></span><span class="kw">pub enum </span>BindingMode {
+<a href=#235 id=235 data-nosnippet>235</a>    <span class="doccomment">/// Nothing is asked unless the worker names an issue, an intent or an exemption.
+<a href=#236 id=236 data-nosnippet>236</a>    </span><span class="attr">#[default]
+<a href=#237 id=237 data-nosnippet>237</a>    </span>Off,
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="doccomment">/// Every start asks; a refused binding is reported and the work starts.
+<a href=#239 id=239 data-nosnippet>239</a>    </span>Advisory,
+<a href=#240 id=240 data-nosnippet>240</a>    <span class="doccomment">/// Every start asks; a refused or unreadable binding does not start.
+<a href=#241 id=241 data-nosnippet>241</a>    </span>Required,
+<a href=#242 id=242 data-nosnippet>242</a>}
+<a href=#243 id=243 data-nosnippet>243</a>
+<a href=#244 id=244 data-nosnippet>244</a><span class="kw">impl </span>BindingMode {
+<a href=#245 id=245 data-nosnippet>245</a>    <span class="doccomment">/// The word the policy file and every surface use.
+<a href=#246 id=246 data-nosnippet>246</a>    ///
+<a href=#247 id=247 data-nosnippet>247</a>    /// ```
+<a href=#248 id=248 data-nosnippet>248</a>    /// use majordomus_cli::policy::BindingMode;
+<a href=#249 id=249 data-nosnippet>249</a>    /// assert_eq!(BindingMode::Advisory.as_str(), "advisory");
+<a href=#250 id=250 data-nosnippet>250</a>    /// ```
+<a href=#251 id=251 data-nosnippet>251</a>    </span><span class="kw">pub fn </span>as_str(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#252 id=252 data-nosnippet>252</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#253 id=253 data-nosnippet>253</a>            BindingMode::Off =&gt; <span class="string">"off"</span>,
+<a href=#254 id=254 data-nosnippet>254</a>            BindingMode::Advisory =&gt; <span class="string">"advisory"</span>,
+<a href=#255 id=255 data-nosnippet>255</a>            BindingMode::Required =&gt; <span class="string">"required"</span>,
+<a href=#256 id=256 data-nosnippet>256</a>        }
+<a href=#257 id=257 data-nosnippet>257</a>    }
+<a href=#258 id=258 data-nosnippet>258</a>}
+<a href=#259 id=259 data-nosnippet>259</a>
+<a href=#260 id=260 data-nosnippet>260</a><span class="doccomment">/// One exemption class: a named reason work may proceed under no intent.
+<a href=#261 id=261 data-nosnippet>261</a>///
+<a href=#262 id=262 data-nosnippet>262</a>/// ```
+<a href=#263 id=263 data-nosnippet>263</a>/// use majordomus_cli::policy::ExemptionClass;
+<a href=#264 id=264 data-nosnippet>264</a>/// let c: ExemptionClass = serde_json::from_str(
+<a href=#265 id=265 data-nosnippet>265</a>///     r#"{"id": "emergency", "description": "Restoring a broken trunk"}"#,
+<a href=#266 id=266 data-nosnippet>266</a>/// )
+<a href=#267 id=267 data-nosnippet>267</a>/// .unwrap();
+<a href=#268 id=268 data-nosnippet>268</a>/// assert_eq!(c.id, "emergency");
+<a href=#269 id=269 data-nosnippet>269</a>/// ```
+<a href=#270 id=270 data-nosnippet>270</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+<a href=#271 id=271 data-nosnippet>271</a></span><span class="kw">pub struct </span>ExemptionClass {
+<a href=#272 id=272 data-nosnippet>272</a>    <span class="doccomment">/// The word a worker gives: `--exempt &lt;id&gt;`.
+<a href=#273 id=273 data-nosnippet>273</a>    </span><span class="kw">pub </span>id: String,
+<a href=#274 id=274 data-nosnippet>274</a>    <span class="doccomment">/// What the class is for, in one line.
+<a href=#275 id=275 data-nosnippet>275</a>    </span><span class="attr">#[serde(default)]
+<a href=#276 id=276 data-nosnippet>276</a>    </span><span class="kw">pub </span>description: String,
+<a href=#277 id=277 data-nosnippet>277</a>}
+<a href=#278 id=278 data-nosnippet>278</a>
+<a href=#279 id=279 data-nosnippet>279</a><span class="doccomment">/// `intent:` — the binding a start is held to (ADR 0111).
+<a href=#280 id=280 data-nosnippet>280</a>///
+<a href=#281 id=281 data-nosnippet>281</a>/// ```
+<a href=#282 id=282 data-nosnippet>282</a>/// use majordomus_cli::policy::{BindingMode, IntentPolicy};
+<a href=#283 id=283 data-nosnippet>283</a>/// // absent: off, and no exemption class exists to give
+<a href=#284 id=284 data-nosnippet>284</a>/// let absent = IntentPolicy::default();
+<a href=#285 id=285 data-nosnippet>285</a>/// assert_eq!(absent.binding, BindingMode::Off);
+<a href=#286 id=286 data-nosnippet>286</a>/// assert!(absent.exemption("maintenance").is_none());
+<a href=#287 id=287 data-nosnippet>287</a>/// let p: IntentPolicy = serde_json::from_str(
+<a href=#288 id=288 data-nosnippet>288</a>///     r#"{"binding": "required", "exemptions": [{"id": "maintenance"}]}"#,
+<a href=#289 id=289 data-nosnippet>289</a>/// )
+<a href=#290 id=290 data-nosnippet>290</a>/// .unwrap();
+<a href=#291 id=291 data-nosnippet>291</a>/// assert!(p.exemption("maintenance").is_some());
+<a href=#292 id=292 data-nosnippet>292</a>/// assert!(p.exemption("because-i-say-so").is_none());
+<a href=#293 id=293 data-nosnippet>293</a>/// ```
+<a href=#294 id=294 data-nosnippet>294</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Default, Deserialize, Serialize, JsonSchema)]
+<a href=#295 id=295 data-nosnippet>295</a></span><span class="kw">pub struct </span>IntentPolicy {
+<a href=#296 id=296 data-nosnippet>296</a>    <span class="doccomment">/// `intent.binding:` — `off`, `advisory` or `required`.
+<a href=#297 id=297 data-nosnippet>297</a>    </span><span class="attr">#[serde(default)]
+<a href=#298 id=298 data-nosnippet>298</a>    </span><span class="kw">pub </span>binding: BindingMode,
+<a href=#299 id=299 data-nosnippet>299</a>    <span class="doccomment">/// `intent.exemptions:` — the classes a worker may give instead of naming work.
+<a href=#300 id=300 data-nosnippet>300</a>    </span><span class="attr">#[serde(default)]
+<a href=#301 id=301 data-nosnippet>301</a>    </span><span class="kw">pub </span>exemptions: Vec&lt;ExemptionClass&gt;,
+<a href=#302 id=302 data-nosnippet>302</a>}
+<a href=#303 id=303 data-nosnippet>303</a>
+<a href=#304 id=304 data-nosnippet>304</a><span class="kw">impl </span>IntentPolicy {
+<a href=#305 id=305 data-nosnippet>305</a>    <span class="doccomment">/// The declared class with this id, when the policy declares one.
+<a href=#306 id=306 data-nosnippet>306</a>    ///
+<a href=#307 id=307 data-nosnippet>307</a>    /// ```
+<a href=#308 id=308 data-nosnippet>308</a>    /// use majordomus_cli::policy::IntentPolicy;
+<a href=#309 id=309 data-nosnippet>309</a>    /// assert!(IntentPolicy::default().exemption("x").is_none());
+<a href=#310 id=310 data-nosnippet>310</a>    /// ```
+<a href=#311 id=311 data-nosnippet>311</a>    </span><span class="kw">pub fn </span>exemption(<span class="kw-2">&amp;</span><span class="self">self</span>, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>ExemptionClass&gt; {
+<a href=#312 id=312 data-nosnippet>312</a>        <span class="self">self</span>.exemptions.iter().find(|c| c.id == id)
+<a href=#313 id=313 data-nosnippet>313</a>    }
+<a href=#314 id=314 data-nosnippet>314</a>}
+<a href=#315 id=315 data-nosnippet>315</a>
+<a href=#316 id=316 data-nosnippet>316</a><span class="doccomment">/// `session:` — what the episode boundary does beyond drawing itself.
+<a href=#317 id=317 data-nosnippet>317</a>///
+<a href=#318 id=318 data-nosnippet>318</a>/// Only the half two entry paths both read is typed here. The rest of the block is carried
+<a href=#319 id=319 data-nosnippet>319</a>/// through unread, as every other key is: the policy schema owns the full shape.
+<a href=#320 id=320 data-nosnippet>320</a>///
+<a href=#321 id=321 data-nosnippet>321</a>/// ```
+<a href=#322 id=322 data-nosnippet>322</a>/// use majordomus_cli::policy::SessionPolicy;
+<a href=#323 id=323 data-nosnippet>323</a>/// // A policy that says nothing about it still converges. The default is what this
+<a href=#324 id=324 data-nosnippet>324</a>/// // repository's policy and the skeleton a new one is written from both declare, and a
+<a href=#325 id=325 data-nosnippet>325</a>/// // policy that could not be read must not silently change behaviour.
+<a href=#326 id=326 data-nosnippet>326</a>/// assert!(SessionPolicy::default().ensure_server_on_start);
+<a href=#327 id=327 data-nosnippet>327</a>/// assert!(SessionPolicy::default().knowledge_on_end);
+<a href=#328 id=328 data-nosnippet>328</a>/// assert!(SessionPolicy::default().knowledge_on_compact);
+<a href=#329 id=329 data-nosnippet>329</a>/// // and a repository that has turned one off is read as having turned it off
+<a href=#330 id=330 data-nosnippet>330</a>/// let off: SessionPolicy =
+<a href=#331 id=331 data-nosnippet>331</a>///     serde_json::from_str(r#"{"ensure_server_on_start": false, "knowledge_on_end": false}"#)
+<a href=#332 id=332 data-nosnippet>332</a>///         .expect("a session block");
+<a href=#333 id=333 data-nosnippet>333</a>/// assert!(!off.ensure_server_on_start);
+<a href=#334 id=334 data-nosnippet>334</a>/// assert!(!off.knowledge_on_end);
+<a href=#335 id=335 data-nosnippet>335</a>/// assert!(off.knowledge_on_compact, "the two switches are independent");
+<a href=#336 id=336 data-nosnippet>336</a>/// ```
+<a href=#337 id=337 data-nosnippet>337</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+<a href=#338 id=338 data-nosnippet>338</a></span><span class="kw">pub struct </span>SessionPolicy {
+<a href=#339 id=339 data-nosnippet>339</a>    <span class="doccomment">/// `session.freshness:` — how old a continuation record may be before it stops being
+<a href=#340 id=340 data-nosnippet>340</a>    /// current. A separate question from divergence, which is about git topology and says
+<a href=#341 id=341 data-nosnippet>341</a>    /// nothing about age.
+<a href=#342 id=342 data-nosnippet>342</a>    </span><span class="attr">#[serde(default)]
+<a href=#343 id=343 data-nosnippet>343</a>    </span><span class="kw">pub </span>freshness: FreshnessPolicy,
+<a href=#344 id=344 data-nosnippet>344</a>    <span class="doccomment">/// Whether entering the repository converges on a ready shared server.
+<a href=#345 id=345 data-nosnippet>345</a>    ///
+<a href=#346 id=346 data-nosnippet>346</a>    /// One switch, both entry paths: the provider's start event (ADR 0035) and the file a
+<a href=#347 id=347 data-nosnippet>347</a>    /// shell evaluates on entry (ADR 0043). It defaults to `true` because that is what
+<a href=#348 id=348 data-nosnippet>348</a>    /// this repository's policy and the skeleton a new one is written from both declare,
+<a href=#349 id=349 data-nosnippet>349</a>    /// and because a policy that could not be read must not silently change behaviour —
+<a href=#350 id=350 data-nosnippet>350</a>    /// an unreadable policy is `doctor`'s finding, not a reason to stop converging.
+<a href=#351 id=351 data-nosnippet>351</a>    </span><span class="attr">#[serde(default = <span class="string">"yes"</span>)]
+<a href=#352 id=352 data-nosnippet>352</a>    </span><span class="kw">pub </span>ensure_server_on_start: bool,
+<a href=#353 id=353 data-nosnippet>353</a>    <span class="doccomment">/// Whether closing an episode derives the knowledge it produced into candidate records
+<a href=#354 id=354 data-nosnippet>354</a>    /// under the tracked knowledge section (ADR 0091). Read here so that
+<a href=#355 id=355 data-nosnippet>355</a>    /// `knowledge_base.status` judges a silent writer only where the writer is switched on,
+<a href=#356 id=356 data-nosnippet>356</a>    /// and defaults to `true` for the reason `ensure_server_on_start` does: the policy and
+<a href=#357 id=357 data-nosnippet>357</a>    /// the skeleton both declare it, and an unreadable policy must not change behaviour.
+<a href=#358 id=358 data-nosnippet>358</a>    </span><span class="attr">#[serde(default = <span class="string">"yes"</span>)]
+<a href=#359 id=359 data-nosnippet>359</a>    </span><span class="kw">pub </span>knowledge_on_end: bool,
+<a href=#360 id=360 data-nosnippet>360</a>    <span class="doccomment">/// Whether a provider's compaction event derives the same records. Independent of
+<a href=#361 id=361 data-nosnippet>361</a>    /// `checkpoint_on_compact`: the two record different things.
+<a href=#362 id=362 data-nosnippet>362</a>    </span><span class="attr">#[serde(default = <span class="string">"yes"</span>)]
+<a href=#363 id=363 data-nosnippet>363</a>    </span><span class="kw">pub </span>knowledge_on_compact: bool,
+<a href=#364 id=364 data-nosnippet>364</a>    <span class="doccomment">/// `session.brief_interval_minutes:` — how often a session reports on itself without
+<a href=#365 id=365 data-nosnippet>365</a>    /// being asked (ADR 0136). Absent is the default `brief.session` carries; the provider
+<a href=#366 id=366 data-nosnippet>366</a>    /// mod reads the interval from that answer rather than from this file.
+<a href=#367 id=367 data-nosnippet>367</a>    </span><span class="attr">#[serde(default)]
+<a href=#368 id=368 data-nosnippet>368</a>    </span><span class="kw">pub </span>brief_interval_minutes: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#369 id=369 data-nosnippet>369</a>    <span class="doccomment">/// `session.edits_require_claim:` — whether a provider's tool may write a file of the
+<a href=#370 id=370 data-nosnippet>370</a>    /// checkout only while a claim covers it: the active task's scope, or a live mesh claim
+<a href=#371 id=371 data-nosnippet>371</a>    /// of the writing session (I2735, [`crate::guard`]). Off unless a repository turns it
+<a href=#372 id=372 data-nosnippet>372</a>    /// on, because it refuses edits, and a repository that never asked for that must not
+<a href=#373 id=373 data-nosnippet>373</a>    /// find its workers stopped by an upgrade.
+<a href=#374 id=374 data-nosnippet>374</a>    </span><span class="attr">#[serde(default)]
+<a href=#375 id=375 data-nosnippet>375</a>    </span><span class="kw">pub </span>edits_require_claim: bool,
+<a href=#376 id=376 data-nosnippet>376</a>    <span class="doccomment">/// `session.stranded_after:` — how long an open episode may be silent before its client
+<a href=#377 id=377 data-nosnippet>377</a>    /// is taken to be gone (`90s`, `30m`, `12h`). `majordomus recover` reads it to judge an
+<a href=#378 id=378 data-nosnippet>378</a>    /// episode stranded, and `worktree.uncommitted` reads the same value twice over: an
+<a href=#379 id=379 data-nosnippet>379</a>    /// episode silent this long holds no work, and uncommitted work untouched this long
+<a href=#380 id=380 data-nosnippet>380</a>    /// that nothing holds is abandoned. Absent is absent: no reader carries a default of
+<a href=#381 id=381 data-nosnippet>381</a>    /// its own, because a second copy of the number is the drift the policy exists to stop.
+<a href=#382 id=382 data-nosnippet>382</a>    ///
+<a href=#383 id=383 data-nosnippet>383</a>    /// ```
+<a href=#384 id=384 data-nosnippet>384</a>    /// use majordomus_cli::policy::SessionPolicy;
+<a href=#385 id=385 data-nosnippet>385</a>    /// let declared: SessionPolicy =
+<a href=#386 id=386 data-nosnippet>386</a>    ///     serde_json::from_str(r#"{"stranded_after": "12h"}"#).expect("a session block");
+<a href=#387 id=387 data-nosnippet>387</a>    /// assert_eq!(declared.stranded_after.as_deref(), Some("12h"));
+<a href=#388 id=388 data-nosnippet>388</a>    /// assert_eq!(SessionPolicy::default().stranded_after, None, "absent is not a default");
+<a href=#389 id=389 data-nosnippet>389</a>    /// // a bare number is seconds, as the shell reader takes it, and never a parse failure
+<a href=#390 id=390 data-nosnippet>390</a>    /// // that would take the rest of the policy down with it
+<a href=#391 id=391 data-nosnippet>391</a>    /// let bare: SessionPolicy =
+<a href=#392 id=392 data-nosnippet>392</a>    ///     serde_json::from_str(r#"{"stranded_after": 3600}"#).expect("a session block");
+<a href=#393 id=393 data-nosnippet>393</a>    /// assert_eq!(bare.stranded_after.as_deref(), Some("3600"));
+<a href=#394 id=394 data-nosnippet>394</a>    /// ```
+<a href=#395 id=395 data-nosnippet>395</a>    </span><span class="attr">#[serde(default, deserialize_with = <span class="string">"scalar_text"</span>)]
+<a href=#396 id=396 data-nosnippet>396</a>    </span><span class="kw">pub </span>stranded_after: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#397 id=397 data-nosnippet>397</a>}
+<a href=#398 id=398 data-nosnippet>398</a>
+<a href=#399 id=399 data-nosnippet>399</a><span class="doccomment">/// A scalar read as the text it was written as: the subset reader hands `12h` over as a
+<a href=#400 id=400 data-nosnippet>400</a>/// string and `3600` as a number, and both are the same kind of value to a duration.
+<a href=#401 id=401 data-nosnippet>401</a></span><span class="kw">fn </span>scalar_text&lt;<span class="lifetime">'de</span>, D: serde::Deserializer&lt;<span class="lifetime">'de</span>&gt;&gt;(
+<a href=#402 id=402 data-nosnippet>402</a>    d: D,
+<a href=#403 id=403 data-nosnippet>403</a>) -&gt; std::result::Result&lt;<span class="prelude-ty">Option</span>&lt;String&gt;, D::Error&gt; {
+<a href=#404 id=404 data-nosnippet>404</a>    <span class="prelude-val">Ok</span>(<span class="kw">match </span>serde_json::Value::deserialize(d)<span class="question-mark">? </span>{
+<a href=#405 id=405 data-nosnippet>405</a>        serde_json::Value::String(s) =&gt; <span class="prelude-val">Some</span>(s),
+<a href=#406 id=406 data-nosnippet>406</a>        serde_json::Value::Number(n) =&gt; <span class="prelude-val">Some</span>(n.to_string()),
+<a href=#407 id=407 data-nosnippet>407</a>        <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
+<a href=#408 id=408 data-nosnippet>408</a>    })
+<a href=#409 id=409 data-nosnippet>409</a>}
+<a href=#410 id=410 data-nosnippet>410</a>
+<a href=#411 id=411 data-nosnippet>411</a><span class="kw">impl </span>Default <span class="kw">for </span>SessionPolicy {
+<a href=#412 id=412 data-nosnippet>412</a>    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+<a href=#413 id=413 data-nosnippet>413</a>        SessionPolicy {
+<a href=#414 id=414 data-nosnippet>414</a>            freshness: FreshnessPolicy::default(),
+<a href=#415 id=415 data-nosnippet>415</a>            ensure_server_on_start: <span class="bool-val">true</span>,
+<a href=#416 id=416 data-nosnippet>416</a>            knowledge_on_end: <span class="bool-val">true</span>,
+<a href=#417 id=417 data-nosnippet>417</a>            knowledge_on_compact: <span class="bool-val">true</span>,
+<a href=#418 id=418 data-nosnippet>418</a>            brief_interval_minutes: <span class="prelude-val">None</span>,
+<a href=#419 id=419 data-nosnippet>419</a>            edits_require_claim: <span class="bool-val">false</span>,
+<a href=#420 id=420 data-nosnippet>420</a>            stranded_after: <span class="prelude-val">None</span>,
+<a href=#421 id=421 data-nosnippet>421</a>        }
+<a href=#422 id=422 data-nosnippet>422</a>    }
+<a href=#423 id=423 data-nosnippet>423</a>}
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a><span class="kw">fn </span>yes() -&gt; bool {
+<a href=#426 id=426 data-nosnippet>426</a>    <span class="bool-val">true
+<a href=#427 id=427 data-nosnippet>427</a></span>}
+<a href=#428 id=428 data-nosnippet>428</a>
+<a href=#429 id=429 data-nosnippet>429</a><span class="doccomment">/// The policy as loaded: the typed value, where it came from, and the hash the stamps
+<a href=#430 id=430 data-nosnippet>430</a>/// carry.
+<a href=#431 id=431 data-nosnippet>431</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#432 id=432 data-nosnippet>432</a></span><span class="kw">pub struct </span>LoadedPolicy {
+<a href=#433 id=433 data-nosnippet>433</a>    <span class="doccomment">/// The typed policy.
+<a href=#434 id=434 data-nosnippet>434</a>    </span><span class="kw">pub </span>policy: Policy,
+<a href=#435 id=435 data-nosnippet>435</a>    <span class="doccomment">/// Repository-relative path of the policy file.
+<a href=#436 id=436 data-nosnippet>436</a>    </span><span class="kw">pub </span>path: String,
+<a href=#437 id=437 data-nosnippet>437</a>    <span class="doccomment">/// SHA-256 (hex) of the [`normal_form`] of the policy file followed by that of every
+<a href=#438 id=438 data-nosnippet>438</a>    /// profile file, in name order, concatenated: exactly what the shell tool's
+<a href=#439 id=439 data-nosnippet>439</a>    /// `mj_policy_cat` hashes. A comment or a blank line does not move it (I1991).
+<a href=#440 id=440 data-nosnippet>440</a>    </span><span class="kw">pub </span>sha256: String,
+<a href=#441 id=441 data-nosnippet>441</a>}
+<a href=#442 id=442 data-nosnippet>442</a>
+<a href=#443 id=443 data-nosnippet>443</a><span class="kw">impl </span>LoadedPolicy {
+<a href=#444 id=444 data-nosnippet>444</a>    <span class="doccomment">/// Read the policy and profiles of a repository.
+<a href=#445 id=445 data-nosnippet>445</a>    </span><span class="kw">pub fn </span>load(repository: <span class="kw-2">&amp;</span>Repository) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#446 id=446 data-nosnippet>446</a>        <span class="kw">let </span>rel =
+<a href=#447 id=447 data-nosnippet>447</a>            repository
+<a href=#448 id=448 data-nosnippet>448</a>                .section_path(POLICY_SECTION)
+<a href=#449 id=449 data-nosnippet>449</a>                .ok_or_else(|| Error::InvalidManifest {
+<a href=#450 id=450 data-nosnippet>450</a>                    path: repository.root().join(<span class="kw">crate</span>::repository::MANIFEST),
+<a href=#451 id=451 data-nosnippet>451</a>                    reason: <span class="macro">format!</span>(<span class="string">"the manifest names no `{POLICY_SECTION}` section"</span>),
+<a href=#452 id=452 data-nosnippet>452</a>                })<span class="question-mark">?</span>;
+<a href=#453 id=453 data-nosnippet>453</a>        <span class="kw">let </span>path = repository.root().join(<span class="kw-2">&amp;</span>rel);
+<a href=#454 id=454 data-nosnippet>454</a>        <span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>path).map_err(|e| Error::io(<span class="kw-2">&amp;</span>path, e))<span class="question-mark">?</span>;
+<a href=#455 id=455 data-nosnippet>455</a>        <span class="kw">let </span>policy: Policy = yaml::parse_into(<span class="kw-2">&amp;</span>text).map_err(|reason| Error::InvalidPolicy {
+<a href=#456 id=456 data-nosnippet>456</a>            path: path.clone(),
+<a href=#457 id=457 data-nosnippet>457</a>            reason,
+<a href=#458 id=458 data-nosnippet>458</a>        })<span class="question-mark">?</span>;
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="comment">// The one point a repository's policy is read, and therefore the one place the lease
+<a href=#460 id=460 data-nosnippet>460</a>        // timings can be declared for this process. `declare_timings` is a OnceLock set, so
+<a href=#461 id=461 data-nosnippet>461</a>        // reading the policy twice does not move a judgement already in flight.
+<a href=#462 id=462 data-nosnippet>462</a>        </span><span class="kw">crate</span>::lease::declare_timings(<span class="kw-2">&amp;</span>policy.server);
+<a href=#463 id=463 data-nosnippet>463</a>        <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
+<a href=#464 id=464 data-nosnippet>464</a>        hasher.update(normal_form(<span class="kw-2">&amp;</span>text).as_bytes());
+<a href=#465 id=465 data-nosnippet>465</a>        <span class="kw">for </span>profile <span class="kw">in </span>profile_files(repository)<span class="question-mark">? </span>{
+<a href=#466 id=466 data-nosnippet>466</a>            <span class="kw">let </span>bytes = std::fs::read(<span class="kw-2">&amp;</span>profile).map_err(|e| Error::io(<span class="kw-2">&amp;</span>profile, e))<span class="question-mark">?</span>;
+<a href=#467 id=467 data-nosnippet>467</a>            hasher.update(normal_form(<span class="kw-2">&amp;</span>String::from_utf8_lossy(<span class="kw-2">&amp;</span>bytes)).as_bytes());
+<a href=#468 id=468 data-nosnippet>468</a>        }
+<a href=#469 id=469 data-nosnippet>469</a>        <span class="prelude-val">Ok</span>(LoadedPolicy {
+<a href=#470 id=470 data-nosnippet>470</a>            policy,
+<a href=#471 id=471 data-nosnippet>471</a>            path: rel,
+<a href=#472 id=472 data-nosnippet>472</a>            sha256: <span class="macro">format!</span>(<span class="string">"{:x}"</span>, hasher.finalize()),
+<a href=#473 id=473 data-nosnippet>473</a>        })
+<a href=#474 id=474 data-nosnippet>474</a>    }
+<a href=#475 id=475 data-nosnippet>475</a>}
+<a href=#476 id=476 data-nosnippet>476</a>
+<a href=#477 id=477 data-nosnippet>477</a><span class="doccomment">/// The normal form of a file in the layer's YAML subset, which the policy hash covers in
+<a href=#478 id=478 data-nosnippet>478</a>/// place of its bytes: trailing spaces, tabs and carriage returns dropped; blank lines and
+<a href=#479 id=479 data-nosnippet>479</a>/// whole-line comments dropped; a trailing comment (a `#` after a space or tab) dropped
+<a href=#480 id=480 data-nosnippet>480</a>/// from a line that holds no quote, since inside a quoted scalar ` #` may be text.
+<a href=#481 id=481 data-nosnippet>481</a>/// Indentation, order and every value are kept, and every line ends in a newline.
+<a href=#482 id=482 data-nosnippet>482</a>///
+<a href=#483 id=483 data-nosnippet>483</a>/// It is the shell tool's `mj_yaml_normal` (lib/common.sh), line for line: the two must
+<a href=#484 id=484 data-nosnippet>484</a>/// agree, or each renderer would call the other's bootstraps stale. The subset refuses
+<a href=#485 id=485 data-nosnippet>485</a>/// block scalars, so no `#` line is ever content.
+<a href=#486 id=486 data-nosnippet>486</a>///
+<a href=#487 id=487 data-nosnippet>487</a>/// ```
+<a href=#488 id=488 data-nosnippet>488</a>/// use majordomus_cli::policy::normal_form;
+<a href=#489 id=489 data-nosnippet>489</a>///
+<a href=#490 id=490 data-nosnippet>490</a>/// let edited = "# a new comment\nversion: 1   # the schema\n\ncontext:\n  name: \"a #b\"\n";
+<a href=#491 id=491 data-nosnippet>491</a>/// assert_eq!(normal_form(edited), "version: 1\ncontext:\n  name: \"a #b\"\n");
+<a href=#492 id=492 data-nosnippet>492</a>/// assert_eq!(normal_form(edited), normal_form("version: 1\ncontext:\n  name: \"a #b\"\n"));
+<a href=#493 id=493 data-nosnippet>493</a>/// assert_ne!(normal_form("a: 1\n"), normal_form("a: 2\n"));
+<a href=#494 id=494 data-nosnippet>494</a>/// ```
+<a href=#495 id=495 data-nosnippet>495</a></span><span class="kw">pub fn </span>normal_form(text: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#496 id=496 data-nosnippet>496</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::with_capacity(text.len());
+<a href=#497 id=497 data-nosnippet>497</a>    <span class="kw">for </span>raw <span class="kw">in </span>text.split(<span class="string">'\n'</span>) {
+<a href=#498 id=498 data-nosnippet>498</a>        <span class="kw">let </span><span class="kw-2">mut </span>line = raw.trim_end_matches([<span class="string">' '</span>, <span class="string">'\t'</span>, <span class="string">'\r'</span>]);
+<a href=#499 id=499 data-nosnippet>499</a>        <span class="kw">let </span>body = line.trim_start_matches([<span class="string">' '</span>, <span class="string">'\t'</span>]);
+<a href=#500 id=500 data-nosnippet>500</a>        <span class="kw">if </span>body.is_empty() || body.starts_with(<span class="string">'#'</span>) {
+<a href=#501 id=501 data-nosnippet>501</a>            <span class="kw">continue</span>;
+<a href=#502 id=502 data-nosnippet>502</a>        }
+<a href=#503 id=503 data-nosnippet>503</a>        <span class="kw">if </span>!line.contains([<span class="string">'\''</span>, <span class="string">'"'</span>]) {
+<a href=#504 id=504 data-nosnippet>504</a>            <span class="kw">let </span>b = line.as_bytes();
+<a href=#505 id=505 data-nosnippet>505</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(i) =
+<a href=#506 id=506 data-nosnippet>506</a>                (<span class="number">1</span>..b.len()).find(|<span class="kw-2">&amp;</span>i| b[i] == <span class="string">b'#' </span>&amp;&amp; (b[i - <span class="number">1</span>] == <span class="string">b' ' </span>|| b[i - <span class="number">1</span>] == <span class="string">b'\t'</span>))
+<a href=#507 id=507 data-nosnippet>507</a>            {
+<a href=#508 id=508 data-nosnippet>508</a>                line = line[..i].trim_end_matches([<span class="string">' '</span>, <span class="string">'\t'</span>]);
+<a href=#509 id=509 data-nosnippet>509</a>            }
+<a href=#510 id=510 data-nosnippet>510</a>        }
+<a href=#511 id=511 data-nosnippet>511</a>        out.push_str(line);
+<a href=#512 id=512 data-nosnippet>512</a>        out.push(<span class="string">'\n'</span>);
+<a href=#513 id=513 data-nosnippet>513</a>    }
+<a href=#514 id=514 data-nosnippet>514</a>    out
+<a href=#515 id=515 data-nosnippet>515</a>}
+<a href=#516 id=516 data-nosnippet>516</a>
+<a href=#517 id=517 data-nosnippet>517</a><span class="doccomment">/// The profile files, `&lt;profiles&gt;/*.yaml`, sorted by name. An absent directory is no
+<a href=#518 id=518 data-nosnippet>518</a>/// profile, not an error.
+<a href=#519 id=519 data-nosnippet>519</a></span><span class="kw">pub fn </span>profile_files(repository: <span class="kw-2">&amp;</span>Repository) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;PathBuf&gt;&gt; {
+<a href=#520 id=520 data-nosnippet>520</a>    <span class="kw">let </span><span class="prelude-val">Some</span>(rel) = repository.section_path(PROFILES_SECTION) <span class="kw">else </span>{
+<a href=#521 id=521 data-nosnippet>521</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(Vec::new());
+<a href=#522 id=522 data-nosnippet>522</a>    };
+<a href=#523 id=523 data-nosnippet>523</a>    <span class="kw">let </span>dir = repository.root().join(rel);
+<a href=#524 id=524 data-nosnippet>524</a>    <span class="kw">let </span>entries = <span class="kw">match </span>std::fs::read_dir(<span class="kw-2">&amp;</span>dir) {
+<a href=#525 id=525 data-nosnippet>525</a>        <span class="prelude-val">Ok</span>(e) =&gt; e,
+<a href=#526 id=526 data-nosnippet>526</a>        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == std::io::ErrorKind::NotFound =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(Vec::new()),
+<a href=#527 id=527 data-nosnippet>527</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(Error::io(<span class="kw-2">&amp;</span>dir, e)),
+<a href=#528 id=528 data-nosnippet>528</a>    };
+<a href=#529 id=529 data-nosnippet>529</a>    <span class="kw">let </span><span class="kw-2">mut </span>files: Vec&lt;PathBuf&gt; = entries
+<a href=#530 id=530 data-nosnippet>530</a>        .filter_map(|e| e.ok().map(|e| e.path()))
+<a href=#531 id=531 data-nosnippet>531</a>        .filter(|p| p.extension().is_some_and(|x| x == <span class="string">"yaml"</span>) &amp;&amp; p.is_file())
+<a href=#532 id=532 data-nosnippet>532</a>        .collect();
+<a href=#533 id=533 data-nosnippet>533</a>    files.sort();
+<a href=#534 id=534 data-nosnippet>534</a>    <span class="prelude-val">Ok</span>(files)
+<a href=#535 id=535 data-nosnippet>535</a>}
+<a href=#536 id=536 data-nosnippet>536</a>
+<a href=#537 id=537 data-nosnippet>537</a><span class="doccomment">/// The repository-relative directory where a repository may override a provider template.
+<a href=#538 id=538 data-nosnippet>538</a></span><span class="kw">pub fn </span>repository_providers_dir(repository: <span class="kw-2">&amp;</span>Repository) -&gt; PathBuf {
+<a href=#539 id=539 data-nosnippet>539</a>    repository
+<a href=#540 id=540 data-nosnippet>540</a>        .ai_dir()
+<a href=#541 id=541 data-nosnippet>541</a>        .join(<span class="kw-2">&amp;</span>repository.manifest().repo.path)
+<a href=#542 id=542 data-nosnippet>542</a>        .join(<span class="string">"providers"</span>)
+<a href=#543 id=543 data-nosnippet>543</a>}
+<a href=#544 id=544 data-nosnippet>544</a>
+<a href=#545 id=545 data-nosnippet>545</a><span class="doccomment">/// Hex SHA-256 of a text.
+<a href=#546 id=546 data-nosnippet>546</a></span><span class="kw">pub fn </span>sha256_hex(text: <span class="kw-2">&amp;</span>str) -&gt; String {
+<a href=#547 id=547 data-nosnippet>547</a>    <span class="kw">let </span><span class="kw-2">mut </span>h = Sha256::new();
+<a href=#548 id=548 data-nosnippet>548</a>    h.update(text.as_bytes());
+<a href=#549 id=549 data-nosnippet>549</a>    <span class="macro">format!</span>(<span class="string">"{:x}"</span>, h.finalize())
+<a href=#550 id=550 data-nosnippet>550</a>}
+<a href=#551 id=551 data-nosnippet>551</a>
+<a href=#552 id=552 data-nosnippet>552</a><span class="doccomment">/// Hex SHA-256 of arbitrary bytes: the same digest [`sha256_hex`] takes, for content that
+<a href=#553 id=553 data-nosnippet>553</a>/// is not necessarily text. A file the repository tracks may hold anything, and decoding it
+<a href=#554 id=554 data-nosnippet>554</a>/// to hash it would be a decision about its encoding that nothing here is entitled to make.
+<a href=#555 id=555 data-nosnippet>555</a>///
+<a href=#556 id=556 data-nosnippet>556</a>/// ```
+<a href=#557 id=557 data-nosnippet>557</a>/// use majordomus_cli::policy::{sha256_bytes_hex, sha256_hex};
+<a href=#558 id=558 data-nosnippet>558</a>/// assert_eq!(sha256_bytes_hex(b"majordomus"), sha256_hex("majordomus"));
+<a href=#559 id=559 data-nosnippet>559</a>/// assert_ne!(sha256_bytes_hex(&amp;[0xff, 0xfe]), sha256_bytes_hex(&amp;[0xfe, 0xff]));
+<a href=#560 id=560 data-nosnippet>560</a>/// ```
+<a href=#561 id=561 data-nosnippet>561</a></span><span class="kw">pub fn </span>sha256_bytes_hex(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+<a href=#562 id=562 data-nosnippet>562</a>    <span class="kw">let </span><span class="kw-2">mut </span>h = Sha256::new();
+<a href=#563 id=563 data-nosnippet>563</a>    h.update(bytes);
+<a href=#564 id=564 data-nosnippet>564</a>    <span class="macro">format!</span>(<span class="string">"{:x}"</span>, h.finalize())
+<a href=#565 id=565 data-nosnippet>565</a>}
+<a href=#566 id=566 data-nosnippet>566</a>
+<a href=#567 id=567 data-nosnippet>567</a><span class="doccomment">/// A path is inside `root` after lexical normalisation: no absolute path, no `..`
+<a href=#568 id=568 data-nosnippet>568</a>/// component, nothing empty.
+<a href=#569 id=569 data-nosnippet>569</a></span><span class="kw">pub fn </span>is_safe_relative(path: <span class="kw-2">&amp;</span>str) -&gt; bool {
+<a href=#570 id=570 data-nosnippet>570</a>    <span class="kw">let </span>p = Path::new(path);
+<a href=#571 id=571 data-nosnippet>571</a>    !path.is_empty()
+<a href=#572 id=572 data-nosnippet>572</a>        &amp;&amp; !p.is_absolute()
+<a href=#573 id=573 data-nosnippet>573</a>        &amp;&amp; p.components().all(|c| {
+<a href=#574 id=574 data-nosnippet>574</a>            <span class="macro">matches!</span>(
+<a href=#575 id=575 data-nosnippet>575</a>                c,
+<a href=#576 id=576 data-nosnippet>576</a>                std::path::Component::Normal(<span class="kw">_</span>) | std::path::Component::CurDir
+<a href=#577 id=577 data-nosnippet>577</a>            )
+<a href=#578 id=578 data-nosnippet>578</a>        })
+<a href=#579 id=579 data-nosnippet>579</a>}
+<a href=#580 id=580 data-nosnippet>580</a>
+<a href=#581 id=581 data-nosnippet>581</a><span class="attr">#[cfg(test)]
+<a href=#582 id=582 data-nosnippet>582</a></span><span class="kw">mod </span>tests {
+<a href=#583 id=583 data-nosnippet>583</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#584 id=584 data-nosnippet>584</a>
+<a href=#585 id=585 data-nosnippet>585</a>    <span class="doccomment">/// `session.stranded_after` is read as the text it was written as: a duration as a
+<a href=#586 id=586 data-nosnippet>586</a>    /// string, a bare number as its digits, anything else as absent, and a value that is
+<a href=#587 id=587 data-nosnippet>587</a>    /// not even well-formed as the parse failure it is.
+<a href=#588 id=588 data-nosnippet>588</a>    </span><span class="attr">#[test]
+<a href=#589 id=589 data-nosnippet>589</a>    </span><span class="kw">fn </span>a_stranded_after_is_text_a_number_or_absent() {
+<a href=#590 id=590 data-nosnippet>590</a>        <span class="kw">let </span>read = |json: <span class="kw-2">&amp;</span>str| serde_json::from_str::&lt;SessionPolicy&gt;(json);
+<a href=#591 id=591 data-nosnippet>591</a>        <span class="kw">let </span>text = read(<span class="string">r#"{"stranded_after": "12h"}"#</span>).unwrap();
+<a href=#592 id=592 data-nosnippet>592</a>        <span class="macro">assert_eq!</span>(text.stranded_after.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"12h"</span>));
+<a href=#593 id=593 data-nosnippet>593</a>        <span class="kw">let </span>number = read(<span class="string">r#"{"stranded_after": 3600}"#</span>).unwrap();
+<a href=#594 id=594 data-nosnippet>594</a>        <span class="macro">assert_eq!</span>(number.stranded_after.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"3600"</span>));
+<a href=#595 id=595 data-nosnippet>595</a>        <span class="kw">let </span>other = read(<span class="string">r#"{"stranded_after": true}"#</span>).unwrap();
+<a href=#596 id=596 data-nosnippet>596</a>        <span class="macro">assert_eq!</span>(other.stranded_after, <span class="prelude-val">None</span>);
+<a href=#597 id=597 data-nosnippet>597</a>        <span class="macro">assert!</span>(read(<span class="string">r#"{"stranded_after": tru}"#</span>).is_err());
+<a href=#598 id=598 data-nosnippet>598</a>    }
+<a href=#599 id=599 data-nosnippet>599</a>
+<a href=#600 id=600 data-nosnippet>600</a>    <span class="attr">#[test]
+<a href=#601 id=601 data-nosnippet>601</a>    </span><span class="kw">fn </span>a_comment_or_a_blank_line_is_not_part_of_the_normal_form() {
+<a href=#602 id=602 data-nosnippet>602</a>        <span class="kw">let </span>plain = <span class="string">"version: 1\ncontext:\n  budget: 150\n  list: [a, b]\n"</span>;
+<a href=#603 id=603 data-nosnippet>603</a>        <span class="kw">let </span>commented = <span class="string">"# head\nversion: 1 # v\r\n\ncontext:   \n  # inside\n  budget: 150\t# cap\n  list: [a, b] #l\n"</span>;
+<a href=#604 id=604 data-nosnippet>604</a>        <span class="macro">assert_eq!</span>(normal_form(commented), plain);
+<a href=#605 id=605 data-nosnippet>605</a>        <span class="comment">// a quoted line keeps what follows its quote, and a `#` with no space before it is text
+<a href=#606 id=606 data-nosnippet>606</a>        </span><span class="macro">assert_eq!</span>(normal_form(<span class="string">"a: 'x' # c\n"</span>), <span class="string">"a: 'x' # c\n"</span>);
+<a href=#607 id=607 data-nosnippet>607</a>        <span class="macro">assert_eq!</span>(normal_form(<span class="string">"a: b#c\n"</span>), <span class="string">"a: b#c\n"</span>);
+<a href=#608 id=608 data-nosnippet>608</a>        <span class="comment">// the last line needs no newline, and indentation is significant
+<a href=#609 id=609 data-nosnippet>609</a>        </span><span class="macro">assert_eq!</span>(normal_form(<span class="string">"a:\n  b: 1"</span>), <span class="string">"a:\n  b: 1\n"</span>);
+<a href=#610 id=610 data-nosnippet>610</a>        <span class="macro">assert_ne!</span>(normal_form(<span class="string">"a:\n  b: 1\n"</span>), normal_form(<span class="string">"a:\nb: 1\n"</span>));
+<a href=#611 id=611 data-nosnippet>611</a>    }
+<a href=#612 id=612 data-nosnippet>612</a>
+<a href=#613 id=613 data-nosnippet>613</a>    <span class="attr">#[test]
+<a href=#614 id=614 data-nosnippet>614</a>    </span><span class="kw">fn </span>the_intent_block_is_read_from_the_policy_file_and_absent_means_off() {
+<a href=#615 id=615 data-nosnippet>615</a>        <span class="kw">let </span>absent: Policy = yaml::parse_into(<span class="string">"version: 1\n"</span>).expect(<span class="string">"a policy"</span>);
+<a href=#616 id=616 data-nosnippet>616</a>        <span class="macro">assert_eq!</span>(absent.intent.binding, BindingMode::Off);
+<a href=#617 id=617 data-nosnippet>617</a>        <span class="macro">assert!</span>(absent.intent.exemptions.is_empty());
+<a href=#618 id=618 data-nosnippet>618</a>        <span class="kw">let </span>p: Policy = yaml::parse_into(
+<a href=#619 id=619 data-nosnippet>619</a>            <span class="string">"version: 1\nintent:\n  binding: required\n  exemptions:\n    - id: emergency\n      description: Restoring a broken trunk\n    - id: maintenance\n"</span>,
+<a href=#620 id=620 data-nosnippet>620</a>        )
+<a href=#621 id=621 data-nosnippet>621</a>        .expect(<span class="string">"a policy with an intent block"</span>);
+<a href=#622 id=622 data-nosnippet>622</a>        <span class="macro">assert_eq!</span>(p.intent.binding, BindingMode::Required);
+<a href=#623 id=623 data-nosnippet>623</a>        <span class="kw">let </span>class = p.intent.exemption(<span class="string">"emergency"</span>).expect(<span class="string">"the declared class"</span>);
+<a href=#624 id=624 data-nosnippet>624</a>        <span class="macro">assert_eq!</span>(class.description, <span class="string">"Restoring a broken trunk"</span>);
+<a href=#625 id=625 data-nosnippet>625</a>        <span class="macro">assert_eq!</span>(p.intent.exemption(<span class="string">"maintenance"</span>).unwrap().description, <span class="string">""</span>);
+<a href=#626 id=626 data-nosnippet>626</a>        <span class="macro">assert!</span>(p.intent.exemption(<span class="string">"whim"</span>).is_none());
+<a href=#627 id=627 data-nosnippet>627</a>        <span class="comment">// each mode is the word the file spells it with
+<a href=#628 id=628 data-nosnippet>628</a>        </span><span class="kw">for </span>(mode, word) <span class="kw">in </span>[
+<a href=#629 id=629 data-nosnippet>629</a>            (BindingMode::Off, <span class="string">"off"</span>),
+<a href=#630 id=630 data-nosnippet>630</a>            (BindingMode::Advisory, <span class="string">"advisory"</span>),
+<a href=#631 id=631 data-nosnippet>631</a>            (BindingMode::Required, <span class="string">"required"</span>),
+<a href=#632 id=632 data-nosnippet>632</a>        ] {
+<a href=#633 id=633 data-nosnippet>633</a>            <span class="macro">assert_eq!</span>(mode.as_str(), word);
+<a href=#634 id=634 data-nosnippet>634</a>            <span class="kw">let </span>read: BindingMode = serde_json::from_value(<span class="macro">serde_json::json!</span>(word)).unwrap();
+<a href=#635 id=635 data-nosnippet>635</a>            <span class="macro">assert_eq!</span>(read, mode);
+<a href=#636 id=636 data-nosnippet>636</a>        }
+<a href=#637 id=637 data-nosnippet>637</a>    }
+<a href=#638 id=638 data-nosnippet>638</a>
+<a href=#639 id=639 data-nosnippet>639</a>    <span class="attr">#[test]
+<a href=#640 id=640 data-nosnippet>640</a>    </span><span class="kw">fn </span>projection_defaults_are_file_mode_and_not_always_loaded() {
+<a href=#641 id=641 data-nosnippet>641</a>        <span class="kw">let </span>p: Policy = yaml::parse_into(
+<a href=#642 id=642 data-nosnippet>642</a>            <span class="string">"version: 1\nprojections:\n  - provider: agents\n    target: AGENTS.md\n"</span>,
+<a href=#643 id=643 data-nosnippet>643</a>        )
+<a href=#644 id=644 data-nosnippet>644</a>        .unwrap();
+<a href=#645 id=645 data-nosnippet>645</a>        <span class="macro">assert_eq!</span>(p.projections.len(), <span class="number">1</span>);
+<a href=#646 id=646 data-nosnippet>646</a>        <span class="macro">assert_eq!</span>(p.projections[<span class="number">0</span>].mode, ProjectionMode::File);
+<a href=#647 id=647 data-nosnippet>647</a>        <span class="macro">assert!</span>(!p.projections[<span class="number">0</span>].always_loaded);
+<a href=#648 id=648 data-nosnippet>648</a>        <span class="macro">assert_eq!</span>(p.profiles.default, <span class="prelude-val">None</span>);
+<a href=#649 id=649 data-nosnippet>649</a>    }
+<a href=#650 id=650 data-nosnippet>650</a>
+<a href=#651 id=651 data-nosnippet>651</a>    <span class="attr">#[test]
+<a href=#652 id=652 data-nosnippet>652</a>    </span><span class="kw">fn </span>unknown_projection_keys_are_refused() {
+<a href=#653 id=653 data-nosnippet>653</a>        <span class="kw">let </span>r: std::result::Result&lt;Policy, String&gt; = yaml::parse_into(
+<a href=#654 id=654 data-nosnippet>654</a>            <span class="string">"projections:\n  - provider: agents\n    target: AGENTS.md\n    colour: red\n"</span>,
+<a href=#655 id=655 data-nosnippet>655</a>        );
+<a href=#656 id=656 data-nosnippet>656</a>        <span class="macro">assert!</span>(r.unwrap_err().contains(<span class="string">"colour"</span>));
+<a href=#657 id=657 data-nosnippet>657</a>    }
+<a href=#658 id=658 data-nosnippet>658</a>
+<a href=#659 id=659 data-nosnippet>659</a>    <span class="attr">#[test]
+<a href=#660 id=660 data-nosnippet>660</a>    </span><span class="kw">fn </span>safe_relative_paths() {
+<a href=#661 id=661 data-nosnippet>661</a>        <span class="macro">assert!</span>(is_safe_relative(<span class="string">"AGENTS.md"</span>));
+<a href=#662 id=662 data-nosnippet>662</a>        <span class="macro">assert!</span>(is_safe_relative(<span class="string">"docs/x/y.md"</span>));
+<a href=#663 id=663 data-nosnippet>663</a>        <span class="macro">assert!</span>(is_safe_relative(<span class="string">"./AGENTS.md"</span>));
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">""</span>));
+<a href=#665 id=665 data-nosnippet>665</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">"/etc/passwd"</span>));
+<a href=#666 id=666 data-nosnippet>666</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">"../x"</span>));
+<a href=#667 id=667 data-nosnippet>667</a>        <span class="macro">assert!</span>(!is_safe_relative(<span class="string">"a/../../x"</span>));
+<a href=#668 id=668 data-nosnippet>668</a>    }
+<a href=#669 id=669 data-nosnippet>669</a>}
+<a href=#670 id=670 data-nosnippet>670</a>
+<a href=#671 id=671 data-nosnippet>671</a><span class="doccomment">/// `server:` — what a lease contest is judged by.
+<a href=#672 id=672 data-nosnippet>672</a>///
+<a href=#673 id=673 data-nosnippet>673</a>/// Every field is optional and absent means "keep the compiled default", which is why there
+<a href=#674 id=674 data-nosnippet>674</a>/// is no reader-side default *value* here: the defaults live in one place, `lease::Timings`,
+<a href=#675 id=675 data-nosnippet>675</a>/// and this block only says which of them this repository overrides.
+<a href=#676 id=676 data-nosnippet>676</a>///
+<a href=#677 id=677 data-nosnippet>677</a>/// ```
+<a href=#678 id=678 data-nosnippet>678</a>/// use majordomus_cli::policy::ServerPolicy;
+<a href=#679 id=679 data-nosnippet>679</a>/// // a policy that predates the block: absent, not defaulted to zero
+<a href=#680 id=680 data-nosnippet>680</a>/// assert_eq!(ServerPolicy::default().probe_timeout_seconds, None);
+<a href=#681 id=681 data-nosnippet>681</a>/// let p: ServerPolicy =
+<a href=#682 id=682 data-nosnippet>682</a>///     serde_json::from_str(r#"{"probe_timeout_seconds": 5}"#).expect("a server block");
+<a href=#683 id=683 data-nosnippet>683</a>/// assert_eq!(p.probe_timeout_seconds, Some(5));
+<a href=#684 id=684 data-nosnippet>684</a>/// ```
+<a href=#685 id=685 data-nosnippet>685</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+<a href=#686 id=686 data-nosnippet>686</a></span><span class="kw">pub struct </span>ServerPolicy {
+<a href=#687 id=687 data-nosnippet>687</a>    <span class="doccomment">/// `server.probe_timeout_seconds:` — how long a probe waits for the current owner before
+<a href=#688 id=688 data-nosnippet>688</a>    /// that silence counts as evidence that it is gone.
 <a href=#689 id=689 data-nosnippet>689</a>    </span><span class="attr">#[serde(default)]
-<a href=#690 id=690 data-nosnippet>690</a>    </span><span class="kw">pub </span>idle_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#691 id=691 data-nosnippet>691</a>}
+<a href=#690 id=690 data-nosnippet>690</a>    </span><span class="kw">pub </span>probe_timeout_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#691 id=691 data-nosnippet>691</a>    <span class="doccomment">/// `server.bind_grace_seconds:` — how long a lease naming no URL yet is left alone,
+<a href=#692 id=692 data-nosnippet>692</a>    /// because a server writes its lease before it can serve.
+<a href=#693 id=693 data-nosnippet>693</a>    </span><span class="attr">#[serde(default)]
+<a href=#694 id=694 data-nosnippet>694</a>    </span><span class="kw">pub </span>bind_grace_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#695 id=695 data-nosnippet>695</a>    <span class="doccomment">/// `server.join_timeout_seconds:` — how long a process waits to join or create the lease
+<a href=#696 id=696 data-nosnippet>696</a>    /// file before refusing rather than waiting forever.
+<a href=#697 id=697 data-nosnippet>697</a>    </span><span class="attr">#[serde(default)]
+<a href=#698 id=698 data-nosnippet>698</a>    </span><span class="kw">pub </span>join_timeout_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#699 id=699 data-nosnippet>699</a>    <span class="doccomment">/// `server.busy_grace_seconds:` — how long a live owner that does not answer is waited
+<a href=#700 id=700 data-nosnippet>700</a>    /// on, and asked again, before its lease is taken over.
+<a href=#701 id=701 data-nosnippet>701</a>    </span><span class="attr">#[serde(default)]
+<a href=#702 id=702 data-nosnippet>702</a>    </span><span class="kw">pub </span>busy_grace_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#703 id=703 data-nosnippet>703</a>    <span class="doccomment">/// `server.read_deadline_seconds:` — how long the shared server lets a connection go
+<a href=#704 id=704 data-nosnippet>704</a>    /// without a request read in full on it before it closes the connection.
+<a href=#705 id=705 data-nosnippet>705</a>    </span><span class="attr">#[serde(default)]
+<a href=#706 id=706 data-nosnippet>706</a>    </span><span class="kw">pub </span>read_deadline_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#707 id=707 data-nosnippet>707</a>    <span class="doccomment">/// `server.idle_seconds:` — how long a server started for a checkout no client owns
+<a href=#708 id=708 data-nosnippet>708</a>    /// (`serve ensure`, a shell entering the checkout) outlives its last peer before it stops
+<a href=#709 id=709 data-nosnippet>709</a>    /// by itself. `--idle` on the command line overrides it.
+<a href=#710 id=710 data-nosnippet>710</a>    </span><span class="attr">#[serde(default)]
+<a href=#711 id=711 data-nosnippet>711</a>    </span><span class="kw">pub </span>idle_seconds: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#712 id=712 data-nosnippet>712</a>}
 </code></pre></div></section></main></body></html>

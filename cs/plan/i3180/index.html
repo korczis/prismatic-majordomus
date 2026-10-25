@@ -172,12 +172,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>ZRUŠENO</span>
 <span class="text-sm text-body">vlna 1 · p2 · implementační profil · bezpečné paralelně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/runtime-lifecycle/" class="text-fg-brand underline">runtime-lifecycle — Jeden použitelný server na checkout se spouští, připojuje, zastavuje a hlásí svůj stav bez souběhů a skrytých zabití</a>.</p>
-  <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Blokováno. Tento úkol nemůže začít, dokud není hotovo: <a href="https://majordomus.dev/cs/plan/i3179/" class="font-mono underline">I3179</a>. Stav je z toho odvozen, nikoli deklarován.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Když vstupní hook nenajde žádný spustitelný soubor nebo najde zastaralý, spusťte jeden deduplikovaný, odpojený build pod sdíleným zámkem buildu, ohlaste &#39;building&#39; v banneru a ve stavu runtime a nechte další vstup nebo klienta spustit server, až build skončí; nikdy nekompilujte synchronně v shellu.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Stálý příkaz vlastníka 2026-10-12: vstup do repozitáře musí vždy skončit s běžícím serverem, mesh a UI, sestavovanými automaticky. bin/majordomus-env záměrně nikdy nesestavuje a při zastarání vypíná automatický start (komentář, řádky 3-7, 56-66), takže čerstvý klon s direnv allow nemá server, dokud člověk nespustí just build. Zdroje: chatgpt-majordomus:c233#0, chatgpt-majordomus:c233#2.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Ověřeno: bin/majordomus-env nikdy nesestavuje; launcher bin/majordomus-mcp může; lib/rust_bin.sh drží zámek sestavení a práh volného místa; PR #1312 (rozpracováno; jeho ADR zatím není na masteru) zajistí, že klient MCP vždy dostane server.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Jedno sestavení na pozadí na zastaralou generaci, viditelné jako stav &#39;building&#39;, odmítnuté pod prahem disku s uvedením důvodu.</p>
@@ -204,7 +201,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">case_entry_builds_once</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
+  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Zpráva o dokončení</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cancelled 2026-10-22 by the owner (\&quot;I3180 is cancelled\&quot;), with ADR 0172 superseded by ADR 0224: entering a checkout never builds (rules entry-converges and envrc-is-an-adapter), and a missing or stale executable fails fast or answers through a release of the same generation. The visible state this issue would have produced is not needed: an entry that cannot run says so and names the explicit build.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -214,7 +211,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/.ai/repo/project/issues/I3180.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3180.yaml</a>. Přečtěte ho zpět pomocí <code class="font-mono text-heading">majordomus plan show I3180</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/.ai/repo/project/issues/I3180.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3180.yaml</a>. Přečtěte ho zpět pomocí <code class="font-mono text-heading">majordomus plan show I3180</code>.</p>
 </div>
 
 </div>
@@ -264,9 +261,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -274,7 +271,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6af2d09cb734c53c610f68841f135c11e2fc781e" class="font-mono underline">6af2d09</a> · inputs <span class="font-mono">d2bcb1fec06f</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b62848cb6f5a2fa472b22d352f85a9255a447cdd" class="font-mono underline">b62848c</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

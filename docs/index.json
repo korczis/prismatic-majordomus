@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "6af2d09cb734c53c610f68841f135c11e2fc781e",
+  "commit": "b62848cb6f5a2fa472b22d352f85a9255a447cdd",
   "source_version": "1.0.0-alpha.8",
-  "registry_fingerprint": "4a12d942f591891d6a3baf612b3e4acb6de48842c22a700b4a44bb8a7bb86a9d"
+  "registry_fingerprint": "b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2"
  },
  "counts": {
-  "pages": 5813,
-  "capabilities": 3438,
-  "cli_commands": 116,
-  "http_routes": 207,
-  "mcp_tools": 201,
-  "mcp_resources": 3280,
+  "pages": 5867,
+  "capabilities": 3474,
+  "cli_commands": 120,
+  "http_routes": 209,
+  "mcp_tools": 203,
+  "mcp_resources": 3312,
   "modules": 94
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 162
+   "count": 163
   },
   {
    "kind": "application",
@@ -78,7 +78,7 @@
    "route": null,
    "title": null,
    "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-   "count": 33
+   "count": 35
   },
   {
    "kind": "deployment",
@@ -110,7 +110,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 352
+   "count": 353
   },
   {
    "kind": "domain",
@@ -150,7 +150,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-   "count": 38
+   "count": 40
   },
   {
    "kind": "issue",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 978
+   "count": 990
   },
   {
    "kind": "knowledge",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 106
+   "count": 108
   },
   {
    "kind": "moment",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 628
+   "count": 640
   },
   {
    "kind": "use-case",
@@ -1791,6 +1791,15 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0224/",
+   "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+   "description": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0224",
+   "source": ".ai/repo/adrs/0224-no-ordinary-command-builds.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/applications/",
    "title": "Applications",
    "description": "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description.",
@@ -3075,6 +3084,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/adrs/adr-0224/",
+   "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+   "description": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/applications/",
    "title": "Aplikace",
    "description": "Kam se hodí a kam ne. Každá položka deklaruje obojí, protože katalog, který uvádí jen to, kam se hodí, není popis.",
@@ -3756,6 +3771,12 @@
    "route": "/cs/docs/brief/",
    "title": "Brief relace",
    "description": "brief relace: `majordomus brief` a `brief.session` — jeden řádek a pár dalších o tom, co relaci obklopuje (její epizoda a úloha, peery všech nástěnek, mesh, integrační fronta, zámek derive), kdo jej skládá, přepínač politiky a mod Claude Code, který drží relaci informovanou a vzhůru",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/build-cache/",
+   "title": "The build cache, as a person sees it",
+   "description": "what a person sees of the mesh build cache: how a Rust build starts sccache with the store as its second level, the one line a local-only build leaves, and the gate that refuses a build around the cache",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -4458,6 +4479,36 @@
    "route": "/cs/docs/cli/mesh/",
    "title": "majordomus mesh",
    "description": "Mesh: uzly, které běžící server tohoto repozitáře objevil v síti, identita uzlu tohoto stroje a samotest, který prokazuje předpoklady jen na tomto stroji",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/mesh/build-cache/",
+   "title": "majordomus mesh build-cache",
+   "description": "The mesh build cache: what each dependency install and build directory is cached under",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/mesh/build-cache/ensure/",
+   "title": "majordomus mesh build-cache ensure",
+   "description": "Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/mesh/build-cache/env/",
+   "title": "majordomus mesh build-cache env",
+   "description": "The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/mesh/build-cache/key/",
+   "title": "majordomus mesh build-cache key",
+   "description": "Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/docs/cli/mesh/build-cache/provision/",
+   "title": "majordomus mesh build-cache provision",
+   "description": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -6964,14 +7015,14 @@
   },
   {
    "route": "/cs/guarantees/mcp-client-always-served/",
-   "title": "Klient, který spouští MCP server z checkoutu bez spustitelného souboru, nebo s takovým, který nelze sestavit, dostane obsluhu z nainstalovaného release a je o tom informován, místo aby byl odmítnut",
-   "description": "Klient, který spouští MCP server, čeká na handshake, a ten, kdo ho nedostane včas, ohlásí server jako selhaný a pokračuje bez něj, takže relace je tiše jediným workerem repozitáře, který jich má mnoho. Když tento checkout nemá spustitelný soubor, který by šel spustit, nebo ho nedokáže vytvořit, mcp obslouží nainstalovaný release a stderr uvede release i důvod. Nic jiného se nemění: každý další příkaz stále končí kódem 12 a zastaralý spustitelný soubor, který lze přebudovat, se přebuduje.",
+   "title": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
+   "description": "A client that spawns the MCP server is waiting on a handshake, and one that does not get it in time reports the server as failed and carries on without it. When this checkout's executable is missing or older than its sources, mcp is served by the installed release only when that release is of this tree's generation, and stderr names the release and the commit it was built from. Otherwise the launcher refuses with exit 12, naming why the release was not used and the explicit build, just build. Nothing is ever built on the way, for mcp or for any other command (ADR 0224).",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
    "route": "/cs/guarantees/mcp-client-autostart/",
-   "title": "Klient MCP otevřený v repozitáři spustí server sám, sestaví spustitelný soubor, když musí, přes konfigurace klientů v kořeni a bin/majordomus-mcp",
-   "description": "Nikdo nespouští server ručně. Otevřete tento repozitář v Claude Code, Gemini CLI nebo Codexu a klient najde svou konfiguraci v kořeni, spustí bin/majordomus-mcp a mluví s ním MCP; launcher sestaví spustitelný soubor Rust, když chybí nebo je starší než jeho zdroje, a pak spustí majordomus mcp, který nastartuje sdílený server repozitáře nebo se připojí k tomu, který už běží. První klient, který repozitář otevře, se stane serverem; druhý ho sdílí.",
+   "title": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
+   "description": "Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or Codex and the client finds its configuration at the root, spawns bin/majordomus-mcp, and speaks MCP to it; the launcher finds the Rust executable — it never builds it (ADR 0224); a missing or stale one is answered by the installed release of this tree's generation or refused with exit 12 naming just build — then runs majordomus mcp, which starts the repository's shared server or attaches to the one already running. The first client to open the repository becomes the server; the second shares it.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -8040,6 +8091,12 @@
    "route": "/cs/plan/automation/",
    "title": "automation — Automatizace repozitáře jsou skriptované schopnosti nad typovaným Rustem, ne shell",
    "description": "Schopnost může být skriptovaná (ADR 0069): skript Rhai uvnitř spustitelného souboru v Rustu orchestruje typované schopnosti přes jediný registr, dosáhne na každý povrch projekcemi, které už existují, běží v sandboxu s deklarovaným a vynucovaným stropem efektů a shell se zmenšuje migrací pod kontrolou, která odmítne nový shell bez deklarované výjimky.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/builds-reuse-the-mesh-cache/",
+   "title": "builds-reuse-the-mesh-cache — Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs",
+   "description": "Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -13679,7 +13736,7 @@
   {
    "route": "/cs/plan/i3830/",
    "title": "I3830 — A local gate reports and CI decides: pre-commit and pre-push refuse only on integrity",
-   "description": "Make doctor, the worktree guard, rustdoc and scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict.",
+   "description": "Make doctor, rustdoc and a failed gate or case of scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the worktree guard, the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict. The worktree guard keeps refusing because CI checks out a fresh clone and never sees which worktree a commit came from, and rule project.worktree-topology v1 clause 6 makes the hook's refusal the enforcement.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -13935,6 +13992,66 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i3946/",
+   "title": "I3946 — Every gate of the CI model declares its lane, and both readers refuse a lane they cannot read",
+   "description": "Give every gate of .ai/repo/ci/gates.yaml a lane (feedback, proof or release) and the model a top-level tiers map (local and pull-request run feedback, integration adds proof, release runs all three), as ADR 0186 decides, and make both readers of the model, scripts/ci-plan --check and the executable's GateModel (apps/majordomus-cli/src/gates/model.rs), refuse in the same words a gate without a lane once tiers are declared, a lane that is none of the three, and a tier naming a lane that does not exist. ci-plan's plan carries gates[].lane; the executable gains GateDecl.lane and GateModel.tiers. Slice S2 of I2350: lanes are declared and validated, and select nothing.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3947/",
+   "title": "I3947 — A plan asked at a tier selects only the lanes that tier runs, and both readers of the CI model agree on it",
+   "description": "Give scripts/ci-plan a --tier T option and the executable's model::plan a tier argument, fed from gates.completion's new tier input the way on_demand is. A plan asked at tier T leaves out every gate whose lane is not in T's entry of the model's tiers map, with the reason `lane L: not in the T tier` in both readers, and neither implies nor requires brings such a gate back. Without a tier every lane is planned as before; a model without tiers, or a tier the model does not declare, is refused as a usage error in the same words by both readers. Slice S4 of I2350.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3949/",
+   "title": "I3949 — A printf piped into grep -q under pipefail is refused, and a here-string replaces it",
+   "description": "scripts/ci/pipefail-check refuses, by file and line, a printf or echo piped into `grep -q` in any script that sets pipefail, and the five scripts that carried that spelling give grep the text as a here-string.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3950/",
+   "title": "I3950 — A cache key is a versioned triplet of platform, toolchain and inputs, derived from the host and the repository",
+   "description": "A key model under mesh/build_cache/: the kinds a repository has (cargo build directory, mix deps, npm node_modules) detected from the lockfiles it tracks, each key derived from a schema version, the platform (the toolchain's host triple, or 'any' for platform-independent source), the toolchain executable's own version and the digest of the declared inputs and environment; projected as majordomus mesh build-cache key.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3951/",
+   "title": "I3951 — The mesh store is spoken natively: signed S3 requests, bounded in time, with the credential read from a private file and never answered",
+   "description": "An S3 client under mesh/build_cache/: AWS Signature V4 over a bounded HTTP/1.1 connection, HEAD, GET into a file and PUT from a file, path-style; the node's credential read from the AWS-format file of mode 0600 that sccache also reads (profile mesh-build-cache), never from the environment.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3952/",
+   "title": "I3952 — A dependency install is restored before and saved after, verified by its digest, local level first and a trusted store second",
+   "description": "majordomus mesh build-cache ensure <kind> -- <install command> for npm node_modules, mix deps and the cargo build directory: an install whose key is already in place is skipped, a hit is restored from the local archive level or the selected store after its recorded SHA-256 matches, a miss runs the command and saves its result to both; MAJORDOMUS_BUILD_CACHE=off bypasses every level.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3953/",
+   "title": "I3953 — Every local build path of the repository goes through the cache, and a gate refuses a new bypass",
+   "description": "The repository's cargo choke point (lib/rust_bin.sh, which scripts/derive, scripts/rust-check and the just recipes call) starts sccache with the store as its second level through the configuration I2673 derives, credential by file; the local site build installs through mesh build-cache ensure; scripts/ci/build-cache-check refuses a local script that runs cargo or npm install around them unless the line declares why.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3955/",
+   "title": "I3955 — Whether an archived cargo build directory is reused on a second node is measured before anything restores one",
+   "description": "Build one commit cold on node A, archive its build directory without incremental state, restore it on node B with the same paths but its own checkout and registry, and record how many units B finds Fresh, the archive size and both build times; decide from that whether the cargo build directory becomes a kind of mesh build-cache ensure.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3956/",
+   "title": "I3956 — Every worker, and every process it starts on any machine, is traced to its session, and the board names the address that reaches it",
+   "description": "Derive, never ask, who owns work: the board row of a Claude Code session carries the address that reaches it (its cross-session name and socket), announced by the session-start hook; every remote run (offload derive, remote test or build on a cluster host) carries its owner (session key, board peer, issue) in its process environment and in a run record on the host; `majordomus mesh who <pid|path|issue|host-pid>` answers the owner and the address; a remote cargo started around the offload path is refused by a hook.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3957/",
+   "title": "I3957 — No entry path or gate builds: the launcher, the gates, the test harness and the just bridge call the tree's executable and fail fast or use a release of the same generation",
+   "description": "Change bin/majordomus-cli so a missing or stale executable exits 12 naming the explicit build for every caller, or answers through the installed release only when its build generation matches the tree; make the nine cargo-run gates of .ai/repo/ci/gates.yaml, test/lib.sh and the just bridge call the tree's executable; make the edit guard and the pre-commit guard declare their outcome instead of passing silently.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i3960/",
    "title": "I3960 — The initialize instructions tell the caller about itself before the board, and the board line is bounded",
    "description": "Bound PeerBoard::summary (each claim's intent cut, at most three claims a peer, the whole line capped, the rest counted with a pointer to majordomus_peers) and move it after the sentences about the caller in the MCP initialize instructions.",
@@ -14022,6 +14139,18 @@
    "route": "/cs/plan/i3995/",
    "title": "I3995 — A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
    "description": "mj_git_label (lib/common.sh) labels a recorded head of NONE, which mj_git_head writes when start runs on an unborn branch, as advanced once the branch has commits, so the state doctrine passes and check and a completed finish are no longer refused for a history that was never rewritten. start's refusal of a second task names the commands that release the first: finish, or handover --close.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4154/",
+   "title": "I4154 — The follow backlog test waits on the follower's cursor, not on fifty milliseconds",
+   "description": "http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again writes its backlog only once the follower's cursor stands, and writes it whole, so a loaded runner cannot turn it red.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4155/",
+   "title": "I4155 — The follower's shared board and page caches are keyed by the repository they read",
+   "description": "The process-wide BOARD and PAGE caches in apps/majordomus-cli/src/http/follow.rs carry the Context they were read for in their key, so two Contexts in one process never answer each other's snapshot or latest cursor.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14172,6 +14301,12 @@
    "route": "/cs/plan/operation-convergence/",
    "title": "operation-convergence — Po alfě se doba od záměru k jeho ověřenému splnění měří ze záznamů",
    "description": "Doba od záměru k ověřenému hotovu, zásahy, přeplánování, čas governance a přepracování se odvozují na záměr z historie gitu a ledgeru důkazů a srovnání s/bez se čte ze spárovaných běhů měření výkonu za pravidlem ADR 0082.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/ordinary-commands-never-build/",
+   "title": "ordinary-commands-never-build — No ordinary command builds: every entry path fails fast or answers through a release of the same generation",
+   "description": "Every entry path and every gate calls the tree's executable, a missing or stale one fails fast naming the explicit build or answers through a release whose generation matches, and no caller passes silently.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -15090,6 +15225,30 @@
    "route": "/cs/registry/capabilities/mcp-projection/",
    "title": "mcp.projection",
    "description": "Kdo odpovídá na `initialize` a s jakými verzemi protokolu; transporty a relace připojené přes každý z nich; obsluhované metody a to, že prompty a notifikace obsluhovány nejsou; každý nástroj (nebo jen ty s jedním efektem) s jeho schopností, efektem a nápovědami, z nichž jsou odvozeny jeho anotace; nástroje, které zapisují do repozitáře; zdroje; a zda každý klient, kterého distribuce deklaruje, má zde konfiguraci, která spouští server tohoto repozitáře. Čte registr a jeden soubor na každého deklarovaného klienta; nic nezapisuje.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/mesh-build-cache-ensure/",
+   "title": "mesh.build_cache.ensure",
+   "description": "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/mesh-build-cache-env/",
+   "title": "mesh.build_cache.env",
+   "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/mesh-build-cache-key/",
+   "title": "mesh.build_cache.key",
+   "description": "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/mesh-build-cache-provision/",
+   "title": "mesh.build_cache.provision",
+   "description": "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16575,9 +16734,9 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
-   "route": "/cs/rules/project-a-push-runs-what-ci-would-find-first-1/",
-   "title": "Push spustí to, co by CI našlo jako první",
-   "description": "Push spustí to, co by jako první našla CI",
+   "route": "/cs/rules/project-a-push-runs-what-ci-would-find-first-2/",
+   "title": "A push runs what CI would find first, and CI decides",
+   "description": "A push runs what CI would find first, and CI decides",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16641,7 +16800,7 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
-   "route": "/cs/rules/project-cache-is-invisible-1/",
+   "route": "/cs/rules/project-cache-is-invisible-2/",
    "title": "Cache nikdy nemění, co příkaz pozoruje",
    "description": "Cache nikdy nemění, co příkaz pozoruje",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
@@ -19143,6 +19302,12 @@
    "section": "Documentation"
   },
   {
+   "route": "/docs/build-cache/",
+   "title": "The build cache, as a person sees it",
+   "description": "what a person sees of the mesh build cache: how a Rust build starts sccache with the store as its second level, the one line a local-only build leaves, and the gate that refuses a build around the cache",
+   "section": "Documentation"
+  },
+  {
    "route": "/docs/capabilities/",
    "title": "Capabilities",
    "description": "the Rust executable's capability model: one definition, and MCP, HTTP, OpenAPI, Swagger UI, the command line and the generated reference derived from it; what is canonical, how to extend it, how it fails",
@@ -19842,6 +20007,36 @@
    "route": "/docs/cli/mesh/",
    "title": "majordomus mesh",
    "description": "The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/mesh/build-cache/",
+   "title": "majordomus mesh build-cache",
+   "description": "The mesh build cache: what each dependency install and build directory is cached under",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/mesh/build-cache/ensure/",
+   "title": "majordomus mesh build-cache ensure",
+   "description": "Restore a dependency install or a cold cargo build directory from the local level or this node's store, verified by its digest; on a miss run the command and save what it left. MAJORDOMUS_BUILD_CACHE=off bypasses every level",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/mesh/build-cache/env/",
+   "title": "majordomus mesh build-cache env",
+   "description": "The sccache client configuration for the store this node selected, as a script `eval` reads: local disk first, the store second only when it is healthy now, the credential by file path only",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/mesh/build-cache/key/",
+   "title": "majordomus mesh build-cache key",
+   "description": "Every lockfile the repository tracks, with the key its install or build directory is cached under: schema version, platform, toolchain and input digest",
+   "section": "Documentation"
+  },
+  {
+   "route": "/docs/cli/mesh/build-cache/provision/",
+   "title": "majordomus mesh build-cache provision",
+   "description": "Plan what this host still owes as a cache provider, or with --apply bring it there as root; idempotent, no secret reported",
    "section": "Documentation"
   },
   {
@@ -22348,14 +22543,14 @@
   },
   {
    "route": "/guarantees/mcp-client-always-served/",
-   "title": "A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away",
-   "description": "A client that spawns the MCP server is waiting on a handshake, and one that does not get it in time reports the server as failed and carries on without it, so the session is silently the only worker of a repository that has many. When this checkout has no executable to run, or cannot make one, mcp is served by the installed release instead, and stderr names the release and the reason. Nothing else changes: every other command still exits 12, and a stale executable that can be rebuilt is rebuilt.",
+   "title": "A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built",
+   "description": "A client that spawns the MCP server is waiting on a handshake, and one that does not get it in time reports the server as failed and carries on without it. When this checkout's executable is missing or older than its sources, mcp is served by the installed release only when that release is of this tree's generation, and stderr names the release and the commit it was built from. Otherwise the launcher refuses with exit 12, naming why the release was not used and the explicit build, just build. Nothing is ever built on the way, for mcp or for any other command (ADR 0224).",
    "section": "Guaranteed, advisory, planned"
   },
   {
    "route": "/guarantees/mcp-client-autostart/",
-   "title": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
-   "description": "Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or Codex and the client finds its configuration at the root, spawns bin/majordomus-mcp, and speaks MCP to it; the launcher builds the Rust executable when it is missing or older than its sources, then runs majordomus mcp, which starts the repository's shared server or attaches to the one already running. The first client to open the repository becomes the server; the second shares it.",
+   "title": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
+   "description": "Nobody runs a server by hand. Open this repository in Claude Code, Gemini CLI or Codex and the client finds its configuration at the root, spawns bin/majordomus-mcp, and speaks MCP to it; the launcher finds the Rust executable — it never builds it (ADR 0224); a missing or stale one is answered by the installed release of this tree's generation or refused with exit 12 naming just build — then runs majordomus mcp, which starts the repository's shared server or attaches to the one already running. The first client to open the repository becomes the server; the second shares it.",
    "section": "Guaranteed, advisory, planned"
   },
   {
@@ -23424,6 +23619,12 @@
    "route": "/plan/automation/",
    "title": "automation — Repository automation is scripted capabilities over typed Rust, not shell",
    "description": "A capability may be scripted (ADR 0069): a Rhai script inside the Rust executable orchestrates typed capabilities through the one registry, reaches every surface by the projections that already exist, runs in a sandbox with a declared and enforced effect ceiling, and shell shrinks by migration under a gate that refuses new shell without a declared exemption.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/builds-reuse-the-mesh-cache/",
+   "title": "builds-reuse-the-mesh-cache — Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs",
+   "description": "Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass.",
    "section": "The plan"
   },
   {
@@ -29063,7 +29264,7 @@
   {
    "route": "/plan/i3830/",
    "title": "I3830 — A local gate reports and CI decides: pre-commit and pre-push refuse only on integrity",
-   "description": "Make doctor, the worktree guard, rustdoc and scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict.",
+   "description": "Make doctor, rustdoc and a failed gate or case of scripts/ci/run-plan --before-push report their findings in the pre-commit and pre-push hooks without refusing, while derive-current (scripts/pages current), the worktree guard, the SSH permissions check, finish --check, case numbers and an uncomputable plan keep refusing; CI keeps every required check and remains the verdict. The worktree guard keeps refusing because CI checks out a fresh clone and never sees which worktree a commit came from, and rule project.worktree-topology v1 clause 6 makes the hook's refusal the enforcement.",
    "section": "The plan"
   },
   {
@@ -29319,6 +29520,66 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3946/",
+   "title": "I3946 — Every gate of the CI model declares its lane, and both readers refuse a lane they cannot read",
+   "description": "Give every gate of .ai/repo/ci/gates.yaml a lane (feedback, proof or release) and the model a top-level tiers map (local and pull-request run feedback, integration adds proof, release runs all three), as ADR 0186 decides, and make both readers of the model, scripts/ci-plan --check and the executable's GateModel (apps/majordomus-cli/src/gates/model.rs), refuse in the same words a gate without a lane once tiers are declared, a lane that is none of the three, and a tier naming a lane that does not exist. ci-plan's plan carries gates[].lane; the executable gains GateDecl.lane and GateModel.tiers. Slice S2 of I2350: lanes are declared and validated, and select nothing.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3947/",
+   "title": "I3947 — A plan asked at a tier selects only the lanes that tier runs, and both readers of the CI model agree on it",
+   "description": "Give scripts/ci-plan a --tier T option and the executable's model::plan a tier argument, fed from gates.completion's new tier input the way on_demand is. A plan asked at tier T leaves out every gate whose lane is not in T's entry of the model's tiers map, with the reason `lane L: not in the T tier` in both readers, and neither implies nor requires brings such a gate back. Without a tier every lane is planned as before; a model without tiers, or a tier the model does not declare, is refused as a usage error in the same words by both readers. Slice S4 of I2350.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3949/",
+   "title": "I3949 — A printf piped into grep -q under pipefail is refused, and a here-string replaces it",
+   "description": "scripts/ci/pipefail-check refuses, by file and line, a printf or echo piped into `grep -q` in any script that sets pipefail, and the five scripts that carried that spelling give grep the text as a here-string.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3950/",
+   "title": "I3950 — A cache key is a versioned triplet of platform, toolchain and inputs, derived from the host and the repository",
+   "description": "A key model under mesh/build_cache/: the kinds a repository has (cargo build directory, mix deps, npm node_modules) detected from the lockfiles it tracks, each key derived from a schema version, the platform (the toolchain's host triple, or 'any' for platform-independent source), the toolchain executable's own version and the digest of the declared inputs and environment; projected as majordomus mesh build-cache key.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3951/",
+   "title": "I3951 — The mesh store is spoken natively: signed S3 requests, bounded in time, with the credential read from a private file and never answered",
+   "description": "An S3 client under mesh/build_cache/: AWS Signature V4 over a bounded HTTP/1.1 connection, HEAD, GET into a file and PUT from a file, path-style; the node's credential read from the AWS-format file of mode 0600 that sccache also reads (profile mesh-build-cache), never from the environment.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3952/",
+   "title": "I3952 — A dependency install is restored before and saved after, verified by its digest, local level first and a trusted store second",
+   "description": "majordomus mesh build-cache ensure <kind> -- <install command> for npm node_modules, mix deps and the cargo build directory: an install whose key is already in place is skipped, a hit is restored from the local archive level or the selected store after its recorded SHA-256 matches, a miss runs the command and saves its result to both; MAJORDOMUS_BUILD_CACHE=off bypasses every level.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3953/",
+   "title": "I3953 — Every local build path of the repository goes through the cache, and a gate refuses a new bypass",
+   "description": "The repository's cargo choke point (lib/rust_bin.sh, which scripts/derive, scripts/rust-check and the just recipes call) starts sccache with the store as its second level through the configuration I2673 derives, credential by file; the local site build installs through mesh build-cache ensure; scripts/ci/build-cache-check refuses a local script that runs cargo or npm install around them unless the line declares why.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3955/",
+   "title": "I3955 — Whether an archived cargo build directory is reused on a second node is measured before anything restores one",
+   "description": "Build one commit cold on node A, archive its build directory without incremental state, restore it on node B with the same paths but its own checkout and registry, and record how many units B finds Fresh, the archive size and both build times; decide from that whether the cargo build directory becomes a kind of mesh build-cache ensure.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3956/",
+   "title": "I3956 — Every worker, and every process it starts on any machine, is traced to its session, and the board names the address that reaches it",
+   "description": "Derive, never ask, who owns work: the board row of a Claude Code session carries the address that reaches it (its cross-session name and socket), announced by the session-start hook; every remote run (offload derive, remote test or build on a cluster host) carries its owner (session key, board peer, issue) in its process environment and in a run record on the host; `majordomus mesh who <pid|path|issue|host-pid>` answers the owner and the address; a remote cargo started around the offload path is refused by a hook.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3957/",
+   "title": "I3957 — No entry path or gate builds: the launcher, the gates, the test harness and the just bridge call the tree's executable and fail fast or use a release of the same generation",
+   "description": "Change bin/majordomus-cli so a missing or stale executable exits 12 naming the explicit build for every caller, or answers through the installed release only when its build generation matches the tree; make the nine cargo-run gates of .ai/repo/ci/gates.yaml, test/lib.sh and the just bridge call the tree's executable; make the edit guard and the pre-commit guard declare their outcome instead of passing silently.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i3960/",
    "title": "I3960 — The initialize instructions tell the caller about itself before the board, and the board line is bounded",
    "description": "Bound PeerBoard::summary (each claim's intent cut, at most three claims a peer, the whole line capped, the rest counted with a pointer to majordomus_peers) and move it after the sentences about the caller in the MCP initialize instructions.",
@@ -29406,6 +29667,18 @@
    "route": "/plan/i3995/",
    "title": "I3995 — A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
    "description": "mj_git_label (lib/common.sh) labels a recorded head of NONE, which mj_git_head writes when start runs on an unborn branch, as advanced once the branch has commits, so the state doctrine passes and check and a completed finish are no longer refused for a history that was never rewritten. start's refusal of a second task names the commands that release the first: finish, or handover --close.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4154/",
+   "title": "I4154 — The follow backlog test waits on the follower's cursor, not on fifty milliseconds",
+   "description": "http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again writes its backlog only once the follower's cursor stands, and writes it whole, so a loaded runner cannot turn it red.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4155/",
+   "title": "I4155 — The follower's shared board and page caches are keyed by the repository they read",
+   "description": "The process-wide BOARD and PAGE caches in apps/majordomus-cli/src/http/follow.rs carry the Context they were read for in their key, so two Contexts in one process never answer each other's snapshot or latest cursor.",
    "section": "The plan"
   },
   {
@@ -29556,6 +29829,12 @@
    "route": "/plan/operation-convergence/",
    "title": "operation-convergence — After the alpha, the time from an intent to its verified satisfaction is measured from the records",
    "description": "Intent-to-verified-done, interventions, replans, governance time and rework are derived per intent from git history and the evidence ledger, and the with/without comparison is read from matched benchmark runs behind ADR 0082's rule.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/ordinary-commands-never-build/",
+   "title": "ordinary-commands-never-build — No ordinary command builds: every entry path fails fast or answers through a release of the same generation",
+   "description": "Every entry path and every gate calls the tree's executable, a missing or stale one fails fast naming the explicit build or answers through a release whose generation matches, and no caller passes silently.",
    "section": "The plan"
   },
   {
@@ -30474,6 +30753,30 @@
    "route": "/registry/capabilities/mcp-projection/",
    "title": "mcp.projection",
    "description": "Who answers `initialize` and with which protocol versions; the transports and the sessions attached over each; the methods served, and that prompts and notifications are not; every tool (or only those with one effect) with its capability, effect and the hints its annotations are derived from; the tools that write the repository; the resources; and whether each client the distribution declares has a configuration here that starts this repository's server. Reads the registry and one file per declared client; writes nothing.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/mesh-build-cache-ensure/",
+   "title": "mesh.build_cache.ensure",
+   "description": "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/mesh-build-cache-env/",
+   "title": "mesh.build_cache.env",
+   "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/mesh-build-cache-key/",
+   "title": "mesh.build_cache.key",
+   "description": "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/mesh-build-cache-provision/",
+   "title": "mesh.build_cache.provision",
+   "description": "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.",
    "section": "Registry"
   },
   {
@@ -32181,12 +32484,12 @@
    "section": "Rules"
   },
   {
-   "route": "/rules/project-a-push-runs-what-ci-would-find-first-1/",
-   "title": "A push runs what CI would find first",
-   "description": "A push runs what CI would find first",
+   "route": "/rules/project-a-push-runs-what-ci-would-find-first-2/",
+   "title": "A push runs what CI would find first, and CI decides",
+   "description": "A push runs what CI would find first, and CI decides",
    "kind": "rule",
-   "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@1",
-   "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md",
+   "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
+   "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
    "section": "Rules"
   },
   {
@@ -32280,12 +32583,12 @@
    "section": "Rules"
   },
   {
-   "route": "/rules/project-cache-is-invisible-1/",
+   "route": "/rules/project-cache-is-invisible-2/",
    "title": "A cache never changes what a command observes",
    "description": "A cache never changes what a command observes",
    "kind": "rule",
-   "id": "majordomus://rule/project.cache-is-invisible@1",
-   "source": ".ai/repo/rules/project/cache-is-invisible.v1.md",
+   "id": "majordomus://rule/project.cache-is-invisible@2",
+   "source": ".ai/repo/rules/project/cache-is-invisible.v2.md",
    "section": "Rules"
   },
   {
@@ -33218,7 +33521,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.8 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.8, built from commit 6af2d09cb734c53c610f68841f135c11e2fc781e: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.8, built from commit b62848cb6f5a2fa472b22d352f85a9255a447cdd: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
   },
   {
@@ -34215,6 +34518,30 @@
    "route": "/rustdoc/majordomus_cli/mesh/broadcast/",
    "title": "majordomus_cli::mesh::broadcast - Rust",
    "description": "The UDP broadcast provider: the controlled fallback for segments where multicast is filtered. Same protocol, same port, no second serialization — only the destination differs: the limited broadcast address in `auto` mode, or the directed broadcast addresses the declaration lists in `explicit` mode. Never `auto` by default, and it does not spray interfaces: one socket, the destinations named above, nothing more.",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/mesh/build_cache/",
+   "title": "majordomus_cli::mesh::build_cache - Rust",
+   "description": "A node’s offer of a shared build cache, and the choice among offers (ADR 0157).",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/mesh/build_cache/env/",
+   "title": "majordomus_cli::mesh::build_cache::env - Rust",
+   "description": "The sccache client configuration, derived from the selected store (I2673, ADR 0157).",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/mesh/build_cache/key/",
+   "title": "majordomus_cli::mesh::build_cache::key - Rust",
+   "description": "What a dependency install or a build directory is cached under: a triplet of platform, toolchain and inputs, derived from the machine and the repository (I3950).",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/mesh/build_cache/offer/",
+   "title": "majordomus_cli::mesh::build_cache::offer - Rust",
+   "description": "A build-cache offer as the mesh carries it: a signed, expiring record of the cooperation journal (ADR 0157 decision 2, I2671).",
    "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
   },
   {

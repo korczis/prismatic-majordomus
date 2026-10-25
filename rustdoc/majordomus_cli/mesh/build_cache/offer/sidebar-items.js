@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KINDS"],"fn":["read"],"struct":["OfferReading"]};

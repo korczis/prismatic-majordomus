@@ -522,6 +522,17 @@ can name it on that sibling's <code>BoardView</code>.</td>
     &quot;Peer&quot;: {
       &quot;description&quot;: &quot;One peer as the board lists it.&quot;,
       &quot;properties&quot;: {
+        &quot;address&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/PeerAddress&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it.&quot;
+        },
         &quot;announcement&quot;: {
           &quot;anyOf&quot;: [
             {
@@ -585,6 +596,49 @@ can name it on that sibling's <code>BoardView</code>.</td>
         &quot;connected_at&quot;,
         &quot;last_seen_seconds_ago&quot;,
         &quot;attached&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PeerAddress&quot;: {
+      &quot;description&quot;: &quot;Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client&#39;s parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider&#39;s messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \&quot;lundra\&quot;).unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\&quot;lundra\&quot;, Some(4242)));\nassert!(bare.provider.is_none() &amp;&amp; bare.mesh_session().is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;host&quot;: {
+          &quot;description&quot;: &quot;The machine the worker runs on.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;pid&quot;: {
+          &quot;description&quot;: &quot;The worker&#39;s own process: the provider&#39;s pid, not the MCP bridge it started.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;provider&quot;: {
+          &quot;description&quot;: &quot;The provider whose session this is (`claude-code`), when its environment says so.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;session&quot;: {
+          &quot;description&quot;: &quot;The provider&#39;s id for the session, the one its lifecycle hooks are given.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;socket&quot;: {
+          &quot;description&quot;: &quot;The socket other sessions on the same machine message this one through.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;host&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     },
@@ -774,7 +828,7 @@ can name it on that sibling's <code>BoardView</code>.</td>
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::peers</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">PeerListInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">PeerList</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">4a12d942f591891d6a3baf612b3e4acb6de48842c22a700b4a44bb8a7bb86a9d</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/docs/generated/modules/peers.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/peers.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.8</dd></div>
       </dl>
     </div>
@@ -837,9 +891,9 @@ can name it on that sibling's <code>BoardView</code>.</td>
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6af2d09cb734c53c610f68841f135c11e2fc781e/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/b62848cb6f5a2fa472b22d352f85a9255a447cdd/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -847,7 +901,7 @@ can name it on that sibling's <code>BoardView</code>.</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6af2d09cb734c53c610f68841f135c11e2fc781e" class="font-mono underline">6af2d09</a> · inputs <span class="font-mono">d2bcb1fec06f</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b62848cb6f5a2fa472b22d352f85a9255a447cdd" class="font-mono underline">b62848c</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

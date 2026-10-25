@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PROBE_BUDGET","PROTOCOL_S3"],"enum":["FileError","Health","Scope"],"fn":["headroom_gib","local_offer","offers_of","probe_health","read_node_file","select"],"mod":["env","key","offer"],"struct":["KnownProvider","LocalProvider","NodeFile","Offer","PassedOver","Policy","Selection"]};
