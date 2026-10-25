@@ -4,7 +4,7 @@ description = "The tree a deployment's provider receives, assembled outside the 
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 186
+weight = 190
 [extra]
 route = "/docs/cli/deploy/"
 command = "majordomus deploy"

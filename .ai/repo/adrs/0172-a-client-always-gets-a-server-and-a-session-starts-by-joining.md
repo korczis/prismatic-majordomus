@@ -31,7 +31,7 @@ provenance:
 
 On 2026-10-16 the owner opened `claude` in this repository and asked why the session did not
 join the mesh through the hook and start working. Two separate things were true, and both
-were already named by ADR 0156 as the way a session ends up working alone.
+were already named by ADR 0226 as the way a session ends up working alone.
 
 1. **The server never came up.** `.mcp.json` starts `bin/majordomus-mcp`, which runs the
    crate's own executable and builds it when it is missing. The checkout had never built one,
@@ -45,7 +45,7 @@ were already named by ADR 0156 as the way a session ends up working alone.
 2. **Nothing started a turn.** The SessionStart hook ran, the mesh was active, and the whole
    briefing was in the session's context. A hook can only add context. A session that is
    merely opened waits for its first message, so it was not on the board until a person
-   typed, which is the state ADR 0156 describes as "behaved as the only worker".
+   typed, which is the state ADR 0226 describes as "behaved as the only worker".
 
 ## Decision
 
@@ -98,9 +98,9 @@ publishing is not.
   `85_installer`, not a side effect of this one. Until then the file is sourced by hand.
 - **Codex and Gemini.** Each takes an initial prompt differently; each is wrapped only when
   it is proved against the real tool (milestone `every-session-joins-the-mesh`).
-- **The four facts of ADR 0156** (current, attached, announced, useful) as a derived block of
+- **The four facts of ADR 0226** (current, attached, announced, useful) as a derived block of
   `majordomus context`, and the refusal in `start`/`check`/`finish`. That is the capability
-  ADR 0156 describes and this ADR does not pre-empt; the prompt asks a worker for the same
+  ADR 0226 describes and this ADR does not pre-empt; the prompt asks a worker for the same
   steps by hand in the meantime.
 
 ## Alternatives rejected
