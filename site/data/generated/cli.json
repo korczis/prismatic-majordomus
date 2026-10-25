@@ -20323,6 +20323,12 @@
           "command": "majordomus quality rustdoc",
           "name": "rustdoc",
           "route": "/docs/cli/quality/rustdoc/"
+        },
+        {
+          "about": "Refuse a secret handed to a child process on its command line, in the Rust and the shell",
+          "command": "majordomus quality secret-argv",
+          "name": "secret-argv",
+          "route": "/docs/cli/quality/secret-argv/"
         }
       ],
       "command": "majordomus quality",
@@ -20733,6 +20739,149 @@
       ],
       "route": "/docs/cli/quality/rustdoc/",
       "usage": "majordomus quality rustdoc [OPTIONS]"
+    },
+    {
+      "about": "Refuse a secret handed to a child process on its command line, in the Rust and the shell",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus quality",
+          "name": "quality",
+          "route": "/docs/cli/quality/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus quality secret-argv",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "quality",
+            "secret-argv"
+          ],
+          "command": "majordomus quality secret-argv",
+          "description": "Every Rust source and shell unit of the tree read for a value from a credential source that becomes an argument of a child process, where every user of the host can read it. Exits 0 when there is none, 10 with findings (each naming the file, the line, the value's name and the rule), and 12 when the tree cannot be read. The repository the examples run in has nothing to find.",
+          "expectation": "exits 0; prints secret-argv: no secret on a command line",
+          "id": "quality-secret-argv",
+          "setup": [],
+          "title": "Whether any code hands a child a secret on its command line"
+        },
+        {
+          "argv": [
+            "quality",
+            "secret-argv",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus quality secret-argv --format json",
+          "description": "The typed report: whether the tree was read, how many Rust sources and shell units, every finding, and the verdict, exactly as GET /api/v1/quality/secret-argv and the majordomus_quality_secret_argv tool return it.",
+          "expectation": "exits 0; prints one JSON document carrying /measured, /passes, /findings, /rule",
+          "id": "quality-secret-argv-json",
+          "setup": [],
+          "title": "The same answer as the API and MCP give it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "secret-argv",
+      "parent_route": "/docs/cli/quality/",
+      "path": [
+        "majordomus",
+        "quality",
+        "secret-argv"
+      ],
+      "route": "/docs/cli/quality/secret-argv/",
+      "usage": "majordomus quality secret-argv [OPTIONS]"
     },
     {
       "about": "Run a capability as an execution and follow it: its steps, its progress and its output as they happen",
@@ -39604,10 +39753,10 @@
     }
   ],
   "counts": {
-    "arguments": 1712,
-    "commands": 250,
-    "examples": 251,
-    "runnable": 218
+    "arguments": 1717,
+    "commands": 251,
+    "examples": 253,
+    "runnable": 219
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.8",

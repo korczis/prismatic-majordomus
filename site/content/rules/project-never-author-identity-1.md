@@ -1,7 +1,7 @@
 +++
 title = "Never author identity fields"
 description = "Never author identity fields"
-weight = 127
+weight = 128
 [extra]
 kind = "rule"
 slug = "project-never-author-identity-1"

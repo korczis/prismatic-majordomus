@@ -2175,7 +2175,7 @@ pub enum ReleaseCommand {
 /// from it.
 pub struct QualityArgs {
     #[command(subcommand)]
-    /// `report` or `rustdoc`.
+    /// `report`, `rustdoc` or `secret-argv`.
     pub command: QualityCommand,
 }
 
@@ -2186,6 +2186,36 @@ pub enum QualityCommand {
     Report(QualityReportArgs),
     /// Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked
     Rustdoc(QualityRustdocArgs),
+    /// Refuse a secret handed to a child process on its command line, in the Rust and the shell
+    SecretArgv(QualitySecretArgvArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus quality secret-argv`: every Rust source and shell unit of the tree read for a
+/// secret given to a child as an argument, through the capability `quality.secret_argv`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, QualityCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "quality", "secret-argv", "--format", "json"])
+///     .unwrap();
+/// match cli.command {
+///     Command::Quality(q) => match q.command {
+///         QualityCommand::SecretArgv(args) => assert!(matches!(args.format, OutputFormat::Json)),
+///         other => panic!("expected `quality secret-argv`, parsed {other:?}"),
+///     },
+///     other => panic!("expected `quality`, parsed {other:?}"),
+/// }
+/// ```
+pub struct QualitySecretArgvArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
 }
 
 #[derive(Debug, Args)]
@@ -7500,6 +7530,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 argv: &["quality", "rustdoc", "--tree", "site/public/rustdoc", "--format", "json"],
                 setup: &[],
                 expect: Expect::ExitCode(12),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "quality secret-argv",
+        examples: &[
+            ExampleDoc {
+                id: "quality-secret-argv",
+                title: "Whether any code hands a child a secret on its command line",
+                description: "Every Rust source and shell unit of the tree read for a value from a credential source that becomes an argument of a child process, where every user of the host can read it. Exits 0 when there is none, 10 with findings (each naming the file, the line, the value's name and the rule), and 12 when the tree cannot be read. The repository the examples run in has nothing to find.",
+                argv: &["quality", "secret-argv"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["secret-argv: no secret on a command line"]),
+            },
+            ExampleDoc {
+                id: "quality-secret-argv-json",
+                title: "The same answer as the API and MCP give it",
+                description: "The typed report: whether the tree was read, how many Rust sources and shell units, every finding, and the verdict, exactly as GET /api/v1/quality/secret-argv and the majordomus_quality_secret_argv tool return it.",
+                argv: &["quality", "secret-argv", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/measured", "/passes", "/findings", "/rule"]),
             },
         ],
     },

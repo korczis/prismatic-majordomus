@@ -1,6 +1,6 @@
 ---
 name: mj-quality
-description: "Majordomus quality: Public API quality report; Rustdoc tree integrity."
+description: "Majordomus quality: Public API quality report; Rustdoc tree integrity; Refuse a secret on a command line."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -17,6 +17,7 @@ $ARGUMENTS
 |---|---|---|---|---|
 | `quality.report` | Public API quality report | `majordomus_quality` | `majordomus quality report` | reads |
 | `quality.rustdoc` | Rustdoc tree integrity | `majordomus_quality_rustdoc` | `majordomus quality rustdoc` | reads |
+| `quality.secret_argv` | Refuse a secret on a command line | `majordomus_quality_secret_argv` | `majordomus quality secret-argv` | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

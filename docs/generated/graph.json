@@ -1627,6 +1627,15 @@
         "status": "query"
       },
       {
+        "id": "capability:quality.secret_argv",
+        "kind": "capability",
+        "label": "quality.secret_argv",
+        "summary": "Refuse a secret on a command line",
+        "route": "/cockpit/capabilities/quality.secret_argv",
+        "source": "apps/majordomus-cli/src/capability/builtin/quality.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:reasoning.advisors",
         "kind": "capability",
         "label": "reasoning.advisors",
@@ -68715,6 +68724,56 @@
         }
       },
       {
+        "id": "majordomus://issue/I4224",
+        "kind": "issue",
+        "label": "I4224",
+        "summary": "A command line that carries a secret is refused before it lands",
+        "route": "/cockpit/objects/issue/i4224",
+        "source": ".ai/repo/project/issues/I4224.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The gate refuses a fixture that pushes a secret read from a credential file onto an argv, and passes the fixed form",
+            "The gate refuses a shell fixture that passes a token as an argument of an external command, and passes the same value given on standard input or in the child's environment",
+            "This repository's tree passes the gate"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I3996"
+          ],
+          "evidence_required": [
+            "secret_argv_case"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "The GitHub workflows: their run: blocks receive secrets through env: and write them with shell builtins, and they are not shell units the check reads",
+            "The cache_provision.rs fix itself, which is I3996"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/quality/secret_argv.rs",
+            "apps/majordomus-cli/src/quality/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/quality.rs",
+            "apps/majordomus-cli/src/commands/quality.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project/a-secret-never-travels-on-a-command-line.v1.md",
+            ".ai/repo/project/issues/I4224.yaml",
+            "test/cases/3996_a_secret_never_travels_on_a_command_line.sh"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "a-secret-on-a-command-line-is-refused",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3996_a_secret_never_travels_on_a_command_line"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -80278,6 +80337,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-secret-never-travels-on-a-command-line@1",
+        "kind": "rule",
+        "label": "project.a-secret-never-travels-on-a-command-line@1",
+        "summary": "A secret never travels on a command line",
+        "route": "/cockpit/objects/rule/project-a-secret-never-travels-on-a-command-line-1",
+        "source": ".ai/repo/rules/project/a-secret-never-travels-on-a-command-line.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.executions-carry-no-secret@1"
+          ],
+          "statement": "Give a child its secret on standard input, in its environment or in a 0600 file, never in its argv; a line that hands over a value which only looks like one says why with `secret-argv: <why>`.",
+          "tags": [
+            "security",
+            "rust",
+            "shell"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-standing-approval-is-written-where-permissions-are-read@1",
         "kind": "rule",
         "label": "project.a-standing-approval-is-written-where-permissions-are-read@1",
@@ -91837,6 +91917,13 @@
         "source": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh"
       },
       {
+        "id": "majordomus://test/test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+        "kind": "test",
+        "label": "test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+        "route": "/cockpit/objects/test/test-cases-3996-a-secret-never-travels-on-a-command-line-sh",
+        "source": "test/cases/3996_a_secret_never_travels_on_a_command_line.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
         "kind": "test",
         "label": "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
@@ -98967,6 +99054,26 @@
       },
       {
         "source": "capability:quality.rustdoc",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.secret_argv",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.secret_argv",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.secret_argv",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.secret_argv",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -129951,6 +130058,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4224",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4224",
+        "target": "majordomus://issue/I3996",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4224",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -132218,6 +132340,16 @@
       {
         "source": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
         "target": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-secret-never-travels-on-a-command-line@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-secret-never-travels-on-a-command-line@1",
+        "target": "majordomus://rule/project.executions-carry-no-secret@1",
         "kind": "depends_on"
       },
       {
@@ -136292,6 +136424,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -141236,6 +141373,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:quality",
+        "target": "capability:quality.secret_argv",
+        "kind": "composes"
+      },
+      {
         "source": "module:reasoning",
         "target": "capability:reasoning.advisors",
         "kind": "composes"
@@ -141457,8 +141599,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3935,
-      "edges": 9088,
+      "nodes": 3939,
+      "edges": 9099,
       "acyclic": false,
       "truncated": false
     }

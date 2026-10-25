@@ -637,6 +637,16 @@ gates:
     runs: bin/majordomus-cli shell check
     summary: every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ is declared in .ai/repo/automation/inventory.jsonl with an exemption that says why it is shell and when it stops being, and no record names a unit the tree no longer has
 
+  # A secret handed to a child on its command line is readable by every user of the host for
+  # as long as the child runs (I4224). The judge is the executable's own quality.secret_argv,
+  # typed Rust for the reason shell-inventory above is, reading git's index and the files of
+  # the Rust and the shell only: no build of anything it judges, no network. Selected by the
+  # `secret-argv` class, so a plan that touches no code that starts a process does not run it.
+  - id: secret-argv
+    job: structure
+    runs: bin/majordomus-cli quality secret-argv
+    summary: no Rust source or shell unit hands a child process a value read from a credential source as an argument; standard input, the child's environment and a 0600 file are the forms that pass, and each finding names the file, the line and project.a-secret-never-travels-on-a-command-line
+
   - id: step-bound
     job: structure
     lane: feedback
@@ -1265,6 +1275,12 @@ classes:
   - id: backlog
     paths: [scripts/reap-orphans, apps/majordomus-cli/src/integration, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]
+
+  # Code that starts processes, the module that judges it, its rule and its case. Every path
+  # here is already in another class; the overlap only widens a plan.
+  - id: secret-argv
+    paths: [apps/majordomus-cli/**, bin/**, lib/**, scripts/**, share/**, .githooks/**, .claude/hooks/**, .ai/repo/rules/project/a-secret-never-travels-on-a-command-line.v1.md, test/cases/3996_a_secret_never_travels_on_a_command_line.sh]
+    gates: [secret-argv]
 
   # Shell automation against its migration inventory: a unit added, changed or deleted under
   # a governed directory, the inventory itself, the module that judges it, and its case.

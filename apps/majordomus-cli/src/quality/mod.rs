@@ -19,6 +19,7 @@
 //! model    the vocabulary: codes, severities, the report's own shape
 //! rustdoc  the tree rustdoc renders from the crate, judged against the same inventory
 //! leaks    the shapes a published artifact must never carry, from the one file naming them
+//! secret_argv  a secret handed to a child on its command line, in the Rust and the shell
 //! ```
 //!
 //! Discovery happens once and every renderer reads the value: the same relationship the
@@ -68,6 +69,9 @@ pub mod report;
 // crate-visible only: its report reaches every consumer as the typed output of the
 // capability `quality.rustdoc`, and nothing outside the crate needs its Rust items
 pub(crate) mod rustdoc;
+// crate-visible only, like rustdoc: its report reaches every consumer as the typed output of
+// the capability `quality.secret_argv`
+pub(crate) mod secret_argv;
 pub mod source;
 
 pub use model::{

@@ -909,6 +909,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:quality.secret_argv",
+      "path": "/evidence/capabilities/quality-secret-argv/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:reasoning.advisors",
       "path": "/evidence/capabilities/reasoning-advisors/"
     },
@@ -3231,6 +3236,11 @@
       "kind": "command",
       "subject": "command:quality rustdoc",
       "path": "/evidence/commands/quality-rustdoc/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:quality secret-argv",
+      "path": "/evidence/commands/quality-secret-argv/"
     },
     {
       "kind": "command",
@@ -6060,6 +6070,25 @@
         "command:quality rustdoc"
       ],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:quality.secret_argv": {
+      "kind": "capability",
+      "id": "quality.secret_argv",
+      "page": "/evidence/capabilities/quality-secret-argv/",
+      "programs": [],
+      "members": [
+        "command:quality secret-argv"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3996_a_secret_never_travels_on_a_command_line",
+          "path": "test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -17252,6 +17281,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:quality secret-argv": {
+      "kind": "command",
+      "id": "quality secret-argv",
+      "page": "/evidence/commands/quality-secret-argv/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:question": {
       "kind": "command",
       "id": "question",
@@ -22033,6 +22081,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_quality_secret_argv": {
+      "kind": "mcp",
+      "id": "majordomus_quality_secret_argv",
+      "alias_of": "capability:quality.secret_argv",
+      "programs": [],
+      "members": [
+        "capability:quality.secret_argv"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_reasoning": {
       "kind": "mcp",
       "id": "majordomus_reasoning",
@@ -24284,6 +24344,30 @@
         }
       ],
       "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.a-secret-never-travels-on-a-command-line": {
+      "kind": "rule",
+      "id": "project.a-secret-never-travels-on-a-command-line",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3996_a_secret_never_travels_on_a_command_line",
+          "path": "test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3996_a_secret_never_travels_on_a_command_line.sh",
+            ".ai/repo/rules/project/a-secret-never-travels-on-a-command-line.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "apps/majordomus-cli/src/mesh/cache_provision.rs",
+        "apps/majordomus-cli/src/quality/secret_argv.rs"
+      ],
       "findings": []
     },
     "rule:project.a-standing-approval-is-written-where-permissions-are-read": {

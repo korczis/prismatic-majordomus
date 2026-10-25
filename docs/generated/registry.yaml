@@ -280,7 +280,7 @@ modules:
     description: "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: reasoning
     title: Reasoning
     description: "Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence."
@@ -49651,6 +49651,127 @@ capabilities:
       policy: process
       max_entries: 8
       ttl_seconds: 10
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/quality.rs
+  - id: quality.secret_argv
+    module: quality
+    kind: query
+    title: Refuse a secret on a command line
+    description: "Every Rust source and every shell unit the tree would commit, read for a child process given a secret as an argument, where every user of the host reads it (ps, /proc/<pid>/cmdline): a value read from a credential source (a call or variable named as a secret, an env::var of one, a keychain or credentials-file read) or a binding filled from one, reaching .arg, .args, Command::new, a vector named argv, args or cmd, a runner's argument list, or an argument of an external shell command. Standard input, the child's environment and a 0600 file are the forms that pass. Each finding names the file, the line, the value's name (never the value), where it went and the rule; a line that says why with `secret-argv: <why>` is not one. Reads the tree and git's index only; no build and no network."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: SecretArgvReport
+      schema:
+        type: object
+        properties:
+          measured:
+            type: boolean
+            description: "Whether the tree could be read. `false` is not a pass: the reason says what stopped it."
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why the tree could not be read, when it could not."
+          rule:
+            type: string
+            description: The rule the check enforces.
+          rust_files:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many Rust sources were read.
+          shell_files:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many shell units were read.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/SecretArgvFinding"
+            description: "Every finding, by file and line. Empty is the passing answer."
+          passes:
+            type: boolean
+            description: "`true` when the tree was read and nothing was found."
+        required:
+          - measured
+          - rule
+          - rust_files
+          - shell_files
+          - findings
+          - passes
+        description: The verdict of one check of the tree.
+        title: SecretArgvReport
+        "$defs":
+          SecretArgvFinding:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The file, relative to the repository root."
+              line:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The 1-based line of the command line.
+              language:
+                type: string
+                description: "`rust` or `shell`."
+              value:
+                type: string
+                description: "The binding, variable or call that carries the secret. Never its value."
+              sink:
+                type: string
+                description: "Where the command line is built: `.arg`, `argv.push`, `Command::new`, or the external\ncommand a shell line runs."
+              rule:
+                type: string
+                description: The rule the finding breaks.
+              remedy:
+                type: string
+                description: What to do about it.
+            required:
+              - path
+              - line
+              - language
+              - value
+              - sink
+              - rule
+              - remedy
+            description: One value that reaches a command line.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::quality
+    exposure:
+      mcp:
+        tool: majordomus_quality_secret_argv
+      http:
+        method: GET
+        path: /api/v1/quality/secret-argv
+      cli:
+        path:
+          - quality
+          - secret-argv
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - quality
+      - security
+      - rust
+      - shell
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
     execution:
       effect: read
       cancellable: false
