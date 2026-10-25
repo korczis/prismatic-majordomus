@@ -1,0 +1,19 @@
+intent: a-browser-computes-what-the-server-verifies
+observed_at: d116266803
+recorded_by: claude-code (session 21616f1e, worktree feature/a-browser-computes-for-the-mesh; read-only audit of the mesh, the execution plane, the capability registry and wasm32 portability at master)
+recorded_at: 2026-10-17
+observations:
+  - id: one-crate-no-wasm
+    statement: The repository has one Rust crate and no Cargo workspace, no wasm32 target, no browser binding and no cfg(target_arch = "wasm32") anywhere
+    source: file:apps/majordomus-cli/Cargo.toml
+  - id: canonical-json-twice
+    statement: Canonical JSON is written twice, in mesh/journal.rs for signatures and in capability/executor.rs for cache keys, by two implementations that agree only by inspection
+    source: file:apps/majordomus-cli/src/mesh/journal.rs
+  - id: no-caller-authentication
+    statement: A caller beyond loopback reads and writes nothing, and the server authenticates no caller; ADR 0126 leaves token or key-based authorization open
+    source: file:.ai/repo/adrs/0126-a-caller-beyond-loopback-reads-and-changes-nothing-it-cannot-authenticate.md
+conditions:
+  - criterion: core-agrees-everywhere
+    state: missing
+    because: there is no portable core, no fixture and no wasm32 build; the two canonical writers are not held to anything shared
+    observations: [one-crate-no-wasm, canonical-json-twice]

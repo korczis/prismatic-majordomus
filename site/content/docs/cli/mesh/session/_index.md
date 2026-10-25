@@ -4,7 +4,7 @@ description = "Open, update or close a session on the mesh"
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 152
+weight = 153
 [extra]
 route = "/docs/cli/mesh/session/"
 command = "majordomus mesh session"

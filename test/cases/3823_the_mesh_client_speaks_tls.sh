@@ -42,7 +42,7 @@ declare_mesh() {
   mkdir -p .ai/repo/mesh
   {
     printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n'
-    printf 'multicast:\n  enabled: false\nbroadcast:\n  mode: disabled\n'
+    printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\nbroadcast:\n  mode: disabled\n'
     printf 'rendezvous:\n  endpoints:\n'
     printf '%s\n' "$1" | sed 's/^/    - /'
     printf 'cooperation:\n  seeds:\n'

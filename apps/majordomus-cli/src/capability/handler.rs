@@ -204,6 +204,27 @@ pub struct Context {
 static READINGS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
 
 impl Context {
+    /// The repository this context's index was built from, answered from the process's
+    /// one discovery (I3014): a capability asks its context rather than opening the
+    /// repository again from the index's root, so a served call reads no manifest (I3016).
+    ///
+    /// It is an error, not a panic, when the root no longer holds a layer: a served
+    /// process outlives the checkout it was started in.
+    ///
+    /// ```
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let repository = ctx.repository().unwrap();
+    /// assert_eq!(repository.root(), repo.root().canonicalize().unwrap());
+    /// assert_eq!(repository.manifest().local.path, "local");
+    /// std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+    /// assert!(ctx.repository().is_err(), "the layer is gone from under the context");
+    /// ```
+    pub fn repository(&self) -> crate::error::Result<crate::repository::Repository> {
+        crate::repository::Repository::open(std::path::Path::new(&self.index.repository.root))
+    }
+
     /// A context over an index and a registry, with an empty board, a fresh executor and
     /// no caller.
     pub fn new(index: Arc<Index>, registry: Arc<CapabilityRegistry>) -> Self {

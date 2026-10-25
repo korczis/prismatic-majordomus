@@ -104,6 +104,12 @@ pub enum StreamMessage {
         truncated: bool,
         /// How many seconds of quiet before the server pings.
         heartbeat_seconds: u64,
+        /// What this server process's cursors are good for, on a connection that follows the
+        /// blackboard: a client that reconnects sends it back with its cursor, and a cursor
+        /// of another process is answered with `stream.resync` rather than read as if it
+        /// were this one's.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        epoch: Option<String>,
     },
     /// The channel is quiet and alive: written with the ping on every quiet heartbeat, as
     /// a text frame a page can see, so a client that has heard nothing for a few heartbeats
@@ -119,6 +125,13 @@ pub enum StreamMessage {
     Lagged {
         /// How many events were dropped.
         dropped: u64,
+    },
+    /// The cursor or epoch the client resumed from cannot be served: the snapshot that
+    /// follows is its new starting point, and what it held before is not continued.
+    #[serde(rename = "stream.resync")]
+    Resync {
+        /// Why.
+        reason: String,
     },
     /// The server is closing this connection.
     #[serde(rename = "stream.closing")]
@@ -136,6 +149,8 @@ pub enum Scope {
     All,
     /// The executions named in the request target.
     Executions,
+    /// The blackboard (`follow=blackboard`, `super::follow`).
+    Blackboard,
 }
 
 /// What an event carries in place of a value too large for one frame: why it was withheld,
@@ -182,10 +197,39 @@ pub fn open_connections() -> usize {
 pub struct Accepted {
     /// The value to answer `Sec-WebSocket-Accept` with.
     pub accept: String,
-    stream: LiveStream,
+    stream: Followed,
+}
+
+/// What an accepted connection follows.
+enum Followed {
+    Executions(LiveStream),
+    Blackboard(super::follow::Follower),
+}
+
+impl Followed {
+    fn run(self, socket: Box<dyn std::io::Write + Send>, hung_up: impl Fn() -> bool) {
+        match self {
+            Followed::Executions(stream) => stream.run(socket, hung_up),
+            Followed::Blackboard(follower) => {
+                let open = OPEN.fetch_add(1, Ordering::Relaxed) + 1;
+                tracing::debug!(connections = open, "a blackboard follower opened");
+                follower.run(socket, &hung_up);
+                let open = OPEN.fetch_sub(1, Ordering::Relaxed) - 1;
+                tracing::debug!(connections = open, "a blackboard follower closed");
+            }
+        }
+    }
 }
 
 impl Accepted {
+    /// A heartbeat other than [`HEARTBEAT`], for a test that cannot wait twenty seconds.
+    #[cfg(test)]
+    fn set_heartbeat(&mut self, heartbeat: Duration) {
+        if let Followed::Executions(stream) = &mut self.stream {
+            stream.heartbeat = heartbeat;
+        }
+    }
+
     /// Serve the connection on an upgraded socket until it ends. Blocking; the caller runs
     /// it on a thread of its own.
     pub fn serve(self, socket: Box<dyn std::io::Write + Send>) {
@@ -237,20 +281,10 @@ struct LiveStream {
     snapshot: String,
 }
 
-/// Decide what a request to [`PATH`] means: an accepted connection, or the response to
-/// send instead.
-///
-/// The origin is checked here for the same reason it is checked for a state-changing
-/// request: a page on another origin can open a WebSocket to this server, and the
-/// same-origin policy does not stop it. This does.
-///
-/// `snapshot` is the route of `executions.get`, as the registry declares it: what a
-/// [`Withheld`] reference names as the place the whole value is read.
-pub fn accept(
-    store: &Arc<ExecutionStore>,
-    req: &Request,
-    snapshot: &str,
-) -> Result<Accepted, Response> {
+/// Whether a request may open the live channel at all, whatever it follows: a WebSocket
+/// upgrade, from this server's own origin, with a valid handshake, while a connection is
+/// free. The answer is the value of `Sec-WebSocket-Accept`.
+fn admit(req: &Request) -> Result<String, Response> {
     if !ws::is_upgrade(req) {
         return Err(Response::error(
             426,
@@ -289,6 +323,47 @@ pub fn accept(
             &format!("this process serves {MAX_CONNECTIONS} live channels at once and they are all in use"),
         ));
     }
+    Ok(accept)
+}
+
+/// Decide what a request that follows the blackboard means (`follow=blackboard`,
+/// [`super::follow`]): `None` when it follows something else, which [`accept`] answers.
+pub(crate) fn accept_follow(
+    ctx: &Arc<crate::capability::Context>,
+    req: &Request,
+) -> Option<Result<Accepted, Response>> {
+    let follow = super::follow::Follow::parse(&req.query)?;
+    Some(
+        follow
+            .map_err(|reason| Response::error(400, "invalid_input", &reason))
+            .and_then(|follow| {
+                let accept = admit(req)?;
+                Ok(Accepted {
+                    accept,
+                    stream: Followed::Blackboard(super::follow::Follower::new(
+                        Arc::clone(ctx),
+                        follow,
+                    )),
+                })
+            }),
+    )
+}
+
+/// Decide what a request to [`PATH`] means: an accepted connection, or the response to
+/// send instead.
+///
+/// The origin is checked here for the same reason it is checked for a state-changing
+/// request: a page on another origin can open a WebSocket to this server, and the
+/// same-origin policy does not stop it. This does.
+///
+/// `snapshot` is the route of `executions.get`, as the registry declares it: what a
+/// [`Withheld`] reference names as the place the whole value is read.
+pub fn accept(
+    store: &Arc<ExecutionStore>,
+    req: &Request,
+    snapshot: &str,
+) -> Result<Accepted, Response> {
+    let accept = admit(req)?;
     let mut executions = Vec::new();
     let mut after = 0u64;
     for (key, value) in &req.query {
@@ -331,13 +406,13 @@ pub fn accept(
     };
     Ok(Accepted {
         accept,
-        stream: LiveStream {
+        stream: Followed::Executions(LiveStream {
             store: Arc::clone(store),
             filter,
             after,
             heartbeat: HEARTBEAT,
             snapshot: snapshot.to_string(),
-        },
+        }),
     })
 }
 
@@ -385,6 +460,7 @@ impl LiveStream {
             replayed: replayed.len(),
             truncated,
             heartbeat_seconds: HEARTBEAT.as_secs(),
+            epoch: None,
         };
         let mut alive = write(&mut socket, &ready);
         for event in replayed {
@@ -928,7 +1004,7 @@ mod tests {
         .expect("accepted");
         // a short heartbeat, so a replay that stopped early ends in a failed assertion
         // rather than in a wait: its unused writes are spent on heartbeats at once
-        accepted.stream.heartbeat = Duration::from_millis(1);
+        accepted.set_heartbeat(Duration::from_millis(1));
         // the ready frame and every replayed event; the nudge is the first write refused
         let sink = SharedSink::new(1 + behind);
         let writer = Box::new(sink.clone());
@@ -968,7 +1044,7 @@ mod tests {
             &upgrade_request(&format!("{PATH}?execution={id}&after={last}")),
         )
         .expect("accepted");
-        accepted.stream.heartbeat = Duration::from_millis(20);
+        accepted.set_heartbeat(Duration::from_millis(20));
         // the ready frame, one ping and one heartbeat; the next ping finds the client gone
         let sink = SharedSink::new(3);
         let writer = Box::new(sink.clone());
@@ -1077,7 +1153,7 @@ mod tests {
             &upgrade_request(&format!("{PATH}?execution={id}&after=2")),
         )
         .expect("accepted");
-        accepted.stream.heartbeat = Duration::from_millis(20);
+        accepted.set_heartbeat(Duration::from_millis(20));
         // ready, the completed event, the nudge's log line; the next ping is refused
         let sink = SharedSink::new(3);
         let writer = Box::new(sink.clone());

@@ -1,0 +1,119 @@
+{% extends "page.html" %}
+{% block body %}
+{#- Coverage and CI cost over master's recent validate runs (I3933). Every figure is a field of
+    data/trends.json, which `scripts/pages trends` reads from the forge at publish time: the
+    runs, their jobs and each run's own coverage-summary artifact. It is never committed, so a
+    build without it (a local one, or a publication whose forge could not be read) says so
+    instead of drawing anything. The template formats; it computes nothing but a percentage
+    from a covered/total pair and minutes from seconds. A run without coverage reads "not
+    recorded", which site/charts.js draws as a gap, never as zero. The charts are that
+    component drawing these tables (ADR 0152). -#}
+{%- set tr = load_data(path="data/trends.json", required=false) -%}
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
+{%- if tr and tr.schema == "trends/v1" and tr.runs | length > 0 %}
+{%- set runs = tr.runs -%}
+{%- set measured = [r for r in runs if r.coverage] -%}
+{%- set first = runs[0] -%}{%- set latest = runs | last -%}
+<section class="mt-10" aria-labelledby="trends-read">
+  <h2 id="trends-read" class="text-xl font-semibold text-heading">What was read</h2>
+  <dl class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Runs of master</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ runs | length }}">{{ runs | length }}</data></dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">With their coverage</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading"><data value="{{ measured | length }}">{{ measured | length }}</data></dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Oldest run</dt><dd class="mt-1 font-mono text-sm font-semibold text-heading"><data value="{{ first.started_at }}">{{ first.started_at }}</data></dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-3"><dt class="text-xs text-body-subtle">Newest run</dt><dd class="mt-1 font-mono text-sm font-semibold text-heading"><data value="{{ latest.started_at }}">{{ latest.started_at }}</data></dd></div>
+  </dl>
+</section>
+
+<section class="mt-10" aria-labelledby="trends-coverage">
+  <h2 id="trends-coverage" class="text-xl font-semibold text-heading">Coverage</h2>
+  {%- if measured | length > 0 %}
+  <figure id="chart-trends-coverage" class="not-format m-0 mt-6 min-w-0" data-chart="line" data-chart-unit="%" data-chart-label="The crate's line, function and region coverage at each run of master, oldest first">
+    <figcaption class="mb-3 text-sm text-body-subtle">The crate's coverage at each run, oldest first, test code excluded. A run that reads "not recorded" kept no coverage the forge still holds.</figcaption>
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Coverage at each run of master">
+      <table class="w-full text-left text-sm">
+        <thead><tr><th scope="col" class="p-2">Run started</th><th scope="col" class="p-2" data-series="lines">Lines</th><th scope="col" class="p-2" data-series="functions">Functions</th><th scope="col" class="p-2" data-series="regions">Regions</th><th scope="col" class="p-2">Commit</th></tr></thead>
+        <tbody>
+        {%- for r in runs %}
+          <tr id="chart-trends-coverage:{{ r.run_id }}" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="{{ project.repository_url }}/actions/runs/{{ r.run_id }}">{{ r.started_at }}</a></td>
+            {%- for what in ["lines", "functions", "regions"] %}
+            {%- if r.coverage %}{% set d = r.coverage[what] %}{% else %}{% set d = false %}{% endif %}
+            {%- if d and d.total > 0 %}{% set pc = d.covered / d.total * 100 %}
+            <td class="p-2 font-mono" data-value="{{ pc }}">{{ pc | round(precision=2) }}% <span class="text-body-subtle">({{ d.covered }}/{{ d.total }})</span></td>
+            {%- else %}
+            <td class="p-2 text-body-subtle">not recorded</td>
+            {%- endif %}
+            {%- endfor %}
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="{{ project.repository_url }}/commit/{{ r.head_sha }}">{{ r.head_sha | truncate(length=12, end="") }}</a></td>
+          </tr>
+        {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+  </figure>
+  {%- else %}
+  <p class="mt-3 text-sm text-body">None of these runs has a coverage measurement the forge still keeps, so no coverage is drawn. Their cost is below.</p>
+  {%- endif %}
+</section>
+
+<section class="mt-10" aria-labelledby="trends-cost">
+  <h2 id="trends-cost" class="text-xl font-semibold text-heading">CI cost</h2>
+  <figure id="chart-trends-cost" class="not-format m-0 mt-6 min-w-0" data-chart="line" data-chart-unit="min" data-chart-label="Each run's wall time and the minutes its jobs waited for a runner, oldest first">
+    <figcaption class="mb-3 text-sm text-body-subtle">Wall time is from the run's start to its last job's end. Queued is the sum over its jobs of the time each waited for a runner, so it can exceed the wall time when jobs wait side by side.</figcaption>
+    <div class="overflow-x-auto" tabindex="0" role="region" aria-label="CI cost of each run of master">
+      <table class="w-full text-left text-sm">
+        <thead><tr><th scope="col" class="p-2">Run started</th><th scope="col" class="p-2" data-series="wall">Wall minutes</th><th scope="col" class="p-2" data-series="queued">Queued minutes</th><th scope="col" class="p-2">Jobs</th><th scope="col" class="p-2">Conclusion</th></tr></thead>
+        <tbody>
+        {%- for r in runs %}
+          <tr id="chart-trends-cost:{{ r.run_id }}" class="border-t border-default">
+            <td class="p-2 font-mono text-xs"><a class="underline inline-block py-1" href="{{ project.repository_url }}/actions/runs/{{ r.run_id }}">{{ r.started_at }}</a></td>
+            {%- if r.wall_seconds is number %}{% set wm = r.wall_seconds / 60 %}
+            <td class="p-2 font-mono" data-value="{{ wm }}">{{ wm | round(precision=1) }}</td>
+            {%- else %}
+            <td class="p-2 text-body-subtle">not recorded</td>
+            {%- endif %}
+            {%- set qm = r.queued_seconds_total / 60 %}
+            <td class="p-2 font-mono" data-value="{{ qm }}">{{ qm | round(precision=1) }}</td>
+            <td class="p-2 font-mono">{{ r.jobs | length }}</td>
+            <td class="p-2">{{ r.conclusion | default(value="unknown") }}</td>
+          </tr>
+        {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+  </figure>
+</section>
+
+{%- if tr.job_medians and tr.job_medians | length > 0 %}
+<section class="mt-10" aria-labelledby="trends-jobs">
+  <h2 id="trends-jobs" class="text-xl font-semibold text-heading">The slowest jobs</h2>
+  <p class="mt-2 text-sm text-body">Each job's median over the runs above in which it ran, slowest first; a skipped job did not run and is not counted.</p>
+  <div class="mt-4 overflow-x-auto" tabindex="0" role="region" aria-label="Median minutes of each job">
+    <table class="w-full text-left text-sm">
+      <thead><tr><th scope="col" class="p-2">Job</th><th scope="col" class="p-2">Median run minutes</th><th scope="col" class="p-2">Median queued minutes</th><th scope="col" class="p-2">Runs counted</th></tr></thead>
+      <tbody>
+      {%- for j in tr.job_medians[:15] %}
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">{{ j.name }}</td>
+          <td class="p-2 font-mono">{{ (j.median_run_s / 60) | round(precision=1) }}</td>
+          <td class="p-2 font-mono">{% if j.median_queued_s is number %}{{ (j.median_queued_s / 60) | round(precision=1) }}{% else %}not recorded{% endif %}</td>
+          <td class="p-2 font-mono">{{ j.runs }}</td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{%- endif %}
+{%- else %}
+<section class="mt-10" aria-labelledby="trends-none">
+  <h2 id="trends-none" class="text-xl font-semibold text-heading">No series reached this build</h2>
+  <p class="mt-3 text-body">
+    {%- set status = "unknown" -%}{%- set status_kind = "" -%}{% include "partials/status-badge.html" %}
+    The series is read from the forge when the site is published (<code>scripts/pages trends</code>), and this build has none: it was built without that step, or the forge could not be read. Nothing here stands in for it.
+  </p>
+</section>
+{%- endif %}
+{% endblock body %}
+{#- the chart component only where there is a series for it to draw -#}
+{% block scripts %}{%- set tr = load_data(path="data/trends.json", required=false) -%}{% if tr and tr.schema == "trends/v1" and tr.runs | length > 0 %}{% include "partials/charts.html" %}{% endif %}{% endblock scripts %}

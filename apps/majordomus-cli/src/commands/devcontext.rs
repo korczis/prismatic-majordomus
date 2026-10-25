@@ -61,6 +61,7 @@ fn request_of(r: &DevcontextRequest) -> Value {
         max_depth: r.max_depth,
         floor: r.floor,
         all_blocking_rules: r.all_blocking_rules.then_some(true),
+        source_ranges: r.source_ranges.then_some(true),
     };
     serde_json::to_value(input).unwrap_or(Value::Null)
 }
@@ -220,6 +221,53 @@ fn compiled_text(v: &Value) -> String {
         }
     }
 
+    let src = &v["sources"];
+    if src.is_object() {
+        let files = src["files"].as_array().cloned().unwrap_or_default();
+        let sum = |key: &str| -> u64 { files.iter().filter_map(|f| f[key].as_u64()).sum() };
+        o.push_str(&format!(
+            "\nSOURCES ({} file(s) outlined: {} token(s) whole, {} in selected ranges, {} saved)\n",
+            files.len(),
+            sum("whole_tokens"),
+            sum("selected_tokens"),
+            sum("saved_tokens")
+        ));
+        o.push_str(&format!("parser       {}\n", s(&src["parser"])));
+        for f in &files {
+            o.push_str(&format!(
+                "{:>6} -> {:>6}  {:>3} of {:>3} range(s)  {}  {}\n",
+                f["whole_tokens"],
+                f["selected_tokens"],
+                f["selected"],
+                f["definitions"],
+                s(&f["path"]),
+                short(s(&f["digest"]).trim_start_matches("sha256:"))
+            ));
+        }
+        for u in src["unread"].as_array().into_iter().flatten() {
+            o.push_str(&format!(
+                "unread       {}  — {}\n",
+                s(&u["path"]),
+                s(&u["reason"])
+            ));
+        }
+        if let Some(by) = src["unparsed"].as_object() {
+            let mut parts: Vec<String> = by.iter().map(|(ext, n)| format!("{ext} {n}")).collect();
+            crate::order::canonical_strings(&mut parts);
+            if !parts.is_empty() {
+                o.push_str(&format!(
+                    "unparsed     {} (no parser here; no ranges)\n",
+                    parts.join(", ")
+                ));
+            }
+        }
+        if let Some(n) = src["truncated"].as_u64() {
+            o.push_str(&format!(
+                "truncated    {n} file(s) past the per-request bound, not read\n"
+            ));
+        }
+    }
+
     let commits = git["commits"].as_array().cloned().unwrap_or_default();
     if !commits.is_empty() {
         o.push_str(&format!("\nCOMMITS THE LAYER NAMES ({})\n", commits.len()));
@@ -325,6 +373,72 @@ mod tests {
     use super::*;
     use serde_json::json;
 
+    fn compiled_with(sources: Value) -> String {
+        compiled_text(&json!({
+            "fingerprint": "abcdef0123456789",
+            "git": {"head": "0123456789abcdef", "branch": "master", "working_tree": "clean"},
+            "budget": {"used_tokens": 1, "limit_tokens": 2, "required_tokens": 0,
+                       "bytes_per_token": 4, "over_budget": false, "tiers": []},
+            "selected": [], "excluded": [], "deduplicated": [], "conflicts": [],
+            "diagnostics": [],
+            "sources": sources
+        }))
+    }
+
+    #[test]
+    fn the_text_says_what_the_source_cost_and_what_was_not_read() {
+        let t = compiled_with(json!({
+            "parser": "syn 2",
+            "files": [
+                {"path": "src/big.rs", "digest": "sha256:0123456789abcdef0123", "bytes": 4000,
+                 "whole_tokens": 1000, "definitions": 12, "ranges": 11, "truncated": 0,
+                 "selected": 2, "selected_tokens": 120, "saved_tokens": 880},
+                {"path": "src/small.rs", "digest": "sha256:fedcba9876543210", "bytes": 400,
+                 "whole_tokens": 100, "definitions": 3, "ranges": 3, "truncated": 0,
+                 "selected": 1, "selected_tokens": 20, "saved_tokens": 80}
+            ],
+            "unread": [{"path": "src/link.rs", "reason": "a symbolic link; not followed"}],
+            "unparsed": {".md": 2, ".toml": 1},
+            "truncated": 3
+        }));
+        for want in [
+            "SOURCES (2 file(s) outlined: 1100 token(s) whole, 140 in selected ranges, 960 saved)",
+            "parser       syn 2",
+            // a JSON number does not take a width, so the columns are not padded
+            "\n1000 -> 120  2 of 12 range(s)  src/big.rs  0123456789ab\n",
+            "\n100 -> 20  1 of 3 range(s)  src/small.rs  fedcba987654\n",
+            "unread       src/link.rs  — a symbolic link; not followed",
+            "unparsed     .md 2, .toml 1 (no parser here; no ranges)",
+            "truncated    3 file(s) past the per-request bound, not read",
+        ] {
+            assert!(t.contains(want), "missing {want:?} in\n{t}");
+        }
+    }
+
+    #[test]
+    fn an_empty_unparsed_count_and_no_truncation_print_no_line() {
+        let t = compiled_with(json!({"parser": "syn 2", "unparsed": {}}));
+        assert!(
+            t.contains(
+                "SOURCES (0 file(s) outlined: 0 token(s) whole, 0 in selected ranges, 0 saved)"
+            ),
+            "{t}"
+        );
+        assert!(!t.contains("unparsed "), "{t}");
+        assert!(!t.contains("truncated "), "{t}");
+        assert!(!t.contains("unread "), "{t}");
+        // and an answer without the section says nothing about source at all
+        assert!(!compiled_with(Value::Null).contains("SOURCES"));
+    }
+
+    #[test]
+    fn a_source_section_without_an_unparsed_count_prints_no_unparsed_line() {
+        let t = compiled_with(json!({"parser": "syn 2", "truncated": 1}));
+        assert!(t.contains("parser       syn 2"), "{t}");
+        assert!(!t.contains("unparsed "), "{t}");
+        assert!(t.contains("truncated    1 file(s)"), "{t}");
+    }
+
     #[test]
     fn the_text_says_what_was_selected_excluded_and_why() {
         let v = json!({
@@ -373,6 +487,7 @@ mod tests {
             max_depth: None,
             floor: None,
             all_blocking_rules: false,
+            source_ranges: false,
         };
         let v = request_of(&r);
         assert_eq!(v["issue"], "I0001");
@@ -382,5 +497,6 @@ mod tests {
         // executor's cache key is the canonical form
         assert!(v.get("milestone").is_none());
         assert!(v.get("all_blocking_rules").is_none());
+        assert!(v.get("source_ranges").is_none());
     }
 }

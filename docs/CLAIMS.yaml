@@ -1094,22 +1094,22 @@ claims:
     note: Two registry capabilities, peers.list (a query) and peers.announce (the one command), projected like every other; each board is one process's memory and is gone with it. peers.list gathers - it enumerates the checkouts git registers, reads its own board from memory and asks every other checkout's server for its own board (checkouts=this, which is what keeps the gather one hop deep), and reports in boards and complete which checkouts it covered and whether it could read them all. Before ADR 0044 it answered one checkout's board while the bootstrap told every worker it had seen the repository; measured on 2026-09-11, nine agents across sixty worktrees each read a board that held only itself. A peer id is a position on one board and is reassigned on reconnect; the checkout a peer carries is the durable half. Announcements are informational and die with the connection; scope is enforced by the shell tool's task record, not here.
 
   - id: mcp-client-autostart
-    claim: An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp
+    claim: An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable
     source: docs/MCP.md
     implementation: bin/majordomus-mcp
     test: test/cases/90_mcp_shared_server.sh
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: .mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN, MAJORDOMUS_BUILD_PROFILE and MAJORDOMUS_NO_BUILD control the build.
+    note: .mcp.json (Claude Code), .gemini/settings.json (Gemini CLI) and .codex/config.toml (Codex) name the same launcher, which writes nothing to stdout and passes every argument to majordomus mcp; MAJORDOMUS_BIN and MAJORDOMUS_BUILD_PROFILE say which executable runs, and none is built (ADR 0224): `just build` is the build.
 
   - id: mcp-client-always-served
-    claim: A client that starts the MCP server from a checkout with no executable to run, or none it can build, is served by the installed release and told so, instead of being turned away
+    claim: A client that starts the MCP server from a checkout whose executable is missing or stale is served by the installed release when it is of this tree's generation and told so, and is otherwise refused with exit 12 naming the explicit build; nothing is built
     source: docs/MCP.md
     implementation: bin/majordomus-cli
     test: test/cases/3177_a_client_always_gets_a_server.sh
     status: guaranteed
     responsibility: none      # the launcher is the shell tool's, not a supervised responsibility
-    note: Only `mcp` falls back; every other command still exits 12. The fallback runs after a build that could succeed was tried, or without one when there is no cargo or less free space than the floor, and it names the release and the reason on stderr. A file inside the repository, and one that does not answer --version, is never taken for the installed release. MAJORDOMUS_MCP_BUILD=1 restores the build for a contributor. The 2026-10-16 session that began as the only worker of a repository (ADR 0156) began here, with exit 12 on 4.5GB free against a 5120MB floor.
+    note: The generation is the commit the release's RELEASE.json names, which must carry every crate input of the working tree unchanged (mj_rust_same_generation); a version string is not one (ADR 0224, superseding ADR 0172). Every command of the launcher gets the same answer, not mcp alone. A file inside the repository, and one that does not answer --version, is never taken for the installed release. The 2026-10-16 session that began as the only worker of a repository (ADR 0226) began with exit 12 on 4.5GB free; the 2026-10-22 pre-push that timed out at ninety minutes behind the build lock is why the launcher no longer builds at all.
 
   - id: session-start-prompt
     claim: A bare claude in a supervised repository starts with the repository's session-start prompt as its first message, and a run with an argument, outside such a repository, with the opt-out, or with a prompt that cannot be rendered is left exactly as it was
@@ -1480,7 +1480,7 @@ claims:
     note: The episode opens on episodes.attach and never on initialize, so a client that only reads the layer leaves no record; it is keyed by the external identity the client supplies and never by a peer id, which is handed out per connection; every message the client sends is its heartbeat; losing the connection detaches rather than closes, and a reconnect under the same identity resumes the same episode. Nothing here writes a session record - the board runs `capture session --provider generic`, the same command a provider hook's shim runs, and reports what it said. Prompt capture is declared impossible for the connection and is not attempted: an MCP server is handed tool calls, never the prompt that produced them. ADR 0103.
 
   - id: provider-capability-evidence
-    claim: What each provider can do about the session lifecycle, prompt capture and driving a browser beside this server is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported
+    claim: What each provider can do about the session lifecycle, prompt capture, driving a browser beside this server and reporting what a session consumed is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported
     source: docs/CONCEPTS.md
     implementation: share/providers.yaml
     test: test/cases/200_generic_mcp_episode.sh

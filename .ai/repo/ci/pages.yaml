@@ -58,6 +58,16 @@ deploy:
   # (OWED_AFTER, 1800s), for the same measured reason: a queue of 25 minutes is weather.
   # project.the-site-offers-the-release-it-published.
   release_window: 1800
+  # How long GitHub's own "pages build and deployment" may stay `building` or `queued` before
+  # it counts as hung, and `scripts/pages rebuild` replaces it instead of waiting on it (I3902).
+  # A rebuild preempts the build in flight, so the bound sits above the longest build that
+  # has ever finished: on 2026-10-22 the builds took 45-80 s as usual, with outliers of 351,
+  # 582, 745 and 1200 s that did finish, and one that was still `building` after 47 minutes
+  # while the site served the previous commit and nothing could replace it. 1500 s is the
+  # longest finished build plus a quarter. A hung build costs delivery time and nothing
+  # else: no request ever replaced it, because the old predicate refused while it was in
+  # flight.
+  build_hung_after: 1500
   publish: scripts/site-deploy --skip-build
   # What the publishing clone must be able to answer, and therefore what it must be given.
   #

@@ -118,8 +118,24 @@ grep -o -- '--mount=type=cache[^ ]*' "$ROOT/deploy/Dockerfile" | grep -vx -- '--
 grep -q '^ENV RUSTC_WRAPPER=sccache ' "$ROOT/deploy/Dockerfile" || { echo "    cargo does not run behind sccache"; exit 1; }
 awk '/ AS build$/{exit} /MAJORDOMUS_BUILD_(COMMIT|DIRTY)/{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
   || { echo "    a stage before build reads the commit, so every commit recompiles the dependencies"; exit 1; }
-awk '/ AS build$/{exit} /^COPY / && !/^COPY --from=recipe / && !/Cargo\.toml .*Cargo\.lock /{print; found=1} END{exit found}' "$ROOT/deploy/Dockerfile" \
-  || { echo "    a stage before build copies more than the manifest and the lockfile"; exit 1; }
+# The one other input a stage before build may copy is a path crate the package compiles
+# against, as the deployment declares it under build.crates (I2784): each is copied whole,
+# to its own path, before the dependencies are compiled, and never into the runtime image.
+crates="$(awk '/^build:/{b=1; next} b && /^[^ #]/{b=0} b && /^  crates:/{c=1; next}
+  c && /^    - /{print $2; next} c{c=0}' "$ROOT/.ai/repo/deployments/majordomus.yaml")"
+[ -n "$crates" ] || { echo "    the deployment declares no build.crates"; exit 1; }
+awk -v crates="$crates" 'BEGIN{n=split(crates, c, "\n"); for (i=1; i<=n; i++) ok["COPY " c[i] " ./" c[i]]=1}
+  / AS build$/{exit} /^COPY / && !/^COPY --from=recipe / && !/Cargo\.toml .*Cargo\.lock / && !($0 in ok){print; found=1}
+  END{exit found}' "$ROOT/deploy/Dockerfile" \
+  || { echo "    a stage before build copies more than the manifest, the lockfile and the declared crates"; exit 1; }
+for crate in $crates; do
+  awk -v want="COPY $crate ./$crate" '/ AS build$/{exit} $0 == want{found=1} END{exit !found}' "$ROOT/deploy/Dockerfile" \
+    || { echo "    the declared crate $crate is not in the dependency stage"; exit 1; }
+  if awk -v crate="$crate" '/^FROM alpine/{rt=1} rt && /^COPY / && index($0, " " crate " "){found=1}
+      END{exit !found}' "$ROOT/deploy/Dockerfile"; then
+    echo "    the declared crate $crate is copied into the runtime image"; exit 1
+  fi
+done
 
 # ---------------------------------------------------------------- a release image compiles nothing
 # MAJORDOMUS_BINARY_FROM=release takes the release's own published executable from the

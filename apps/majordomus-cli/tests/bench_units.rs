@@ -339,6 +339,7 @@ fn counters_and_phases_are_readable_and_the_startup_set_is_named() {
         names,
         [
             "repository_scans",
+            "repository_discoveries",
             "index_builds",
             "registry_builds",
             "schema_generations",

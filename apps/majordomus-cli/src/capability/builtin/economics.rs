@@ -30,6 +30,7 @@ use crate::economics::model::{
     EconomicsExplainInput, EconomicsExplanation, EconomicsQuery, EconomicsRunList,
     EconomicsRunsQuery, EconomicsSummary,
 };
+use crate::economics::tasks::{TaskEconomicsList, TaskEconomicsQuery};
 use crate::{capability, module};
 
 use super::{get, mcp};
@@ -83,6 +84,21 @@ impl BenchmarkCases for EconomicsRunsQuery {
     }
 }
 
+impl BenchmarkCases for TaskEconomicsQuery {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("all", TaskEconomicsQuery::default()),
+            NamedCase::new(
+                "window",
+                TaskEconomicsQuery {
+                    since: Some("2026-10-19T00:00:00Z".into()),
+                    until: Some("2026-10-22T00:00:00Z".into()),
+                },
+            ),
+        ]
+    }
+}
+
 impl BenchmarkCases for EconomicsCheckInput {
     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         vec![NamedCase::new("default", EconomicsCheckInput::default())]
@@ -108,14 +124,19 @@ fn runs(ctx: &Context, q: EconomicsRunsQuery) -> Result<EconomicsRunList, Capabi
     Ok(crate::economics::runs(root(ctx), &q))
 }
 
+fn tasks(ctx: &Context, q: TaskEconomicsQuery) -> Result<TaskEconomicsList, CapabilityError> {
+    Ok(crate::economics::tasks::tasks(root(ctx), &q))
+}
+
 fn check(ctx: &Context, _: EconomicsCheckInput) -> Result<EconomicsCheckReport, CapabilityError> {
     Ok(crate::economics::claims::check(root(ctx)))
 }
 
-/// The `economics` module: four read-only capabilities, each a thin call into
+/// The `economics` module: five read-only capabilities, each a thin call into
 /// [`crate::economics`], so no surface computes a metric of its own. The summary, the
 /// explanation and the run list are cached per process for five seconds; the claim check is
-/// never cached, because a gate that answered from memory could pass prose edited a moment ago.
+/// never cached, because a gate that answered from memory could pass prose edited a moment ago,
+/// and neither are the task records, which a ledger line written a moment ago changes.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::economics::module;
@@ -124,7 +145,13 @@ fn check(ctx: &Context, _: EconomicsCheckInput) -> Result<EconomicsCheckReport, 
 /// let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
 /// assert_eq!(
 ///     ids,
-///     ["economics.summary", "economics.explain", "economics.runs", "economics.check"]
+///     [
+///         "economics.summary",
+///         "economics.explain",
+///         "economics.runs",
+///         "economics.check",
+///         "economics.tasks",
+///     ]
 /// );
 /// // every capability reads; none of them changes the repository
 /// assert!(m.capabilities.iter().all(|e| e.capability.kind.is_read_only()));
@@ -204,6 +231,21 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["economics", "claims", "gate"],
                 handler: check,
             },
+            capability! {
+                id: "economics.tasks",
+                title: "Each task's delivery economics",
+                description: "One record per task, folded from the ledger of every checkout `git worktree list` reports and the archives a ledger rotation left: its issue and intent, checkout and branch, first start, last finish or refusal, wall seconds, refusal count, and the episodes that carried it with their spans. Interventions, CI reruns, spend and acceptance are present on every record as not_observed, each with the reason and the issue that will supply it. Lists every ledger read with its line and skipped-line counts and every checkout not read; an optional since/until window filters by each task's start.",
+                input: TaskEconomicsQuery,
+                output: TaskEconomicsList,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_economics_tasks"),
+                    http: get("/api/v1/economics/tasks"),
+                    cli: Some(CliExposure { path: vec!["economics".into(), "tasks".into()] }),
+                },
+                tags: ["economics", "evidence", "delivery"],
+                handler: tasks,
+            },
         ],
     }
 }
@@ -229,7 +271,8 @@ mod tests {
                 "economics.summary",
                 "economics.explain",
                 "economics.runs",
-                "economics.check"
+                "economics.check",
+                "economics.tasks"
             ]
         );
         for (e, route, tool) in [
@@ -252,6 +295,11 @@ mod tests {
                 &m.capabilities[3],
                 "/api/v1/economics/check",
                 "majordomus_economics_check",
+            ),
+            (
+                &m.capabilities[4],
+                "/api/v1/economics/tasks",
+                "majordomus_economics_tasks",
             ),
         ] {
             let c = &e.capability;

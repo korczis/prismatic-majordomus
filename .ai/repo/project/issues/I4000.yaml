@@ -1,0 +1,29 @@
+id: I4000
+milestone: a-session-proceeds-through-the-mesh
+title: "A repeated executions.start with the same key answers one execution"
+slug: executions-start-takes-an-idempotency-key
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - a-session-proceeds-through-the-mesh#an-implement-request-runs-once
+objective: "Give executions.start an optional idempotency key; ExecutionStore::create returns the existing execution id for a key it has already seen instead of creating a second execution (Mission Control B1)."
+why: "A double click or a retried client starts two executions of the same capability today; nothing in ExecutionStore::create recognises a repeat."
+current_state: "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists."
+desired_state: "The acceptance criteria below hold and case 4000 proves them."
+scope:
+  - "apps/majordomus-cli/src/execution/store.rs"
+  - "apps/majordomus-cli/src/capability/builtin/executions.rs"
+  - "docs/EXECUTIONS.md"
+  - "test/cases/4000_executions_start_takes_an_idempotency_key.sh"
+  - ".ai/repo/project/issues/I4000.yaml"
+acceptance_criteria:
+  - "A repeated executions.start with the same key answers the same execution id and starts no second execution"
+  - "A different key, or no key, behaves as before"
+  - "The key lives in the execution's own record: no new store"
+validation:
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4000_executions_start_takes_an_idempotency_key"
+evidence_required:
+  - "case_4000_executions_start_takes_an_idempotency_key"
+created_at: 2026-10-23
+updated_at: 2026-10-23

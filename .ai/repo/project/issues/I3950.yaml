@@ -1,0 +1,42 @@
+id: I3950
+milestone: builds-reuse-the-mesh-cache
+title: "A cache key is a versioned triplet of platform, toolchain and inputs, derived from the host and the repository"
+slug: a-cache-key-is-a-derived-triplet
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "A key model under mesh/build_cache/: the kinds a repository has (cargo build directory, mix deps, npm node_modules) detected from the lockfiles it tracks, each key derived from a schema version, the platform (the toolchain's host triple, or 'any' for platform-independent source), the toolchain executable's own version and the digest of the declared inputs and environment; projected as majordomus mesh build-cache key."
+why: "The owner, 2026-10-22, after lundra (the build and deploy host) reached zero free bytes: the shared cache must be part of Majordomus — used when MinIO is available, enforced, dynamic, derived — for compiled Rust, the shared cargo build directory, mix deps.get and npm install, keyed by a triplet for the most reuse. Decided the same day after critique: the store is trusted only through a signed offer (I2671), the build directory archive is measured before it is built (I3955), and the dependency cache is generic and wired first into prismatic-platform. See ADR 0157 and intent a-build-reuses-what-the-mesh-already-built."
+current_state: "Measured on master 2034d4a3f0b on 2026-10-22: no key derivation, no S3 client and no dependency cache exist in the crate; I2670 (#1118) holds the offer model and the pure selection only."
+desired_state: "majordomus mesh build-cache key [--kind] answers every kind present with its key and why, on CLI, HTTP, MCP and OpenAPI; every input that changes what an install leaves changes the key; a kind whose toolchain is absent says so."
+scope:
+  - "apps/majordomus-cli/src/mesh/build_cache.rs"
+  - "apps/majordomus-cli/src/mesh/build_cache/"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "docs/generated"
+  - "site/content/docs"
+  - "site/data"
+  - ".ai/repo/project/intents/a-build-reuses-what-the-mesh-already-built.yaml"
+  - "test/cases/3950_a_cache_key_is_a_derived_triplet.sh"
+non_scope:
+  - "Talking to a store"
+  - "Restoring or saving anything"
+depends_on:
+  - I2670
+acceptance_criteria:
+  - "The platform is the toolchain's own host triple where it states one (rustc -vV); mix deps, which are platform-independent source, are keyed 'any'"
+  - "The toolchain part is read from the executable that will run (rustc, elixir and erl, node and npm's major), never from a pin file alone"
+  - "A changed lockfile, a changed companion input (a member's Cargo.toml, .npmrc), a changed declared variable (RUSTFLAGS, CARGO_ENCODED_RUSTFLAGS, NODE_ENV) and a changed toolchain each change the key; an unrelated file does not"
+  - "The key carries a schema version, so a key derived by an older executable is never mistaken for a newer one's"
+  - "The criterion key-is-a-derived-triplet turns to evidence: test in the commit that adds case 3950"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3950_a_cache_key_is_a_derived_triplet"
+evidence_required:
+  - "key_derivation_case"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#key-is-a-derived-triplet"
+created_at: 2026-10-22
+updated_at: 2026-10-22

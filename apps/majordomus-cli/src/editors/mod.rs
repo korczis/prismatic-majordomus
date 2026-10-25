@@ -771,6 +771,19 @@ pub fn report(
 ) -> EditorProjection {
     let plan = plan(index, registry, root, version);
     let orphans = orphans(root, &plan.artifacts);
+    // A person's own commands and skills are read here and never in `plan`: the plan is what
+    // `generate` writes, and a committed file must not depend on whose machine wrote it.
+    let projected: Vec<String> = plan
+        .artifacts
+        .iter()
+        .filter_map(|a| claude::skill_name(&a.path))
+        .collect();
+    let mut diagnostics = plan.diagnostics;
+    diagnostics.extend(claude::shadow_findings(
+        &projected,
+        claude::personal_dir().as_deref(),
+    ));
+    sort_diagnostics(&mut diagnostics);
     EditorProjection {
         schema: SCHEMA.into(),
         projection_version: PROJECTION_VERSION,
@@ -778,7 +791,7 @@ pub fn report(
         inputs: plan.inputs,
         artifacts: plan.derivations,
         orphans,
-        diagnostics: plan.diagnostics,
+        diagnostics,
     }
 }
 

@@ -15,6 +15,8 @@ scope:
   - "scripts/lib/site-i18n.mjs"
   - "scripts/site-translate"
   - "scripts/site-check"
+  - "site/templates/index.html"
+  - "site/templates/partials/footer.html"
   - "site/i18n/cs/memory"
   - "test/cases/3731_a_number_in_a_segment_is_a_placeholder.sh"
   - "test/cases/3590_the_site_is_derived_in_every_language.sh"
@@ -27,6 +29,7 @@ non_scope:
   - "A share floor for any route other than the homepage"
 acceptance_criteria:
   - "Two fixture pages that differ only in a count inside one sentence produce one memory key, and one translation serves both with each page's own number restored"
+  - "A changing value that is the whole text of an inline element, a short commit id (7 to 40 hex digits) or a version with its date, becomes a void value placeholder too: two builds of one page at different commits produce the same memory key for the sentence around it (33 measured three /cs/ homepage segments re-keyed on every build of 76c57859663: inferred at a commit id, read once at this site's commit id, and the release record line)"
   - "Negative: a translation that drops, repeats or changes a value placeholder is not admitted and the segment is counted as missing"
   - "An identifier that contains digits, such as I1011 or v0.30.2, inside opaque markup or as a lone token stays untranslated and unchanged"
   - "site-translate rekey keeps every translation whose digits match its English, and the cs coverage after a rekey and rebuild of master is not lower than before it"

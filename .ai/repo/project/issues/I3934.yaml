@@ -1,0 +1,26 @@
+id: I3934
+milestone: measurements-are-tracked-over-time
+title: "A CI run is emitted as an OpenTelemetry trace when an endpoint is configured, and nothing is sent when none is"
+slug: a-ci-run-is-an-opentelemetry-trace
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "When the repository configures an OTLP endpoint, every completed validate workflow run is exported as one OpenTelemetry trace, a span per job and per step with queued time, run time and conclusion. With no endpoint configured nothing is sent and nothing fails."
+why: "Queueing across overlapping runs cost up to 774 summed job-minutes on master run 39784979979 and nothing measured it continuously."
+current_state: "scripts/ci-baseline reads runs back on request; no run is shipped to a tracing backend."
+desired_state: "A telemetry workflow exports each completed validate run to the configured OTLP endpoint, and skips silently without one."
+scope:
+  - ".github/workflows/telemetry.yml"
+  - "docs/CI.md"
+  - ".ai/repo/ci/telemetry.yaml"
+  - ".ai/repo/project/issues/I3934.yaml"
+acceptance_criteria:
+  - "With the endpoint set a run's jobs and steps arrive as spans with timings and conclusions"
+  - "With none the export is skipped and no verdict changes"
+validation:
+  - "actionlint .github/workflows/telemetry.yml"
+evidence_required: []
+depends_on: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

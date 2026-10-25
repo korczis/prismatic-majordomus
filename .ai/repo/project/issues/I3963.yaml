@@ -1,0 +1,32 @@
+id: I3963
+milestone: ci-critical-path
+title: "A merge of master derives in one go: scripts/derive derives the staged merge with both parents as history"
+slug: a-merge-of-master-derives-in-one-go
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "Let scripts/derive accept a merge in progress: refuse unresolved or unstaged paths, otherwise write the staged merge as a scratch commit with both parents, derive it in a detached scratch worktree under the lock already held (MJ_DERIVE_OBSERVE naming HEAD, the executable built from the merged tree), and stage what changed back in the checkout, so the merge commits through the pages gate in one go."
+why: "Since I2863 (train 3b, a57482183bf, 2026-10-22 06:00) scripts/derive refused while MERGE_HEAD existed, and the pre-commit pages gate refuses a merge commit whose derived data is stale: a merge of master could be neither derived nor committed. majordomus prs repair --apply does merge --no-commit, scripts/derive, commit (integration/drain.rs refresh_branch), so every executor repair failed at the derive; the landing seat met the same wall merging master 355a0ce into train 4 and worked around it by hand. The offload already derives a merge this way (offload/run.rs input_commit, I3836). Found by session 54f32bb3 on #2351; the landing seat's call, 2026-10-22."
+current_state: "scripts/derive exits 10 before anything runs while MERGE_HEAD, CHERRY_PICK_HEAD or REVERT_HEAD exists (case 3837)."
+desired_state: "A merge with every path resolved and staged is derived in one run: history readers see both parents, delivery.json observes the checkout's HEAD, the derived files are staged, and git commit passes the pages gate. An unresolved or unstaged merge, a cherry-pick and a revert are still refused before the lock."
+scope:
+  - "scripts/derive"
+  - "test/cases/3837_a_derive_does_not_run_mid_merge.sh"
+  - "test/cases/3963_a_merge_of_master_derives_in_one_go.sh"
+non_scope:
+  - "Teaching each history reader about MERGE_HEAD; the scratch commit makes HEAD the merge"
+  - "Rebase, cherry-pick, am and revert, which stay refused"
+depends_on: []
+acceptance_criteria:
+  - "In a disposable repository, a merge whose only conflict is a derived file is derived and committed through a pages-style gate in one go, and the derived history lists the commit added on the merged parent"
+  - "delivery observation during that derive is the checkout's HEAD, never the scratch commit"
+  - "A merge with an unresolved path, or with unstaged changes, is refused with exit 10 before the lock is taken"
+  - "A cherry-pick in progress is still refused (case 3837)"
+  - "The scratch worktree and commit leave nothing behind: no worktree registered, no ref"
+validation:
+  - "bash test/run.sh 3837_a_derive_does_not_run_mid_merge 3963_a_merge_of_master_derives_in_one_go"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "a_merge_of_master_derives_in_one_go"
+created_at: 2026-10-22
+updated_at: 2026-10-22

@@ -11,7 +11,6 @@ current_state: "scripts/site-deploy keeps, on an ordinary deploy, the releases/l
 desired_state: "An ordinary deploy keeps every releases/<tag>.json on gh-pages that site/public does not hold, stable or pre-release, and says which it kept; latest.json keeps its present rule. The deploy after a pre-release's metadata publication still serves that file."
 scope:
   - "scripts/site-deploy"
-  - "test/cases/3721_a_deploy_keeps_every_pre_release_it_serves.sh"
   - "docs/RELEASE.md"
 non_scope:
   - "Which release latest.json names, which stays the newest stable release"

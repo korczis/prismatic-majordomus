@@ -57,7 +57,7 @@ push:
   secrets:
     - GIGALIXIR_EMAIL
     - GIGALIXIR_API_KEY
-  credential: a netrc file written with umask 077 under a home of its own, removed after the push
+  credential: a git credential helper that reads the secrets from the push step's environment; nothing is written to disk
 
 # ---------------------------------------------------------------- what proves it arrived
 observe:

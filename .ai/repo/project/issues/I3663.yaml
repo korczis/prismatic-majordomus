@@ -1,0 +1,30 @@
+id: I3663
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "An Anthropic API advisor is declared, so a held Anthropic credit grant can pay for review"
+slug: an-anthropic-api-advisor-is-declared
+priority: p2
+profile: implementation
+objective: "Declare an advisor in share/advisors.yaml reached over the Anthropic Messages API through the vendor's credential variable, with a model from share/models.yaml (claude-opus-5-5, which this issue adds to the catalogue with its provenance) and an adapter scripts/lib/advisors/anthropic-messages.mjs that speaks the same contract as openai-chat.mjs; reasoning check resolves it, and an absent credential reads not_configured (rule project.advisors-are-optional). No Rust change: the advisor is data and an adapter."
+why: "share/advisors.yaml reaches OpenAI through its API credential but declares no Anthropic API advisor, so the API credits the owner's Max plan includes pay for nothing Majordomus does. The advisor contract (ADR 0098) already makes absence a status. An Anthropic advisor reviewing work a Claude session wrote shares the author's model family: reasoning policy counts independence only among advisors (reasoning/policy.rs), so the advisor's note says so and nothing here claims it as independent of a Claude author (critique finding anthropic-advisor-is-not-independent-of-a-claude-author)."
+current_state: "Advisors: chatgpt (openai API), gemini and codex (CLI), ollama and lmstudio (local), mesh peers; no Anthropic API advisor."
+desired_state: "An Anthropic API advisor exists, reasoning check resolves it, and it reads not_configured without its credential."
+scope:
+  - "share/advisors.yaml"
+  - "scripts/lib/advisors"
+  - "share/models.yaml"
+  - "docs/generated"
+depends_on: []
+serves:
+  - "every-model-call-is-paid-from-a-declared-source#anthropic-api-reaches-the-advisors"
+acceptance_criteria:
+  - "The adapter passes the advisor contract suite against a recorded fixture answer, with no network"
+  - "With ANTHROPIC_API_KEY unset, reasoning advisors reports the advisor not_configured"
+  - "The adapter never logs, stores or echoes the credential or the prompt body"
+  - "The advisor's note states that it shares a Claude author's model family"
+validation:
+  - "node --test scripts/lib/advisors/contract.test.mjs"
+  - "env -u MAJORDOMUS_SHARE majordomus reasoning check"
+evidence_required:
+  - "anthropic api adapter: request normalisation, credential, usage"
+created_at: 2026-10-20
+updated_at: 2026-10-21

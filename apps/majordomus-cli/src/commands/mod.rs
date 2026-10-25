@@ -30,6 +30,7 @@
 //! ```
 
 pub(crate) mod bench;
+pub(crate) mod blackboard;
 pub(crate) mod brief;
 pub(crate) mod capabilities;
 pub(crate) mod command_graph;
@@ -52,6 +53,7 @@ pub(crate) mod generate;
 pub(crate) mod guard;
 pub(crate) mod intent;
 pub(crate) mod knowledge;
+mod layout;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -119,9 +121,11 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Layout(args) => layout::run(args),
         Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Brief(args) => brief::run(args),
+        Command::Blackboard(args) => blackboard::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
         Command::Continuity(args) => continuity::run(args),
@@ -194,6 +198,9 @@ mod tests {
             }),
             (&["majordomus", "brief", "--line"], |c| {
                 matches!(c, Command::Brief(_))
+            }),
+            (&["majordomus", "blackboard", "--this-checkout"], |c| {
+                matches!(c, Command::Blackboard(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],

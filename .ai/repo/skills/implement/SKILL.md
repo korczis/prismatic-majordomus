@@ -163,6 +163,22 @@ After a canonical change, run the repository's generation and then its drift che
 them. Generation is deterministic, owns its output, and must never be replaced by a
 hand-synchronised copy.
 
+In this repository the generation is `scripts/derive`, and two refusals fix the order of the
+last steps. The derive refuses a tree that holds an untracked file, because it projects only
+what git tracks (`project.a-derive-sees-what-the-commit-will`); the commit hook refuses
+derived data that is stale for the tree (`scripts/pages current`). So: `git add` every new
+file, run `scripts/derive`, `git add` what it regenerated, then commit. Do not get past the
+first refusal with `MAJORDOMUS_DERIVE_ALLOW_UNTRACKED=1`: the projections would leave the
+new file out, and the commit that adds it would be refused.
+
+A change that touches nothing under `apps/majordomus-cli` needs no build to derive. When an
+executable built at commit `<sha>` is at hand and
+`git diff --quiet <sha> -- apps/majordomus-cli` exits 0, its crate is the one being derived:
+pass it to `scripts/derive` as `MAJORDOMUS_BIN`. Compare with the working tree, not with
+`origin/master`, because a branch can be behind the trunk. `generate` refuses an executable
+of another crate tree (`REFUSED`, 15); the remedy is a build, never a hand-run
+`majordomus generate` (`docs/CAPABILITIES.md`).
+
 ## 13. Update the diagnostics
 
 Where the change adds or alters operational behaviour, give `doctor`, `check` or `watch`

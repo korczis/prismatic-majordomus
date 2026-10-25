@@ -16,9 +16,9 @@
 #
 # WHAT IT DECIDES, from share/providers.yaml and from the tool's own output:
 #
-#   declaration   every declared provider carries an offers block with all three capabilities
+#   declaration   every declared provider carries an offers block with all four capabilities
 #   vocabulary    episode is hooks|connection|none, prompts is hook|none and browser is
-#                 bridge|none, and nothing else
+#                 bridge|none, and usage lists otel|app-server|stream-json, or none alone
 #   evidence      every citation is present and non-empty, for every value including `none`
 #   bridge        a provider declaring browser: bridge names its browser_host and browser_setup
 #   coverage      `majordomus capture status` reports every provider the declaration names,
@@ -115,6 +115,29 @@ for p in $providers; do
       [ -n "$(decl "$p" "offers.$key")" ] \
         || finding "$p" browser "declares offers.browser: bridge and no offers.$key, so preflight cannot see or name the bridge"
     done
+  fi
+  # Usage is a list of the seams a provider offers (I3287): every item in the vocabulary,
+  # none repeated, `none` only alone, and the list cited like every other capability.
+  seams="$(sed -n "s/^providers\.$p\.offers\.usage\.[0-9][0-9]*=//p" "$TMP/flat" || true)"
+  usage_evidence="$(decl "$p" offers.usage_evidence)"
+  if [ -z "$seams" ]; then
+    finding "$p" usage "declares no offers.usage; how a provider reports what a session consumed is a claim about its product, and nobody wrote it down"
+  else
+    for seam in $seams; do
+      case "$seam" in
+        otel|app-server|stream-json|none) ;;
+        *) finding "$p" usage "offers.usage names '$seam', which is outside the vocabulary" ;;
+      esac
+    done
+    [ "$(printf '%s\n' $seams | sort | uniq -d)" = "" ] || finding "$p" usage "offers.usage names a seam twice"
+    if grep -qx none <<<"$(printf '%s\n' $seams)" && [ "$(printf '%s\n' $seams | wc -l | tr -d ' ')" != 1 ]; then
+      finding "$p" usage "offers.usage names none beside a seam; none is the answer only when nothing else is"
+    fi
+    if [ -z "$usage_evidence" ]; then
+      finding "$p" usage "offers.usage_evidence is empty; a capability with no citation cannot be re-verified and rots in whichever direction the world moves"
+    elif [ "${#usage_evidence}" -lt 24 ]; then
+      finding "$p" usage "offers.usage_evidence is ${#usage_evidence} characters ('$usage_evidence'); a citation names a document or says what was searched and when"
+    fi
   fi
 done
 

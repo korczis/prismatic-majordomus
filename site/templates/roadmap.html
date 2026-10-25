@@ -35,6 +35,13 @@
   </dd>
   <dt class="text-body">Milestones</dt>
   <dd class="text-heading">{{ roadmap.milestones | length }}, every one the plan holds, in the order the graph derives</dd>
+  {#- the plan's issues counted by the status their records declare, in the plan's order: the
+      counts the homepage hero carried until the owner took them off it on 2026-10-22 (I3917,
+      rule project.homepage-tells-a-declared-story v2), read here where a reader comes for them -#}
+  <dt class="text-body">Issues</dt>
+  <dd class="min-w-0 break-words text-heading" data-roadmap-issues>
+    {%- for st in plan.statuses.issue %}{% set n = [i for i in plan.issues if i.status == st] | length %}{% if n > 0 %}<span class="me-3 inline-block whitespace-nowrap"><span class="font-mono" data-roadmap-issue-status="{{ st }}">{{ n }}</span> {{ st | lower }}</span>{% endif %}{% endfor -%}
+  </dd>
   <dt id="delivery" class="scroll-mt-24 text-body">Delivery</dt>
   <dd class="min-w-0 break-words text-heading">
     {%- if delivery %}inferred from the history at <a href="{{ repo }}/commit/{{ delivery.observed.commit }}" class="font-mono underline hover:text-fg-brand">{{ delivery.observed.commit | truncate(length=11, end="") }}</a>: merged and released, each linked to the commit or release that proves it and naming its pull request

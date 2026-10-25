@@ -211,6 +211,71 @@ pub(crate) fn reachable_domains(
         .collect()
 }
 
+/// The name a projected file is typed by, when it is a skill Claude Code reads:
+/// `.claude/skills/<name>/SKILL.md` → `<name>`.
+pub(crate) fn skill_name(path: &str) -> Option<String> {
+    let name = path
+        .strip_prefix(&format!("{SKILLS_DIR}/"))?
+        .strip_suffix("/SKILL.md")?;
+    (!name.contains('/')).then(|| name.to_string())
+}
+
+/// Where Claude Code reads a person's own commands and skills: `$CLAUDE_CONFIG_DIR`, else
+/// `~/.claude`. `None` when neither can be named.
+pub fn personal_dir() -> Option<std::path::PathBuf> {
+    personal_dir_from(
+        std::env::var_os("CLAUDE_CONFIG_DIR"),
+        std::env::var_os("HOME"),
+    )
+}
+
+/// [`personal_dir`] from the two variables' values, so that it is judged without changing
+/// the environment every other test reads.
+fn personal_dir_from(
+    config: Option<std::ffi::OsString>,
+    home: Option<std::ffi::OsString>,
+) -> Option<std::path::PathBuf> {
+    config
+        .filter(|v| !v.is_empty())
+        .map(std::path::PathBuf::from)
+        .or_else(|| home.map(|h| std::path::PathBuf::from(h).join(".claude")))
+}
+
+/// Every projected skill a person's own command or skill shares a name with. Claude Code
+/// answers one name with one thing, so under that name the person sees either theirs or the
+/// repository's, never both, and which one has changed between sessions; nothing in the
+/// repository can see this, because the other half lives in the person's profile. Only the
+/// names are read, never the content: this reports, it projects nothing (ADR 0140).
+pub(crate) fn shadow_findings(
+    projected: &[String],
+    personal: Option<&std::path::Path>,
+) -> Vec<EditorDiagnostic> {
+    let Some(personal) = personal else {
+        return Vec::new();
+    };
+    projected
+        .iter()
+        .filter_map(|name| {
+            let command = personal.join("commands").join(format!("{name}.md"));
+            let skill = personal.join("skills").join(name).join("SKILL.md");
+            let theirs = [command, skill].into_iter().find(|p| p.is_file())?;
+            Some(EditorDiagnostic {
+                severity: Severity::Warning,
+                code: "personal-name-hides-a-skill".into(),
+                adapter: Some(ID.into()),
+                path: Some(skill_path(name)),
+                message: format!(
+                    "/{name} is this repository's skill and also the person's own {}; Claude Code offers one of the two under that name, so the other is unreachable",
+                    theirs.display()
+                ),
+                remedy: format!(
+                    "rename the personal one (for example to {name}-personal), or remove it if the repository's skill replaces it"
+                ),
+            })
+        })
+        .collect()
+}
+
 /// A command whose name a workflow skill of the layer already has, where both products that
 /// read `.agents/skills/` and Claude Code would show two things under one name.
 pub(crate) fn name_findings(
@@ -475,6 +540,47 @@ mod tests {
         assert_eq!(listed.artifacts, [".claude/skills/mj-mesh/SKILL.md"]);
     }
 
+    /// A personal command or skill that shares a projected skill's name is named, with the
+    /// file that does; a name nobody else has, or a profile that cannot be found, is quiet.
+    #[test]
+    fn a_personal_name_that_hides_a_skill_is_a_finding() {
+        let home = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(home.path().join("commands")).unwrap();
+        std::fs::write(home.path().join("commands/evolve.md"), "x").unwrap();
+        std::fs::create_dir_all(home.path().join("skills/mj-mesh")).unwrap();
+        std::fs::write(home.path().join("skills/mj-mesh/SKILL.md"), "x").unwrap();
+        let names = [
+            "evolve".to_string(),
+            "mj-mesh".to_string(),
+            "implement".to_string(),
+        ];
+        let found = shadow_findings(&names, Some(home.path()));
+        assert_eq!(found.len(), 2, "{found:?}");
+        assert!(found
+            .iter()
+            .all(|d| d.code == "personal-name-hides-a-skill"));
+        assert_eq!(
+            found[0].path.as_deref(),
+            Some(".claude/skills/evolve/SKILL.md")
+        );
+        assert!(
+            found[0].message.contains("/evolve") && found[0].message.contains("commands/evolve.md")
+        );
+        assert!(found[1].message.contains("skills/mj-mesh/SKILL.md"));
+        assert!(shadow_findings(&names, None).is_empty());
+        assert_eq!(
+            skill_name(".claude/skills/evolve/SKILL.md").as_deref(),
+            Some("evolve")
+        );
+        assert_eq!(skill_name(".agents/skills/evolve/SKILL.md"), None);
+        assert_eq!(
+            skill_name(".claude/skills/evolve/README.md"),
+            None,
+            "a file under the skills directory that is not a SKILL.md names no skill"
+        );
+        assert_eq!(skill_name(".claude/skills/a/b/SKILL.md"), None);
+    }
+
     #[test]
     fn a_command_named_as_a_workflow_skill_is_a_finding() {
         let skill = super::super::SkillRef {
@@ -494,5 +600,27 @@ mod tests {
             a.capabilities[0].artifacts,
             [".claude/skills/intent/SKILL.md"]
         );
+    }
+
+    /// `CLAUDE_CONFIG_DIR` names where a person's own commands live, unless it is empty, and
+    /// then `~/.claude` does; with neither there is no directory. Judged from the values, so
+    /// no test's environment changes under another.
+    #[test]
+    fn the_personal_directory_is_the_configured_one_unless_the_variable_is_empty() {
+        let home = || Some(std::ffi::OsString::from("/home/a"));
+        assert_eq!(
+            personal_dir_from(Some("/somewhere/claude-config".into()), home()),
+            Some(std::path::PathBuf::from("/somewhere/claude-config"))
+        );
+        assert_eq!(
+            personal_dir_from(Some("".into()), home()),
+            Some(std::path::PathBuf::from("/home/a/.claude")),
+            "an empty variable names nothing"
+        );
+        assert_eq!(
+            personal_dir_from(None, home()),
+            Some(std::path::PathBuf::from("/home/a/.claude"))
+        );
+        assert_eq!(personal_dir_from(None, None), None);
     }
 }

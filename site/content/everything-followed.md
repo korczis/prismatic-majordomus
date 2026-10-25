@@ -4,7 +4,7 @@ description = "About a dozen sessions on five machines worked one repository, an
 template = "page.html"
 [extra]
 lang = "en"
-related = ["the-bet-on-a-layer/", "proof-carrying-documentation/", "a-pasted-brief-becomes-a-plan/", "seats-not-names/", "claimed-before-it-is-built/", "a-session-ends-the-work-does-not/"]
+related = ["the-bet-on-a-layer/", "proof-carrying-documentation/", "a-pasted-brief-becomes-a-plan/", "seats-not-names/", "claimed-before-it-is-built/", "a-session-ends-the-work-does-not/", "silence-is-not-a-verdict/"]
 [extra.translations]
 cs = "vsechno-v-jednom-proudu/"
 +++

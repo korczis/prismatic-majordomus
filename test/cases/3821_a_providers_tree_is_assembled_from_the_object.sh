@@ -151,4 +151,14 @@ gated="$(grep -c "if: steps.credentials.outputs.present == 'true'" "$WF")"
   || { echo "    provider.yml gates $gated of the $steps_after steps after the credentials check"; exit 1; }
 grep -q '::error::.*answered' "$WF" \
   || { echo "    provider.yml no longer fails when the deployment does not answer the commit"; exit 1; }
+# The push authenticates through a credential helper over the step's environment: the runner's
+# git did not read a netrc (run 39837714659 stopped at "could not read Username"), and a file
+# holding the key is one more place it can leak from.
+grep -qF 'git config --add credential.helper' "$WF" \
+  || { echo "    provider.yml does not hand git its credential through a helper"; exit 1; }
+grep -qF 'git config http.postBuffer' "$WF" \
+  || { echo "    provider.yml pushes a ~100 MB slug chunked; the provider refused that with HTTP 500"; exit 1; }
+if grep -qF '.netrc' "$WF"; then
+  echo "    provider.yml still writes a .netrc for the push"; exit 1
+fi
 exit 0

@@ -11,7 +11,10 @@
 //! disagree with the subsystem that already holds the fact, and a checklist is exactly the
 //! artifact a worker learns to tick.
 //!
-//! So every question here names a **source** and takes its answer from it:
+//! So the questions are **declared once**, in `share/completion.yaml` ([`super::policy`]),
+//! each in a stage of the work, and every question there names a **source**. This module
+//! asks exactly those questions, in the policy's order, and takes each answer from its
+//! source and from nowhere else:
 //!
 //! - an **obligation** of `share/obligations.yaml`, judged by
 //!   [`crate::capability::builtin::obligations`] — which is where `implemented`, `tested`,
@@ -43,6 +46,7 @@ use serde::{Deserialize, Serialize};
 
 use super::closing::{Closing, DEBT_DIRECTORY, DEBT_SUFFIX};
 use super::judge::{Gate, GateStatus};
+use super::policy::{CompletionPolicy, QuestionSource};
 use super::ImpliedObligation;
 use crate::convergence::ConvergenceReport;
 
@@ -51,6 +55,7 @@ use crate::convergence::ConvergenceReport;
 ///
 /// let q = DoneQuestion {
 ///     id: "pushed".into(),
+///     stage: "commit".into(),
 ///     question: "Has the commit reached the remote?".into(),
 ///     status: GateStatus::Queued,
 ///     evidence: "the obligation is owed".into(),
@@ -67,6 +72,8 @@ use crate::convergence::ConvergenceReport;
 pub struct DoneQuestion {
     /// The question's identity, stable across reports.
     pub id: String,
+    /// The lifecycle stage the policy places it in.
+    pub stage: String,
     /// The question, as a person would ask it.
     pub question: String,
     /// The answer, in the same vocabulary every gate uses.
@@ -77,170 +84,6 @@ pub struct DoneQuestion {
     pub source: String,
     /// What would settle it, as a command.
     pub remediation: String,
-}
-
-/// How one question is answered.
-enum Answers {
-    /// An obligation token of `share/obligations.yaml`.
-    Obligation(&'static str),
-    /// The aggregate of the gates the change selects.
-    Gates,
-    /// A gate of the CI model, by id, when the model declares one.
-    Gate(&'static str),
-    /// The change set itself.
-    Change,
-    /// The repository's convergence: whether any work is held where it can be lost.
-    Convergence,
-    /// The debt baselines, at the commit the task started at and now.
-    Debt,
-    /// The branches and worktrees created since the task started that remain.
-    Accumulated,
-    /// The pull requests opened since the task started that are still open.
-    Backlog,
-    /// Nothing reachable from here; the command that would answer it.
-    Elsewhere(&'static str),
-}
-
-/// The invariant, declared once: the question, what answers it, and what a worker runs.
-///
-/// The order is the order the work happens in, so a reader meets the questions in the order
-/// they become answerable rather than in alphabetical order.
-#[allow(clippy::type_complexity)]
-fn invariant() -> Vec<(&'static str, &'static str, Answers, &'static str)> {
-    vec![
-        (
-            "implemented",
-            "Is all the work this task promised present in the tree?",
-            Answers::Obligation("implementation"),
-            "majordomus check",
-        ),
-        (
-            "tested",
-            "Were the cases the change obliges run, and did they pass?",
-            Answers::Obligation("tests"),
-            "majordomus usecase impact",
-        ),
-        (
-            "regression-tested",
-            "Does the change touch a test of its own?",
-            Answers::Change,
-            "add a case under test/cases/ or a test beside the code",
-        ),
-        (
-            "documented",
-            "Were the documents a reader needs updated?",
-            Answers::Obligation("docs"),
-            "scripts/ci/reference-check",
-        ),
-        (
-            "generated",
-            "Is every derived artifact current with its canonical source?",
-            Answers::Obligation("generated"),
-            "majordomus generate --check",
-        ),
-        (
-            "openapi",
-            "Are the OpenAPI document and the transport registries current?",
-            Answers::Obligation("generated"),
-            "majordomus generate --check",
-        ),
-        (
-            "parity",
-            "Does every surface — command line, HTTP, MCP, Cockpit — agree with the registry?",
-            Answers::Elsewhere("majordomus quality report"),
-            "majordomus quality report",
-        ),
-        (
-            "committed",
-            "Are the changes in the branch's history rather than in the working tree?",
-            Answers::Obligation("commit"),
-            "git commit",
-        ),
-        (
-            "pushed",
-            "Has the commit reached the remote?",
-            Answers::Obligation("push"),
-            "git push",
-        ),
-        (
-            "ci",
-            "Has every gate the change selects reported, and did it pass?",
-            Answers::Gates,
-            "majordomus evidence --gate <id> --exit <status>",
-        ),
-        (
-            "version",
-            "Has the declared version moved as far as the public surface has?",
-            Answers::Gate("version-surface"),
-            "majordomus release version",
-        ),
-        (
-            "changelog",
-            "Is the release's own record current with the tree?",
-            Answers::Gate("release-check"),
-            "scripts/ci/release-check",
-        ),
-        (
-            "integrated",
-            "Does the trunk reach this commit?",
-            Answers::Obligation("target"),
-            "open a pull request and land it",
-        ),
-        (
-            "published",
-            "Does the published site serve this commit?",
-            Answers::Obligation("pages"),
-            "scripts/pages verify --commit HEAD",
-        ),
-        (
-            "deployed",
-            "Is the environment this change targets running it?",
-            Answers::Obligation("deploy"),
-            "majordomus deployment",
-        ),
-        (
-            "deployment-verified",
-            "Was the deployed result looked at after it was deployed?",
-            Answers::Obligation("verify"),
-            "majordomus evidence --covers verify --command '<the live check>'",
-        ),
-        (
-            "no-stale-topology",
-            "Is a branch, worktree or pull request left behind?",
-            Answers::Convergence,
-            "majordomus convergence",
-        ),
-        (
-            "no-new-debt",
-            "Is the repository's recorded debt no larger than when this task started?",
-            Answers::Debt,
-            "take out what the change added to the baseline, or settle what the entry records",
-        ),
-        (
-            "nothing-accumulated",
-            "Has every branch and worktree created since this task started gone again?",
-            Answers::Accumulated,
-            "majordomus worktree cleanup",
-        ),
-        (
-            "backlog-not-grown",
-            "Has every pull request opened since this task started been closed?",
-            Answers::Backlog,
-            "majordomus prs status",
-        ),
-        (
-            "handover",
-            "Is the session's continuation record written?",
-            Answers::Elsewhere("majordomus handover"),
-            "majordomus handover < note.md",
-        ),
-        (
-            "issue",
-            "Do the issue and milestone this work belongs to say so?",
-            Answers::Elsewhere("majordomus plan status"),
-            "majordomus plan record",
-        ),
-    ]
 }
 
 /// ```
@@ -266,14 +109,16 @@ pub struct ObligationStanding {
     pub reproduce: String,
 }
 
-/// Answer the invariant.
+/// Answer the invariant: every question of the policy, in the policy's order.
 ///
 /// Every argument is a judgement somebody else already made: `standing` is the obligation
 /// closure's, `gates` is [`super::judge`]'s, `implied` is [`super::implied`]'s,
 /// `changed` is the change set, `convergence` is [`crate::convergence`]'s verdict over the
 /// repository's holdings and `closing` is [`super::closing`]'s readings of what the task
 /// leaves behind. Nothing is measured here — this composes.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn answer(
+    policy: &CompletionPolicy,
     standing: &std::collections::BTreeMap<String, ObligationStanding>,
     implied: &[ImpliedObligation],
     gates: &[Gate],
@@ -282,11 +127,13 @@ pub(crate) fn answer(
     convergence: Option<&ConvergenceReport>,
     closing: Option<&Closing>,
 ) -> Vec<DoneQuestion> {
-    invariant()
-        .into_iter()
-        .map(|(id, question, from, remediation)| {
-            let (status, evidence, source) = match from {
-                Answers::Obligation(token) => {
+    policy
+        .questions
+        .iter()
+        .map(|decl| {
+            let (status, evidence, source) = match decl.kind() {
+                QuestionSource::Obligation(token) => {
+                    let token = token.as_str();
                     let applicable = implied
                         .iter()
                         .find(|o| o.id == token)
@@ -330,7 +177,7 @@ pub(crate) fn answer(
                         ),
                     }
                 }
-                Answers::Gates => {
+                QuestionSource::Gates => {
                     let required: Vec<&Gate> = gates.iter().filter(|g| g.required).collect();
                     let refused = required.iter().filter(|g| g.status.refuses()).count();
                     let silent = required.iter().filter(|g| g.status.unverified()).count();
@@ -357,7 +204,7 @@ pub(crate) fn answer(
                         ".ai/repo/ci/gates.yaml".to_string(),
                     )
                 }
-                Answers::Gate(gate) => match gates.iter().find(|g| g.id == gate) {
+                QuestionSource::Gate(gate) => match gates.iter().find(|g| g.id == gate) {
                     Some(g) => (
                         g.status,
                         g.reason.clone(),
@@ -369,7 +216,7 @@ pub(crate) fn answer(
                         format!("gate {gate}"),
                     ),
                 },
-                Answers::Change => {
+                QuestionSource::ChangeTestPath => {
                     let tests: Vec<&String> = changed
                         .iter()
                         .filter(|p| is_test_path(p))
@@ -404,7 +251,7 @@ pub(crate) fn answer(
                         )
                     }
                 }
-                Answers::Convergence => match convergence {
+                QuestionSource::Convergence => match convergence {
                     // the verdict is one word over every holding; the evidence names the
                     // holdings themselves, because "3 at risk" is not something a person
                     // can act on and `feature/x, /tmp/wt` is
@@ -436,27 +283,49 @@ pub(crate) fn answer(
                         "convergence.report".to_string(),
                     ),
                 },
-                Answers::Debt => debt_answer(closing),
-                Answers::Accumulated => accumulated_answer(closing),
-                Answers::Backlog => backlog_answer(closing),
-                Answers::Elsewhere(command) => (
+                QuestionSource::ClosingDebt => debt_answer(closing),
+                QuestionSource::ClosingAccumulated => accumulated_answer(closing),
+                QuestionSource::ClosingBacklog => backlog_answer(closing),
+                QuestionSource::Elsewhere(command) => (
                     GateStatus::Unknown,
                     format!(
                         "nothing in this report reaches that fact; `{command}` is what answers it"
                     ),
-                    command.to_string(),
+                    command,
                 ),
             };
             DoneQuestion {
-                id: id.to_string(),
-                question: question.to_string(),
+                id: decl.id.clone(),
+                stage: decl.stage.clone(),
+                question: decl.question.clone(),
                 status,
                 evidence,
                 source,
-                remediation: remediation.to_string(),
+                remediation: decl.remediation.clone(),
             }
         })
         .collect()
+}
+
+/// The one question asked when the completion policy cannot be read: whether it can be.
+///
+/// Answered `unknown`, so that the done invariant a reader sees is "this could not be
+/// asked" rather than an empty list that reads as nothing owed; and it names no stage, so
+/// the stage fold over no policy completes nothing.
+pub(crate) fn unreadable_policy() -> DoneQuestion {
+    DoneQuestion {
+        id: "policy".into(),
+        stage: String::new(),
+        question: "Can the definition of done be read?".into(),
+        status: GateStatus::Unknown,
+        evidence: format!(
+            "share/{} could not be read, so no question of the done invariant can be asked \
+             and nothing is complete",
+            super::policy::POLICY_FILE
+        ),
+        source: format!("share/{}", super::policy::POLICY_FILE),
+        remediation: "majordomus doctor".into(),
+    }
 }
 
 /// The words for a closing question nothing could be measured for: there is no task, so
@@ -649,6 +518,15 @@ mod tests {
     use super::*;
     use std::collections::BTreeMap;
 
+    /// The policy this build ships, read once: every test asks its questions.
+    fn shipped() -> &'static CompletionPolicy {
+        static POLICY: std::sync::OnceLock<CompletionPolicy> = std::sync::OnceLock::new();
+        POLICY.get_or_init(|| {
+            let share = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
+            CompletionPolicy::load(&share).expect("the shipped completion policy parses")
+        })
+    }
+
     fn implied_of(id: &str, applicable: bool, declared: bool) -> ImpliedObligation {
         ImpliedObligation {
             id: id.into(),
@@ -711,7 +589,16 @@ mod tests {
     }
 
     fn closing_answers(closing: Option<&Closing>) -> [DoneQuestion; 3] {
-        let q = answer(&BTreeMap::new(), &[], &[], &[], true, None, closing);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &[],
+            &[],
+            &[],
+            true,
+            None,
+            closing,
+        );
         let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
         [
             by("no-new-debt"),
@@ -894,7 +781,16 @@ mod tests {
 
     #[test]
     fn every_question_carries_a_source_and_something_to_run() {
-        let q = answer(&BTreeMap::new(), &[], &[], &[], false, None, None);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &[],
+            &[],
+            &[],
+            false,
+            None,
+            None,
+        );
         assert_eq!(q.len(), 22, "the invariant is twenty-two questions");
         for question in &q {
             assert!(!question.source.is_empty(), "{} has no source", question.id);
@@ -909,13 +805,60 @@ mod tests {
         }
     }
 
+    /// The questions asked are the policy's and no others: its ids, its order, its stages,
+    /// its wording and its remediations, so that the file a reader opens is the invariant
+    /// the report answers and not a description of it.
+    #[test]
+    fn the_questions_asked_are_the_policys_in_its_order_and_its_stages() {
+        let q = answer(shipped(), &BTreeMap::new(), &[], &[], &[], true, None, None);
+        let asked: Vec<(&str, &str, &str, &str)> = q
+            .iter()
+            .map(|a| {
+                (
+                    a.id.as_str(),
+                    a.stage.as_str(),
+                    a.question.as_str(),
+                    a.remediation.as_str(),
+                )
+            })
+            .collect();
+        let declared: Vec<(&str, &str, &str, &str)> = shipped()
+            .questions
+            .iter()
+            .map(|d| {
+                (
+                    d.id.as_str(),
+                    d.stage.as_str(),
+                    d.question.as_str(),
+                    d.remediation.as_str(),
+                )
+            })
+            .collect();
+        assert_eq!(asked, declared);
+
+        // and a policy that asks one question is answered with that one question, from the
+        // source it names: nothing here supplies a question the policy did not declare
+        let one = CompletionPolicy::parse(
+            "version: 1\nstages:\n  - id: s\n    title: S\n    summary: s\nquestions:\n  - id: \
+             only\n    stage: s\n    question: Is anything left behind?\n    source: \
+             convergence\n    remediation: majordomus convergence\n",
+            "t",
+        )
+        .unwrap();
+        let q = answer(&one, &BTreeMap::new(), &[], &[], &[], true, None, None);
+        assert_eq!(q.len(), 1);
+        assert_eq!((q[0].id.as_str(), q[0].stage.as_str()), ("only", "s"));
+        assert_eq!(q[0].source, "convergence.report");
+        assert_eq!(q[0].status, GateStatus::Unknown, "no verdict was read");
+    }
+
     #[test]
     fn an_obligation_answer_is_the_closures_word_and_not_a_second_opinion() {
         let mut s = BTreeMap::new();
         s.insert("tests".to_string(), standing("discharged"));
         s.insert("docs".to_string(), standing("stale"));
         s.insert("push".to_string(), standing("owed"));
-        let q = answer(&s, &[], &[], &[], true, None, None);
+        let q = answer(shipped(), &s, &[], &[], &[], true, None, None);
         let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
         assert_eq!(by("tested").status, GateStatus::Pass);
         assert_eq!(by("documented").status, GateStatus::Stale);
@@ -932,7 +875,16 @@ mod tests {
             implied_of("tests", true, false),
             implied_of("deploy", false, false),
         ];
-        let q = answer(&BTreeMap::new(), &implied, &[], &[], true, None, None);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &implied,
+            &[],
+            &[],
+            true,
+            None,
+            None,
+        );
         let by = |id: &str| q.iter().find(|q| q.id == id).unwrap().clone();
         assert_eq!(by("tested").status, GateStatus::Queued);
         assert!(by("tested").evidence.contains("does not declare it"));
@@ -945,7 +897,7 @@ mod tests {
 
     #[test]
     fn the_ci_question_separates_refused_from_never_reported() {
-        let none = answer(&BTreeMap::new(), &[], &[], &[], true, None, None);
+        let none = answer(shipped(), &BTreeMap::new(), &[], &[], &[], true, None, None);
         assert_eq!(
             none.iter().find(|q| q.id == "ci").unwrap().status,
             GateStatus::Exempt
@@ -955,7 +907,16 @@ mod tests {
             gate("a", GateStatus::Queued, true),
             gate("b", GateStatus::Pass, true),
         ];
-        let q = answer(&BTreeMap::new(), &[], &silent, &[], true, None, None);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &[],
+            &silent,
+            &[],
+            true,
+            None,
+            None,
+        );
         assert_eq!(
             q.iter().find(|q| q.id == "ci").unwrap().status,
             GateStatus::Queued
@@ -965,7 +926,16 @@ mod tests {
             gate("a", GateStatus::Fail, true),
             gate("b", GateStatus::Queued, true),
         ];
-        let q = answer(&BTreeMap::new(), &[], &red, &[], true, None, None);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &[],
+            &red,
+            &[],
+            true,
+            None,
+            None,
+        );
         let ci = q.iter().find(|q| q.id == "ci").unwrap();
         assert_eq!(ci.status, GateStatus::Fail, "a refusal outranks a silence");
         assert!(ci.evidence.contains("1 refusing") && ci.evidence.contains("1 never reported"));
@@ -974,7 +944,16 @@ mod tests {
             gate("a", GateStatus::Pass, true),
             gate("b", GateStatus::Exempt, false),
         ];
-        let q = answer(&BTreeMap::new(), &[], &green, &[], true, None, None);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &[],
+            &green,
+            &[],
+            true,
+            None,
+            None,
+        );
         assert_eq!(
             q.iter().find(|q| q.id == "ci").unwrap().status,
             GateStatus::Pass
@@ -984,6 +963,7 @@ mod tests {
     #[test]
     fn a_release_question_a_model_declares_no_gate_for_is_unknown_not_exempt() {
         let q = answer(
+            shipped(),
             &BTreeMap::new(),
             &[],
             &[gate("version-surface", GateStatus::Pass, true)],
@@ -1004,6 +984,7 @@ mod tests {
     #[test]
     fn regression_is_answered_from_the_change_set_alone() {
         let q = answer(
+            shipped(),
             &BTreeMap::new(),
             &[],
             &[],
@@ -1017,6 +998,7 @@ mod tests {
         assert!(r.evidence.contains("no test path"));
 
         let q = answer(
+            shipped(),
             &BTreeMap::new(),
             &[],
             &[],
@@ -1073,7 +1055,16 @@ mod tests {
             at_risk: 1,
             converged: false,
         };
-        let q = answer(&BTreeMap::new(), &[], &[], &[], true, Some(&at_risk), None);
+        let q = answer(
+            shipped(),
+            &BTreeMap::new(),
+            &[],
+            &[],
+            &[],
+            true,
+            Some(&at_risk),
+            None,
+        );
         let question = q.iter().find(|q| q.id == "no-stale-topology").unwrap();
         assert_eq!(question.status, GateStatus::Fail);
         assert!(
@@ -1090,6 +1081,7 @@ mod tests {
             ..at_risk
         };
         let q = answer(
+            shipped(),
             &BTreeMap::new(),
             &[],
             &[],
@@ -1111,7 +1103,7 @@ mod tests {
     /// never a pass. The rule about absence, applied to the one source that can be absent.
     #[test]
     fn an_unreadable_verdict_is_unknown_and_never_a_pass() {
-        let q = answer(&BTreeMap::new(), &[], &[], &[], true, None, None);
+        let q = answer(shipped(), &BTreeMap::new(), &[], &[], &[], true, None, None);
         let question = q.iter().find(|q| q.id == "no-stale-topology").unwrap();
         assert_eq!(question.status, GateStatus::Unknown);
         assert!(!question.status.refuses());
@@ -1120,7 +1112,7 @@ mod tests {
 
     #[test]
     fn a_question_nothing_here_reaches_says_so_and_names_the_command() {
-        let q = answer(&BTreeMap::new(), &[], &[], &[], true, None, None);
+        let q = answer(shipped(), &BTreeMap::new(), &[], &[], &[], true, None, None);
         for id in ["parity", "handover", "issue"] {
             let question = q.iter().find(|q| q.id == id).unwrap();
             assert_eq!(question.status, GateStatus::Unknown, "{id}");

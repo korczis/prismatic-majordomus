@@ -14,7 +14,8 @@
 #       request, says which run it yielded to, and cancels itself; clear, and it proceeds
 #   scripts/ci/release-path preempt [--self ID]
 #       the tag push's own run: busy, and every pull-request validate already queued or
-#       running is labelled, told, and cancelled; clear, and nothing is touched
+#       running is labelled, told, and cancelled, and one still not completed after the wait
+#       is force-cancelled; clear, and nothing is touched
 #   scripts/ci/release-path resume  [--self ID]
 #       clear, and the newest validate run of each labelled pull request's head runs again
 #       when it is the cancelled one, and the label goes; busy, and nothing is touched
@@ -32,7 +33,8 @@
 # `resume` touch nothing, `status` exits 12. None of them fails the job that asked: a release
 # is never held up by its own priority, and a branch's verdict is never red because of it.
 #
-# MJ_RELEASE_PATH_CANCEL_WAIT overrides the model's cancel_wait_seconds (case 3027 sets 0).
+# MJ_RELEASE_PATH_CANCEL_WAIT overrides the model's cancel_wait_seconds (case 3027 sets 0),
+# the bound yield waits for its own cancel and preempt waits before it reads its cancels again.
 #
 # Exit: 0 done (or clear) · 10 busy (status only) · 12 the reading could not be made
 # (status only) · 2 usage.
@@ -42,7 +44,7 @@ set -o pipefail
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 MODEL="$ROOT/.ai/repo/ci/release-path.yaml"
 
-usage() { sed -n '2,38p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,40p' "$0" | sed 's/^# \{0,1\}//'; }
 [ $# -gt 0 ] || { usage >&2; exit 2; }
 CMD="$1"; shift
 case "$CMD" in status|yield|preempt|resume) ;; -h|--help) usage; exit 0 ;;
@@ -219,7 +221,7 @@ preempt)
   fi
   first="$(holder_phrase "$(printf '%s\n' "$held" | head -n 1)")"
   say "release-path: the release path holds: $first"
-  n=0
+  n=0; cancelled=""
   while IFS="$US" read -r id pr branch st; do
     [ -n "$id" ] || continue
     if [ -z "$pr" ]; then
@@ -229,15 +231,44 @@ preempt)
     mark_and_tell "$pr" "$id" "$first"
     if out="$(api -X POST "repos/$SLUG/actions/runs/$id/cancel" 2>&1)"; then
       say "yield  validate run $id of #$pr on $branch ($st) is cancelled and labelled $LABEL"
-      n=$((n + 1))
+      n=$((n + 1)); cancelled="$cancelled $id"
     else
       warn "validate run $id of #$pr could not be cancelled: $(printf '%s' "$out" | head -n 1)"
     fi
   done <<<"$(branch_runs)"
+  # A cancel GitHub accepted is a request, not an end: on 2026-10-19 a cancelled run's suite job
+  # went on running and held its slot until the run was force-cancelled. So after the same
+  # bounded wait yield gives its own cancel, each run cancelled here is read again, and one that
+  # has not completed is force-cancelled. A run that cannot be read is left as it is.
+  forced=0
+  if [ -n "$cancelled" ]; then
+    waited=0
+    while [ "$waited" -lt "$CANCEL_WAIT" ]; do sleep 5; waited=$((waited + 5)); done
+    for id in $cancelled; do
+      if ! out="$(api "repos/$SLUG/actions/runs/$id" 2>&1)"; then
+        warn "validate run $id could not be read after its cancel, so it was not force-cancelled: $(printf '%s' "$out" | head -n 1)"
+        continue
+      fi
+      st="$(jq -r '.status // empty' <<<"$out" 2>/dev/null || true)"
+      if [ -z "$st" ]; then
+        warn "validate run $id could not be read after its cancel, so it was not force-cancelled: no status in the answer"
+        continue
+      fi
+      [ "$st" != completed ] || continue
+      if out="$(api -X POST "repos/$SLUG/actions/runs/$id/force-cancel" 2>&1)"; then
+        say "force  validate run $id was still $st ${CANCEL_WAIT}s after its cancel; it is force-cancelled"
+        forced=$((forced + 1))
+      else
+        warn "validate run $id is still $st after its cancel and could not be force-cancelled: $(printf '%s' "$out" | head -n 1)"
+      fi
+    done
+  fi
   notice "$n pull-request validate run(s) yielded to $first"
+  [ "$forced" = 0 ] || notice "$forced of them still ran after the cancel and were force-cancelled"
   summary "## The release path goes first"
   summary ""
   summary "$n pull-request validate run(s) yielded to $first."
+  [ "$forced" = 0 ] || summary "$forced of them still ran after the cancel and were force-cancelled."
   exit 0 ;;
 
 resume)

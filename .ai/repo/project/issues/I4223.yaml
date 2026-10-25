@@ -1,0 +1,36 @@
+id: I4223
+milestone: M004
+title: "The pre-commit generation gate answers inside its bound, and a failed case's reason reaches an artifact"
+slug: the-pre-commit-gate-answers-in-its-bound
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make `generate --check`, which `scripts/pages current` runs in front of every commit, stop paying for the plan's scope-conflict scan: choose the runnable issues once, normalise every scope entry once, and compare normalised entries without allocating, with the same findings in the same order. And make the reason a failed case prints reach a file CI keeps: test/run.sh writes every failed or timed-out case's output to MJ_TEST_FAILURES, and validate.yml uploads it per suite shard."
+why: "Master's validate 40086406859 at 563fe99 failed 56_derived_current_gate on suite-shard 3: the gate took 31 s at best of two against a bound of 30. It was the only failure of case 56 among the last 60 failed validate runs (2026-10-16 to 2026-10-24), but it had no margin. Profiled on the development Mac, the scope-conflict scan in plan::derive (every pair of runnable issues of a wave, every pair of their scope entries, four new strings per comparison) was 3.9 of the 12.1 s the main thread spent in `generate --check`, through the benchmark cases that derive the plan as well as the plan's own artifacts. The case's reason was printed in the job's log, but suite.tsv, the shard's artifact, held only FAIL and 150 s."
+current_state: "On 563fe99 plan::overlap normalises both entries into new Strings and formats two more per question, and the conflict loop visits every pair of issues of the plan before asking their status. A debug `generate --check` took 18.4 s here (load 7.6). test/run.sh records name, word, seconds and phase per case; a case's output exists only in the job log."
+desired_state: "The same `generate --check` takes 11.3 s on the same machine under a heavier load (27), with plan::derive gone from the top of its profile and every plan finding unchanged. The bound of case 56 stays at 30 s. A failed case's output is in the suite-failures-<shard> artifact under its name."
+scope:
+  - ".ai/repo/project/issues/I4223.yaml"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "test/run.sh"
+  - ".github/workflows/validate.yml"
+  - "test/cases/56_derived_current_gate.sh"
+  - "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+non_scope:
+  - "Raising the 30 s bound of case 56"
+  - "The changelog's per-decision git walks (added_at_each), whose answers depend on git's per-path history simplification and are a change of their own"
+acceptance_criteria:
+  - "overlap answers every pair of the entries normalisation exists for as the allocating definition did, and a conflict is reported once per pair and only between runnable issues"
+  - "The plan unit tests pass unchanged"
+  - "A run with MJ_TEST_FAILURES set writes a failed case's output under its name and nothing of the cases that passed or declined, and a green run leaves the file empty"
+  - "Case 56 passes on CI with its bound unchanged"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+  - "bash test/run.sh 4223_a_failed_cases_reason_reaches_the_artifact 56_derived_current_gate"
+evidence_required:
+  - "scope_conflict_scan_allocates_nothing"
+  - "failed_case_reason_in_artifact"
+depends_on: []
+serves: []
+created_at: 2026-10-24
+updated_at: 2026-10-24

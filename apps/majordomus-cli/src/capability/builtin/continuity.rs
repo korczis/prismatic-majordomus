@@ -830,8 +830,7 @@ fn blockers(path: &Path) -> Vec<String> {
 /// policy cannot be read at all, yields no thresholds; every record is then reported as
 /// `unknown` naming the missing key, which is the honest answer and not a default.
 pub(crate) fn thresholds_of(ctx: &Context) -> Thresholds {
-    let root = PathBuf::from(&ctx.index.repository.root);
-    let Ok(repo) = crate::repository::Repository::open(&root) else {
+    let Ok(repo) = ctx.repository() else {
         return Thresholds::default();
     };
     let Ok(loaded) = crate::policy::LoadedPolicy::load(&repo) else {

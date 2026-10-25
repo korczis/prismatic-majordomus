@@ -28,8 +28,12 @@ fn run_to(args: DeployArgs, w: &mut dyn Write) -> Result<u8> {
         commit,
         executable,
         out,
+        site,
     } = args.command;
     let mut input = json!({ "executable": executable, "out": out });
+    if let Some(s) = site {
+        input["site"] = json!(s);
+    }
     if let Some(d) = deployment {
         input["deployment"] = json!(d);
     }
@@ -148,6 +152,7 @@ mod tests {
                 commit: deployment.map(|_| "HEAD".to_string()),
                 executable: executable.display().to_string(),
                 out: out.display().to_string(),
+                site: None,
             },
             format,
         }
@@ -187,6 +192,32 @@ mod tests {
         let v: Value = serde_json::from_slice(&w).unwrap();
         assert_eq!(v["provider"]["app"], "hosted-app");
         assert_eq!(v["deployment"], "hosted");
+    }
+
+    /// `--site` reaches the capability: a site given to a deployment that declares none is
+    /// refused, naming `build.site`, and nothing is printed.
+    #[test]
+    fn a_site_given_to_the_deploy_command_reaches_the_capability() {
+        let repo = hosted_layer(&["hosted"]);
+        let elsewhere = tempfile::tempdir().unwrap();
+        let exe = elsewhere.path().join("exe");
+        std::fs::write(&exe, b"an executable").unwrap();
+        let mut a = args(
+            repo.root(),
+            Some("hosted"),
+            &exe,
+            &elsewhere.path().join("slug"),
+            OutputFormat::Text,
+        );
+        let DeployCommand::Slug { site, .. } = &mut a.command;
+        *site = Some(elsewhere.path().join("built").display().to_string());
+        let mut w = Vec::new();
+        let e = run_to(a, &mut w).unwrap_err();
+        assert!(
+            matches!(&e, Error::Refused { code: 15, reason } if reason.contains("build.site")),
+            "{e}"
+        );
+        assert!(w.is_empty(), "nothing is printed");
     }
 
     /// The command is dispatched from the command line, and a refusal exits 15 with

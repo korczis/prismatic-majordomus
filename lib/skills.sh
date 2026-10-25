@@ -309,6 +309,40 @@ mj_validate_skills() {
   if [ "$MJ_SKILLS_N" = 0 ]; then mj_doctrine_skip skill "$(mj_rel "$MJ_SKILLS_DIR")/" "no skills; nothing to validate"
   elif [ "$MJ_FAILS" = "$before" ]; then mj_doctrine_ok skill "$MJ_SKILLS_N skill(s), $MJ_SKILLS_EXAMPLES example(s)" "every one valid; $MJ_SKILLS_REFS reference(s) resolve"; fi
   [ "$MJ_SKILLS_N" = 0 ] || mj_skills_proof_doctrine
+  mj_skills_shadow_doctrine
+  return 0
+}
+
+# ---------------------------------------------------------------- the reachable half
+# A projected skill is unreachable by its name when the person's own Claude Code profile has
+# a command or skill of the same name: the product answers one name with one thing. Nothing
+# in the repository can see that, so `generate --check` never could; the executable's
+# `editors.status` reads the profile's names (never their content) and says which, and this
+# reports each as a warning. Skipped, and said so, when the executable or jq is missing.
+mj_skills_shadow_doctrine() {
+  local bin share out rc=0 path message remedy n=0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  { [ -x "$bin" ] && command -v jq >/dev/null 2>&1; } || {
+    mj_doctrine_skip skill "reachable" "the executable or jq is not here, so whether a personal command hides a projected skill is not judged (unknown, never a pass)" "majordomus run editors.status"
+    return 0
+  }
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] || { [ -f "$MJ_BIN_DIR/../share/kinds.yaml" ] && share="$MJ_BIN_DIR/../share"; }
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run editors.status --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null \
+          | jq -c '.output // empty' 2>/dev/null )" || rc=$?
+  if [ "$rc" != 0 ] || [ -z "$out" ]; then
+    mj_doctrine_skip skill "reachable" "the executable could not answer editors.status (exit $rc), so shadowed skills are not judged (unknown, never a pass)" "$bin run editors.status --input '{}' --format json"
+    return 0
+  fi
+  while IFS=$'\037' read -r path message remedy; do
+    [ -n "$path" ] || continue
+    n=$((n + 1))
+    mj_warn skill "$path" "personal-name-hides-a-skill: $message; $remedy" "majordomus run editors.status"
+  done < <(printf '%s' "$out" | jq -r '.diagnostics[] | select(.code == "personal-name-hides-a-skill") | [.path, .message, .remedy] | join("\u001f")')
+  [ "$n" != 0 ] || mj_doctrine_ok skill "reachable" "no personal command or skill shares a name with a projected skill" "majordomus run editors.status"
   return 0
 }
 

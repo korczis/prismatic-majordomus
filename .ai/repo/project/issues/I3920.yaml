@@ -1,0 +1,31 @@
+id: I3920
+milestone: work-graph-github
+title: "The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing"
+slug: the-projection-reads-every-issue
+priority: p0
+profile: implementation
+parallel_safe: false
+objective: "scripts/github-sync lists the repository issues with gh issue list (GraphQL, paged to the end) instead of gh api --paginate over the REST issues endpoint, and refuses as unreadable (exit 12, nothing changed) any listing shorter than the repository issues.totalCount, so a truncated read can never be taken for absent issues. The scripted forges of the cases that drive the adapter answer the new reads."
+why: "On 2026-10-22 github-check reported 788 to 888 records missing on master and on every pull request although they existed on GitHub: gh api --paginate over repos/<repo>/issues?state=all&per_page=100 stopped after four pages of issues and pull requests mixed (gh 2.98; the endpoint pages by cursor), so about 400 of 1384 issues were read. The structure job was red everywhere, and an --apply run by the landing seat created 487 duplicate issues (#1861-#2347) before it was stopped; each was closed citing its original and its record marker removed. The unreadable guard did not fire because the call succeeded with a partial answer."
+current_state: "Fixed on train 4 (integration/train-4-20261022, commit 5164599181f): scripts/github-sync lists with gh issue list and checks the count; cases 602, 894 and 1038 answer issue list and api graphql. Not on master until train 4 lands."
+desired_state: "On master the projection reads every issue; github-check finds nothing missing that exists; a listing shorter than totalCount exits 12 and writes nothing; a case proves the truncated listing is refused."
+scope:
+  - "scripts/github-sync"
+  - "test/cases/894_github_sync_applies_only_the_trunk.sh"
+  - "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh"
+  - "test/cases/1038_a_head_is_judged_against_what_it_changes.sh"
+  - ".ai/repo/project/issues/I3920.yaml"
+acceptance_criteria:
+  - "github-sync --check against the live repository reports no record missing that has an issue"
+  - "A listing shorter than the repository issue count exits 12 and nothing is written"
+  - "Cases 602, 894 and 1038 drive the adapter through issue list and api graphql"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk"
+evidence_required:
+  - "truncated_listing_is_unreadable"
+  - "no_duplicate_on_apply"
+depends_on: []
+serves: []
+created_at: 2026-10-22
+updated_at: 2026-10-22

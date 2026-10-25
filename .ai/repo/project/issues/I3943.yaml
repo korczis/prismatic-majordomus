@@ -1,0 +1,37 @@
+id: I3943
+milestone: ci-critical-path
+title: A second list of gates outside the model is found when it is put back
+slug: a-second-gate-list-is-found
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Slice S1 of I2350: add scripts/ci-plan --inventory, which reads the gate ids and commands from the model as ci-plan already parses it and reports every tracked file outside the model that runs the commands of two or more gates near each other or enumerates three or more gate ids on a line; hold what remains in a ratchet baseline that can only shrink; run the check in CI; and make the one recipe that listed gates by hand run the dispatcher instead."
+why: "I2350 acceptance criterion 2 says no script outside the model carries a list of gates, proved by a check that finds one when it is put back, and nothing checked it. The Plan agent finding of 2026-10-23 found that scripts/ci/core-check, the recipe ci-structure in .just/ci.just and the pre-push hook carry lists of checks outside the model, and ci-structure ran shell-lint and core-check by hand while calling them the gates every plan runs, so a gate added to the model was added to CI and not to the local run. A list that nothing looks for comes back; the check is what keeps it out."
+current_state: "gates.yaml is the model and scripts/ci-plan reads it, but no check looks for a second list of its gates. .just/ci.just ci-structure runs scripts/ci/shell-lint and scripts/ci/core-check by hand. scripts/ci/core-check carries its own ordered list of checks and the pre-push hook runs case-numbers and the rustdoc check by name; neither runs two gates' commands, so the inventory as defined does not find them."
+desired_state: "scripts/ci-plan --inventory exits 0 on a tree whose findings are all in .ai/repo/ci/gate-list-baseline.txt, 10 on a finding the baseline does not hold or a baseline entry that matches nothing (STALE), and 12 when the tree or the baseline cannot be read. ci-structure runs scripts/ci/run-plan --job structure. The inventory runs in CI with the gate doc-command-check, an always gate of the structure job, so no new gate, duration row or reader change is owed."
+scope:
+  - "scripts/ci-plan"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/ci/gate-list-baseline.txt"
+  - ".just/ci.just"
+  - "test/cases/3943_a_second_gate_list_is_found.sh"
+  - ".ai/repo/project/issues/I3943.yaml"
+non_scope:
+  - "scripts/ci/core-check: its ordered checks are slice S6 of I2350, which makes it read its list from the model"
+  - "The pre-push hook and docs/CI.md block: they remain in the baseline or out of the inventory's definition until their slices"
+  - "A new gate: the inventory is added to the runs of an existing always gate of the structure job"
+depends_on: []
+acceptance_criteria:
+  - "A file that runs the commands of two gates within ten lines, or enumerates three gate ids on a line, is reported with its file, line and gates, and the inventory exits 10"
+  - "A baseline entry that matches nothing is reported STALE and fails; a finding the baseline does not hold fails"
+  - "The repository's own tree passes the inventory against the committed baseline"
+  - "Putting shell-lint and core-check back into the ci-structure recipe in a copy of .just/ci.just makes the inventory exit 10"
+  - "The inventory runs in CI through the model"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 3943_a_second_gate_list_is_found 94_ci_plan 26_ci_wiring 131_completion_gates"
+  - "scripts/ci-plan --inventory"
+  - "scripts/ci-plan --check"
+evidence_required:
+  - "a_second_gate_list_is_found_test"
+created_at: 2026-10-23
+updated_at: 2026-10-23

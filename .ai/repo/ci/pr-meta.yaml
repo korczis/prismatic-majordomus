@@ -1,0 +1,82 @@
+# The model of the pull-request metadata projection (I3970): who keeps each pull request's
+# labels, milestone, assignee and `Refs` region current, and what that actor may and may not
+# do. .github/workflows/pr-meta.yml is an adapter over this file and carries no rule of its
+# own; test/cases/3970_a_pull_request_carries_its_metadata.sh holds the two to each other and
+# drives the adapter, `scripts/github-sync --prs`, against a scripted forge.
+#
+# On 2026-10-22 the owner found pull requests with no assignee, label, milestone or linked
+# issue: of 77 open, none carried a milestone or an assignee, and one carried a label.
+# The records already said all of it. GitHub keeps it current now, on the events that can
+# change it, so it is a convention that is maintained rather than one that is remembered.
+#
+# A link is `Refs #<n>`, never a closing keyword: a `Closes #N` merged on 2026-10-03 closed a
+# canonically open issue and reddened every structure job. Issues close through their
+# records alone (`majordomus plan done`), and the issue projection carries that to GitHub.
+version: 1
+
+# ---------------------------------------------------------------- who keeps it
+# The workflow: for one pull request per event, and for every open one on a daily sweep or a
+# dispatch. A person's `scripts/github-sync --prs --apply` is the fallback when a run failed.
+#
+# Labels are the workflow's to write. validate.yml starts a run on every `labeled` event, and
+# a label added with a person's token is one, so a backfill from a clone writing labels to
+# every open pull request would start a validate run for each of them. A write with the
+# workflow's own token starts no workflow. So a person's backfill passes
+# `--fields milestone,assignee,body`, and the next sweep adds the labels.
+actor:
+  workflow: .github/workflows/pr-meta.yml
+  job: project
+  # minutes; every step of the job declares a smaller bound of its own
+  bound: 40
+  fallback: scripts/github-sync --prs --fields milestone,assignee,body --apply
+
+# ---------------------------------------------------------------- when it runs
+# Every event that can change what a pull request serves or carries: its title (opened,
+# edited), its commits (synchronize), a label a person set (labeled). A write made with the
+# workflow's own token starts no workflow, so the projection never answers itself. One run
+# per pull request at a time, never cancelled: a cancelled run is a pull request half written,
+# and the next event's run reads the remote afresh.
+#
+# pull_request_target, not pull_request (the I3970 record): the run is the base repository's,
+# its token can write to any pull request, a fork's included, and the workflow file is the
+# base's. That is safe because nothing of the head is executed: the checkout is the default
+# branch, and the head's commits and records are read with git as data. The landing rule
+# allows this run and no other for a pull request (project.the-projection-is-applied-at-landing@2).
+#
+# The sweep carries to a pull request what reached GitHub after its last event: an issue the
+# landing projected (its `Refs #<n>` replaces "not on GitHub yet"), a milestone created since.
+trigger:
+  pull_request_target:
+    types: [opened, edited, synchronize, labeled]
+  schedule: '41 5 * * *'
+  dispatch: true
+  concurrency: pr-meta-<number>, pr-meta-sweep
+
+# ---------------------------------------------------------------- what the token may do
+# Exactly these and nothing broader. Labels, milestone and assignee of a pull request are
+# written through the issues endpoints, which a pull request's write permission covers;
+# issues are only read, to find the GitHub number of each record.
+permissions:
+  pull-requests: write
+  issues: read
+  contents: read
+
+# ---------------------------------------------------------------- what runs
+# The adapter is the trunk's, checked out at the default branch: a pull request's head
+# supplies the commits and records the adapter reads as data (with git, at that head) and
+# never the code that holds the token. The metadata is projected from the trunk's records; a
+# record only the head carries is named by its id alone.
+checkout: default branch only, whole history; never the head
+runs:
+  pull_request: scripts/github-sync --prs --pr <number> --apply
+  sweep: scripts/github-sync --prs --apply
+
+# ---------------------------------------------------------------- what the actor may not do
+forbidden:
+  - write a closing keyword (Closes, Fixes, Resolves #N) anywhere
+  - overwrite a region a person edited (--force)
+  - create, close or reopen an issue
+  - touch a label outside the four families it owns (type:*, priority:*, train, records)
+  - check out or execute anything of the head
+  - write an issue (the token reads issues)
+  - be cancelled by a newer run

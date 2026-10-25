@@ -70,6 +70,12 @@ case "$(field outcome)" in pass|partial) ;; *) echo "    a current tree was reco
 # in the executable and owed as follow-ups, after which this bound comes back down: compute
 # the benchmark projection once per `generate --check`, batch the changelog's ancestry
 # questions into one git call, and cache the rustdoc module routes.
+#
+# It failed again at 31 s on master's validate 40086406859 (563fe99, suite-shard 3), the one
+# failure of this case in the 60 failed validate runs from 2026-10-16 to 2026-10-24. The plan
+# had grown and its scope-conflict scan, which built four strings for every pair of scope
+# entries of every pair of runnable issues, was 3.9 of the 12.1 s `generate --check` spent on
+# its main thread; I4223 made it allocate nothing, and the bound stayed where it was.
 best=""
 for _ in 1 2; do
   t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)

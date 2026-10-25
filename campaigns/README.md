@@ -50,6 +50,7 @@ survived only on one disk, in a directory git was told to ignore. `.ai/repo/scop
 | `majordomus-living-site-v2-20261011` | 2026-10-10 | 13 | Living Site V2: freshness by construction | `~/Downloads/majordomus-living-site-v2-20261011.zip` |
 | `majordomus-mesh-interactive-v5-20261011` | 2026-10-11 | 13 | Majordomus Mesh UI Interactive V5 | `~/Downloads/majordomus-mesh-interactive-v5-20261011.zip` (makes `/ui/mesh` an interactive node-operations surface) |
 | `majordomus-mesh-pack` | 2026-10-10 | 23 | Majordomus Mesh + Prompt-Pack Lifecycle — Opus/Fable Prompt Pack | `~/Downloads/majordomus-opus-fable-full-prompt-pack-20261010.zip` |
+| `majordomus-mission-control-pack-2026-10-22` | 2026-10-22 | 15 | Majordomus Mission Control: prompt pack | `~/Downloads/majordomus-one-click-mission-control-prompt-pack.zip` |
 | `majordomus-openai-provider-control-plane-prompts` | 2026-09-07 | 14 | Majordomus OpenAI / Provider Control Plane Prompt Pack | `~/Downloads/majordomus-openai-provider-control-plane-prompts` |
 | `majordomus-opus55-recovery-pack` | 2026-10-08 | 19 | Prismatic Majordomus: Opus 5.5 Recovery & Evidence-First Prompt Pack | `~/Downloads/majordomus-opus55-recovery-pack.zip` |
 | `majordomus-pr-throughput-pack-20261010` | 2026-10-10 | 18 | Majordomus PR Throughput: closed-loop integration and release | `~/Downloads/majordomus-pr-throughput-pack-20261010.zip` |

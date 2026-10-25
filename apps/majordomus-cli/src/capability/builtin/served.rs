@@ -70,10 +70,13 @@ pub struct ObserveInput {
     /// The name the observation is recorded under; `pages` when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deployment: Option<String>,
-    /// The site's base URL; `base_url` of `site/config.toml` when absent.
+    /// The base URL; when absent, the `provider.url` of the deployment object `deployment`
+    /// names, else `base_url` of `site/config.toml` (I3822).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub url: Option<String>,
-    /// The identity file under the base; `build.json` when absent.
+    /// The identity under the base; when absent, the `health.liveness` route of the
+    /// deployment object `deployment` names (which answers `commit` and `dirty`), else
+    /// `build.json`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub identity: Option<String>,
     /// The commit expected to be served, any revision git resolves; `HEAD` when absent.
@@ -197,6 +200,11 @@ pub struct DeploymentStanding {
     /// That record re-judged against the commit asked about. This, not the recorded
     /// judgement, is what a reader acts on.
     pub now: Judgement,
+    /// For a deployment the layer declares as an object: `active` while `now` is served,
+    /// `declared` otherwise, `retired` when the object says so. Derived from the newest
+    /// observation, never set by hand (I3822); absent for a name no object carries.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<crate::deploy::Status>,
 }
 
 /// Every deployment's standing against one commit: the answer `served.show` gives on the
@@ -264,21 +272,67 @@ fn configured_base(root: &Path) -> Option<String> {
     })
 }
 
+/// The deployment objects the layer declares, by id. One that does not parse is left out
+/// here: `deploy.check` is where it is refused, with the key and the correction.
+fn declared_deployments(ctx: &Context) -> Vec<crate::deploy::Deployment> {
+    ctx.index
+        .objects
+        .iter()
+        .filter(|o| o.kind == crate::deploy::KIND)
+        .filter_map(|o| crate::deploy::Deployment::parse(o).ok())
+        .collect()
+}
+
+/// Where a deployment object says it answers: its provider's URL and its liveness route,
+/// which reports the commit the running executable was built from. `None` for an object
+/// that names no provider, whose address is the platform's to know.
+fn provider_address(deployment: &crate::deploy::Deployment) -> Option<(String, String)> {
+    let provider = deployment.provider.as_ref()?;
+    let route = deployment.health.liveness.as_str();
+    Some((
+        provider.url.clone(),
+        route.trim_start_matches('/').to_string(),
+    ))
+}
+
+/// The status a deployment object stands at, judged from what it was last seen serving:
+/// `active` only while that is the commit asked about, and a retired object stays retired.
+fn derived_status(
+    declared: Option<crate::deploy::Status>,
+    now: &Judgement,
+) -> crate::deploy::Status {
+    use crate::deploy::Status;
+    match declared {
+        Some(Status::Retired) => Status::Retired,
+        _ if now.verdict.passes() => Status::Active,
+        _ => Status::Declared,
+    }
+}
+
 fn observe(ctx: &Context, input: ObserveInput) -> Result<Observed, CapabilityError> {
     let root = root_of(ctx);
     let expected = resolve(&root, input.commit.as_deref().unwrap_or("HEAD"))?;
-    let base = match input.url {
-        Some(u) => u,
-        None => configured_base(&root).ok_or_else(|| {
+    let object = input.deployment.as_deref().and_then(|id| {
+        declared_deployments(ctx)
+            .into_iter()
+            .find(|d| d.id == id)
+            .and_then(|d| provider_address(&d))
+    });
+    let base = match (input.url, &object) {
+        (Some(u), _) => u,
+        (None, Some((url, _))) => url.clone(),
+        (None, None) => configured_base(&root).ok_or_else(|| {
             CapabilityError::InvalidInput(
-                "no `url` was given and site/config.toml names no base_url".into(),
+                "no `url` was given, no deployment object with a provider is named, and site/config.toml names no base_url".into(),
             )
         })?,
     };
     served::check_base(&base).map_err(CapabilityError::InvalidInput)?;
-    let identity = input
-        .identity
-        .unwrap_or_else(|| served::DEFAULT_IDENTITY.into());
+    let identity = match (input.identity, object) {
+        (Some(i), _) => i,
+        (None, Some((_, route))) => route,
+        (None, None) => served::DEFAULT_IDENTITY.into(),
+    };
     if identity.contains("..") || identity.contains('?') || identity.contains('#') {
         return Err(CapabilityError::InvalidInput(format!(
             "`{identity}` is not a plain path under the site"
@@ -352,12 +406,19 @@ fn forge_with(program: &str, root: &Path) -> ForgeObserved {
 fn show(ctx: &Context, input: ShowInput) -> Result<ServedStanding, CapabilityError> {
     let root = root_of(ctx);
     let expected = resolve(&root, input.commit.as_deref().unwrap_or("HEAD"))?;
-    Ok(standing(
+    let mut answer = standing(
         &root,
         &expected,
         input.deployment.as_deref(),
         &GitAncestry { root: &root },
-    ))
+    );
+    let objects = declared_deployments(ctx);
+    for d in &mut answer.deployments {
+        if let Some(object) = objects.iter().find(|o| o.id == d.deployment) {
+            d.status = Some(derived_status(object.status, &d.now));
+        }
+    }
+    Ok(answer)
 }
 
 /// The standing of every recorded deployment against `expected`. Public so that a consumer
@@ -411,6 +472,7 @@ pub fn standing(
             deployment: o.deployment.clone(),
             now: o.rejudge(expected, git),
             observation: o.clone(),
+            status: None,
         })
         .collect();
     ServedStanding {
@@ -464,7 +526,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "served.observe",
                 kind: CapabilityKind::Command,
                 title: "Observe what a deployment serves",
-                description: "Fetches the build identity the site serves (`build.json` under the configured base URL, one bounded probe, no shell), judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks).",
+                description: "Fetches the build identity a deployment serves (one bounded probe, no shell): for a `deployment` naming an object with a provider, its liveness route at the provider's URL; otherwise `build.json` under the configured base URL. It judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks).",
                 input: ObserveInput,
                 output: Observed,
                 stability: Stability::BehaviorallyVerified,
@@ -499,7 +561,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "served.show",
                 title: "What each deployment was last seen serving",
-                description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+                description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
                 input: ShowInput,
                 output: ServedStanding,
                 stability: Stability::BehaviorallyVerified,
@@ -756,5 +818,185 @@ mod tests {
             configured_base(dir.path()).as_deref(),
             Some("https://example.test")
         );
+    }
+
+    fn deployment(provider: Option<serde_json::Value>) -> crate::deploy::Deployment {
+        let mut v = serde_json::json!({
+            "schema": "deployment/v1", "kind": "deployment", "id": "hosted",
+            "title": "The hosted deployment", "application": "hosted",
+            "build": { "package": "majordomus-cli", "binary": "majordomus",
+                       "profile": "release", "inputs": ["apps/majordomus-cli"] },
+            "listen": { "port": 8080, "interface": "all" },
+            "health": { "liveness": "/api/v1/live", "readiness": "/api/v1/ready" },
+            "resources": { "cpu_kind": "shared", "cpus": 1, "memory_mb": 256 },
+            "machines": { "count": 1, "min_running": 0, "autostart": true, "autostop": true },
+            "region": "fra",
+        });
+        if let Some(p) = provider {
+            v["provider"] = p;
+        }
+        serde_json::from_value(v).expect("a deployment")
+    }
+
+    /// I3822: an object that names a provider is observed where it says it answers, at the
+    /// route that reports its commit; one that names none has no address of its own.
+    #[test]
+    fn a_provider_deployment_is_addressed_by_its_object() {
+        let hosted = deployment(Some(serde_json::json!({
+            "name": "gigalixir", "app": "hosted-app", "stack": "gigalixir-24",
+            "url": "https://hosted-app.gigalixirapp.com",
+        })));
+        let (base, identity) = provider_address(&hosted).expect("an address");
+        assert_eq!(base, "https://hosted-app.gigalixirapp.com");
+        assert_eq!(identity, "api/v1/live");
+        assert_eq!(
+            served::identity_url(&base, &identity),
+            "https://hosted-app.gigalixirapp.com/api/v1/live"
+        );
+        assert_eq!(provider_address(&deployment(None)), None);
+    }
+
+    /// I3822: the status is the newest observation's, re-judged; it is active only while
+    /// that serves the commit, and a retired object is never revived by an observation.
+    #[test]
+    fn the_status_is_active_only_while_the_commit_is_served() {
+        use crate::deploy::Status;
+        let judged = |verdict| Judgement {
+            verdict,
+            reason: String::new(),
+        };
+        let served = judged(ServedVerdict::Served);
+        assert_eq!(
+            derived_status(Some(Status::Declared), &served),
+            Status::Active
+        );
+        assert_eq!(derived_status(None, &served), Status::Active);
+        for v in [
+            ServedVerdict::Stale,
+            ServedVerdict::Unreachable,
+            ServedVerdict::Malformed,
+            ServedVerdict::Dirty,
+        ] {
+            assert_eq!(
+                derived_status(Some(Status::Active), &judged(v)),
+                Status::Declared,
+                "{v:?}"
+            );
+        }
+        assert_eq!(
+            derived_status(Some(Status::Retired), &served),
+            Status::Retired
+        );
+    }
+
+    /// A committed layer that declares the deployment `hosted`, answering at `url`.
+    fn hosted_at(url: &str) -> crate::synthetic::SyntheticRepository {
+        use crate::deploy::slug::testing::{commit, init, object_yaml, write_object};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        init(repo.root(), &[]);
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(
+            "  - id: deployment\n    kind: deployment\n    discovery: vcs\n    \
+             pathspec: ':(glob).ai/repo/deployments/*.yaml'\n    required: false\n",
+        );
+        std::fs::write(&sources, text).unwrap();
+        let yaml = object_yaml("hosted", &["docs"], true)
+            .replace("https://hosted-app.gigalixirapp.com", url);
+        write_object(repo.root(), ".ai/repo/deployments/hosted.yaml", &yaml);
+        commit(repo.root(), "the layer");
+        repo
+    }
+
+    /// A loopback port nothing listens on: bound by the system's choice, then let go.
+    fn closed_port() -> u16 {
+        std::net::TcpListener::bind("127.0.0.1:0")
+            .unwrap()
+            .local_addr()
+            .unwrap()
+            .port()
+    }
+
+    /// I3822: a named deployment object is observed where it says it answers, at the route
+    /// that reports its commit, unless the caller names the address and the identity; with
+    /// no address from anywhere, the refusal names every place one could have come from.
+    #[test]
+    fn an_observation_is_addressed_by_its_object_unless_the_caller_names_it() {
+        let base = format!("https://127.0.0.1:{}", closed_port());
+        let repo = hosted_at(&base);
+        let ctx = repo.context().unwrap();
+        let input =
+            |url: Option<&str>, identity: Option<&str>, deployment: Option<&str>| ObserveInput {
+                deployment: deployment.map(str::to_string),
+                url: url.map(str::to_string),
+                identity: identity.map(str::to_string),
+                commit: None,
+                timeout_seconds: Some(1),
+                dry_run: true,
+            };
+
+        let by_object = observe(&ctx, input(None, None, Some("hosted"))).unwrap();
+        assert_eq!(by_object.observation.url, format!("{base}/api/v1/live"));
+        assert_eq!(by_object.observation.deployment, "hosted");
+        assert_eq!(
+            by_object.observation.judgement.verdict,
+            ServedVerdict::Unreachable
+        );
+        assert_eq!(by_object.recorded, None, "a dry run records nothing");
+
+        let elsewhere = format!("https://127.0.0.1:{}", closed_port());
+        let named = observe(
+            &ctx,
+            input(Some(&elsewhere), Some("build.json"), Some("hosted")),
+        )
+        .unwrap();
+        assert_eq!(named.observation.url, format!("{elsewhere}/build.json"));
+
+        match observe(&ctx, input(None, None, None)) {
+            Err(CapabilityError::InvalidInput(m)) => {
+                assert!(m.contains("no deployment object with a provider"), "{m}");
+                assert!(m.contains("site/config.toml names no base_url"), "{m}");
+            }
+            other => panic!("an observation with no address was made: {other:?}"),
+        }
+    }
+
+    /// I3822: the standing of a deployment the layer declares carries the status its newest
+    /// observation derives, and a name no object carries has none.
+    #[test]
+    fn a_declared_deployment_stands_at_the_status_its_observation_derives() {
+        use crate::deploy::Status;
+        let repo = hosted_at(&format!("https://127.0.0.1:{}", closed_port()));
+        let ctx = repo.context().unwrap();
+        let head = resolve(repo.root(), "HEAD").unwrap();
+        for name in ["hosted", "pages"] {
+            served::append(repo.root(), &record(name, &head, ServedVerdict::Served)).unwrap();
+        }
+        let s = show(
+            &ctx,
+            ShowInput {
+                commit: None,
+                deployment: None,
+            },
+        )
+        .unwrap();
+        let standing: Vec<_> = s
+            .deployments
+            .iter()
+            .map(|d| (d.deployment.as_str(), d.status))
+            .collect();
+        assert_eq!(
+            standing,
+            [("hosted", Some(Status::Active)), ("pages", None)]
+        );
+    }
+
+    /// A process that cannot tell how it was built answers `dirty: null`; that proves no
+    /// commit, and the reason says so rather than calling the value not a boolean.
+    #[test]
+    fn an_unknown_dirtiness_proves_no_commit_and_says_why() {
+        let body = format!(r#"{{"alive":true,"commit":"{A}","dirty":null}}"#);
+        let why = BuildIdentity::parse(body.as_bytes()).unwrap_err().0;
+        assert!(why.contains("dirty: null"), "{why}");
     }
 }

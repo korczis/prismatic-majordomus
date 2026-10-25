@@ -248,9 +248,12 @@ if [ -x "$BIN/majordomus-mcp" ] && [ -f "${repo:-}/.ai/repo/policy.yaml" ]; then
       < "$WORK/mcp.in" > "$WORK/mcp.out" 2> "$WORK/mcp.log" ) &
   mcp_pid=$!
   exec 3> "$WORK/mcp.in"
-  frame 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"install-check","version":"0"}}' >&3
-  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n' >&3
-  frame 2 tools/list >&3
+  # a launcher that cannot start may close the pipe before these are written: the write then
+  # fails (EPIPE, or SIGPIPE in the subshell), and under set -e that would end the gate before
+  # it says why, so the failure is left to the checks below, which name it
+  ( frame 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"install-check","version":"0"}}'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    frame 2 tools/list ) >&3 2>/dev/null || true
   # bounded: 60 s for the server to listen and both answers to arrive
   i=0
   while [ "$i" -lt 600 ]; do

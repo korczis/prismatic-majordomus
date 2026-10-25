@@ -13,11 +13,14 @@
 #   refused   a planted sentence carrying each form of the vocabulary, in each copy file and in
 #             the template's markup, in a string a {% set %} types, and in an aria-label, each
 #             named with its file, its line and the form
-#   allowed   the same words in a TOML comment, in a TOML key and in a {# template comment #}
+#   allowed   the same words in a TOML comment, in a TOML key and in a {# template comment #},
+#             and "not yet measured" inside the proof band's supported figure alone, whose words
+#             `declared` holds to the recorded run (I3916); the same words beside it are refused
 #   unread    a copy file or the template that cannot be read is a finding, never a clean pass
 #   real      the checkout's own marketing.toml, manifesto.toml, homepage.toml and
-#             site/templates/index.html pass, and the template reads its plan and release
-#             figures from the generated data rather than from a sentence or a milestone bar
+#             site/templates/index.html pass, and the template reads its release figures from
+#             the generated data rather than from a sentence or a milestone bar, and counts none
+#             of the plan's issues on the hero: /roadmap/ counts them (I3917)
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
@@ -91,6 +94,12 @@ judge 0 '^OK   present ' "a template comment"
 # the same word inside a longer one is not the word
 fresh; printf 'lead = "Yesterday is history; shippedness is not a word."\n' >> "$F/site/data/marketing.toml"
 judge 0 '^OK   present ' "a form only as part of a longer word"
+# the proof band's supported figure reads the recorded run, and its words are judged by
+# `declared`, not here; the same words anywhere else in the template are a sentence
+fresh; printf '<dl data-claims-proof><dd class="x" data-supported="{%% if ci_measured %%}{{ n }}{%% else %%}unmeasured{%% endif %%}">{%% if ci_measured %%}{{ n }}{%% else %%}not yet measured{%% endif %%}</dd></dl>\n' >> "$F/site/templates/index.html"
+judge 0 '^OK   present ' "the supported figure's words, read from the recorded run"
+printf '<p>Supported claims: not yet measured.</p>\n' >> "$F/site/templates/index.html"
+judge 10 "site/templates/index.html:3 states the present \\('not yet'\\)" "the same words outside the figure"
 
 # --- unread: a file the check cannot read is a finding, not a clean pass
 fresh; rm "$F/site/templates/index.html"
@@ -105,13 +114,16 @@ cp "$ROOT/site/templates/index.html" "$F/site/templates/index.html"
 judge 0 '^OK   present .*site/templates/index.html' "the checkout's own copy and template"
 grep -q '^FAIL' out.txt && { echo "    the checkout's own files carry a present-state sentence:"; cat out.txt; exit 1; }
 
-# and the hero reads its figures rather than describing them: the plan's issues, the newest
-# release record's changes from the changelog, and no milestone progress bar the roadmap
-# disowns
+# and the hero reads its figures rather than describing them: the newest release record's
+# changes from the changelog, and no milestone progress bar the roadmap disowns. The plan's
+# issues by status are not the hero's (I3917): /roadmap/ counts them
 TPL="$ROOT/site/templates/index.html"
 expect_grep 'load_data\(path="data/generated/changelog.json"\)' "$TPL" || exit 1
 expect_grep 'data-product-landings="\{\{ rel.version \}\}"' "$TPL" || exit 1
-expect_grep 'data-issues="\{\{ st \}\}"' "$TPL" || exit 1
+if grep -qE 'data-issues=|data-product-issues' "$TPL"; then
+  echo "    site/templates/index.html still counts the plan's issues on the hero"; exit 1
+fi
+expect_grep 'data-roadmap-issue-status="\{\{ st \}\}"' "$ROOT/site/templates/roadmap.html" || exit 1
 if grep -qE 'data-product-milestones|data/generated/roadmap.json' "$TPL"; then
   echo "    site/templates/index.html still draws milestone progress from roadmap.json"; exit 1
 fi

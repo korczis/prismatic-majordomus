@@ -41,7 +41,7 @@ R="$T/repo"; mkdir -p "$R"
 # The declaration lists the seed's own public key, so the hub's mesh opens (deny_unknown).
 declare_mesh() { # allowed-key
   mkdir -p "$R/.ai/repo/mesh"
-  printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\nbroadcast:\n  mode: disabled\ntrust:\n  policy: deny_unknown\n  allow:\n    - %s\n' "$1" > "$R/.ai/repo/mesh/majordomus.yaml"
+  printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\nbroadcast:\n  mode: disabled\ntrust:\n  policy: deny_unknown\n  allow:\n    - %s\n' "$1" > "$R/.ai/repo/mesh/majordomus.yaml"
   git -C "$R" add .ai/repo/mesh/majordomus.yaml && git -C "$R" commit -qm "the mesh" >/dev/null
 }
 

@@ -91,7 +91,8 @@
 #   scripts/reap-orphans --servers    only the servers
 #   scripts/reap-orphans --targets    only the build directories
 #   scripts/reap-orphans --kill       end the abandoned servers (TERM, then KILL after --grace)
-#   scripts/reap-orphans --reclaim    remove the build output of landed or pushed, unattended worktrees
+#   scripts/reap-orphans --reclaim    remove the build output of landed or pushed, unattended worktrees,
+#                                     and reduce the build cache's local level to its bound
 #   scripts/reap-orphans --min-age 2h only consider servers older than two hours
 #
 # `--kill` and `--reclaim` are separate on purpose: the two subjects are consented to
@@ -606,7 +607,7 @@ EOF
   # machine it was only asked to measure, and a fixture with no declaration must find
   # nothing to reclaim. Cargo's answer or nothing — and one without cargo's CACHEDIR.TAG is
   # not provably the build directory cargo named, so it is left alone and counted.
-  local shared cap_kb
+  local shared cap_kb bound_out
   shared_build_dir
   shared="$SHARED_DIR"
   [ -z "${MAJORDOMUS_SHARED_BUILD_DIR:-}" ] || { shared="$MAJORDOMUS_SHARED_BUILD_DIR"; SHARED_WHY=""; }
@@ -627,8 +628,24 @@ EOF
       row "$shared" "$(human "$size")" "keep — shared by every worktree, within its $(human "$cap_kb") bound"
       tgt_kept=$((tgt_kept + 1))
     elif grep -qE '(^|/)(cargo|rustc)( |$)' "$SNAP_PS"; then
-      row "$shared" "$(human "$size")" "keep — over its bound, but a cargo or rustc process is running"
-      tgt_kept=$((tgt_kept + 1))
+      # Not kept whole until nobody builds anywhere, which on a machine where nine sessions
+      # build is never: on 2026-10-23 that held it at 102GB against its 6GB bound (I3959).
+      # Its stale units go instead, oldest first until it is under its bound, each inside
+      # cargo's own lock on its profile; a profile a build holds is skipped and said
+      # (lib/rust_bin.sh mj_rust_bound_build_dir).
+      bound_out="$(mktemp "${TMPDIR:-/tmp}/mj-reap-bound.XXXXXX")"
+      if [ "$RECLAIM" -eq 0 ]; then
+        row "$shared" "$(human "$size")" "over its bound, and a cargo or rustc process is running: stale units would be evicted under cargo's lock"
+        rc=0; mj_rust_bound_build_dir "$shared" "$ROOT/$CRATE_REL" dry-run > "$bound_out" 2>&1 || rc=$?
+        sed 's/^/    /' "$bound_out"
+        if [ "$rc" -eq 10 ]; then tgt_found=$((tgt_found + 1)); else tgt_kept=$((tgt_kept + 1)); fi
+      else
+        row "$shared" "$(human "$size")" "over its bound, and a cargo or rustc process is running: evicting stale units under cargo's lock"
+        mj_rust_bound_build_dir "$shared" "$ROOT/$CRATE_REL" evict > "$bound_out" 2>&1 || true
+        sed 's/^/    /' "$bound_out"
+        tgt_kept=$((tgt_kept + 1))
+      fi
+      rm -f "$bound_out"
     else
       tgt_found=$((tgt_found + 1))
       if [ "$RECLAIM" -eq 0 ]; then
@@ -652,6 +669,66 @@ EOF
   fi
 }
 
+# ------------------------------------------------------------------------------- build cache
+#
+# The machine-wide archive level of `majordomus mesh build-cache ensure` (ADR 0157 decision 13,
+# I3952): every checkout of this machine restores its npm, mix and cargo build-directory
+# archives from `${XDG_CACHE_HOME:-~/.cache}/majordomus/build-cache` and saves to it. `ensure`
+# holds it under the policy's `build_cache.local_max_gib` (20 when the policy says nothing)
+# whenever it adds an archive; this measures it on every run and, with --reclaim, reduces it to
+# that bound, oldest archive first. An archive is the result of an install that a miss simply
+# runs again, so the bound is the only predicate; a level whose size cannot be read is left
+# alone and counted. MAJORDOMUS_BUILD_CACHE_CAP_MB overrides the bound, in MiB, for one run.
+build_cache_bound_kb() {
+  local gib
+  case "${MAJORDOMUS_BUILD_CACHE_CAP_MB:-}" in
+    '') ;;
+    *[!0-9]*) ;;
+    *) echo $(( MAJORDOMUS_BUILD_CACHE_CAP_MB * 1024 )); return 0 ;;
+  esac
+  gib="$(awk '/^build_cache:/ { inb = 1; next }
+              /^[^ #]/ { inb = 0 }
+              inb && $1 == "local_max_gib:" { print $2; exit }' "$ROOT/.ai/repo/policy.yaml" 2>/dev/null || true)"
+  case "$gib" in ''|*[!0-9]*) gib=20 ;; esac
+  echo $(( gib * 1048576 ))
+}
+
+reap_build_cache() {
+  local level size bound over removed freed a s sz
+  level="${XDG_CACHE_HOME:-$HOME/.cache}/majordomus/build-cache"
+  [ -d "$level" ] || return 0
+  bound="$(build_cache_bound_kb)"
+  size="$(size_kb "$level")"
+  if [ -z "$size" ]; then
+    row "$level" "?" "skip — the build cache: its size could not be read"
+    unreadable=$((unreadable + 1)); return 0
+  fi
+  if [ "$size" -le "$bound" ]; then
+    row "$level" "$(human "$size")" "keep — the build cache, within its $(human "$bound") bound"
+    tgt_kept=$((tgt_kept + 1)); return 0
+  fi
+  over=$((size - bound))
+  tgt_found=$((tgt_found + 1))
+  if [ "$RECLAIM" -eq 0 ]; then
+    row "$level" "$(human "$size")" "would reduce — the build cache, over its $(human "$bound") bound by $(human "$over"): oldest archives first"
+    tgt_freed=$((tgt_freed + over)); return 0
+  fi
+  removed=0; freed=0
+  # oldest first, as `ensure` prunes; a scratch directory (a leading dot) is a run in flight
+  while IFS= read -r a; do
+    [ -n "$a" ] || continue
+    [ "$size" -gt "$bound" ] || break
+    s="${a%.tar.gz}.sha256"
+    sz="$(du -sk "$a" "$s" 2>/dev/null | awk '{ t += $1 } END { print t + 0 }')"
+    rm -f "$a" "$s" || continue
+    size=$((size - sz)); freed=$((freed + sz)); removed=$((removed + 1))
+  done <<EOF
+$(find "$level" -name '.*' -prune -o -type f -name '*.tar.gz' -exec ls -1tr {} + 2>/dev/null)
+EOF
+  row "$level" "$(human "$size")" "reduced — the build cache: $removed archive(s) removed, $(human "$freed") freed"
+  tgt_reclaimed=$((tgt_reclaimed + 1)); tgt_freed=$((tgt_freed + freed))
+}
+
 # ------------------------------------------------------------------------------- report
 
 before="$(free_kb "$ROOT")"
@@ -664,6 +741,8 @@ if [ "$DO_TARGETS" -eq 1 ]; then
   if [ "$DO_SERVERS" -eq 1 ]; then echo; fi
   PHASE="examining build output"
   reap_targets
+  PHASE="examining the build cache"
+  reap_build_cache
   TGT_REACHED=1
 fi
 PHASE="summarising"

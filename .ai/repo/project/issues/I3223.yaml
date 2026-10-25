@@ -30,6 +30,18 @@ validation:
 evidence_required:
   - "homepage_check_scenarios"
 created_at: 2026-10-18
-updated_at: 2026-10-20T22:08:50Z
+updated_at: 2026-10-22T04:43:54Z
 started_at: 2026-10-20T22:08:50Z
 started_event: sha256:28648588e841d5c5bc1314fc9ecb705d4d3ca50724c4873a561f2b0e91d2dc57
+verified_at: 2026-10-22T04:40:55Z
+verified_event: sha256:6261f7aed0c550617a39f311212009e54b27084f72e46a9d3e5a445f4f8388ab
+completed_at: 2026-10-22T04:43:54Z
+completed_event: sha256:a368d7814f4928f55b5ed6a36768cf307e026bfd64d7d15db2c6b7daa03c161b
+evidence:
+  - covers: homepage_check_scenarios
+    type: ci
+    command: "scripts/ci/homepage-check --only scenarios; bash test/run.sh 333_homepage_narrative"
+    result: "passed in train 3a validate 39712017896 (76c57859663, landed on master 2026-10-22)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39712017896"
+    commit: 76c578596631b290f9291691b388f359fbce97ae
+    recorded_at: 2026-10-22T04:38:44Z

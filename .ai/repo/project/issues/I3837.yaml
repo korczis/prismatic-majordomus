@@ -6,8 +6,8 @@ priority: p2
 profile: implementation
 parallel_safe: true
 objective: "Give every shell case that writes an enabled mesh declaration with its other discovery providers off a `tailscale: enabled: false` beside `multicast: enabled: false`, and add a structure check that refuses a new case whose enabled declaration leaves the tailnet provider on unless the case says it tests the tailnet."
-why: "I2410 makes the tailnet a discovery provider, on by default. A fixture that switched multicast off to stay hermetic then still asks the real tailnet on any machine whose PATH has the Tailscale CLI: on macbook-2 on 2026-10-21 health_server's mesh-dimension tests saw 2 real nodes where they assert none (fixed for the Rust fixtures inside I2410). Eighteen shell cases have the same exposure and pass only because CI's runners have no Tailscale: 130, 301, 495, 821, 827, 993, 1023, 1050, 1051, 1052, 1053, 1054, 3051, 3066, 3067, 3068, 3069, 3151."
-current_state: "Those cases write `multicast:\\n  enabled: false` and no `tailscale:` key into .ai/repo/mesh/majordomus.yaml of their fixture; nothing checks that a case's declaration is hermetic."
+why: "I2410 makes the tailnet a discovery provider, on by default. A fixture that switched multicast off to stay hermetic then still asks the real tailnet on any machine whose PATH has the Tailscale CLI: on macbook-2 on 2026-10-21 health_server's mesh-dimension tests saw 2 real nodes where they assert none (fixed for the Rust fixtures inside I2410). Fifteen shell cases have the same exposure and pass only because CI's runners have no Tailscale: 368, 494, 495, 924, 1023, 1050, 1051, 1052, 1053, 1054, 3066, 3067, 3068, 3069, 3151 (the first count of eighteen named seven cases that never turn the mesh on, and missed 368, 494 and 924, two of which write the declaration as a here-document)."
+current_state: "Those cases write, on one line or as a here-document, `multicast:\\n  enabled: false` and no `tailscale:` key into .ai/repo/mesh/majordomus.yaml of their fixture; nothing checks that a case's declaration is hermetic."
 desired_state: "Every case's enabled declaration names the tailnet provider; a case that leaves it on says why, and a check refuses one that does not."
 scope:
   - "test/cases"
@@ -18,7 +18,7 @@ non_scope:
 depends_on:
   - I2410
 acceptance_criteria:
-  - "Each of the eighteen cases declares `tailscale: enabled: false` and passes on a machine with the Tailscale CLI on PATH, named in the evidence"
+  - "Each of the fifteen cases declares `tailscale: enabled: false` and passes on a machine with the Tailscale CLI on PATH, named in the evidence"
   - "A fixture case whose enabled declaration omits the tailnet key is refused by the check, and one that declares it, or says it tests the tailnet, is admitted"
 validation:
   - "bash test/run.sh 3847_a_case_that_enables_the_mesh_declares_its_tailnet_off"

@@ -375,6 +375,11 @@ impl Memory {
             }
             // read raw above, before the body is typed: a withdrawal never reaches this match
             EventBody::ReviewWithdrawn { .. } => return None,
+            // a store offered or withdrawn is the build cache's news, not the cooperation's:
+            // `mesh state` reads it
+            EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {
+                return None
+            }
         };
         signal.machine = Some(machine);
         Some(signal)
@@ -887,6 +892,32 @@ mod tests {
         assert_eq!(
             short_scope(&["a".into(), "b".into(), "c".into(), "d".into()]),
             "a, b +2"
+        );
+    }
+
+    #[test]
+    fn a_build_cache_offer_or_withdrawal_is_not_cooperation_news() {
+        let events = vec![
+            event(
+                1,
+                1,
+                json!({"kind": "build_cache_offered", "offer": {
+                    "protocol": "s3", "provider": "minio", "scope": "lan",
+                    "endpoint": "http://192.0.2.10:9000", "bucket": "majordomus-build-cache",
+                    "lifetime_seconds": 30 }}),
+            ),
+            event(
+                2,
+                2,
+                json!({"kind": "build_cache_withdrawn", "reason": "probe failed"}),
+            ),
+        ];
+        let reader = Reader::default();
+        let machines = HashMap::new();
+        let read = fold(&events, None, &ctx(&reader, &machines));
+        assert!(
+            read.signals.is_empty(),
+            "the build cache's news is `mesh state`'s, not the monitor's"
         );
     }
 }

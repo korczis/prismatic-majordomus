@@ -217,7 +217,7 @@ mj_validate_completion_gates() {
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
-    mj_gate_unknown "$id" "the gate reader is not built at $bin, so no gate can be judged here (unknown, never a pass)" "bin/majordomus-cli --help"
+    mj_gate_unknown "$id" "the gate reader is not built at $bin, so no gate can be judged here (unknown, never a pass)" "just build"
     return 0
   fi
   if ! command -v jq >/dev/null 2>&1; then

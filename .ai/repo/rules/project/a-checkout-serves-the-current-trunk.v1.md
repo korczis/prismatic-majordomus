@@ -30,7 +30,7 @@ reading at all. That is the defect this rule closes: the distance is measured, s
 wherever an answer is served, and judged against a declared number.
 
 The cooperation model the owner set on 2026-10-16 — always current, rescue before reset,
-release often — is recorded once, in ADR 0167 and the rule that carries it, and ADR 0156
+release often — is recorded once, in ADR 0167 and the rule that carries it, and ADR 0226
 (proposed) names *current* as one of the facts a session joins the cluster with.
 This rule is not a second statement of either. It is the measurement both rely on, and the
 gate that makes a stale checkout impossible to miss.

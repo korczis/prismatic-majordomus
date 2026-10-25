@@ -51,6 +51,8 @@ esac
 case "$*" in
   *"--paginate repos/"*"/milestones"*) cat "$MJ_STUB_MS"; exit 0 ;;
   *"--paginate repos/"*"/issues"*)     cat "$MJ_STUB_IS"; exit 0 ;;
+  *"issue list"*)                      cat "$MJ_STUB_IS"; exit 0 ;;
+  *"api graphql"*)                     wc -l < "$MJ_STUB_IS" | tr -d ' '; exit 0 ;;
 esac
 exit 0
 STUB
@@ -168,7 +170,7 @@ for mode in --check --apply; do
   expect_grep 'github-sync: could not list the milestones of example/fixture; nothing was read and nothing was changed \(reproduce: gh api repos/example/fixture/milestones\)'
   expect_no_grep '^DRIFT'
   : > "$LOG"
-  expect_exit 12 unread '/issues' "$mode"
+  expect_exit 12 unread 'issue list' "$mode"
   expect_grep 'github-sync: could not list the issues of example/fixture; nothing was read and nothing was changed'
   expect_no_grep '^DRIFT'
   if grep -qE '^(issue (create|edit|close|reopen)|api -X)' "$LOG"; then

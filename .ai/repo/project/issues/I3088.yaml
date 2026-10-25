@@ -1,0 +1,39 @@
+id: I3088
+milestone: public-proof
+title: "An article explains in both languages why automation is a capability, not a shell script"
+slug: automation-is-a-capability
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Publish site/content-src/automation-is-a-capability.md, an English article on why this repository's automation becomes a typed or scripted capability rather than shell (ADR 0069). It covers what shell cost, a scripted capability and the sandbox it runs in, one declaration reaching every surface (ADR 0004), the automation inventory and its exemptions, how shell check refuses new shell, the portable-shell rule for the shell that remains, and what is not built yet. Every statement is one that ADR 0069, ADR 0004, rules project.no-new-nouns, project.no-network-no-eval and project.portable-shell, docs/SHELL.md, docs/CAPABILITIES.md, the automation inventory or the plan on master states, each ADR with its status, and no count is typed by hand. site/content-src/automatizace-je-schopnost.md is its Czech translation, naming translated_from and its source's digest. site/data/nav.toml lists both. Both relate the derivation, layer and proof-carrying documentation articles, each of which names them back in its own language."
+why: "The owner asked on 2026-10-19 that the site's articles be developed and interlinked in every language. That new automation is a capability and never another shell script is a rule every worker's bootstrap states, and the site explained it only in an ADR, a manual and an inventory written for the sessions that follow them."
+current_state: "No article explains why automation is a capability. The article groups relate each other, and none of them names it."
+desired_state: "/automation-is-a-capability/ and /automatizace-je-schopnost/ are built, are counterparts of each other, are listed in the navigation, and are related both ways with three other groups. Check 21 passes, with the translation at its source's digest."
+scope:
+  - ".ai/repo/project/issues/I3088.yaml"
+  - "site/content-src/automation-is-a-capability.md"
+  - "site/content-src/automatizace-je-schopnost.md"
+  - "site/content-src/written-once-derived-everywhere.md"
+  - "site/content-src/napsano-jednou-odvozeno-vsude.md"
+  - "site/content-src/the-bet-on-a-layer.md"
+  - "site/content-src/teze.md"
+  - "site/content-src/proof-carrying-documentation.md"
+  - "site/content-src/dokumentace-kterou-lze-odmitnout.md"
+  - "site/data/nav.toml"
+  - "scripts/ci/english-only-allow.txt"
+non_scope:
+  - "Building the scripted capability kind, migrating any script, or settling the contradictions between the automation records that the fact-check found"
+depends_on:
+  - "I3086"
+acceptance_criteria:
+  - "Both articles are built, declare each other in [extra.translations], and the Czech one records translated_from = automation-is-a-capability/ and the digest check 21 computes of its source"
+  - "Each statement is one a record, manual or the inventory on master states, and check 19 finds no count typed by hand"
+  - "scripts/site-check --articles passes the tree, counting the new related links"
+validation:
+  - "majordomus plan validate"
+  - "scripts/site-check --articles site/content-src site/data/nav.toml site/config.toml"
+  - "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3389_related_articles_answer_each_other_in_every_language"
+evidence_required: []
+serves: []
+created_at: 2026-10-21
+updated_at: 2026-10-21

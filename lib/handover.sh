@@ -39,12 +39,16 @@ H
   if [ "$list" = 1 ]; then mj_record_list "$MJ_STATE_DIR/handovers" handover; return; fi
   if [ "$resolve" = 1 ]; then mj_handover_resolve "$path_only" "$want_task"; return; fi
 
-  local task_id="" profile="" owner=""
-  if mj_load_current; then task_id="$(mj_cur id)"; profile="$(mj_cur profile)"; owner="$(mj_cur owner)"
-  elif [ "$no_task" != 1 ]; then mj_die "$MJ_EX_MISSING" "no active task; run majordomus start, or pass --no-task"; fi
+  # The task a handover continues is the caller's or none (ADR 0164): another episode's
+  # active task is neither named in it nor closed by it, and the handover is still written.
+  mj_record_attribution
+  local task_id="$MJ_RECORD_TASK" profile="$MJ_RECORD_PROFILE" owner="$MJ_RECORD_OWNER"
+  if [ -z "$task_id" ] && [ "$no_task" != 1 ] && ! mj_load_current; then
+    mj_die "$MJ_EX_MISSING" "no active task; run majordomus start, or pass --no-task"
+  fi
 
   local body; body="$(mktemp "${TMPDIR:-/tmp}/mj.hb.XXXXXX")"
-  if [ "$derive" = 1 ]; then mj_derive_handover_body > "$body"; else cat > "$body"; fi
+  if [ "$derive" = 1 ]; then mj_derive_handover_body record > "$body"; else cat > "$body"; fi
   [ -s "$body" ] || { rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: empty body on stdin (or pass --derive)"; }
   if mj_reject_identity "$body"; then
     rm -f "$body"; mj_die "$MJ_EX_CONTRACT" "handover: body must not contain identity fields; they are computed"
@@ -86,7 +90,7 @@ H
   # this event collects the field's distinct values as task identifiers.
   local fields=""
   [ -n "$task_id" ] && fields="\"task_id\":\"$task_id\","
-  mj_ledger_append task.handed_over "$fields\"handover_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\",\"closed\":$close"
+  mj_ledger_append task.handed_over "$fields\"handover_path\":\"$(mj_json_esc "${final#"$MJ_ROOT/"}")\",\"closed\":$close" "$MJ_RECORD_SESSION"
   printf '%s\n' "${final#"$MJ_ROOT/"}"
 }
 

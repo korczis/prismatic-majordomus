@@ -334,7 +334,7 @@ fn a_live_claim_puts_its_issue_in_flight_and_every_proof_is_shown() {
         ".ai/repo/mesh/majordomus.yaml",
         &format!(
             "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n\
-             multicast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n\
+             multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - {key}\n\
              cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  repository: fixture\n"
         ),
     );

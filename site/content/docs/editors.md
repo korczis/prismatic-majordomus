@@ -1,7 +1,7 @@
 +++
 title = "Editors and agents"
 description = "what Zed and Google Antigravity read from the repository: the skills and tasks projected by `majordomus generate editors`, ownership and conflict refusal, what is left to the person (MCP, settings, permissions) and why"
-weight = 53
+weight = 54
 [extra]
 source = "docs/EDITORS.md"
 +++
@@ -113,6 +113,17 @@ an instruction file Zed would read before `AGENTS.md`, a `.agents/workflows/` di
 `.agents/skills.json` (which would load the canonical files, without the `name` Antigravity's
 guide requires, beside the projection), and an `.agents/rules/*.md` without a valid `trigger`,
 which Antigravity discards.
+
+`editors.status` also reports a projected skill that a person's own Claude Code profile
+hides (`personal-name-hides-a-skill`): a command `<profile>/commands/<name>.md`, or a skill
+`<profile>/skills/<name>/SKILL.md`, with the same name as a skill under `.claude/skills/`.
+The profile is `$CLAUDE_CONFIG_DIR`, else `~/.claude`. Claude Code answers one name with one
+thing, so one of the two is unreachable, and which one has changed between sessions. The
+repository cannot see this, and `generate --check` never could. Only `editors.status` reads
+the profile, and it reads names, never content. `generate` does not read it, so no committed
+file depends on whose machine wrote it. `majordomus doctor` prints each finding as a warning
+(`skill … personal-name-hides-a-skill`). The remedy is to rename the personal command or
+skill, or to remove it.
 
 ## Updating an adapter
 

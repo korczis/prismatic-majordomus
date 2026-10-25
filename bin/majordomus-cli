@@ -1,120 +1,59 @@
 #!/usr/bin/env bash
-# majordomus-cli — run the Rust executable for the repository you are in, building it first
-# when it is missing or older than its sources. The one launcher every caller that needs the
-# executable shares: bin/majordomus-mcp starts the MCP server through it, the git hooks ask
-# the worktree guard through it, and a person types `bin/majordomus-cli worktree status`.
-# Every argument is passed through. The one caller that may not build is .envrc, which goes
-# through bin/majordomus-env instead; both find the executable through lib/rust_bin.sh.
+# majordomus-cli — run the Rust executable for the repository you are in. It never builds it
+# (ADR 0224, which supersedes ADR 0172): a missing or stale executable is answered through the
+# installed release only when that release is of this tree's generation, and otherwise refused
+# with exit 12 naming the explicit build, `just build`. The one launcher every caller that needs
+# the executable shares: bin/majordomus hands it the words that are the executable's,
+# bin/majordomus-mcp starts the MCP server through it, the git hooks ask the worktree guard and
+# the commit judge through it, every just recipe of the bridge runs it, and a person types
+# `bin/majordomus-cli worktree status`. Every argument is passed through. bin/majordomus-env,
+# which .envrc calls, finds the executable through the same lib/rust_bin.sh and never runs it.
 #
-# stdout belongs to the command: nothing here writes to it. Build output goes to stderr.
+# stdout belongs to the command: nothing here writes to it. A fallback or a refusal is said on
+# stderr.
 #
-#   MAJORDOMUS_BIN            use this executable and never build. It is trusted about
-#                             freshness, never about generation: `majordomus generate`
-#                             refuses a tree whose crate it was not built from (exit 15).
-#   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
-#   MAJORDOMUS_NO_BUILD=1     refuse to build; exit 12 when the executable is missing
-#   MAJORDOMUS_MCP_BUILD=1    `mcp` builds this checkout's executable like every other command
-#   MAJORDOMUS_INSTALLED_BIN  the installed release `mcp` falls back to (lib/rust_bin.sh)
-#   MAJORDOMUS_HOOK=1         a git hook is asking: an executable that is missing is not
-#                             built cold under the hook, the installed release answers (I3831)
+#   MAJORDOMUS_BIN            use this executable. It is trusted about freshness, never about
+#                             generation: `majordomus generate` refuses a tree whose crate it
+#                             was not built from (exit 15), and a gate asks
+#                             mj_rust_same_generation before it lets one judge the tree.
+#   MAJORDOMUS_BIN_COMMIT     the commit MAJORDOMUS_BIN was built from, when it is known
+#   MAJORDOMUS_BUILD_PROFILE  debug (default) or release: which of the tree's builds runs
+#   MAJORDOMUS_INSTALLED_BIN  the installed release (lib/rust_bin.sh, mj_rust_installed)
+#   MAJORDOMUS_HOOK=1         a git hook is asking; it is told so in the refusal
+#   MAJORDOMUS_NO_BUILD=1     accepted and redundant: nothing here builds
 #
-# `mcp` is the command a client spawns and then waits on: a client that gets no handshake
-# in time reports the server as failed and the session goes on without it, silently, as the
-# only worker of the repository (ADR 0156, ADR 0172). So `mcp` never waits on a build it can
-# avoid: when this checkout has no executable, or has one that cannot be rebuilt (no cargo,
-# too little free space, a failed build), it runs the installed release and says so on
-# stderr. A stale executable that CAN be rebuilt is rebuilt, as for every other command.
+# What a missing or stale executable means is declared per caller class, and none passes
+# silently (ADR 0224, decision 3). This launcher gives every caller the same two steps — the
+# verified fallback, then the refusal (exit 12) — and each caller declares what it does with
+# them on one line, `# majordomus-on-stale-executable: [fallback, else ]refuse|skip`, which
+# case 3958 reads in every caller and holds to its behaviour:
 #
-# Exit codes are the executable's; 12 when it is missing and cannot be built.
+#   person, entry   fallback, else refuse: exit 12 naming `just build` (bin/majordomus,
+#                   lib/plan.sh and every just recipe of the bridge reach this launcher)
+#   mcp             fallback, else refuse: the client reports a failed server, loudly, rather
+#                   than being served by a release of another crate (bin/majordomus-mcp)
+#   hook gate       fallback, else refuse: the commit or push stops at exit 12 (.githooks/*)
+#   provider hook   fallback, else skip, with a recorded line (.claude/hooks/majordomus-edit-guard)
+#   gate            fallback, else refuse: the gate fails at exit 12 (scripts/ci/run-plan)
+#
+# Exit codes are the executable's; 12 when there is none to run.
 set -eu
 
 here="$(cd "$(dirname "$0")" && pwd)"
 root="$(cd "$here/.." && pwd)"
-crate="$root/apps/majordomus-cli"
-profile="${MAJORDOMUS_BUILD_PROFILE:-debug}"
 
-# Where the executable is, and where its data is: one answer, shared with bin/majordomus-env,
-# which asks the same question and then decides differently about building it.
+# Where the executable is, whether it is current, and which release may stand in for it: one
+# answer, in lib/rust_bin.sh, shared with bin/majordomus-env, test/lib.sh and the gates.
 # shellcheck source=../lib/rust_bin.sh
 . "$root/lib/rust_bin.sh"
-bin="$(mj_rust_bin "$root")"
 share="$(mj_rust_share "$root")"
 if [ -n "$share" ]; then
   MAJORDOMUS_SHARE="$share"; export MAJORDOMUS_SHARE
 fi
 
-# `mcp` only: run the installed release instead of failing (exit 12) or building under a
-# client that is waiting. Returns when there is none, so the caller reports as before.
-use_installed_for_mcp() {
-  [ "${1:-}" = mcp ] || return 0
-  [ -z "${MAJORDOMUS_BIN:-}" ] || return 0
-  [ "${MAJORDOMUS_MCP_BUILD:-0}" != 1 ] || return 0
-  mj_ui_reason="$2"; shift 2
-  mj_ui_bin="$(mj_rust_installed "$root")" || return 0
-  printf 'majordomus-cli: %s; serving this client from the installed release %s (%s)\n' \
-    "$mj_ui_reason" "$mj_ui_bin" "$("$mj_ui_bin" --version 2>/dev/null)" >&2
-  exec "$mj_ui_bin" "$@"
-}
-
-# A git hook (MAJORDOMUS_HOOK=1) whose checkout has no executable at all: answer from the
-# installed release instead of a cold build. On 2026-10-21 a commit hook found its worktree's
-# target removed by a disk sweep, waited 60s on the shared build directory's lock and then
-# compiled every dependency cold in a private one, at a load of 77, for a check that takes a
-# second (I3831). A stale executable that exists is still rebuilt: that build is incremental,
-# and an older release must not judge a crate whose sources it was not built from. Returns
-# when there is no installed release, so the caller builds as before.
-use_installed_for_hook() {
-  [ "${MAJORDOMUS_HOOK:-0}" = 1 ] || return 0
-  [ -z "${MAJORDOMUS_BIN:-}" ] || return 0
-  mj_uh_bin="$(mj_rust_installed "$root")" || return 0
-  printf 'majordomus-cli: %s is missing; the hook asks the installed release %s (%s) instead of a cold build\n' \
-    "$bin" "$mj_uh_bin" "$("$mj_uh_bin" --version 2>/dev/null)" >&2
-  exec "$mj_uh_bin" "$@"
-}
-
-# Is the executable missing, or older than any source, manifest or lock file? Decided in
-# lib/rust_bin.sh, so that this script and the one `.envrc` calls cannot disagree about it.
-stale=0
-mj_rust_stale "$root" "$bin" && stale=1
-
-if [ "$stale" = 1 ] && [ -z "${MAJORDOMUS_BIN:-}" ]; then
-  [ -x "$bin" ] || use_installed_for_mcp "${1:-}" "$bin is missing" "$@"
-  [ -x "$bin" ] || use_installed_for_hook "$@"
-  if [ "${MAJORDOMUS_NO_BUILD:-0}" = 1 ]; then
-    use_installed_for_mcp "${1:-}" "the build is forbidden (MAJORDOMUS_NO_BUILD)" "$@"
-    printf 'majordomus-cli: %s is missing or stale and MAJORDOMUS_NO_BUILD is set; run: cargo build --manifest-path %s/Cargo.toml\n' "$bin" "$crate" >&2
-    exit 12
-  fi
-  if ! command -v cargo >/dev/null 2>&1; then
-    use_installed_for_mcp "${1:-}" "cargo is not installed" "$@"
-    printf 'majordomus-cli: %s is missing or stale and cargo is not installed; install a Rust toolchain (rustup) or set MAJORDOMUS_BIN\n' "$bin" >&2
-    exit 12
-  fi
-  # A build is bounded on the disk it may consume the way a wait is bounded on time: below
-  # the floor it does not start, because a build that fills the volume takes every other
-  # session on the machine with it. Decided in lib/rust_bin.sh, so that this launcher and
-  # every other caller that builds cannot disagree about the floor.
-  if ! mj_rust_space_check "$root" "the build of the executable"; then
-    use_installed_for_mcp "${1:-}" "there is not room to build" "$@"
-    exit 12
-  fi
-  printf 'majordomus-cli: building the executable (%s profile) ...\n' "$profile" >&2
-  flags=""
-  [ "$profile" = release ] && flags="--release"
-  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
-  # shellcheck disable=SC2086
-  # bounded: a build that stands behind another worktree's lock says so and builds in its own
-  # directory at the bound (lib/rust_bin.sh, mj_cargo_bounded)
-  # shellcheck disable=SC2086
-  if ! RUSTFLAGS='' mj_cargo_bounded "$root" build --quiet --locked --manifest-path "$crate/Cargo.toml" $flags 1>&2; then
-    use_installed_for_mcp "${1:-}" "the build failed" "$@"
-    printf 'majordomus-cli: the build failed; see above\n' >&2
-    exit 12
-  fi
-fi
-
-# Still not there: either it could not be built, or it was never this checkout's to begin
-# with and whoever owns it has since removed it. Which of those, and what it means for
-# whatever the caller was about to measure, is said in one place for every caller.
-[ -x "$bin" ] || { mj_rust_bin_missing "$root" "$bin" 'majordomus-cli: '; exit 12; }
+prefix='majordomus-cli: '
+[ "${MAJORDOMUS_HOOK:-0}" = 1 ] && prefix='majordomus-cli (git hook): '
+[ "${1:-}" = mcp ] && prefix='majordomus-cli (mcp): '
+bin="$(mj_rust_resolve "$root" "$prefix")" || exit 12
+[ -x "$bin" ] || { mj_rust_bin_missing "$root" "$bin" "$prefix"; exit 12; }
 exec "$bin" "$@"

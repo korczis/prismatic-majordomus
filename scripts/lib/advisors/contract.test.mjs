@@ -5,11 +5,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import {
-  AdvisorFailure, buildPrompt, consultOne, httpFailure, normalise, scrub, STATUSES,
+  ANSWER_SCHEMA, AdvisorFailure, buildPrompt, consultOne, httpFailure, normalise, scrub, STATUSES,
 } from './contract.mjs';
 import { consultSelected, loadAdapter } from './driver.mjs';
 
@@ -58,6 +58,15 @@ function fakeSpawn({ stdout = '', stderr = '', code = 0, error, delayMs = 0 }) {
       child.emit('close', code);
     }, delayMs);
     return child;
+  };
+}
+
+// Codex as the adapter runs it: the final message goes to the file `-o` names, and stdout
+// carries only progress.
+function codexSpawn({ answer, stdout = 'progress…' }) {
+  return (exe, args) => {
+    writeFileSync(args[args.indexOf('-o') + 1], answer);
+    return fakeSpawn({ stdout })(exe, args);
   };
 }
 
@@ -217,6 +226,44 @@ test('api adapter: absent credential, 401, 429 and an unreachable host are typed
   assert.equal(limited.retry_after_seconds, 30);
 });
 
+const anthropic = { id: 'claude-api', adapter: 'anthropic-messages', model: 'm-2', credential: 'TEST_KEY', capabilities: ['independent_reasoning'] };
+
+test('anthropic api adapter: request normalisation, credential, usage', async () => {
+  const { exchange } = await loadAdapter('anthropic-messages');
+  const fetch = fakeFetch([['/v1/messages', () => response(200, {
+    stop_reason: 'end_turn',
+    content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: ANSWER }],
+    usage: { input_tokens: 21, output_tokens: 9, cache_read_input_tokens: 0 },
+  })]]);
+  const r = await consultOne({ exchange }, anthropic, 'question', { fetch, env: { TEST_KEY: 'k' } });
+  assert.equal(r.status, 'completed');
+  assert.deepEqual(r.usage, { input_tokens: 21, output_tokens: 9 });
+  const { init } = fetch.calls[0];
+  const sent = JSON.parse(init.body);
+  assert.equal(sent.model, 'm-2', 'the model comes from the catalogue');
+  assert.deepEqual(sent.messages, [{ role: 'user', content: 'question' }]);
+  assert.equal(init.headers['x-api-key'], 'k');
+  assert.equal(init.headers['anthropic-version'], '2023-06-01');
+  assert.equal(JSON.stringify(r).includes('"k"'), false, 'the credential reaches no result');
+});
+
+test('anthropic api adapter: absent credential, refusal, 401, 429 and an empty answer are typed', async () => {
+  const { exchange } = await loadAdapter('anthropic-messages');
+  const cases = [
+    [{}, fakeFetch([]), 'unavailable'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'refusal', stop_details: { category: 'cyber' }, content: [] })]]), 'error'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(401, {})]]), 'auth_failed'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(429, {}, { 'retry-after': '12' })]]), 'rate_limited'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'end_turn' })]]), 'malformed'],
+    [{ TEST_KEY: 'k' }, fakeFetch([['/v1/messages', () => response(200, { stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '' }] })]]), 'empty'],
+    [{ TEST_KEY: 'k' }, fakeFetch([]), 'unavailable'],
+  ];
+  for (const [env, fetch, want] of cases) {
+    const r = await consultOne({ exchange }, anthropic, 'q', { fetch, env });
+    assert.equal(r.status, want, JSON.stringify(r));
+  }
+});
+
 test('local runtime adapters discover the served model and report usage', async () => {
   const ollama = await loadAdapter('ollama-chat');
   const f1 = fakeFetch([
@@ -243,7 +290,7 @@ test('cli adapters: output, absent executable, authentication and rate limits', 
   const codex = await loadAdapter('codex-exec');
   const cli = { id: 'c', executable: 'tool' };
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ stdout: ANSWER }) })).status, 'completed');
-  assert.equal((await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ stdout: ANSWER }) })).status, 'completed');
+  assert.equal((await consultOne(codex, cli, 'q', { spawn: codexSpawn({ answer: ANSWER }) })).status, 'completed');
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ error: 'ENOENT' }) })).status, 'unavailable');
   assert.equal((await consultOne(gemini, cli, 'q', { spawn: fakeSpawn({ code: 1, stderr: 'Error: 401 Unauthorized' }) })).status, 'auth_failed');
   assert.equal((await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ code: 1, stderr: 'rate limit exceeded' }) })).status, 'rate_limited');
@@ -251,9 +298,47 @@ test('cli adapters: output, absent executable, authentication and rate limits', 
   assert.equal((await consultOne(gemini, cli, 'q', { timeoutMs: 20, spawn: fakeSpawn({ stdout: ANSWER, delayMs: 500 }) })).status, 'timeout');
   // codex runs read-only
   let seen;
-  const spy = (exe, args) => { seen = args; return fakeSpawn({ stdout: ANSWER })(exe, args); };
+  const spy = (exe, args) => { seen = args; return codexSpawn({ answer: ANSWER })(exe, args); };
   await consultOne(codex, cli, 'q', { spawn: spy });
   assert.ok(seen.includes('read-only'));
+});
+
+test('codex adapter: the final message is held to the answer schema and read from its file alone', async () => {
+  const codex = await loadAdapter('codex-exec');
+  const cli = { id: 'c', executable: 'tool' };
+  // the schema it is handed is the answer's, strict in the subset Codex enforces
+  let schema;
+  const spy = (exe, args) => {
+    const at = args.indexOf('--output-schema');
+    assert.ok(at > 0, `no --output-schema in ${args.join(' ')}`);
+    schema = JSON.parse(readFileSync(args[at + 1], 'utf8'));
+    return codexSpawn({ answer: ANSWER })(exe, args);
+  };
+  assert.equal((await consultOne(codex, cli, 'q', { spawn: spy })).status, 'completed');
+  assert.deepEqual(schema, JSON.parse(JSON.stringify(ANSWER_SCHEMA)));
+  assert.equal(schema.additionalProperties, false);
+  assert.deepEqual([...schema.required].sort(), Object.keys(schema.properties).sort());
+  // the stances and confidences the schema allows are the ones normalise accepts
+  for (const stance of schema.properties.stance.enum) {
+    assert.equal(normalise(JSON.stringify({ ...JSON.parse(ANSWER), stance })).stance, stance);
+  }
+  // an exit 0 that wrote no final message is empty, however answer-like stdout looks
+  const silent = await consultOne(codex, cli, 'q', { spawn: fakeSpawn({ stdout: `progress… ${ANSWER}` }) });
+  assert.equal(silent.status, 'empty');
+  assert.match(silent.diagnostic ?? silent.reason ?? JSON.stringify(silent), /wrote no final message/);
+  // a final message that is not the answer is still judged by normalise, not by the schema
+  assert.equal((await consultOne(codex, cli, 'q', { spawn: codexSpawn({ answer: 'I cannot help with that.' }) })).status, 'malformed');
+  // a client too old for --output-schema fails as an error that names it, never as an answer
+  // (stderr as codex-cli 0.163.0 prints it for an argument it does not know, captured
+  // 2026-10-22 with the flag renamed: the cause first, usage and "try '--help'" last)
+  const old = fakeSpawn({ code: 2, stderr: [
+    "error: unexpected argument '--output-schema' found", '',
+    "  tip: to pass '--output-schema' as a value, use '-- --output-schema'", '',
+    'Usage: codex exec [OPTIONS] [PROMPT]', '       codex exec [OPTIONS] <COMMAND> [ARGS]', '',
+    "For more information, try '--help'.", ''].join('\n') });
+  const r = await consultOne(codex, cli, 'q', { spawn: old });
+  assert.equal(r.status, 'error');
+  assert.match(r.diagnostic, /exited 2: error: unexpected argument '--output-schema' found/);
 });
 
 test('peer adapter: a review request answered through the mesh', async () => {

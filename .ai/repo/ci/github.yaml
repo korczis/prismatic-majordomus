@@ -97,6 +97,10 @@ phases:
 forbidden:
   - overwrite a region a person edited (--force)
   - write or lower the drift baseline (--write-baseline)
+  # A pull request's own metadata (labels, milestone, assignee, its managed region) is another
+  # projection with a model of its own, .ai/repo/ci/pr-meta.yaml, and the one run a pull
+  # request may start (project.the-projection-is-applied-at-landing@2). This one stays the
+  # trunk's: it never runs for a pull request.
   - run for a pull request or from any tree that is not the tip of the default branch
   - apply without the executable
   - be cancelled by a newer run

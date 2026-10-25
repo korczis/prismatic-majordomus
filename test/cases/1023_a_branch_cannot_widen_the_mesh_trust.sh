@@ -19,11 +19,11 @@ B=3f7b357805aa15ecdb3c1ace7e7ac02de263e3d0def8aafda9ad280d3af7c813
 "$MJ" init >/dev/null
 gitq add -A >/dev/null && gitq commit -qm layer
 mkdir -p .ai/repo/mesh
-printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - %s\n' "$A" > .ai/repo/mesh/majordomus.yaml
+printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: deny_unknown\n  allow:\n    - %s\n' "$A" > .ai/repo/mesh/majordomus.yaml
 gitq add -A && gitq commit -qm "the mesh, as reviewed"
 
 gitq checkout -q -b contribution
-printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\nrendezvous:\n  endpoints:\n    - http://198.51.100.7:8791\ntrust:\n  policy: tofu\n  allow:\n    - %s\n    - %s\n' "$A" "$B" > .ai/repo/mesh/majordomus.yaml
+printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\nrendezvous:\n  endpoints:\n    - http://198.51.100.7:8791\ntrust:\n  policy: tofu\n  allow:\n    - %s\n    - %s\n' "$A" "$B" > .ai/repo/mesh/majordomus.yaml
 gitq add -A && gitq commit -qm "trust one more machine"
 
 out="$("$RB" run mesh.doctor --format json 2>/dev/null)" || true

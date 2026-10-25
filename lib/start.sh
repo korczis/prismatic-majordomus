@@ -71,7 +71,7 @@ H
       [ "$oc" = active ] && mj_info task "$(mj_cur id)" "that task is still active there; nothing here changes it" "majordomus --repo $(mj_cur worktree) check"
     else
       case "$oc" in
-        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus handover or majordomus finish first" ;;
+        active) mj_die "$MJ_EX_REFUSED" "task $(mj_cur id) is active ('$(mj_cur task)'); run majordomus finish (or majordomus handover --close) first" ;;
         *) mkdir -p "$MJ_STATE_DIR/archive"; mv "$MJ_CUR" "$MJ_STATE_DIR/archive/$(mj_cur id).yaml" ;;
       esac
     fi

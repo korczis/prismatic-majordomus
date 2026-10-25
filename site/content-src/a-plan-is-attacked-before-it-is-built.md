@@ -4,7 +4,7 @@ description = "In this repository, work on an intent does not start because some
 template = "page.html"
 [extra]
 lang = "en"
-related = ["a-pasted-brief-becomes-a-plan/", "proof-carrying-documentation/", "seats-not-names/", "written-once-derived-everywhere/"]
+related = ["a-pasted-brief-becomes-a-plan/", "proof-carrying-documentation/", "seats-not-names/", "written-once-derived-everywhere/", "a-doubt-is-settled-by-an-experiment/"]
 [extra.translations]
 cs = "plan-se-napadne-driv-nez-se-postavi/"
 +++

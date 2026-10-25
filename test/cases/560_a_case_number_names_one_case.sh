@@ -203,8 +203,60 @@ if command -v jq >/dev/null 2>&1; then
   expect_exit 0 env MJ_ROOT="$A" MJ_CASE_BASE=master MJ_CASE_BOARD_FILE="$T/board.bad" "$CN" next
   expect_grep 'the peer board of the shared server +not reachable'
   expect_grep '^next free identity: case 8$'
+
+  # ---------------------------------------------------------------- an announced block
+  # A seat announces its numbers as a block. Read as single identities, `cases 3500-3599` was
+  # the one number 3500, and a second seat announced 3501-3549 inside it; a person reading
+  # both boards caught it. A block is read whole, with a hyphen or an en dash: next allocates
+  # above it, nothing inside it is a hole, and `block` refuses a proposed block that meets it.
+  printf '%s\n' '{"peers":[
+    {"id":"p12","announcement":{"name":"claude","scope":[],"intent":"id block: cases 3500-3599"}},
+    {"id":"p7","announcement":{"name":"codex","scope":[],"intent":"case block 20–29"}}]}' \
+    > "$T/blocks.json"
+  blocks() {
+    local want="$1"; shift
+    expect_exit "$want" env MJ_ROOT="$A" MJ_CASE_BASE=master MJ_CASE_BOARD_FILE="$T/blocks.json" "$CN" "$@"
+  }
+  blocks 0 next
+  expect_grep '^next free identity: case 3600$'
+  expect_grep '^highest claimed: case 3599  \(peer: block 3500-3599, p12 \(claude\)\)$'
+  expect_grep 'the peer board of the shared server +0 identities announced, and 2 block\(s\): 20-29, 3500-3599$'
+  expect_grep '^  20-29  p7 \(codex\)$'
+  expect_grep '^  0 8-19 30-3499$'
+  blocks 0 next --json
+  printf '%s' "$LAST_OUT" | jq -e '.next == 3600 and (.blocks | length) == 2
+    and .blocks[1] == {"from": 3500, "to": 3599, "held_by": "p12 (claude)"}' >/dev/null \
+    || { printf '    next --json does not carry the blocks:\n%s\n' "$LAST_OUT"; exit 1; }
+
+  # the overlap of the day is refused, with the holder named
+  blocks 10 block 3501-3549
+  expect_grep '^REFUSE case block 3501-3549 meets 1 announced block\(s\) and 0 identit'
+  expect_grep '^  block 3500-3599  announced on the board p12 \(claude\)$'
+  expect_grep 'scripts/case-numbers next'
+  # one identity of overlap is an overlap, at either end
+  blocks 10 block 29-35
+  expect_grep '^  block 20-29  announced on the board p7 \(codex\)$'
+  # an identity a ref or this tree holds inside the block is refused as well, with its holder
+  blocks 10 block 1-6
+  expect_grep 'meets 0 announced block\(s\) and 6 identit\(ies\) already claimed'
+  expect_grep '^  05 +ref: 05_five\.sh$'
+  expect_grep '^  06 +tree: 06_six\.sh'
+  # a block that meets nothing passes, and says how to announce it so the next survey reads it
+  blocks 0 block 3600-3649
+  expect_grep '^ok  case block 3600-3649'
+  expect_grep 'the board was read'
+  expect_grep 'intent "case block 3600-3649"'
+  blocks 0 block 30–39
+  expect_grep '^ok  case block 30-39'
+  # a range written backwards, or none, is usage, not a guess
+  blocks 2 block 3549-3501
+  blocks 2 block
+  blocks 2 next 3500
+  # without the board the answer says which half it did not see
+  expect_exit 0 env MJ_ROOT="$A" MJ_CASE_BASE=master MJ_CASE_NO_BOARD=1 "$CN" block 3501-3549
+  expect_grep 'the board was NOT asked'
 else
   echo "    (jq absent: the board parse is not measured here)"
 fi
 
-echo "    a case identity names one case: a new collision is refused and today's debt may not grow; next reads the tree, every worktree, every ref's history and the board, names what is outstanding and who holds it, and states what it could not reach"
+echo "    a case identity names one case: a new collision is refused and today's debt may not grow; next reads the tree, every worktree, every ref's history and the board, blocks whole, names what is outstanding and who holds it, and states what it could not reach; block refuses a range that meets a claim"

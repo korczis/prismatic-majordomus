@@ -75,6 +75,23 @@ grep -v near_percent "$model" > "$T/nomargin.yaml"
 st=0; "$B" --model "$T/nomargin.yaml" --report "$T/near.tsv" > "$T/out" 2>&1 || st=$?
 [ "$st" = 12 ] || { echo "    a model without near_percent exited $st, expected 12"; cat "$T/out"; exit 1; }
 
+# ---------------------------------------------------------------- the deal's record
+# The shards are dealt from the record, so a case it lacks, or one that grew past it, is
+# named; --write-durations writes the record this run measured. Neither changes the verdict.
+printf 'cheap\t10\nedge\t100\nidle\t42\n' > "$T/rec.tsv"
+printf 'cheap\tok\t10\tparallel\nedge\tok\t950\tparallel\nnew\tok\t5\tparallel\nidle\tskip\t1\tparallel\n' > "$T/drift.tsv"
+run "$T/drift.tsv" "$T/rec.tsv"
+[ "$st" = 0 ] || { echo "    STALE or DRIFT changed the verdict: exit $st"; cat "$T/out"; exit 1; }
+grep -q '^STALE   1 case(s) of this run are not in ' "$T/out" && grep -qx '          new' "$T/out" \
+  || { echo "    the case the record lacks was not named"; cat "$T/out"; exit 1; }
+grep -q '^DRIFT   edge cost 950 s in this run, recorded at 100 s' "$T/out" \
+  || { echo    "    a case at 9.5 times its record was not named as DRIFT"; cat "$T/out"; exit 1; }
+grep -q '^DRIFT   cheap' "$T/out" && { echo "    a case at its record was named as DRIFT"; cat "$T/out"; exit 1; }
+st=0; "$B" --model "$model" --report "$T/drift.tsv" --durations "$T/rec.tsv" --write-durations "$T/w.tsv" > "$T/out" 2>&1 || st=$?
+[ "$st" = 0 ] || { echo "    --write-durations changed the verdict: exit $st"; cat "$T/out"; exit 1; }
+printf 'cheap\t10\nedge\t950\nidle\t42\nnew\t5\n' | cmp -s - "$T/w.tsv" \
+  || { echo "    the written record is not this run's passed costs over the recorded rest (a skipped idle keeps its 42):"; cat "$T/w.tsv"; exit 1; }
+
 # ---------------------------------------------------------------- this repository's own model and record
 st=0; (cd "$ROOT" && ./scripts/ci/suite-budget --report "$T/near.tsv" > "$T/own.out" 2>&1) || st=$?
 [ "$st" = 0 ] || { echo "    the repository's own model and record refused a cheap run: $st"; cat "$T/own.out"; exit 1; }

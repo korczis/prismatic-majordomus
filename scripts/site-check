@@ -19,6 +19,7 @@
 #                                   with a #fragment names an element its page carries (I3008).
 #                                   The scan a case runs on a fixture. Exit 0, 10 findings, 12 missing.
 #   scripts/site-check --casefold PUBLIC_DIR|LISTING
+#   scripts/site-check --memory I18N_DIR
 #                                   check 13l alone, over a built public directory with every
 #                                   composed snapshot in it, or a file listing its paths one per
 #                                   line (a case-insensitive disk cannot hold the clash a case
@@ -399,6 +400,51 @@ if [ "${1:-}" = --roadmap ]; then
   roadmap_complete "$2" "$3" "${4:-$(dirname "$3")/build.json}" && exit 0
   exit 10
 fi
+# Check 22 as a function, so a case can hold it on a fixture (--memory) and the full run calls
+# the same rule. An entry of site/i18n/<lang>/memory whose English still carries a whole-element
+# value inside a <tN>…</tN> pair is keyed the way the build stopped computing (I3758): no page
+# can reach it again, and the sentence falls back to English. scripts/site-translate rekey moves
+# it; this refuses a memory that was not moved, so no train has to remember the step (I3777).
+# The rule is rekeyValues in scripts/lib/site-i18n.mjs, the same one rekey applies.
+memory_keyed() { # i18n-dir
+  local out rc=0
+  command -v node >/dev/null 2>&1 || { bad i18n "node is missing; the translation memory's keys cannot be checked"; return; }
+  out="$(node --input-type=module - "$1" "$(cd "$(dirname "$0")/.." && pwd)/scripts/lib/site-i18n.mjs" <<'NODE'
+import { existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+const [dir, lib] = process.argv.slice(2);
+const { loadMemory, rekeyValues } = await import(lib);
+let entries = 0;
+for (const lang of existsSync(dir) ? readdirSync(dir).sort() : []) {
+  const mem = join(dir, lang, 'memory');
+  if (!existsSync(mem)) continue;
+  for (const e of loadMemory(mem).values()) {
+    entries += 1;
+    const r = rekeyValues(e, lang);
+    if (!r) continue;
+    console.log(r.refused
+      ? `F\t${lang} entry ${e.k} carries ${r.refused}, and its translation lost that value: fix the entry by hand, then run scripts/site-translate rekey --lang ${lang}`
+      : `F\t${lang} entry ${e.k} carries ${r.moved.join(' ')} inside a placeholder pair, keyed the old way, which no page reaches: run scripts/site-translate rekey --lang ${lang}`);
+  }
+}
+console.log(`N\t${entries}`);
+NODE
+)" || rc=$?
+  [ "$rc" = 0 ] || { bad i18n "the translation memory under $1 could not be read (node exited $rc)"; return; }
+  local found n
+  found="$(printf '%s\n' "$out" | awk -F'\t' '$1 == "F" { print $2 }')"
+  n="$(printf '%s\n' "$out" | awk -F'\t' '$1 == "N" { print $2 }')"
+  if [ -z "$found" ]; then ok i18n "every one of ${n:-0} translation-memory entries is keyed the way the build computes it"; return; fi
+  while IFS= read -r line; do bad i18n "$line"; done <<< "$found"
+}
+
+if [ "${1:-}" = --memory ]; then
+  [ -d "${2:-}" ] || { echo "site-check: --memory needs an i18n directory (site/i18n)" >&2; exit 12; }
+  fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
+  memory_keyed "$2"
+  [ "$fails" = 0 ] && exit 0
+  exit 10
+fi
 if [ "${1:-}" = --casefold ]; then
   [ -d "${2:-}" ] || [ -f "${2:-}" ] || { echo "site-check: --casefold needs a built public directory, or a file listing its paths" >&2; exit 12; }
   fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails + 1)); }
@@ -606,10 +652,15 @@ if [ -f "$PD" ]; then
     [ "$want" = "$got" ] || { bad product "/features/$id/ links $got of the $want claim(s) the model gives it"; prod_bad=1; }
   done
   # the telemetry the homepage prints is the dataset's, never a number in a template
-  for k in capabilities mcp_tools http_routes objects; do
+  for k in capabilities builtin declarative mcp_tools http_routes objects; do
     n="$(jq -r --arg k "$k" '.telemetry[$k]' "$PD")"
     grep -qF ">$n</dd>" "$PUB/index.html" || { bad product "the homepage does not print the derived $k ($n)"; prod_bad=1; }
   done
+  # the total is its two parts: builtin capabilities plus one generated resource per object
+  [ "$(jq -r '.telemetry.capabilities - .telemetry.builtin - .telemetry.declarative' "$PD")" = 0 ] \
+    || { bad product "telemetry: capabilities is not builtin plus declarative"; prod_bad=1; }
+  [ "$(jq -r '.telemetry.declarative - .telemetry.objects' "$PD")" = 0 ] \
+    || { bad product "telemetry: the generated resources are not one per object"; prod_bad=1; }
   # nothing enumerates the product by hand. A feature's route typed into a template, the
   # generator, its jq programs or the navigation would be the second inventory this whole
   # surface exists to remove; the section route itself is a section things legitimately link to.
@@ -1850,11 +1901,24 @@ if [ -n "$offered" ]; then
   [ -z "$other_offers" ] \
     || { bad release "the homepage carries data-release ${other_offers% } beside the ${offered} /build.json offers: a badge reads another source"; relbad=1; }
 fi
+# The pre-release beside it (I3449): when /build.json offers one, the homepage names it, every
+# data-prerelease it carries is that one version, and /releases/latest.json, which the
+# installer resolves unasked, still names a stable release: the pages show both channels and
+# the installer's default stays stable (I2829).
+offered_pre="$(jq -r '.release.prerelease.version // empty' "$PUB/build.json" 2>/dev/null || true)"
+home_pres="$(grep -oE 'data-prerelease="[^"]*"' "$PUB/index.html" 2>/dev/null | sed 's/^[^"]*"//; s/"$//' | LC_ALL=C sort -u | tr '\n' ' ' || true)"
+if [ -n "$offered_pre" ]; then
+  [ "${home_pres% }" = "$offered_pre" ] \
+    || { bad release "/build.json offers the pre-release $offered_pre and the homepage names ${home_pres:-none}: a person reading the page is not told it exists, or reads another source"; relbad=1; }
+  case "$pub_latest" in *-*) bad release "/releases/latest.json names the pre-release $pub_latest; the installer's default resolves the stable release only (I2829)"; relbad=1 ;; esac
+elif [ -n "$home_pres" ]; then
+  bad release "the homepage names the pre-release ${home_pres% } and /build.json offers none"; relbad=1
+fi
 dist_latest="$(jq -r '.latest.version // empty' "$DIST" 2>/dev/null || true)"
 static_latest="$(jq -r '.version // empty' "$SITE/static/releases/latest.json" 2>/dev/null || true)"
 [ "$static_latest" = "$dist_latest" ] \
   || { bad release "distribution.json names ${dist_latest:-no release} as the latest and site/static/releases/latest.json names ${static_latest:-none}; regenerate (scripts/derive)"; relbad=1; }
-[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
+[ "$relbad" = 0 ] && ok release "one release on every surface: the homepage, /build.json and /releases/latest.json offer ${offered:-none}${offered_pre:+, and the pages name the pre-release $offered_pre beside it} ($(jq -r '.release.source // "no release"' "$PUB/build.json" 2>/dev/null)), and the committed projections agree on ${dist_latest:-none}"
 
 
 # 18. a publication offers no surface it cannot answer for. Every route the projection
@@ -1917,5 +1981,10 @@ relay_check search "$ROOT/scripts/lib/search-check.mjs" "OK   search       " "FA
 # The rule is article_counterparts, above, read from site/content-src so it needs no build, and
 # `--articles <dir> <nav.toml> <config.toml>` runs it alone.
 article_counterparts "$SITE/content-src" "$SITE/data/nav.toml" "$SITE/config.toml" site/content-src
+
+# 22. every translation-memory entry is keyed the way the build computes its key (I3777): one
+# keyed before a rule changed the key is unreachable, and the sentence it holds reads in English.
+# The rule is memory_keyed, above; `--memory <i18n-dir>` runs it alone.
+memory_keyed "$SITE/i18n"
 
 printf 'site-check: %s failure(s)\n' "$fails"; [ "$fails" = 0 ] && exit 0 || exit 10

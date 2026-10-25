@@ -5,7 +5,7 @@
 #
 # Hooks add context; only a first message starts a turn. On 2026-10-16 a session opened in
 # this repository, received the whole startup briefing, and waited for a person to type —
-# so it was never on the board (ADR 0156, ADR 0172). share/shell/session-start.sh wraps
+# so it was never on the board (ADR 0226, ADR 0172). share/shell/session-start.sh wraps
 # `claude` so that the first message is `majordomus prompt render session-start`. The
 # fixture stubs `claude` and `majordomus`, and runs the function in bash and, where there is
 # one, zsh: the same file, because it is sourced from either.

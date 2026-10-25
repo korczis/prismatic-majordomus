@@ -1,0 +1,33 @@
+id: I2984
+milestone: peer-blackboard
+title: "The published site shows a public-safe blackboard, labelled as the snapshot it is"
+slug: the-published-blackboard-is-public-safe
+priority: p1
+profile: implementation
+parallel_safe: false
+serves:
+  - the-peer-blackboard-is-one-reality#published-safely
+objective: "Give the UI snapshot (ADR 0141) a /ui/peers page and a home panel built from a public-safe projection of blackboard.snapshot. It shows the counts (workers, present, boards, conflicts, open reviews, untaken handovers), every source with its state and reason, and the revision and time it was read. It names no worktree path, scope, intent, message body, session key, node id or endpoint. The page says it is a snapshot of that revision and never that it is live. A link to the live page leads to it."
+why: "majordomus.dev/ui says Mesh: unknown and withholds /ui/peers. A visitor cannot tell whether the mesh exists, or how old what they see is. A private path or session key in a published bundle would be a leak no later commit can take back."
+current_state: "The UI snapshot withholds /ui/peers (I2983). The published /ui home shows the mesh as not observed and names no blackboard source."
+desired_state: "The published /ui/peers shows the public-safe counts and source states of the blackboard at the snapshot's revision, says so, and carries nothing private."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+  - "apps/majordomus-cli/src/ui/peers.rs"
+  - "apps/majordomus-cli/src/web/report/snapshot.rs"
+  - "docs/BLACKBOARD.md"
+  - "docs/MAJORDOMUS_UI.md"
+  - "test/cases/1092_the_ui_snapshot_holds_every_screen.sh"
+depends_on:
+  - "I2983"
+acceptance_criteria:
+  - "The published /ui/peers shows the blackboard's counts and every source's state with the revision and time it was read, and its state line says snapshot"
+  - "The published bundle names no worktree path, scope, intent, session key, node id or endpoint that the blackboard read"
+  - "A visitor offline from any runtime is told the page is a snapshot; nothing on it says live"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 1092_the_ui_snapshot_holds_every_screen"
+evidence_required:
+  - "case_published_blackboard_is_public_safe"
+created_at: 2026-10-19
+updated_at: 2026-10-19

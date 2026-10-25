@@ -23,6 +23,10 @@ git config user.email a@b.c; git config user.name a
 # records of every kind the validators read (test/lib.sh synthetic_repo), so the counters the
 # two forms are compared on count real work and not only what a bare layer costs
 synthetic_repo 4
+# one run first, so that both runs compared below read a warm flatten cache: the first
+# command after init parses what the second reads back, and flatten_cache_hit would differ
+# between the two forms for that reason alone (I0821)
+"$MJ" doctor >/dev/null 2>&1 || :
 
 # 1. the same command, both forms
 # doctor may report findings in a fresh repository; its exit is not what this case is about

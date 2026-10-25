@@ -6,7 +6,7 @@ template = "page.html"
 lang = "cs"
 translated_from = "claimed-before-it-is-built/"
 source_digest = "f37dcdd45b804033b067a37ca28ed1dc313e24cdaf07aeb9bbd450bd8a0c0477"
-related = ["kresla-ne-jmena/", "vsechno-v-jednom-proudu/", "napsano-jednou-odvozeno-vsude/", "session-skonci-prace-ne/", "jedna-vetev-jedno-misto/"]
+related = ["kresla-ne-jmena/", "vsechno-v-jednom-proudu/", "napsano-jednou-odvozeno-vsude/", "session-skonci-prace-ne/", "jedna-vetev-jedno-misto/", "mnoho-stroju-jeden-denik/"]
 [extra.translations]
 en = "claimed-before-it-is-built/"
 +++

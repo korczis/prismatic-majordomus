@@ -614,8 +614,7 @@ fn now() -> i64 {
 /// The policy, typed, or `None` when the repository or its policy cannot be read. Absence is
 /// carried as absence: the switches then take their declared defaults and the cap is none.
 fn policy_of(ctx: &Context) -> Option<crate::policy::Policy> {
-    let root = PathBuf::from(&ctx.index.repository.root);
-    let repo = crate::repository::Repository::open(&root).ok()?;
+    let repo = ctx.repository().ok()?;
     Some(crate::policy::LoadedPolicy::load(&repo).ok()?.policy)
 }
 

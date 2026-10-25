@@ -1,0 +1,31 @@
+intent: a-browser-computes-what-the-server-verifies
+reviewed_at: d116266803
+reviewed_by: "claude-code (session 21616f1e) — SELF-REVIEW: the session that authored I2784 also wrote this critique. Stated rather than hidden: a critique carries more weight when another session or the owner writes it."
+findings:
+  - id: a-fixture-blessed-by-the-code
+    class: unproven_assumption
+    subject: a-browser-computes-what-the-server-verifies#core-agrees-everywhere
+    finding: A fixture whose expected digests were produced by the code under test proves only that the code agrees with itself.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2784
+      because: The digests are computed by Python's hashlib over the expected canonical bytes, and the expected bytes were derived by hand; the first run found two hand-derived rows wrong (the exponent sign serde_json writes), corrected to serde_json's canonical form, which is the form the mesh already signs.
+  - id: a-stale-executable
+    class: regression_risk
+    subject: I2784
+    finding: The executable's generation digests only its own crate, so an edit to the core would leave a stale binary reading as current.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2784
+      because: generation::PATH_DEPENDENCY_INPUTS adds the core's manifest and sources, build.rs reruns on them, and a unit test holds that a core edit is another generation and a core test edit is not.
+  - id: only-compiled-not-run
+    class: insufficient_work
+    subject: I2784
+    finding: A wasm32 module that compiles proves nothing about what it computes.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I2784
+      because: The portable-core gate builds the module and executes it under node through the C ABI a browser Worker calls, row by row against the fixture.

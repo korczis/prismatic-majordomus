@@ -2,7 +2,8 @@
 # The UI as a publication carries it (I2483, ADR 0141): `majordomus web report ui-snapshot`
 # reads the UI once, in-process, and writes it as files under target/web/ui-snapshot.
 #
-#   every screen    each screen the snapshot's own navigation names is a file of it
+#   every screen    each screen the snapshot's own navigation names is a file of it, or the
+#                   page about the live UI for a screen the snapshot withholds
 #   what it is      every page says the commit it was read at, and tells the script so
 #   a surface       the declaration beside it mounts it at /ui for a publication and for no
 #                   process, names this commit, and the topology holds it without a conflict
@@ -30,7 +31,9 @@ grep -oE 'class="mj-ui-nav-item[^"]*"[^>]*href="[^"]*"' "$S/index.html" | sed 's
 [ "$(wc -l < nav.txt | tr -d ' ')" -ge 5 ] || { echo "    the dashboard's navigation names fewer than five screens:"; sed 's/^/    | /' nav.txt; exit 1; }
 while IFS= read -r href; do
   case "$href" in /*|*://*) echo "    the navigation keeps a link a file cannot answer: $href"; exit 1 ;; esac
-  [ -f "$S/$href" ] || { echo "    the navigation names $href, which the snapshot does not hold"; exit 1; }
+  # a screen the snapshot withholds is linked to the page about the live UI, with the path
+  # it meant after `#`: the file is that page
+  [ -f "$S/${href%%#*}" ] || { echo "    the navigation names $href, which the snapshot does not hold"; exit 1; }
 done < nav.txt
 pages="$(jq -r '.pages | length' "$S/snapshot.json")"
 [ "$pages" -le 60 ] && [ "$pages" -ge "$(wc -l < nav.txt | tr -d ' ')" ] \

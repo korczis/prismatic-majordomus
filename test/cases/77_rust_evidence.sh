@@ -1,3 +1,4 @@
+# majordomus-exclusive: compiles the crate's doc examples and its benchmarks with every core cargo takes; beside it on CI's four-core runner case 431 starved past its 600 s bound (I4199)
 # majordomus-covers: none
 # claims: rust-evidence-gates, rust-hot-path-benchmarks, rust-coverage-floor
 # The Rust executable carries its evidence with it (rule project.rust-cli-evidence). The
@@ -126,7 +127,8 @@ while IFS= read -r d; do
   [ -f "$ROOT/$d" ] || { echo "    the session/continuity domain names $d, which is not a file; a threshold over a file nothing compiles is a threshold over nothing"; exit 1; }
 done < "$ROOT/scripts/session-coverage-domain"
 bench_job="$(awk '/^  bench:/{f=1} /^  site:/{f=0} f' "$WF")"
-printf '%s\n' "$bench_job" | grep -qF 'cargo run --quiet -- bench --profile ci --check --no-write' \
+# the explicit build, then the gate's line through the launcher: no ordinary command builds (ADR 0224)
+printf '%s\n' "$bench_job" | grep -qF 'bin/majordomus-cli bench --profile ci --check --no-write' \
   || { echo "    the bench job does not run the benchmark check against the baseline"; exit 1; }
 # the jobs run on pull requests and on master, not on a schedule or by hand only
 awk '/^on:/{f=1} /^jobs:/{f=0} f' "$WF" | grep -qE '^  (push|pull_request):' || { echo "    validate.yml does not run on push"; exit 1; }

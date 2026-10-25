@@ -299,12 +299,7 @@ pub fn run_checks(
         }
     }
 
-    let credentials: Vec<&str> = refs
-        .models
-        .vendors
-        .iter()
-        .filter_map(|v| v.credential_env.as_deref())
-        .collect();
+    let credentials = refs.models.credential_variables();
     let mut ci_files = Vec::new();
     if on("ci") {
         ci_files.extend(files_under(root, ".github/workflows", &["yml", "yaml"]));
@@ -534,6 +529,35 @@ mod tests {
         );
         let held = run_checks(root.path(), &catalogue, &refs, &loaded, &adopter);
         assert_eq!(families(held), Vec::<String>::new());
+    }
+
+    /// A funding source's own credential variable is a model credential too: CI that
+    /// names it depends on a live model as surely as CI naming the vendor's.
+    #[test]
+    fn ci_naming_a_funding_sources_credential_is_found() {
+        let root = tempfile::tempdir().unwrap();
+        let wf = root.path().join(".github/workflows");
+        std::fs::create_dir_all(&wf).unwrap();
+        std::fs::write(wf.join("ci.yml"), "env:\n  T: ${{ secrets.ACME_SEAT }}\n").unwrap();
+        let catalogue: AdvisorCatalogue =
+            crate::metadata::yaml::parse_into("version: 1\nadvisors: []\n").unwrap();
+        let refs = References {
+            providers: Vec::new(),
+            models: crate::models::ModelCatalogue::parse(concat!(
+                "version: 1\nvendors:\n  - id: acme\n    title: Acme\n    credential_env: ACME_KEY\n",
+                "    funding:\n      - id: seat\n        kind: subscription\n        credential_env: ACME_SEAT\n",
+                "        evidence:\n          url: https://acme.example/docs\n          checked: 2026-10-21\n",
+                "models: []\n",
+            ))
+            .unwrap(),
+        };
+        let loaded = super::super::store::Store::at(root.path()).load();
+        let ci: Vec<String> = run(root.path(), &catalogue, &refs, &loaded)
+            .into_iter()
+            .filter(|f| f.check == "ci")
+            .map(|f| f.message)
+            .collect();
+        assert!(ci.iter().any(|m| m.contains("ACME_SEAT")), "{ci:?}");
     }
 
     #[test]

@@ -93,6 +93,11 @@ pub struct KindSpec {
     /// from each item; `schema_version` still applies to the file.
     #[serde(default)]
     pub members: Option<String>,
+    /// How an object of the kind comes to exist; absent means canonical, an authored
+    /// object. The layout check reads it (I2871): a canonical object in the local half is a
+    /// copy of authored knowledge, a runtime one is the half's own state.
+    #[serde(default)]
+    pub lifecycle: Option<crate::repository::Lifecycle>,
 }
 
 #[derive(Debug, Deserialize)]

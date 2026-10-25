@@ -267,6 +267,203 @@ impl NodeIdentity {
     pub fn sign(&self, message: &[u8]) -> String {
         hex(&self.signing.sign(message).to_bytes())
     }
+
+    /// Replace the machine's key: make a new one, have this key sign a [`Succession`] naming
+    /// it and the new key countersign, and write the new key to `path` (owner-only from its
+    /// first byte), which destroys the old secret on disk. The identity in memory keeps the
+    /// old key, because a running runtime still closes its old-key stream with it (ADR 0067,
+    /// addendum of 2026-10-15). The display name carries over; the node id does not, because
+    /// it is the new key's digest. Nothing is written when the statement cannot be made.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let path = dir.path().join("node.json");
+    /// let old = NodeIdentity::load_or_create(&path).unwrap();
+    /// let (new, succession) = old.rotate(&path).unwrap();
+    /// assert!(succession.verify().is_ok());
+    /// assert_eq!(succession.new_key, new.public.public_key);
+    /// assert_eq!(
+    ///     NodeIdentity::load_or_create(&path).unwrap().public.node_id,
+    ///     new.public.node_id,
+    ///     "the file holds the new key"
+    /// );
+    /// ```
+    pub fn rotate(&self, path: &Path) -> Result<(NodeIdentity, Succession), MeshError> {
+        self.rotate_with(path, Self::create)
+    }
+
+    /// [`NodeIdentity::rotate`] with the successor made by `create`: a key that cannot be
+    /// made, or a successor the statement refuses, stops it before anything is written.
+    fn rotate_with(
+        &self,
+        path: &Path,
+        create: impl FnOnce() -> Result<Self, MeshError>,
+    ) -> Result<(NodeIdentity, Succession), MeshError> {
+        let mut new = create()?;
+        new.public.display_name = self.public.display_name.clone();
+        let at = crate::peers::rfc3339(std::time::SystemTime::now());
+        let succession = Succession::sign(self, &new, &at)?;
+        new.persist(path)?;
+        Ok((new, succession))
+    }
+}
+
+/// The succession statement's format version, and the domain both of its signatures are
+/// made under, so that no other signed message of the mesh can be read as one.
+pub const SUCCESSION_SCHEMA: &str = "majordomus-mesh-succession/v1";
+
+/// A node key handing over to its successor: the old key signs that it hands over to the
+/// new one, and the new key countersigns that its holder exists and agreed. The statement
+/// names no repository, because the key it succeeds is the machine's, and it carries public
+/// halves only. What a succession confers is decided in [`super::trust`], never here: a
+/// statement that verifies proves who signed it, not that anyone should follow it.
+///
+/// ```
+/// use majordomus_cli::mesh::identity::{NodeIdentity, Succession};
+/// let old = NodeIdentity::ephemeral().unwrap();
+/// let new = NodeIdentity::ephemeral().unwrap();
+/// let statement = Succession::sign(&old, &new, "2026-10-15T08:00:00Z").unwrap();
+/// assert!(statement.verify().is_ok());
+/// let wire = serde_json::to_string(&statement).unwrap();
+/// let read: Succession = serde_json::from_str(&wire).unwrap();
+/// assert!(read.verify().is_ok(), "the statement survives its serialization");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct Succession {
+    /// [`SUCCESSION_SCHEMA`]; any other value is refused by [`Succession::verify`].
+    pub schema: String,
+    /// The key handing over, 64 hex characters.
+    pub old_key: String,
+    /// The key taking over, 64 hex characters; never the old key.
+    pub new_key: String,
+    /// When the old key signed, RFC 3339. One line: it is part of the signed bytes.
+    pub at: String,
+    /// The old key's signature over [`Succession::signing_bytes`].
+    pub old_signature: String,
+    /// The new key's countersignature over [`Succession::countersigning_bytes`], which
+    /// include the old signature, so it agrees to this hand-over and no other.
+    pub new_signature: String,
+}
+
+impl Succession {
+    /// The statement `old` signs and `new` countersigns, made at `at`. Refused when the two
+    /// are one key or `at` is not one non-empty line, because neither would verify.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::identity::{NodeIdentity, Succession};
+    /// let node = NodeIdentity::ephemeral().unwrap();
+    /// assert!(Succession::sign(&node, &node, "2026-10-15T08:00:00Z").is_err());
+    /// ```
+    pub fn sign(old: &NodeIdentity, new: &NodeIdentity, at: &str) -> Result<Self, MeshError> {
+        let mut statement = Succession {
+            schema: SUCCESSION_SCHEMA.into(),
+            old_key: old.public.public_key.clone(),
+            new_key: new.public.public_key.clone(),
+            at: at.into(),
+            old_signature: String::new(),
+            new_signature: String::new(),
+        };
+        statement.check_shape().map_err(MeshError::Identity)?;
+        statement.old_signature = old.sign(&statement.signing_bytes());
+        statement.new_signature = new.sign(&statement.countersigning_bytes());
+        Ok(statement)
+    }
+
+    /// The canonical bytes the old key signs: the domain, the role `hand-over`, both keys and
+    /// the time, one per line. The role keeps one signature from being replayed as the other.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::identity::{NodeIdentity, Succession};
+    /// let s = Succession::sign(
+    ///     &NodeIdentity::ephemeral().unwrap(),
+    ///     &NodeIdentity::ephemeral().unwrap(),
+    ///     "2026-10-15T08:00:00Z",
+    /// )
+    /// .unwrap();
+    /// assert!(s.signing_bytes().starts_with(b"majordomus-mesh-succession/v1\nhand-over\n"));
+    /// ```
+    pub fn signing_bytes(&self) -> Vec<u8> {
+        format!(
+            "{}\nhand-over\n{}\n{}\n{}",
+            self.schema, self.old_key, self.new_key, self.at
+        )
+        .into_bytes()
+    }
+
+    /// The canonical bytes the new key countersigns: the domain, the role `take-over`, both
+    /// keys, the time and the old key's signature, one per line.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::identity::{NodeIdentity, Succession};
+    /// let s = Succession::sign(
+    ///     &NodeIdentity::ephemeral().unwrap(),
+    ///     &NodeIdentity::ephemeral().unwrap(),
+    ///     "2026-10-15T08:00:00Z",
+    /// )
+    /// .unwrap();
+    /// let bytes = String::from_utf8(s.countersigning_bytes()).unwrap();
+    /// assert!(bytes.ends_with(&s.old_signature), "the countersignature covers the signature");
+    /// ```
+    pub fn countersigning_bytes(&self) -> Vec<u8> {
+        format!(
+            "{}\ntake-over\n{}\n{}\n{}\n{}",
+            self.schema, self.old_key, self.new_key, self.at, self.old_signature
+        )
+        .into_bytes()
+    }
+
+    /// Whether the statement is what it says: the schema is [`SUCCESSION_SCHEMA`], both keys
+    /// parse and differ, `at` is one non-empty line, the old key's signature covers
+    /// [`Succession::signing_bytes`] and the new key's covers
+    /// [`Succession::countersigning_bytes`]. The error says which part failed; malformed
+    /// material is an error, never a panic.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::identity::{NodeIdentity, Succession};
+    /// let mut s = Succession::sign(
+    ///     &NodeIdentity::ephemeral().unwrap(),
+    ///     &NodeIdentity::ephemeral().unwrap(),
+    ///     "2026-10-15T08:00:00Z",
+    /// )
+    /// .unwrap();
+    /// s.at = "2026-10-16T08:00:00Z".into();
+    /// assert!(s.verify().is_err(), "a changed time is not what the old key signed");
+    /// ```
+    pub fn verify(&self) -> Result<(), String> {
+        self.check_shape()?;
+        if !verify(&self.old_key, &self.signing_bytes(), &self.old_signature) {
+            return Err("the old key's signature does not verify".into());
+        }
+        if !verify(
+            &self.new_key,
+            &self.countersigning_bytes(),
+            &self.new_signature,
+        ) {
+            return Err("the new key's countersignature does not verify".into());
+        }
+        Ok(())
+    }
+
+    /// Everything [`Succession::verify`] checks before a signature.
+    fn check_shape(&self) -> Result<(), String> {
+        if self.schema != SUCCESSION_SCHEMA {
+            return Err(format!("schema {} is not {SUCCESSION_SCHEMA}", self.schema));
+        }
+        if node_id_of_key(&self.old_key).is_none() {
+            return Err("the old key is not a key".into());
+        }
+        if node_id_of_key(&self.new_key).is_none() {
+            return Err("the new key is not a key".into());
+        }
+        if self.old_key == self.new_key {
+            return Err("a key cannot succeed itself".into());
+        }
+        if self.at.is_empty() || self.at.contains(['\n', '\r']) {
+            return Err("the time is not one non-empty line".into());
+        }
+        Ok(())
+    }
 }
 
 /// Verify `signature` (hex) over `message` against `public_key` (hex). False on any
@@ -394,6 +591,35 @@ fn write_private(path: &Path, text: &str) -> Result<(), MeshError> {
 mod tests {
     use super::*;
 
+    /// A rotation whose new key cannot be made fails with that error, and the file still
+    /// holds the old key.
+    #[test]
+    fn a_rotation_whose_key_cannot_be_made_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let old = NodeIdentity::load_or_create(&path).unwrap();
+        let err = old
+            .rotate_with(&path, || Err(MeshError::Identity("no OS entropy".into())))
+            .unwrap_err();
+        assert!(err.to_string().contains("no OS entropy"), "{err}");
+        let kept = NodeIdentity::load_or_create(&path).unwrap();
+        assert_eq!(kept.public.node_id, old.public.node_id);
+    }
+
+    /// A successor that is the same key is refused by the statement, and nothing is written.
+    #[test]
+    fn a_rotation_to_the_same_key_is_refused_and_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let old = NodeIdentity::load_or_create(&path).unwrap();
+        let err = old
+            .rotate_with(&path, || NodeIdentity::load_or_create(&path))
+            .unwrap_err();
+        assert!(err.to_string().contains("cannot succeed itself"), "{err}");
+        let kept = NodeIdentity::load_or_create(&path).unwrap();
+        assert_eq!(kept.public.node_id, old.public.node_id);
+    }
+
     /// A node key is owner-only from the moment it exists, whatever the umask, and a stale
     /// temp file left by an interrupted write does not lend it its mode.
     #[cfg(unix)]
@@ -511,6 +737,107 @@ mod tests {
             "not json",
             "the file is untouched"
         );
+    }
+
+    /// I2705: a rotation is a statement the old key signs and the new key countersigns, the
+    /// file then holds the new key alone and owner-only, and a forged or altered statement
+    /// does not verify.
+    #[test]
+    fn a_rotation_is_signed_by_the_old_key_and_countersigned_by_the_new() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let old = relabel(&path, "mac-mini").unwrap();
+        let (new, succession) = old.rotate(&path).unwrap();
+
+        assert_eq!(succession.schema, SUCCESSION_SCHEMA);
+        assert_eq!(succession.old_key, old.public.public_key);
+        assert_eq!(succession.new_key, new.public.public_key);
+        assert_ne!(
+            new.public.node_id, old.public.node_id,
+            "a new key is a new node"
+        );
+        assert_eq!(
+            new.public.display_name, "mac-mini",
+            "the label carries over"
+        );
+        assert_eq!(succession.verify(), Ok(()));
+        assert!(verify(
+            &old.public.public_key,
+            &succession.signing_bytes(),
+            &succession.old_signature
+        ));
+        assert!(verify(
+            &new.public.public_key,
+            &succession.countersigning_bytes(),
+            &succession.new_signature
+        ));
+
+        // the file holds the new key, owner-only, and the old secret is gone from it
+        let text = std::fs::read_to_string(&path).unwrap();
+        assert!(!text.contains(&hex(&old.signing.to_bytes())));
+        assert!(text.contains(&hex(&new.signing.to_bytes())));
+        let reloaded = NodeIdentity::load_or_create(&path).unwrap();
+        assert_eq!(reloaded.public.node_id, new.public.node_id);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(&path).unwrap().permissions().mode() & 0o777;
+            assert_eq!(mode, 0o600, "the rotated key file is {mode:o}");
+        }
+
+        // the statement survives its serialization byte for byte
+        let wire = serde_json::to_string(&succession).unwrap();
+        let read: Succession = serde_json::from_str(&wire).unwrap();
+        assert_eq!(read, succession);
+        assert_eq!(read.verify(), Ok(()));
+
+        // a countersignature by any key but the named successor is a forgery
+        let thief = NodeIdentity::ephemeral().unwrap();
+        let mut forged = succession.clone();
+        forged.new_signature = thief.sign(&forged.countersigning_bytes());
+        assert!(forged.verify().unwrap_err().contains("countersignature"));
+        // and naming the thief instead breaks the old key's signature
+        let mut forged = succession.clone();
+        forged.new_key = thief.public.public_key.clone();
+        forged.new_signature = thief.sign(&forged.countersigning_bytes());
+        assert!(forged.verify().unwrap_err().contains("old key's signature"));
+        // one signature cannot stand in for the other: the roles differ
+        let mut swapped = succession.clone();
+        swapped.new_signature = new.sign(&swapped.signing_bytes());
+        assert!(swapped.verify().is_err());
+        // a countersignature is bound to the exact signature it countersigned
+        let mut resigned = succession.clone();
+        resigned.old_signature = thief.sign(b"anything");
+        assert!(resigned.verify().is_err());
+
+        for (field, value) in [
+            ("schema", "majordomus-mesh-succession/v2"),
+            ("old_key", "zz"),
+            ("new_key", ""),
+            ("at", "2026-10-15T08:00:00Z\nextra"),
+            ("at", ""),
+            ("old_signature", "not hex"),
+            ("new_signature", "00"),
+        ] {
+            let mut bad = serde_json::to_value(&succession).unwrap();
+            bad[field] = value.into();
+            let bad: Succession = serde_json::from_value(bad).unwrap();
+            assert!(bad.verify().is_err(), "{field} = {value:?} verified");
+        }
+        assert!(Succession::sign(&old, &old, "2026-10-15T08:00:00Z").is_err());
+        assert!(Succession::sign(&old, &new, "two\nlines").is_err());
+    }
+
+    /// A rotation whose new key cannot be written leaves the old key where it was.
+    #[test]
+    fn a_rotation_that_cannot_write_keeps_the_old_key() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("node.json");
+        let old = NodeIdentity::load_or_create(&path).unwrap();
+        std::fs::create_dir(path.with_extension("tmp")).unwrap();
+        assert!(old.rotate(&path).is_err());
+        let still = NodeIdentity::load_or_create(&path).unwrap();
+        assert_eq!(still.public.node_id, old.public.node_id);
     }
 
     #[test]

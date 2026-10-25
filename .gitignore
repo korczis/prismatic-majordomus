@@ -3,6 +3,11 @@
 *.swp
 *~
 
+# git's own temporaries for a merge driver's %O %A %B, written at the root of the checkout a
+# merge runs in and removed when it ends; a merge interrupted by a signal leaves them behind
+# (six at the primary checkout's root on 2026-10-22). Never content, never a change.
+/.merge_file_*
+
 # Temporary artifacts, data, directories, files...
 /.local/
 /.tmp/
@@ -45,6 +50,9 @@ site/data/build.json
 # one deployment, like build.json, and never committed — a committed copy would describe the
 # commit before the one carrying it (ADR 68)
 site/data/evidence.json
+# the coverage and CI-cost series a publication read from the forge (scripts/pages trends,
+# I3933): a reading of the runs, not of the tree, so no branch could derive or commit it
+site/data/trends.json
 site/static/js/
 site/static/syntax-*.css
 

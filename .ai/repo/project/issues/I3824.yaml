@@ -39,4 +39,23 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-23T02:52:41Z
+started_at: 2026-10-23T02:51:47Z
+started_event: sha256:8fb567c78f2cce757f13acded0fd12754409e49cae7c1d80374a37a520445032
+verified_at: 2026-10-23T02:52:05Z
+verified_event: sha256:95cb07713c545c76e49962cb45d989296aaa69908e245586a748efa1bb7dd20a
+completed_at: 2026-10-23T02:52:41Z
+completed_event: sha256:cd882ddb45462a09bb206fca7769fb2e44b7ffc58109886b5011a252c8837f31
+evidence:
+  - covers: bootstrap_agrees_with_rule
+    type: test
+    command: "bash test/run.sh 3824_the_bootstrap_says_what_the_cooperation_rule_says 3150_the_cooperation_model_is_one_record"
+    result: "pass"
+    commit: 355a0cee79aab7030af2e9e4e39a617ffd47c5dd
+    recorded_at: 2026-10-23T02:52:24Z
+  - covers: never_merges_is_refused
+    type: test
+    command: "bash test/run.sh 3824_the_bootstrap_says_what_the_cooperation_rule_says 3150_the_cooperation_model_is_one_record"
+    result: "pass"
+    commit: 355a0cee79aab7030af2e9e4e39a617ffd47c5dd
+    recorded_at: 2026-10-23T02:52:33Z

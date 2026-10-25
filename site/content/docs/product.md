@@ -1,7 +1,7 @@
 +++
 title = "Product"
 description = "the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused"
-weight = 46
+weight = 47
 [extra]
 source = "docs/PRODUCT.md"
 +++
@@ -205,10 +205,11 @@ hand fails the check rather than the reader.
 ## The homepage's story, and what search engines are shown
 
 The homepage is an argument with an order, and the order is data: `site/data/homepage.toml`
-lists the ids of the sections the page renders — hero, recognise, map, how, refuses, surfaces,
-proof, install. It is told overview first: what this is, what goes wrong without it, what it
-controls, how one task moves through it, the proof that "done" can be refused, how one
-declaration reaches every interface, the evidence, and how to start. Reference-level material —
+lists the ids of the sections the page renders — hero, recognise, how, map, surfaces,
+blackboard, refuses, proof, install. It is told overview first: what this is, what goes wrong
+without it, how one task moves through it, what it controls, how one declaration reaches every
+interface, who is working on what, the proof that "done" can be refused, the evidence, and how
+to start. Reference-level material —
 the lifecycle transcripts, the full catalogue of failure modes, every recorded refusal, a
 capability on all its surfaces — stays on the page behind a disclosure rather than in the first
 reading of it. Nothing about the order is decided in `site/templates/index.html`.
@@ -219,10 +220,11 @@ reading of it. Nothing about the order is decided in `site/templates/index.html`
 |---|---|---|
 | `hero` | the positioning, one install command, and the product: a call that opens the first interface a person opens, beside a view of it read from this project's own plan | `marketing.toml`, `distribution.json`, `web.json`, `build.json` `snapshots`, `plan.json`, `roadmap.json` |
 | `recognise` | three failures, each a domain's `problem`; the featured moments behind a disclosure | `homepage.toml` `problems`, `product.json` domains, the Why catalogue |
-| `map` | the product's domains as disclosures: the failure each answers, its features, its counts | `product.json` domains (ADR 0104), via `partials/domain-map.html` |
 | `how` | the task lifecycle in its order; the recorded run of each step behind a disclosure | `terminal.json` |
-| `refuses` | the challenge stepped through, its first verdict line by line, and every other recorded refusal behind a disclosure | `challenge.json`, `terminal.json` |
+| `map` | the product's domains as disclosures: the failure each answers, its features, its counts | `product.json` domains (ADR 0104), via `partials/domain-map.html` |
 | `surfaces` | declaration to interfaces, the model's size, the providers, one capability on every surface | `product.json`, `registry.json` |
+| `blackboard` | what the peer blackboard shows, the pages a running server follows it live on, that this site follows no server and the commit it was built from, the issues the blackboard waits for with the status their records declare, and the document that explains it; no figure of it, since only a running server can read one | `marketing.toml`, `homepage.toml` `[blackboard]`, `docs.json`, `plan.json`, `build.json` |
+| `refuses` | the challenge stepped through, its first verdict line by line, and every other recorded refusal behind a disclosure | `challenge.json`, `terminal.json` |
 | `proof` | every claim counted by its declared status, what a recorded run supports, where the page came from, what is not built | `docs/CLAIMS.yaml`, `product.json` `evidence`, `manifesto.toml` |
 | `install` | the install, next-step and verification commands | `distribution.json` |
 

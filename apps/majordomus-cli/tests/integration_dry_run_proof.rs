@@ -281,8 +281,9 @@ fn a_quiet_forge_proves_that_nothing_moved() {
     let log = log(&fg);
     assert!(!log.contains("WRITE-OR-UNEXPECTED"), "{log}");
     assert!(
-        !log.lines()
-            .any(|l| l.starts_with("pr merge") || l.starts_with("pr close")),
+        !log.lines().any(|l| ["pr merge", "pr close", "api -X"]
+            .iter()
+            .any(|w| l.starts_with(w))),
         "{log}"
     );
     assert_eq!(origin_refs(&fg), before);

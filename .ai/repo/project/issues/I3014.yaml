@@ -1,0 +1,28 @@
+id: I3014
+milestone: two-folder-integration
+title: "The repository is found once per process, and a counter proves it"
+slug: the-repository-is-found-once-per-process
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Repository::open, which Repository::discover ends in, answers from one process-wide cell keyed by the root: the first open reads and parses .ai/manifest.yaml, every later open of the same root answers from what was read while the manifest's length and modification time are unchanged, and an edited manifest is read again. perf gains a repository_discoveries counter, bumped only by a real walk, listed in startup_work, and tests/hot_path.rs asserts it is 1 after startup."
+why: "The first slice of I1105 (one model, discovered once). On 2026-10-20 a read-only survey of origin/master 9a5a9b77520 found four ways to find a root and nothing cached: Repository::discover walks and reads the manifest at every entry, and manifest_value reads it again. Without a counter, discovered once is a claim nobody can check."
+current_state: "Repository { root, manifest } (apps/majordomus-cli/src/repository.rs) is built anew by every discover and open; perf counts repository_scans (the file walk) but not discoveries."
+desired_state: "One discovery per root per process, counted; the counter is a startup-work counter the hot-path test holds at 1."
+scope:
+  - apps/majordomus-cli/src/repository.rs
+  - apps/majordomus-cli/src/perf.rs
+  - apps/majordomus-cli/tests/hot_path.rs
+non_scope:
+  - "Rewiring serve, mcp or the capabilities (I3015, I3016)"
+  - "Caching environment, provider or service facts (I1107)"
+depends_on: []
+acceptance_criteria:
+  - "A second open of the same root reads no manifest and an edited one is read again, proved by a unit test that makes the manifest unreadable after the first open"
+  - "perf reports repository_discoveries, it is listed in startup_work, and tests/hot_path.rs asserts it is 1 after startup"
+validation:
+  - "cargo test --workspace --all-features"
+evidence_required:
+  - discovered_once_counter
+created_at: 2026-10-21
+updated_at: 2026-10-21

@@ -637,7 +637,7 @@ mj_recover_strays() {
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || mj_die "$MJ_EX_CONTRACT" \
-    "recover: the runtime that classifies a stray file is not built, and nothing here decides it a second time (build it: bin/majordomus-cli --help)"
+    "recover: the runtime that classifies a stray file is not built, and nothing here decides it a second time (build it: just build)"
   command -v jq >/dev/null 2>&1 || mj_die "$MJ_EX_CONTRACT" \
     "recover: jq is not installed, so the runtime's verdicts cannot be read here (brew install jq)"
 

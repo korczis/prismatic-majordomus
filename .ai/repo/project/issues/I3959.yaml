@@ -1,0 +1,43 @@
+id: I3959
+milestone: development-runtime
+title: "The shared build directory stays under its bound while builds run: between builds, under cargo's lock, its stale units are evicted oldest first until it is under the bound"
+slug: the-shared-build-dir-stays-bounded
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Make the shared build directory's 6144MB bound (MAJORDOMUS_SHARED_BUILD_CAP_MB) hold on a machine where some cargo always runs: before and after every bounded build, and from scripts/reap-orphans when a build is running, evict whole stale units of the build directory, oldest first, until it is under its bound: a coverage run's llvm-cov-target, dependency generations whose crate version no worktree's Cargo.lock names, idle incremental sessions and idle generations of this crate's own units. Each profile's units are evicted only while cargo's lock on that profile is taken without waiting and no process names or holds them; a held lock is skipped and said, and what was evicted is reported per unit."
+why: "Measured 2026-10-23 09:43Z: ~/.asdf/installs/rust/1.90.0/build-shared/majordomus held 102 GB against its 6 GB bound, 94 GB at 12:58Z, and the disk fell to the 35 GiB floor again and again. scripts/reap-orphans reclaims the directory only as a whole and only when no cargo or rustc process runs anywhere on the machine, which here is never; the age sweeps of I2713 and I2787 bound nothing by size: at 16:30Z debug/deps held 51 GB in eleven majordomus_cli generations, every one of them under the 120-minute age."
+current_state: "The reaper's bound applies only when nobody builds anywhere. The pre-build sweeps remove idle incremental sessions (30 min) and this crate's generations idle for 120 min, with no regard to the size of what remains."
+desired_state: "mj_rust_bound_build_dir, in lib/rust_bin.sh, evicts stale units oldest first until the build directory is under its bound, under cargo's lock on each profile, never a unit written within MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN minutes (default 60), open, or in a profile a process names; it runs after the pre-build sweeps and after each bounded build (rate-limited; after a build it waits for a held lock in the background, bounded by MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT), and scripts/reap-orphans runs it when a build is running instead of keeping the directory whole. A dry run says what it would evict, per unit."
+scope:
+  - "lib/rust_bin.sh"
+  - "scripts/reap-orphans"
+  - "scripts/ci/backlog-check"
+  - "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+  - "test/cases/08_no_forbidden_constructs.sh"
+  - "test/run.sh"
+  - "docs/WORKTREES.md"
+  - ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md"
+non_scope:
+  - "The toolchain half of staleness: a generation built by a toolchain no worktree pins is not recognised, because cargo's rustc fingerprint cannot be recomputed from a toolchain file outside cargo"
+  - "Not sharing build.rs output between trees (shared-build-dir-stamps-the-wrong-generation)"
+  - "The number of concurrent builders"
+depends_on:
+  - "I2787"
+acceptance_criteria:
+  - "A fixture build directory over its bound, with its profile lock free, has its stale units evicted oldest first until it is under the bound, and every evicted unit is named with its size"
+  - "With the profile lock held by a stand-in build nothing in that profile is evicted, and that is said"
+  - "A unit a running stand-in build holds open, a recent unit and a dependency generation some worktree's Cargo.lock names are kept"
+  - "A dependency generation whose crate version no worktree's Cargo.lock names is evicted, and so is an idle llvm-cov-target"
+  - "--dry-run evicts nothing and reports what it would"
+  - "scripts/reap-orphans, over the bound while a build runs, evicts stale units under the lock rather than keeping the whole directory"
+  - "After a build, a held lock is waited for in the background, bounded, and the build that finished does not wait"
+validation:
+  - "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound"
+  - "bash test/run.sh 3196_stale_crate_artifacts_are_pruned_under_cargos_lock"
+  - "bash test/run.sh 1022_worktrees_share_build_intermediates"
+  - "majordomus plan validate"
+evidence_required:
+  - "the_shared_build_dir_stays_under_its_bound_test"
+created_at: 2026-10-23
+updated_at: 2026-10-23

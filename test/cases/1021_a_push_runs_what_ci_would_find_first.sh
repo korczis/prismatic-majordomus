@@ -6,11 +6,14 @@
 # --before-push`, which the pre-push hook calls, runs a budget of the plan's structure gates,
 # chosen from the seconds CI recorded, and the suite's fast cases. This case drives its
 # choice over a plan and durations it writes. It proves four things: a cheap gate runs and
-# its failure refuses the push; a gate that reaches the network, one with no recorded
-# duration, one over the per-gate limit and one past the budget are each left out with a line
-# that says why; a missing durations file or an uncomputable plan refuses the push; and a case
+# its failure exits 1, naming it (the hook reports that exit, case 3948); a gate that reaches
+# the network, one with no recorded duration, one over the per-gate limit and one past the
+# budget are each left out with a line that says why; a missing durations file or an
+# uncomputable plan exits 12, which refuses the push; and a case
 # that reads stdin no longer hangs the runner. A fifth, since 2026-10-10: nothing it runs
 # inherits the repository git hands a hook, so a fixture cannot write into the one being pushed.
+# A sixth, since 2026-10-22: the push is planned from its commits, so an untracked file in the
+# working tree (git's .merge_file_* temporaries) cannot force the full plan.
 . "$ROOT/test/lib.sh"
 
 R="$ROOT/scripts/ci/run-plan"
@@ -36,7 +39,7 @@ expect_grep 'left out unrecorded: no recorded duration'
 expect_grep 'left out too-slow: CI recorded 400s, over the 15s a push spends on one gate'
 expect_grep 'left out budget-b: 12s more would pass the 20s budget for gates'
 expect_grep '  ok     budget-a'
-expect_grep 'failed: cheap-fails. CI would refuse this push for the same reason'
+expect_grep 'failed: cheap-fails. CI would refuse this push for the same reason, and CI holds the verdict'
 expect_grep 'against a bound of 180s'
 # without the failing gate, the push goes on
 plan_with "$(gate cheap-ok true false)" "$(gate networked true true)"
@@ -85,8 +88,41 @@ unset MJ_PUSH_DURATIONS MJ_PUSH_CASES MJ_PUSH_GATE_BUDGET
 expect_exit 12 "$R" --before-push --base no-such-ref-anywhere
 expect_grep 'the plan could not be computed .* so the push is refused'
 
+# ---------------------------------------------------------------- planned from the commits
+# A push sends commits, so its plan is computed from them, never from the working tree. On
+# 2026-10-22 git's `.merge_file_XXXXXX` temporaries, left at the primary checkout's root by an
+# interrupted merge, were "a changed path in no class of the model" and pushed a push that
+# only deleted remote refs into the full plan. A copy of run-plan and ci-plan, with this
+# repository's model, runs in a small repository whose one commit changes a classified path
+# and whose working tree holds such a temporary, untracked and not ignored.
+mkdir -p planned/scripts/ci planned/lib planned/bin planned/.ai/repo/ci planned/docs
+cp "$ROOT/scripts/ci/run-plan" planned/scripts/ci/ && cp "$ROOT/scripts/ci-plan" planned/scripts/
+cp "$ROOT/lib/common.sh" "$ROOT/lib/sha256.sh" "$ROOT/lib/rust_bin.sh" planned/lib/ && cp "$ROOT/.ai/repo/ci/gates.yaml" planned/.ai/repo/ci/
+printf 'base\n' > planned/docs/README.md
+git -C planned init -q -b master && git -C planned add -A \
+  && git -C planned -c user.email=case@example.invalid -c user.name=case commit -qm base \
+  && git -C planned checkout -qb work && printf 'changed\n' >> planned/docs/README.md \
+  && git -C planned -c user.email=case@example.invalid -c user.name=case commit -qam change \
+  || fail 'could not build the planned fixture repository'
+printf 'a merge driver input\n' > planned/.merge_file_AbC123
+: > "$T/empty.tsv"
+# the control: the working tree's plan sees the temporary, which is what forced the full plan
+planned/scripts/ci-plan < /dev/null > "$T/worktree-plan.json" 2>/dev/null \
+  || fail 'ci-plan could not plan the fixture working tree'
+jq -e '.mode == "full" and (.reason | test("in no class of the model: .*\\.merge_file_AbC123"))' "$T/worktree-plan.json" > /dev/null \
+  || fail "the fixture does not reproduce the full plan: $(jq -c '{mode, reason}' "$T/worktree-plan.json")"
+# the push: planned from the commit, the temporary is not a change
+MJ_PUSH_DURATIONS="$T/empty.tsv" MJ_PUSH_CASES="$T/empty.tsv" expect_exit 0 planned/scripts/ci/run-plan --before-push
+expect_grep '^run-plan --before-push: '
+expect_no_grep 'merge_file_AbC123'
+expect_no_grep '^run-plan --before-push: full'
+# a caller that names its own head keeps it: a head that names no commit is refused, not replaced
+MJ_PUSH_DURATIONS="$T/empty.tsv" MJ_PUSH_CASES="$T/empty.tsv" expect_exit 12 planned/scripts/ci/run-plan --before-push --head no-such-head
+expect_grep 'the plan could not be computed .* so the push is refused'
+
 # ---------------------------------------------------------------- the model and the wiring
-grep -qx 'scripts/ci/run-plan --before-push || exit \$?' "$ROOT/.githooks/pre-push" \
+# exit 1 is reported and anything else refuses; case 3948 drives the hook through both
+grep -qx 'scripts/ci/run-plan --before-push' "$ROOT/.githooks/pre-push" \
   || fail 'the pre-push hook does not call run-plan --before-push'
 grep -q 'name: structure-gates-on-push' "$ROOT/.ai/repo/policy.yaml" \
   || fail 'the policy does not declare the pre-push enforcement, so doctor cannot hold it'

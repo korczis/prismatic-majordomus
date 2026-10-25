@@ -123,7 +123,7 @@ fn skipped<P>() -> Result<SourceRead<P>, (MonitorSourceHealth, String)> {
     Err((MonitorSourceHealth::Skipped, "not asked for".into()))
 }
 
-fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, CapabilityError> {
+pub(crate) fn monitor(ctx: &Context, input: MonitorInput) -> Result<MonitorPage, CapabilityError> {
     let previous = match input.after.as_deref() {
         Some(token) => Cursor::parse(token).map_err(CapabilityError::InvalidInput)?,
         None => Cursor::default(),

@@ -1209,9 +1209,21 @@ mj_adr_collisions() {
       refs="$(awk -F"$MJ_TAB" -v w="$path" '$1 == w { print $2 }' "$seen" \
         | while IFS= read -r commit; do
             git -C "$MJ_ROOT" for-each-ref --contains "$commit" \
-              --format='%(refname:short)' refs/heads refs/remotes/origin refs/tags 2>/dev/null
-          done | LC_ALL=C sort -u | head -6 | tr '\n' ' ')"
-      [ -n "$refs" ] || refs="no current ref — an unreferenced commit still in this object store"
+              --format='%(refname)' refs/heads refs/remotes/origin refs/tags 2>/dev/null
+          done | LC_ALL=C sort -u)"
+      if [ -n "$refs" ]; then
+        # A ref claims the identity while its tip carries the document, not while its history
+        # once added it: a branch that renumbered its decision away claims nothing at the old
+        # number. On 2026-10-16 #1293 renamed 0168 to 0169, and #947's commit was still refused
+        # "also claimed by .../0168-..." because that branch contained the add-commit (I2761).
+        refs="$(printf '%s\n' "$refs" | while IFS= read -r ref; do
+            git -C "$MJ_ROOT" cat-file -e "$ref:$path" 2>/dev/null || continue
+            printf '%s\n' "${ref#refs/*/}"
+          done | head -6 | tr '\n' ' ')"
+        [ -n "$refs" ] || continue
+      else
+        refs="no current ref — an unreferenced commit still in this object store"
+      fi
       "$report" "$here" "identity $num is also claimed by $path, on: ${refs% }. One of the two has to be renumbered before either lands, or \`generate --strict\` will exclude both and name only the identity. \`majordomus adr next\` says which number is free."
       MJ_ADR_FINDINGS=$((MJ_ADR_FINDINGS + 1)); rc=1
     done

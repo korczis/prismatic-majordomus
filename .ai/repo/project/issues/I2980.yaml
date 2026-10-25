@@ -1,0 +1,35 @@
+id: I2980
+milestone: peer-blackboard
+title: "The blackboard is one projection answered on every interface"
+slug: the-blackboard-is-one-projection
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - the-peer-blackboard-is-one-reality#one-projection
+objective: "Add blackboard.snapshot: one read capability that composes the repository-wide board (peers.list), the live mesh state (sessions, claims, reviews, handovers) and the newest monitor signals into one typed snapshot with the sources it read and their health, whether it is complete, every worker with its claims (advisory or exclusive), the conflicts (potential overlaps and confirmed conflicted claims), open reviews, untaken handovers, typed relations (verified or candidate) and the monitor cursor a stream resumes from."
+why: "The facts exist in three capabilities that each surface would have to join again, and a join done per renderer is a second truth; the board's p1 is a position on one board, so a join by it would merge people."
+current_state: "peers.list, mesh.state and monitor.stream answer separately; /cockpit/peers renders peers.list alone."
+desired_state: "majordomus blackboard, GET /api/v1/blackboard and majordomus_blackboard answer the same projection; a board peer and the mesh session its server projected for it are one worker by an explicit identifier, never by a name."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+  - "apps/majordomus-cli/src/capability/builtin/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/peers.rs"
+  - "apps/majordomus-cli/src/capability/builtin/monitor.rs"
+  - "apps/majordomus-cli/src/commands/blackboard.rs"
+  - "apps/majordomus-cli/src/commands/mod.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "docs/BLACKBOARD.md"
+  - "test/cases/3380_the_blackboard_is_one_projection.sh"
+depends_on: []
+acceptance_criteria:
+  - "The three interfaces answer the same projection"
+  - "An unread board or absent source makes complete false and names the reason"
+  - "A board peer joins the mesh session its own server projected only through the stream that server names, with the same board session id, checkout and client; two matches make candidates and no join"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 3380_the_blackboard_is_one_projection"
+evidence_required:
+  - "case_blackboard_projection"
+created_at: 2026-10-18
+updated_at: 2026-10-18

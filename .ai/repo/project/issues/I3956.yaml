@@ -1,0 +1,39 @@
+id: I3956
+milestone: builds-reuse-the-mesh-cache
+title: "Every worker, and every process it starts on any machine, is traced to its session, and the board names the address that reaches it"
+slug: every-process-is-traced-to-its-session
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Derive, never ask, who owns work: the board row of a Claude Code session carries the address that reaches it (its cross-session name and socket), announced by the session-start hook; every remote run (offload derive, remote test or build on a cluster host) carries its owner (session key, board peer, issue) in its process environment and in a run record on the host; `majordomus mesh who <pid|path|issue|host-pid>` answers the owner and the address; a remote cargo started around the offload path is refused by a hook."
+why: "The owner, 2026-10-22, after a coordinator could not tell which of six local sessions ran a 33-minute `cargo test --doc` that kept lundra (the build host) thrashing at load 21: 'that is core evidence, this must not happen; it must be wired into Majordomus derived, inferred, generic, dynamic, enforced (hooks, ...)'. The answer took a process-tree trace (ssh parent chain to a Claude pid, then matching start times to the session list), because every session's working directory is the primary checkout and the board row names no address."
+current_state: "Measured on 2026-10-22: the board row (majordomus_announce) carries client name and version but no cross-session address; ListAgents names sessions without their board peer or issue; Claude processes all report the primary checkout as cwd; remote runs on lundra carry no owner in their environment or in /tmp/offload-queue beyond the offload tag."
+desired_state: "From any one fact — a pid on any mesh host, a worktree path, an issue, a board peer — one command answers the session, its board peer, its issue and the address to message it, on every surface; a run that cannot be traced is refused before it starts."
+scope:
+  - "apps/majordomus-cli/src/peers.rs"
+  - "apps/majordomus-cli/src/mesh/"
+  - "apps/majordomus-cli/src/offload/"
+  - "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+  - "apps/majordomus-cli/src/cli.rs"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - ".claude/hooks/"
+  - ".ai/repo/providers/"
+  - "test/cases/3957_every_process_is_traced_to_its_session.sh"
+non_scope:
+  - "Stopping another session's process: the trace names the owner, the owner acts"
+depends_on: []
+acceptance_criteria:
+  - "A session-start hook announces the session's cross-session address on the board, and the board row carries it"
+  - "An offload derive and a remote run export the owner (session key, peer, issue) into the remote process environment and write it into the host's run record"
+  - "mesh who answers the owner of a remote pid, a local pid, a worktree path and an issue, with the address, from a fixture of two sessions"
+  - "A command that starts cargo on a cluster host outside the offload path is refused by a hook, naming the traced path"
+  - "A remote run is started in its own process group and stopped as a group; a run's leftover (parent init, working directory deleted) is found by a sweep and named with its owner (measured 2026-10-22: rustc pid 1416661 survived its cargo and bash being killed, 50 min, lundra in 11 GiB swap)"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=2 bash test/run.sh 3957_every_process_is_traced_to_its_session"
+evidence_required:
+  - "trace_case"
+serves:
+  - "a-build-reuses-what-the-mesh-already-built#every-build-path-goes-through-it"
+created_at: 2026-10-22
+updated_at: 2026-10-22

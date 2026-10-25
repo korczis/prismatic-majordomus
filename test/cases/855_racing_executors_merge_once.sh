@@ -10,7 +10,7 @@
 #   - exactly one process says it merged the pull request, and the forge was asked once
 #   - every other one was refused by the base's lease, by name (exit 12), or found
 #     nothing left to merge (exit 0); none failed otherwise
-#   - master gains exactly one merge commit, and no lease is left behind
+#   - master is fast-forwarded once, to the head, and no lease is left behind (I3910)
 #
 # and across the rounds at least one process was refused: the processes did overlap, so the
 # rounds tested a race rather than four executors run one after another.
@@ -46,6 +46,14 @@ case "\$1 \$2" in
       git fetch -q origin "refs/pull/\$3/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$3" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$3" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-\$n" ;;
   "pr view") if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
   # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
   # this repository, and no pull request mentions it. The list is this forge's own, unlogged
@@ -71,7 +79,7 @@ for r in 1 2 3; do
   printf '[{"number":%s,"title":"change %s","author":{"login":"someone"},"headRefName":"feature/%s","headRefOid":"%s","baseRefName":"master","isDraft":false,"labels":[],"createdAt":"2026-09-01T00:00:00Z","updatedAt":"2026-09-01T00:00:00Z","body":"","statusCheckRollup":[{"__typename":"CheckRun","name":"ci","status":"COMPLETED","conclusion":"SUCCESS"}],"reviewDecision":"","autoMergeRequest":null,"isCrossRepository":false}]\n' \
     "$r" "$r" "$r" "$H" > "$STATE/prs.json"
   "$RB" prs --repo "$W" refresh >/dev/null || { echo "    round $r: refresh failed"; tail -5 "$STATE/log"; exit 1; }
-  before="$(git -C "$ORIGIN" rev-list --count --merges master)"
+  before="$(git -C "$ORIGIN" rev-list --count master)"
 
   # four executors, each waiting on one file, released together
   rm -f "$STATE/go"; PIDS=""
@@ -96,9 +104,10 @@ for r in 1 2 3; do
   done
   PIDS=""
   [ "$merged" = 1 ] || { echo "    round $r: $merged executors say they merged #$r, not 1"; tail -n 3 "$STATE"/out."$r".*; exit 1; }
-  [ "$(grep -c "^pr merge $r " "$STATE/log")" = 1 ] || { echo "    round $r: the forge was asked to merge #$r $(grep -c "^pr merge $r " "$STATE/log") times"; exit 1; }
-  after="$(git -C "$ORIGIN" rev-list --count --merges master)"
-  [ "$after" = $((before + 1)) ] || { echo "    round $r: master gained $((after - before)) merge commits, not 1"; exit 1; }
+  [ "$(grep -c "^api -X PATCH .* sha=$H " "$STATE/log")" = 1 ] || { echo "    round $r: the forge was asked to land #$r $(grep -c "^api -X PATCH .* sha=$H " "$STATE/log") times"; exit 1; }
+  after="$(git -C "$ORIGIN" rev-list --count master)"
+  [ "$after" = $((before + 1)) ] && [ "$(git -C "$ORIGIN" rev-parse master)" = "$H" ] \
+    || { echo "    round $r: master gained $((after - before)) commits and is not #$r's head"; exit 1; }
   [ ! -e "$LOCK" ] || { echo "    round $r: the lease was left behind: $(cat "$LOCK")"; exit 1; }
 done
 

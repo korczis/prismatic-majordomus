@@ -1,0 +1,29 @@
+id: I2865
+milestone: a-derive-does-only-the-work-its-inputs-changed
+title: "The eight kinds of derive are measured cold on a host of their own, each with its sample count"
+slug: the-derive-scenarios-are-measured-cold
+priority: p2
+profile: deep-work
+parallel_safe: false
+objective: "Measure a cold run, a no-op run, one rule edited, one Rust source edited, one site source edited, one generated output deleted, one staged new file and one unstaged tracked edit, stage by stage, in a disposable checkout with a build directory of its own, several samples each, and commit the result as I2521's derive record."
+why: "Split from I2521 on 2026-10-21 (3e with a3). On the shared development machine a derive takes 14 to 28 minutes under load 17 to 63, so eight scenarios with several cold samples each would hold the machine and its disk for hours and still measure the other sessions as much as the derive. I1409 records two timings twenty minutes apart that disagreed sixfold."
+current_state: "Nothing measured. Blocked on a host: it needs a machine whose load is the derive's own, with room for a private build directory. The shared development machine is not one (load 17-63, disk 34-66 GiB free on 2026-10-21)."
+desired_state: "One derive record per scenario under .ai/repo/benchmarks/, written by I2521's script, each with commit, host, load and sample count."
+scope:
+  - ".ai/repo/benchmarks"
+  - ".ai/repo/project/issues/I2865.yaml"
+non_scope:
+  - "Cleaning a build directory other worktrees share"
+  - "Budgets or gates on the measured durations"
+depends_on:
+  - "I2521"
+acceptance_criteria:
+  - "Each of the eight scenarios has a recorded duration per stage with the commit, the host, the load at the time and the number of samples"
+  - "The no-op scenario names the stage that is its largest share, from the samples"
+  - "No tracked generated file differs before and after the measurements"
+validation:
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "derive_scenarios_measured"
+created_at: 2026-10-21
+updated_at: 2026-10-21

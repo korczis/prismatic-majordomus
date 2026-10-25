@@ -1,0 +1,27 @@
+id: I2761
+milestone: development-runtime
+title: "A branch that renumbered its decision away claims nothing at the old number"
+slug: a-renumbered-adr-claims-nothing
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Count a ref as claiming an ADR identity only while its tip carries the document, so that renumbering one of two colliding decisions clears the collision for the other branch."
+why: "On 2026-10-16 two sessions took ADR 0168 within minutes: #947 (the d8 mesh segment) and #1293 (I1101). The landing seat decided that #947 keeps 0168, and #1293 renamed its decision to 0169 and pushed. #947's commit was still refused by the pre-commit hook with `identity 0168 is also claimed by .ai/repo/adrs/0168-what-an-adoption-leaves-behind-is-measured-not-remembered.md, on: docs/adoption-footprint-forensics`. mj_adr_collisions asks which refs contain the commit that once added the path, and #1293's branch still contains that commit in its history. No branch carried the document any more, and the only way past was --no-verify, which this repository forbids."
+current_state: "mj_adr_collisions reports a collision for every path that any ref's history ever added, for as long as any ref contains that add-commit, whether or not the document still exists at the ref's tip."
+desired_state: "A ref claims an identity while `git cat-file -e <ref>:<path>` holds. A path that no current tip carries is no collision, whereas one in an unreferenced commit is still reported as before. The allocator (`adr next`) is unchanged: a withdrawn identity stays spent there."
+scope:
+  - "lib/adr.sh"
+  - "test/cases/271_adr_allocation.sh"
+  - ".ai/repo/project/issues/I2761.yaml"
+depends_on: []
+acceptance_criteria:
+  - "adr check passes on a branch taking an identity whose other claimant renumbered its document away and pushed"
+  - "the renumbered document still collides at its new number, naming the branch"
+  - "case 271 fails against master without the change"
+validation:
+  - "bash test/run.sh 271_adr_allocation"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "renumbered_claim_case"
+created_at: 2026-10-16
+updated_at: 2026-10-16

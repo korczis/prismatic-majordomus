@@ -4,7 +4,7 @@ description = "Several AI sessions working on one repository will sooner or late
 template = "page.html"
 [extra]
 lang = "en"
-related = ["seats-not-names/", "everything-followed/", "written-once-derived-everywhere/", "a-session-ends-the-work-does-not/", "one-branch-one-place/"]
+related = ["seats-not-names/", "everything-followed/", "written-once-derived-everywhere/", "a-session-ends-the-work-does-not/", "one-branch-one-place/", "many-machines-one-journal/"]
 [extra.translations]
 cs = "zabrano-driv-nez-se-stavi/"
 +++

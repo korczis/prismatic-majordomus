@@ -35,7 +35,7 @@
           <td class="px-3 py-2 font-mono font-semibold text-heading">{{ p.name }}</td>
           <td class="px-3 py-2 font-mono text-body">{{ p.type }}{% if p.refs | length > 0 %} <span class="text-body-subtle">→</span> {% for r in p.refs %}<a href="{{ api_root }}{{ api.schema_homes[r] }}/#schema-{{ r }}" class="text-fg-brand underline">{{ r }}</a>{% if not loop.last %}, {% endif %}{% endfor %}{% endif %}</td>
           <td class="px-3 py-2 font-mono text-body">{% if p.required %}yes{% else %}no{% endif %}</td>
-          <td class="px-3 py-2 text-body">{{ p.description | markdown(inline=true) | safe }}</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">{{ p.description | markdown(inline=true) | safe }}</div></td>
         </tr>
         {%- endfor -%}
       </tbody>

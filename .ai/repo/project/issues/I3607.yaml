@@ -1,0 +1,30 @@
+id: I3607
+milestone: surfaces-never-disagree
+title: "mesh state answers in JSON on the command line, and its view is chosen the same way on every surface"
+slug: mesh-state-is-one-shape-everywhere
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Give `majordomus mesh state` a --json answer that is the MCP tool's and the HTTP route's document, and make the one choice between the summary and the full view a single parameter whose name is the same on the command line, MCP and HTTP."
+why: "On 2026-10-20 `majordomus mesh state --full --json` exited 2 with 'unexpected argument --json'. A piped reader saw nothing, because the error went to stderr and the JSON never came. The MCP tool refuses `full` and takes `view: full`, while the command line takes --full, and the session-start brief tells every worker to reproduce with `majordomus mesh state --full`. A worker that follows the brief on one surface cannot carry the same call to another."
+current_state: "The command line prints mesh state as text only and spells the full view --full. majordomus_mesh_state takes view, claims, kind, open, matching, limit, after, session and runtime, and refuses full. The same capability is projected with two vocabularies."
+desired_state: "`majordomus mesh state --json` prints the document the MCP tool returns for the same arguments, the view parameter has one name on every projection (with --full kept as its alias on the command line), and a case holds the command line's JSON equal to the MCP answer."
+scope:
+  - "apps/majordomus-cli/src/capability/builtin"
+  - "apps/majordomus-cli/src/commands/mesh.rs"
+  - "test/cases"
+  - "docs/MESH.md"
+non_scope:
+  - "Changing what the full view contains"
+depends_on: []
+acceptance_criteria:
+  - "`majordomus mesh state --json` prints one JSON document and exits 0"
+  - "For the same arguments, the command line's JSON and the MCP tool's answer are equal apart from the observation time"
+  - "The view is selected by a parameter with one name on the command line, MCP and HTTP, and the brief's reproduce hint uses it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "mesh_state_json_equals_mcp_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20

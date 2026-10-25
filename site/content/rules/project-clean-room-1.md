@@ -1,7 +1,7 @@
 +++
 title = "Clean room"
 description = "Clean room"
-weight = 88
+weight = 89
 [extra]
 kind = "rule"
 slug = "project-clean-room-1"

@@ -1,0 +1,28 @@
+id: I3664
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "doctor and the brief tell the owner a held funding source no credential reaches, with the vendor's claim link"
+slug: an-unreached-funding-source-is-told
+priority: p3
+profile: implementation
+objective: "Add a typed check (ADR 0069) that doctor and the brief read: for each source the owner holds (I3661) whose credential variable is unset, name the vendor, the source, the vendor's claim link and the date of its evidence; say it once per renewal period, and say nothing for a source the owner declares they do not hold."
+why: "A credit grant that is never claimed, or claimed but never wired to a credential, is money the owner already pays for and nothing uses. Majordomus cannot claim it and must not sign in to a console; it can only tell the owner, with the link the vendor published, which is evidence and not an instruction."
+current_state: "doctor reports credential presence for nothing funding-related; the brief says nothing about funding."
+desired_state: "An unreached held source is told once per period, with its claim link, and silence means nothing is owed."
+scope:
+  - "apps/majordomus-cli/src/models"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - "lib/doctrine.sh"
+depends_on:
+  - "I3661"
+cancelled: true
+completion: "Cancelled 2026-10-21 on feature/intent-funding-sources by the plan's critique (findings subscription-has-no-credential-variable and doctor-scope-and-period-are-wrong): a subscription seat is usually reached through Claude Code's login, not a variable, so a credential-presence check would tell a signed-in owner their seat is unusable; and nudging the owner to export the grant's API key would move every headless Claude Code child off the seat, because ANTHROPIC_API_KEY outranks it (code.claude.com/docs/en/authentication, read 2026-10-21). Reopen with a measured instance of a grant going unused (ADR 0207)."
+acceptance_criteria:
+  - "A held credit grant with its credential unset appears in doctor and the brief with the claim link and evidence date"
+  - "The same finding is not repeated within one renewal period (test with a fixed clock)"
+  - "A source declared not held produces nothing"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test brief"
+evidence_required:
+  - "test_an_unreached_funding_source_is_told_once_per_period"
+created_at: 2026-10-20
+updated_at: 2026-10-21

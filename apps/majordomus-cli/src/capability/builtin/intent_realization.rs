@@ -25,8 +25,10 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::intent::{IntentFinding, Intents, RepositoryEvidence, INTENT};
-use crate::intent_realization::{explain, gather, realize, IntentExplanation, IntentRealization};
+use crate::intent::{IntentFinding, IntentRecord, Intents, RepositoryEvidence, INTENT};
+use crate::intent_realization::{
+    explain, first_intent_at, gather, realize, IntentExplanation, IntentRealization,
+};
 use crate::plan::Plan;
 use crate::{capability, module};
 
@@ -115,7 +117,8 @@ fn derived(ctx: &Context) -> Result<(Plan, Intents, IntentRealization), Capabili
     let intents = Intents::build(&ctx.index, &plan, &evidence);
     let root = PathBuf::from(&ctx.index.repository.root);
     let (units, skipped) = gather(&root, &ctx.index, &ctx.peers.list());
-    let mut realization = realize(&intents, &plan, units);
+    let first = first_intent_at(&IntentRecord::all(&ctx.index));
+    let mut realization = realize(&intents, &plan, units, first.as_deref());
     if skipped > 0 {
         realization.findings.push(IntentFinding {
             level: crate::intent::WARN.into(),
@@ -156,7 +159,10 @@ fn realization_work(
     r.intents.retain(|v| v.intent == id);
     r.work.retain(|w| w.links.iter().any(|l| l.intent == id));
     r.findings.retain(|f| f.subject == id);
+    // one intent's work is linked to it by construction: no unlinked unit is left to count
     r.orphans = 0;
+    r.empty = 0;
+    r.before_intents = 0;
     Ok(r)
 }
 

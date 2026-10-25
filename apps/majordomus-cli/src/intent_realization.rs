@@ -43,7 +43,8 @@ use serde::{Deserialize, Serialize};
 use crate::capability::builtin::continuity::{document, read_task};
 use crate::index::Index;
 use crate::intent::{
-    IntentEvidenceState, IntentFinding, IntentStage, IntentVerdictState, IntentView, Intents, WARN,
+    IntentEvidenceState, IntentFinding, IntentRecord, IntentStage, IntentVerdictState, IntentView,
+    Intents, WARN,
 };
 use crate::intent_plan::{CoverageStrength, CriterionCoverage, IntentCoverage};
 use crate::ledger::Entry;
@@ -57,6 +58,10 @@ pub const REPRODUCE: &str = "majordomus intent realization";
 
 /// Where the untracked half of the layer lives, relative to the repository root.
 const STATE_DIR: &str = ".ai/local/state";
+
+/// Where the closed session records live: a path changed under it is the record itself, not
+/// work the session did.
+const SESSIONS_DIR: &str = ".ai/repo/sessions/";
 
 // ---------------------------------------------------------------- vocabulary
 
@@ -194,6 +199,51 @@ impl IntentLinkVia {
     }
 }
 
+/// What a unit of work that realises no intent is, by the facts it records (ADR 0075,
+/// amendment of 2026-10-15). Only [`IntentUnlinkedClass::Orphan`] is work serving no intent;
+/// the other two classes say why a unit is not, and neither is a link.
+///
+/// ```
+/// use majordomus_cli::intent_realization::IntentUnlinkedClass;
+/// assert_eq!(
+///     serde_json::to_string(&IntentUnlinkedClass::BeforeIntents).unwrap(),
+///     "\"before_intents\""
+/// );
+/// assert!(IntentUnlinkedClass::Empty < IntentUnlinkedClass::Orphan);
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum IntentUnlinkedClass {
+    /// A session record that lists no issue, no commit and no changed path outside the session
+    /// records, and whose own words cite no issue: it did no work a link could be read from.
+    Empty,
+    /// Not live, not empty, and its earliest episode started before the first intent record
+    /// was written — or no intent is declared at all.
+    BeforeIntents,
+    /// Anything else unlinked: work done, or being done, while an intent existed, with no fact
+    /// linking it to one.
+    Orphan,
+}
+
+impl IntentUnlinkedClass {
+    /// The word every surface prints for this class.
+    ///
+    /// ```
+    /// use majordomus_cli::intent_realization::IntentUnlinkedClass;
+    /// assert_eq!(IntentUnlinkedClass::Empty.as_str(), "empty");
+    /// assert_eq!(IntentUnlinkedClass::Orphan.as_str(), "orphan");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntentUnlinkedClass::Empty => "empty",
+            IntentUnlinkedClass::BeforeIntents => "before_intents",
+            IntentUnlinkedClass::Orphan => "orphan",
+        }
+    }
+}
+
 // ---------------------------------------------------------------- the work, as recorded
 
 /// One execution episode of a piece of work, and the provider that ran it when a record says.
@@ -259,6 +309,13 @@ pub struct IntentWorkUnit {
     /// Issue ids a recorded event shows it moving.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub moved_issues: Vec<String>,
+    /// When its earliest episode started, as its record says: a session record's `started_at`,
+    /// a task's first `task.started`, a claim's `at`. Empty when no record says.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub started_at: String,
+    /// The commits a session record lists.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub commits: Vec<String>,
 }
 
 impl IntentWorkUnit {
@@ -281,6 +338,8 @@ impl IntentWorkUnit {
             handovers: Vec::new(),
             named_issues: Vec::new(),
             moved_issues: Vec::new(),
+            started_at: String::new(),
+            commits: Vec::new(),
         }
     }
 
@@ -369,6 +428,7 @@ fn rank(provenance: IntentLinkProvenance, kind: Option<IntentWorkKind>) -> i64 {
 ///     work: IntentWorkUnit::new(IntentWorkKind::Task, "t-1"),
 ///     links: vec![],
 ///     unlinked: Some("it names no issue".into()),
+///     class: None,
 /// };
 /// assert!(w.links.is_empty() && w.unlinked.is_some());
 /// ```
@@ -381,6 +441,11 @@ pub struct IntentRealizedWork {
     /// When it realises none: the first link that is missing.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub unlinked: Option<String>,
+    /// When it realises none: what it is, by the facts it records. [`realize`] sets it on every
+    /// unlinked unit; [`link`] alone, which knows neither liveness nor the first intent, leaves
+    /// it empty.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub class: Option<IntentUnlinkedClass>,
 }
 
 /// The ids in a text that are issues of the plan, each once, in order of appearance.
@@ -522,6 +587,7 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
         work: unit,
         links,
         unlinked,
+        class: None,
     }
 }
 
@@ -824,8 +890,10 @@ fn verdict_drift(view: &IntentView, out: &mut Vec<IntentFinding>) {
 ///
 /// ```
 /// use majordomus_cli::intent_realization::IntentRealization;
-/// let r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };
-/// assert_eq!(r.orphans, 0);
+/// let r = IntentRealization {
+///     intents: vec![], work: vec![], orphans: 0, empty: 0, before_intents: 0, findings: vec![],
+/// };
+/// assert_eq!(r.orphans + r.empty + r.before_intents, 0);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentRealization {
@@ -833,13 +901,37 @@ pub struct IntentRealization {
     pub intents: Vec<IntentRealizationView>,
     /// Every unit of work read, with its links.
     pub work: Vec<IntentRealizedWork>,
-    /// How many units of work realise no intent.
+    /// How many units of work serve no intent: the unlinked units of class `orphan` alone.
     pub orphans: usize,
+    /// How many unlinked units are `empty`: session records that did no work a link could be
+    /// read from.
+    #[serde(default)]
+    pub empty: usize,
+    /// How many unlinked units are `before_intents`: finished work that started before the
+    /// first intent record was written, or while none was declared.
+    #[serde(default)]
+    pub before_intents: usize,
     /// Every finding: each intent's drift, then the live work that serves no intent.
     pub findings: Vec<IntentFinding>,
 }
 
-/// Join every unit of work to every intent. Pure: the records are already read.
+/// Join every unit of work to every intent, and classify every unit that realises none. Pure:
+/// the records are already read.
+///
+/// `first_intent` is the earliest `created_at` of any intent record ([`first_intent_at`]).
+/// An unlinked unit is, in this order (ADR 0075, amendment of 2026-10-15):
+///
+/// * `orphan` when it is live — an active task, an attached claim — whatever else holds: work
+///   happening now is never excused, and keeps the `work_serves_no_intent` warning;
+/// * `empty` when it is a session record that lists no issue, no commit and no changed path
+///   outside `.ai/repo/sessions/`, and whose own words cite no issue of the plan;
+/// * `before_intents` when no intent is declared, or its earliest episode started before
+///   `first_intent` (both ISO-8601 in UTC, compared as text, so a bare date stands for its
+///   first instant);
+/// * `orphan` otherwise — including a unit whose start no record states, or a repository whose
+///   intents state no `created_at`, because neither can show the work predates them.
+///
+/// Only `orphan` counts in `orphans`. No class is a link and nothing is written.
 ///
 /// ```
 /// use majordomus_cli::intent::Intents;
@@ -852,13 +944,19 @@ pub struct IntentRealization {
 /// #     "milestone_edges": [], "findings": []})).unwrap();
 /// let mut live = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
 /// live.outcome = "active".into();
-/// let r = realize(&Intents { intents: vec![], findings: vec![] }, &plan, vec![live]);
-/// // live work that serves no intent is an orphan, and is named
+/// let r = realize(&Intents { intents: vec![], findings: vec![] }, &plan, vec![live], None);
+/// // live work that serves no intent is an orphan, and is named, even with no intent declared
 /// assert_eq!(r.orphans, 1);
 /// assert_eq!(r.findings[0].code, "work_serves_no_intent");
 /// ```
-pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> IntentRealization {
-    let work: Vec<IntentRealizedWork> = units.into_iter().map(|u| link(u, intents, plan)).collect();
+pub fn realize(
+    intents: &Intents,
+    plan: &Plan,
+    units: Vec<IntentWorkUnit>,
+    first_intent: Option<&str>,
+) -> IntentRealization {
+    let mut work: Vec<IntentRealizedWork> =
+        units.into_iter().map(|u| link(u, intents, plan)).collect();
     let mut findings = Vec::new();
     let mut views = Vec::with_capacity(intents.intents.len());
     for view in &intents.intents {
@@ -923,17 +1021,25 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
             findings: drifted,
         });
     }
-    let mut orphans = 0;
-    for w in &work {
-        let Some(why) = &w.unlinked else {
+    let ids: Vec<String> = plan.issues.iter().map(|i| i.id.clone()).collect();
+    let declared = !intents.intents.is_empty();
+    let (mut orphans, mut empty, mut before_intents) = (0, 0, 0);
+    for w in &mut work {
+        let Some(why) = w.unlinked.clone() else {
             continue;
         };
-        orphans += 1;
         let live = match w.work.kind {
             IntentWorkKind::Task => w.work.outcome == "active",
             IntentWorkKind::PeerClaim => w.work.outcome == "attached",
             IntentWorkKind::SessionRecord => false,
         };
+        let class = classify(&w.work, live, declared, first_intent, &ids);
+        w.class = Some(class);
+        match class {
+            IntentUnlinkedClass::Empty => empty += 1,
+            IntentUnlinkedClass::BeforeIntents => before_intents += 1,
+            IntentUnlinkedClass::Orphan => orphans += 1,
+        }
         if live {
             warn(
                 &mut findings,
@@ -950,8 +1056,62 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
         intents: views,
         work,
         orphans,
+        empty,
+        before_intents,
         findings,
     }
+}
+
+/// The class of one unlinked unit, in the order [`realize`] documents.
+fn classify(
+    unit: &IntentWorkUnit,
+    live: bool,
+    declared: bool,
+    first_intent: Option<&str>,
+    ids: &[String],
+) -> IntentUnlinkedClass {
+    if live {
+        return IntentUnlinkedClass::Orphan;
+    }
+    let did_nothing = unit.kind == IntentWorkKind::SessionRecord
+        && unit.moved_issues.is_empty()
+        && unit.commits.is_empty()
+        && unit.named_issues.is_empty()
+        && issue_tokens(&unit.title, ids).is_empty()
+        && unit.scope.iter().all(|p| p.starts_with(SESSIONS_DIR));
+    if did_nothing {
+        return IntentUnlinkedClass::Empty;
+    }
+    let predates = match first_intent {
+        _ if !declared => true,
+        Some(first) => !unit.started_at.is_empty() && unit.started_at.as_str() < first,
+        None => false,
+    };
+    if predates {
+        IntentUnlinkedClass::BeforeIntents
+    } else {
+        IntentUnlinkedClass::Orphan
+    }
+}
+
+/// The earliest `created_at` any intent record states, or `None` when none states one: the
+/// instant before which finished unlinked work is `before_intents` rather than an orphan.
+///
+/// ```
+/// use majordomus_cli::intent::IntentRecord;
+/// use majordomus_cli::intent_realization::first_intent_at;
+/// let at = |c: &str| IntentRecord { created_at: c.into(), ..IntentRecord::default() };
+/// let records = [at("2026-10-07"), at(""), at("2026-09-15")];
+/// assert_eq!(first_intent_at(&records).as_deref(), Some("2026-09-15"));
+/// assert_eq!(first_intent_at(&[at("")]), None);
+/// ```
+pub fn first_intent_at(records: &[IntentRecord]) -> Option<String> {
+    records
+        .iter()
+        .map(|r| r.created_at.as_str())
+        .filter(|c| !c.is_empty())
+        .min()
+        .map(str::to_string)
 }
 
 // ---------------------------------------------------------------- explain
@@ -1007,7 +1167,7 @@ fn strength_words(s: CoverageStrength) -> &'static str {
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
 /// let intents = Intents { intents: vec![view.clone()], findings: vec![] };
-/// let r = realize(&intents, &plan, vec![]);
+/// let r = realize(&intents, &plan, vec![], None);
 /// let coverage = IntentCoverage { criteria: vec![], issues: vec![], findings: vec![] };
 /// let e = explain(&view, &coverage, &r);
 /// assert!(e.because[0].starts_with("declared"));
@@ -1181,6 +1341,8 @@ fn payload_str(e: &Entry, key: &str) -> String {
 /// // I0001 moved before t-1 was resumed in s-b, so only I0002 is its own
 /// assert_eq!(t.moved_issues, ["I0002"]);
 /// assert_eq!(t.outcome, "active");
+/// // its earliest episode began with its first start
+/// assert_eq!(t.started_at, "1");
 /// ```
 pub fn tasks_from_ledger(
     entries: &[Entry],
@@ -1227,6 +1389,10 @@ pub fn tasks_from_ledger(
             match e.event.as_str() {
                 "task.started" => {
                     unit.outcome = "active".into();
+                    // the first start is when the task's earliest episode began
+                    if unit.started_at.is_empty() {
+                        unit.started_at = e.ts.clone();
+                    }
                     for p in payload_str(e, "scope").split_whitespace() {
                         push_once(&mut unit.scope, p);
                     }
@@ -1387,6 +1553,12 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
         }
         u.handovers = strings(m.get("handovers"));
         u.moved_issues = strings(m.get("issues"));
+        u.commits = strings(m.get("commits"));
+        u.started_at = m
+            .get("started_at")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
         units.push(u);
     }
 
@@ -1400,6 +1572,7 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
             u.title = c.intent.clone();
             u.outcome = if p.attached { "attached" } else { "departed" }.into();
             u.scope = c.scope.clone();
+            u.started_at = c.at.clone();
             if let Some(b) = p.checkout.as_ref().and_then(|k| k.branch.as_deref()) {
                 push_once(&mut u.branches, b);
             }
@@ -1870,8 +2043,11 @@ mod tests {
                 gone_claim,
                 record,
             ],
+            None,
         );
-        assert_eq!(r.orphans, 5);
+        // the closed session record recording nothing is `empty` (ADR 0075, amendment of
+        // 2026-10-15), not an orphan; the other four state no start, so none predates an intent
+        assert_eq!((r.orphans, r.empty, r.before_intents), (4, 1, 0));
         assert_eq!(
             r.findings
                 .iter()
@@ -1901,12 +2077,138 @@ mod tests {
         assert_eq!(x.providers, ["claude-code", "codex"]);
     }
 
+    /// ADR 0075, amendment of 2026-10-15: an unlinked unit is `empty`, `before_intents` or
+    /// `orphan`, in that order; a live unit is never excused; with no intent declared every
+    /// finished unit predates them.
+    #[test]
+    fn realize_classifies_unlinked_work() {
+        let p = plan(vec![issue("I0001", "m1", "ACTIVE", &["lib"], &[])]);
+        let first = Some("2026-09-15");
+        let record = |id: &str, started: &str| {
+            let mut u = IntentWorkUnit::new(IntentWorkKind::SessionRecord, id);
+            u.outcome = "interrupted".into();
+            u.title = format!("Session {id} on master");
+            u.started_at = started.into();
+            u
+        };
+        // a recovered episode that records nothing, after the first intent: empty
+        let mut empty_after = record("s-empty", "2026-10-01T00:00:00Z");
+        // its only changed path is the session record itself: still nothing done
+        empty_after.scope = vec![".ai/repo/sessions/20261001T000000Z--s-empty.md".into()];
+        // the same before the first intent: empty comes first
+        let empty_before = record("s-empty-early", "2026-09-06T03:55:23Z");
+        // a record with commits before the first intent, on the day itself, and after it
+        let mut early = record("s-early", "2026-09-14T23:59:59Z");
+        early.commits = vec!["abc".into()];
+        let mut same_day = record("s-same-day", "2026-09-15T08:00:00Z");
+        same_day.commits = vec!["def".into()];
+        // a changed path outside the session records is work too
+        let mut later = record("s-later", "2026-10-02T00:00:00Z");
+        later.scope = vec!["docs/x.md".into()];
+        // its own words cite an issue whose milestone no intent names: not empty, an orphan
+        let mut cites = record("s-cites", "2026-10-03T00:00:00Z");
+        cites.title = "finish I0001".into();
+        // a finished task and a departed claim that began before the first intent
+        let mut old_task = IntentWorkUnit::new(IntentWorkKind::Task, "t-old");
+        old_task.outcome = "completed".into();
+        old_task.started_at = "2026-09-10T00:00:00Z".into();
+        let mut gone = IntentWorkUnit::new(IntentWorkKind::PeerClaim, "p3/c");
+        gone.outcome = "departed".into();
+        gone.started_at = "2026-09-01T00:00:00Z".into();
+        // a finished task whose start no record states cannot show it predates anything
+        let mut unknown = IntentWorkUnit::new(IntentWorkKind::Task, "t-unknown");
+        unknown.outcome = "completed".into();
+        // live work is never excused, however early it began
+        let mut live = IntentWorkUnit::new(IntentWorkKind::Task, "t-live");
+        live.outcome = "active".into();
+        live.started_at = "2026-09-01T00:00:00Z".into();
+        let mut attached = IntentWorkUnit::new(IntentWorkKind::PeerClaim, "p2/c");
+        attached.outcome = "attached".into();
+        attached.started_at = "2026-09-01T00:00:00Z".into();
+        let units = vec![
+            empty_after,
+            empty_before,
+            early,
+            same_day,
+            later,
+            cites,
+            old_task,
+            gone,
+            unknown,
+            live,
+            attached,
+        ];
+        let declared = intents(vec![view("x", IntentStage::Executing, &[])]);
+
+        let r = realize(&declared, &p, units.clone(), first);
+        let classes: Vec<(&str, Option<&str>)> = r
+            .work
+            .iter()
+            .map(|w| (w.work.id.as_str(), w.class.map(IntentUnlinkedClass::as_str)))
+            .collect();
+        assert_eq!(
+            classes,
+            [
+                ("s-empty", Some("empty")),
+                ("s-empty-early", Some("empty")),
+                ("s-early", Some("before_intents")),
+                ("s-same-day", Some("orphan")),
+                ("s-later", Some("orphan")),
+                ("s-cites", Some("orphan")),
+                ("t-old", Some("before_intents")),
+                ("p3/c", Some("before_intents")),
+                ("t-unknown", Some("orphan")),
+                ("t-live", Some("orphan")),
+                ("p2/c", Some("orphan")),
+            ]
+        );
+        assert_eq!((r.orphans, r.empty, r.before_intents), (6, 2, 3));
+        assert_eq!(
+            r.findings
+                .iter()
+                .map(|f| (f.code.as_str(), f.subject.as_str()))
+                .collect::<Vec<_>>(),
+            [
+                ("work_serves_no_intent", "t-live"),
+                ("work_serves_no_intent", "p2/c")
+            ],
+            "the warning is the live work's alone, exactly as before"
+        );
+        let json = serde_json::to_value(&r).unwrap();
+        assert_eq!(
+            (&json["orphans"], &json["empty"], &json["before_intents"]),
+            (&json!(6), &json!(2), &json!(3))
+        );
+        assert_eq!(json["work"][0]["class"], "empty");
+
+        // intents that state no creation time cannot show anything predates them
+        let r = realize(&declared, &p, units.clone(), None);
+        assert_eq!((r.orphans, r.empty, r.before_intents), (9, 2, 0));
+
+        // with no intent declared, every finished unit that did something predates them;
+        // empty records stay empty and live work stays an orphan
+        let r = realize(&intents(vec![]), &p, units, None);
+        assert_eq!((r.orphans, r.empty, r.before_intents), (2, 2, 7));
+        assert_eq!(r.findings.len(), 2);
+
+        // a linked unit carries no class
+        let mut linked = IntentWorkUnit::new(IntentWorkKind::Task, "t-linked");
+        linked.named_issues = vec!["I0001".into()];
+        let p2 = plan(vec![issue("I0001", "m1", "ACTIVE", &[], &[])]);
+        let v = view("x", IntentStage::Executing, &[("m1", Some("ACTIVE"))]);
+        let r = realize(&intents(vec![v]), &p2, vec![linked], first);
+        assert!(r.work[0].unlinked.is_none() && r.work[0].class.is_none());
+        assert_eq!((r.orphans, r.empty, r.before_intents), (0, 0, 0));
+    }
+
     #[test]
     fn explain_gives_one_sentence_per_fact_for_every_stage() {
         let r = IntentRealization {
             intents: vec![],
             work: vec![],
             orphans: 0,
+            empty: 0,
+            before_intents: 0,
             findings: vec![],
         };
         let none = IntentCoverage {
@@ -1997,7 +2299,12 @@ mod tests {
         let mut quiet = IntentWorkUnit::new(IntentWorkKind::Task, "t-2");
         quiet.moved_issues = vec!["I0002".into()];
         let unrelated = IntentWorkUnit::new(IntentWorkKind::Task, "t-3");
-        let r = realize(&intents(vec![v.clone()]), &p, vec![t, quiet, unrelated]);
+        let r = realize(
+            &intents(vec![v.clone()]),
+            &p,
+            vec![t, quiet, unrelated],
+            None,
+        );
         let coverage = IntentCoverage {
             criteria: vec![
                 CriterionCoverage {
@@ -2069,6 +2376,7 @@ mod tests {
                 u.moved_issues = vec!["I0001".into()];
                 u
             }],
+            None,
         );
         let e2 = explain(&v2, &coverage, &r2);
         assert_eq!(
@@ -2171,6 +2479,32 @@ mod tests {
     }
 
     #[test]
+    fn a_task_started_again_keeps_the_time_of_its_first_start() {
+        let entries = vec![
+            entry(
+                "10",
+                "task.started",
+                Some("s-a"),
+                json!({ "task_id": "t-1" }),
+            ),
+            entry(
+                "20",
+                "task.started",
+                Some("s-b"),
+                json!({ "task_id": "t-1" }),
+            ),
+        ];
+        let tasks = tasks_from_ledger(&entries, &BTreeMap::new());
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(
+            tasks[0].started_at, "10",
+            "the second start does not move it"
+        );
+        assert_eq!(tasks[0].outcome, "active");
+        assert_eq!(tasks[0].episodes.len(), 2, "both episodes are the task's");
+    }
+
+    #[test]
     fn issue_tokens_are_whole_words_each_once() {
         let ids = ["I0001".to_string(), "I0002".to_string()];
         assert_eq!(
@@ -2259,6 +2593,9 @@ mod tests {
         };
         assert_eq!(unit("t-1").providers(), ["gemini"]);
         assert_eq!(unit("t-1").episodes[0].provider_session, "g-1");
+        // a task began with its first start, a claim when it was announced
+        assert_eq!(unit("t-1").started_at, "1");
+        assert_eq!(unit("p1/work").started_at, "2026-10-02T00:00:00Z");
         assert!(unit("t-2").providers().is_empty());
         // the title cites no issue; the names come from what the task declared at start
         assert_eq!(unit("t-3").named_issues, ["I0007", "I0008"]);

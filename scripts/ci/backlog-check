@@ -149,7 +149,17 @@ else
   else
     fail "$SPACE_LIB no longer sweeps the build directories before a build under cargo's lock: the shared and private build directories grow until the disk is full, or a sweep removes what a build is reading"
   fi
-  grep -qE '^MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0$' test/run.sh \
+  # and what remains is bounded by its size, between builds, under the same lock (I3959): the
+  # age sweeps alone left 51 GB of generations younger than their age in the shared directory
+  if body_has mj_rust_prune_build_dir -E 'mj_rust_bound_build_dir "' \
+     && body_has mj_cargo_bounded -E '^ +mj_rust_bound_after_build "' \
+     && body_has mj_rust_bound_build_dir 'mj_rust_locked "$mj_bb_p" mj_rust_evict_in_profile ' \
+     && body_has mj_rust_evict_in_profile 'mj_rust_profile_users'; then
+    ok "every build bounds its build directory's size by evicting stale units, under cargo's lock"
+  else
+    fail "$SPACE_LIB no longer bounds the build directory's size around a build under cargo's lock: it grows past its bound while builds run"
+  fi
+  grep -qE '^MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0; MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0$' test/run.sh \
     || fail "test/run.sh does not turn the build directory sweeps off: a case that builds would sweep the machine it runs on"
   unbounded=""
   for f in bin/majordomus-cli scripts/derive; do

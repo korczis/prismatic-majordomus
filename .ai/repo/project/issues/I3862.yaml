@@ -1,0 +1,33 @@
+id: I3862
+milestone: a-claim-stands-only-on-its-evidence
+title: "The shell floor is held by a case that reads what the rule forbids"
+slug: the-shell-floor-is-enforced
+priority: p2
+profile: implementation
+parallel_safe: true
+serves:
+  - a-claim-stands-only-on-its-evidence#blocking-rule-shows-refusal
+objective: "Give rule project.portable-shell a case that exercises what it states. The case reads every shell unit the shell-lint gate lints and refuses an associative array, mapfile or readarray, and a GNU-only flag (stat -c, date -d, readlink -f, grep -P, sed -r, xargs -r, find -printf, cp --parents) unless the same line carries its BSD form after ||. Its scanner is first held to a fixture whose answer is known, so a scanner that stopped finding them cannot pass for a clean tree. test/mesh-lab/run, the one unit that broke the floor, keeps its scenario verdicts in one JSON object instead of two associative arrays. The rule names the new case beside case 08 and says what each holds, with shellcheck as the shell-lint gate's half."
+why: "On 2026-10-21 a fact-check (I3089) found that the rule names test/cases/08_no_forbidden_constructs.sh as its test, while case 08 scans only for eval and network clients. The rule is blocking, and the proof graph counted it proven by a case that tests none of its constructs. The mesh lab's runner, started on the host with env bash, used declare -A, which bash 3.2 refuses."
+current_state: "No case reads the shell units for associative arrays, mapfile or GNU-only flags; test/mesh-lab/run declares two associative arrays; the rule names case 08 alone."
+desired_state: "Case 3480 refuses each construct the rule forbids in every shell unit and holds its scanner to a fixture; no shell unit breaks the floor; the rule names the cases that hold it and says what each holds."
+scope:
+  - ".ai/repo/project/issues/I3862.yaml"
+  - ".ai/repo/rules/project/portable-shell.v1.md"
+  - "test/mesh-lab/run"
+non_scope:
+  - "Detecting every GNU-only flag: the case refuses the listed ones, and review holds the rest"
+depends_on: []
+acceptance_criteria:
+  - "Case 3480 fails on a fixture carrying each forbidden construct and passes on the tree"
+  - "No shell unit carries an associative array, mapfile, readarray or a listed GNU-only flag without its BSD form"
+  - "Rule project.portable-shell names case 3480 as a test and says what case 08, case 3480 and the shell-lint gate each hold"
+validation:
+  - "bash test/run.sh 3480_the_shell_floor_is_bash_3_2_and_bsd_userland"
+  - "scripts/ci/shell-lint"
+  - "scripts/ci/rule-proof-check"
+  - "majordomus plan validate"
+evidence_required:
+  - "case_the_shell_floor_is_bash_3_2_and_bsd_userland"
+created_at: 2026-10-21
+updated_at: 2026-10-21

@@ -35,6 +35,8 @@ acceptance_criteria:
   - "An event whose resource attributes name no known repository or checkout of this repository is not stored (case)"
   - "Every fixture names its client, version and capture date; the request id is optional until a captured fixture shows it"
   - "A field without a named reporter is refused and no code path fabricates, interpolates or defaults a measured value (carried from I0302)"
+  - "Measured facts attach to the session, task and issue they served and survive into the completed record (carried from I0302)"
+  - "The receiving needs no network beyond the loopback and leaves no background process of its own (carried from I0302)"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics"
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib economics::usage"
@@ -43,4 +45,4 @@ evidence_required:
   - "test_a_missing_cache_write_reads_absent"
   - "case_a_silent_provider_is_absent"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-22

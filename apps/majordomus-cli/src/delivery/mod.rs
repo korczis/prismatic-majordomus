@@ -36,6 +36,7 @@
 
 pub(crate) mod public;
 pub(crate) mod revision;
+pub(crate) mod trends;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
