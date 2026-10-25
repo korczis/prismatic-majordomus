@@ -2196,17 +2196,18 @@ pub enum QualityCommand {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, OutputFormat, QualityCommand};
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, QualityCommand, QualitySecretArgvArgs};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "quality", "secret-argv", "--format", "json"])
 ///     .unwrap();
-/// match cli.command {
+/// let args: QualitySecretArgvArgs = match cli.command {
 ///     Command::Quality(q) => match q.command {
-///         QualityCommand::SecretArgv(args) => assert!(matches!(args.format, OutputFormat::Json)),
+///         QualityCommand::SecretArgv(args) => args,
 ///         other => panic!("expected `quality secret-argv`, parsed {other:?}"),
 ///     },
 ///     other => panic!("expected `quality`, parsed {other:?}"),
-/// }
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
 /// ```
 pub struct QualitySecretArgvArgs {
     #[command(flatten)]

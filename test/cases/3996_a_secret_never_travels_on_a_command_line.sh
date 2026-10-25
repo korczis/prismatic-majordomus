@@ -75,7 +75,7 @@ echo "    the same secret as the child's standard input passes"
 cat > scripts/publish <<SH
 #!/bin/sh
 api_token='$PLACEHOLDER'
-curl -fsS -H "Authorization: Bearer \$api_token" https://api.invalid/user
+curl -fsS --max-time 5 -H "Authorization: Bearer \$api_token" https://api.invalid/user
 SH
 cat >> scripts/publish <<'SH'
 key=$(security find-generic-password -s mesh -w)
