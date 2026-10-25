@@ -26,4 +26,18 @@ validation:
 evidence_required:
   - "case_4008_a_push_that_only_deletes_runs_no_plan"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-25T18:52:54Z
+started_at: 2026-10-25T18:51:10Z
+started_event: sha256:73cce8c0455180c256b0f526f1b3755b3360dcff0549e9dc49ce94a9be37a8ad
+verified_at: 2026-10-25T18:51:53Z
+verified_event: sha256:9563df7c9d8e1b7d13c9fadb83a3013b09af5f3535c78a6974a8a35663441cb8
+completed_at: 2026-10-25T18:52:54Z
+completed_event: sha256:00fd40bbe40dd23ba8db891cbf400e1f94cc899871d53cf6e2db504d5fa5d33f
+evidence:
+  - covers: case_4008_a_push_that_only_deletes_runs_no_plan
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4008_a_push_that_only_deletes_plans_nothing"
+    result: "ok   4008_a_push_that_only_deletes_plans_nothing; tests: 1 passed, 0 failed, 0 skipped at master 2efeacea031 (the case landed as 4008_a_push_that_only_deletes_plans_nothing, the record's validation names it 4008_a_push_that_only_deletes_runs_no_plan): a deletion-only push, and a deletion beside a refs/majordomus update, run no finish, case-numbers or run-plan and exit 0; a mixed push runs all three; landed through #2376 in train 6"
+    artifact: "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:52:39Z

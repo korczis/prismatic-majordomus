@@ -25,4 +25,18 @@ validation:
 evidence_required:
   - "case_4007_an_idle_serve_exits_by_itself"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-25T18:54:49Z
+started_at: 2026-10-25T18:53:29Z
+started_event: sha256:61cd11a94c96fc4a683d7a6255346079f0f9baf0f4a3a3c5dba49691b99ee970
+verified_at: 2026-10-25T18:54:13Z
+verified_event: sha256:df3d39eb0fe654a6309da18b1b78ea97b23591d5323aef16bddea6b0bd664e9d
+completed_at: 2026-10-25T18:54:49Z
+completed_event: sha256:e168cedae7a8c72e05008b1bdc9f8b11819b358bb314651adfdc800ee1cfb0f9
+evidence:
+  - covers: case_4007_an_idle_serve_exits_by_itself
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4007_an_idle_server_leaves_by_itself"
+    result: "ok   4007_an_idle_server_leaves_by_itself; tests: 1 passed, 0 failed, 0 skipped at master 2efeacea031 (the case landed as 4007_an_idle_server_leaves_by_itself, the record's validation names it 4007_an_idle_serve_exits_by_itself): a server with a 3 s idle life under mesh, probe and board traffic leaves by itself with exit 0, the reason logged and its lease released; an attached MCP session and a running execution each keep it past the bound, and it leaves once they are gone; --idle 0 stays. The bound is the policy key server.idle_seconds (I2701). Landed through #2393 in train 7 (#2501)"
+    artifact: "test/cases/4007_an_idle_server_leaves_by_itself.sh"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T18:54:40Z
