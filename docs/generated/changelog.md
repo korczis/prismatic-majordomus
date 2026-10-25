@@ -318,8 +318,8 @@ Current version: **1.0.0-alpha.8**
 
 ### Decisions
 
+- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(superseded)_
 - **ADR-0175** v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof _(proposed)_
-- **ADR-0172** A client always gets a server, and a session that is opened starts by joining the cluster _(proposed)_
 
 ### Added
 

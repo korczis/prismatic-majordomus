@@ -1352,8 +1352,8 @@ pub fn providers_markdown(value: &Value) -> String {
     };
     let mut s = String::new();
     s.push_str("# Providers\n\n");
-    s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under and whether its client drives a browser beside this repository's server (`offers.browser`, with the native messaging host a bridge registers) are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
-    s.push_str("| provider | title | bootstraps | client configuration | hooks | browser | scratch roots |\n|---|---|---|---|---|---|---|\n");
+    s.push_str("Every provider the tool ships an adapter for, and what this repository does with each. The set is the templates under `share/providers/`; the title, the client configuration a provider reads and the scratch roots it creates checkouts under and whether its client drives a browser beside this repository's server (`offers.browser`, with the native messaging host a bridge registers) and the official seams through which it reports what a session consumed (`offers.usage`) are `share/providers.yaml`; the bootstraps are the policy's `projections[]`; whether a client configuration is present and which hooks are wired are facts of this tree. `majordomus product providers`, the MCP tool `majordomus_providers`, `GET /api/v1/product/providers` and the site's provider cards answer from the same value. A document that names providers points here rather than listing them (ADR 0024).\n\n");
+    s.push_str("| provider | title | bootstraps | client configuration | hooks | browser | usage | scratch roots |\n|---|---|---|---|---|---|---|---|\n");
     for p in value["providers"].as_array().into_iter().flatten() {
         let str_of = |k: &str| {
             p.get(k)
@@ -1370,8 +1370,18 @@ pub fn providers_markdown(value: &Value) -> String {
             (Some(word), _) => format!("`{word}`"),
             (None, _) => "—".to_string(),
         };
+        // the usage seams, as declared: a list, `none` alone, nothing at all when undeclared
+        let usage = match offers.get("usage").and_then(Value::as_array) {
+            Some(seams) if !seams.is_empty() => seams
+                .iter()
+                .filter_map(Value::as_str)
+                .map(|w| format!("`{w}`"))
+                .collect::<Vec<_>>()
+                .join(", "),
+            _ => "—".to_string(),
+        };
         s.push_str(&format!(
-            "| `{}` | {} | {} | {} | {} | {} | {} |\n",
+            "| `{}` | {} | {} | {} | {} | {} | {} | {} |\n",
             str_of("id"),
             str_of("title"),
             cell(&p["bootstraps"]),
@@ -1381,6 +1391,7 @@ pub fn providers_markdown(value: &Value) -> String {
                 .unwrap_or_else(|| "—".to_string()),
             cell(&p["hooks"]),
             browser,
+            usage,
             cell(&p["scratch_roots"]),
         ));
     }

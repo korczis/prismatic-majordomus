@@ -1,7 +1,7 @@
 +++
 title = "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current"
 description = "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current"
-weight = 168
+weight = 169
 [extra]
 kind = "rule"
 slug = "project-the-cooperation-model-is-the-owners-word-2"

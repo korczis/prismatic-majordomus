@@ -14,8 +14,9 @@
 # run again in this tree's own directory; a build that got the lock before the bound is not
 # moved; a build already in its own directory that is still blocked stops with 75 rather
 # than wait; the disk floor is asked before a private build starts; a failing build shows
-# its error although the caller asked for quiet; and the launcher the commit hook runs
-# builds through this function and calls cargo no other way.
+# its error although the caller asked for quiet; the derive, one of the two explicit builds,
+# builds through this function; and the launcher the commit hook runs calls cargo in no way at
+# all, because since ADR 0224 it never builds (case 3958 walks it with cargo on PATH).
 . "$ROOT/test/lib.sh"
 
 LIB="$ROOT/lib/rust_bin.sh"
@@ -109,11 +110,12 @@ run fail 3 env -u CARGO_BUILD_BUILD_DIR
 [ "$RC" = 101 ] || { echo "    cargo's own exit status was not returned: $RC"; exit 1; }
 printf '%s\n' "$ERR" | grep -q 'error: could not compile x' || { echo "    a failing build hid its error: $ERR"; exit 1; }
 
-# ---------------------------------------------------------------- the launcher builds through it
-grep -qE '^[^#]*mj_cargo_bounded "\$root" build' "$ROOT/bin/majordomus-cli" \
-  || { echo "    bin/majordomus-cli does not build through mj_cargo_bounded"; exit 1; }
-if grep -nE '^[^#]*[^_[:alnum:]]cargo build' "$ROOT/bin/majordomus-cli" | grep -v "printf"; then
-  echo "    bin/majordomus-cli still calls cargo build directly"; exit 1
+# ---------------------------------------------------------------- the explicit build goes through it
+# ADR 0224: the launcher never builds, so the build left to bound is the explicit one
+grep -qE '^[^#]*mj_cargo_bounded "\$ROOT" build' "$ROOT/scripts/derive" \
+  || { echo "    scripts/derive does not build through mj_cargo_bounded"; exit 1; }
+if grep -nE '^[^#]*(mj_cargo_bounded|(^|[^_[:alnum:]])cargo )' "$ROOT/bin/majordomus-cli" | grep -v "printf"; then
+  echo "    bin/majordomus-cli calls cargo; the launcher never builds"; exit 1
 fi
 
 # ---------------------------------------------------------------- the gate reads the shape

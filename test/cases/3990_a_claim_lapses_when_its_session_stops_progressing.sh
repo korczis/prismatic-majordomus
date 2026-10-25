@@ -45,7 +45,7 @@ export XDG_STATE_HOME="$T/state"
 # 8 s (four heartbeats is the least the declaration admits).
 mkdir -p .ai/repo/mesh
 printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n' > .ai/repo/mesh/majordomus.yaml
-printf 'multicast:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
+printf 'multicast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n' >> .ai/repo/mesh/majordomus.yaml
 printf 'cooperation:\n  heartbeat_seconds: 1\n  expiry_seconds: 30\n  session_ttl_seconds: 8\n  repository: case-3990\n' \
   >> .ai/repo/mesh/majordomus.yaml
 git add -A && git commit -qm "mesh enabled"

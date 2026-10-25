@@ -114,12 +114,12 @@ grep -q 'listening on http://127\.0\.0\.1:' "$S/err4.txt" || { echo "    no serv
 [ "$(wc -l < "$S/out4.txt" | tr -d ' ')" = 2 ] || { echo "    expected 2 frames behind the corrupt lease:"; cat "$S/out4.txt"; exit 1; }
 [ ! -f .ai/local/state/mcp/server.json ] || { echo "    the lease outlived the session"; exit 1; }
 
-# --- the launcher refuses, by name, when told not to build and the executable is absent
+# --- the launcher refuses, by name, when the executable is absent (it never builds, ADR 0224)
 ( MAJORDOMUS_BIN="$S/no-such-binary"; export MAJORDOMUS_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'is not an executable' ) || exit 1
-# no executable, no build and no installed release to fall back to (ADR 0172 serves `mcp`
-# from the installed release when there is one; case 3177 holds that half), so the refusal
-# is the same on a runner and on a machine that has a release installed
-( unset MAJORDOMUS_BIN; MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_BUILD_PROFILE=nonexistent MAJORDOMUS_INSTALLED_BIN="$S/no-installed-release"; export MAJORDOMUS_NO_BUILD MAJORDOMUS_BUILD_PROFILE MAJORDOMUS_INSTALLED_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'MAJORDOMUS_NO_BUILD is set' ) || exit 1
+# no executable and no installed release to fall back to (ADR 0224 serves a release of the
+# tree's generation when there is one; case 3177 holds that half), so the refusal is the same
+# on a runner and on a machine that has a release installed, and it names the explicit build
+( unset MAJORDOMUS_BIN; MAJORDOMUS_BUILD_PROFILE=nonexistent MAJORDOMUS_INSTALLED_BIN="$S/no-installed-release"; export MAJORDOMUS_BUILD_PROFILE MAJORDOMUS_INSTALLED_BIN; expect_exit 12 "$LAUNCHER" --inspect; expect_grep 'run: just build' ) || exit 1
 # and everything after the launcher's name reaches `majordomus mcp`
 expect_exit 0 "$LAUNCHER" --help
 expect_grep '^Usage: majordomus mcp'

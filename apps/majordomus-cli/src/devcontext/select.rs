@@ -483,6 +483,7 @@ impl Candidate {
 ///     // a reference the layer declares and nothing answers: reported, not dropped
 ///     unresolved: vec![("majordomus://rule/gone@1".into(), "depends_on".into())],
 ///     diagnostics: Vec::new(),
+///     paths: Default::default(),
 /// };
 ///
 /// // the identifier is the key, so one thing is one entry however many paths found it
@@ -500,6 +501,9 @@ pub struct Selection {
     pub unresolved: Vec<(String, String)>,
     /// What could not be read, never an error.
     pub diagnostics: Vec<crate::model::Diagnostic>,
+    /// The paths the work is about: the request's own and the scope its seeds declare.
+    /// The compiler reads the Rust source under these for its ranges.
+    pub paths: BTreeSet<String>,
 }
 
 /// What the walk was asked to start from and how far it may go.
@@ -769,6 +773,7 @@ pub fn select(ctx: &Context, graph: &Graph, req: &Request<'_>) -> Selection {
         candidates: BTreeMap::new(),
         unresolved: Vec::new(),
         diagnostics: Vec::new(),
+        paths: BTreeSet::new(),
     };
 
     // 1. the seeds themselves: what was asked for, at relevance 1
@@ -806,6 +811,9 @@ pub fn select(ctx: &Context, graph: &Graph, req: &Request<'_>) -> Selection {
             }
         }
     }
+    // kept on the selection: the compiler reads the Rust source under exactly these paths
+    // for its ranges (`super::source`), and a second derivation of the set could disagree
+    sel.paths = effective.clone();
 
     // 4. what those paths reach: the code, the cases, and the contracts over them
     paths(&mut sel, index, &by_uri, &nodes, &effective);
