@@ -115,6 +115,8 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
             shell.version,
             &[(crate::ui::SURFACE, crate::ui::PREFIX)],
         ))
+        // the narrow-screen menu: the same drawer as the UI's, holding the Cockpit's sections
+        .child(crate::ui::drawer::toggle())
         .child(header(shell))
         .child(
             el("div").class("mj-layout").child(sidebar(shell)).child(
@@ -135,6 +137,7 @@ pub fn page(shell: &Shell<'_>, main: El) -> String {
                     .child(main),
             ),
         )
+        .child(crate::ui::drawer::scrim())
         .child(palette())
         .child(footer(shell));
 
@@ -168,11 +171,13 @@ fn skip_link() -> El {
 }
 
 /// The Cockpit's tool bar, beneath the site's bar (`project.the-ui-wears-the-sites-navbar`):
-/// the Cockpit's name, its palette, its API links and the version. The brand and the theme
-/// toggle are the site's, in the bar above.
+/// the drawer's button (from md to lg, where the bar has no menu of its own), the Cockpit's
+/// name, its palette, its API links and the version. The brand and the theme toggle are the
+/// site's, in the bar above.
 fn header(shell: &Shell<'_>) -> El {
     el("header")
         .class("mj-topbar")
+        .child(crate::ui::drawer::button())
         .child(
             el("a")
                 .class("mj-brand")
@@ -200,7 +205,7 @@ fn header(shell: &Shell<'_>) -> El {
 
 fn sidebar(shell: &Shell<'_>) -> El {
     let mut nav = el("nav")
-        .class("mj-sidebar")
+        .class(format!("mj-sidebar {}", crate::ui::drawer::PANEL))
         .attr("aria-label", "Cockpit sections");
     for section in shell.navigation.sections() {
         let mut list = el("ul").class("mj-nav-list");
@@ -846,6 +851,47 @@ mod tests {
         for s in &bar_scripts {
             assert!(html.contains(&format!("<script src=\"{s}\" defer>")), "{s}");
         }
+    }
+
+    /// Below lg the Cockpit's sections are the drawer's panel, in the served page and opened by
+    /// the drawer's checkbox with no script (I3214): the checkbox comes before the tool bar
+    /// that holds its button, and the backdrop is a second label of it.
+    #[test]
+    fn the_sections_are_the_drawer_and_open_without_a_script() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let navigation = super::super::nav::build(&ctx, "/cockpit");
+        let shell = Shell {
+            title: "Overview",
+            subtitle: None,
+            area: Area::Overview,
+            breadcrumbs: Vec::new(),
+            navigation: &navigation,
+            stylesheet: "/cockpit/assets/cockpit.css?v=1".into(),
+            favicon: "/cockpit/assets/favicon.svg?v=1".into(),
+            scripts: Vec::new(),
+            bar_scripts: Vec::new(),
+            vendor: "{}".into(),
+            assets_present: true,
+            version: "0.0.0",
+        };
+        let html = page(&shell, el("p"));
+        let toggle = html
+            .find("id=\"mj-drawer\"")
+            .expect("the drawer's checkbox");
+        let button = html
+            .find("class=\"mj-drawer-button\" for=\"mj-drawer\"")
+            .expect("its button");
+        assert!(toggle < button, "the checkbox precedes its button: {html}");
+        assert!(html.contains("class=\"mj-sidebar mj-drawer\""), "{html}");
+        assert!(
+            html.contains("class=\"mj-nav-link"),
+            "the sections are in the page: {html}"
+        );
+        assert!(
+            html.contains("class=\"mj-drawer-scrim\" for=\"mj-drawer\""),
+            "{html}"
+        );
     }
 
     #[test]

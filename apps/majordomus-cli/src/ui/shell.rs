@@ -133,13 +133,7 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: View) -> String {
                 .text("Skip to content"),
         )
         .raw(navbar::render(frame.version, &[(SURFACE, PREFIX)]))
-        .child(
-            el("input")
-                .class("mj-ui-menu-toggle")
-                .attr("type", "checkbox")
-                .attr("id", "mj-ui-menu")
-                .attr("aria-label", "Show the menu"),
-        )
+        .child(super::drawer::toggle())
         .child(
             el("div")
                 .class("mj-ui-frame")
@@ -161,7 +155,8 @@ pub fn page(ctx: &Context, frame: &Frame<'_>, view: View) -> String {
                                 .child(view.main),
                         ),
                 ),
-        );
+        )
+        .child(super::drawer::scrim());
     document_on(
         &format!("{} · majordomus ui", view.title),
         &root,
@@ -188,7 +183,7 @@ fn sidebar(ctx: &Context, frame: &Frame<'_>) -> El {
         }));
     // no brand of its own: the bar above carries the site's
     el("aside")
-        .class("mj-ui-sidebar")
+        .class(format!("mj-ui-sidebar {}", super::drawer::PANEL))
         .attr("aria-label", "majordomus ui")
         .child(
             el("nav")
@@ -244,18 +239,13 @@ fn release_line(latest: &Reading, published: &Reading, commit: &Reading) -> Stri
     format!("Latest release {} · {day_of} · {short}", shown(latest))
 }
 
-/// The tool bar beneath the site's: the menu button of a narrow screen, the search, the other
-/// surfaces. The theme toggle is the site's, in the bar above.
+/// The tool bar beneath the site's: the drawer's button (from md to lg, where the bar has no
+/// menu of its own), the search, the other surfaces. The theme toggle is the site's, in the bar
+/// above.
 fn topbar(read_at: &str) -> El {
     el("header")
         .class("mj-ui-topbar")
-        .child(
-            el("label")
-                .class("mj-ui-menu-button")
-                .attr("for", "mj-ui-menu")
-                .child(icon("menu"))
-                .child(el("span").class("mj-sr-only").text("Menu")),
-        )
+        .child(super::drawer::button())
         .child(
             el("form")
                 .class("mj-ui-search")
@@ -445,7 +435,15 @@ mod tests {
     fn the_only_inline_script_is_the_one_the_policy_allows() {
         let html = render(PREFIX);
         assert_eq!(html.matches("<script>").count(), 1, "{html}");
-        assert!(html.contains("for=\"mj-ui-menu\""));
+        assert!(html.contains("for=\"mj-drawer\""));
+        assert!(
+            html.contains("class=\"mj-ui-sidebar mj-drawer\""),
+            "the sidebar is the drawer"
+        );
+        assert!(
+            html.contains("class=\"mj-drawer-scrim\""),
+            "the drawer has its backdrop"
+        );
         assert!(crate::cockpit::csp().contains("script-src 'self' 'sha256-"));
     }
 

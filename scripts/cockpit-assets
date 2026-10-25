@@ -6,7 +6,8 @@
 # drift-checked exactly as cockpit.css is, and ui.js, written by hand. Both directories also
 # hold two of the site's scripts, nav.js and theme.js, copied byte for byte: the bar every UI
 # screen and every Cockpit page wears is the site's (project.the-ui-wears-the-sites-navbar),
-# and so are the scripts it behaves by.
+# and so are the scripts it behaves by. Both also hold drawer.js, copied byte for byte from
+# share/design/drawer.js: the one narrow-screen menu both surfaces render (I3214).
 #
 # Two kinds of file live under share/cockpit/:
 #
@@ -42,6 +43,8 @@ COPIES="site/nav.js share/ui/nav.js
 site/theme.js share/ui/theme.js
 site/nav.js share/cockpit/nav.js
 site/theme.js share/cockpit/theme.js
+share/design/drawer.js share/ui/drawer.js
+share/design/drawer.js share/cockpit/drawer.js
 share/cockpit/socket.js share/ui/socket.js"
 CHECK=0
 [ "${1:-}" = "--check" ] && CHECK=1

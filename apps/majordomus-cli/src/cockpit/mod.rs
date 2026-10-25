@@ -59,10 +59,12 @@ pub const STYLESHEET: &str = "cockpit.css";
 /// overview.
 pub const SHELL_SCRIPTS: &[&str] = &["palette.js"];
 
-/// The site's own scripts the bar at the top of every page behaves by — its menus, then its
-/// theme toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
-/// `scripts/cockpit-assets` writes and checks (`project.the-ui-wears-the-sites-navbar`).
-pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
+/// The scripts the bar at the top of every page behaves by — the site's menus, then its theme
+/// toggle (`project.the-ui-wears-the-sites-navbar`), then the drawer that opens with the bar's
+/// menu on a narrow screen (`crate::ui::drawer`, I3214) — served as byte copies of
+/// `site/nav.js`, `site/theme.js` and `share/design/drawer.js` that `scripts/cockpit-assets`
+/// writes and checks.
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js", "drawer.js"];
 
 /// The vendored libraries the page modules load at run time, through `vendor()` and
 /// `vendorModule()` in `cockpit.js`. A run-time URL is not a static import the server can

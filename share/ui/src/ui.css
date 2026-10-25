@@ -31,6 +31,7 @@
 @import "../../design/base.css";
 @import "../../design/primitives.css";
 @import "../../design/kit.css";
+@import "../../design/drawer.css";
 @plugin "flowbite/plugin";
 @source "../../../apps/majordomus-cli/src/ui/navbar.html";
 @custom-variant dark (&:where(.dark, .dark *));
@@ -86,17 +87,15 @@
 
   /* ---------------------------------------------------------------- the frame */
 
-  .mj-ui-menu-toggle {
-    @apply sr-only;
-  }
   .mj-ui-frame {
     @apply flex min-h-screen w-full min-w-0;
   }
   /* On a wide screen the sidebar stays in view beneath the site's bar, which stays at the top:
      ui.js writes the bar's height into --ui-bar as it changes (a measurement of this page, not
-     a token), and without the script the sidebar sticks to the top of the window as before. */
+     a token), and without the script the sidebar sticks to the top of the window as before.
+     Below lg it is the drawer's panel (share/design/drawer.css). */
   .mj-ui-sidebar {
-    @apply fixed inset-y-0 left-0 z-40 hidden w-64 flex-col gap-6 overflow-y-auto px-4 py-5;
+    @apply hidden flex-col gap-6 overflow-y-auto px-4 py-5;
     @apply lg:sticky lg:z-10 lg:flex lg:w-60 lg:shrink-0;
     background: var(--mj-raised);
     border-right: 1px solid var(--mj-line);
@@ -104,14 +103,6 @@
       top: var(--ui-bar, 0rem);
       height: calc(100vh - var(--ui-bar, 0rem));
     }
-  }
-  /* a narrow screen opens the sidebar from the menu button, with no script */
-  .mj-ui-menu-toggle:checked ~ .mj-ui-frame .mj-ui-sidebar {
-    @apply flex;
-  }
-  .mj-ui-menu-toggle:focus-visible ~ .mj-ui-frame .mj-ui-menu-button {
-    outline: 2px solid var(--mj-accent);
-    outline-offset: 2px;
   }
   .mj-ui-nav-list {
     @apply m-0 grid list-none gap-1 p-0;
@@ -155,11 +146,6 @@
     @apply flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap lg:px-6;
     background: var(--mj-bg);
     border-bottom: 1px solid var(--mj-line);
-  }
-  .mj-ui-menu-button {
-    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg lg:hidden;
-    color: var(--mj-fg);
-    border: 1px solid var(--mj-line);
   }
   .mj-ui-search {
     @apply order-last flex min-w-0 flex-1 basis-full items-center gap-2 rounded-xl px-3 sm:order-none sm:basis-0 sm:max-w-2xl;

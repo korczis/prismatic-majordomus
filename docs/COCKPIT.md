@@ -459,6 +459,11 @@ the same facts are as text.
 | `topology.js` | the registry graph in three dimensions | `vendor/three.module.min.js` |
 | `activity.js` | a running plot of the execution and cache counters | `vendor/p5.min.js` |
 
+Below lg the sidebar's sections are the drawer the UI uses too (`ui::drawer`, I3214). It
+opens without a script, from its checkbox, and below md it also opens with the site bar's
+menu. `drawer.js` closes it on Escape, on its backdrop and on a choice. The
+[UI manual](MAJORDOMUS_UI.md#on-a-phone) explains which toggle shows at which width.
+
 If a vendored library is absent the frame says so and the page keeps working. None of them
 is on the critical path, each is fetched only by the page that uses it, and the two visual
 ones respect `prefers-reduced-motion`, pause when the tab is hidden and dispose what they

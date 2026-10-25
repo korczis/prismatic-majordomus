@@ -482,10 +482,34 @@ the window of events it holds (first and last time and logical clock) and what w
 and why; `observatory.replay` refuses a recording with an event that lacks its kind, clock or
 time, naming the event. A recording is a moment; it is replaced by capturing again. What is still open is in [What it does not do yet](#what-it-does-not-do-yet).
 
+## On a phone
+
+Below lg the screens are a drawer: the sidebar slides in from the left edge beneath the bar,
+over a backdrop. `/ui` and `/cockpit` share the drawer. `apps/majordomus-cli/src/ui/drawer.rs`
+renders the shell (a checkbox, its button, the panel and the backdrop), and each surface puts
+its own entries in the panel. `share/design/drawer.css` styles it for both, and
+`share/design/drawer.js` gives both their behaviour; `scripts/cockpit-assets` copies the script
+into `share/ui/` and `share/cockpit/`, and it loads with the bar's scripts. (I3214)
+
+Only one menu toggle shows at a time:
+
+- **Below md:** the site bar shows its own menu button (`navbar-main`). The drawer opens and
+  closes with it, and the drawer's own button is hidden while scripts run.
+- **From md to lg:** the bar has no menu button. The drawer's button, in the surface's tool
+  bar, opens the drawer.
+- **At lg and above:** the sidebar is always in view, and neither toggle shows.
+
+While the drawer is open, the page behind it does not scroll. Escape, a click on the backdrop
+and a choice of entry each close it. After Escape or a backdrop click, the focus goes back to
+the toggle that opened it. The site's `nav.js` already gives that behaviour to the bar's menu,
+and `drawer.js` adds it for the checkbox. `scripts/cockpit-probe` checks all of this on `/ui`
+and `/cockpit` at every width the design declares.
+
 ## Without JavaScript
 
-Every screen is complete HTML, and the menu of a narrow screen opens with a checkbox and its
-label. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
+Every screen is complete HTML, and the drawer of a narrow screen opens with a checkbox and its
+label: with scripts off the bar's own menu button cannot open anything, so the drawer's button
+shows below md as well, and every entry is in the served page. `share/ui/ui.js` is the only script of the UI's own: it pulls in slow panels, refreshes
 the screen, draws graphs, loads `live.js` on a screen that follows the live channel, reveals
 the bar's search button and keeps the sidebar beneath the bar. The bar's menus and theme toggle run on the site's own two scripts. The one inline script is the theme
 statement the policy allows by its digest, the same one the Cockpit ships. A served test
