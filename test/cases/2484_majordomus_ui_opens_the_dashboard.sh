@@ -26,7 +26,7 @@ url="$("$RB" ui --no-open --idle 60 --repo "$T" 2>"$T/err")"; code=$?
 [ "$code" = 0 ] || { echo "    ui exited $code"; cat "$T/err"; exit 1; }
 case "$url" in http://*/ui) ;; *) echo "    the address does not end in /ui: '$url'"; cat "$T/err"; exit 1 ;; esac
 [ -f "$lease" ] || { echo "    no lease after ui"; exit 1; }
-status="$(curl -s -o /dev/null -w '%{http_code}' "$url")"
+status="$(curl -s -m 30 -o /dev/null -w '%{http_code}' "$url")"
 [ "$status" = 200 ] || { echo "    $url answers $status"; exit 1; }
 
 # --- a running server is used: the same address, the same lease, and nothing started
@@ -39,7 +39,7 @@ grep -q "\"url\": \"$url\"" "$T/again.json" || { echo "    the second call names
 # --- a named screen is its route, and answers
 roadmap="$("$RB" ui roadmap --no-open --repo "$T" 2>/dev/null)"
 [ "$roadmap" = "$url/roadmap" ] || { echo "    ui roadmap printed '$roadmap'"; exit 1; }
-status="$(curl -s -o /dev/null -w '%{http_code}' "$roadmap")"
+status="$(curl -s -m 30 -o /dev/null -w '%{http_code}' "$roadmap")"
 [ "$status" = 200 ] || { echo "    $roadmap answers $status"; exit 1; }
 
 echo "    majordomus ui ensures one server, prints /ui or a screen's route, and refuses an unknown screen first"

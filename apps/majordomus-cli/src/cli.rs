@@ -4744,11 +4744,12 @@ pub enum ServeCommand {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command};
+/// use majordomus_cli::cli::{Cli, Command, UiArgs};
 ///
 /// // without a screen, the dashboard; the browser is opened unless asked not to
 /// let cli = Cli::try_parse_from(["majordomus", "ui"]).unwrap();
 /// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// let args: UiArgs = args;
 /// assert!(args.screen.is_none() && !args.no_open && args.idle.is_none());
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "ui", "roadmap", "--no-open"]).unwrap();
