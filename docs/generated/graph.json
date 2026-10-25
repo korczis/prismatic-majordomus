@@ -70546,6 +70546,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4231",
+        "kind": "issue",
+        "label": "I4231",
+        "summary": "The containment test's unwalkable mirror names a parent that was never written, so a commit-graph cannot walk it",
+        "route": "/cockpit/objects/issue/i4231",
+        "source": ".ai/repo/project/issues/I4231.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The test passes, and its precondition holds: git rev-list on the mirror's tip fails",
+            "The precondition still holds after git commit-graph write --reachable and git gc in the test repository",
+            "The rest of the test (pairs decided once, an unnamed head left to the caller, no repository answers nothing) is unchanged"
+          ],
+          "created_at": "2026-10-25",
+          "current_state": "The test deletes .git/objects/<lost> and asserts that containment then answers nothing for the mirror.",
+          "depends_on": [],
+          "evidence_required": [
+            "containment_answers_as_containing_and_asks_each_pair_once_test"
+          ],
+          "milestone": "landing-survives-any-session",
+          "non_scope": [
+            "CheckoutMemo::containing and ancestry, which already treat a walk git refuses as undecided",
+            "Isolating the test's git from the runner's global configuration"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Test-only change; the production code paths are untouched.",
+          "scope": [
+            "apps/majordomus-cli/src/integration/memo.rs",
+            ".ai/repo/project/issues/I4231.yaml"
+          ],
+          "serves": [],
+          "slug": "a-mirror-whose-history-is-missing-decides-nothing",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::memo::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -132638,6 +132678,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4231",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4231",
+        "target": "majordomus://milestone/landing-survives-any-session",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144229,8 +144279,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }
