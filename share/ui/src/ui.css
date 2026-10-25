@@ -452,6 +452,16 @@
     color: var(--mj-accent);
     @apply underline;
   }
+  /* a row's own link with a second link under it in the same cell (a declaration's technical
+     view) are two targets: each takes a line of its own, at least 24 px tall, so neither
+     crowds the other at any width (WCAG 2.5.8, I3079) */
+  .mj-ui-row-link:has(+ .mj-ui-link),
+  .mj-ui-row-link + .mj-ui-link {
+    display: block;
+    width: fit-content;
+    min-height: 24px;
+    line-height: 24px;
+  }
   /* the row a link lands on is lit, so the reader sees where it went */
   tr:target {
     background: var(--mj-accent-soft);
