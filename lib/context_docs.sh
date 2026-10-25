@@ -277,6 +277,16 @@ mj_ctxd_cross_check() {
          | while IFS= read -r j; do printf '%s ' "$(mj_ctxd "$j" path)"; done)"
     mj_ctxd_problem duplicate-id "$id" "claimed by two files: ${p% }" "grep -rln '^id: $id$' $tree"
   done
+  # Whether every tracked pathspec of every document matches a tracked file, asked of git
+  # once: git refuses the whole list if any one matches nothing, and only then is each
+  # asked on its own below, so the answer per entry stays git's (I0820).
+  local tracks_ok=0 specs=()
+  i=0
+  while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
+    for p in $(mj_ctxd_list "$i" tracks); do specs+=("$p"); done
+    i=$((i + 1))
+  done
+  if [ "${#specs[@]}" = 0 ] || mj_git ls-files --error-unmatch -- "${specs[@]}" >/dev/null 2>&1; then tracks_ok=1; fi
   i=0
   while [ "$i" -lt "$MJ_CTXD_COUNT" ]; do
     rel="$(mj_ctxd "$i" path)"
@@ -296,7 +306,7 @@ mj_ctxd_cross_check() {
       [ -d "$MJ_ROOT/$other" ] || mj_ctxd_problem broken-reference "$rel" "children.exempt entry '$p' is not a directory in this repository" "ls -d '$p'"
     done
     # every tracked pathspec covers at least one file the index knows
-    for p in $(mj_ctxd_list "$i" tracks); do
+    [ "$tracks_ok" = 1 ] || for p in $(mj_ctxd_list "$i" tracks); do
       [ -n "$(mj_git ls-files -- "$p" 2>/dev/null | head -n 1)" ] \
         || mj_ctxd_problem broken-reference "$rel" "tracks '$p', which matches no tracked file" "git ls-files -- '$p'"
     done

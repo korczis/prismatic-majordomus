@@ -322,16 +322,27 @@ END {
 
   # --- scope conflict: two issues that could run together but touch the same paths.
   #     Reported conservatively — an uncertain overlap serialises rather than races.
-  for (i = 1; i <= inum; i++) for (j = i + 1; j <= inum; j++) {
-    a = iids[i]; b = iids[j]
+  #     Only READY and ACTIVE issues of one wave can run together, so only they are paired,
+  #     in record order, and each scope is normalised once: pairing every issue with every
+  #     other first made this loop most of what loading the model cost (I0820).
+  for (i = 1; i <= inum; i++) {
+    a = iids[i]
     if (status[a] != "READY" && status[a] != "ACTIVE") continue
-    if (status[b] != "READY" && status[b] != "ACTIVE") continue
-    if (wave[a] != wave[b]) continue
-    for (x = 1; x <= scpn[a]; x++) for (y = 1; y <= scpn[b]; y++)
-      if (overlap(scp[a, x], scp[b, y])) {
-        finding("WARN", "scope_conflict", a, "shares " scp[a, x] " with " b "; they may not run concurrently")
-        x = scpn[a] + 1; break
-      }
+    w = wave[a]; livpos[a] = ++livn[w]; live[w, livn[w]] = a
+    for (x = 1; x <= scpn[a]; x++) nscp[a, x] = normscope(scp[a, x])
+  }
+  for (i = 1; i <= inum; i++) {
+    a = iids[i]
+    if (!(a in livpos)) continue
+    w = wave[a]
+    for (j = livpos[a] + 1; j <= livn[w]; j++) {
+      b = live[w, j]
+      for (x = 1; x <= scpn[a]; x++) for (y = 1; y <= scpn[b]; y++)
+        if (overlapn(nscp[a, x], nscp[b, y])) {
+          finding("WARN", "scope_conflict", a, "shares " scp[a, x] " with " b "; they may not run concurrently")
+          x = scpn[a] + 1; break
+        }
+    }
   }
 
   # --- the active milestone: the lowest-ranked unblocked milestone that is ACTIVE, else the
@@ -447,8 +458,14 @@ function finding(level, code, subject, message) {
 # does path a contain path b, or the reverse? Trailing slashes and ./ are normalised so
 # that a hand-written scope entry cannot silently miss an overlap.
 function overlap(a, b) {
-  sub(/^\.\//, "", a); sub(/\/+$/, "", a)
-  sub(/^\.\//, "", b); sub(/\/+$/, "", b)
+  return overlapn(normscope(a), normscope(b))
+}
+function normscope(p) {
+  sub(/^\.\//, "", p); sub(/\/+$/, "", p)
+  return p
+}
+# overlap() of two scopes already normalised by normscope()
+function overlapn(a, b) {
   if (a == b) return 1
   if (index(b, a "/") == 1) return 1
   if (index(a, b "/") == 1) return 1

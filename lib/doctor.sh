@@ -1454,17 +1454,27 @@ mj_validate_roadmap() {
 }
 
 mj_validate_dag() {
-  local lvl subj msg n
+  local fl n all
   mj_project_doctrine_load || return 0
-  mj_pj_findings | while IFS="$MJ_TAB" read -r _ lvl _ subj msg; do
-    case "$lvl" in
-      FAIL) mj_doctrine_fail dag "$subj" "$msg" "majordomus plan validate" ;;
-      *)    mj_warn dag "$subj" "$msg" "majordomus plan show $subj" ;;
-    esac
-  done
+  # The model's findings are thousands of lines on a plan this size, so they are printed by
+  # one awk rather than one mj_finding each (I0820): the line is mj_finding's, in either
+  # format, and a FAIL row takes the level mj_doctrine_fail would give it.
+  if [ "$MJ_DOCTRINE_CMD" = watch ]; then fl=DRIFT
+  else case "$MJ_DOCTRINE_CLASS" in advisory) fl=WARN ;; *) fl=FAIL ;; esac; fi
+  mj_pj_findings | awk -F'\t' -v fl="$fl" -v json="$MJ_JSON" '
+    function jesc(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); return s }
+    { lvl = $2; subj = $4; msg = $0; for (i = 1; i <= 4; i++) sub(/^[^\t]*\t/, "", msg)
+      if (lvl == "FAIL") { lvl = fl; rep = "majordomus plan validate" }
+      else { lvl = "WARN"; rep = "majordomus plan show " subj }
+      if (json == 1)
+        printf "{\"level\":\"%s\",\"category\":\"dag\",\"subject\":\"%s\",\"message\":\"%s\",\"reproduce\":\"%s\"}\n", lvl, jesc(subj), jesc(msg), jesc(rep)
+      else
+        printf "%-4s %-11s %s — %s  [reproduce: %s]\n", lvl, "dag", subj, msg, rep }'
+  all="$(mj_pj_findings | wc -l | tr -d ' ')"
   n="$(mj_pj_fail_count)"
+  MJ_FINDINGS=$((MJ_FINDINGS + all))
+  case "$fl" in FAIL|DRIFT) MJ_FAILS=$((MJ_FAILS + n)) ;; esac
   [ "$n" = 0 ] && mj_doctrine_ok dag "$(mj_pj_rows W | wc -l | tr -d ' ') wave(s)" "acyclic, every edge resolves, nothing running ahead of a dependency"
-  # The findings above were printed in a subshell, so the failure has to be raised here.
   [ "$n" = 0 ] || mj_doctrine_fail dag "graph" "$n dependency-graph failure(s)" "majordomus plan validate"
   return 0
 }

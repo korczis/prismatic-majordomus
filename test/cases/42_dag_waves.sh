@@ -81,3 +81,20 @@ expect_exit 0 "$MJ" plan validate
 expect_grep 'shares src/shared with I0013'
 expect_exit 0 "$MJ" plan waves
 expect_grep 'serialised by scope overlap'
+
+# --- only issues that can run are paired, each pair once, in record order, and a scope's
+#     leading ./ and trailing / do not hide an overlap (I0820)
+pj_issue I0014 M000
+sed 's#^  - src/I0014$#  - ./src/shared/#' .ai/repo/project/issues/I0014.yaml > /tmp/c.$$ && mv /tmp/c.$$ .ai/repo/project/issues/I0014.yaml
+# I0002 waits on I0001, so it is not READY and shares nothing with anybody
+sed 's#^  - src/I0002$#  - src/shared#' .ai/repo/project/issues/I0002.yaml > /tmp/d.$$ && mv /tmp/d.$$ .ai/repo/project/issues/I0002.yaml
+expect_exit 0 "$MJ" plan validate
+got="$(printf '%s\n' "$LAST_OUT" | grep -oE 'I00[0-9]+ — shares [^ ]+ with I00[0-9]+')"
+want="I0012 — shares src/shared with I0013
+I0012 — shares src/shared with I0014
+I0013 — shares src/shared/inner with I0014"
+[ "$got" = "$want" ] || { printf '    scope conflicts:\n%s\n    expected:\n%s\n' "$got" "$want"; exit 1; }
+
+# the doctor prints the model's findings in one pass, as the lines mj_finding prints
+expect_exit 0 "$MJ" doctor --json
+expect_grep '^\{"level":"WARN","category":"dag","subject":"I0012","message":"shares src/shared with I0013; they may not run concurrently","reproduce":"majordomus plan show I0012"\}$'
