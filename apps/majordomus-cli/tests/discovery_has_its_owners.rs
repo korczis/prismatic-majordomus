@@ -24,11 +24,6 @@ const OWNERS: &[(&str, usize, &str)] = &[
         "mcp elects a server before the layer loads",
     ),
     (
-        "src/commands/ui.rs",
-        1,
-        "ui ensures the shared server before the layer loads",
-    ),
-    (
         "src/commands/env.rs",
         1,
         "the environment entry runs on every directory change",
