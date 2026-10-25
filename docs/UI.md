@@ -132,6 +132,16 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   characters means a renderer skipped a string (I3004). The marks are read by `rawMarkdown`
   in `scripts/lib/ui-static.mjs`, the same rule the renderer follows. A lone mark and an
   empty span are characters, not markup.
+- **`links.bare-issue-id`**: on a `/ui` page, every issue id a reader sees leads to its
+  issue (I2914). A screen draws an id the plan holds as a link to the issue's inspector.
+  An id the plan does not hold is drawn as an element marked `data-mj-unresolved`, whose
+  title says that the plan holds no such issue. Both happen in
+  `apps/majordomus-cli/src/ui/prose.rs`: `inline` handles prose, and `ids` handles an
+  identifier list such as a claim's scope. A range such as `I3810-I3819` counts as two ids.
+  An id in text that is neither a link nor marked unresolved means a renderer skipped it.
+  The rule exempts text inside links, `code`, `pre`, `kbd` and `samp`. A path segment
+  (`src/I0001`) and a word that only contains an id (`XI2400`, `I24000`) are not ids. The
+  ids are read by `bareIssueIds` in `scripts/lib/ui-static.mjs`.
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
   run.

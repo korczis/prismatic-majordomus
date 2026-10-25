@@ -17,6 +17,8 @@ use std::collections::BTreeSet;
 
 use crate::cockpit::html::{el, text, El, Node};
 
+use super::source::Answer;
+
 /// The records prose may name: an id is a link only when the plan holds the record.
 #[derive(Debug, Default, Clone)]
 pub struct Known {
@@ -39,6 +41,22 @@ impl Known {
     }
 }
 
+/// The records a screen's prose may name: every issue and every milestone the plan holds, so
+/// an id in a sentence is a link exactly when there is a record behind it (I3000). A plan that
+/// could not answer names none, and every issue id is then drawn unresolved.
+pub fn known(issues: &Answer, roadmap: &Answer) -> Known {
+    let ids = |answer: &Answer, pointer: &str| {
+        super::view::items(answer, pointer)
+            .iter()
+            .map(|x| super::view::text(x, "id"))
+            .collect()
+    };
+    Known {
+        issues: ids(issues, "/issues"),
+        milestones: ids(roadmap, "/milestones"),
+    }
+}
+
 /// A link target a record may carry: an absolute web address and nothing else. A record is
 /// text somebody typed, and `javascript:` is text somebody can type.
 fn is_web(href: &str) -> bool {
@@ -50,24 +68,94 @@ fn is_id_char(c: char) -> bool {
     c.is_ascii_alphanumeric() || c == '-' || c == '_'
 }
 
-/// Plain text with every word that names a known record drawn as a link to it.
+/// Whether a word has the shape of an issue's id (`I2400`): what a reader takes for a way to
+/// the issue it names.
+fn is_issue_id(word: &str) -> bool {
+    word.len() == 5 && word.starts_with('I') && word[1..].bytes().all(|b| b.is_ascii_digit())
+}
+
+/// An issue id the plan this page reads does not hold: shown as the id, and said to lead
+/// nowhere rather than left as text that looks like it leads somewhere (I2914).
+fn unresolved(id: &str) -> Node {
+    Node::Element(
+        el("span")
+            .class("mj-ui-mono")
+            .attr("data-mj-unresolved", "")
+            .attr(
+                "title",
+                format!("The plan this page reads holds no issue {id}"),
+            )
+            .text(id),
+    )
+}
+
+/// One word as nodes: a link when it names a known record; otherwise each of its
+/// `-`-separated parts that names one (`I3810-I3819` is two ids), with an issue id the plan
+/// does not hold marked unresolved. `after_slash` is a word that is a path's segment
+/// (`src/I0001`), which is part of the path and never an id.
+fn word_nodes(word: &str, known: &Known, after_slash: bool, out: &mut Vec<Node>) -> bool {
+    let link = |id: &str, href: String| {
+        Node::Element(
+            el("a")
+                .class("mj-ui-link mj-ui-mono")
+                .attr("href", href)
+                .text(id),
+        )
+    };
+    if after_slash {
+        return false;
+    }
+    if let Some(href) = known.href(word) {
+        out.push(link(word, href));
+        return true;
+    }
+    if !word.split('-').any(is_issue_id) {
+        return false;
+    }
+    let mut plain = String::new();
+    for (n, part) in word.split('-').enumerate() {
+        if n > 0 {
+            plain.push('-');
+        }
+        let drawn = match known.href(part) {
+            Some(href) if is_issue_id(part) => link(part, href),
+            _ if is_issue_id(part) => unresolved(part),
+            _ => {
+                plain.push_str(part);
+                continue;
+            }
+        };
+        if !plain.is_empty() {
+            out.push(text(std::mem::take(&mut plain)));
+        }
+        out.push(drawn);
+    }
+    if !plain.is_empty() {
+        out.push(text(plain));
+    }
+    true
+}
+
+/// Plain text with every word that names a known record drawn as a link to it, and every
+/// issue id it cannot lead to said to be unresolved.
 fn linked(run: &str, known: &Known, out: &mut Vec<Node>) {
     let mut plain = String::new();
     let mut word = String::new();
-    let flush = |word: &mut String, plain: &mut String, out: &mut Vec<Node>| match known.href(word)
-    {
-        Some(href) => {
+    let flush = |word: &mut String, plain: &mut String, out: &mut Vec<Node>| {
+        if word.is_empty() {
+            return;
+        }
+        let after_slash = plain.ends_with('/');
+        let mut drawn = Vec::new();
+        if word_nodes(word, known, after_slash, &mut drawn) {
             if !plain.is_empty() {
                 out.push(text(std::mem::take(plain)));
             }
-            out.push(Node::Element(
-                el("a")
-                    .class("mj-ui-link mj-ui-mono")
-                    .attr("href", href)
-                    .text(std::mem::take(word)),
-            ));
+            out.append(&mut drawn);
+            word.clear();
+        } else {
+            plain.push_str(&std::mem::take(word));
         }
-        None => plain.push_str(&std::mem::take(word)),
     };
     for c in run.chars() {
         if is_id_char(c) {
@@ -81,6 +169,15 @@ fn linked(run: &str, known: &Known, out: &mut Vec<Node>) {
     if !plain.is_empty() {
         out.push(text(plain));
     }
+}
+
+/// A line that is an identifier list rather than prose — a claim's scope
+/// (`issue:I3810..I3819, case:3810..3819`), a heading's id — with every record it names a
+/// link and no markup read at all.
+pub fn ids(line: &str, known: &Known) -> Vec<Node> {
+    let mut out = Vec::new();
+    linked(line, known, &mut out);
+    out
 }
 
 /// The first `open … close` span in `s`: what precedes it, what it holds, and what follows.
@@ -210,11 +307,37 @@ mod tests {
     }
 
     #[test]
-    fn an_id_the_plan_does_not_hold_is_text_and_a_longer_word_is_not_an_id() {
+    fn an_id_the_plan_does_not_hold_is_unresolved_and_a_longer_word_is_not_an_id() {
         let html = drawn("I9999 is unknown, and XI2400 and I24000 are other words.");
         assert!(!html.contains("<a"), "{html}");
+        assert!(
+            html.contains("<span class=\"mj-ui-mono\" data-mj-unresolved title=\"The plan this page reads holds no issue I9999\">I9999</span> is unknown"),
+            "{html}"
+        );
+        assert!(html.contains("XI2400 and I24000 are other words"), "{html}");
         // an id made of words is matched whole
         assert!(drawn("part of development-runtime now").contains(">development-runtime</a>"));
+    }
+
+    #[test]
+    fn every_id_of_a_range_is_drawn_and_a_path_segment_is_part_of_its_path() {
+        let range = drawn("I2400-I9999 landed, as did I2400..I2400");
+        assert!(range.starts_with("<p><a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I2400#issue\">I2400</a>-<span"), "{range}");
+        assert!(range.contains(">I9999</span> landed"), "{range}");
+        assert_eq!(range.matches("?issue=I2400#issue").count(), 3, "{range}");
+        let path = drawn("the answer is in src/I2400/answer.txt and src/I9999");
+        assert!(!path.contains("<a") && !path.contains("<span"), "{path}");
+        assert!(drawn("I2400-fix").contains(">I2400</a>-fix"));
+    }
+
+    #[test]
+    fn an_identifier_list_links_its_records_and_reads_no_markup() {
+        let scope = el("div")
+            .nodes(ids("issue:I2400..I9999, `case`:3810", &known()))
+            .render();
+        assert!(scope.starts_with("<div>issue:<a "), "{scope}");
+        assert!(scope.contains("data-mj-unresolved"), "{scope}");
+        assert!(scope.ends_with(", `case`:3810</div>"), "{scope}");
     }
 
     #[test]

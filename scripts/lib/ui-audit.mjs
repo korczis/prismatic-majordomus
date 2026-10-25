@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { chromium } from 'playwright';
 
-import { rawMarkdown } from './ui-static.mjs';
+import { bareIssueIds, rawMarkdown } from './ui-static.mjs';
 
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
@@ -33,10 +33,11 @@ export const OVERFLOW_TOLERANCE = 1;
 export const VISIT_DEADLINE_MS = 60000;
 
 /**
- * The surface whose rendered text must carry no light markup: the UI draws a record's prose
- * as markup (I3004), and a screen that hands a reader backticks skipped its renderer. The
- * documentation is drawn by the site's own Markdown pipeline and the Cockpit shows records
- * as data, so neither is held to it here.
+ * The surface whose rendered text must carry no light markup and no issue id that leads
+ * nowhere: the UI draws a record's prose as markup (I3004) and every id as a link to its
+ * issue (I2914), so a screen that hands a reader backticks or a bare id skipped its
+ * renderer. The documentation is drawn by the site's own Markdown pipeline and the Cockpit
+ * shows records as data, so neither is held to it here.
  */
 export const PROSE_PREFIX = '/ui';
 
@@ -115,7 +116,7 @@ export async function auditPage(page, origin, route, width) {
   }
 
   const observed = await page.evaluate(({ tolerance, prose }) => {
-    const out = { overflow: null, landmarks: {}, headings: [], duplicate_ids: [], triggers: [], texts: [] };
+    const out = { overflow: null, landmarks: {}, headings: [], duplicate_ids: [], triggers: [], texts: [], ids: [] };
 
     // horizontal overflow, with the elements that cause it rather than the fact alone.
     // The body's scroll width, not the document element's: content inside its own
@@ -201,16 +202,18 @@ export async function auditPage(page, origin, route, width) {
         });
       }
     }
-    // the text a reader sees outside the elements where a backtick is content, handed to
-    // rawMarkdown() beside this file rather than judged here, so the rule has one reading
+    // the text a reader sees outside the elements where a backtick is content, and outside
+    // the elements where an id already leads somewhere or says it cannot, handed to
+    // rawMarkdown() and bareIssueIds() beside this file rather than judged here, so each
+    // rule has one reading
     if (prose) {
       const literal = 'code, pre, kbd, samp, script, style, textarea, template, noscript, svg';
+      const placed = `a, [data-mj-unresolved], [hidden], ${literal}`;
       const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
         const value = node.nodeValue || '';
-        if (!/[`*]/.test(value)) continue;
-        if (node.parentElement?.closest(literal)) continue;
-        out.texts.push(value);
+        if (/[`*]/.test(value) && !node.parentElement?.closest(literal)) out.texts.push(value);
+        if (/I\d{4}/.test(value) && !node.parentElement?.closest(placed)) out.ids.push(value);
       }
     }
     return out;
@@ -248,6 +251,9 @@ export async function auditPage(page, origin, route, width) {
   }
   for (const { mark, sample } of observed.texts.flatMap(rawMarkdown).slice(0, 5)) {
     findings.push({ rule: 'text.raw-markdown', detail: `a ${mark} mark reaches the reader as characters: "${sample}"` });
+  }
+  for (const { id, sample } of observed.ids.flatMap(bareIssueIds).slice(0, 5)) {
+    findings.push({ rule: 'links.bare-issue-id', detail: `${id} is shown outside a link and leads nowhere: "${sample}"` });
   }
   for (const error of console_errors) {
     findings.push({ rule: 'runtime.console-error', detail: error });

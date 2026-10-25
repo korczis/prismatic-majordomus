@@ -15,8 +15,9 @@ use serde_json::Value;
 use crate::capability::Context;
 use crate::cockpit::html::{el, El};
 
+use super::prose::Known;
 use super::shell::View;
-use super::source::{ask, Answer, Source};
+use super::source::{ask_all, Answer, Source};
 use super::view::{hero, kpi, kpi_count, list, panel, state, table, text, unanswered, wide};
 
 /// The route of the screen.
@@ -29,10 +30,16 @@ pub const LIB: &str = "live.js";
 pub const CHANNEL: &str = "/events?follow=blackboard&frames=snapshot";
 
 const BLACKBOARD: Source = Source::with("blackboard.snapshot", r#"{"signals":0}"#);
+/// The plan's issues and milestones: what an intent, a claim or a review may name, and so
+/// link to (I2914).
+const ISSUES: Source = Source::of("plan.issues");
+const ROADMAP: Source = Source::of("plan.roadmap");
 
 /// The Peers screen; `lib` is the URL of [`LIB`] the page loads to follow the channel.
 pub fn screen(ctx: &Context, lib: &str) -> View {
-    let board = ask(ctx, BLACKBOARD);
+    let answers = ask_all(ctx, &[BLACKBOARD, ISSUES, ROADMAP]);
+    let known = super::prose::known(&answers[&ISSUES], &answers[&ROADMAP]);
+    let board = answers[&BLACKBOARD].clone();
 
     let top = hero(
         "users",
@@ -60,25 +67,25 @@ pub fn screen(ctx: &Context, lib: &str) -> View {
         .child(wide(panel(
             "Workers",
             "Each worker with where it works, the client it is, whether it is here, what it announced and what it claims.",
-            workers(&board),
+            workers(&board, &known),
             &[&board],
         )))
         .child(panel(
             "Claims that meet",
             "Two workers whose scopes overlap. Confirmed when both claims are exclusive or one is already conflicted; potential otherwise.",
-            conflicts(&board),
+            conflicts(&board, &known),
             &[&board],
         ))
         .child(panel(
             "What waits",
             "Open review requests and handovers nobody has taken yet.",
-            waiting(&board),
+            waiting(&board, &known),
             &[&board],
         ))
         .child(panel(
             "Relations",
             "Two workers related by a record: verified when an identifier joins them, a candidate when only a weaker match does.",
-            relations(&board),
+            relations(&board, &known),
             &[&board],
         ))
         .child(panel(
@@ -124,7 +131,7 @@ fn joined(parts: &[String]) -> String {
         .join(" · ")
 }
 
-fn claims(w: &Value) -> El {
+fn claims(w: &Value, known: &Known) -> El {
     let mut cell = el("td");
     for claim in w
         .get("claims")
@@ -142,7 +149,9 @@ fn claims(w: &Value) -> El {
                     .join(", ")
             })
             .unwrap_or_default();
-        let mut line = el("div").class("mj-ui-mono mj-identity").text(scope);
+        let mut line = el("div")
+            .class("mj-ui-mono mj-identity")
+            .nodes(super::prose::ids(&scope, known));
         if text(claim, "mode") == "exclusive" {
             line = line.child(el("span").class("mj-tag").text(" exclusive"));
         }
@@ -154,7 +163,7 @@ fn claims(w: &Value) -> El {
     cell
 }
 
-fn workers(answer: &Answer) -> El {
+fn workers(answer: &Answer, known: &Known) -> El {
     unanswered(answer).unwrap_or_else(|| {
         let rows = list(answer, "/workers")
             .iter()
@@ -169,8 +178,8 @@ fn workers(answer: &Answer) -> El {
                     ])))
                     .child(el("td").text(joined(&[text(w, "client"), text(w, "origin")])))
                     .child(el("td").child(state(w, "presence")))
-                    .child(el("td").nodes(super::prose::marks(&text(w, "intent"))))
-                    .child(claims(w))
+                    .child(el("td").nodes(super::prose::inline(&text(w, "intent"), known)))
+                    .child(claims(w, known))
             })
             .collect::<Vec<_>>();
         table(
@@ -186,7 +195,7 @@ fn side(r: Option<&Value>) -> String {
         .unwrap_or_default()
 }
 
-fn conflicts(answer: &Answer) -> El {
+fn conflicts(answer: &Answer, known: &Known) -> El {
     unanswered(answer).unwrap_or_else(|| {
         let rows = list(answer, "/conflicts")
             .iter()
@@ -204,12 +213,12 @@ fn conflicts(answer: &Answer) -> El {
                     .child(
                         el("td")
                             .class("mj-ui-mono mj-identity")
-                            .text(side(c.get("first"))),
+                            .nodes(super::prose::ids(&side(c.get("first")), known)),
                     )
                     .child(
                         el("td")
                             .class("mj-ui-mono mj-identity")
-                            .text(side(c.get("second"))),
+                            .nodes(super::prose::ids(&side(c.get("second")), known)),
                     )
                     .child(el("td").class("mj-ui-mono mj-identity").text(paths))
             })
@@ -222,7 +231,7 @@ fn conflicts(answer: &Answer) -> El {
     })
 }
 
-fn waiting(answer: &Answer) -> El {
+fn waiting(answer: &Answer, known: &Known) -> El {
     unanswered(answer).unwrap_or_else(|| {
         let mut rows = list(answer, "/reviews")
             .iter()
@@ -240,7 +249,10 @@ fn waiting(answer: &Answer) -> El {
                     } else {
                         reviewer
                     }))
-                    .child(el("td").text(joined(&[text(r, "issue"), text(r, "subject")])))
+                    .child(el("td").nodes(super::prose::ids(
+                        &joined(&[text(r, "issue"), text(r, "subject")]),
+                        known,
+                    )))
             })
             .collect::<Vec<_>>();
         rows.extend(list(answer, "/handovers").iter().map(|h| {
@@ -252,11 +264,10 @@ fn waiting(answer: &Answer) -> El {
                         .text(text(h, "runtime")),
                 )
                 .child(el("td").text("whoever takes it"))
-                .child(el("td").text(joined(&[
-                    text(h, "issue"),
-                    text(h, "name"),
-                    text(h, "branch"),
-                ])))
+                .child(el("td").nodes(super::prose::ids(
+                    &joined(&[text(h, "issue"), text(h, "name"), text(h, "branch")]),
+                    known,
+                )))
         }));
         table(
             &["What", "From", "For", "About"],
@@ -266,7 +277,7 @@ fn waiting(answer: &Answer) -> El {
     })
 }
 
-fn relations(answer: &Answer) -> El {
+fn relations(answer: &Answer, known: &Known) -> El {
     unanswered(answer).unwrap_or_else(|| {
         let rows = list(answer, "/relations")
             .iter()
@@ -277,9 +288,13 @@ fn relations(answer: &Answer) -> El {
                     .child(
                         el("td")
                             .class("mj-ui-mono mj-identity")
-                            .text(text(r, "from")),
+                            .nodes(super::prose::ids(&text(r, "from"), known)),
                     )
-                    .child(el("td").class("mj-ui-mono mj-identity").text(text(r, "to")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-mono mj-identity")
+                            .nodes(super::prose::ids(&text(r, "to"), known)),
+                    )
             })
             .collect::<Vec<_>>();
         table(
@@ -348,6 +363,53 @@ mod tests {
         assert!(html.contains("data-follow-state"), "{html}");
     }
 
+    /// An issue a worker names, in what it said or in what it claims, leads to that issue; one
+    /// the plan does not hold is said to lead nowhere (I2914).
+    #[test]
+    fn an_issue_a_worker_names_leads_to_it() {
+        let board = serde_json::json!({
+            "workers": [{
+                "key": "k", "board_peer": "p1", "intent": "I2400 is **done**",
+                "claims": [{ "scope": ["issue:I2400..I9999"], "mode": "exclusive" }],
+            }],
+            "conflicts": [{
+                "certainty": "potential",
+                "first": { "worker": "board:x/p1", "claim": "I2400" },
+                "second": { "worker": "board:x/p2", "claim": "I9999" },
+            }],
+        });
+        let answer = Answer {
+            source: BLACKBOARD,
+            route: None,
+            exposure: crate::ui::source::Exposure::default(),
+            value: Ok(std::sync::Arc::new(board)),
+            took: std::time::Duration::from_millis(1),
+            standing: crate::ui::source::Standing::NOW,
+        };
+        let known = Known {
+            issues: ["I2400".to_string()].into(),
+            ..Known::default()
+        };
+        let html = workers(&answer, &known).render();
+        assert_eq!(
+            html.matches("href=\"/ui/prs?issue=I2400#issue\"").count(),
+            2,
+            "{html}"
+        );
+        assert!(html.contains("<strong>done</strong>"), "{html}");
+        assert!(html.contains("issue:<a "), "{html}");
+        assert!(
+            html.contains("..<span class=\"mj-ui-mono\" data-mj-unresolved"),
+            "{html}"
+        );
+        let met = conflicts(&answer, &known).render();
+        assert!(met.contains("board:x/p1 · <a "), "{met}");
+        assert!(
+            met.contains("board:x/p2 · <span class=\"mj-ui-mono\" data-mj-unresolved"),
+            "{met}"
+        );
+    }
+
     /// Every part of an answer is drawn: an exclusive claim that the mesh marked conflicted,
     /// a pair of claims that meet with the paths where, a review for a named reviewer and one
     /// for anyone, a handover for whoever takes it, and a relation with its evidence.
@@ -385,10 +447,10 @@ mod tests {
             standing: crate::ui::source::Standing::NOW,
         };
         let html = [
-            workers(&answer),
-            conflicts(&answer),
-            waiting(&answer),
-            relations(&answer),
+            workers(&answer, &Known::default()),
+            conflicts(&answer, &Known::default()),
+            waiting(&answer, &Known::default()),
+            relations(&answer, &Known::default()),
         ]
         .map(|e| e.render())
         .concat();

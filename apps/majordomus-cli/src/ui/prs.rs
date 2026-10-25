@@ -1247,9 +1247,14 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                     .class("mj-ui-detail-head")
                     .child({
                         let milestone = text(&i, "milestone");
+                        // the id is this inspector's own address, so the id leads somewhere
                         el("p")
                             .class("mj-ui-mono mj-ui-dim")
-                            .text(format!("{id} · "))
+                            .child(code_link(
+                                format!("{}#issue", filter.href(ROUTE, "issue", Some(id))),
+                                id,
+                            ))
+                            .text(" · ")
                             .child(if milestone.is_empty() {
                                 none()
                             } else {
@@ -1289,7 +1294,18 @@ fn issue_panel(issues: &Answer, id: &str, filter: &Filter) -> El {
                             ),
                     ),
             )
-            .child(el("p").class("mj-ui-lead").text(text(&i, "objective")))
+            .child(
+                el("p").class("mj-ui-lead").nodes(super::prose::inline(
+                    &text(&i, "objective"),
+                    &super::prose::Known {
+                        issues: list(issues, "/issues")
+                            .iter()
+                            .map(|x| text(x, "id"))
+                            .collect(),
+                        ..super::prose::Known::default()
+                    },
+                )),
+            )
             .child(
                 el("dl")
                     .class("mj-ui-facts")
@@ -1652,7 +1668,7 @@ mod tests {
     fn an_issue_opens_with_what_it_waits_for_unblocks_and_serves() {
         let issues = plan(serde_json::json!({ "issues": [{
             "id": "I0002", "title": "The second thing", "milestone": "M1", "priority": "p1", "wave": 3,
-            "status": "READY", "objective": "Make the second thing true.",
+            "status": "READY", "objective": "Make the second thing `true` after I0002.",
             "depends_on": ["I0001"], "blocked_by": [], "dependents": ["I0003"],
             "serves": ["intent-a#c1"], "scope": ["apps/a.rs"],
             "evidence_have": 1, "evidence_need": 2, "started_at": "2026-10-01T10:00:00Z"
@@ -1661,10 +1677,10 @@ mod tests {
         let html = issue_panel(&issues, "I0002", &filter).render();
         for want in [
             "id=\"issue\"",
-            "I0002 · <a",
+            ">I0002</a> · <a",
+            "Make the second thing <code class=\"mj-ui-code\">true</code> after <a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I0002#issue\">I0002</a>.",
             "href=\"/ui/roadmap?milestone=M1#milestone\">M1</a> · p1 · wave 3",
             "href=\"/ui/roadmap?intent=intent-a#intent\"",
-            "Make the second thing true.",
             "issue=I0001",
             "issue=I0003",
             "intent-a#c1",
@@ -1925,7 +1941,9 @@ mod tests {
         );
         let html = issue_panel(&issues, "I0008", &Filter::default()).render();
         assert!(
-            html.contains("I0008 · <span class=\"mj-ui-dim\">none</span> · none · wave unknown"),
+            html.contains(
+                "href=\"/ui/prs?issue=I0008#issue\">I0008</a> · <span class=\"mj-ui-dim\">none</span> · none · wave unknown"
+            ),
             "{html}"
         );
     }

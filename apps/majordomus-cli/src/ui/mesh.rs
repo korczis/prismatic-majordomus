@@ -15,6 +15,7 @@ use crate::cockpit::html::{el, El};
 use crate::cockpit::view::word_badge;
 
 use super::dashboard::ROWS;
+use super::prose::Known;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
@@ -34,6 +35,9 @@ const CLAIMS: Source = Source::with(
     "mesh.state",
     r#"{"view":"full","kind":"claims","open":true}"#,
 );
+/// The plan's issues and milestones: what a worker's intent may name, and so link to (I2914).
+const ISSUES: Source = Source::of("plan.issues");
+const ROADMAP: Source = Source::of("plan.roadmap");
 
 /// A seat of the cooperation model and the claim scope that holds it
 /// (`project.the-cooperation-model-is-the-owners-word`, ADR 0167). A `*` stands for one or
@@ -151,7 +155,7 @@ pub(crate) fn unobserved(peers: &Answer) -> Option<String> {
 
 /// The Mesh screen; `query` may select one machine (`node`).
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
-    let answers = ask_all(ctx, &[PEERS, EVENTS, CLAIMS]);
+    let answers = ask_all(ctx, &[PEERS, EVENTS, CLAIMS, ISSUES, ROADMAP]);
     let selected = query
         .iter()
         .find(|(k, _)| k == "node")
@@ -161,11 +165,19 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
         &answers[&EVENTS],
         &answers[&CLAIMS],
         selected,
+        &super::prose::known(&answers[&ISSUES], &answers[&ROADMAP]),
     )
 }
 
-/// The screen drawn from the three answers it reads, with `selected` the machine to inspect.
-fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&str>) -> View {
+/// The screen drawn from the answers it reads, with `selected` the machine to inspect and
+/// `known` the records a worker's intent may link to.
+fn render(
+    peers: &Answer,
+    events: &Answer,
+    claims: &Answer,
+    selected: Option<&str>,
+    known: &Known,
+) -> View {
     let machines = list(peers, "/machines");
     let absent = unobserved(peers);
 
@@ -263,7 +275,7 @@ fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&st
 
     let mut grid = el("div").class("mj-ui-grid");
     if let Some(name) = selected {
-        grid = grid.child(wide(inspector(name, &machines, peers, events)));
+        grid = grid.child(wide(inspector(name, &machines, peers, events, known)));
     }
     grid = grid
         .child(wide(panel(
@@ -275,7 +287,7 @@ fn render(peers: &Answer, events: &Answer, claims: &Answer, selected: Option<&st
         .child(wide(panel(
             "Seats",
             "Who holds each seat of the cooperation model now, read from the live exclusive claims (rule project.the-cooperation-model-is-the-owners-word, ADR 0167). A seat nobody claims is said as vacant.",
-            seats(claims),
+            seats(claims, known),
             &[claims],
         )))
         .child(panel(
@@ -349,7 +361,7 @@ fn live_claims(session: &Value) -> u64 {
 
 /// The inspector of one machine: what it is, its runtimes, the sessions they hold, their
 /// claims, and the events the journal holds from it.
-fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) -> El {
+fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer, known: &Known) -> El {
     let Some(m) = machines.iter().find(|m| text(m, "name") == name) else {
         return panel(
             name,
@@ -426,7 +438,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                     el("td")
                         .class("mj-ui-dim")
                         .attr_if("title", (!said.is_empty()).then_some(said))
-                        .nodes(super::prose::marks(&intent)),
+                        .nodes(super::prose::inline(&intent, known)),
                 )
         })
         .collect::<Vec<_>>();
@@ -538,7 +550,7 @@ fn said(claim: &Value) -> (String, Option<String>) {
 }
 
 /// One row of the seat table: the seat, who holds it, what it claims and what it said.
-fn seat_row(seat: &str, holder: Option<&Value>, scope: String) -> El {
+fn seat_row(seat: &str, holder: Option<&Value>, scope: String, known: &Known) -> El {
     let (who, intent, title) = match holder {
         Some(c) => {
             let session = text(c, "session");
@@ -556,14 +568,14 @@ fn seat_row(seat: &str, holder: Option<&Value>, scope: String) -> El {
             el("td")
                 .class("mj-ui-dim")
                 .attr_if("title", title)
-                .nodes(super::prose::marks(&intent)),
+                .nodes(super::prose::inline(&intent, known)),
         )
 }
 
 /// The seats and who holds each, then every worker's exclusive claim: all of it read from
 /// the live claims, so a seat moves when its claim moves and a crashed holder's seat falls
 /// vacant when its claim expires.
-fn seats(claims: &Answer) -> El {
+fn seats(claims: &Answer, known: &Known) -> El {
     unanswered(claims).unwrap_or_else(|| {
         if claims
             .ok()
@@ -583,7 +595,9 @@ fn seats(claims: &Answer) -> El {
                 .filter(|c| seat_of(c).is_some_and(|s| s.name == seat.name))
                 .collect();
             if holders.is_empty() {
-                rows.push(seat_row(seat.name, None, seat.scope.into()).attr("title", seat.does));
+                rows.push(
+                    seat_row(seat.name, None, seat.scope.into(), known).attr("title", seat.does),
+                );
             }
             for c in holders {
                 let scope = c
@@ -596,7 +610,7 @@ fn seats(claims: &Answer) -> El {
                     })
                     .unwrap_or(seat.scope)
                     .to_string();
-                rows.push(seat_row(seat.name, Some(c), scope));
+                rows.push(seat_row(seat.name, Some(c), scope, known));
             }
         }
         let workers: Vec<&Value> = live
@@ -618,7 +632,7 @@ fn seats(claims: &Answer) -> El {
                     }
                 })
                 .unwrap_or_default();
-            rows.push(seat_row("Worker", Some(c), scope));
+            rows.push(seat_row("Worker", Some(c), scope, known));
         }
         el("div")
             .child(table(
@@ -662,6 +676,19 @@ fn refused(peers: &Answer) -> El {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // the screen as the tests below read it, with a plan that holds no record
+    fn render(p: &Answer, e: &Answer, c: &Answer, selected: Option<&str>) -> View {
+        super::render(p, e, c, selected, &Known::default())
+    }
+
+    fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) -> El {
+        super::inspector(name, machines, peers, events, &Known::default())
+    }
+
+    fn seats(claims: &Answer) -> El {
+        super::seats(claims, &Known::default())
+    }
 
     /// A runtime's tone is its own word's presentation; an unknown word never reads as alive.
     #[test]
@@ -1142,6 +1169,34 @@ mod tests {
 
     /// A worker that said nothing reads none, one that said much is cut and said whole in the
     /// row's title, and a worker's claim names no path, its one path, or its first and a count.
+    #[test]
+    fn an_issue_a_worker_names_leads_to_it() {
+        let claims = answer(
+            CLAIMS,
+            Ok(serde_json::json!({
+                "active": true,
+                "state": { "claims": [
+                    { "session": "s/board-q1", "scope": ["a.rs"], "mode": "exclusive",
+                      "intent": "I2400 is `done`; I9999 is elsewhere" },
+                ]},
+            })),
+        );
+        let known = Known {
+            issues: ["I2400".to_string()].into(),
+            ..Known::default()
+        };
+        let html = super::seats(&claims, &known).render();
+        assert!(
+            html.contains("href=\"/ui/prs?issue=I2400#issue\">I2400</a>"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<code class=\"mj-ui-code\">done</code>"),
+            "{html}"
+        );
+        assert!(html.contains("data-mj-unresolved"), "{html}");
+    }
+
     #[test]
     fn a_workers_row_says_what_it_said_and_claims() {
         let long = "y".repeat(INTENT + 1);
