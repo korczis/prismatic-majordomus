@@ -11,6 +11,10 @@
 #                                       the verdicts are rendered in name order at the end
 #   MJ_TEST_REPORT=<file>               also write one TSV row per case:
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
+#   MJ_TEST_FAILURES=<file>             also write the output of every case that failed or
+#                                       timed out, each under a "== <name>" line (with
+#                                       MJ_TEST_JOBS > 1): the reason a case gives reaches a
+#                                       file an artifact can carry, not only the job's log
 #   MJ_TEST_SHARD=<i>/<n>               run only the i-th of n shards (with MJ_TEST_JOBS > 1):
 #                                       cases are dealt longest-first over n x MJ_TEST_JOBS
 #                                       worker slots by the seconds MJ_TEST_DURATIONS records,
@@ -187,7 +191,7 @@ run_case() {
   # command reads stdin (54's `session close` reads a summary) then waited for ever whenever
   # that was an open pipe: 39 minutes on 2026-10-09, with nothing printed.
   ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
-      MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
+      MJ_TEST_FAILURES MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
     && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" < /dev/null ) &
   pid=$!
   MJ_CASE_PID="$pid"
@@ -310,6 +314,8 @@ jobs="${MJ_TEST_JOBS:-1}"
 case "$jobs" in ''|*[!0-9]*|0) echo "run.sh: MJ_TEST_JOBS must be a positive integer, got '$jobs'" >&2; exit 2 ;; esac
 report="${MJ_TEST_REPORT:-}"
 [ -n "$report" ] && : > "$report"
+failures="${MJ_TEST_FAILURES:-}"
+[ -n "$failures" ] && : > "$failures"
 
 # the cases in name order, the exclusive ones told apart by their header, never by a list here
 parallel_names=""; exclusive_names=""
@@ -406,6 +412,11 @@ else
     phase=parallel; case " $exclusive_names " in *" $name "*) phase=exclusive ;; esac
     rc="$(cat "$L/$name.rc" 2>/dev/null || echo 2)"; sec="$(cat "$L/$name.sec" 2>/dev/null || echo 0)"
     [ "$rc" = 0 ] || [ "$rc" = 2 ] || [ "$rc" = 4 ] || cat "$L/$name.log" 2>/dev/null
+    # the same reason, kept: a case's own words are the one account of why it failed, and a
+    # job log is read by a person once while an artifact is read by the next tool (I4223)
+    if [ -n "$failures" ] && [ "$rc" != 0 ] && [ "$rc" != 4 ]; then
+      { printf '== %s\n' "$name"; cat "$L/$name.log" 2>/dev/null; } >> "$failures"
+    fi
     verdict "$name" "$rc" "$sec" "$phase"
   done
   rm -rf "$L"

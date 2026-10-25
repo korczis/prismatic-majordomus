@@ -70457,6 +70457,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I4223",
+        "kind": "issue",
+        "label": "I4223",
+        "summary": "The pre-commit generation gate answers inside its bound, and a failed case's reason reaches an artifact",
+        "route": "/cockpit/objects/issue/i4223",
+        "source": ".ai/repo/project/issues/I4223.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "overlap answers every pair of the entries normalisation exists for as the allocating definition did, and a conflict is reported once per pair and only between runnable issues",
+            "The plan unit tests pass unchanged",
+            "A run with MJ_TEST_FAILURES set writes a failed case's output under its name and nothing of the cases that passed or declined, and a green run leaves the file empty",
+            "Case 56 passes on CI with its bound unchanged"
+          ],
+          "created_at": "2026-10-24",
+          "depends_on": [],
+          "evidence_required": [
+            "scope_conflict_scan_allocates_nothing",
+            "failed_case_reason_in_artifact"
+          ],
+          "milestone": "M004",
+          "non_scope": [
+            "Raising the 30 s bound of case 56",
+            "The changelog's per-decision git walks (added_at_each), whose answers depend on git's per-path history simplification and are a change of their own"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4223.yaml",
+            "apps/majordomus-cli/src/plan.rs",
+            "test/run.sh",
+            ".github/workflows/validate.yml",
+            "test/cases/56_derived_current_gate.sh",
+            "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+          ],
+          "serves": [],
+          "slug": "the-pre-commit-gate-answers-in-its-bound",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
+            "bash test/run.sh 4223_a_failed_cases_reason_reaches_the_artifact 56_derived_current_gate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -93895,6 +93940,13 @@
         "label": "test/cases/41_project_status.sh",
         "route": "/cockpit/objects/test/test-cases-41-project-status-sh",
         "source": "test/cases/41_project_status.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
+        "kind": "test",
+        "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
+        "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
+        "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -132522,6 +132574,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4223",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4223",
+        "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139017,6 +139079,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144108,8 +144175,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3999,
-      "edges": 9227,
+      "nodes": 4001,
+      "edges": 9230,
       "acyclic": false,
       "truncated": false
     }
