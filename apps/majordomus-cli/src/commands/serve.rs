@@ -58,13 +58,20 @@ use crate::shared::SharedServer;
 
 use super::executions::{ask_server, cli_capability, map};
 
-/// Run `majordomus serve`.
-pub fn run(args: ServeArgs) -> Result<u8> {
-    let start = match &args.repo.repo {
+/// The repository a command that elects this checkout's server works on: the one named by
+/// `--repo`, else the one around the working directory. Found here, before the layer loads,
+/// for `serve` and for `ui`, which converges on the same server (I3017's owners).
+pub(crate) fn discover(args: &RepoArgs) -> Result<Repository> {
+    let start = match &args.repo {
         Some(p) => p.clone(),
         None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
     };
-    let repo = Repository::discover(&start)?;
+    Repository::discover(&start)
+}
+
+/// Run `majordomus serve`.
+pub fn run(args: ServeArgs) -> Result<u8> {
+    let repo = discover(&args.repo)?;
     let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),

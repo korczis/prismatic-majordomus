@@ -22,7 +22,6 @@ use crate::capability::builtin::server::ServerStanding;
 use crate::cli::{OutputFormat, UiArgs};
 use crate::error::{Error, Result};
 use crate::lease;
-use crate::repository::Repository;
 use crate::ui::{PREFIX, SCREENS};
 
 use super::serve;
@@ -48,11 +47,7 @@ struct UiReport {
 pub fn run(args: UiArgs) -> Result<u8> {
     // refused before the repository is read or a server started: a typo costs nothing
     let route = screen_route(args.screen.as_deref())?;
-    let start = match &args.repo.repo {
-        Some(p) => p.clone(),
-        None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
-    };
-    let repo = Repository::discover(&start)?;
+    let repo = serve::discover(&args.repo)?;
     let layer = serve::layer_args(&args.repo)?;
     // the declared server timings, the idle life among them, as `serve ensure` reads them
     let _ = crate::policy::LoadedPolicy::load(&repo);
