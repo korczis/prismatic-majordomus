@@ -1769,6 +1769,9 @@ mj_cargo_bounded() {
   mj_rust_prune_build_dir "$mj_cs_root"
   mj_cs_rc=0
   mj_cargo_bounded_run "$@" || mj_cs_rc=$?
+  # between this build and the next: the bound, under cargo's lock, now that it is free
+  # (I3959); rate-limited, and a no-op within the bound, whatever the build answered
+  mj_rust_bound_after_build "$mj_cs_root"
   mj_rust_slot_release "$mj_cs_root"
   return "$mj_cs_rc"
 }
@@ -1904,8 +1907,7 @@ mj_cargo_bounded_run() {
         cat "$mj_cb_log" >&2
       fi
       rm -f "$mj_cb_log"
-      # between this build and the next: the bound, under cargo's lock, now that it is free
-      mj_rust_bound_after_build "$mj_cb_root"
+      # (the bound between this build and the next runs in mj_cargo_bounded, I3959)
       return "$mj_cb_rc"
     fi
     # the bound: say what was observed, stop waiting, and go where no other tree builds
