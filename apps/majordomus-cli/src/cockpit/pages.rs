@@ -6623,7 +6623,9 @@ pub fn execution(ctx: &Context, id: &str) -> Page {
                     .collect(),
             )
         },
-    );
+    )
+    // the live page reads this card back from the server when a step moves
+    .attr("data-mj-steps", "");
 
     let logs: Vec<El> = history
         .events

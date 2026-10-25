@@ -64385,7 +64385,9 @@
           "profile": "implementation",
           "scope": [
             "test/cases/3982_one_click_implement_survives_a_restart.sh",
-            "test/fixtures"
+            "test/fixtures",
+            "share/cockpit/executions.js",
+            "apps/majordomus-cli/src/cockpit/pages.rs"
           ],
           "serves": [
             "an-issue-is-implemented-from-one-click#the-loop-is-walked-across-a-restart"
@@ -87074,6 +87076,13 @@
         "label": "test/cases/391_skills_are_proven_capabilities.sh",
         "route": "/cockpit/objects/test/test-cases-391-skills-are-proven-capabilities-sh",
         "source": "test/cases/391_skills_are_proven_capabilities.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "kind": "test",
+        "label": "test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "route": "/cockpit/objects/test/test-cases-3982-one-click-implement-survives-a-restart-sh",
+        "source": "test/cases/3982_one_click_implement_survives_a_restart.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -129861,6 +129870,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/3982_one_click_implement_survives_a_restart.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -134972,8 +134986,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3782,
-      "edges": 8747,
+      "nodes": 3783,
+      "edges": 8748,
       "acyclic": false,
       "truncated": false
     }

@@ -152,7 +152,29 @@ function installExecutionPage() {
     }
     if (frame.type === 'execution.step.started' || frame.type === 'execution.step.completed') {
       touchState(page, frame);
+      rereadSteps();
     }
+  }
+
+  // A step moved: the server renders the steps table, so that card is read back from this
+  // page's own URL and put in place. Steps that move together are read once.
+  let rereading = null;
+  function rereadSteps() {
+    if (rereading) return;
+    rereading = window.setTimeout(async () => {
+      rereading = null;
+      const current = page.querySelector('[data-mj-steps]');
+      if (!current || final) return;
+      try {
+        const answer = await fetch(window.location.href, { headers: { Accept: 'text/html' } });
+        if (!answer.ok) return;
+        const html = new DOMParser().parseFromString(await answer.text(), 'text/html');
+        const fresh = html.querySelector('[data-mj-steps]');
+        if (fresh && !final) current.replaceWith(document.importNode(fresh, true));
+      } catch (_) {
+        // the next step, or the resync after a reconnect, reads it again
+      }
+    }, 150);
   }
 
   async function resync() {
