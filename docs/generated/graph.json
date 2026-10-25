@@ -70414,6 +70414,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I4205",
+        "kind": "issue",
+        "label": "I4205",
+        "summary": "A milestone's order is its own, and the shell and the executable order the roadmap alike",
+        "route": "/cockpit/objects/issue/i4205",
+        "source": ".ai/repo/project/issues/I4205.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 48: two milestones on order 777 fail plan validate with milestone_duplicate_order naming the first; two on order 0 pass",
+            "plan.rs unit test two_milestones_on_one_order_are_refused holds the same message",
+            "Case 99: the shell and the executable agree on this repository's roadmap"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Renumbering milestones whose order is unique",
+            "What rank, the dependency layering, decides"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4205.yaml",
+            ".ai/repo/project/milestones/browser-compute.yaml",
+            ".ai/repo/project/milestones/builds-reuse-the-mesh-cache.yaml",
+            ".ai/repo/project/milestones/derived-data-integrity.yaml",
+            ".ai/repo/project/milestones/ordinary-commands-never-build.yaml",
+            "apps/majordomus-cli/src/plan.rs",
+            "lib/project.awk",
+            "lib/plan.sh",
+            "docs/ROADMAP.md",
+            "test/cases/48_roadmap_graph.sh"
+          ],
+          "serves": [],
+          "slug": "a-milestone-order-is-unique",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "bash test/run.sh 48_roadmap_graph 99_plan_capabilities",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4220",
         "kind": "issue",
         "label": "I4220",
@@ -73366,7 +73413,7 @@
             "Writing anything on a browser's behalf before ADR 0170's open question is decided",
             "WebRTC, peer-to-peer transfer, reputation"
           ],
-          "order": 147,
+          "order": 148,
           "priority": "p1",
           "risks": [
             "The structure job installs the wasm32 target for the portable-core gate; a runner without network for rustup fails that gate loudly rather than skipping it."
@@ -73419,7 +73466,7 @@
             "Public exposure of the store",
             "A second provider beside the first"
           ],
-          "order": 181,
+          "order": 197,
           "priority": "p0",
           "scope": [
             "apps/majordomus-cli/src/mesh/build_cache.rs",
@@ -73809,7 +73856,7 @@
             "derivation_survives_an_unrelated_merge",
             "fixture_without_history_evaluates"
           ],
-          "order": 95,
+          "order": 98,
           "priority": "p1",
           "scope": [
             "scripts",
@@ -75307,7 +75354,7 @@
           "non_scope": [
             "Migrating lib/*.sh domain logic (intent repository-automation-is-typed)"
           ],
-          "order": 182,
+          "order": 198,
           "priority": "p0",
           "risks": [
             "A client that relied on the hidden rebuild now sees exit 12: the message names the one command to run"
@@ -132608,6 +132655,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4205",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4205",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4220",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144229,8 +144286,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }

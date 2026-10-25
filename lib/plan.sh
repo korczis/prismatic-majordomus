@@ -151,7 +151,9 @@ mj_plan_roadmap() {
       END {
         for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++) {
           split(r[i], x, "\t"); split(r[j], y, "\t")
-          if (x[1] > y[1] || (x[1] == y[1] && x[2] > y[2])) { t = r[i]; r[i] = r[j]; r[j] = t }
+          # rank, then order, then id, as plan.rs orders the roadmap; without the id, milestones that
+          # share an order (0, the default) came out in whatever order the exchanges left (I4205)
+          if (x[1] + 0 > y[1] + 0 || (x[1] + 0 == y[1] + 0 && (x[2] + 0 > y[2] + 0 || (x[2] + 0 == y[2] + 0 && "" x[4] > "" y[4])))) { t = r[i]; r[i] = r[j]; r[j] = t }
         }
         printf "{\"schema\":1,\"milestones\":["
         for (i = 1; i <= n; i++) {

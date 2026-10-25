@@ -1258,6 +1258,26 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             );
         }
     }
+    // Two milestones on one `order` leave their place within a rank to whichever reader sorts
+    // them (I4205): the shell and this executable once disagreed on the roadmap that way. An
+    // order is a milestone's own place, so a second holder is refused; 0, the default of a
+    // record that names none, is no place and is never compared. `lib/project.awk` is the same.
+    let mut order_holder: BTreeMap<i64, &str> = BTreeMap::new();
+    for m in &mraw {
+        let o = order_of(&m.order);
+        if o == 0 {
+            continue;
+        }
+        if let Some(first) = order_holder.get(&o) {
+            v.fail(
+                "milestone_duplicate_order",
+                &m.id,
+                format!("has order {o}, which {first} already has; give one of them a free order"),
+            );
+        } else {
+            order_holder.insert(o, &m.id);
+        }
+    }
 
     // ---------------------------------------------------------------- assemble
     edges.sort();
@@ -1793,6 +1813,33 @@ mod tests {
         assert!(f[0]
             .message
             .starts_with("projects to GitHub as a 259-character title"));
+    }
+
+    /// Two milestones on one non-zero order are refused on the second, naming the first; two
+    /// on order 0, a record's default, are no conflict (I4205).
+    #[test]
+    fn two_milestones_on_one_order_are_refused() {
+        let mut a = milestone("M001", &[]);
+        let mut b = milestone("M002", &[]);
+        let mut c = milestone("M003", &[]);
+        let mut d = milestone("M004", &[]);
+        a.order = "7".into();
+        b.order = "7".into();
+        c.order = "0".into();
+        d.order = "0".into();
+        let p = derive(header(), vec![a, b, c, d], vec![]);
+        let f: Vec<_> = p
+            .findings
+            .iter()
+            .filter(|f| f.code == "milestone_duplicate_order")
+            .collect();
+        assert_eq!(f.len(), 1, "{:?}", p.findings);
+        assert_eq!(f[0].level, "FAIL");
+        assert_eq!(f[0].subject, "M002");
+        assert_eq!(
+            f[0].message,
+            "has order 7, which M001 already has; give one of them a free order"
+        );
     }
 
     /// A record naming a dependency that does not exist is refused by name, and the

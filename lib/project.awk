@@ -375,6 +375,16 @@ END {
       finding("FAIL", "milestone_title_too_long", id, "projects to GitHub as a " tl "-character title (\"" id " — <title>\"); GitHub's limit is " MTITLE_MAX)
   }
 
+  # Two milestones on one order leave their place within a rank to whichever reader sorts them
+  # (I4205), so a second holder is refused; 0, a record's default, is no place and is never
+  # compared. plan.rs is the same, in the same record order.
+  for (i = 1; i <= mn; i++) {
+    id = mids[i]; o = m[id, "order"] + 0
+    if (o == 0) continue
+    if (o in mord) finding("FAIL", "milestone_duplicate_order", id, "has order " o ", which " mord[o] " already has; give one of them a free order")
+    else mord[o] = id
+  }
+
   # ---------------------------------------------------------------- emit
   print "P", clean(pkey["name"]), clean(pkey["repository"]), clean(pkey["default_branch"]), best
   print "S", "issue", ISTATUS

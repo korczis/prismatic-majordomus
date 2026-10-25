@@ -98,6 +98,7 @@ The same refusals the work graph has, one level up, each by name:
 | `milestone_duplicate_dependency` | the same requirement is declared twice |
 | `milestone_cycle` | the requirements form a loop, so no order exists |
 | `milestone_premature` | a milestone is being executed past an unmet dependency |
+| `milestone_duplicate_order` | two milestones share one non-zero `order`, so their place within a rank is nobody's |
 | `empty_milestone` | a milestone is reachable and nobody has planned work in it |
 
 ```
