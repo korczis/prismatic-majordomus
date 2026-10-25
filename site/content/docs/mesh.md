@@ -784,6 +784,22 @@ The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.h
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
 
+**The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
+systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, `Restart=always`. Two
+facts of that machine decide how it is upgraded. Its glibc is older than the
+`aarch64-unknown-linux-gnu` archive needs — the 1.0.0-alpha.5 executable asks for `GLIBC_2.32`
+and stops before it starts — while the installer picks the gnu archive on any glibc machine; so
+jetson runs the `aarch64-unknown-linux-musl` archive, verified against its digest, unpacked
+beside the older trees under `~/.local/share/majordomus/versions/`, with both launchers in
+`~/.local/bin` pointed at it. And an executable refuses a manifest newer than itself
+(1.0.0-alpha.5 against the trunk of 2026-10-25: `unknown key(s): lifecycle`), so jetson's hub
+checkout is detached at the tag of the release it runs, not at the trunk, until a release for
+its platform carries the trunk's schema. A hub left behind falls a protocol behind and links
+with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every MacBook spoke
+protocol 2, and every other machine on its board read `expired`. After the upgrade its `mesh
+doctor` held every check, and the hubs of both MacBooks listed it live.
+
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
 under its service manager when no session is attached or after a bounded grace, checks its
