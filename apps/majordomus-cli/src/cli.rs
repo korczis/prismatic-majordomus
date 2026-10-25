@@ -1894,6 +1894,9 @@ pub struct MonitorArgs {
     /// Start after this cursor (a page's `cursor`), instead of the newest signals
     #[arg(long)]
     pub after: Option<String>,
+    /// Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing
+    #[arg(long, value_name = "FILE")]
+    pub cursor_file: Option<std::path::PathBuf>,
     /// At most this many signals per page (default 50, at most 500)
     #[arg(long)]
     pub limit: Option<u64>,
@@ -3347,6 +3350,9 @@ pub enum DeployCommand {
         /// The directory the slug is written into: outside the checkout, absent or empty
         #[arg(long)]
         out: String,
+        /// The site built at that commit, required when the deployment declares build.site
+        #[arg(long)]
+        site: Option<String>,
     },
 }
 
@@ -5227,7 +5233,7 @@ pub enum DevcontextCommand {
 ///     "majordomus", "devcontext", "compile",
 ///     "--path", "apps/majordomus-cli/src", "--path", "lib",
 ///     "--uri", "majordomus://adr/0052",
-///     "--floor", "0.4", "--all-blocking-rules",
+///     "--floor", "0.4", "--all-blocking-rules", "--source-ranges",
 /// ]);
 ///
 /// // repeated singular flags accumulate into the set the compiler seeds from
@@ -5235,6 +5241,7 @@ pub enum DevcontextCommand {
 /// assert_eq!(compiling.uris, ["majordomus://adr/0052"]);
 /// assert_eq!(compiling.floor, Some(0.4));
 /// assert!(compiling.all_blocking_rules);
+/// assert!(compiling.source_ranges);
 ///
 /// // the same flags reach `explain`, after its positional identifier
 /// let explaining = request_of(&[
@@ -5246,6 +5253,7 @@ pub enum DevcontextCommand {
 /// let silent = request_of(&["majordomus", "devcontext", "compile"]);
 /// assert!(silent.issue.is_none() && silent.paths.is_empty());
 /// assert!(!silent.all_blocking_rules && silent.floor.is_none());
+/// assert!(!silent.source_ranges, "reading source is asked for, never assumed");
 /// ```
 pub struct DevcontextRequest {
     /// An issue id (`I0301`) or its canonical identifier
@@ -5275,6 +5283,10 @@ pub struct DevcontextRequest {
     /// Every blocking rule of the layer, not only the ones the work reaches
     #[arg(long)]
     pub all_blocking_rules: bool,
+    /// Outline the Rust source under the work's paths into ranges (path, lines, symbol,
+    /// reason, cost), spent by the budget beside the layer's objects
+    #[arg(long)]
+    pub source_ranges: bool,
 }
 
 // ------------------------------------------------------------------ the command line as data

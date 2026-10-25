@@ -18960,6 +18960,20 @@
                 ]
               },
               {
+                "name": "source_ranges",
+                "long": "source-ranges",
+                "positional": false,
+                "help": "Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects",
+                "value_name": "SOURCE_RANGES",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
                 "name": "repo",
                 "long": "repo",
                 "positional": false,
@@ -19202,6 +19216,20 @@
                 "positional": false,
                 "help": "Every blocking rule of the layer, not only the ones the work reaches",
                 "value_name": "ALL_BLOCKING_RULES",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "source_ranges",
+                "long": "source-ranges",
+                "positional": false,
+                "help": "Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects",
+                "value_name": "SOURCE_RANGES",
                 "takes_value": false,
                 "required": false,
                 "global": false,
@@ -23514,6 +23542,18 @@
             "defaults": []
           },
           {
+            "name": "cursor_file",
+            "long": "cursor-file",
+            "positional": false,
+            "help": "Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing",
+            "value_name": "FILE",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
             "name": "limit",
             "long": "limit",
             "positional": false,
@@ -26600,6 +26640,18 @@
                 "value_name": "OUT",
                 "takes_value": true,
                 "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "site",
+                "long": "site",
+                "positional": false,
+                "help": "The site built at that commit, required when the deployment declares build.site",
+                "value_name": "SITE",
+                "takes_value": true,
+                "required": false,
                 "global": false,
                 "possible_values": [],
                 "defaults": []

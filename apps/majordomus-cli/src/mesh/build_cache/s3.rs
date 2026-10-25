@@ -822,13 +822,8 @@ mod tests {
             Probe::Unhealthy(503)
         );
         // a port nothing listens on
-        let closed = TcpListener::bind("127.0.0.1:0")
-            .unwrap()
-            .local_addr()
-            .unwrap()
-            .to_string();
         assert_eq!(
-            probe(&Endpoint { host: closed }, Duration::from_millis(200)),
+            probe(&closed_port(), Duration::from_millis(200)),
             Probe::Unknown
         );
     }
@@ -847,13 +842,12 @@ mod tests {
         Endpoint { host }
     }
 
+    /// A loopback endpoint nothing listens on, from the build cache's one source of them.
     fn closed_port() -> Endpoint {
-        let host = TcpListener::bind("127.0.0.1:0")
-            .unwrap()
-            .local_addr()
-            .unwrap()
-            .to_string();
-        Endpoint { host }
+        let port = crate::mesh::build_cache::tests::closed_port();
+        Endpoint {
+            host: format!("127.0.0.1:{port}"),
+        }
     }
 
     fn quick(endpoint: Endpoint) -> Store {

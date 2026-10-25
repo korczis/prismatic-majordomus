@@ -1291,40 +1291,8 @@ impl std::error::Error for CursorError {}
 /// assert_eq!(canonical_json(&a), br#"{"a":[{"c":3,"d":2}],"b":1}"#.to_vec());
 /// ```
 pub fn canonical_json(value: &Value) -> Vec<u8> {
-    let mut out = Vec::new();
-    write_canonical(value, &mut out);
-    out
-}
-
-fn write_canonical(value: &Value, out: &mut Vec<u8>) {
-    match value {
-        Value::Object(map) => {
-            // A BTreeSet, not a sorted vector: the signing order is the byte order of the
-            // keys, decided by the container rather than by a comparator written here.
-            let keys: std::collections::BTreeSet<&String> = map.keys().collect();
-            out.push(b'{');
-            for (i, key) in keys.iter().enumerate() {
-                if i > 0 {
-                    out.push(b',');
-                }
-                out.extend(serde_json::to_vec(key).unwrap_or_default());
-                out.push(b':');
-                write_canonical(&map[*key], out);
-            }
-            out.push(b'}');
-        }
-        Value::Array(items) => {
-            out.push(b'[');
-            for (i, item) in items.iter().enumerate() {
-                if i > 0 {
-                    out.push(b',');
-                }
-                write_canonical(item, out);
-            }
-            out.push(b']');
-        }
-        other => out.extend(serde_json::to_vec(other).unwrap_or_default()),
-    }
+    // one implementation, the portable core's, which a browser runs as wasm32 (ADR 0170)
+    majordomus_core::canonical_json(value)
 }
 
 impl MeshEvent {

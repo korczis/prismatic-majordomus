@@ -5,24 +5,24 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 218,
-      "covered": 179,
+      "required": 220,
+      "covered": 181,
       "missing": 0,
       "waived": 39,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 210,
-      "covered": 179,
+      "required": 212,
+      "covered": 181,
       "missing": 0,
       "waived": 31,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 204,
-      "covered": 174,
+      "required": 206,
+      "covered": 176,
       "missing": 0,
       "waived": 30,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 646,
-      "covered": 546,
+      "required": 652,
+      "covered": 552,
       "missing": 0,
       "waived": 100,
       "inapplicable": 0
@@ -474,7 +474,8 @@
         "no-seed",
         "issue",
         "milestone",
-        "intent"
+        "intent",
+        "source-ranges"
       ]
     },
     {
@@ -939,6 +940,30 @@
       "module": "gates",
       "kind": "query",
       "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "gates.policy",
+      "module": "gates",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "gates.state",
+      "module": "gates",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -2983,6 +3008,12 @@
     {
       "key": "system.http.ui.panels.standing",
       "route": "/ui/panels/standing",
+      "view": "pinned",
+      "deferred": true
+    },
+    {
+      "key": "system.http.ui.panels.shared_scope",
+      "route": "/ui/panels/shared-scope",
       "view": "pinned",
       "deferred": true
     }

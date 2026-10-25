@@ -185,6 +185,18 @@ pub struct GateRun {
 /// The newest `task.gate` line per gate for one task. A line that is not JSON is skipped
 /// and counted: a ledger that has grown one bad line still holds the rest.
 pub(crate) fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>, usize) {
+    runs_where(ledger, Some(task))
+}
+
+/// The newest `task.gate` line per gate, whichever task recorded it: the last word this
+/// checkout's ledger holds about each gate. What `gates.state` reads, because the state of
+/// a gate is not a property of the task that happens to be open.
+pub(crate) fn latest_runs(ledger: &Path) -> (BTreeMap<String, GateRun>, usize) {
+    runs_where(ledger, None)
+}
+
+/// The newest `task.gate` line per gate, of one task or of every task.
+fn runs_where(ledger: &Path, task: Option<&str>) -> (BTreeMap<String, GateRun>, usize) {
     let Ok(text) = std::fs::read_to_string(ledger) else {
         return (BTreeMap::new(), 0);
     };
@@ -201,7 +213,7 @@ pub(crate) fn runs_for(ledger: &Path, task: &str) -> (BTreeMap<String, GateRun>,
                 .unwrap_or_default()
                 .to_string()
         };
-        if s("event") != GATE_EVENT || s("task") != task {
+        if s("event") != GATE_EVENT || task.is_some_and(|t| s("task") != t) {
             continue;
         }
         let gate = s("gate");
@@ -687,6 +699,16 @@ classes:
         assert_eq!(build.exit, 0, "the newest line wins");
         assert_eq!(build.inputs_hash, "bbbb");
         assert_eq!(runs.len(), 1, "another task's run is not this task's");
+
+        // and read without a task, the last word about the gate is whoever said it last
+        let (latest, skipped) = latest_runs(&path);
+        assert_eq!(skipped, 1);
+        let build = latest.get("build").expect("the newest line of any task");
+        assert_eq!(
+            build.exit, 1,
+            "a later failure of another task is the gate's state"
+        );
+        assert_eq!(build.inputs_hash, "cccc");
     }
 
     #[test]

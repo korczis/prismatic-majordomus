@@ -4260,6 +4260,7 @@ majordomus devcontext compile [OPTIONS]
 | `--max-depth` | `<MAX_DEPTH>` | — | How far from a seed the walk goes |
 | `--floor` | `<FLOOR>` | — | Relevance below which an entry is reported rather than given, between 0 and 1 |
 | `--all-blocking-rules` | flag | — | Every blocking rule of the layer, not only the ones the work reaches |
+| `--source-ranges` | flag | — | Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4305,6 +4306,7 @@ majordomus devcontext explain [OPTIONS] <URI>
 | `--max-depth` | `<MAX_DEPTH>` | — | How far from a seed the walk goes |
 | `--floor` | `<FLOOR>` | — | Relevance below which an entry is reported rather than given, between 0 and 1 |
 | `--all-blocking-rules` | flag | — | Every blocking rule of the layer, not only the ones the work reaches |
+| `--source-ranges` | flag | — | Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -5247,6 +5249,7 @@ majordomus monitor [OPTIONS]
 |---|---|---|---|
 | `--follow` | flag | — | Keep following: ask again every `--interval` seconds and print only what is new |
 | `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
+| `--cursor-file` | `<FILE>` | — | Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing |
 | `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
 | `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
 | `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |
@@ -5882,6 +5885,7 @@ majordomus deploy slug [OPTIONS]
 | `--commit` | `<COMMIT>` | — | The commit every file is read at (default HEAD) |
 | `--executable` | `<EXECUTABLE>` | required | The executable built at that commit |
 | `--out` | `<OUT>` | required | The directory the slug is written into: outside the checkout, absent or empty |
+| `--site` | `<SITE>` | — | The site built at that commit, required when the deployment declares build.site |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
