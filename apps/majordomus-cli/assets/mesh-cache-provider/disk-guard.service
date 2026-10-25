@@ -1,0 +1,11 @@
+[Unit]
+Description=Keep the build host's root filesystem off the cliff
+Documentation=file:/usr/local/libexec/majordomus/disk-guard
+After=docker.service local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/majordomus/disk-guard
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=30min

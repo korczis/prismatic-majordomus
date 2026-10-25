@@ -37,7 +37,7 @@ pub fn run(args: McpArgs) -> Result<u8> {
     let stdin = std::io::stdin();
     let stdout = std::io::stdout();
     if args.standalone {
-        let mut server = standalone(&args.repo)?;
+        let mut server = standalone(&args.repo, None)?;
         tracing::info!("standalone: no shared server, no HTTP, no peers");
         stdio::serve(stdin.lock(), stdout.lock(), |m| server.handle(m))?;
         return Ok(0);
@@ -49,12 +49,20 @@ pub fn run(args: McpArgs) -> Result<u8> {
     Ok(0)
 }
 
-/// A server answering one stdio session alone: no shared server, no HTTP, no peers.
-fn standalone(repo: &RepoArgs) -> Result<Server> {
-    let app = App::load(repo)?;
+/// A server answering one stdio session alone: no shared server, no HTTP, no peers. A
+/// repository the session already discovered is loaded as it is, not discovered again (I3015).
+fn standalone(repo: &RepoArgs, found: Option<Repository>) -> Result<Server> {
+    let app = match found {
+        Some(found) => App::load_from(repo, found)?,
+        None => App::load(repo)?,
+    };
     // a stdio session outlives commits like any other: it follows the repository too
     let live = Arc::new(Live::watching(repo.clone(), app.context.clone()));
     let peer = live.current().peers.attach(PeerTransport::Stdio);
+    // as on a shared server, the stdio client is the worker that started this process (I3956)
+    live.current()
+        .peers
+        .locate_known(&peer, crate::peers::PeerAddress::of_this_process());
     Ok(Server::new(
         Surface::new(Arc::clone(&live)).for_peer(peer),
         crate::VERSION,
@@ -139,12 +147,12 @@ impl Session {
         // (I2129). A policy that does not parse leaves the defaults; `doctor` reports it.
         let _ = crate::policy::LoadedPolicy::load(&repo);
         let backend = match lease::elect(&repo) {
-            Ok(Role::Server(lease)) => match Self::serve(&args, lease, None) {
+            Ok(Role::Server(lease)) => match Self::serve(&args, &repo, lease, None) {
                 Ok(backend) => backend,
-                Err(e) => Self::alone(&args, None, &format!("starting it failed: {e}"))?,
+                Err(e) => Self::alone(&args, &repo, None, &format!("starting it failed: {e}"))?,
             },
             Ok(Role::Peer { url }) => Self::attach(url),
-            Err(e) => Self::alone(&args, None, &e.to_string())?,
+            Err(e) => Self::alone(&args, &repo, None, &e.to_string())?,
         };
         Ok(Session {
             args,
@@ -155,8 +163,13 @@ impl Session {
 
     /// The shared server cannot be used: serve this client alone and say why. The layer
     /// itself still has to load; when it does not, that error is the answer, not this.
-    fn alone(args: &McpArgs, resume: Option<ClientInfo>, why: &str) -> Result<Backend> {
-        let mut server = standalone(&args.repo)?;
+    fn alone(
+        args: &McpArgs,
+        repo: &Repository,
+        resume: Option<ClientInfo>,
+        why: &str,
+    ) -> Result<Backend> {
+        let mut server = standalone(&args.repo, Some(repo.clone()))?;
         tracing::warn!(
             "cannot use the shared server: {why}; serving this client alone (no HTTP, no Swagger UI, no peers), as --standalone would"
         );
@@ -169,13 +182,14 @@ impl Session {
     /// Become the shared server: load the layer, bind, and answer this stdio locally.
     fn serve(
         args: &McpArgs,
+        repo: &Repository,
         lease: Lease,
         resume: Option<crate::peers::ClientInfo>,
     ) -> Result<Backend> {
         // the lease is kept young while the layer loads, so that a peer waiting on it
         // never mistakes a slow start for an abandoned one
         lease.keep_alive();
-        let app = App::load(&args.repo)?;
+        let app = App::load_from(&args.repo, repo.clone())?;
         let live = Arc::new(Live::watching(args.repo.clone(), app.context.clone()));
         let ctx = live.current();
         let root = std::path::Path::new(&app.context.index.repository.root);
@@ -196,6 +210,10 @@ impl Session {
             &crate::shared::MeshHosting::default(),
         )?;
         let peer = ctx.peers.attach(PeerTransport::Stdio);
+        // the client on this process's own stdio started this process: its address is this
+        // process's environment (I3956); a bridged client's is carried in its initialize
+        ctx.peers
+            .locate_known(&peer, crate::peers::PeerAddress::of_this_process());
         let mut server = Server::new(Surface::new(live).for_peer(peer.clone()), crate::VERSION)
             .with_endpoint(Some(shared.url()));
         if let Some(client) = resume {
@@ -258,7 +276,7 @@ impl Session {
         };
         match lease::elect(&self.repo) {
             Ok(Role::Server(lease)) => {
-                match Self::serve(&self.args, lease, client.clone()) {
+                match Self::serve(&self.args, &self.repo, lease, client.clone()) {
                     Ok(backend) => {
                         self.replace(backend);
                         tracing::info!(
@@ -363,7 +381,7 @@ impl Session {
         reason: &str,
         withheld: Option<&BridgeError>,
     ) -> Option<Reply> {
-        match Self::alone(&self.args, client, reason) {
+        match Self::alone(&self.args, &self.repo, client, reason) {
             Ok(backend) => {
                 self.replace(backend);
                 match withheld {
@@ -744,6 +762,39 @@ mod tests {
             body: String::new(),
         };
         assert!(refused(&notification, &rejected).is_none());
+    }
+
+    /// When no lease can be taken the client is served alone, and when the layer does not
+    /// load either, that error is the answer rather than the election's.
+    #[test]
+    fn a_failed_election_over_a_layer_that_does_not_load_answers_the_layers_error() {
+        use clap::Parser;
+        let fixture = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = fixture.root().canonicalize().unwrap();
+        let repo = Repository::discover(&root).unwrap();
+        // the lease's directory cannot be made where a file stands in its way
+        let blocked = root.join(repo.local_path()).join("state");
+        std::fs::create_dir_all(blocked.parent().unwrap()).unwrap();
+        std::fs::write(&blocked, b"not a directory").unwrap();
+        assert!(lease::elect(&repo).is_err());
+
+        let missing = root.join("no-share-here");
+        let cli = crate::cli::Cli::try_parse_from([
+            "majordomus",
+            "mcp",
+            "--repo",
+            root.to_str().unwrap(),
+            "--share",
+            missing.to_str().unwrap(),
+        ])
+        .unwrap();
+        let crate::cli::Command::Mcp(args) = cli.command else {
+            panic!("not the mcp command")
+        };
+        match Session::open(args, repo) {
+            Err(e) => assert!(matches!(e, Error::ShareNotFound { .. }), "{e:?}"),
+            Ok(_) => panic!("a session was opened over a layer that does not load"),
+        }
     }
 
     #[test]

@@ -190,6 +190,14 @@ scripts/release-version --check --tag v0.3.0
 scripts/ci/release-verdict --commit HEAD
 ```
 
+The verdict is the newest `ci` check-run GitHub attaches to that commit, whichever event
+started it, and `release.yml` asks the same question again with `--wait 300`. A commit that
+reached master unchanged from a pull request's head carries that pull request's run too, so a
+red or unfinished run there is the verdict until master's own push run on the commit concludes
+and is the newer one. Tag only after that push run is green: a tag pushed earlier is refused
+by the release workflow, at once on a red run and after five minutes on one still running,
+and is released by dispatching `release.yml` with the tag once the verdict is green.
+
 ```bash
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0

@@ -30,8 +30,9 @@ EXPIRY=6
 REPO="majordomus-mesh-lab"
 mkdir -p "$LAB"
 
-declare -A VERDICT=()
-declare -A DETAIL=()
+# Every scenario's verdict and detail, in the order the scenarios ran, as one JSON object:
+# this runner starts on the host, and an associative array is bash 4 (project.portable-shell).
+SCENARIOS='{}'
 declare -a ORDER=()
 STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -45,11 +46,7 @@ cleanup() {
 }
 
 write_evidence() {
-  local status="$1" scenarios="{}" name
-  for name in "${ORDER[@]}"; do
-    scenarios="$(jq -c --arg n "$name" --arg v "${VERDICT[$name]}" --arg d "${DETAIL[$name]:-}" \
-      '. + {($n): {verdict: $v, detail: $d}}' <<<"$scenarios")"
-  done
+  local status="$1" scenarios="$SCENARIOS"
   jq -n \
     --arg schema "mesh-lab-evidence/v1" \
     --arg started "$STARTED" \
@@ -66,11 +63,21 @@ write_evidence() {
       scenarios: $scenarios}' > "$LAB/evidence.json"
 }
 
-trap 'rc=$?; if [ $rc -ne 0 ] && [ -n "${ORDER[*]:-}" ]; then write_evidence failed; fi; cleanup' EXIT
+# a run that failed after a scenario reported leaves its evidence; every run removes its nodes
+on_exit() {
+  local rc=$?
+  if [ "$rc" -ne 0 ] && [ -n "${ORDER[*]:-}" ]; then write_evidence failed; fi
+  cleanup
+}
+trap on_exit EXIT
 
-pass() { ORDER+=("$1"); VERDICT[$1]=pass; DETAIL[$1]="$2"; printf 'pass  %-34s %s\n' "$1" "$2"; }
+# verdict NAME VERDICT DETAIL: records a scenario's outcome; a later one of the same name replaces it
+verdict() {
+  SCENARIOS="$(jq -c --arg n "$1" --arg v "$2" --arg d "$3" '. + {($n): {verdict: $v, detail: $d}}' <<<"$SCENARIOS")"
+}
+pass() { ORDER+=("$1"); verdict "$1" pass "$2"; printf 'pass  %-34s %s\n' "$1" "$2"; }
 fail() {
-  ORDER+=("$1"); VERDICT[$1]=fail; DETAIL[$1]="$2"
+  ORDER+=("$1"); verdict "$1" fail "$2"
   printf 'FAIL  %-34s %s\n' "$1" "$2" >&2
   for n in a b c; do
     printf -- '--- node %s cooperation\n' "$n" >&2

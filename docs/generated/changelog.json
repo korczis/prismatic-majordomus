@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/changelog/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.6",
-  "current": "1.0.0-alpha.6",
+  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "current": "1.0.0-alpha.8",
   "sections": [
     {
       "version": "1.0.0-alpha.5",
@@ -795,7 +795,7 @@
                 {
                   "kind": "issue",
                   "id": "I3833",
-                  "title": "majordomus disk prune reclaims the container runtime's caches by name: build cache, anonymous unused volumes, dangling images, then trims the VM disk",
+                  "title": "majordomus disk prune reclaims by name what nobody is using: idle build directories under their cargo locks, and the container runtime's cache",
                   "route": "/plan/i3833/"
                 }
               ]
@@ -1087,7 +1087,7 @@
                 {
                   "kind": "issue",
                   "id": "I3833",
-                  "title": "majordomus disk prune reclaims the container runtime's caches by name: build cache, anonymous unused volumes, dangling images, then trims the VM disk",
+                  "title": "majordomus disk prune reclaims by name what nobody is using: idle build directories under their cargo locks, and the container runtime's cache",
                   "route": "/plan/i3833/"
                 },
                 {
@@ -3524,20 +3524,20 @@
       "tree_url": "https://github.com/korczis/prismatic-majordomus/tree/v0.30.0",
       "decisions": [
         {
+          "id": "adr-0172",
+          "title": "A client always gets a server, and a session that is opened starts by joining the cluster",
+          "status": "superseded",
+          "date": "2026-10-22",
+          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
+          "added": "80eb4a539bf358011dda2b7e48f25618e04df101"
+        },
+        {
           "id": "adr-0175",
           "title": "v1.0.0-alpha.1 declares what it can do and its limits, and every line of the declaration names its proof",
           "status": "proposed",
           "date": "2026-10-19",
           "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0175-v1-0-0-alpha-1-declares-what-it-can-do-and-its-limits.md",
           "added": "d605fbeb40f4fb10b9e945708cd589d325f680c4"
-        },
-        {
-          "id": "adr-0172",
-          "title": "A client always gets a server, and a session that is opened starts by joining the cluster",
-          "status": "proposed",
-          "date": "2026-10-17",
-          "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0172-a-client-always-gets-a-server-and-a-session-starts-by-joining.md",
-          "added": "80eb4a539bf358011dda2b7e48f25618e04df101"
         }
       ],
       "groups": [
@@ -6107,7 +6107,7 @@
         {
           "id": "adr-0164",
           "title": "A durable record names the session that wrote it, and relates a task only when the task is that session's",
-          "status": "proposed",
+          "status": "accepted",
           "date": "2026-10-15",
           "url": "https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0164-a-record-names-the-session-that-wrote-it.md",
           "added": "e59b86b66c9b96a6408fad219b6d059c64902974"

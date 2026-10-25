@@ -1,7 +1,7 @@
 +++
 title = "majordomus intent validate"
 description = "Every finding over the intents; exit 10 when any is a failure"
-weight = 192
+weight = 198
 [extra]
 route = "/docs/cli/intent/validate/"
 command = "majordomus intent validate"

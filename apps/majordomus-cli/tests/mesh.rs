@@ -36,14 +36,14 @@ mod common;
 use common::{run_in, Fixture, Served};
 use serde_json::{json, Value};
 
-use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig};
+use majordomus_cli::mesh::config::{MeshConfig, MulticastConfig, TailscaleConfig};
 use majordomus_cli::mesh::identity::NodeIdentity;
 use majordomus_cli::mesh::protocol::advertise;
 use majordomus_cli::mesh::MeshRuntime;
 
 /// An enabled declaration with every socket-opening transport off: activation, identity
 /// and registration under test, and not one datagram anywhere.
-const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n";
+const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n";
 
 const DISABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: false\n";
 
@@ -296,6 +296,11 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
+        // this test is about the rendezvous: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
         trust: majordomus_cli::mesh::config::TrustConfig {
             allow: vec![own.to_string()],
             ..Default::default()
@@ -586,6 +591,11 @@ fn a_registration_learns_only_the_trusted_nodes_of_its_own_repository() {
         },
         broadcast: Default::default(),
         rendezvous: Default::default(),
+        // the hub is reached by its address here: the tailnet stays quiet
+        tailscale: TailscaleConfig {
+            enabled: false,
+            ..TailscaleConfig::default()
+        },
         trust: Default::default(),
         cooperation: Default::default(),
     };
@@ -847,4 +857,335 @@ fn discovery_flood_bounded_test() {
     let routed: Value = serde_json::from_str(&response.body.text()).expect("a JSON status");
     assert_eq!(routed["refusals"]["overflow"], json!(lost), "{routed}");
     mesh.stop();
+}
+
+/// A peer that answers one connection with `write`, after reading the request's first bytes:
+/// whatever a dialer meets on the far side of a link or a rendezvous it does not control.
+fn peer_answering(
+    write: impl FnOnce(&mut std::net::TcpStream) + Send + 'static,
+) -> std::net::SocketAddr {
+    use std::io::Read;
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+    std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let mut head = [0u8; 8192];
+        let _ = stream.read(&mut head);
+        write(&mut stream);
+    });
+    addr
+}
+
+/// A peer answering one connection with `body`, as the shared server does: 200, its length,
+/// and the JSON pretty-printed.
+fn peer_answering_json(body: &impl serde::Serialize) -> std::net::SocketAddr {
+    use std::io::Write;
+    let text = serde_json::to_string_pretty(body).unwrap();
+    peer_answering(move |s| {
+        let _ = s.write_all(
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n",
+                text.len()
+            )
+            .as_bytes(),
+        );
+        let _ = s.write_all(text.as_bytes());
+    })
+}
+
+/// A dialer reads no reply beyond its bound (I2704). A link reply is held at most at
+/// `MAX_LINK_REPLY` — one message under `MAX_LINK_MESSAGE` in its `{"signed":…}` — counted
+/// without the whitespace the server pretty-prints, so the reply at the bound is read and the
+/// one a byte over is refused; a register answer is held at most at `MAX_REGISTER_ANSWER`
+/// and carries at most `MAX_ANSWER_CANDIDATES` envelopes, so 33 are read, 34 are refused as
+/// too many before the 34th is built and 10 000 are refused as oversized after 81 KiB; and a
+/// peer that drips its reply a byte at a time is cut at the whole-reply deadline, with
+/// nothing of the padding held.
+#[test]
+fn reply_bound_test() {
+    use majordomus_cli::mcp::bridge::{request_json_within, ReplyBound, ReplyRefused};
+    use majordomus_cli::mesh::link::{
+        HttpTransport, LinkReply, LinkTransport, Signed, MAX_LINK_MESSAGE, MAX_LINK_REPLY,
+        SYNC_PATH,
+    };
+    use majordomus_cli::mesh::rendezvous::{
+        register, RegisterAnswer, RegisterError, MAX_ANSWER_CANDIDATES, MAX_REGISTER_ANSWER,
+    };
+    use std::time::{Duration, Instant};
+
+    // a link reply whose compact JSON is `extra` bytes over MAX_LINK_REPLY
+    let link_reply = |extra: usize| {
+        let bare = serde_json::to_string(&LinkReply::accepted(Signed {
+            body: json!(""),
+            sig: String::new(),
+        }))
+        .unwrap()
+        .len();
+        LinkReply::accepted(Signed {
+            body: json!("x".repeat(MAX_LINK_REPLY - bare + extra)),
+            sig: String::new(),
+        })
+    };
+    let at_bound = link_reply(0);
+    assert_eq!(
+        serde_json::to_string(at_bound.signed.as_ref().unwrap())
+            .unwrap()
+            .len(),
+        MAX_LINK_MESSAGE,
+        "the reply at the bound carries a message at the message bound"
+    );
+    let ask = Signed {
+        body: json!({}),
+        sig: String::new(),
+    };
+    let peer = peer_answering_json(&at_bound);
+    let read = HttpTransport
+        .post(&peer.to_string(), SYNC_PATH, &ask)
+        .expect("a reply at the bound is read, its pretty-printing not counted");
+    assert_eq!(read.signed, at_bound.signed);
+
+    let peer = peer_answering_json(&link_reply(1));
+    let refused = HttpTransport
+        .post(&peer.to_string(), SYNC_PATH, &ask)
+        .expect_err("a reply a byte over the bound");
+    assert!(
+        refused.contains(&format!("{MAX_LINK_REPLY}-byte bound")),
+        "the failure names the bound: {refused}"
+    );
+
+    // the rendezvous: the bound on candidates, and the bound on bytes beneath it
+    let node = NodeIdentity::ephemeral().unwrap();
+    let envelope = advertise(&node, 1, &[], &[], &[], "test");
+    let answer = |n: usize| RegisterAnswer {
+        accepted: true,
+        refusal: None,
+        candidates: vec![envelope.clone(); n],
+    };
+    let peer = peer_answering_json(&answer(MAX_ANSWER_CANDIDATES));
+    let read = register(&format!("http://{peer}"), &envelope).expect("33 candidates are read");
+    assert_eq!(read.candidates.len(), MAX_ANSWER_CANDIDATES);
+
+    let peer = peer_answering_json(&answer(MAX_ANSWER_CANDIDATES + 1));
+    assert_eq!(
+        register(&format!("http://{peer}"), &envelope).unwrap_err(),
+        RegisterError::TooManyCandidates {
+            endpoint: format!("http://{peer}"),
+            bound: MAX_ANSWER_CANDIDATES,
+        }
+    );
+
+    let peer = peer_answering_json(&answer(10_000));
+    assert_eq!(
+        register(&format!("http://{peer}"), &envelope).unwrap_err(),
+        RegisterError::Refused {
+            endpoint: format!("http://{peer}"),
+            refused: ReplyRefused::Oversized {
+                bound: MAX_REGISTER_ANSWER
+            },
+        },
+        "10 000 candidates are never read as far as their count"
+    );
+
+    // a peer that never stops and never finishes: a space every 20 ms, which no bound
+    // between two reads ever catches and which the dialer never holds
+    let peer = peer_answering(|s| {
+        use std::io::Write;
+        let _ = s.write_all(b"HTTP/1.1 200 OK\r\n\r\n");
+        for _ in 0..1500 {
+            if s.write_all(b" ").is_err() {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    });
+    let started = Instant::now();
+    let bound = ReplyBound {
+        bytes: 1024,
+        idle: Duration::from_secs(5),
+        within: Duration::from_millis(600),
+    };
+    let late = request_json_within(&format!("http://{peer}"), "POST", "/", &[], None, bound)
+        .expect_err("a dripping reply is cut");
+    assert_eq!(
+        ReplyRefused::of(&late),
+        Some(&ReplyRefused::Late { millis: 600 })
+    );
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "cut at the whole-reply deadline, not at the idle one: {:?}",
+        started.elapsed()
+    );
+}
+
+#[test]
+fn enrolment_lists_this_machines_key_once_and_opens_the_mesh_here() {
+    let f = Fixture::new();
+    // the declaration `majordomus init` ships: enabled, deny_unknown, nobody listed
+    let seeded = std::fs::read_to_string(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../../share/skeleton/ai/repo/mesh/mesh.yaml"),
+    )
+    .unwrap();
+    f.write(".ai/repo/mesh/mesh.yaml", &seeded);
+    let state = f.root().join("xdg-state");
+    let mj = |args: &[&str]| {
+        let out = std::process::Command::new(common::BIN)
+            .args(args)
+            .args(["--discovery", "filesystem"])
+            .current_dir(f.root())
+            .env("XDG_STATE_HOME", &state)
+            .env("MAJORDOMUS_SHARE", common::dist_share())
+            .output()
+            .unwrap();
+        (
+            out.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&out.stdout).to_string(),
+        )
+    };
+
+    // closed before: the doctor's trust check names this machine as unlisted
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    let trust = |report: &str| -> Value {
+        serde_json::from_str::<Value>(report).unwrap()["checks"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["check"] == json!("trust"))
+            .cloned()
+            .unwrap_or(Value::Null)
+    };
+    // no identity yet: nothing to check against, so no trust verdict either way
+    assert_ne!(trust(&doctor)["ok"], json!(true), "{doctor}");
+
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    let enrolled: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(enrolled["added"], json!(true), "{enrolled}");
+    let key = enrolled["key"].as_str().unwrap().to_string();
+    assert_eq!(key.len(), 64);
+    assert!(
+        state.join("majordomus").join("node.json").is_file(),
+        "enrolment created this machine's identity under its state directory"
+    );
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    assert!(written.contains(&format!("    - \"{key}\"")), "{written}");
+    assert!(
+        written.starts_with("# The mesh of this repository"),
+        "the comments stay"
+    );
+
+    // once: a second enrolment changes nothing
+    let (code, out) = mj(&["mesh", "enrol", "--format", "json"]);
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(
+        serde_json::from_str::<Value>(&out).unwrap()["added"],
+        json!(false)
+    );
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        written
+    );
+
+    // and the machine is listed: the trust check passes
+    let (_, doctor) = mj(&["mesh", "doctor", "--format", "json"]);
+    assert_eq!(trust(&doctor)["ok"], json!(true), "{doctor}");
+}
+
+/// `mesh enrol` in `f` under `env` (a `None` removes the variable): the exit code, stdout
+/// and stderr.
+fn enrol_in(f: &Fixture, env: &[(&str, Option<&std::path::Path>)]) -> (i32, String, String) {
+    let mut command = common::majordomus();
+    command
+        .args([
+            "mesh",
+            "enrol",
+            "--format",
+            "json",
+            "--discovery",
+            "filesystem",
+        ])
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share());
+    for (name, value) in env {
+        match value {
+            Some(value) => command.env(name, value),
+            None => command.env_remove(name),
+        };
+    }
+    let out = command.output().unwrap();
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8_lossy(&out.stdout).to_string(),
+        String::from_utf8_lossy(&out.stderr).to_string(),
+    )
+}
+
+const SEEDED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: mesh\nenabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n";
+
+/// With nowhere to keep this machine's identity, or a state directory that cannot hold
+/// one, enrolment is refused with the reason and the declaration is left as it was.
+#[test]
+fn enrolment_without_a_place_for_the_identity_is_refused_and_writes_nothing() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+
+    let (code, out, err) = enrol_in(&f, &[("HOME", None), ("XDG_STATE_HOME", None)]);
+    assert_ne!(code, 0, "{out}");
+    assert!(
+        err.contains("no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity"),
+        "{err}"
+    );
+
+    // a state directory that is a file: the identity cannot be created under it
+    let blocker = f.root().join("blocker");
+    std::fs::write(&blocker, "a file, not a directory").unwrap();
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&blocker))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("refused"), "{err}");
+
+    assert_eq!(
+        std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap(),
+        SEEDED
+    );
+}
+
+/// A machine whose host name cannot be read is still enrolled: its allowlist entry is
+/// named "this machine" beside its node id and platform.
+#[test]
+fn enrolment_names_a_machine_without_a_readable_host_name_this_machine() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let state = f.root().join("xdg-state");
+    // no `hostname` on an empty PATH
+    let empty = f.root().join("empty-path");
+    std::fs::create_dir_all(&empty).unwrap();
+    let (code, out, err) = enrol_in(
+        &f,
+        &[("XDG_STATE_HOME", Some(&state)), ("PATH", Some(&empty))],
+    );
+    assert_eq!(code, 0, "{out}\n{err}");
+    let written = std::fs::read_to_string(f.path(".ai/repo/mesh/mesh.yaml")).unwrap();
+    let label = format!(
+        " — this machine ({} {})\n",
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    );
+    assert!(written.contains(&label), "{written}");
+}
+
+/// A declaration that cannot be written is an internal error naming it, and the file
+/// keeps what it held.
+#[cfg(unix)]
+#[test]
+fn a_declaration_that_cannot_be_written_is_an_error_and_stays_as_it_was() {
+    use std::os::unix::fs::PermissionsExt;
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/mesh.yaml", SEEDED);
+    let declaration = f.path(".ai/repo/mesh/mesh.yaml");
+    std::fs::set_permissions(&declaration, std::fs::Permissions::from_mode(0o444)).unwrap();
+    let state = f.root().join("xdg-state");
+    let (code, out, err) = enrol_in(&f, &[("XDG_STATE_HOME", Some(&state))]);
+    assert_ne!(code, 0, "{out}");
+    assert!(err.contains("internal: .ai/repo/mesh/mesh.yaml"), "{err}");
+    assert_eq!(std::fs::read_to_string(&declaration).unwrap(), SEEDED);
 }
