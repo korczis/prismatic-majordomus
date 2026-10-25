@@ -104,23 +104,7 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             ask(&v.query, "GET", &target, None, render_state, never)
         }
         MeshCommand::Events(a) => {
-            let mut target = "/api/v1/mesh/events".to_string();
-            let mut pairs = Vec::new();
-            if let Some(after) = a.after {
-                pairs.push(format!("after={after}"));
-            }
-            if let Some(cursor) = &a.cursor {
-                pairs.push(format!("cursor={}", encode(cursor)));
-            }
-            if let Some(limit) = a.limit {
-                pairs.push(format!("limit={limit}"));
-            }
-            if a.newest {
-                pairs.push("newest=true".to_string());
-            }
-            if !pairs.is_empty() {
-                target = format!("{target}?{}", pairs.join("&"));
-            }
+            let target = events_target(&a);
             ask(&a.query, "GET", &target, None, render_events, never)
         }
         MeshCommand::Verify(q) => ask(
@@ -151,6 +135,14 @@ pub fn run(args: MeshArgs) -> Result<u8> {
             "POST",
             "/api/v1/mesh/claims/release",
             Some(json!({ "claim": a.claim })),
+            render_written,
+            never,
+        ),
+        MeshCommand::Beat(a) => ask(
+            &a.query,
+            "POST",
+            "/api/v1/mesh/beats",
+            Some(json!({ "session": a.session, "phase": a.phase, "pid": a.pid })),
             render_written,
             never,
         ),
@@ -1158,6 +1150,33 @@ fn viewed(path: &str, v: &crate::cli::MeshViewArgs) -> String {
     }
 }
 
+/// The `mesh.events` route `mesh events` asks: each flag given becomes one query pair, and
+/// no flag is the bare route under the server's own default page.
+fn events_target(a: &crate::cli::MeshEventsArgs) -> String {
+    let mut pairs = Vec::new();
+    if let Some(after) = a.after {
+        pairs.push(format!("after={after}"));
+    }
+    if let Some(cursor) = &a.cursor {
+        pairs.push(format!("cursor={}", encode(cursor)));
+    }
+    if let Some(limit) = a.limit {
+        pairs.push(format!("limit={limit}"));
+    }
+    if a.newest {
+        pairs.push("newest=true".to_string());
+    }
+    if a.beats {
+        pairs.push("beats=true".to_string());
+    }
+    let target = "/api/v1/mesh/events";
+    if pairs.is_empty() {
+        target.to_string()
+    } else {
+        format!("{target}?{}", pairs.join("&"))
+    }
+}
+
 /// The summary view of `mesh.state`: the totals, then each runtime, the open reviews and
 /// the untaken handovers, each list followed by how many it did not show.
 fn render_summary(sm: &Value) -> String {
@@ -1407,6 +1426,41 @@ fn map(e: CapabilityError) -> Error {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// `mesh events` asks for what its flags say and nothing else: no flag is the bare
+    /// route, and `--beats` asks for the session beats the journal hides by default (I3990).
+    #[test]
+    fn the_events_flags_are_the_query_the_server_is_asked() {
+        use clap::Parser;
+        let target = |args: &[&str]| {
+            let cli = crate::cli::Cli::try_parse_from(
+                ["majordomus", "mesh", "events"].iter().chain(args),
+            )
+            .unwrap();
+            let crate::cli::Command::Mesh(mesh) = cli.command else {
+                panic!("expected `mesh`")
+            };
+            let MeshCommand::Events(events) = mesh.command else {
+                panic!("expected `events`")
+            };
+            events_target(&events)
+        };
+        assert_eq!(target(&[]), "/api/v1/mesh/events");
+        assert_eq!(
+            target(&["--beats"]),
+            "/api/v1/mesh/events?beats=true",
+            "beats are asked for by name"
+        );
+        assert_eq!(
+            target(&["--after", "42", "--limit", "10", "--newest", "--beats"]),
+            "/api/v1/mesh/events?after=42&limit=10&newest=true&beats=true"
+        );
+        assert_eq!(
+            target(&["--cursor", "00000000000000aa:7", "--beats"]),
+            "/api/v1/mesh/events?cursor=00000000000000aa%3A7&beats=true",
+            "a cursor resumes the walk, encoded, beside the beats"
+        );
+    }
 
     /// One entry of `server.status`'s `servers`, as `checkouts_of` writes it.
     fn server(worktree: &str, primary: bool, this: bool, standing: &str, port: u16) -> Value {

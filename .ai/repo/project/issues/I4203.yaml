@@ -1,0 +1,30 @@
+id: I4203
+milestone: ci-critical-path
+title: "The ci verdict judges each gate by the receipt of the attempt that ran it, so a rerun that passes is not judged by the attempt that failed"
+slug: a-rerun-is-judged-by-its-own-receipts
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the ci job's verdict read, for every gate, only the receipts of the latest attempt that ran it. Name each receipt artifact with github.run_attempt (ci-receipts-<gate>-a<attempt>); then scripts/ci/verdict reads, of every artifact directory ci-receipts-<job>-a<n>, only its highest attempt n (a directory with no -a<n> is attempt 0). Both halves are needed: a `rerun --failed` carries the untouched jobs' receipts from an earlier attempt, so downloading only the current attempt would leave those gates without a receipt."
+why: "Train 6 (#2417, run 40088179259) attempt 3: the pages job (120969512183) passed every check and no step failed, yet ci (120972566054) went red with 'verdict: gate pages-live was selected and its job pages succeeded, but a step of it reported failure'. The run held three artifacts named ci-receipts-pages (attempt 1 13:15Z, attempt 2 19:33Z red, 19:58Z); validate.yml's ci job downloads `pattern: ci-receipts-*` and received attempt 2's red receipt (12573745759). Every `gh run rerun --failed` of a gate that failed once can therefore stay red however the rerun ends."
+current_state: "validate.yml uploads ci-receipts-<gate> with the same name on every attempt, and the ci job's download-artifact `pattern: ci-receipts-*` takes whichever same-named artifact it receives; scripts/ci/verdict reads the directory without knowing which attempt wrote it."
+desired_state: "A rerun's verdict reads only receipts of the attempt that ran each gate (or the newest per gate); a gate red in attempt N and green in attempt N+1 reads green; case 94 holds a fixture with two receipts of one gate from different attempts."
+scope:
+  - ".ai/repo/project/issues/I4203.yaml"
+  - ".github/workflows/validate.yml"
+  - "scripts/ci/verdict"
+  - "test/cases/94_ci_plan.sh"
+non_scope:
+  - "What any gate checks"
+  - "Deleting artifacts of past runs"
+acceptance_criteria:
+  - "Case 94 fails against master's verdict on a fixture with a stale red and a fresh green receipt of one gate, and passes with the fix"
+  - "A `gh run rerun --failed` whose rerun gate passes yields a green ci verdict"
+validation:
+  - "bash test/run.sh 94_ci_plan"
+evidence_required:
+  - "a_rerun_is_judged_by_its_own_receipts_test"
+depends_on: []
+serves: []
+created_at: 2026-10-24
+updated_at: 2026-10-25

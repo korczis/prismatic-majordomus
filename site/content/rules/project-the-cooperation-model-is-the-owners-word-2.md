@@ -1,7 +1,7 @@
 +++
 title = "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current"
 description = "Work moves through seats held as mesh claims, a worker lands its own green head, and every checkout is kept current"
-weight = 168
+weight = 169
 [extra]
 kind = "rule"
 slug = "project-the-cooperation-model-is-the-owners-word-2"
@@ -49,7 +49,11 @@ check or a hook, and paths and identifiers are still claimed before they are bui
 ## Required behaviour
 
 1. **A seat is an exclusive mesh claim.** A session holds a seat by holding its claim through
-   `mesh.claim`, releases it when it stops, and loses it when its heartbeat stops. Nothing else
+   `mesh.claim`, releases it when it stops, and loses it when its heartbeat stops — and,
+   while its server beats on, a seat whose holder waits on a dialog, hangs or crashes is
+   suspended within `cooperation.session_ttl_seconds` and no longer refuses the next
+   session; a holder that waits on something outside itself says so with `mesh beat
+   --phase` (I3990, `project.an-exclusive-claim-lives-by-its-holders-progress`). Nothing else
    makes a session a seat: not a name on the board, not a sentence in a handover. The seats and
    the scope each one claims:
 

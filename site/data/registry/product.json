@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "d9fa317cddbc23810f2092697aed88496bb206b8b54aaec253fc3318309e4213",
+  "fingerprint": "bd53486748624e2b26ea104a4bd6872a3dcfa42d222bb0e99d5a9c7f384fcfbb",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 82,
+        "capabilities": 83,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 148,
+        "capabilities": 149,
         "moments": 38
       },
       "evidence": {
@@ -5574,6 +5574,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
               "id": "mesh.build_cache.ensure",
               "title": "Restore an install before its command, and save it after",
               "kind": "command",
@@ -5926,10 +5934,10 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 29,
-        "mcp_tools": 24,
+        "capabilities": 30,
+        "mcp_tools": 25,
         "mcp_resources": 2,
-        "http_routes": 26,
+        "http_routes": 27,
         "cli_paths": 9,
         "commands": 0,
         "objects": 1,
@@ -8030,7 +8038,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 190
+          "objects": 191
         }
       ],
       "rule_refs": [
@@ -8406,11 +8414,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 192,
+        "mcp_resources": 193,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 190,
+        "objects": 191,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9647,6 +9655,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
               "id": "mesh.build_cache.ensure",
               "title": "Restore an install before its command, and save it after",
               "kind": "command",
@@ -10432,10 +10448,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 68,
-        "mcp_tools": 59,
+        "capabilities": 69,
+        "mcp_tools": 60,
         "mcp_resources": 9,
-        "http_routes": 63,
+        "http_routes": 64,
         "cli_paths": 25,
         "commands": 0,
         "objects": 1,
@@ -10896,6 +10912,14 @@
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
             {
               "id": "mesh.build_cache.ensure",
               "title": "Restore an install before its command, and save it after",
@@ -11904,10 +11928,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 110,
-        "mcp_tools": 98,
+        "capabilities": 111,
+        "mcp_tools": 99,
         "mcp_resources": 18,
-        "http_routes": 104,
+        "http_routes": 105,
         "cli_paths": 49,
         "commands": 0,
         "objects": 0,
@@ -13461,7 +13485,7 @@
         },
         {
           "name": "issue",
-          "objects": 1027
+          "objects": 1034
         },
         {
           "name": "intent",
@@ -13671,11 +13695,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1226,
+        "mcp_resources": 1233,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1223,
+        "objects": 1230,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17608,7 +17632,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1027)",
+        "title": "issue (1034)",
         "features": [
           "planning"
         ]
@@ -17671,7 +17695,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (190)",
+        "title": "rule (191)",
         "features": [
           "doctrine"
         ]
@@ -18668,17 +18692,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3538,
-    "builtin": 219,
-    "declarative": 3319,
+    "capabilities": 3549,
+    "builtin": 220,
+    "declarative": 3329,
     "modules": 60,
-    "mcp_tools": 205,
-    "mcp_resources": 3376,
-    "http_routes": 211,
-    "cli_commands": 218,
+    "mcp_tools": 206,
+    "mcp_resources": 3386,
+    "http_routes": 212,
+    "cli_commands": 220,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3319,
+    "objects": 3329,
     "by_kind": {
       "adr": 166,
       "application": 5,
@@ -18697,7 +18721,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1027,
+      "issue": 1034,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -18706,12 +18730,12 @@
       "profile": 4,
       "prompt": 5,
       "release-record": 36,
-      "rule": 190,
+      "rule": 191,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 652,
+      "test": 654,
       "use-case": 49,
       "workspace": 1
     },

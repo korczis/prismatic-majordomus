@@ -18,6 +18,12 @@
           "route": "/docs/cli/serve/"
         },
         {
+          "about": "The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser",
+          "command": "majordomus ui",
+          "name": "ui",
+          "route": "/docs/cli/ui/"
+        },
+        {
           "about": "Introspect the capability registry: what exists, where it came from, how it is exposed",
           "command": "majordomus capabilities",
           "name": "capabilities",
@@ -1171,6 +1177,193 @@
       ],
       "route": "/docs/cli/serve/stop/",
       "usage": "majordomus serve stop [OPTIONS]"
+    },
+    {
+      "about": "The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The screen to open, by the last word of its route (`roadmap` is /ui/roadmap); without it, the dashboard",
+          "name": "screen",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SCREEN"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print the address and open no browser",
+          "long": "no-open",
+          "name": "no_open",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_OPEN"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The port a server this call starts asks for first, as for `serve ensure`",
+          "long": "port",
+          "name": "port",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PORT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The idle life of a server this call starts, in seconds, as for `serve ensure`",
+          "long": "idle",
+          "name": "idle",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SECONDS"
+        },
+        {
+          "defaults": [
+            "20"
+          ],
+          "global": false,
+          "help": "How long to wait for a server to become ready",
+          "long": "wait",
+          "name": "wait",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SECONDS"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus ui",
+      "depth": 1,
+      "examples": [
+        {
+          "argv": [
+            "ui",
+            "nowhere",
+            "--no-open"
+          ],
+          "command": "majordomus ui nowhere --no-open",
+          "description": "`majordomus ui` ensures this checkout's shared server as `serve ensure` does, prints the address of /ui (or of /ui/<screen>) and opens it in a browser; `--no-open` only prints it. A screen is named by the last word of its route, and one the navigation does not hold is refused with exit 2 and every screen listed, before the repository is read or anything is started.",
+          "expectation": "exits 2",
+          "id": "ui-unknown-screen",
+          "setup": [],
+          "title": "A screen the UI does not have is refused before a server is started"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "ui",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "ui"
+      ],
+      "route": "/docs/cli/ui/",
+      "usage": "majordomus ui [OPTIONS] [SCREEN]"
     },
     {
       "about": "Introspect the capability registry: what exists, where it came from, how it is exposed",
@@ -22777,6 +22970,12 @@
           "route": "/docs/cli/mesh/release/"
         },
         {
+          "about": "Say a session is making progress, and what it is doing, so its exclusive claims keep excluding",
+          "command": "majordomus mesh beat",
+          "name": "beat",
+          "route": "/docs/cli/mesh/beat/"
+        },
+        {
           "about": "Open, update or close a session on the mesh",
           "command": "majordomus mesh session",
           "name": "session",
@@ -24463,6 +24662,20 @@
           "value_name": "NEWEST"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Include the session beats a working session's runtime writes, hidden by default",
+          "long": "beats",
+          "name": "beats",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "BEATS"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -25056,6 +25269,175 @@
       ],
       "route": "/docs/cli/mesh/release/",
       "usage": "majordomus mesh release [OPTIONS] <CLAIM>"
+    },
+    {
+      "about": "Say a session is making progress, and what it is doing, so its exclusive claims keep excluding",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus mesh",
+          "name": "mesh",
+          "route": "/docs/cli/mesh/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The session making progress, as it was claimed under",
+          "long": "session",
+          "name": "session",
+          "positional": false,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "SESSION"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What it is doing, one line: `waiting on CI run 123`",
+          "long": "phase",
+          "name": "phase",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PHASE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The running process of this machine the beat speaks for",
+          "long": "pid",
+          "name": "pid",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus mesh beat",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "mesh",
+            "beat",
+            "--session",
+            "lander",
+            "--phase",
+            "waiting-on-ci"
+          ],
+          "command": "majordomus mesh beat --session lander --phase waiting-on-ci",
+          "description": "A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.",
+          "expectation": "exits 10",
+          "id": "mesh-beat",
+          "setup": [],
+          "title": "Keep a waiting session's exclusive claims excluding"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "beat",
+      "parent_route": "/docs/cli/mesh/",
+      "path": [
+        "majordomus",
+        "mesh",
+        "beat"
+      ],
+      "route": "/docs/cli/mesh/beat/",
+      "usage": "majordomus mesh beat [OPTIONS]"
     },
     {
       "about": "Open, update or close a session on the mesh",
@@ -39656,10 +40038,10 @@
     }
   ],
   "counts": {
-    "arguments": 1716,
-    "commands": 250,
-    "examples": 251,
-    "runnable": 218
+    "arguments": 1735,
+    "commands": 252,
+    "examples": 253,
+    "runnable": 220
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.8",
