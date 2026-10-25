@@ -250,7 +250,10 @@ if [ -x "$BIN/majordomus-mcp" ] && [ -f "${repo:-}/.ai/repo/policy.yaml" ]; then
   exec 3> "$WORK/mcp.in"
   # a launcher that cannot start may close the pipe before these are written: the write then
   # fails (EPIPE, or SIGPIPE in the subshell), and under set -e that would end the gate before
-  # it says why, so the failure is left to the checks below, which name it
+  # it says why, so the failure is left to the checks below, which name it. Whether the launcher
+  # is gone before the first write is a race; MJ_INSTALL_CHECK_SEND_AFTER (seconds, a test's
+  # alone) waits first, so case 1024 meets the closed pipe on every run, not on some (I4208).
+  [ -z "${MJ_INSTALL_CHECK_SEND_AFTER:-}" ] || sleep "$MJ_INSTALL_CHECK_SEND_AFTER"
   ( frame 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"install-check","version":"0"}}'
     printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
     frame 2 tools/list ) >&3 2>/dev/null || true

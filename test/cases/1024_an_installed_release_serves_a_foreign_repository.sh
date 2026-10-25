@@ -76,7 +76,11 @@ s/\"size\": [0-9]*/\"size\": $size/
       || { echo "    $meta could not be told the repacked digest of $name"; exit 1; }
   done
 done
-out="$(env HOME="$T/home-broken" "$GATE" --base "$HTTP_BASE" --expect "v$VERSION" 2>&1)" && {
+# The gate writes to the launcher a moment after starting it; a launcher that exits at once has
+# usually, not always, closed the pipe by then. Waiting a second before the writes makes the
+# closed pipe the case every run (I4208): a gate that died of the write (EPIPE under set -e)
+# instead of naming the launcher's failure fails this case every time, not on some runners.
+out="$(env HOME="$T/home-broken" MJ_INSTALL_CHECK_SEND_AFTER=1 "$GATE" --base "$HTTP_BASE" --expect "v$VERSION" 2>&1)" && {
   echo "    the gate passed a release whose MCP launcher cannot start"
   printf '%s\n' "$out" | sed 's/^/      /'
   exit 1

@@ -70414,6 +70414,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4208",
+        "kind": "issue",
+        "label": "I4208",
+        "summary": "Case 1024 meets the launcher's closed pipe on every run, so a gate that dies of the write fails it every time",
+        "route": "/cockpit/objects/issue/i4208",
+        "source": ".ai/repo/project/issues/I4208.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 1024 passes with the write guard",
+            "With the write guard removed (the writes straight to fd 3), case 1024 fails on every run"
+          ],
+          "created_at": "2026-10-25",
+          "current_state": "install-check writes to the launcher as soon as the fifo opens; whether the planted launcher has exited by then is a race, so case 1024 exercises the closed pipe on some runs only.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "What the gate checks",
+            "The write guard itself, which landed in f49a7399498"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "scripts/ci/install-check",
+            "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
+            ".ai/repo/project/issues/I4208.yaml"
+          ],
+          "serves": [],
+          "slug": "a-closed-pipe-is-met-on-every-run",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "bash test/run.sh 1024_an_installed_release_serves_a_foreign_repository"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4220",
         "kind": "issue",
         "label": "I4220",
@@ -132608,6 +132647,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4208",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4208",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4220",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144229,8 +144278,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }
