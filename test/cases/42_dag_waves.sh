@@ -95,6 +95,8 @@ I0012 — shares src/shared with I0014
 I0013 — shares src/shared/inner with I0014"
 [ "$got" = "$want" ] || { printf '    scope conflicts:\n%s\n    expected:\n%s\n' "$got" "$want"; exit 1; }
 
-# the doctor prints the model's findings in one pass, as the lines mj_finding prints
-expect_exit 0 "$MJ" doctor --json
+# the doctor prints the model's findings in one pass, as the lines mj_finding prints. The
+# fixture has no hooks and no projections, so doctor fails for its own reasons; only the dag
+# line is asked about.
+LAST_OUT="$("$MJ" doctor --json 2>&1)" || true
 expect_grep '^\{"level":"WARN","category":"dag","subject":"I0012","message":"shares src/shared with I0013; they may not run concurrently","reproduce":"majordomus plan show I0012"\}$'
