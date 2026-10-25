@@ -26273,6 +26273,8 @@
             "The cache never grows past the cap",
             "yaml_flatten count is unchanged; a new counter flatten_cache_hit reports hits"
           ],
+          "completed_at": "2026-10-25T20:40:59Z",
+          "completed_event": "sha256:6739b7bae5404538ba3d425d960c19f799845b54ecf5c188b4a7b4aa7ffaf5b0",
           "created_at": "2026-09-05",
           "current_state": ".ai/README.md already reserves local/cache/ for rebuildable caches; nothing uses it.",
           "depends_on": [
@@ -26300,7 +26302,7 @@
           "slug": "flatten-cache",
           "started_at": "2026-10-16T09:50:41Z",
           "started_event": "sha256:48973b22009f2da9d36792957a4ae77fa3397e684a2b19f2b5b6ff925e48511d",
-          "updated_at": "2026-10-16T09:51:08Z",
+          "updated_at": "2026-10-25T20:40:59Z",
           "validation": [
             "bash test/run.sh 3090_a_flatten_is_cached_by_its_content",
             "MJ_TIMING=1 bin/majordomus doctor"
@@ -40965,6 +40967,8 @@
             "The same text inside the markers is still refused",
             "A whole-file target is judged as before"
           ],
+          "completed_at": "2026-10-25T20:41:17Z",
+          "completed_event": "sha256:422846c455230e6d6b10b0bd425336790b57082376e2f7d09d3326d8549e1e10",
           "created_at": "2026-10-13",
           "current_state": "lib/doctor.sh:276 greps the whole target for rule bullets and rule headings whatever its mode; the neighbouring reference and budget checks already read the region through mj_region_extract.",
           "depends_on": [],
@@ -40985,7 +40989,7 @@
           "slug": "a-region-host-is-not-judged-as-a-bootstrap",
           "started_at": "2026-10-13T11:17:46Z",
           "started_event": "sha256:6d908b8b69c389d6d3f08dfc28f2074f781bfcede344b10179a154269121d41b",
-          "updated_at": "2026-10-13T18:08:39Z",
+          "updated_at": "2026-10-25T20:41:17Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
@@ -44288,6 +44292,8 @@
             "the renumbered document still collides at its new number, naming the branch",
             "case 271 fails against master without the change"
           ],
+          "completed_at": "2026-10-25T20:40:43Z",
+          "completed_event": "sha256:ad06231459fa960dd7bd652d64c38c41ee70a0fc20886a3c219b3fdcba4a76e7",
           "created_at": "2026-10-16",
           "current_state": "mj_adr_collisions reports a collision for every path that any ref's history ever added, for as long as any ref contains that add-commit, whether or not the document still exists at the ref's tip.",
           "depends_on": [],
@@ -44305,7 +44311,9 @@
             ".ai/repo/project/issues/I2761.yaml"
           ],
           "slug": "a-renumbered-adr-claims-nothing",
-          "updated_at": "2026-10-16",
+          "started_at": "2026-10-25T20:39:19Z",
+          "started_event": "sha256:bd62cb6479568f4171a07896cfbd2a2c81423ec513eba8505a997620c43f486e",
+          "updated_at": "2026-10-25T20:40:43Z",
           "validation": [
             "bash test/run.sh 271_adr_allocation",
             "bin/majordomus plan validate"
@@ -64073,6 +64081,8 @@
             "reasoning check forbids a source's own credential variable in CI as it forbids the vendor's (test)",
             "models.list carries the sources, and majordomus generate --check is clean"
           ],
+          "completed_at": "2026-10-25T20:40:25Z",
+          "completed_event": "sha256:517628e739bcdc1e4925d1d1240cffff7b8b13346a4fbea952424131a96b70aa",
           "created_at": "2026-10-20",
           "current_state": "share/models.yaml declares id, title, inference and credential_env per vendor; no funding source exists; reasoning check collects CI-forbidden variables from vendor.credential_env only.",
           "depends_on": [],
@@ -64098,7 +64108,9 @@
             "every-model-call-is-paid-from-a-declared-source#vendor-declares-its-sources"
           ],
           "slug": "a-vendor-declares-its-funding-sources",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-25T20:39:02Z",
+          "started_event": "sha256:3fcf3e8e7db965716a0c4b9e9d522fb3f9a1b8386a89fc86a4180f1e5e2f04ec",
+          "updated_at": "2026-10-25T20:40:25Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib models::",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib reasoning::check",
@@ -70098,6 +70110,8 @@
             "A push of any non-deletion ref runs the plan as before",
             "The exemption is declared data beside the refs/majordomus/* one"
           ],
+          "completed_at": "2026-10-25T20:40:09Z",
+          "completed_event": "sha256:94839781287551d9c63743e9be9f39def0da3d8c4b1bd65d4bb13d3f79cf50b7",
           "created_at": "2026-10-23",
           "current_state": "Not built: this issue is planned by the milestone a-session-proceeds-through-the-mesh and nothing of it exists.",
           "desired_state": "The acceptance criteria below hold and case 4008 proves them.",
@@ -70120,7 +70134,9 @@
             "a-session-proceeds-through-the-mesh#heavy-work-shares-the-machine"
           ],
           "slug": "a-push-that-only-deletes-runs-no-plan",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-25T20:38:46Z",
+          "started_event": "sha256:59bceee0880b33ee39e6905469f05a17c13d976c496ceda99a1d66e40b097fe8",
+          "updated_at": "2026-10-25T20:40:09Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4008_a_push_that_only_deletes_runs_no_plan"
           ],
@@ -70468,6 +70484,8 @@
             "retry::transient holds 'unexpected end of JSON input' as an outage; a 401, a 404 and a refusal are still answers",
             "Case 742: a pr list cut off once is asked exactly twice, the refresh exits 0 and records the observation; the four outage and refusal sections still hold"
           ],
+          "completed_at": "2026-10-25T20:39:37Z",
+          "completed_event": "sha256:08dc5c4579cbca54c8898b61fc63da0f113f531e7ba3abc27fec20d9dd0cbece",
           "created_at": "2026-10-24",
           "current_state": "A cut-off reply is taken as the forge's answer: gh_retrying returns it at once and the observation fails with exit 12.",
           "depends_on": [],
@@ -70493,7 +70511,9 @@
           ],
           "serves": [],
           "slug": "a-truncated-forge-reply-is-retried",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T20:38:13Z",
+          "started_event": "sha256:337e586beb890191d02cb926dde90ff3679263a95a26a04790d869ed814cf03b",
+          "updated_at": "2026-10-25T20:39:37Z",
           "validation": [
             "cargo test --lib integration::retry integration::forge::tests::the_forge_is_asked_exactly_this",
             "bash test/run.sh 742_only_an_outage_is_asked_again"
@@ -70514,6 +70534,8 @@
             "A run with MJ_TEST_FAILURES set writes a failed case's output under its name and nothing of the cases that passed or declined, and a green run leaves the file empty",
             "Case 56 passes on CI with its bound unchanged"
           ],
+          "completed_at": "2026-10-25T20:39:52Z",
+          "completed_event": "sha256:6992923c7f75a1b5c55457ccaf43d9a1ae97a58a524a0d98692bd605e2a95202",
           "created_at": "2026-10-24",
           "depends_on": [],
           "evidence_required": [
@@ -70538,7 +70560,9 @@
           ],
           "serves": [],
           "slug": "the-pre-commit-gate-answers-in-its-bound",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T20:38:29Z",
+          "started_event": "sha256:43d9ca711b9cbcc5b276f103d48f826790e1817a44d29789bbc27c69ea275bea",
+          "updated_at": "2026-10-25T20:39:52Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
             "bash test/run.sh 4223_a_failed_cases_reason_reaches_the_artifact 56_derived_current_gate"
