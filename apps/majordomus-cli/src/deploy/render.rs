@@ -146,6 +146,22 @@ pub(crate) fn runtime_inputs(d: &Deployment) -> Vec<&str> {
         .collect()
 }
 
+/// The inputs besides the package that the package compiles in: the distribution's `share`
+/// directory, which the crate embeds from (the cache provider's payload, I2674). The build
+/// stage copies them beside the package, at the same relative place, or the build stops at
+/// the first `include_str!` that reaches them.
+const EMBEDDED_INPUTS: [&str; 1] = ["share"];
+
+/// The declared inputs the build stage carries beside the package ([`EMBEDDED_INPUTS`]).
+fn embedded_inputs(d: &Deployment) -> Vec<&str> {
+    d.build
+        .inputs
+        .iter()
+        .map(String::as_str)
+        .filter(|p| EMBEDDED_INPUTS.contains(p))
+        .collect()
+}
+
 /// The stages of the builder, in order, before the runtime stage. Each is a layer cache
 /// boundary, and what invalidates each is the point of the split:
 ///
@@ -232,6 +248,10 @@ pub fn dockerfile(d: &Deployment, source: &str, rust: &str) -> String {
         r#"p && /^version = / {{ $0 = "version = \"0.0.0\""; p = 0 }} $0 == "name = \"{package}\"" {{ p = 1 }} 1"#,
         package = d.build.package
     );
+    let embedded_copies: String = embedded_inputs(d)
+        .iter()
+        .map(|input| format!("COPY {input} ./{input}\n"))
+        .collect();
     out.push_str(&format!(
         "FROM {image} AS toolchain\n\
          RUN apk add --no-cache musl-dev sccache\n\
@@ -257,6 +277,7 @@ pub fn dockerfile(d: &Deployment, source: &str, rust: &str) -> String {
          \x20 && sccache --show-stats\n\n\
          FROM deps AS build\n\
          COPY {pkg} ./{pkg}\n\
+         {embedded}\
          # The commit this image is built from, compiled into the executable so that\n\
          # /api/v1/live and /api/v1/ready can name it. The build context carries no .git,\n\
          # so the builder cannot ask git and the build must say it:\n\
@@ -276,6 +297,7 @@ pub fn dockerfile(d: &Deployment, source: &str, rust: &str) -> String {
          COPY --from={RELEASE_CONTEXT} {binary}-${{TARGETARCH}} /out/{binary}\n\n\
          FROM ${{{BINARY_ARG}}} AS binary\n\n",
         image = rust_image(rust),
+        embedded = embedded_copies,
         profile = d.build.profile,
         package = d.build.package,
         binary = d.build.binary,
@@ -694,6 +716,63 @@ mod tests {
         assert!(build
             .iter()
             .any(|l| *l == format!("ARG {COMMIT_ARG}=unknown")));
+    }
+
+    /// Every file the crate embeds is one the build stage copies: the stage is given the
+    /// package and [`EMBEDDED_INPUTS`], nothing else of the repository. A test module may
+    /// read the repository, since the image compiles no test. Train 6 embedded
+    /// `share/mesh-cache-provider/` and master's image stopped compiling; a pull request
+    /// builds the image only when the image's own definition changes, so it is caught here.
+    #[test]
+    fn the_build_stage_carries_every_file_the_package_embeds() {
+        let package = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .canonicalize()
+            .expect("the package directory resolves");
+        let root = package
+            .join("../..")
+            .canonicalize()
+            .expect("the repository resolves");
+        let file = dockerfile(&deployment(), "x.yaml", "1.98.1");
+        let copied: Vec<std::path::PathBuf> = stage(&file, "build")
+            .iter()
+            .filter_map(|l| l.strip_prefix("COPY "))
+            .filter_map(|l| l.split(' ').next())
+            .map(|from| root.join(from))
+            .collect();
+        let mut missing = Vec::new();
+        let mut dirs = vec![package.join("src")];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).expect("the source tree reads") {
+                let path = entry.expect("a source entry reads").path();
+                if path.is_dir() {
+                    dirs.push(path);
+                    continue;
+                }
+                if path.extension().is_none_or(|e| e != "rs") {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).expect("a source file reads");
+                // From the first test module on, the file compiles only under test.
+                let compiled = text.split("#[cfg(test)]").next().unwrap_or_default();
+                for marker in ["include_str!(\"", "include_bytes!(\""] {
+                    for (at, _) in compiled.match_indices(marker) {
+                        let rest = &compiled[at + marker.len()..];
+                        let embedded = &rest[..rest.find('"').unwrap_or(rest.len())];
+                        let carried = dir
+                            .join(embedded)
+                            .canonicalize()
+                            .is_ok_and(|t| copied.iter().any(|c| t.starts_with(c)));
+                        if !carried {
+                            missing.push(format!("{}: {embedded}", path.display()));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(
+            missing.is_empty(),
+            "embedded, not copied by the build stage: {missing:?}"
+        );
     }
 
     #[test]

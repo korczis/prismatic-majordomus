@@ -35,6 +35,7 @@ RUN --mount=type=cache,id=majordomus-sccache,target=/sccache mkdir -p apps/major
 
 FROM deps AS build
 COPY apps/majordomus-cli ./apps/majordomus-cli
+COPY share ./share
 # The commit this image is built from, compiled into the executable so that
 # /api/v1/live and /api/v1/ready can name it. The build context carries no .git,
 # so the builder cannot ask git and the build must say it:

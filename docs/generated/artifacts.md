@@ -289,7 +289,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21265 | `48968b686e49b16f` |
 | `apps/majordomus-cli/src/ui/icons.toml` | `ui-icons` | text | 9034 | `223a8f9827ffa3f2` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9327 | `fefc26c07c8db943` |
-| `deploy/Dockerfile` | `deployment` | text | 4559 | `cd3d9307ea0f86f0` |
+| `deploy/Dockerfile` | `deployment` | text | 4578 | `513626c1b50819e6` |
 | `deploy/gigalixir/Procfile` | `deployment` | text | 522 | `5dbc7258766f2753` |
 | `deploy/gigalixir/bin/compile` | `deployment` | text | 432 | `ec41143398e3794a` |
 | `deploy/gigalixir/bin/detect` | `deployment` | text | 345 | `60601c82b8b7adb3` |
