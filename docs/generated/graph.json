@@ -38613,6 +38613,8 @@
             "An offline peer, a peer without a tailnet IP and a missing tailscale CLI each produce no candidate and a doctor line",
             "A candidate the trust list does not name is refused by the link, as any other candidate is"
           ],
+          "completed_at": "2026-10-25T22:10:33Z",
+          "completed_event": "sha256:5e0aff932f3a76a27ef6bcceffbd1f80fd013999aef7f880c5b4b2a2f3421b23",
           "created_at": "2026-10-10",
           "current_state": "Tailnet peers are dialed only through hand-written rendezvous endpoints.",
           "evidence_required": [
@@ -38631,7 +38633,9 @@
             "test/cases"
           ],
           "slug": "the-tailnet-is-a-discovery-provider",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-25T22:10:03Z",
+          "started_event": "sha256:9e86d30714c4bcad1cec9fe7ffe6b78edc56a78ac2488386ecc932125f7a36a4",
+          "updated_at": "2026-10-25T22:10:33Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib mesh::tailscale"
@@ -38689,6 +38693,8 @@
             "`majordomus mesh enrol` adds this node's key once, idempotently",
             "A machine whose key is not enrolled opens no mesh socket (I2261 still holds)"
           ],
+          "completed_at": "2026-10-25T22:11:36Z",
+          "completed_event": "sha256:aa0eb3975c5c9f1e200e85d6473e25c556ce5ecb1dcc4813e0d188e7cb4f37c5",
           "created_at": "2026-10-10",
           "current_state": "A repository has a mesh only if somebody hand-writes .ai/repo/mesh/<name>.yaml and its allowlist.",
           "desired_state": "init writes the declaration; `majordomus mesh enrol` adds this node's key to the allowlist and says what to commit; nothing trusts a key nobody enrolled.",
@@ -38707,7 +38713,9 @@
             "test/cases"
           ],
           "slug": "init-declares-the-mesh",
-          "updated_at": "2026-10-10",
+          "started_at": "2026-10-25T22:11:13Z",
+          "started_event": "sha256:bb6f7b29443f9f5fc47a80b202cad275f0b281513a0b97c1e87bcce1532c0751",
+          "updated_at": "2026-10-25T22:11:36Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 01_init"
@@ -44566,6 +44574,8 @@
             "Neither lock gains a package",
             "A core source edit changes the executable's generation; a core test edit does not"
           ],
+          "completed_at": "2026-10-25T21:52:11Z",
+          "completed_event": "sha256:ffc5a30db005387e5804c0f81eed2b6abeb2c2948bcceb06fbba092c7d4532a1",
           "created_at": "2026-10-17",
           "current_state": "No portable core; canonical JSON is written twice in the executable; no wasm32 target.",
           "depends_on": [],
@@ -44594,7 +44604,9 @@
             "a-browser-computes-what-the-server-verifies#core-agrees-everywhere"
           ],
           "slug": "a-portable-core-runs-in-the-browser",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-25T21:51:47Z",
+          "started_event": "sha256:3b10ec5392122b38326d88c86b1003a113f91734aca6ee54204903f4fb2e11f7",
+          "updated_at": "2026-10-25T21:52:11Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --manifest-path apps/majordomus-core/Cargo.toml",
