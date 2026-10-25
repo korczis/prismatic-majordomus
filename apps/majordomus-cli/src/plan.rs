@@ -693,12 +693,24 @@ impl PlanFindings {
 /// assert!(!overlap("lib", "libexec"));
 /// ```
 pub fn overlap(a: &str, b: &str) -> bool {
-    let norm = |s: &str| {
-        let s = s.strip_prefix("./").unwrap_or(s);
-        s.trim_end_matches('/').to_string()
+    overlap_normal(normal(a), normal(b))
+}
+
+/// A scope entry as [`overlap`] compares it: no leading `./`, no trailing `/`.
+fn normal(s: &str) -> &str {
+    s.strip_prefix("./").unwrap_or(s).trim_end_matches('/')
+}
+
+/// [`overlap`] over entries already [`normal`], allocating nothing: the scope conflict below
+/// asks it of every pair of entries of every pair of runnable issues of a wave, and building
+/// four strings per question made it most of `plan::derive` (I4223).
+fn overlap_normal(a: &str, b: &str) -> bool {
+    let within = |inner: &str, outer: &str| {
+        inner.len() > outer.len()
+            && inner.starts_with(outer)
+            && inner.as_bytes()[outer.len()] == b'/'
     };
-    let (a, b) = (norm(a), norm(b));
-    a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
+    a == b || within(b, a) || within(a, b)
 }
 
 #[allow(clippy::too_many_lines)] // one derivation, in the order lib/project.awk derives it
@@ -1148,20 +1160,23 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
 
     // --- scope conflict: two issues that could run together but touch the same paths.
     //     Reported conservatively — an uncertain overlap serialises rather than races.
-    for a in 0..iraw.len() {
-        for b in (a + 1)..iraw.len() {
-            if !matches!(status[a].as_str(), "READY" | "ACTIVE") {
-                continue;
-            }
-            if !matches!(status[b].as_str(), "READY" | "ACTIVE") {
-                continue;
-            }
+    //     The runnable issues are chosen once and every scope entry normalised once, so the
+    //     pairs cost a comparison each rather than a scan of the whole plan and four strings.
+    let runnable: Vec<usize> = (0..iraw.len())
+        .filter(|&n| matches!(status[n].as_str(), "READY" | "ACTIVE"))
+        .collect();
+    let normals: Vec<Vec<&str>> = iraw
+        .iter()
+        .map(|r| r.scope.iter().map(|s| normal(s)).collect())
+        .collect();
+    for (i, &a) in runnable.iter().enumerate() {
+        for &b in &runnable[i + 1..] {
             if wave[a] != wave[b] {
                 continue;
             }
-            'pair: for x in &iraw[a].scope {
-                for y in &iraw[b].scope {
-                    if overlap(x, y) {
+            'pair: for (x, nx) in iraw[a].scope.iter().zip(&normals[a]) {
+                for ny in &normals[b] {
+                    if overlap_normal(nx, ny) {
                         v.warn(
                             "scope_conflict",
                             &iraw[a].id,
@@ -1677,6 +1692,68 @@ mod tests {
     }
 
     /// Two issues of one wave that touch the same paths are serialised, and said so.
+    #[test]
+    fn overlap_is_asked_of_normal_entries_with_the_same_answers() {
+        // every answer of the allocating definition this replaced, on the entries that
+        // normalisation exists for: `./`, trailing slashes, a prefix that is not a parent
+        let was = |a: &str, b: &str| {
+            let norm = |s: &str| {
+                let s = s.strip_prefix("./").unwrap_or(s);
+                s.trim_end_matches('/').to_string()
+            };
+            let (a, b) = (norm(a), norm(b));
+            a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
+        };
+        let entries = [
+            "",
+            "/",
+            "./",
+            "lib",
+            "lib/",
+            "./lib",
+            "./lib/",
+            "libexec",
+            "lib/x",
+            "lib/x/",
+            "apps/cli",
+            "apps/cli/src/main.rs",
+            "apps/clix",
+            "/abs",
+            "/abs/b",
+            "a//b",
+            "a/",
+        ];
+        for a in entries {
+            for b in entries {
+                assert_eq!(overlap(a, b), was(a, b), "overlap({a:?}, {b:?})");
+            }
+        }
+    }
+
+    #[test]
+    fn a_conflict_is_reported_once_per_pair_and_only_between_runnable_issues() {
+        let mut a = issue("I0001", "M000", &[]);
+        let mut b = issue("I0002", "M000", &[]);
+        let mut c = issue("I0003", "M000", &[]);
+        a.scope = vec!["docs".into(), "lib/".into()];
+        b.scope = vec!["./lib/x".into(), "docs/a.md".into()];
+        c.scope = vec!["lib".into()];
+        c.cancelled = true;
+        let p = derive(header(), vec![milestone("M000", &[])], vec![a, b, c]);
+        let found: Vec<_> = p
+            .findings
+            .iter()
+            .filter(|f| f.code == "scope_conflict")
+            .collect();
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert_eq!(found[0].subject, "I0001");
+        assert!(
+            found[0].message.starts_with("shares docs with I0002"),
+            "{}",
+            found[0].message
+        );
+    }
+
     #[test]
     fn overlapping_scope_in_one_wave_is_a_warning() {
         let mut a = issue("I0001", "M000", &[]);

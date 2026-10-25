@@ -22041,6 +22041,20 @@
           "value_name": "ALL_BLOCKING_RULES"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects",
+          "long": "source-ranges",
+          "name": "source_ranges",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "SOURCE_RANGES"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -22307,6 +22321,20 @@
           "required": false,
           "takes_value": false,
           "value_name": "ALL_BLOCKING_RULES"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Outline the Rust source under the work's paths into ranges (path, lines, symbol, reason, cost), spent by the budget beside the layer's objects",
+          "long": "source-ranges",
+          "name": "source_ranges",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "SOURCE_RANGES"
         },
         {
           "defaults": [],
@@ -27250,6 +27278,18 @@
         {
           "defaults": [],
           "global": false,
+          "help": "Keep the cursor in this file: start after the one it holds (unless `--after` is given) and write each page's cursor back, so a restarted watcher repeats nothing",
+          "long": "cursor-file",
+          "name": "cursor_file",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [],
+          "global": false,
           "help": "At most this many signals per page (default 50, at most 500)",
           "long": "limit",
           "name": "limit",
@@ -30789,6 +30829,18 @@
           "required": true,
           "takes_value": true,
           "value_name": "OUT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The site built at that commit, required when the deployment declares build.site",
+          "long": "site",
+          "name": "site",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SITE"
         },
         {
           "defaults": [],
@@ -39604,7 +39656,7 @@
     }
   ],
   "counts": {
-    "arguments": 1712,
+    "arguments": 1716,
     "commands": 250,
     "examples": 251,
     "runnable": 218

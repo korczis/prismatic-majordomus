@@ -71,7 +71,7 @@ jq -e '.plan.changes == 2' "$S/drift.json" >/dev/null || fail "drift and the wra
 prov --apply --root "$S/host" > "$S/apply3.json" 2> "$S/err" || fail "the repair failed" "$S/err" "$S/apply3.json"
 grep -q 'sccache-mesh' "$S/host/home/korczis/.cargo/config.toml" || fail "the wrapper line was not rewritten"
 ! grep -q '\.cargo/bin/sccache"' "$S/host/home/korczis/.cargo/config.toml" || fail "the old wrapper line remains"
-cmp -s "$S/host/etc/docker/daemon.json" "$ROOT/share/mesh-cache-provider/daemon.json" || fail "daemon.json was not put back"
+cmp -s "$S/host/etc/docker/daemon.json" "$ROOT/apps/majordomus-cli/assets/mesh-cache-provider/daemon.json" || fail "daemon.json was not put back"
 prov --apply --root "$S/host" > "$S/apply4.json" 2> "$S/err" || fail "a fourth apply failed" "$S/err"
 jq -e '(.apply.written | length) == 0' "$S/apply4.json" >/dev/null || fail "the repair is not idempotent" "$S/apply4.json"
 
