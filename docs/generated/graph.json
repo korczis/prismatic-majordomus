@@ -70546,6 +70546,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I4230",
+        "kind": "issue",
+        "label": "I4230",
+        "summary": "Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+        "route": "/cockpit/objects/issue/i4230",
+        "source": ".ai/repo/project/issues/I4230.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With more free than the reclaim mark, a generation idle for 30 minutes is kept and the bound says every other unit was written within 60 min",
+            "Below the reclaim mark, the same generation is evicted, one idle for 2 minutes is kept, and the bound names the free space, the mark and the age it applied",
+            "A pressure age of 0 keeps the hour, and an idle age of 0 evicts nothing, under the mark too",
+            "Without the change, case 3959's pressure section fails"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I3959"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "the bound's size (MAJORDOMUS_SHARED_BUILD_CAP_MB) and its lock wait",
+            "the age sweeps of I2713 and I2787 and the private build directories"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+            "docs/WORKTREES.md",
+            ".ai/repo/project/issues/I4230.yaml"
+          ],
+          "serves": [],
+          "slug": "the-bound-evicts-under-pressure",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -132638,6 +132682,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4230",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "majordomus://issue/I3959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144229,8 +144288,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9235,
       "acyclic": false,
       "truncated": false
     }
