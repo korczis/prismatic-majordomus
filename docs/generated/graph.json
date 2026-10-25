@@ -70546,6 +70546,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4229",
+        "kind": "issue",
+        "label": "I4229",
+        "summary": "The image's build stage carries every file the crate embeds",
+        "route": "/cockpit/objects/issue/i4229",
+        "source": ".ai/repo/project/issues/I4229.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The test passes on master's sources",
+            "A source that embeds ../../../share/advisors.yaml fails the test, naming that source and that path"
+          ],
+          "created_at": "2026-10-25",
+          "current_state": "On 2efeacea031 nothing short of building the image checks that an embedded file reaches the build context.",
+          "depends_on": [],
+          "evidence_required": [
+            "embedded_files_reach_the_build_stage"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Changing what the image copies: master's layout already carries every embedded file",
+            "Embeds written through concat! or env!, which name no literal path"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4229.yaml",
+            "apps/majordomus-cli/src/deploy/render.rs"
+          ],
+          "serves": [],
+          "slug": "the-build-stage-carries-every-embedded-file",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::the_build_stage_carries_every_file_the_package_embeds"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -132638,6 +132676,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4229",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4229",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144229,8 +144277,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }
