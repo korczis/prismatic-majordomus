@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 213 | 179 | 0 | 34 |
-| http | 207 | 179 | 0 | 28 |
-| mcp | 201 | 174 | 0 | 27 |
+| direct | 217 | 179 | 0 | 38 |
+| http | 209 | 179 | 0 | 30 |
+| mcp | 203 | 174 | 0 | 29 |
 | system | 14 | 14 | 0 | 0 |
-| total | 635 | 546 | 0 | 89 |
+| total | 643 | 546 | 0 | 97 |
 
 ## Capabilities
 
@@ -126,6 +126,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
+| `mesh.build_cache.ensure` | mesh | command | — | waived | — | — | — |
+| `mesh.build_cache.env` | mesh | query | — | waived | waived | waived | — |
+| `mesh.build_cache.key` | mesh | query | — | waived | waived | waived | — |
+| `mesh.build_cache.provision` | mesh | command | — | waived | — | — | — |
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |

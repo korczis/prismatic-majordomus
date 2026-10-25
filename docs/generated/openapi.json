@@ -7673,6 +7673,15 @@
                 "value": true
               }
             }
+          },
+          {
+            "name": "tier",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
           }
         ],
         "responses": {
@@ -10074,6 +10083,225 @@
             "name": "mesh"
           }
         }
+      }
+    },
+    "/api/v1/mesh/build-cache/env": {
+      "get": {
+        "operationId": "mesh.build_cache.env",
+        "summary": "The sccache client configuration for the store this node selected",
+        "description": "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "sccache",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The sccache executable to ask; `sccache` when absent.",
+            "examples": {
+              "no-sccache": {
+                "value": "no-such-sccache"
+              }
+            }
+          },
+          {
+            "name": "node_file",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The node file naming the store this node offers or knows."
+          },
+          {
+            "name": "credentials",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The AWS-format credential file, mode 0600."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The sccache client configuration for the store this node selected: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildCacheEnvReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.build_cache.env",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_build_cache_env"
+        },
+        "x-majordomus-cli": "mesh build-cache env"
+      }
+    },
+    "/api/v1/mesh/build-cache/key": {
+      "get": {
+        "operationId": "mesh.build_cache.key",
+        "summary": "What every dependency install and build directory is cached under",
+        "description": "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+        "tags": [
+          "mesh"
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Kind"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "Only this kind; every kind the repository has when absent.",
+            "examples": {
+              "cargo": {
+                "value": "cargo-build-dir"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What every dependency install and build directory is cached under: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BuildCacheKeyReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "mesh.build_cache.key",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "experimental",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_mesh_build_cache_key"
+        },
+        "x-majordomus-cli": "mesh build-cache key"
       }
     },
     "/api/v1/mesh/claims": {
@@ -21740,6 +21968,17 @@
             ],
             "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
           },
+          "address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeerAddress"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
+          },
           "overlaps": {
             "type": "array",
             "items": {
@@ -24450,6 +24689,384 @@
           "inputs"
         ],
         "description": "What is shipped and what it is built from."
+      },
+      "BuildCacheEnvReport": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/Mode",
+            "description": "What the client is configured as."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why, always one sentence; for a local-only answer, the condition that did not hold."
+          },
+          "sccache": {
+            "$ref": "#/components/schemas/BuildCacheSccache",
+            "description": "The installed sccache."
+          },
+          "store": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BuildCacheStore"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The selected store, when one was."
+          },
+          "credentials_file": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The path of the credential file the variables name; never its content."
+          },
+          "variables": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheEnvVar"
+            },
+            "description": "The variables to set in the environment of the process that starts the sccache\nserver; empty when the client is local-only."
+          },
+          "passed_over": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCachePassedOver"
+            },
+            "description": "The offers selection passed over, with the rule."
+          }
+        },
+        "required": [
+          "mode",
+          "reason",
+          "sccache",
+          "variables"
+        ],
+        "description": "The answer of `report`.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::{EnvReport, Mode, Sccache};\nlet r = EnvReport {\n    mode: Mode::LocalOnly, reason: \"sccache is not installed\".into(),\n    sccache: Sccache { found: false, version: None, multilevel: None, detail: String::new() },\n    store: None, credentials_file: None, variables: vec![], passed_over: vec![],\n};\nassert!(r.variables.is_empty());\n```"
+      },
+      "BuildCacheEnvVar": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The variable."
+          },
+          "value": {
+            "type": "string",
+            "description": "Its value: never a key, at most the path of a credential file."
+          }
+        },
+        "required": [
+          "name",
+          "value"
+        ],
+        "description": "One variable of the client's environment.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::EnvVar;\nlet v = EnvVar { name: \"SCCACHE_REGION\".into(), value: \"us-east-1\".into() };\nassert_eq!(v.name, \"SCCACHE_REGION\");\n```"
+      },
+      "BuildCacheHealth": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "healthy",
+            "description": "Ready and answering."
+          },
+          {
+            "type": "string",
+            "const": "degraded",
+            "description": "Answering, but something the policy cares about is wrong (low headroom, slow)."
+          },
+          {
+            "type": "string",
+            "const": "unhealthy",
+            "description": "Not answering, or refusing."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "The probe could not say: never `Healthy`."
+          }
+        ],
+        "description": "How the offering node's own probe judges the store.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```"
+      },
+      "BuildCacheKeyReport": {
+        "type": "object",
+        "properties": {
+          "platform": {
+            "type": "string",
+            "description": "This machine's platform triple."
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheKindKey"
+            },
+            "description": "One entry per lockfile the repository tracks, by kind then directory."
+          }
+        },
+        "required": [
+          "platform",
+          "kinds"
+        ],
+        "description": "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```"
+      },
+      "BuildCacheKindKey": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/Kind",
+            "description": "What is cached."
+          },
+          "dir": {
+            "type": "string",
+            "description": "The directory holding the lockfile, relative to the repository root (`.` for the root)."
+          },
+          "location": {
+            "type": "string",
+            "description": "Where the entry is restored to: relative to the repository, or `~/`-relative when it\nlies under the home directory (a shared cargo build directory)."
+          },
+          "platform": {
+            "type": "string",
+            "description": "The platform triple the entry is built for."
+          },
+          "toolchain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The toolchain as its executables state it; absent when they could not be asked."
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The files hashed into the digest, relative to the repository root."
+          },
+          "digest": {
+            "type": "string",
+            "description": "The first 32 hex digits of the SHA-256 over the inputs and the declared environment."
+          },
+          "key": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "`v1/<kind>/<platform>/<toolchain>/<digest>`; absent when the toolchain is."
+          },
+          "unavailable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is no key, when there is none."
+          }
+        },
+        "required": [
+          "kind",
+          "dir",
+          "location",
+          "platform",
+          "inputs",
+          "digest"
+        ],
+        "description": "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
+      },
+      "BuildCacheNodeOffer": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offering node's id: the last tie-break, so ordering is total."
+          },
+          "protocol": {
+            "type": "string",
+            "description": "The protocol the store speaks (`s3`)."
+          },
+          "provider": {
+            "type": "string",
+            "description": "What serves it (`minio`, `garage`, ...): data, not a code path."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/BuildCacheScope",
+            "description": "How far the endpoint is meant to be reached."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The non-secret address a client connects to."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "The bucket the cache lives in."
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The offering node's own preference, higher first."
+          },
+          "headroom_gib": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Free space on the data path, in GiB, when the node said."
+          },
+          "health": {
+            "$ref": "#/components/schemas/BuildCacheHealth",
+            "description": "The node's own judgement of the store."
+          },
+          "age_seconds": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Seconds since the offer was last refreshed."
+          },
+          "rtt_ms": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "A measured round trip from the asking node, in milliseconds, when one was."
+          }
+        },
+        "required": [
+          "node",
+          "protocol",
+          "provider",
+          "scope",
+          "endpoint",
+          "bucket",
+          "priority",
+          "health",
+          "age_seconds"
+        ],
+        "description": "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+      },
+      "BuildCacheOfferReading": {
+        "type": "object",
+        "properties": {
+          "offers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCacheNodeOffer"
+            },
+            "description": "The offers of trusted runtimes whose beat rose within the offer's lifetime, one per\nnode, in node order: what `super::select` takes."
+          },
+          "ignored": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BuildCachePassedOver"
+            },
+            "description": "Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds."
+          }
+        },
+        "required": [
+          "offers",
+          "ignored"
+        ],
+        "description": "What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&[], &|_| true, &|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```"
+      },
+      "BuildCachePassedOver": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offer's node."
+          },
+          "why": {
+            "type": "string",
+            "description": "The rule, in words."
+          }
+        },
+        "required": [
+          "node",
+          "why"
+        ],
+        "description": "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
+      },
+      "BuildCacheSccache": {
+        "type": "object",
+        "properties": {
+          "found": {
+            "type": "boolean",
+            "description": "Whether `--version` was answered."
+          },
+          "version": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version it stated."
+          },
+          "multilevel": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether it has the multi-level chain: measured, and unknown when the measurement\ncould not be made."
+          },
+          "detail": {
+            "type": "string",
+            "description": "How that was found out, in words."
+          }
+        },
+        "required": [
+          "found",
+          "detail"
+        ],
+        "description": "What the installed sccache is, as measured.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Sccache;\nlet s = Sccache { found: false, version: None, multilevel: None, detail: \"absent\".into() };\nassert!(!s.found);\n```"
+      },
+      "BuildCacheScope": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "host",
+            "description": "Reachable from the machine that offers it and no other."
+          },
+          {
+            "type": "string",
+            "const": "lan",
+            "description": "Reachable on the offering machine's local network."
+          },
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "Reachable by every node of the mesh."
+          }
+        ],
+        "description": "How far an offer's endpoint is meant to be reached, nearest first.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);\n```"
+      },
+      "BuildCacheStore": {
+        "type": "object",
+        "properties": {
+          "node": {
+            "type": "string",
+            "description": "The offering node."
+          },
+          "provider": {
+            "type": "string",
+            "description": "What serves the store."
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The non-secret endpoint."
+          },
+          "bucket": {
+            "type": "string",
+            "description": "The bucket."
+          }
+        },
+        "required": [
+          "node",
+          "provider",
+          "endpoint",
+          "bucket"
+        ],
+        "description": "The store the second level is.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Store;\nlet s = Store { node: \"n1\".into(), provider: \"minio\".into(),\n    endpoint: \"http://192.168.100.30:9000\".into(), bucket: \"b\".into() };\nassert_eq!(s.provider, \"minio\");\n```"
       },
       "BuildIdentity": {
         "type": "object",
@@ -38374,6 +38991,18 @@
             "description": "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```",
             "default": null
           },
+          "lane": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Lane"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```",
+            "default": null
+          },
           "inputs": {
             "type": "array",
             "items": {
@@ -42948,6 +43577,26 @@
         ],
         "description": "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
       },
+      "Kind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "cargo-build-dir",
+            "description": "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+          },
+          {
+            "type": "string",
+            "const": "mix-deps",
+            "description": "The `deps/` directory `mix deps.get` fills."
+          },
+          {
+            "type": "string",
+            "const": "npm-modules",
+            "description": "The `node_modules/` directory `npm ci` fills."
+          }
+        ],
+        "description": "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+      },
       "KindCount": {
         "type": "object",
         "properties": {
@@ -43565,6 +44214,26 @@
           "explanation"
         ],
         "description": "What a landing allocates, and why, step by step.\n\n```\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::landing::{decide, LandingDecision, ReleasePolicy, DECISION_SCHEMA};\nuse majordomus_cli::release::version::Version;\nlet d: LandingDecision = decide(Version::parse(\"1.2.3\").unwrap(), Impact::None, &ReleasePolicy::default(), &[]);\nassert_eq!(d.schema, DECISION_SCHEMA);\nassert_eq!(d.next_version, \"1.2.3\", \"nothing moved and nothing is owed\");\n```"
+      },
+      "Lane": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "feedback",
+            "description": "Cheap, fast and decisive: a pull request's required verdict needs it green."
+          },
+          {
+            "type": "string",
+            "const": "proof",
+            "description": "The heavy half, which judges the combined top before it lands."
+          },
+          {
+            "type": "string",
+            "const": "release",
+            "description": "A gate only a release asks."
+          }
+        ],
+        "description": "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs."
       },
       "LayerSummary": {
         "type": "object",
@@ -45481,6 +46150,17 @@
               "$ref": "#/components/schemas/StreamView"
             },
             "description": "Every stream's liveness."
+          },
+          "build_cache": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BuildCacheOfferReading"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none."
           }
         },
         "required": [
@@ -46253,6 +46933,21 @@
           "scope"
         ],
         "description": "One issue of a milestone, as a node of its graph."
+      },
+      "Mode": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "mesh",
+            "description": "Local disk first, the selected store second."
+          },
+          {
+            "type": "string",
+            "const": "local-only",
+            "description": "The local disk alone: the build is what it was."
+          }
+        ],
+        "description": "What the client is configured as.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Mode;\nassert_ne!(Mode::Mesh, Mode::LocalOnly);\n```"
       },
       "ModeResolution": {
         "type": "object",
@@ -48853,6 +49548,17 @@
               }
             ],
             "description": "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+          },
+          "address": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeerAddress"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
           }
         },
         "required": [
@@ -48864,6 +49570,49 @@
           "attached"
         ],
         "description": "One peer as the board lists it."
+      },
+      "PeerAddress": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider whose session this is (`claude-code`), when its environment says so."
+          },
+          "host": {
+            "type": "string",
+            "description": "The machine the worker runs on."
+          },
+          "pid": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The worker's own process: the provider's pid, not the MCP bridge it started."
+          },
+          "session": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The provider's id for the session, the one its lifecycle hooks are given."
+          },
+          "socket": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The socket other sessions on the same machine message this one through."
+          }
+        },
+        "required": [
+          "host"
+        ],
+        "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
       },
       "PeerCheckout": {
         "type": "object",

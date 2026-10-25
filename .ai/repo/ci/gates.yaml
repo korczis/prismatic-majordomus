@@ -47,13 +47,37 @@
 #     input in the change. The executable's reader (src/gates/model.rs) applies no shape and
 #     plans the union, which can only be wider.
 #
+# Lanes and tiers (ADR 0186). Every gate declares a `lane`, the time horizon its verdict
+# belongs to: `feedback` is cheap, fast and decisive, and a pull request's required verdict
+# needs it green; `proof` is the heavy half (the suite, the browser sweeps, the crate's
+# lanes, coverage, macOS, the installer), which judges the combined top before it lands;
+# `release` is a gate only a release asks. The `tiers` map names, for each moment a plan is
+# asked at, the lanes it runs. A structure gate is feedback when structure-durations.tsv
+# measures it at about a minute or less, or its note says seconds and file reads; the ones
+# that cost more (core-check, shell-lint, worktree-topology, evidence-check), that reach
+# the network (github-projection) or that nothing has measured (plan-drift) are proof until
+# a measurement says otherwise. No gate is release-only today. Both readers refuse, once
+# `tiers` is declared, a gate without a lane and a tier naming a lane that does not exist,
+# and always a lane that is none of the three. Lanes select nothing yet: the plan is exactly
+# what it was without them (I2350, slice S2; slice S4 selects by tier).
+#
 # Patterns: `**` crosses directories, `*` does not, a pattern without a wildcard names one
 # path. Paths are repository-relative, as `git diff --name-only` prints them.
 version: 1
 
+# The lanes each tier runs (ADR 0186): a push checked here and a pull request run the
+# feedback lane, the combined top the landing seat integrates adds the proof, and a release
+# runs all three.
+tiers:
+  local: [feedback]
+  pull-request: [feedback]
+  integration: [feedback, proof]
+  release: [feedback, proof, release]
+
 gates:
   - id: shell-lint
     job: structure
+    lane: proof
     always: true
     runs: scripts/ci/shell-lint
     summary: bash -n over every script, shellcheck over the tool, the scripts and the cases
@@ -64,39 +88,52 @@ gates:
   # anywhere for a reviewer to see. File reads only, so it belongs with the structure checks.
   - id: prompt-privacy
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/prompt-privacy
     summary: no published or generated file is a prompt record, a rendering, or a copy of one; every site generator names the local half so it can exclude it
 
   - id: ui-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ui check
     summary: the static half of UI conformance — every scrolling box this repository writes is reachable from the keyboard
 
   - id: pipefail-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/pipefail-check
     summary: a script that pipes under `set -e` may not report its pipeline's failure as its last command's success; a ratchet over the scripts that still can
 
   - id: argv-limit-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/argv-limit-check
     summary: a whole file's JSON may not travel to jq on the command line — Linux refuses a single argument over 131072 bytes and macOS never will, so the shape is checked rather than the size
 
   - id: doc-command-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/doc-command-check && scripts/ci-plan --inventory
     summary: a command the documents tell a reader to run is executed by a use-case scenario or a command-line example, or marked with the reason it cannot run here; and no tracked file outside this model lists gates or runs several of their commands, each a ratchet over what still promises or lists without proof (.ai/repo/ci/gate-list-baseline.txt)
 
   - id: liveness-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/liveness-check
     summary: a wait with no bound, a process spawned and never reaped, a command that pages to a terminal; a ratchet over the shell that still carries them
+
+  - id: build-cache-check
+    job: structure
+    lane: feedback
+    always: true
+    runs: scripts/ci/build-cache-check
+    summary: a local script that runs cargo build, test or run, npm ci or install, or mix deps.get outside the cache's choke points declares why on the line; GitHub workflows are a declared exemption
 
   # Development semantics belong to the capability registry and every surface consumes them
   # (ADR 0040). File reads only — share/commands.yaml against docs/generated/registry.json,
@@ -105,6 +142,7 @@ gates:
   # fails on a new entry, not on the accepted ones.
   - id: development-semantics
     job: structure
+    lane: feedback
     always: true
     runs: scripts/development-semantics-check
     summary: a mutating development command is backed by a capability of the canonical runtime and a Cockpit tree reaches into no layer path; the debt ratchets down and may not grow
@@ -116,24 +154,28 @@ gates:
   # runs `capture status`; no build, so it belongs with the other structure checks.
   - id: provider-evidence
     job: structure
+    lane: feedback
     always: true
     runs: scripts/provider-evidence-check
     summary: every declared provider's session and prompt capability is declared with the citation it was verified from, and every one of them is reported
 
   - id: core-check
     job: structure
+    lane: proof
     always: true
     runs: scripts/ci/core-check
     summary: doctor, watch, the context documents, the continuity commands, plan validate, the offline GitHub projection, every reference a document makes, the derived site data
 
   - id: evidence-check
     job: structure
+    lane: proof
     always: true
     runs: scripts/evidence-check
     summary: every claim that declares a guarantee, against the run actually recorded for it; a ratchet over the claims no recorded execution yet supports
 
   - id: site-basepath
     job: structure
+    lane: feedback
     runs: scripts/site-basepath-check
     summary: the documentation source states no origin-absolute link, so one build serves both the published site and the executable's /docs mount
 
@@ -148,6 +190,7 @@ gates:
   # refs rather than exiting clean.
   - id: adr-collision
     job: structure
+    lane: feedback
     runs: bin/majordomus adr check
     summary: every decision valid and its references resolving, and no identity this branch adds is already carried by a different decision on another ref
 
@@ -161,6 +204,7 @@ gates:
   # records are one checkout's own and CI holds none.
   - id: knowledge-nodes
     job: structure
+    lane: feedback
     always: true
     runs: bin/majordomus knowledge nodes --scope shared
     summary: every canonical object is one node with one identity; an identity two source classes claim is refused by name, and the refusal fails the plan
@@ -175,6 +219,7 @@ gates:
   # person accepts a real collision with the label collision:accepted.
   - id: collision-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/collision-gate
     summary: no path this pull request adds is added independently, with different content, by another unmerged branch; related work and same-bytes copies are listed, and a checkout that cannot see the other branches says so instead of passing
@@ -188,27 +233,32 @@ gates:
   # in the merged tree, so the gate is asked of every plan (2026-10-12, 1096 twice on master).
   - id: case-numbers
     job: structure
+    lane: feedback
     always: true
     runs: scripts/case-numbers check
     summary: no file under test/cases/ shares its identity with another, beyond the collisions recorded on the baseline
 
   - id: shell-suite
     job: suite
+    lane: proof
     runs: MJ_TEST_JOBS=4 bash test/run.sh
     summary: every behavioural case, in a disposable repository each, four at a time
 
   - id: rust-integration
     job: rust
+    lane: proof
     runs: scripts/rust-check --integration
     summary: the executable built, the registry validated, every committed projection current, the benchmark coverage complete
 
   - id: command-graph
     job: rust
+    lane: proof
     runs: scripts/ci/command-graph
     summary: the command graph builds without an error, and no workflow file carries a hand-written bridge to either program
 
   - id: rust-check
     job: rust
+    lane: proof
     implies: [rust-integration, rust-quality]
     runs: scripts/rust-check --ci
     summary: fmt, clippy with warnings denied, the suites and doc examples, rustdoc, the benchmarks building, the registry checks, the benchmark runner through every transport
@@ -220,12 +270,14 @@ gates:
   # takes under a second, which is why it can be unconditional rather than classed.
   - id: command-furnished
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/command-furnished
     summary: every public command carries its reference section, its fixture, its demo and its behavioural and negative cases, reported in one pass rather than one refusal per derivation
 
   - id: rust-command
     job: structure
+    lane: feedback
     runs: scripts/ci/rust-command-check --strict
     summary: every composed command module asserts, in the file that declares it, that it is what it claims
 
@@ -235,12 +287,14 @@ gates:
   # one would be the gap (project.the-handbook-is-built-from-the-tree, ADR 0149).
   - id: handbook-check
     job: structure
+    lane: feedback
     always: true
     runs: python3 handbook/build.py --check
     summary: every edition of the handbook builds from this tree; a chapter whose declared anchor left the repository's graph, a chapter that cites nothing, a caption with no figure behind it and derived data that changed shape each fail
 
   - id: english-only
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/english-only-check
     summary: every authored file is spelled in English; a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, fails — proper nouns and files that use a foreign string as test data are declared with their reason beside the check
@@ -250,12 +304,14 @@ gates:
   # that forgot one would be the gap.
   - id: prismatic-independence
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/prismatic-independence-check
     summary: no submodule, gitlink, dependency manifest, script, hook, workflow or configuration file names a Prismatic project; the project's own name and the bare brand word are not references, and documents are out of scope
 
   - id: finding-reproduce
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/finding-reproduce-check
     summary: every finding a command reports names the command that reproduces it; a reporting call with too few arguments, or one this gate cannot parse, is a finding of its own
@@ -267,7 +323,8 @@ gates:
   # orphan fails, evidence that is not current is reported and does not.
   - id: skills-proof
     job: structure
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
+    lane: feedback
+    runs: bin/majordomus-cli skills verify
     summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
 
   # Two tests demand to name every active skill — the crate's tests/skills.rs in its header
@@ -277,6 +334,7 @@ gates:
   # an hour later (I2664). This reads the same lines in seconds and builds nothing.
   - id: skill-naming
     job: structure
+    lane: feedback
     runs: scripts/ci/skill-naming-check
     summary: every active skill is named where a test demands the whole list — the majordomus-skill header of apps/majordomus-cli/tests/skills.rs and the first marker line of test/cases/391_skills_are_proven_capabilities.sh — and neither names a skill that does not exist
 
@@ -286,6 +344,7 @@ gates:
   # issue ids only, and builds nothing.
   - id: audit-plan
     job: structure
+    lane: feedback
     runs: scripts/ci/audit-plan-check
     summary: every row of docs/COCKPIT_IDE_AUDIT.md's gap matrix whose status is planned names an issue id, and every id it names is an issue of the plan; rows in the other statuses are evidence claims and are not read
 
@@ -296,6 +355,7 @@ gates:
   # (I2716). This reads the cases and the model in seconds and builds nothing.
   - id: release-record-listing
     job: structure
+    lane: feedback
     runs: scripts/ci/release-record-cases-check
     summary: every case that names the release record or reads what is offered from it is run by the release-record-cases gate, and every case that gate names exists
 
@@ -305,11 +365,13 @@ gates:
   # naming the checkout it was planned in. Reads the index's blobs; writes nothing.
   - id: pack-plan
     job: structure
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- pack plan chatgpt
+    lane: feedback
+    runs: bin/majordomus-cli pack plan chatgpt
     summary: the chatgpt pack plans clean — every file within a shard's token budget, the shards within the file count, no source naming the checkout, never a binary, worktree, link or build artifact
 
   - id: rule-proof
     job: structure
+    lane: feedback
     runs: scripts/ci/rule-proof-check
     summary: every blocking rule names what proves it and every proof is in the tree; a blocking rule that names none is new debt, a named case that was renamed or deleted fails outright, and the verdict names the population it is not about (claims are the claim-proof gate)
 
@@ -320,6 +382,7 @@ gates:
   # .ai/repo/commit-policy-baseline.txt.
   - id: commit-policy
     job: structure
+    lane: feedback
     runs: scripts/ci/commit-policy
     summary: every commit this branch adds satisfies the repository's commit policy, and the history's recorded debt does not grow
 
@@ -328,6 +391,7 @@ gates:
   # one path class names all four.
   - id: lease-reader
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/lease-reader-check
     summary: the shared server's lease is parsed by the one typed reader the executable owns; a second parser anywhere but documentation and the tests is refused
@@ -341,6 +405,7 @@ gates:
   # on the known ones.
   - id: claim-proof
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/claim-proof-check --strict
     summary: every claim marked guaranteed names a runnable test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and with the debt at zero any exception fails
@@ -350,8 +415,9 @@ gates:
   # while the metric's evidence does not stand (ADR 0082).
   - id: economics-claims
     job: structure
+    lane: feedback
     always: true
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
+    runs: bin/majordomus-cli economics check
     summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
 
   # The third population. A public command must have an executable use case and doctor fails
@@ -363,6 +429,7 @@ gates:
   # the gate fails on a tool that arrives unexercised, not on the known ones.
   - id: mcp-tool-run
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/mcp-tool-run-check
     summary: every MCP tool the registry projects is sent a tools/call by a case or an integration test of this repository; the verdict states its denominator and the populations it is not about, and the uninvoked set may not grow
@@ -374,21 +441,25 @@ gates:
   # finding text before the structure job does.
   - id: rust-quality
     job: structure
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report
+    lane: feedback
+    runs: bin/majordomus-cli quality report
     summary: the crate's own exported surface — documentation beyond the signature, an executable example on everything that carries behaviour, a module boundary something exercises — and every command of the command line accounted for against the capability registry
 
   - id: generation-converges
     job: structure
+    lane: feedback
     runs: scripts/ci/generation-converges
     summary: generating twice changes nothing the second time — no artifact is written from a value the same run also writes
 
   - id: rust-coverage
     job: coverage
+    lane: proof
     runs: just coverage
     summary: coverage of the crate against scripts/rust-coverage-threshold and of the session/continuity domain against scripts/session-coverage-threshold, both measured with test code out of the denominator
 
   - id: coverage-differential
     job: coverage
+    lane: proof
     runs: scripts/ci/coverage-differential
     summary: every executable line, function and region a change adds or touches under the crate is covered by a test, measured against the branch's merge-base with the trunk over the same export and test-exclusion as the crate gate; new debt is refused, legacy debt on untouched lines is not this gate's business (project.new-code-is-covered)
 
@@ -396,18 +467,21 @@ gates:
   # its runner is the scarce one, and a queued benchmark check is not a measurement.
   - id: rust-bench
     job: bench
+    lane: proof
     on-demand: true
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench --profile ci --check --no-write
+    runs: bin/majordomus-cli bench --profile ci --check --no-write
     summary: the benchmark check against the committed baseline of its platform (macOS, the one platform with a baseline under .ai/repo/benchmarks/rust/)
 
   - id: projection-closure
     job: rust
+    lane: proof
     runs: scripts/ci/projection-check
     summary: the command line, the one interface declared twice, agrees with the registry — no capability claims a command clap does not answer, and no new command is hand-written rather than derived
 
   - id: web-topology
     job: rust
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
+    lane: proof
+    runs: bin/majordomus-cli web validate
     summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
 
   # An intent names the milestones that realise it and the evidence that settles it; a link
@@ -419,7 +493,8 @@ gates:
   # (project.work-serves-a-declared-intent), so it runs where the toolchain is.
   - id: intent-check
     job: rust
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent validate
+    lane: proof
+    runs: bin/majordomus-cli intent validate
     summary: every intent names a milestone and a criterion, and every milestone, evidence reference and governance entry it names resolves; every serves link names a criterion of an intent that realises the issue's milestone, every issue under such a milestone serves a criterion, and a criterion of an intent with work has an issue serving it; the gap and critique hold together, and no serving issue started without a critique or with a blocking finding open; a milestone no intent serves, and weaker coverage, are reported as warnings
 
   # Closed work that the evidence contradicts. The plan can say every milestone of an intent is
@@ -434,11 +509,13 @@ gates:
   # never evidenced is a warning (closed_work_unproven), not a refusal.
   - id: intent-realization
     job: rust
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent realization
+    lane: proof
+    runs: bin/majordomus-cli intent realization
     summary: no intent whose counted milestones are all DONE has a criterion whose latest recorded run is failing or no longer current evidence at the checkout; criteria never evidenced and work serving no intent are warnings; the work realising each intent, its providers and handovers, and each link's provenance are reported
 
   - id: cockpit-assets
     job: site
+    lane: proof
     runs: scripts/cockpit-assets --check
     summary: every committed stylesheet of the browser surfaces (the Cockpit's and the UI's) matches the source it is compiled from
 
@@ -448,6 +525,7 @@ gates:
   # this gate the sentence was documentation only: four reads had grown under it.
   - id: cockpit-projection
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/cockpit-projection-check
     summary: no Cockpit page reads the index directly; every fact a page shows is what a capability answered through Context::execute (ADR 0012)
@@ -460,6 +538,7 @@ gates:
   # ratchet in .ai/repo/ui-integrity-baseline.txt, and a new one fails.
   - id: ui-integrity
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/cockpit-projection-check --ui-integrity
     summary: what an interface shows is derived and unknown is never drawn as healthy — no direct registry, product or Why read in a Cockpit page outside the navigation's allow-list, no health check ok by literal, no healthy #[default], no absent count rendered as zero, beyond the baseline (ADR 0089)
@@ -472,11 +551,13 @@ gates:
   # current by generate --check in the rust job, like every other generated artifact.
   - id: design
     job: structure
+    lane: feedback
     runs: scripts/ci/design-check
     summary: no source carries a design decision of its own — every colour, size, status word, brand copy and theme key comes from share/design/tokens.yaml through its projections
 
   - id: worktree-topology
     job: structure
+    lane: proof
     runs: scripts/ci/worktree-check
     summary: the branch-to-worktree rule has one constant in the crate, the pre-commit hook asks the guard and the policy declares it, every document and template names the same container, and the behavioural case passes through the built executable
 
@@ -489,12 +570,14 @@ gates:
   # repository's merge policy cannot reach.
   - id: backlog-hygiene
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/backlog-check
     summary: every self-accumulating quantity keeps its measuring command, the reaper matches by predicate rather than by name, every derived site tree is declared merge=derived, and nothing advertises the forge merge button
 
   - id: mesh-check
     job: structure
+    lane: feedback
     runs: scripts/ci/mesh-check
     summary: the mesh stays one subsystem — UDP sockets, link transports, link handlers and the journal only under src/mesh/ (and its capability module), one MeshRegistry constructed only there, a Cockpit mesh page that asks the mesh capabilities, and the mesh-declaration kind, its schema and both rules moving together (project.mesh-is-observation-not-authority, project.mesh-cooperation-is-authenticated)
 
@@ -504,6 +587,7 @@ gates:
   # inside a node. Loopback integration tests prove the protocol; this proves a network.
   - id: mesh-lab
     job: mesh-lab
+    lane: proof
     runs: test/mesh-lab/run
     summary: separate Linux nodes on a real bridge discover each other by multicast, link, share claims and handovers, converge, and recover from a partition and a crash, and scripts/ci/mesh-lab-evidence then judges the record the lab wrote — a complete acceptance or nothing (project.mesh-cooperation-is-authenticated, claim mesh-network-acceptance)
 
@@ -515,6 +599,7 @@ gates:
   # without adding a line to the list. File reads only, so it runs with the structure checks.
   - id: crate-boundary
     job: structure
+    lane: feedback
     runs: scripts/ci/crate-boundary
     summary: the Rust crate declares only dependencies that were argued for, and links no async runtime, HTTP client, CDP client or TLS stack but rustls over ring (ADR 0032, amended by ADR 0220)
 
@@ -524,6 +609,7 @@ gates:
   # written, and nothing ever called it.
   - id: order-check
     job: structure
+    lane: feedback
     runs: scripts/ci/order-check
     summary: a collection has one order — no case-folded comparator outside order.rs, no sort key that renders markup, no locale-collated comparison, and the ordering debt does not grow
 
@@ -535,6 +621,7 @@ gates:
   # suite runs, which is why the gate is given --no-suite here rather than running it twice.
   - id: entry-converges
     job: structure
+    lane: feedback
     runs: scripts/ci/entry-converges --no-suite
     summary: entry by a shell starts nothing and builds nothing, the start event ensures the server where the policy says it does, the briefing has one author and the lease one typed reader, and a server nobody owns has a bounded life
 
@@ -546,11 +633,13 @@ gates:
   # touches no governed directory does not build the crate in this job for it.
   - id: shell-inventory
     job: structure
+    lane: feedback
     runs: bin/majordomus-cli shell check
     summary: every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ is declared in .ai/repo/automation/inventory.jsonl with an exemption that says why it is shell and when it stops being, and no record names a unit the tree no longer has
 
   - id: step-bound
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/step-bound-check
     summary: every timed step and every full-history checkout of validate.yml and pages.yml declares a bound smaller than its job's, so a step that runs out of time fails with a message instead of being killed by its job and reported as a cancellation; every gate of this model has a step in its job that dispatches it, times it or writes its receipt, so the ci verdict never meets a green job with a silent gate; and a pages.yml step or job named after a row of .ai/repo/ci/pages.yaml is bounded at no less than budget.bound.percent of that row's warm budget
@@ -560,6 +649,7 @@ gates:
   # never runs such a gate before a push and says so (project.a-push-runs-what-ci-would-find-first).
   - id: github-projection
     job: structure
+    lane: proof
     runs: scripts/ci/github-check
     network: true
     summary: the GitHub projection still agrees with the canonical model — no record behind, edited, in conflict or unmanaged, and the backlog of unprojected records no larger than its baseline
@@ -571,17 +661,20 @@ gates:
   # changed path. Advisory under `drift.enforcement: advisory` until I2748 settles today's drift.
   - id: plan-drift
     job: structure
+    lane: proof
     always: true
     runs: scripts/ci/plan-drift-check
     summary: merged work the plan has not recorded is pending on a head and inside the window declared in .ai/repo/ci/plan.yaml, and refused on the trunk past it with `majordomus plan verify|done <id>` named; active_without_work and done_without_trace are reported and never refuse; a missing or unreadable window refuses
 
   - id: providers-data
     job: structure
+    lane: feedback
     runs: scripts/ci/providers-check
     summary: every provider is declared once beside its template, every projected bootstrap is under the derived merge driver, the generated provider table is current, and no document lists providers by hand instead of pointing at it
 
   - id: cockpit-probe
     job: cockpit
+    lane: proof
     runs: scripts/cockpit-probe
     summary: every Cockpit route the server serves answered, and the pages and interactions measured in a real browser; the route set is the one the UI audit uses
 
@@ -589,6 +682,7 @@ gates:
   # command a person runs produces it first, as the site job does through .github/actions/rustdoc.
   - id: site-build
     job: site
+    lane: proof
     runs: scripts/rust-check --doc && scripts/site-build && scripts/site-check
     summary: the derived data current, the site built once, every static check over the output
 
@@ -597,6 +691,7 @@ gates:
   # shard passed and that their reports are every route once (scripts/site-probe --verify-report).
   - id: site-probe
     job: site-probe
+    lane: proof
     requires: [site-build]
     runs: SITE_PROBE_JOBS=4 SITE_PROBE_SHARD=K/6 scripts/site-probe, then scripts/site-probe --verify-report
     summary: every route at three widths in a real browser, split in six shards that together are the sweep, the menu, the dropdown, the theme toggle, the diagrams
@@ -606,6 +701,7 @@ gates:
   # file, stays in its copy's language, and the switch and the alternates lead to every copy.
   - id: site-languages
     job: site
+    lane: proof
     requires: [site-build]
     runs: node scripts/lib/site-i18n-probe.mjs site/public "$(sed -n 's/^base_url = "\(.*\)"/\1/p' site/config.toml)" --jobs 4
     summary: every link of every page in every language lands, stays in its language, and the switch and the alternates lead to every copy
@@ -620,8 +716,9 @@ gates:
   # resolving, and no machine path or secret in a published byte.
   - id: rustdoc
     job: rust
+    lane: proof
     requires: [rust-check]
-    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality rustdoc
+    runs: bin/majordomus-cli quality rustdoc
     summary: the crate's published rustdoc tree is this commit's and complete — every exported item has its page at its derived route, no page is an orphan, the crate index and its assets are present, every internal link resolves, and no machine path or secret is published
 
   # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
@@ -632,6 +729,7 @@ gates:
   # reports are every page once (scripts/site-probe --verify-report, the one fan-in for both probes).
   - id: interaction-probe
     job: interactions
+    lane: proof
     runs: scripts/site-build --no-data, then MJ_PROBE_SHARD=K/6 scripts/interaction-probe per shard, then scripts/site-probe --verify-report
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
@@ -639,8 +737,9 @@ gates:
   # probe, the audit no longer fit that job's bound and was killed mid-run.
   - id: ui-audit
     job: ui
+    lane: proof
     requires: [site-build]
-    runs: scripts/rust-check --doc && cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report && bash test/run.sh --no-skips --runs-in ui
+    runs: scripts/rust-check --doc && bin/majordomus-cli bench system.http. --transport system --profile ci --no-write --check && scripts/ui audit --report && bash test/run.sh --no-skips --runs-in ui
     summary: "every warm screen of the UI within the latency budget the benchmark policy declares, measured over a real socket; then every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui; then the cases that drive the UI in a browser (majordomus-skip-runs-in: ui), with no skip excused"
 
   # The one gate that measures the published site rather than this tree: the advertised
@@ -677,6 +776,7 @@ gates:
   # public surface — every capability in the committed registry is builtin and lives there.
   - id: version-surface
     job: rust
+    lane: proof
     runs: scripts/ci/version-matches-surface
     summary: the declared version is at least what the public contract requires since the last release — capabilities, routes, MCP tools, commands and both schemas of each, compared as contracts rather than as text — and every breaking movement is named
 
@@ -692,6 +792,7 @@ gates:
   # `at-finish` declares. See majordomus.publication-currency.
   - id: pages-live
     job: pages
+    lane: proof
     at-finish: true
     runs: scripts/ci/pages-check
     network: true
@@ -704,6 +805,7 @@ gates:
   # the cadence of a commit.
   - id: installer-live
     job: install
+    lane: proof
     on-demand: true
     runs: scripts/ci/install-check --wait 300
     network: true
@@ -722,6 +824,7 @@ gates:
   # ci:full — and the plan says, on every push, that it was not planned.
   - id: macos
     job: macos
+    lane: proof
     on-demand: true
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
@@ -731,6 +834,7 @@ gates:
   # the manifest against the tree in both directions, and the index against the packs.
   - id: campaigns-provenance
     job: structure
+    lane: feedback
     runs: scripts/ci/campaigns-check
     summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, and every pack has a row in the index that names it
 
@@ -739,6 +843,7 @@ gates:
   # job; the ratchet is meant to reach zero.
   - id: diagram-check
     job: structure
+    lane: feedback
     runs: scripts/ci/diagram-check
     summary: no architectural relationship in a published document (docs, the site's pages and templates, the decisions, the rules, the handbook, the markdown majordomus ui renders) is typed in box art — every one is a mermaid block, with literal terminal output, file listings, quoted file content and the verbatim campaign packs exempt by declaration
 
@@ -748,6 +853,7 @@ gates:
   # in two groups under two labels. File reads only, so it belongs in the structure job.
   - id: nav-check
     job: structure
+    lane: feedback
     runs: scripts/ci/nav-check
     summary: the site's navigation is declared once in site/data/nav.toml — no href is written twice, the primary navigation stays small, every template that renders navigation reads nav.groups and types no route the declaration does not carry, and the call to action resolves
 
@@ -757,6 +863,7 @@ gates:
   # about is how one goes unpublished for a year with nothing saying so.
   - id: entity-check
     job: structure
+    lane: feedback
     runs: scripts/ci/entity-check
     summary: every object of the layer is addressable — no two identities of a kind reduce to one route — and site/data/publication.toml declares, for every kind the index holds and for no kind it does not, whether the site publishes it as entity pages, as an editorial section, or not at all and why
 
@@ -768,6 +875,7 @@ gates:
   # somebody tried to publish. File reads only; it belongs in the structure job.
   - id: release-check
     job: structure
+    lane: feedback
     runs: scripts/ci/release-check
     summary: the version is authored in one place with one writer — the crate's writer and the release script name the same manifest, the shell tool prints what it declares, the lock records it, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
 
@@ -784,6 +892,7 @@ gates:
   # It needs the executable, which the structure job already builds for evidence-check.
   - id: version-authored-once
     job: structure
+    lane: feedback
     always: true
     runs: bin/majordomus-cli release version
     summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact, and no hand-written prose names a version label (a major and a minor with no patch) outside the declared history (project.prose-states-no-version)
@@ -795,6 +904,7 @@ gates:
   # (test/cases/533_source_links_name_the_built_commit.sh). File reads only.
   - id: source-pin-check
     job: structure
+    lane: feedback
     always: true
     runs: scripts/ci/source-pin-check
     summary: no template under site/templates adds a source link that names master instead of the commit the page was built from — a ratchet over the blob/master and tree/master occurrences, per file, against .ai/repo/source-pin-baseline.txt
@@ -808,6 +918,7 @@ gates:
   # person's.
   - id: merge-policy
     job: structure
+    lane: feedback
     runs: scripts/gitattributes --check
     summary: the merge policy's generated block of .gitattributes is what the generators write — every path it marks merge=derived is one a generator owns, and every generated path is marked
 
@@ -821,6 +932,7 @@ gates:
   # gate of the structure job, and case 94 asks it too, so a new such case cannot be left out.
   - id: release-record-cases
     job: rust
+    lane: proof
     subsumed-by: shell-suite
     requires: [rust-integration]
     runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 49_roadmap_doctrine 84_distribution_model 87_release_pipeline 97_install_gate 103_release_projection 112_version_matches_surface 139_release_record_schema 352_the_version_the_site_shows_is_one_you_can_get 620_mcp_tools_are_invoked_and_answer 743_release_version_answers_with_the_contract 763_a_tag_older_than_the_record_practice_is_a_note 1041_a_release_publishes_its_metadata 1060_the_version_is_allocated_at_landing 1087_the_site_offers_the_release_it_published 3021_a_tag_does_not_freeze_the_queue 3029_a_tag_in_flight_is_pending 3102_a_milestone_version_is_inferred 3100_an_issue_delivery_is_inferred 3104_the_ui_roadmap_reads_delivery 3055_a_derivation_needs_no_history 3179_a_prerelease_is_never_published_as_stable 3212_a_prerelease_version_is_bumped_and_ordered 3222_an_alpha_publishes_beside_the_latest_release 3224_a_published_alpha_owes_its_record 3225_the_installer_takes_an_alpha_only_by_name 3342_a_dry_run_initialises_nothing 996_the_record_pull_request_gets_its_verdict 3385_doctor_fits_its_budget_in_the_commit_hook 3724_the_roadmap_says_what_the_plan_holds 3470_the_release_follows_the_work 3471_the_delivery_screen_shows_what_waits_for_a_release 3727_the_pages_name_the_pre_release_beside_the_stable_one
@@ -835,9 +947,10 @@ gates:
   # cannot be left out (I2662: a pull request that records evidence planned the whole suite).
   - id: plan-record-cases
     job: rust
+    lane: proof
     subsumed-by: shell-suite
     requires: [rust-integration]
-    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3220_the_idd_loop_is_walked_in_a_browser 3246_every_file_the_site_generator_reads_is_an_input 3385_doctor_fits_its_budget_in_the_commit_hook 3400_a_recorded_commit_link_names_the_history 3244_a_milestone_title_fits_on_github 3726_a_record_holds_no_template_delimiter 3970_a_pull_request_carries_its_metadata
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips 26_ci_wiring 40_project_model 41_project_status 42_dag_waves 43_plan_command 44_model_doctrine 45_github_projection 46_cross_surface 47_mutation 48_roadmap_graph 49_roadmap_doctrine 51_derived_artifacts_committed 53_status_vocabulary 57_derived_merge_driver 58_home_path_gate 74_knowledge_edges 75_knowledge_mutation 97_github_gate 98_traceability 99_plan_capabilities 99_work_graph_chain 103_release_projection 129_executable_issues 131_completion_gates 133_plan_transition 194_audit_rows_are_planned 274_commit_policy 367_an_intent_is_satisfied_only_by_evidence 386_a_plan_is_held_to_its_intent 388_an_intent_is_realised_across_providers_and_held_to_reality 400_derivation_is_one_graph 581_no_plan_stamp_without_its_event 582_the_done_guard_holds_in_both_engines 602_a_spliced_body_is_recognised_as_its_own 620_mcp_tools_are_invoked_and_answer 890_an_intent_criterion_is_met_only_by_current_evidence 892_what_is_said_of_intents_is_what_the_claims_matrix_says 893_preflight_follows_what_an_issue_serves 894_github_sync_applies_only_the_trunk 895_a_finished_task_does_not_satisfy_an_intent 960_a_task_starts_bound_to_what_it_serves 961_a_resumed_task_is_told_its_intent_moved 962_plan_start_asks_the_binding_in_both_engines 1038_a_head_is_judged_against_what_it_changes 1076_the_roadmap_opens_a_milestone 1081_an_intent_opens_what_serves_it 3048_a_derivation_survives_an_unrelated_merge 3053_a_repository_of_n_records_costs_n 3073_context_knowledge_slice 3075_knowledge_validate_judges_the_graph 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift 3102_a_milestone_version_is_inferred 3103_the_roadmap_draws_every_milestone 3104_the_ui_roadmap_reads_delivery 3220_the_idd_loop_is_walked_in_a_browser 3246_every_file_the_site_generator_reads_is_an_input 3385_doctor_fits_its_budget_in_the_commit_hook 3400_a_recorded_commit_link_names_the_history 3244_a_milestone_title_fits_on_github 3726_a_record_holds_no_template_delimiter 3970_a_pull_request_carries_its_metadata 3958_no_entry_path_or_gate_builds
     summary: the cases about the plan's records and what reads them — the project model, the plan command and its transitions, the DAG and roadmap, the GitHub projection, the intents bound to issues, the completion gates — pass against this tree
 
 # Shapes: changes whose plan is narrower than the union of their classes (the header's last

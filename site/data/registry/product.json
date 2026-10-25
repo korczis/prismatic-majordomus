@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.8"
   },
-  "fingerprint": "ede5e092b6f55bfc588e7c8f747b15bb44aca1cdecc41668a22f8b30688ba3f2",
+  "fingerprint": "e641eb26d1188442d85ffbb3fddbbd3c4611c1ebcba89af8967d31354c1e965e",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 78,
+        "capabilities": 82,
         "moments": 17
       },
       "evidence": {
@@ -3045,7 +3045,7 @@
         },
         {
           "id": "mcp-client-autostart",
-          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "claim": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
           "status": "guaranteed",
           "test": "test/cases/90_mcp_shared_server.sh"
         },
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 142,
+        "capabilities": 146,
         "moments": 38
       },
       "evidence": {
@@ -4314,7 +4314,7 @@
         },
         {
           "id": "mcp-client-autostart",
-          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "claim": "An MCP client opened in the repository starts the server itself, through the client configurations at the root and bin/majordomus-mcp, without ever building the executable",
           "status": "guaranteed",
           "test": "test/cases/90_mcp_shared_server.sh"
         },
@@ -5574,6 +5574,38 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.build_cache.ensure",
+              "title": "Restore an install before its command, and save it after",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache ensure"
+            },
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -5894,11 +5926,11 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 25,
-        "mcp_tools": 22,
+        "capabilities": 29,
+        "mcp_tools": 24,
         "mcp_resources": 2,
-        "http_routes": 24,
-        "cli_paths": 5,
+        "http_routes": 26,
+        "cli_paths": 9,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -7478,7 +7510,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 162
+          "objects": 163
         },
         {
           "name": "knowledge",
@@ -7486,7 +7518,7 @@
         },
         {
           "name": "document",
-          "objects": 352
+          "objects": 353
         }
       ],
       "rule_refs": [
@@ -7759,11 +7791,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 575,
+        "mcp_resources": 577,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 572,
+        "objects": 574,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -9579,6 +9611,38 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.build_cache.ensure",
+              "title": "Restore an install before its command, and save it after",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache ensure"
+            },
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
+            {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
               "kind": "command",
@@ -10332,11 +10396,11 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 64,
-        "mcp_tools": 57,
+        "capabilities": 68,
+        "mcp_tools": 59,
         "mcp_resources": 9,
-        "http_routes": 61,
-        "cli_paths": 21,
+        "http_routes": 63,
+        "cli_paths": 25,
         "commands": 0,
         "objects": 1,
         "rules": 2,
@@ -10796,6 +10860,38 @@
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.build_cache.ensure",
+              "title": "Restore an install before its command, and save it after",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache ensure"
+            },
+            {
+              "id": "mesh.build_cache.env",
+              "title": "The sccache client configuration for the store this node selected",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_env",
+              "route": "GET /api/v1/mesh/build-cache/env",
+              "cli": "majordomus mesh build-cache env"
+            },
+            {
+              "id": "mesh.build_cache.key",
+              "title": "What every dependency install and build directory is cached under",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_build_cache_key",
+              "route": "GET /api/v1/mesh/build-cache/key",
+              "cli": "majordomus mesh build-cache key"
+            },
+            {
+              "id": "mesh.build_cache.provision",
+              "title": "Provision this node as a mesh build cache provider",
+              "kind": "command",
+              "stability": "experimental",
+              "cli": "majordomus mesh build-cache provision"
+            },
             {
               "id": "mesh.claim",
               "title": "Claim a scope across the mesh",
@@ -11754,11 +11850,11 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 104,
-        "mcp_tools": 94,
+        "capabilities": 108,
+        "mcp_tools": 96,
         "mcp_resources": 16,
-        "http_routes": 100,
-        "cli_paths": 45,
+        "http_routes": 102,
+        "cli_paths": 49,
         "commands": 0,
         "objects": 0,
         "rules": 3,
@@ -13307,15 +13403,15 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 106
+          "objects": 108
         },
         {
           "name": "issue",
-          "objects": 978
+          "objects": 991
         },
         {
           "name": "intent",
-          "objects": 38
+          "objects": 40
         },
         {
           "name": "gap",
@@ -13323,7 +13419,7 @@
         },
         {
           "name": "critique",
-          "objects": 33
+          "objects": 35
         }
       ],
       "rule_refs": [
@@ -13521,11 +13617,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1162,
+        "mcp_resources": 1181,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1159,
+        "objects": 1178,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17353,7 +17449,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (162)",
+        "title": "adr (163)",
         "features": [
           "knowledge"
         ]
@@ -17402,7 +17498,7 @@
       },
       {
         "id": "critique",
-        "title": "critique (33)",
+        "title": "critique (35)",
         "features": [
           "planning"
         ]
@@ -17451,14 +17547,14 @@
       },
       {
         "id": "intent",
-        "title": "intent (38)",
+        "title": "intent (40)",
         "features": [
           "planning"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (978)",
+        "title": "issue (991)",
         "features": [
           "planning"
         ]
@@ -17479,7 +17575,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (106)",
+        "title": "milestone (108)",
         "features": [
           "planning"
         ]
@@ -18493,39 +18589,39 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3438,
-    "builtin": 213,
-    "declarative": 3225,
+    "capabilities": 3475,
+    "builtin": 217,
+    "declarative": 3258,
     "modules": 60,
-    "mcp_tools": 201,
-    "mcp_resources": 3280,
-    "http_routes": 207,
-    "cli_commands": 214,
+    "mcp_tools": 203,
+    "mcp_resources": 3313,
+    "http_routes": 209,
+    "cli_commands": 218,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3225,
+    "objects": 3258,
     "by_kind": {
-      "adr": 162,
+      "adr": 163,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 33,
+      "critique": 35,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 352,
+      "document": 353,
       "domain": 6,
       "feature": 29,
       "gap": 4,
       "implementation": 52,
-      "intent": 38,
-      "issue": 978,
+      "intent": 40,
+      "issue": 991,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 106,
+      "milestone": 108,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -18536,7 +18632,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 628,
+      "test": 640,
       "use-case": 49,
       "workspace": 1
     },
