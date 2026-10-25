@@ -70546,6 +70546,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4226",
+        "kind": "issue",
+        "label": "I4226",
+        "summary": "Case 1096 matches a page from a here-string, so a match is never read as a miss",
+        "route": "/cockpit/objects/issue/i4226",
+        "source": ".ai/repo/project/issues/I4226.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh has no printf piped into grep",
+            "Case 1096 passes, with the same checks and messages as before"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I2486"
+          ],
+          "desired_state": "Each of those checks is grep -q or grep -qE with the page as a here-string. What the case asserts, its patterns and its messages are unchanged.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "what case 1096 asserts, or the UI behaviour it covers (I2486)",
+            "other cases with the same pipe form"
+          ],
+          "objective": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh",
+            ".ai/repo/project/issues/I4226.yaml"
+          ],
+          "serves": [],
+          "slug": "case-1096-matches-without-a-pipe",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -132638,6 +132680,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4226",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4226",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4226",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144229,8 +144286,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9235,
       "acyclic": false,
       "truncated": false
     }
