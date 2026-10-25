@@ -24,7 +24,8 @@
 #   done        I0001 is done from the first tab; I0002 becomes ready
 #   explained   the workspace's standing panel explains the intent from
 #               intent_realization.explain, and the Cockpit's issue page shows the
-#               validation command and the evidence present
+#               validation command and the evidence present; the criterion's code span is
+#               drawn as code and no backtick reaches the reader (I3004)
 #   reproduced  the recorded command, run again, gives the recorded result
 #   clean       no console error, no uncaught exception, no failed request; a distribution
 #               without the vendored graph library is never asked for it (I2900)
@@ -82,7 +83,7 @@ milestones:
   - loop
 satisfaction:
   - id: the-answer-holds
-    criterion: The answer the work owes is in its scope
+    criterion: The answer the work owes is in `src/I0001/answer.txt`
     evidence: test
     ref: checks/the-answer-holds.sh
 YAML
@@ -301,7 +302,13 @@ try {
     if (!standing.includes(want)) fail(`the standing panel does not explain ${want}`);
   }
   await noBareIds(a, 'explained');
-  console.log('    explained: the standing panel names the criterion, its evidence and its source, every issue id a link');
+  // the criterion's code span is drawn as code, and no backtick reaches the reader (I3004)
+  if (!(await a.locator('main code.mj-ui-code', { hasText: 'src/I0001/answer.txt' }).count())) {
+    fail('the criterion\'s code span is not drawn as code');
+  }
+  const raw = await a.evaluate(() => document.querySelector('main').innerText.match(/`[^`\s][^`]*`/g) || []);
+  if (raw.length) fail(`raw markdown reaches the reader: ${raw.slice(0, 3).join(', ')}`);
+  console.log('    explained: the standing panel names the criterion, its evidence and its source, every issue id a link, its code span drawn as code');
   await a.screenshot({ path: `${shots}/2-done.png`, fullPage: true });
 
   // the evidence, as the Cockpit's issue page shows it

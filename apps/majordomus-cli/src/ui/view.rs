@@ -443,10 +443,8 @@ pub fn unanswered(a: &Answer) -> Option<El> {
         el("p")
             .class("mj-ui-empty")
             .child(word_badge("unknown"))
-            .text(format!(
-                " {} could not answer: {reason}",
-                a.source.capability
-            ))
+            .text(format!(" {} could not answer: ", a.source.capability))
+            .nodes(super::prose::marks(reason))
     })
 }
 

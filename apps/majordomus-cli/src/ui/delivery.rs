@@ -101,7 +101,11 @@ pub fn screen(ctx: &Context) -> View {
                     .child(el("td").child(code_link(gate_href(&id), value(g, "id"))))
                     .child(el("td").text(value(g, "job")))
                     .child(el("td").class("mj-ui-dim").text(when))
-                    .child(el("td").class("mj-ui-dim").text(value(g, "summary")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-dim")
+                            .nodes(super::prose::marks(&value(g, "summary"))),
+                    )
                     .child(el("td").child(gates_named(g, "implies")))
             })
             .collect::<Vec<_>>();
@@ -213,7 +217,7 @@ fn currency_body(answer: &Value) -> El {
                 el("span")
                     .child(word_badge(&value(answer, "stance")))
                     .text(" ")
-                    .text(text(answer, "summary")),
+                    .nodes(super::prose::marks(&text(answer, "summary"))),
             ),
             row("Landed past it", el("span").text(landed)),
             row("Waited", el("span").text(waited)),

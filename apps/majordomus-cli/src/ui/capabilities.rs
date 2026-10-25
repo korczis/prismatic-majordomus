@@ -146,7 +146,7 @@ fn detail(ctx: &Context, id: &str) -> El {
                             .child(
                                 el("td")
                                     .class("mj-ui-dim")
-                                    .text(text(schema, "description")),
+                                    .nodes(super::prose::marks(&text(schema, "description"))),
                             )
                     })
                     .collect::<Vec<_>>()
@@ -158,7 +158,11 @@ fn detail(ctx: &Context, id: &str) -> El {
                 el("div")
                     .class("mj-ui-detail-head")
                     .child(el("h3").class("mj-ui-detail-title").text(at("/title")))
-                    .child(el("p").class("mj-ui-dim").text(at("/description"))),
+                    .child(
+                        el("p")
+                            .class("mj-ui-dim")
+                            .nodes(super::prose::marks(&at("/description"))),
+                    ),
             )
             .child(
                 el("dl").class("mj-ui-facts").children(

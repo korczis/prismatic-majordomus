@@ -366,7 +366,7 @@ pub fn health_panel(health: &Answer) -> El {
                             .child(
                                 el("span")
                                     .class("mj-ui-check-detail")
-                                    .text(text(c, "detail")),
+                                    .nodes(super::prose::marks(&text(c, "detail"))),
                             ),
                     )
                     .child(state(c, "status"))
@@ -581,7 +581,11 @@ fn pull_request_detail(a: &Value) -> El {
             el("tr")
                 .child(el("td").class("mj-ui-mono").text(text(e, "kind")))
                 .child(el("td").child(state(e, "status")))
-                .child(el("td").class("mj-ui-dim").text(text(e, "detail")))
+                .child(
+                    el("td")
+                        .class("mj-ui-dim")
+                        .nodes(super::prose::marks(&text(e, "detail"))),
+                )
         })
         .collect::<Vec<_>>();
     let factors = a

@@ -124,6 +124,14 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   `net::ERR_ABORTED` is the browser saying it no longer needs the response, which is what a
   lazily loaded asset in flight when the audit moves on produces, and it says nothing about
   the site.
+- **`text.raw-markdown`** — on a `/ui` page, no text a reader sees carries a fence (```),
+  a strong span (`**word**`) or a code span. Text inside `code`, `pre`, `kbd` and `samp` is
+  exempt, because a backtick there is content. A record's prose is written in that markup,
+  and a screen draws it through `apps/majordomus-cli/src/ui/prose.rs` (`inline` where ids
+  may be links, `marks` in a table cell or inside a link). A mark that reaches the reader as
+  characters means a renderer skipped a string (I3004). The marks are read by `rawMarkdown`
+  in `scripts/lib/ui-static.mjs`, the same rule the renderer follows. A lone mark and an
+  empty span are characters, not markup.
 - **`page.status` / `page.unreachable` / `page.audit-failed`** — the page answered, and it
   answered in time. A page that does not is a finding about that page, never the end of the
   run.

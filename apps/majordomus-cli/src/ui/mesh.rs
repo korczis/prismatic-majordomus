@@ -426,7 +426,7 @@ fn inspector(name: &str, machines: &[Value], peers: &Answer, events: &Answer) ->
                     el("td")
                         .class("mj-ui-dim")
                         .attr_if("title", (!said.is_empty()).then_some(said))
-                        .text(intent),
+                        .nodes(super::prose::marks(&intent)),
                 )
         })
         .collect::<Vec<_>>();
@@ -556,7 +556,7 @@ fn seat_row(seat: &str, holder: Option<&Value>, scope: String) -> El {
             el("td")
                 .class("mj-ui-dim")
                 .attr_if("title", title)
-                .text(intent),
+                .nodes(super::prose::marks(&intent)),
         )
 }
 

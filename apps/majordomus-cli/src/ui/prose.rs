@@ -133,6 +133,35 @@ pub fn inline(line: &str, known: &Known) -> Vec<Node> {
     }
 }
 
+/// One line of text that may carry a `code span` or a **strong** word, drawn with both and
+/// with no link at all: what a summary, a title or a worker's intent says when it sits in a
+/// table cell, or inside a link of its own, where an anchor in it would be an anchor inside
+/// an anchor. A `[label](address)` stays the text it is. The line is never markup: every
+/// byte of it goes through the builder's escaping, as in [`inline`].
+pub fn marks(line: &str) -> Vec<Node> {
+    let mut out = Vec::new();
+    let mut rest = line;
+    loop {
+        let code = span(rest, "`", "`").map(|(b, i, a)| (b.len(), 0, b, i, a));
+        let strong = span(rest, "**", "**").map(|(b, i, a)| (b.len(), 1, b, i, a));
+        let Some((_, kind, before, inner, after)) = [code, strong].into_iter().flatten().min()
+        else {
+            if !rest.is_empty() {
+                out.push(text(rest));
+            }
+            return out;
+        };
+        if !before.is_empty() {
+            out.push(text(before));
+        }
+        out.push(match kind {
+            0 => Node::Element(el("code").class("mj-ui-code").text(inner)),
+            _ => Node::Element(el("strong").nodes(marks(inner))),
+        });
+        rest = after;
+    }
+}
+
 /// A paragraph of prose; the empty string draws nothing a reader would take for content.
 pub fn paragraph(prose: &str, known: &Known) -> El {
     el("p")
@@ -211,6 +240,29 @@ mod tests {
         assert!(html.contains("a lone ` or ** or [x]("), "{html}");
         // empty markup is the characters it is made of
         assert!(drawn("an empty `` span").contains("an empty `` span"));
+    }
+
+    #[test]
+    fn marks_draw_code_and_strong_and_never_a_link() {
+        let html = el("td")
+            .nodes(marks(
+                "run `majordomus ui` for **the** UI, see I2400 and [x](https://e.org)",
+            ))
+            .render();
+        assert!(
+            html.contains("<code class=\"mj-ui-code\">majordomus ui</code>"),
+            "{html}"
+        );
+        assert!(html.contains("<strong>the</strong>"), "{html}");
+        assert!(!html.contains("<a"), "{html}");
+        assert!(html.contains("see I2400 and [x](https://e.org)"), "{html}");
+        let hostile = el("td").nodes(marks("`<b>` and <i> and a lone `")).render();
+        assert!(
+            hostile
+                .contains("<code class=\"mj-ui-code\">&lt;b&gt;</code> and &lt;i&gt; and a lone `"),
+            "{hostile}"
+        );
+        assert_eq!(el("td").nodes(marks("")).render(), "<td></td>");
     }
 
     #[test]

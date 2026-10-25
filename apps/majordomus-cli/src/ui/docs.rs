@@ -62,7 +62,7 @@ pub fn screen(ctx: &Context) -> View {
                     .child(
                         el("span")
                             .class("mj-ui-card-text")
-                            .text(value(f, "description")),
+                            .nodes(super::prose::marks(&value(f, "description"))),
                     )
             }))
     });
@@ -78,7 +78,11 @@ pub fn screen(ctx: &Context) -> View {
             .map(|d| {
                 // a document objects.list names is an object of the index: its technical view
                 el("tr")
-                    .child(el("td").class("mj-ui-cell-title").text(value(d, "title")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-cell-title")
+                            .nodes(super::prose::marks(&value(d, "title"))),
+                    )
                     .child(el("td").child(object_or(&text(d, "uri"), &text(d, "path"))))
             })
             .collect::<Vec<_>>();

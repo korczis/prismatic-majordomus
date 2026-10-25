@@ -936,7 +936,11 @@ fn inspector(a: &Value, all: &[Value], repository: &str, filter: &Filter) -> El 
             el("tr")
                 .child(el("td").class("mj-ui-mono").text(text(e, "kind")))
                 .child(el("td").child(state(e, "status")))
-                .child(el("td").class("mj-ui-dim").text(text(e, "detail")))
+                .child(
+                    el("td")
+                        .class("mj-ui-dim")
+                        .nodes(super::prose::marks(&text(e, "detail"))),
+                )
         })
         .collect::<Vec<_>>();
     let since = a

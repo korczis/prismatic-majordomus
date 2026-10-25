@@ -14,6 +14,8 @@ import { readFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { chromium } from 'playwright';
 
+import { rawMarkdown } from './ui-static.mjs';
+
 const AXE = new URL('../../node_modules/axe-core/axe.min.js', import.meta.url);
 
 /** How much horizontal overflow is a browser rounding artefact rather than a defect. */
@@ -29,6 +31,14 @@ export const OVERFLOW_TOLERANCE = 1;
  * that hits it is a finding about that page.
  */
 export const VISIT_DEADLINE_MS = 60000;
+
+/**
+ * The surface whose rendered text must carry no light markup: the UI draws a record's prose
+ * as markup (I3004), and a screen that hands a reader backticks skipped its renderer. The
+ * documentation is drawn by the site's own Markdown pipeline and the Cockpit shows records
+ * as data, so neither is held to it here.
+ */
+export const PROSE_PREFIX = '/ui';
 
 /** Run a promise against a deadline, rejecting with a message a report can print. */
 function withDeadline(work, ms, what) {
@@ -104,8 +114,8 @@ export async function auditPage(page, origin, route, width) {
     return { route, width, status, findings, console_errors, failed_requests };
   }
 
-  const observed = await page.evaluate((tolerance) => {
-    const out = { overflow: null, landmarks: {}, headings: [], duplicate_ids: [], triggers: [] };
+  const observed = await page.evaluate(({ tolerance, prose }) => {
+    const out = { overflow: null, landmarks: {}, headings: [], duplicate_ids: [], triggers: [], texts: [] };
 
     // horizontal overflow, with the elements that cause it rather than the fact alone.
     // The body's scroll width, not the document element's: content inside its own
@@ -191,8 +201,20 @@ export async function auditPage(page, origin, route, width) {
         });
       }
     }
+    // the text a reader sees outside the elements where a backtick is content, handed to
+    // rawMarkdown() beside this file rather than judged here, so the rule has one reading
+    if (prose) {
+      const literal = 'code, pre, kbd, samp, script, style, textarea, template, noscript, svg';
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const value = node.nodeValue || '';
+        if (!/[`*]/.test(value)) continue;
+        if (node.parentElement?.closest(literal)) continue;
+        out.texts.push(value);
+      }
+    }
     return out;
-  }, OVERFLOW_TOLERANCE);
+  }, { tolerance: OVERFLOW_TOLERANCE, prose: route === PROSE_PREFIX || route.startsWith(`${PROSE_PREFIX}/`) || route.startsWith(`${PROSE_PREFIX}?`) });
 
   if (observed.overflow) {
     findings.push({
@@ -223,6 +245,9 @@ export async function auditPage(page, origin, route, width) {
     if (!trigger.accessible_name) {
       findings.push({ rule: 'component.trigger-unnamed', detail: `a ${trigger.component} trigger has no accessible name` });
     }
+  }
+  for (const { mark, sample } of observed.texts.flatMap(rawMarkdown).slice(0, 5)) {
+    findings.push({ rule: 'text.raw-markdown', detail: `a ${mark} mark reaches the reader as characters: "${sample}"` });
   }
   for (const error of console_errors) {
     findings.push({ rule: 'runtime.console-error', detail: error });

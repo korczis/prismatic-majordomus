@@ -169,7 +169,7 @@ fn workers(answer: &Answer) -> El {
                     ])))
                     .child(el("td").text(joined(&[text(w, "client"), text(w, "origin")])))
                     .child(el("td").child(state(w, "presence")))
-                    .child(el("td").text(text(w, "intent")))
+                    .child(el("td").nodes(super::prose::marks(&text(w, "intent"))))
                     .child(claims(w))
             })
             .collect::<Vec<_>>();
@@ -301,7 +301,7 @@ fn sources(answer: &Answer) -> El {
                     .child(
                         el("td")
                             .class("mj-ui-dim mj-identity")
-                            .text(text(s, "reason")),
+                            .nodes(super::prose::marks(&text(s, "reason"))),
                     )
             })
             .collect::<Vec<_>>();

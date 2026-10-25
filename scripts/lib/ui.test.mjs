@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, languageSample, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
-import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
+import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, rawMarkdown, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
@@ -423,6 +423,21 @@ test('two bars are compared element by element: a class, a box past a pixel, a s
   assert.ok(d.some((x) => /font-size is 14px on the UI, 16px on the site/.test(x)), d.join('\n'));
   assert.ok(d.some((x) => /nav>a\[0\]: only the site has this element/.test(x)), d.join('\n'));
   assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
+});
+
+// ------------------------------------------------------------------ raw markdown (I3004)
+test('a code span, a strong word and a fence that reach the reader are each a raw-markdown mark', () => {
+  const marks = rawMarkdown('run `majordomus ui` for **the** UI, then ``` closes').map((m) => m.mark);
+  assert.deepEqual(marks.sort(), ['code', 'fence', 'strong']);
+  const [code] = rawMarkdown('the forge was not observed; `majordomus served forge` records it');
+  assert.ok(code.sample.includes('`majordomus served forge`'), code.sample);
+});
+
+test('a lone mark, an empty span and prose without markup are not raw markdown', () => {
+  assert.deepEqual(rawMarkdown('a lone ` and an empty `` and ** and 2 * 3 * 4'), []);
+  assert.deepEqual(rawMarkdown('Everything that can be run, what it changes, and what is running.'), []);
+  // a mark that opens on a space is a character, as the renderer reads it
+  assert.deepEqual(rawMarkdown('a ` spaced ` pair and ** spaced ** stars'), []);
 });
 
 let failed = 0;
