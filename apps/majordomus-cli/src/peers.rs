@@ -721,6 +721,9 @@ impl PeerBoard {
     ) -> Option<Announced> {
         let announced = self.announce_locked(id, claim, intent, scope);
         if announced.is_some() {
+            if claim.is_some() {
+                self.drop_repeated_departures(id);
+            }
             crate::change::BLACKBOARD.advance();
         }
         announced
@@ -830,6 +833,37 @@ impl PeerBoard {
         {
             slots.remove(seq);
         }
+    }
+
+    /// Drop the departed slots that `id` has just made redundant by announcing (I4227).
+    ///
+    /// A client that re-attaches on a timer and announces the same named claim each time
+    /// (the ChatGPT bridge, every ten minutes) is one worker, but it left a departed slot
+    /// behind at every reconnect: on 2026-10-25 all [`RETAINED`] slots of the primary
+    /// checkout's board were copies of that one bridge, so every real session that
+    /// departed lost its retained announcement at once — the very thing retention keeps.
+    ///
+    /// A departed slot is the same worker when it has the announcer's client name and
+    /// address (both absent counts as the same), and it is redundant when every one of its
+    /// claims is a named claim the announcer now holds under the same name. A slot that
+    /// says anything more — an unnamed claim, or a name the announcer does not hold — is
+    /// kept, and so is another session that happens to use the same claim name, because
+    /// its address differs.
+    fn drop_repeated_departures(&self, id: &PeerId) {
+        let mut slots = self.lock();
+        let Some(me) = slots.get(&id.seq()) else {
+            return;
+        };
+        let (client, address) = (me.client.name.clone(), me.address.clone());
+        let held: Vec<String> = me.claims.keys().cloned().collect();
+        slots.retain(|seq, s| {
+            let repeats = *seq != id.seq()
+                && s.departed
+                && s.client.name == client
+                && s.address == address
+                && s.claims.keys().all(|k| !k.is_empty() && held.contains(k));
+            !repeats
+        });
     }
 
     /// Every peer, in attachment order.
@@ -1772,5 +1806,66 @@ mod tests {
             !line.contains(&long),
             "an intent is cut, never carried whole: {line}"
         );
+    }
+
+    /// A client that re-attaches on a timer and announces the same named claim keeps one
+    /// row, not one per reconnect, so the departed slots stay free for the sessions that
+    /// really left; another session using the same claim name, and a departed slot that
+    /// said more, are kept (I4227).
+    #[test]
+    fn a_departed_peer_that_a_later_announce_repeats_is_not_kept() {
+        let bridge = |board: &PeerBoard| {
+            let p = board.attach(Transport::Http);
+            board.identify(
+                &p,
+                ClientInfo::from_initialize(&serde_json::json!({
+                    "clientInfo": { "name": "codex-chatgpt-mesh-coordinator", "version": "1" }
+                })),
+            );
+            p
+        };
+        let board = PeerBoard::new();
+        let left = board.attach(Transport::Stdio);
+        board.announce(&left, "a session that really left", vec!["docs".into()]);
+        board.detach(&left);
+        let said_more = bridge(&board);
+        board.announce(&said_more, "the bridge's own note", vec![]);
+        board.announce_claim(&said_more, Some("chatgpt-bridge"), "relay", vec![]);
+        board.detach(&said_more);
+        let elsewhere = bridge(&board);
+        board.locate(
+            &elsewhere,
+            PeerAddress::from_env(|_| None, Some(4242), "lundra").unwrap(),
+        );
+        board.announce_claim(&elsewhere, Some("chatgpt-bridge"), "relay", vec![]);
+        board.detach(&elsewhere);
+        for _ in 0..RETAINED + 4 {
+            let again = bridge(&board);
+            board.announce_claim(&again, Some("chatgpt-bridge"), "relay", vec![]);
+            board.detach(&again);
+        }
+        let now = bridge(&board);
+        board.announce_claim(&now, Some("chatgpt-bridge"), "relay", vec![]);
+        let listed = board.list();
+        let intents: Vec<&str> = listed
+            .iter()
+            .flat_map(|p| p.claims.iter().map(|c| c.intent.as_str()))
+            .collect();
+        assert!(
+            intents.contains(&"a session that really left"),
+            "the departure that matters is still retained: {intents:?}"
+        );
+        assert!(intents.contains(&"the bridge's own note"), "{intents:?}");
+        let bridges: Vec<&Peer> = listed
+            .iter()
+            .filter(|p| p.client.name == "codex-chatgpt-mesh-coordinator")
+            .collect();
+        assert_eq!(
+            bridges.len(),
+            3,
+            "the slot that said more, the other address, and the attached one: {bridges:?}"
+        );
+        assert!(bridges.iter().any(|p| p.address.is_some() && !p.attached));
+        assert_eq!(bridges.iter().filter(|p| p.attached).count(), 1);
     }
 }

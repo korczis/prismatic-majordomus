@@ -68673,6 +68673,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4227",
+        "kind": "issue",
+        "label": "I4227",
+        "summary": "A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect",
+        "route": "/cockpit/objects/issue/i4227",
+        "source": ".ai/repo/project/issues/I4227.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After RETAINED + 4 reconnects of one client announcing the same named claim, a session that departed before them is still listed with its announcement",
+            "The re-attached client is listed once attached, with no departed copy of itself",
+            "A departed slot of the same client that also held an unnamed claim is kept",
+            "A departed slot of the same client name at a different address is kept"
+          ],
+          "created_at": "2026-10-25",
+          "current_state": "PeerBoard::detach marks a slot with claims departed and drops the oldest departed slots past RETAINED; nothing recognises that a newer slot is the same worker saying the same thing.",
+          "depends_on": [],
+          "evidence_required": [
+            "a_departed_peer_that_a_later_announce_repeats_is_not_kept_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "The RETAINED bound itself, and the order in which departed slots are dropped past it",
+            "The progress liveness of a peer (I3990, feature/a-claim-lives-by-its-holders-progress), which touches other hunks of the same file",
+            "The bridge's reconnect cadence, which is the client's",
+            "Mesh claims, which live in the mesh journal and not on the board"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            ".ai/repo/project/issues/I4227.yaml"
+          ],
+          "serves": [],
+          "slug": "a-departed-peer-that-repeats-another-is-not-kept",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib peers::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -129894,6 +129936,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4227",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4227",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -141400,8 +141452,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3934,
-      "edges": 9085,
+      "nodes": 3935,
+      "edges": 9087,
       "acyclic": false,
       "truncated": false
     }
