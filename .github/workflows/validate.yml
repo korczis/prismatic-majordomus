@@ -212,15 +212,18 @@ jobs:
   # commit's: a producer that failed, or was not planned, slows its consumers and never stops
   # them. The `if:` of each producer is the union of its consumers' (test/cases/3939): a plan
   # that selects a consumer selects its producer, and a plan that selects neither skips both.
-  #   build             -> suite-shard, evidence, ui-shard, ui-checks, ui, mesh-lab
+  # A consumer that runs on every plan makes its producer run on every plan, with no `if:`.
+  #   build             -> structure (every plan), site, suite-shard, evidence, ui-shard,
+  #                        ui-checks, ui, mesh-lab
   #   rustdoc-surface   -> suite-shard, ui-shard, ui-checks
-  # The macos job keeps its own build (another target), and the site job its own rustdoc: it
-  # would wait for this one and finish later, not sooner. The artifact is `majordomus-exe`,
-  # not the rust job's `majordomus-cli-<triple>`: upload-artifact@v4 refuses a name twice in
-  # one run. Its provenance carries the fields scripts/rust-check --artifact writes.
+  # No gate builds (ADR 0224), so the structure and site jobs, whose gates and generator run the
+  # executable, take this one rather than building their own. The macos job keeps its own build
+  # (another target), and the site job its own rustdoc: it would wait for this one and finish
+  # later, not sooner. The artifact is `majordomus-exe`, not the rust job's
+  # `majordomus-cli-<triple>`: upload-artifact@v4 refuses a name twice in one run. Its
+  # provenance carries the fields scripts/rust-check --artifact writes.
   build:
     needs: plan
-    if: needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.ui_audit == 'true' || needs.plan.outputs.mesh_lab == 'true'
     timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
@@ -293,7 +296,7 @@ jobs:
   # (run 38214783248): 55 minutes until the structure gates are made cheaper (#972 takes
   # about 8 minutes off), which is the fix this bound is waiting for.
   structure:
-    needs: plan
+    needs: [plan, build]
     timeout-minutes: 55
     runs-on: ubuntu-latest
     env:
@@ -330,6 +333,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ci-plan
+      # No gate builds (ADR 0224), so every gate and script that asks bin/majordomus-cli gets
+      # the build job's executable (I3939), with MAJORDOMUS_BIN and the commit it was built
+      # from. Six of this job's gates and the scripts several others call run it; each used to
+      # reach it through `cargo run` or a launcher that built, and waited on the build lock.
+      # The pinned toolchain is set up all the same: core-check's derive-toolchain wiring
+      # refuses a job whose cargo lacks it, since a derive there would fetch it mid-merge.
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable every gate runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
       # Every gate the model assigns to this job, in its order, as the plan selected them:
       # shell-lint, ui-check and core-check on every plan, and the structural gates a change
       # needs — site-basepath, rust-command, worktree-topology, providers-data. Dispatched
@@ -1010,8 +1026,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: rust
         uses: ./.github/actions/setup-rust
+      # the explicit build, then the gate's own line through the launcher (ADR 0224)
+      - name: the executable, built for the benchmark
+        run: RUSTFLAGS='' cargo build --quiet --locked
       - id: bench
-        run: cargo run --quiet -- bench --profile ci --check --no-write
+        run: ../../bin/majordomus-cli bench --profile ci --check --no-write
       - if: always()
         run: ../../scripts/ci/summary --job bench --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - name: the bench receipt
@@ -1037,7 +1056,7 @@ jobs:
   # output, then every route at every width in a real browser (four at a time). On master
   # the same bytes become the Pages artifact the deploy job publishes; nothing rebuilds them.
   site:
-    needs: plan
+    needs: [plan, build]
     # Every gate this job carries, not only the first: the build is a prerequisite of the
     # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
     # site-build must still open the job — otherwise the gate is planned and the job that
@@ -1066,6 +1085,12 @@ jobs:
           fetch-depth: 0
       - id: site
         uses: ./.github/actions/setup-site
+      # The generator reads the plan, the registry and the delivery through the executable, and
+      # no ordinary command builds it (ADR 0224): the build job's, downloaded (I3939).
+      - name: the executable the generator runs
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
       # One generation for the whole job. This step is the gate — it stages a fresh generation
       # from the canonical sources and diffs it against what is committed, which is the only
       # thing that proves the two agree — and the build and the check then read the committed

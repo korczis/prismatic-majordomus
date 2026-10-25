@@ -214,7 +214,7 @@ modules:
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
     stability: experimental
     source: builtin
-    capabilities: 25
+    capabilities: 29
   - id: models
     title: Models
     description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
@@ -23605,6 +23605,11 @@ capabilities:
               - boolean
               - "null"
             description: "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives."
+          tier:
+            type:
+              - string
+              - "null"
+            description: "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
         description: "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over."
         title: CompletionInput
     output:
@@ -24110,6 +24115,12 @@ capabilities:
                   - "null"
                 description: "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```"
                 default: null
+              lane:
+                anyOf:
+                  - "$ref": "#/$defs/Lane"
+                  - type: "null"
+                description: "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```"
+                default: null
               inputs:
                 type: array
                 items:
@@ -24121,6 +24132,18 @@ capabilities:
               - runs
               - inputs
             description: "```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"site-check\",\n    \"job\": \"site\",\n    \"runs\": \"scripts/site-check\",\n    \"summary\": \"the site is whole\"\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\"site/**\".into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \"site-check\");\nassert_eq!(entry.inputs, [\"site/**\"]);\n```\nOne gate of the model, with what the model implies about it."
+          Lane:
+            oneOf:
+              - type: string
+                const: feedback
+                description: "Cheap, fast and decisive: a pull request's required verdict needs it green."
+              - type: string
+                const: proof
+                description: "The heavy half, which judges the combined top before it lands."
+              - type: string
+                const: release
+                description: A gate only a release asks.
+            description: "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs."
           GateClass:
             type: object
             properties:
@@ -33655,6 +33678,876 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/mcp.rs
+  - id: mesh.build_cache.ensure
+    module: mesh
+    kind: command
+    title: "Restore an install before its command, and save it after"
+    description: "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952)."
+    input:
+      name: BuildCacheEnsureInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          kind:
+            "$ref": "#/$defs/Kind"
+            description: "What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`."
+          dir:
+            type:
+              - string
+              - "null"
+            description: "The directory holding the lockfile, relative to the repository; absent names the only\none the repository tracks, or the one the command was started in."
+          command:
+            type: array
+            items:
+              type: string
+            description: "The install or build command, run in that directory on a miss; required for npm and\nmix, optional for a cargo build directory."
+            default: []
+        required:
+          - kind
+        description: "The input of `mesh.build_cache.ensure`."
+        title: BuildCacheEnsureInput
+        "$defs":
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+    output:
+      name: BuildCacheEnsureReport
+      schema:
+        type: object
+        properties:
+          kind:
+            "$ref": "#/$defs/Kind"
+            description: What is cached.
+          dir:
+            type: string
+            description: "The directory holding the lockfile, relative to the repository."
+          target:
+            type: string
+            description: Where the content lives.
+          key:
+            type:
+              - string
+              - "null"
+            description: "The key, when one could be derived."
+          source:
+            "$ref": "#/$defs/Source"
+            description: Where the content came from.
+          command:
+            anyOf:
+              - "$ref": "#/$defs/CommandRun"
+              - type: "null"
+            description: "The command, when it ran."
+          saved:
+            type: array
+            items:
+              "$ref": "#/$defs/Level"
+            description: The levels a new archive was saved to.
+          notes:
+            type: array
+            items:
+              type: string
+            description: "Every miss, refusal and skip, in the order they happened."
+          local:
+            "$ref": "#/$defs/LocalLevel"
+            description: The local level after this run.
+        required:
+          - kind
+          - dir
+          - target
+          - source
+          - saved
+          - notes
+          - local
+        description: "What `mesh build-cache ensure` did."
+        title: BuildCacheEnsureReport
+        "$defs":
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+          Source:
+            oneOf:
+              - type: string
+                const: bypassed
+                description: "`MAJORDOMUS_BUILD_CACHE=off`: no level was asked, the command ran."
+              - type: string
+                const: uncached
+                description: "No key could be derived (a toolchain did not answer): the command ran uncached."
+              - type: string
+                const: in_place
+                description: "The marker already named this key: nothing was done."
+              - type: string
+                const: local
+                description: "Restored from this machine's local level."
+              - type: string
+                const: store
+                description: Restored from the store.
+              - type: string
+                const: command
+                description: "Every level missed: the command made it."
+              - type: string
+                const: nothing
+                description: Nothing was restored and no command was given.
+            description: "Where the target's content came from."
+          CommandRun:
+            type: object
+            properties:
+              argv:
+                type: array
+                items:
+                  type: string
+                description: What ran.
+              exit:
+                type:
+                  - integer
+                  - "null"
+                format: int32
+                description: Its exit code; absent when it could not start or a signal ended it.
+            required:
+              - argv
+            description: "The command, and how it ended."
+          Level:
+            oneOf:
+              - type: string
+                const: local
+                description: "`~/.cache/majordomus/build-cache`."
+              - type: string
+                const: store
+                description: The selected store.
+            description: A level an archive was saved to.
+          LocalLevel:
+            type: object
+            properties:
+              dir:
+                type: string
+                description: Where it is.
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What it holds, in bytes."
+              bound_bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What it may hold.
+              pruned:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Archives removed by this run to stay under the bound, oldest first."
+            required:
+              - dir
+              - bytes
+              - bound_bytes
+              - pruned
+            description: "The local level, measured after this run."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - ensure
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - build
+      - cache
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.build_cache.env
+    module: mesh
+    kind: query
+    title: The sccache client configuration for the store this node selected
+    description: "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673)."
+    input:
+      name: BuildCacheEnvInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          sccache:
+            type:
+              - string
+              - "null"
+            description: "The sccache executable to ask; `sccache` when absent."
+          node_file:
+            type:
+              - string
+              - "null"
+            description: The node file naming the store this node offers or knows.
+          credentials:
+            type:
+              - string
+              - "null"
+            description: "The AWS-format credential file, mode 0600."
+        description: "The input of `mesh.build_cache.env`."
+        title: BuildCacheEnvInput
+    output:
+      name: BuildCacheEnvReport
+      schema:
+        type: object
+        properties:
+          mode:
+            "$ref": "#/$defs/Mode"
+            description: What the client is configured as.
+          reason:
+            type: string
+            description: "Why, always one sentence; for a local-only answer, the condition that did not hold."
+          sccache:
+            "$ref": "#/$defs/BuildCacheSccache"
+            description: The installed sccache.
+          store:
+            anyOf:
+              - "$ref": "#/$defs/BuildCacheStore"
+              - type: "null"
+            description: "The selected store, when one was."
+          credentials_file:
+            type:
+              - string
+              - "null"
+            description: The path of the credential file the variables name; never its content.
+          variables:
+            type: array
+            items:
+              "$ref": "#/$defs/BuildCacheEnvVar"
+            description: "The variables to set in the environment of the process that starts the sccache\nserver; empty when the client is local-only."
+          passed_over:
+            type: array
+            items:
+              "$ref": "#/$defs/BuildCachePassedOver"
+            description: "The offers selection passed over, with the rule."
+        required:
+          - mode
+          - reason
+          - sccache
+          - variables
+        description: "The answer of `report`.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::{EnvReport, Mode, Sccache};\nlet r = EnvReport {\n    mode: Mode::LocalOnly, reason: \"sccache is not installed\".into(),\n    sccache: Sccache { found: false, version: None, multilevel: None, detail: String::new() },\n    store: None, credentials_file: None, variables: vec![], passed_over: vec![],\n};\nassert!(r.variables.is_empty());\n```"
+        title: BuildCacheEnvReport
+        "$defs":
+          Mode:
+            oneOf:
+              - type: string
+                const: mesh
+                description: "Local disk first, the selected store second."
+              - type: string
+                const: local-only
+                description: "The local disk alone: the build is what it was."
+            description: "What the client is configured as.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Mode;\nassert_ne!(Mode::Mesh, Mode::LocalOnly);\n```"
+          BuildCacheSccache:
+            type: object
+            properties:
+              found:
+                type: boolean
+                description: "Whether `--version` was answered."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: The version it stated.
+              multilevel:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether it has the multi-level chain: measured, and unknown when the measurement\ncould not be made."
+              detail:
+                type: string
+                description: "How that was found out, in words."
+            required:
+              - found
+              - detail
+            description: "What the installed sccache is, as measured.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Sccache;\nlet s = Sccache { found: false, version: None, multilevel: None, detail: \"absent\".into() };\nassert!(!s.found);\n```"
+          BuildCacheStore:
+            type: object
+            properties:
+              node:
+                type: string
+                description: The offering node.
+              provider:
+                type: string
+                description: What serves the store.
+              endpoint:
+                type: string
+                description: The non-secret endpoint.
+              bucket:
+                type: string
+                description: The bucket.
+            required:
+              - node
+              - provider
+              - endpoint
+              - bucket
+            description: "The store the second level is.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Store;\nlet s = Store { node: \"n1\".into(), provider: \"minio\".into(),\n    endpoint: \"http://192.168.100.30:9000\".into(), bucket: \"b\".into() };\nassert_eq!(s.provider, \"minio\");\n```"
+          BuildCacheEnvVar:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The variable.
+              value:
+                type: string
+                description: "Its value: never a key, at most the path of a credential file."
+            required:
+              - name
+              - value
+            description: "One variable of the client's environment.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::EnvVar;\nlet v = EnvVar { name: \"SCCACHE_REGION\".into(), value: \"us-east-1\".into() };\nassert_eq!(v.name, \"SCCACHE_REGION\");\n```"
+          BuildCachePassedOver:
+            type: object
+            properties:
+              node:
+                type: string
+                description: "The offer's node."
+              why:
+                type: string
+                description: "The rule, in words."
+            required:
+              - node
+              - why
+            description: "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_build_cache_env
+      http:
+        method: GET
+        path: /api/v1/mesh/build-cache/env
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - env
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - build
+      - cache
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+      local_only: true
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.build_cache.key
+    module: mesh
+    kind: query
+    title: What every dependency install and build directory is cached under
+    description: "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950)."
+    input:
+      name: BuildCacheKeyInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          kind:
+            anyOf:
+              - "$ref": "#/$defs/Kind"
+              - type: "null"
+            description: Only this kind; every kind the repository has when absent.
+        description: "The input of `mesh.build_cache.key`."
+        title: BuildCacheKeyInput
+        "$defs":
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+    output:
+      name: BuildCacheKeyReport
+      schema:
+        type: object
+        properties:
+          platform:
+            type: string
+            description: "This machine's platform triple."
+          kinds:
+            type: array
+            items:
+              "$ref": "#/$defs/BuildCacheKindKey"
+            description: "One entry per lockfile the repository tracks, by kind then directory."
+        required:
+          - platform
+          - kinds
+        description: "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```"
+        title: BuildCacheKeyReport
+        "$defs":
+          BuildCacheKindKey:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/Kind"
+                description: What is cached.
+              dir:
+                type: string
+                description: "The directory holding the lockfile, relative to the repository root (`.` for the root)."
+              location:
+                type: string
+                description: "Where the entry is restored to: relative to the repository, or `~/`-relative when it\nlies under the home directory (a shared cargo build directory)."
+              platform:
+                type: string
+                description: The platform triple the entry is built for.
+              toolchain:
+                type:
+                  - string
+                  - "null"
+                description: The toolchain as its executables state it; absent when they could not be asked.
+              inputs:
+                type: array
+                items:
+                  type: string
+                description: "The files hashed into the digest, relative to the repository root."
+              digest:
+                type: string
+                description: The first 32 hex digits of the SHA-256 over the inputs and the declared environment.
+              key:
+                type:
+                  - string
+                  - "null"
+                description: "`v1/<kind>/<platform>/<toolchain>/<digest>`; absent when the toolchain is."
+              unavailable:
+                type:
+                  - string
+                  - "null"
+                description: "Why there is no key, when there is none."
+            required:
+              - kind
+              - dir
+              - location
+              - platform
+              - inputs
+              - digest
+            description: "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_build_cache_key
+      http:
+        method: GET
+        path: /api/v1/mesh/build-cache/key
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - key
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - build
+      - cache
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.build_cache.provision
+    module: mesh
+    kind: command
+    title: Provision this node as a mesh build cache provider
+    description: "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do."
+    input:
+      name: ProvisionInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          apply:
+            type: boolean
+            description: "Carry the plan out. Absent, the capability only plans and changes nothing. Under the\ndefault root `/` it needs root and refuses without it."
+            default: false
+          root:
+            type:
+              - string
+              - "null"
+            description: "The directory the host's paths are read from and written under; default `/`. Any other\nroot is a staging directory: files only, no privilege, no command."
+        description: "The input of `mesh.build_cache.provision`."
+        title: ProvisionInput
+    output:
+      name: ProvisionReport
+      schema:
+        type: object
+        properties:
+          mode:
+            type: string
+            description: "`plan` or `apply`."
+          root:
+            type: string
+            description: The root read.
+          policy:
+            "$ref": "#/$defs/Policy"
+            description: "The policy in force: declared, not a secret."
+          plan:
+            "$ref": "#/$defs/Plan"
+            description: What the host owed when asked.
+          apply:
+            anyOf:
+              - "$ref": "#/$defs/ApplyReport"
+              - type: "null"
+            description: What the apply did; absent for a plan.
+          ok:
+            type: boolean
+            description: A plan always holds; an apply holds when nothing failed and nothing is owed after it.
+        required:
+          - mode
+          - root
+          - policy
+          - plan
+          - ok
+        description: "The answer: the plan against the host as observed, and the apply's report when asked."
+        title: ProvisionReport
+        "$defs":
+          Policy:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                type: string
+                description: The user whose builds use the cache on this host.
+              home:
+                type: string
+                description: "That user's home directory."
+              alias:
+                type: string
+                description: "The `mc` alias of the store."
+              tailnet_address:
+                type: string
+                description: The address other nodes reach the store at.
+              port:
+                type: integer
+                format: uint16
+                minimum: 0
+                maximum: 65535
+                description: "The store's port."
+              bucket:
+                type: string
+                description: The cache bucket.
+              region:
+                type: string
+                description: The region sccache signs for.
+              expire_days:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Days after which an entry expires.
+              bucket_quota_gib:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "The cache bucket's hard quota, in GiB."
+              gitlab_bucket:
+                type: string
+                description: "The CI cache bucket this host already serves, bounded the same way."
+              gitlab_quota_gib:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Its quota, in GiB."
+              policy_name:
+                type: string
+                description: The name of the least-privilege policy every node identity carries.
+              local_node:
+                type: string
+                description: "The node this host is: its builds use the loopback endpoint."
+              nodes:
+                type: array
+                items:
+                  type: string
+                description: Every node that receives an identity.
+              critical_services:
+                type: array
+                items:
+                  type: string
+                description: The services that restart always and are the last the OOM killer takes.
+            required:
+              - user
+              - home
+              - alias
+              - tailnet_address
+              - port
+              - bucket
+              - region
+              - expire_days
+              - bucket_quota_gib
+              - gitlab_bucket
+              - gitlab_quota_gib
+              - policy_name
+              - local_node
+              - nodes
+              - critical_services
+            description: "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
+          Plan:
+            type: object
+            properties:
+              files:
+                type: array
+                items:
+                  "$ref": "#/$defs/FileAction"
+                description: Every file the policy owns.
+              edits:
+                type: array
+                items:
+                  "$ref": "#/$defs/EditAction"
+                description: The line edits.
+              steps:
+                type: array
+                items:
+                  "$ref": "#/$defs/Step"
+                description: "The commands, in the order they run."
+              changes:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many files are missing, different or of the wrong mode, plus edits owed."
+              unobservable:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many files this process could not observe.
+            required:
+              - files
+              - edits
+              - steps
+              - changes
+              - unobservable
+            description: "The plan: every file, edit and command the host still owes."
+          FileAction:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path on the host.
+              mode:
+                type: string
+                description: "The mode it must have, in octal."
+              owner:
+                type:
+                  - string
+                  - "null"
+                description: "The owner it must have, when not root."
+              source:
+                type: string
+                description: "Where its content comes from: `declared`, `generated` or `copy:<path>`. Never the content."
+              state:
+                "$ref": "#/$defs/FileState"
+                description: Where it stands.
+            required:
+              - path
+              - mode
+              - source
+              - state
+            description: One file of the plan.
+          FileState:
+            oneOf:
+              - type: string
+                const: missing
+                description: Absent.
+              - type: string
+                const: different
+                description: Present with other content.
+              - type: string
+                const: mode
+                description: "Right content, wrong mode."
+              - type: string
+                const: current
+                description: As wanted.
+              - type: string
+                const: unobservable
+                description: Could not be observed by this process; apply as root decides.
+            description: Where a file stands against what the policy wants.
+          EditAction:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The file edited.
+              from:
+                type: string
+                description: The line replaced.
+              to:
+                type: string
+                description: The line it becomes.
+              owed:
+                type: boolean
+                description: The edit is still owed.
+            required:
+              - path
+              - from
+              - to
+              - owed
+            description: "A line edit the plan owes: the cargo config of the build user."
+          Step:
+            type: object
+            properties:
+              id:
+                type: string
+                description: A stable name.
+              line:
+                type: string
+                description: "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+              when:
+                type: string
+                description: "Run only when a file of the named group changed (`systemd`, `journald`, `docker`), or always."
+            required:
+              - id
+              - line
+              - when
+            description: "A command the apply runs once the files are in place, as root."
+          ApplyReport:
+            type: object
+            properties:
+              ok:
+                type: boolean
+                description: Nothing failed and nothing was refused.
+              refused:
+                type:
+                  - string
+                  - "null"
+                description: "Why nothing was done, when it was refused."
+              root:
+                type: string
+                description: The root the files were written under.
+              written:
+                type: array
+                items:
+                  type: string
+                description: "Paths written or corrected, never their content."
+              generated:
+                type: array
+                items:
+                  type: string
+                description: Paths of credentials this run generated.
+              ran:
+                type: array
+                items:
+                  "$ref": "#/$defs/Ran"
+                description: "The command lines that ran, each with its outcome."
+              skipped:
+                type: array
+                items:
+                  type: string
+                description: "Commands that did not run, and why."
+              after:
+                anyOf:
+                  - "$ref": "#/$defs/Plan"
+                  - type: "null"
+                description: "The plan after the apply: `changes` is 0 when the host now holds the policy."
+            required:
+              - ok
+              - root
+              - written
+              - generated
+              - ran
+              - skipped
+            description: What an apply did.
+          Ran:
+            type: object
+            properties:
+              line:
+                type: string
+                description: "The line, with a secret as a placeholder."
+              ok:
+                type: boolean
+                description: It exited zero.
+              output:
+                type: string
+                description: Its output when it failed (a secret removed).
+            required:
+              - line
+              - ok
+              - output
+            description: One command that ran.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - provision
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - build-cache
+      - provisioning
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.claim
     module: mesh
     kind: command
@@ -38527,6 +39420,11 @@ capabilities:
             items:
               "$ref": "#/$defs/StreamView"
             description: "Every stream's liveness."
+          build_cache:
+            anyOf:
+              - "$ref": "#/$defs/BuildCacheOfferReading"
+              - type: "null"
+            description: "The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none."
         required:
           - active
           - view
@@ -39278,6 +40176,121 @@ capabilities:
               - stream
               - liveness
             description: "One stream's liveness."
+          BuildCacheOfferReading:
+            type: object
+            properties:
+              offers:
+                type: array
+                items:
+                  "$ref": "#/$defs/BuildCacheNodeOffer"
+                description: "The offers of trusted runtimes whose beat rose within the offer's lifetime, one per\nnode, in node order: what `super::select` takes."
+              ignored:
+                type: array
+                items:
+                  "$ref": "#/$defs/BuildCachePassedOver"
+                description: "Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds."
+            required:
+              - offers
+              - ignored
+            description: "What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&[], &|_| true, &|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```"
+          BuildCacheNodeOffer:
+            type: object
+            properties:
+              node:
+                type: string
+                description: "The offering node's id: the last tie-break, so ordering is total."
+              protocol:
+                type: string
+                description: "The protocol the store speaks (`s3`)."
+              provider:
+                type: string
+                description: "What serves it (`minio`, `garage`, ...): data, not a code path."
+              scope:
+                "$ref": "#/$defs/BuildCacheScope"
+                description: How far the endpoint is meant to be reached.
+              endpoint:
+                type: string
+                description: The non-secret address a client connects to.
+              bucket:
+                type: string
+                description: The bucket the cache lives in.
+              priority:
+                type: integer
+                format: int32
+                description: "The offering node's own preference, higher first."
+              headroom_gib:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Free space on the data path, in GiB, when the node said."
+              health:
+                "$ref": "#/$defs/BuildCacheHealth"
+                description: "The node's own judgement of the store."
+              age_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds since the offer was last refreshed.
+              rtt_ms:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "A measured round trip from the asking node, in milliseconds, when one was."
+            required:
+              - node
+              - protocol
+              - provider
+              - scope
+              - endpoint
+              - bucket
+              - priority
+              - health
+              - age_seconds
+            description: "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+          BuildCacheScope:
+            oneOf:
+              - type: string
+                const: host
+                description: Reachable from the machine that offers it and no other.
+              - type: string
+                const: lan
+                description: "Reachable on the offering machine's local network."
+              - type: string
+                const: mesh
+                description: Reachable by every node of the mesh.
+            description: "How far an offer's endpoint is meant to be reached, nearest first.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);\n```"
+          BuildCacheHealth:
+            oneOf:
+              - type: string
+                const: healthy
+                description: Ready and answering.
+              - type: string
+                const: degraded
+                description: "Answering, but something the policy cares about is wrong (low headroom, slow)."
+              - type: string
+                const: unhealthy
+                description: "Not answering, or refusing."
+              - type: string
+                const: unknown
+                description: "The probe could not say: never `Healthy`."
+            description: "How the offering node's own probe judges the store.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```"
+          BuildCachePassedOver:
+            type: object
+            properties:
+              node:
+                type: string
+                description: "The offer's node."
+              why:
+                type: string
+                description: "The rule, in words."
+            required:
+              - node
+              - why
+            description: "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -42112,6 +43125,11 @@ capabilities:
               - "$ref": "#/$defs/PeerCheckout"
               - type: "null"
             description: "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+          address:
+            anyOf:
+              - "$ref": "#/$defs/PeerAddress"
+              - type: "null"
+            description: "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
           overlaps:
             type: array
             items:
@@ -42208,6 +43226,37 @@ capabilities:
               - worktree
               - this_checkout
             description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
+          PeerAddress:
+            type: object
+            properties:
+              provider:
+                type:
+                  - string
+                  - "null"
+                description: "The provider whose session this is (`claude-code`), when its environment says so."
+              host:
+                type: string
+                description: The machine the worker runs on.
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The worker's own process: the provider's pid, not the MCP bridge it started."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: "The provider's id for the session, the one its lifecycle hooks are given."
+              socket:
+                type:
+                  - string
+                  - "null"
+                description: The socket other sessions on the same machine message this one through.
+            required:
+              - host
+            description: "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
           Overlap:
             type: object
             properties:
@@ -42412,6 +43461,11 @@ capabilities:
                   - "$ref": "#/$defs/PeerCheckout"
                   - type: "null"
                 description: "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+              address:
+                anyOf:
+                  - "$ref": "#/$defs/PeerAddress"
+                  - type: "null"
+                description: "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
             required:
               - id
               - client
@@ -42493,6 +43547,37 @@ capabilities:
               - worktree
               - this_checkout
             description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
+          PeerAddress:
+            type: object
+            properties:
+              provider:
+                type:
+                  - string
+                  - "null"
+                description: "The provider whose session this is (`claude-code`), when its environment says so."
+              host:
+                type: string
+                description: The machine the worker runs on.
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The worker's own process: the provider's pid, not the MCP bridge it started."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: "The provider's id for the session, the one its lifecycle hooks are given."
+              socket:
+                type:
+                  - string
+                  - "null"
+                description: The socket other sessions on the same machine message this one through.
+            required:
+              - host
+            description: "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
           Overlap:
             type: object
             properties:

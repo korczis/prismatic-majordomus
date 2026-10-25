@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# build-cache-check — a local script may not build around the mesh build cache without saying why
+# (project.every-build-path-goes-through-the-cache, ADR 0157, I3953).
+#
+# The choke points are lib/rust_bin.sh (mj_cargo_bounded, which starts sccache with the store
+# as its second level) and `majordomus mesh build-cache ensure` (npm, mix). A script that runs
+# `cargo build|test|run`, `npm ci|install` or `mix deps.get` itself reuses nothing the mesh
+# built and adds nothing to it. This gate reads every tracked script and recipe and refuses such
+# a line unless it declares why, on the line or on the comment line before it:
+#
+#     npm ci   # build-cache: <why this build cannot use the cache>
+#
+# Not read: GitHub workflows (their runners cannot reach the store: a declared exemption),
+# prose, comments, and a bare `cargo` in a file that defines `cargo()` as mj_cargo_bounded
+# (that function is the choke point). Command position only: the words in an echoed message
+# are not commands.
+#
+#   scripts/ci/build-cache-check [paths...]   default: every tracked script and recipe
+#
+# Exit: 0 clean, 10 an undeclared bypass, 2 usage.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+
+# command position: line start, or after ; & | { ( $( then do else, past VAR=value prefixes
+CMD='(^|[;&|{]|\$\(|[[:space:]](then|do|else))[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=('"'"'[^'"'"']*'"'"'|"[^"]*"|[^[:space:]]*)[[:space:]]+)*((command|env)[[:space:]]+)?'
+BYPASS="${CMD}(cargo[[:space:]]+(build|test|run)|npm[[:space:]]+(ci|install)|mix[[:space:]]+deps\\.get)([[:space:]]|\$)"
+
+candidates() {
+  if [ $# -gt 0 ]; then printf '%s\n' "$@"; return; fi
+  git ls-files scripts lib bin share .just justfile .githooks .claude/hooks 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
+    [ -f "$f" ] || continue
+    case "$f" in
+      .just/*|justfile) printf '%s\n' "$f" ;;
+      *) head -n 1 "$f" 2>/dev/null | grep -q '^#!.*sh' && printf '%s\n' "$f" || true ;;
+    esac
+  done
+}
+
+found=0
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  chokes=0
+  grep -qE '^[[:space:]]*cargo\(\)[[:space:]]*\{[^}]*mj_cargo_bounded' "$f" 2>/dev/null && chokes=1
+  while IFS=: read -r n line; do
+    case "$line" in *"# build-cache:"*) continue ;; esac
+    first="${line#"${line%%[![:space:]]*}"}"
+    case "$first" in '#'*) continue ;; esac
+    if [ "$n" -gt 1 ] && sed -n "$((n - 1))p" "$f" | grep -qE '^[[:space:]]*#[[:space:]]*build-cache:[[:space:]]*[^[:space:]]'; then continue; fi
+    if [ "$chokes" = 1 ] && grep -qE "${CMD}cargo[[:space:]]" <<<"$line" \
+       && ! grep -qE 'npm|mix' <<<"$line"; then continue; fi
+    printf 'BYPASS %s:%s: %s\n' "$f" "$n" "$first"
+    found=$((found + 1))
+  done < <(grep -nE "$BYPASS" "$f" 2>/dev/null || true)
+done < <(candidates "$@")
+
+if [ "$found" -gt 0 ]; then
+  echo "build-cache-check: $found line(s) build around the cache. Go through mj_cargo_bounded (lib/rust_bin.sh) or 'majordomus mesh build-cache ensure', or declare why on the line:  # build-cache: <why>" >&2
+  exit 10
+fi
+echo "build-cache-check: every build line goes through the cache or declares why"
