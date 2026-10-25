@@ -70546,6 +70546,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4232",
+        "kind": "issue",
+        "label": "I4232",
+        "summary": "A build of the portable core from the repository's root keeps the executable's rlib of it",
+        "route": "/cockpit/objects/issue/i4232",
+        "source": ".ai/repo/project/issues/I4232.yaml",
+        "facts": {
+          "created_at": "2026-10-25",
+          "current_state": "Measured at origin/master 2efeacea031 on 2026-10-25: apps/majordomus-core/Cargo.toml declares crate-type = [\\\"rlib\\\", \\\"cdylib\\\"].",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "the shared build-dir itself (.cargo/config.toml, ADR 0139)",
+            "the core's code, its own Cargo.lock and its tests"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-core/Cargo.toml",
+            "scripts/rust-check",
+            "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+            ".ai/repo/project/issues/I4232.yaml"
+          ],
+          "serves": [],
+          "slug": "a-core-build-keeps-its-own-rlib",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 4232_a_core_build_keeps_its_own_rlib",
+            "scripts/rust-check --portable-core",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -93991,6 +94029,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "kind": "test",
+        "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "route": "/cockpit/objects/test/test-cases-4232-a-core-build-keeps-its-own-rlib-sh",
+        "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -132638,6 +132683,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4232",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4232",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139138,6 +139193,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144229,8 +144289,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4004,
+      "edges": 9235,
       "acyclic": false,
       "truncated": false
     }

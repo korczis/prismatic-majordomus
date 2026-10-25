@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "94055f5c02d96de4ffe4d549beb908a692df3e3aa2a71b6c29dec8b1a5b96c36",
+    "fingerprint": "e7cc074a4ab843c6cad7c9769581e552847366b4411b20e206dff878608ea66f",
     "summary": {
-      "total": 3538,
+      "total": 3540,
       "builtin": 219,
-      "declarative": 3319,
+      "declarative": 3321,
       "by_kind": {
         "command": 35,
         "query": 184,
-        "resource": 3319
+        "resource": 3321
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 62,
-        "implemented": 3329
+        "implemented": 3331
       },
       "mcp_tools": 205,
-      "mcp_resources": 3376,
+      "mcp_resources": 3378,
       "http_routes": 211,
       "cli_commands": 120,
       "modules": 94,
@@ -91121,7 +91121,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1027,
+        "capabilities": 1028,
         "capability_ids": []
       },
       {
@@ -91718,7 +91718,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 652,
+        "capabilities": 653,
         "capability_ids": []
       },
       {
@@ -91810,7 +91810,7 @@
     ]
   },
   "index": {
-    "fingerprint": "aa43b4dfb5276404c4c567ed870ab68397c7483b0435d154229a63680ca2abab",
+    "fingerprint": "acd23b41cbfd0a2248343934af76c3ce7474ede6f00c5d8cad8efbaa665cd425",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -91850,7 +91850,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1027,
+      "issue": 1028,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -91864,7 +91864,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 652,
+      "test": 653,
       "use-case": 49,
       "workspace": 1
     },
@@ -99295,7 +99295,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 970095
+        "bytes": 974354
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114521,6 +114521,17 @@
         "bytes": 3420
       },
       {
+        "uri": "majordomus://issue/I4232",
+        "kind": "issue",
+        "identity": "I4232",
+        "title": "A build of the portable core from the repository's root keeps the executable's rlib of it",
+        "description": "apps/majordomus-core declares an rlib only, so cargo names that rlib by its hash. `cargo test --manifest-path apps/majordomus-core/Cargo.toml`, run from the root where the shared build-dir applies, can then no longer replace the rlib every executable links. The wasm32 module is the cdylib that scripts/rust-check --portable-core asks for on its command line.",
+        "path": ".ai/repo/project/issues/I4232.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2806
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -125401,6 +125412,14 @@
         "bytes": 3613
       },
       {
+        "uri": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "kind": "test",
+        "identity": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "path": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "source_class": "case",
+        "bytes": 5122
+      },
+      {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
         "kind": "test",
         "identity": "test/cases/42_dag_waves.sh",
@@ -127963,7 +127982,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1027
+      "objects": 1028
     },
     {
       "name": "knowledge",
@@ -128125,7 +128144,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 652
+      "objects": 653
     },
     {
       "name": "use-case",
