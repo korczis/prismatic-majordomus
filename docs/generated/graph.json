@@ -70414,6 +70414,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4201",
+        "kind": "issue",
+        "label": "I4201",
+        "summary": "A blackboard follower whose heartbeat cannot be written ends at that write, and a test that no other write can pre-empt proves it",
+        "route": "/cockpit/objects/issue/i4201",
+        "source": ".ai/repo/project/issues/I4201.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "cargo test --lib http::follow:: passes with the new test",
+            "With line 672's break removed, the new test does not return (it is killed at its bound)",
+            "coverage-differential reports follow.rs:672 covered"
+          ],
+          "created_at": "2026-10-24",
+          "current_state": "Measured on d1e5a31adba (train 6): no test refuses the heartbeat frame itself, so whether line 672 is covered depends on the order of the parallel tests.",
+          "depends_on": [],
+          "desired_state": "Line 672 is covered on every run. With the break removed, the new test never returns, so a regression there cannot pass.",
+          "evidence_required": [
+            "heartbeat_failure_ends_the_follower"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "The follower's behaviour, which is unchanged",
+            "The existing timing-dependent tests"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4201.yaml",
+            "apps/majordomus-cli/src/http/follow.rs"
+          ],
+          "serves": [],
+          "slug": "a-follower-ends-where-its-heartbeat-fails",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- http::follow::"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4220",
         "kind": "issue",
         "label": "I4220",
@@ -132608,6 +132648,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4201",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4201",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4220",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144229,8 +144279,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }
