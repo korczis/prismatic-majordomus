@@ -267,6 +267,12 @@ pub struct Peer {
     /// which checkout's server it asked.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub checkout: Option<PeerCheckout>,
+    /// Where the worker behind this peer can be reached from outside its connection: its
+    /// machine, its process, its provider session and the socket other sessions message it
+    /// on; see [`PeerAddress`]. Derived when the peer attached, never announced by hand.
+    /// Absent for a client that exposes none of it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub address: Option<PeerAddress>,
 }
 
 /// Two peers that claimed the same ground.
@@ -349,12 +355,194 @@ pub fn claims_meet(a: &str, b: &str) -> bool {
     a == b || b.starts_with(&format!("{a}/")) || a.starts_with(&format!("{b}/"))
 }
 
+// ---------------------------------------------------------------- the address (I3956)
+
+/// Where the worker behind a peer can be reached from outside its MCP connection.
+///
+/// A board row named a client and a version, and nothing a person or another session could
+/// act on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be
+/// found only by walking an ssh client's parent chain to a provider pid, its messaging
+/// socket, and a start time matched by hand. Every one of those facts is in the environment
+/// the provider hands the processes it starts — the MCP server among them — so the address
+/// is read from there when the peer attaches, and never asked of the model.
+///
+/// The provider's messaging *token* is a credential and is never read: the address is where
+/// to knock, not the key.
+///
+/// ```
+/// use majordomus_cli::peers::PeerAddress;
+/// // a client that exposes nothing still has a machine and a parent process
+/// let bare = PeerAddress::from_env(|_| None, Some(4242), "lundra").unwrap();
+/// assert_eq!((bare.host.as_str(), bare.pid), ("lundra", Some(4242)));
+/// assert!(bare.provider.is_none() && bare.mesh_session().is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct PeerAddress {
+    /// The provider whose session this is (`claude-code`), when its environment says so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    /// The machine the worker runs on.
+    pub host: String,
+    /// The worker's own process: the provider's pid, not the MCP bridge it started.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<u32>,
+    /// The provider's id for the session, the one its lifecycle hooks are given.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// The socket other sessions on the same machine message this one through.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub socket: Option<String>,
+}
+
+/// The `_meta` key a bridge carries the address under in the `initialize` it forwards.
+pub(crate) const ADDRESS_META: &str = "dev.majordomus/address";
+
+impl PeerAddress {
+    /// The address an environment describes. `env` answers a variable by name; `parent` is
+    /// the pid of the process that started this one, used when the provider names no pid of
+    /// its own; `host` is the machine. `None` only when there is no host to name.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let env = |k: &str| match k {
+    ///     "CLAUDE_CODE_SESSION_ID" => Some("s-1".to_string()),
+    ///     "CLAUDE_CODE_MESSAGING_TOKEN" => Some("secret".to_string()),
+    ///     _ => None,
+    /// };
+    /// let a = PeerAddress::from_env(env, Some(7), "mac").unwrap();
+    /// assert_eq!(a.provider.as_deref(), Some("claude-code"));
+    /// assert_eq!(a.pid, Some(7), "no provider pid: the parent is the worker");
+    /// assert!(!serde_json::to_string(&a).unwrap().contains("secret"));
+    /// ```
+    pub fn from_env(
+        env: impl Fn(&str) -> Option<String>,
+        parent: Option<u32>,
+        host: &str,
+    ) -> Option<PeerAddress> {
+        let host = host.trim();
+        if host.is_empty() {
+            return None;
+        }
+        let read = |k: &str| {
+            env(k)
+                .map(|v| v.trim().to_string())
+                .filter(|v| !v.is_empty())
+        };
+        let session = read("CLAUDE_CODE_SESSION_ID");
+        let socket = read("CLAUDE_CODE_MESSAGING_SOCKET");
+        let claude = session.is_some() || socket.is_some() || read("CLAUDECODE").is_some();
+        let pid = read("CLAUDE_PID")
+            .and_then(|p| p.parse::<u32>().ok())
+            .filter(|p| *p > 1)
+            .or(parent.filter(|p| *p > 1));
+        Some(PeerAddress {
+            provider: claude.then(|| "claude-code".to_string()),
+            host: host.to_string(),
+            pid,
+            session,
+            socket,
+        })
+    }
+
+    /// The address of the worker that started this process: its environment, its parent
+    /// and this machine.
+    pub(crate) fn of_this_process() -> Option<PeerAddress> {
+        Self::from_env(
+            |k| std::env::var(k).ok(),
+            Some(std::os::unix::process::parent_id()),
+            &crate::integration::drain::host(),
+        )
+    }
+
+    /// The address a bridge carried in `initialize` params, under
+    /// `_meta["dev.majordomus/address"]`.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let params = serde_json::json!({ "_meta": { "dev.majordomus/address": { "host": "mac", "pid": 9 } } });
+    /// assert_eq!(PeerAddress::from_initialize(&params).unwrap().pid, Some(9));
+    /// assert!(PeerAddress::from_initialize(&serde_json::json!({})).is_none());
+    /// ```
+    pub fn from_initialize(params: &serde_json::Value) -> Option<PeerAddress> {
+        serde_json::from_value(params.get("_meta")?.get(ADDRESS_META)?.clone()).ok()
+    }
+
+    /// The id this provider session has on the mesh, the one the edit guard judges its
+    /// claims under (`<provider>-<session>`): what joins a board row to a mesh session.
+    /// `None` unless both the provider and its session id are known.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let env = |k: &str| (k == "CLAUDE_CODE_SESSION_ID").then(|| "s1".to_string());
+    /// let a = PeerAddress::from_env(env, Some(7), "mac").unwrap();
+    /// assert_eq!(a.mesh_session().as_deref(), Some("claude-code-s1"));
+    /// let bare = PeerAddress::from_env(|_| None, Some(7), "mac").unwrap();
+    /// assert_eq!(bare.mesh_session(), None);
+    /// ```
+    pub fn mesh_session(&self) -> Option<String> {
+        Some(format!(
+            "{}-{}",
+            self.provider.as_ref()?,
+            self.session.as_ref()?
+        ))
+    }
+
+    /// One line a person can act on: `claude-code pid 85501 on mac, /tmp/cc-socks/85501.sock`.
+    ///
+    /// ```
+    /// use majordomus_cli::peers::PeerAddress;
+    /// let a = PeerAddress::from_env(|_| None, Some(12), "lundra").unwrap();
+    /// assert_eq!(a.line(), "pid 12 on lundra");
+    /// ```
+    pub fn line(&self) -> String {
+        let mut out = String::new();
+        if let Some(p) = &self.provider {
+            out.push_str(p);
+            out.push(' ');
+        }
+        if let Some(pid) = self.pid {
+            out.push_str(&format!("pid {pid} "));
+        }
+        out.push_str(&format!("on {}", self.host));
+        if let Some(socket) = &self.socket {
+            out.push_str(&format!(", {socket}"));
+        }
+        out
+    }
+}
+
+/// Put the address of the worker that started this process into an `initialize` message's
+/// params, under `_meta["dev.majordomus/address"]`, unless the client already put one there.
+///
+/// ```
+/// use majordomus_cli::peers::{with_address, PeerAddress};
+/// let a = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+/// let mut init = serde_json::json!({ "method": "initialize", "params": { "clientInfo": { "name": "x" } } });
+/// with_address(&mut init, &a);
+/// assert_eq!(PeerAddress::from_initialize(&init["params"]), Some(a));
+/// ```
+pub fn with_address(message: &mut serde_json::Value, address: &PeerAddress) {
+    let Some(params) = message.get_mut("params").and_then(|p| p.as_object_mut()) else {
+        return;
+    };
+    let meta = params
+        .entry("_meta")
+        .or_insert_with(|| serde_json::Value::Object(Default::default()));
+    // an address always serialises (string keys, plain values); a `_meta` that is not an
+    // object is left as the client sent it
+    if let (Some(meta), Ok(v)) = (meta.as_object_mut(), serde_json::to_value(address)) {
+        meta.entry(ADDRESS_META).or_insert(v);
+    }
+}
+
 struct Slot {
     client: ClientInfo,
     transport: Transport,
     connected_at: SystemTime,
     last_seen: Instant,
     departed: bool,
+    /// Where the worker can be reached, once its client said so (I3956).
+    address: Option<PeerAddress>,
     /// The peer's claims, by [`claim_key`]. A `BTreeMap` rather than a `Vec` because
     /// announcing under a name a peer already used must replace that claim and not append
     /// a second one — idempotence is the map, not a search.
@@ -421,6 +609,7 @@ impl PeerBoard {
                 connected_at: SystemTime::now(),
                 last_seen: Instant::now(),
                 departed: false,
+                address: None,
                 claims: BTreeMap::new(),
             },
         );
@@ -434,6 +623,38 @@ impl PeerBoard {
             s.client = client;
             crate::change::BLACKBOARD.advance();
             s.last_seen = Instant::now();
+        }
+    }
+
+    /// Where the worker behind a peer can be reached, derived when it attached (I3956).
+    ///
+    /// ```
+    /// use majordomus_cli::peers::{PeerAddress, PeerBoard, Transport};
+    /// let board = PeerBoard::new();
+    /// let id = board.attach(Transport::Http);
+    /// let env = |k: &str| match k {
+    ///     "CLAUDE_CODE_SESSION_ID" => Some("877e4b89-549b".to_string()),
+    ///     "CLAUDE_CODE_MESSAGING_SOCKET" => Some("/tmp/cc-socks/85501.sock".to_string()),
+    ///     "CLAUDE_PID" => Some("85501".to_string()),
+    ///     _ => None,
+    /// };
+    /// board.locate(&id, PeerAddress::from_env(env, None, "mac").unwrap());
+    /// let listed = board.get(&id).unwrap();
+    /// let address = listed.address.expect("the board row carries the address");
+    /// assert_eq!(address.socket.as_deref(), Some("/tmp/cc-socks/85501.sock"));
+    /// assert_eq!(address.mesh_session().as_deref(), Some("claude-code-877e4b89-549b"));
+    /// ```
+    pub fn locate(&self, id: &PeerId, address: PeerAddress) {
+        if let Some(s) = self.lock().get_mut(&id.seq()) {
+            s.address = Some(address);
+        }
+    }
+
+    /// [`PeerBoard::locate`] when there is an address: a process whose machine has no name
+    /// ([`PeerAddress::of_this_process`] answers `None`) leaves the row as it is.
+    pub(crate) fn locate_known(&self, id: &PeerId, address: Option<PeerAddress>) {
+        if let Some(address) = address {
+            self.locate(id, address);
         }
     }
 
@@ -704,6 +925,7 @@ fn peer(seq: u64, s: &Slot) -> Peer {
         // a board does not know which checkout it is the board of; whoever gathered this
         // peer stamps it (`peers.list`), because that is the reader that asked a server
         checkout: None,
+        address: s.address.clone(),
     }
 }
 
@@ -935,6 +1157,153 @@ pub fn epoch_seconds(ts: &str) -> Option<i64> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The address is read from what the provider hands its processes (I3956): the session,
+    /// the socket and the provider's pid, and never its messaging token. A provider pid that
+    /// cannot be parsed, or names init, gives way to the parent; with neither there is no pid.
+    #[test]
+    fn an_address_is_derived_from_the_providers_environment_and_never_carries_its_token() {
+        let env = |k: &str| match k {
+            "CLAUDECODE" => Some("1".to_string()),
+            "CLAUDE_CODE_SESSION_ID" => Some(" 877e4b89 ".to_string()),
+            "CLAUDE_CODE_MESSAGING_SOCKET" => Some("/tmp/cc-socks/24025.sock".to_string()),
+            "CLAUDE_CODE_MESSAGING_TOKEN" => Some("never-on-the-board".to_string()),
+            "CLAUDE_PID" => Some("24025".to_string()),
+            _ => None,
+        };
+        let a = PeerAddress::from_env(env, Some(99), "mac").unwrap();
+        assert_eq!(a.provider.as_deref(), Some("claude-code"));
+        assert_eq!(a.session.as_deref(), Some("877e4b89"), "trimmed");
+        assert_eq!(a.pid, Some(24025), "the provider's pid, not the parent's");
+        assert_eq!(a.mesh_session().as_deref(), Some("claude-code-877e4b89"));
+        assert_eq!(
+            a.line(),
+            "claude-code pid 24025 on mac, /tmp/cc-socks/24025.sock"
+        );
+        let text = serde_json::to_string(&a).unwrap();
+        assert!(!text.contains("never-on-the-board"), "{text}");
+        assert!(!text.contains("TOKEN"), "{text}");
+
+        let garbled = |k: &str| (k == "CLAUDE_PID").then(|| "not-a-pid".to_string());
+        assert_eq!(
+            PeerAddress::from_env(garbled, Some(5), "h").unwrap().pid,
+            Some(5)
+        );
+        let init = |k: &str| (k == "CLAUDE_PID").then(|| "1".to_string());
+        assert_eq!(PeerAddress::from_env(init, Some(1), "h").unwrap().pid, None);
+        assert!(PeerAddress::from_env(|_| None, Some(5), "  ").is_none());
+    }
+
+    /// A located peer is listed with its address, keeps it when it departs (the work it
+    /// announced outlives the connection, and so must the way to reach whoever did it), and
+    /// the address survives the wire a sibling board is read over.
+    #[test]
+    fn a_located_peer_is_listed_with_its_address_and_keeps_it_when_it_departs() {
+        let board = PeerBoard::new();
+        let unlocated = board.attach(Transport::Http);
+        let located = board.attach(Transport::Http);
+        let address = PeerAddress::from_env(|_| None, Some(4242), "lundra").unwrap();
+        board.locate(&located, address.clone());
+        board.locate(&PeerId::new(77), address.clone());
+        board.announce(&located, "a remote derive", vec!["apps".into()]);
+        let listed = board.list();
+        assert_eq!(listed.len(), 2, "locating an unknown peer adds nobody");
+        assert!(listed[0].address.is_none());
+        let text = serde_json::to_string(&listed[0]).unwrap();
+        assert!(!text.contains("address"), "{text}");
+        assert_eq!(listed[1].address.as_ref(), Some(&address));
+        board.detach(&unlocated);
+        board.detach(&located);
+        let gone = &board.list()[0];
+        assert!(!gone.attached);
+        assert_eq!(gone.address.as_ref(), Some(&address));
+        let back: Peer = serde_json::from_str(&serde_json::to_string(gone).unwrap()).unwrap();
+        assert_eq!(&back, gone);
+    }
+
+    /// A process that has no address (its machine has no name) leaves its row unlocated; one
+    /// that has one is located as `locate` would.
+    #[test]
+    fn locating_with_no_address_leaves_the_row_as_it_is() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Stdio);
+        board.locate_known(&peer, None);
+        assert!(board.list()[0].address.is_none());
+        let address = PeerAddress::from_env(|_| None, Some(9), "mac").unwrap();
+        board.locate_known(&peer, Some(address.clone()));
+        assert_eq!(board.list()[0].address.as_ref(), Some(&address));
+        assert_eq!(PeerAddress::from_env(|_| None, Some(9), "  "), None);
+    }
+
+    /// The address a bridge carries is put into `initialize` params once: a client that
+    /// already carried one keeps its own, and params that are not an object are left alone.
+    #[test]
+    fn with_address_stamps_initialize_params_once() {
+        let mine = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+        let theirs = PeerAddress::from_env(|_| None, Some(4), "other").unwrap();
+        let mut init = serde_json::json!({ "method": "initialize", "params": {} });
+        with_address(&mut init, &theirs);
+        with_address(&mut init, &mine);
+        assert_eq!(PeerAddress::from_initialize(&init["params"]), Some(theirs));
+        let mut odd = serde_json::json!({ "method": "initialize", "params": [1] });
+        with_address(&mut odd, &mine);
+        assert_eq!(odd["params"], serde_json::json!([1]));
+        let mut bare = serde_json::json!({ "method": "initialize" });
+        with_address(&mut bare, &mine);
+        assert!(bare.get("params").is_none());
+        let wrong = serde_json::json!({ "_meta": { "dev.majordomus/address": "a string" } });
+        assert!(PeerAddress::from_initialize(&wrong).is_none());
+    }
+
+    /// The machine's own address is derived from this process, never empty.
+    #[test]
+    fn this_process_has_an_address() {
+        let a = PeerAddress::of_this_process().expect("a host");
+        assert!(!a.host.is_empty());
+        assert!(a.pid.is_some(), "a test runs under some parent");
+    }
+
+    /// An address names only what it knows: with no provider or no session there is no mesh
+    /// session to join, and its line leaves out the provider, the pid and the socket it lacks.
+    #[test]
+    fn an_address_without_a_provider_session_pid_or_socket_says_only_what_it_has() {
+        let bare = PeerAddress {
+            provider: None,
+            host: "mac".into(),
+            pid: None,
+            session: Some("s1".into()),
+            socket: None,
+        };
+        assert_eq!(bare.mesh_session(), None, "no provider, no mesh session");
+        assert_eq!(bare.line(), "on mac");
+        let sessionless = PeerAddress {
+            provider: Some("claude-code".into()),
+            session: None,
+            ..bare.clone()
+        };
+        assert_eq!(
+            sessionless.mesh_session(),
+            None,
+            "no session, no mesh session"
+        );
+        assert_eq!(sessionless.line(), "claude-code on mac");
+    }
+
+    /// An `initialize` carries an address only under `_meta["dev.majordomus/address"]`: no
+    /// `_meta`, or a `_meta` without the key, is no address; and a `_meta` that is not an
+    /// object is left as it is rather than replaced.
+    #[test]
+    fn an_address_is_read_and_written_only_under_its_meta_key() {
+        assert!(PeerAddress::from_initialize(&serde_json::json!({})).is_none());
+        assert!(
+            PeerAddress::from_initialize(&serde_json::json!({ "_meta": { "other": 1 } })).is_none()
+        );
+        let mine = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+        let mut odd = serde_json::json!({ "method": "initialize", "params": { "_meta": 5 } });
+        with_address(&mut odd, &mine);
+        assert_eq!(odd["params"]["_meta"], serde_json::json!(5));
+        assert!(PeerAddress::from_initialize(&odd["params"]).is_none());
+    }
 
     /// A board is now read back off the wire: `peers.list` gathers a sibling checkout's
     /// board from that checkout's own server, and `serde` parses the answer into these

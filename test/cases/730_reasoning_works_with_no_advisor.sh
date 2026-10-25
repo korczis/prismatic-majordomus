@@ -19,8 +19,12 @@ reasoning_fixture
 # ---------------------------------------------------------------- 1. absence is state
 expect_exit 0 rz reasoning advisors
 expect_grep "reasoning   operational"
-expect_grep "0 available · 5 optional unavailable"
-for advisor in chatgpt gemini codex ollama lmstudio; do expect_grep "^  $advisor "; done
+# every advisor the distribution declares is listed, and none is available here: the count is
+# the declared set's, read from share/advisors.yaml, so a new advisor is not a broken case
+declared="$(awk '/^advisors:/{a=1; next} /^[^ #]/{a=0} a && /^  - id: /{print $3}' "$ROOT/share/advisors.yaml")"
+[ -n "$declared" ] || { echo "    share/advisors.yaml declares no advisor"; exit 1; }
+expect_grep "0 available · $(printf '%s\n' "$declared" | wc -l | tr -d ' ') optional unavailable"
+for advisor in $declared; do expect_grep "^  $advisor "; done
 expect_grep "chatgpt +not_configured +api +credential_absent"
 expect_grep "codex +unavailable +cli +executable_not_found"
 expect_grep "independent_reasoning +local review"

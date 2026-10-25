@@ -530,8 +530,9 @@ impl HandoverBody {
 /// never breaks an older one's replication.
 ///
 /// The vocabulary is small on purpose: everything the mesh coordinates is a session, a
-/// claim, a handover or a review, and an event that would need a ninth kind is a feature
-/// that has not been agreed. The `kind` tag is what goes on the wire, so it is protocol —
+/// claim, a handover or a review, and a node's offer of the build cache it serves (ADR 0157
+/// agreed that one, I2671); an event that would need another kind is a feature that has not
+/// been agreed. The `kind` tag is what goes on the wire, so it is protocol —
 /// two executables of different ages read the same word for the same event.
 ///
 /// ```
@@ -637,14 +638,147 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
+    /// A node offers the build cache it serves, its own probe having found the store healthy
+    /// (ADR 0157 decision 2). Fresh while the writing stream beats within the offer's
+    /// lifetime; read by `mesh::build_cache::offer`, not folded.
+    BuildCacheOffered {
+        /// The offer.
+        offer: BuildCacheOffer,
+    },
+    /// The node's offer ended: its probe stopped passing, or it no longer serves a store.
+    BuildCacheWithdrawn {
+        /// Why, from a fixed vocabulary: one line, never a path or an endpoint.
+        reason: String,
+    },
+}
+
+/// The longest lifetime a build-cache offer may state, in seconds: an hour. An offer lives
+/// past its runtime's last beat for at most its lifetime, and the runtime writes the
+/// cooperation expiry there, so anything longer is a record nobody should keep believing.
+pub const BUILD_CACHE_LIFETIME_MAX: u64 = 3600;
+
+/// A node's offer of the build cache it serves, as the journal carries it (ADR 0157 decision
+/// 2, I2671): what a client needs to reach the store and rank it, and how long past its
+/// runtime's last beat it holds. No field holds a credential, and the endpoint is a scheme
+/// and an address alone, so none can ride in it.
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::Scope;
+/// use majordomus_cli::mesh::journal::BuildCacheOffer;
+///
+/// let offer = BuildCacheOffer { protocol: "s3".into(), provider: "minio".into(),
+///     scope: Scope::Lan, endpoint: "http://192.0.2.10:9000".into(),
+///     bucket: "majordomus-build-cache".into(), priority: 0, headroom_gib: None,
+///     lifetime_seconds: 30 };
+/// assert!(offer.validate().is_ok());
+/// // user information is where a key would ride: refused before anything is signed
+/// let smuggled = BuildCacheOffer { endpoint: "http://k:s@192.0.2.10:9000".into(), ..offer };
+/// assert!(smuggled.validate().is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct BuildCacheOffer {
+    /// The protocol the store speaks (`s3`).
+    pub protocol: String,
+    /// What serves it (`minio`, `garage`, ...): data, not a code path.
+    pub provider: String,
+    /// How far the endpoint is meant to be reached.
+    pub scope: super::build_cache::Scope,
+    /// `http://` or `https://` and an address: no user information, path, query or fragment.
+    pub endpoint: String,
+    /// The bucket, by S3's naming rules.
+    pub bucket: String,
+    /// The node's preference, higher first.
+    #[serde(default)]
+    pub priority: i32,
+    /// Free space on the store's data path, in GiB, when the node said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub headroom_gib: Option<u64>,
+    /// How long past its runtime's last beat the offer holds, in seconds: 1 to
+    /// [`BUILD_CACHE_LIFETIME_MAX`].
+    pub lifetime_seconds: u64,
+}
+
+impl BuildCacheOffer {
+    /// Check the offer's bounds. A refusal names the field and the rule, never the value: a
+    /// value refused here may be a credential somebody put in the wrong place.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::build_cache::Scope;
+    /// use majordomus_cli::mesh::journal::BuildCacheOffer;
+    ///
+    /// let offer = BuildCacheOffer { protocol: "s3".into(), provider: "minio".into(),
+    ///     scope: Scope::Mesh, endpoint: "https://[2001:db8::1]:9000".into(),
+    ///     bucket: "build.cache-1".into(), priority: 5, headroom_gib: Some(9),
+    ///     lifetime_seconds: 30 };
+    /// assert!(offer.validate().is_ok());
+    /// let queried = BuildCacheOffer { endpoint: "http://192.0.2.1:9000/?X-Amz-Signature=s".into(),
+    ///     ..offer.clone() };
+    /// assert!(!queried.validate().unwrap_err().contains("Signature"));
+    /// let forever = BuildCacheOffer { lifetime_seconds: 0, ..offer };
+    /// assert!(forever.validate().is_err());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        let word = |name: &str, value: &str, max: usize| {
+            let ok = !value.is_empty()
+                && value.len() <= max
+                && value
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+            if ok {
+                Ok(())
+            } else {
+                Err(format!("{name} is not 1-{max} of [a-z0-9-]"))
+            }
+        };
+        word("protocol", &self.protocol, 16)?;
+        word("provider", &self.provider, 32)?;
+        let address = self
+            .endpoint
+            .strip_prefix("http://")
+            .or_else(|| self.endpoint.strip_prefix("https://"));
+        let addressed = self.endpoint.len() <= 256
+            && address.is_some_and(|a| {
+                !a.is_empty()
+                    && a.bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b".-:[]".contains(&b))
+            });
+        if !addressed {
+            return Err(
+                "the endpoint is not http:// or https:// and an address alone \
+                 (no user information, path, query or fragment)"
+                    .into(),
+            );
+        }
+        let b = self.bucket.as_bytes();
+        let named = (3..=63).contains(&b.len())
+            && b.iter()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || b".-".contains(c))
+            && b[0].is_ascii_alphanumeric()
+            && b[b.len() - 1].is_ascii_alphanumeric();
+        if !named {
+            return Err(
+                "the bucket is not 3-63 of [a-z0-9.-], beginning and ending with a \
+                 letter or a digit"
+                    .into(),
+            );
+        }
+        if !(1..=BUILD_CACHE_LIFETIME_MAX).contains(&self.lifetime_seconds) {
+            return Err(format!(
+                "a lifetime of {} s is not 1-{BUILD_CACHE_LIFETIME_MAX}",
+                self.lifetime_seconds
+            ));
+        }
+        Ok(())
+    }
 }
 
 /// The most a review request's body, or a requester's result note, carries: room for the
 /// evidence a reviewer needs without a second channel, and far under the link's bound.
 pub const REVIEW_BODY_MAX: usize = 8 * 1024;
 
-/// The event kinds this executable interprets. An event naming another kind is stored and
-/// relayed, never folded.
+/// The event kinds this executable interprets: the cooperation fold reads the first nine,
+/// `mesh::build_cache::offer` the build-cache two. An event naming another kind is stored and
+/// relayed, never interpreted.
 pub const KNOWN_KINDS: &[&str] = &[
     "session_opened",
     "session_closed",
@@ -655,6 +789,8 @@ pub const KNOWN_KINDS: &[&str] = &[
     "review_requested",
     "review_answered",
     "review_withdrawn",
+    "build_cache_offered",
+    "build_cache_withdrawn",
 ];
 
 impl EventBody {
@@ -682,6 +818,8 @@ impl EventBody {
             EventBody::ReviewRequested { .. } => "review_requested",
             EventBody::ReviewAnswered { .. } => "review_answered",
             EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
+            EventBody::BuildCacheOffered { .. } => "build_cache_offered",
+            EventBody::BuildCacheWithdrawn { .. } => "build_cache_withdrawn",
         }
     }
 
@@ -840,6 +978,8 @@ impl EventBody {
                 }
                 Ok(())
             }
+            EventBody::BuildCacheOffered { offer } => offer.validate(),
+            EventBody::BuildCacheWithdrawn { reason } => line("reason", reason, 256),
         }
     }
 }
@@ -1084,40 +1224,8 @@ impl std::error::Error for CursorError {}
 /// assert_eq!(canonical_json(&a), br#"{"a":[{"c":3,"d":2}],"b":1}"#.to_vec());
 /// ```
 pub fn canonical_json(value: &Value) -> Vec<u8> {
-    let mut out = Vec::new();
-    write_canonical(value, &mut out);
-    out
-}
-
-fn write_canonical(value: &Value, out: &mut Vec<u8>) {
-    match value {
-        Value::Object(map) => {
-            // A BTreeSet, not a sorted vector: the signing order is the byte order of the
-            // keys, decided by the container rather than by a comparator written here.
-            let keys: std::collections::BTreeSet<&String> = map.keys().collect();
-            out.push(b'{');
-            for (i, key) in keys.iter().enumerate() {
-                if i > 0 {
-                    out.push(b',');
-                }
-                out.extend(serde_json::to_vec(key).unwrap_or_default());
-                out.push(b':');
-                write_canonical(&map[*key], out);
-            }
-            out.push(b'}');
-        }
-        Value::Array(items) => {
-            out.push(b'[');
-            for (i, item) in items.iter().enumerate() {
-                if i > 0 {
-                    out.push(b',');
-                }
-                write_canonical(item, out);
-            }
-            out.push(b']');
-        }
-        other => out.extend(serde_json::to_vec(other).unwrap_or_default()),
-    }
+    // one implementation, the portable core's, which a browser runs as wasm32 (ADR 0170)
+    majordomus_core::canonical_json(value)
 }
 
 impl MeshEvent {
@@ -5028,5 +5136,28 @@ mod tests {
             let r = b.ingest(&[event], &accept_all);
             proptest::prop_assert_eq!(r.accepted, 0);
         }
+    }
+
+    #[test]
+    fn the_build_cache_bodies_name_their_kind_and_the_kind_is_known() {
+        let offered = EventBody::BuildCacheOffered {
+            offer: BuildCacheOffer {
+                protocol: "s3".into(),
+                provider: "minio".into(),
+                scope: super::super::build_cache::Scope::Lan,
+                endpoint: "http://192.0.2.10:9000".into(),
+                bucket: "majordomus-build-cache".into(),
+                priority: 0,
+                headroom_gib: None,
+                lifetime_seconds: 30,
+            },
+        };
+        let withdrawn = EventBody::BuildCacheWithdrawn {
+            reason: "probe failed".into(),
+        };
+        assert_eq!(offered.kind(), "build_cache_offered");
+        assert_eq!(withdrawn.kind(), "build_cache_withdrawn");
+        assert!(KNOWN_KINDS.contains(&offered.kind()));
+        assert!(KNOWN_KINDS.contains(&withdrawn.kind()));
     }
 }

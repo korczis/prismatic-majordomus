@@ -1326,6 +1326,40 @@
       "tool": "majordomus_gates"
     },
     {
+      "api_anchor": "/docs/api/gates/#op-gates-policy",
+      "claims": [],
+      "cli": null,
+      "id": "gates.policy",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/policy",
+      "route": "/registry/capabilities/gates-policy/",
+      "slug": "gates-policy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "The completion policy",
+      "tool": "majordomus_completion_policy"
+    },
+    {
+      "api_anchor": "/docs/api/gates/#op-gates-state",
+      "claims": [],
+      "cli": null,
+      "id": "gates.state",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/state",
+      "route": "/registry/capabilities/gates-state/",
+      "slug": "gates-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "How each gate last went",
+      "tool": "majordomus_gate_state"
+    },
+    {
       "api_anchor": "/docs/api/graph/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -1948,6 +1982,74 @@
       "tests": [],
       "title": "The MCP projection of this registry",
       "tool": "majordomus_mcp"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh build-cache ensure",
+      "id": "mesh.build_cache.ensure",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-ensure/",
+      "slug": "mesh-build-cache-ensure",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Restore an install before its command, and save it after",
+      "tool": null
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-env",
+      "claims": [],
+      "cli": "majordomus mesh build-cache env",
+      "id": "mesh.build_cache.env",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-env/",
+      "slug": "mesh-build-cache-env",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "The sccache client configuration for the store this node selected",
+      "tool": "majordomus_mesh_build_cache_env"
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-build_cache-key",
+      "claims": [],
+      "cli": "majordomus mesh build-cache key",
+      "id": "mesh.build_cache.key",
+      "kind": "query",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-key/",
+      "slug": "mesh-build-cache-key",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "What every dependency install and build directory is cached under",
+      "tool": "majordomus_mesh_build_cache_key"
+    },
+    {
+      "api_anchor": null,
+      "claims": [],
+      "cli": "majordomus mesh build-cache provision",
+      "id": "mesh.build_cache.provision",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-build-cache-provision/",
+      "slug": "mesh-build-cache-provision",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Provision this node as a mesh build cache provider",
+      "tool": null
     },
     {
       "api_anchor": "/docs/api/mesh/#op-mesh-claim",
@@ -4445,7 +4547,7 @@
     ]
   },
   "counts": {
-    "capabilities": 214,
+    "capabilities": 220,
     "claims": 93,
     "modules": 60
   },
@@ -5088,6 +5190,16 @@
           "id": "gates.model",
           "route": "/registry/capabilities/gates-model/",
           "slug": "gates-model"
+        },
+        {
+          "id": "gates.policy",
+          "route": "/registry/capabilities/gates-policy/",
+          "slug": "gates-policy"
+        },
+        {
+          "id": "gates.state",
+          "route": "/registry/capabilities/gates-state/",
+          "slug": "gates-state"
         }
       ],
       "claims": [],
@@ -5386,6 +5498,26 @@
     },
     {
       "capabilities": [
+        {
+          "id": "mesh.build_cache.ensure",
+          "route": "/registry/capabilities/mesh-build-cache-ensure/",
+          "slug": "mesh-build-cache-ensure"
+        },
+        {
+          "id": "mesh.build_cache.env",
+          "route": "/registry/capabilities/mesh-build-cache-env/",
+          "slug": "mesh-build-cache-env"
+        },
+        {
+          "id": "mesh.build_cache.key",
+          "route": "/registry/capabilities/mesh-build-cache-key/",
+          "slug": "mesh-build-cache-key"
+        },
+        {
+          "id": "mesh.build_cache.provision",
+          "route": "/registry/capabilities/mesh-build-cache-provision/",
+          "slug": "mesh-build-cache-provision"
+        },
         {
           "id": "mesh.claim",
           "route": "/registry/capabilities/mesh-claim/",

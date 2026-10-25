@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 59
+weight = 60
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -725,6 +725,50 @@ the moment before anything is removed. A generation removed too early costs one 
 rebuilds a unit whose output is missing. `test/cases/3196_stale_crate_artifacts_are_pruned_under_cargos_lock.sh`
 proves each row, and that removing the lock or the process check makes it fail.
 
+## The bound, while builds run
+
+The sweeps above remove what is old and ask nothing about the size of what remains. On
+2026-10-23 the shared build directory held 102 GB against its 6144MB bound
+(`MAJORDOMUS_SHARED_BUILD_CAP_MB`, ADR 0139), and at 16:30Z its `debug/deps` held 51 GB in
+eleven generations of this crate, every one of them younger than the deps sweep's 120 minutes.
+`scripts/reap-orphans` reduced it only as a whole and only when no `cargo` or `rustc` ran
+anywhere on the machine, which with nine sessions building was never.
+
+So the bound is applied between builds, by the builds: `mj_rust_bound_build_dir` in
+`lib/rust_bin.sh` runs after the sweeps above before a build, after a bounded build has finished
+(`mj_rust_bound_after_build`, at most once every two minutes per build directory), and from
+`scripts/reap-orphans` when a build is running. While the directory is over its bound it evicts
+whole stale units, oldest first, until it is under it:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| unit | when it is stale | order |
+|---|---|---|
+| a coverage run's `llvm-cov-target` | no file in it written within `MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN` minutes (default 60) | first |
+| a dependency's generation (its `deps` files, fingerprint and build-script output, by unit hash) | its crate version, read from the generation's dep-info, is named by no worktree's `Cargo.lock`, and it is idle as above | first |
+| a finished incremental session | idle as above | by age |
+| a generation of this crate's own units | idle as above | by age |
+
+</div>
+
+
+Each profile's units are evicted only inside cargo's own lock on that profile. A unit is asked
+again inside it: one written since, one with a file some process holds open, and every unit of
+a profile some process names (a test binary, a doctest) are kept, and each is said. The pass
+before a build takes only a lock that is free. Measured on 2026-10-23 with four cargo processes
+running, the shared debug profile's lock was held at 40 of 40 probes in a minute, so the pass
+after a build, when the directory is over its bound, waits for each profile's lock in the
+background, bounded by `MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT` seconds (default 900; 0 waits
+for none). There is one waiter per build directory, and its log and pid are kept under
+`~/.cache/majordomus/bound-<cksum>.{log,pid}`. The build that finished does not wait.
+
+What it cannot evict it says: a bound smaller than one generation cannot hold the newest
+generations of the trees building now, and a dependency some `Cargo.lock` names is never a
+candidate. `scripts/reap-orphans --targets` while a build runs is the dry run: it lists every
+unit it would evict, with its size, idle minutes and whether its profile is locked now.
+`MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0` evicts nothing.
+`test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh` proves each row.
+
 ## Private build directories
 
 A build that waits `MAJORDOMUS_BUILD_LOCK_WAIT` seconds behind another worktree's lock builds
@@ -751,8 +795,9 @@ minutes per machine:
 
 `test/cases/3197_idle_private_build_dirs_are_reclaimed.sh` proves each row.
 
-All three sweeps are off in the test suite (`test/run.sh` sets `MAJORDOMUS_INCREMENTAL_IDLE_MIN`,
-`MAJORDOMUS_DEPS_IDLE_MIN` and `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN` to 0): a case must not act on
+All three sweeps and the bound's eviction are off in the test suite (`test/run.sh` sets
+`MAJORDOMUS_INCREMENTAL_IDLE_MIN`, `MAJORDOMUS_DEPS_IDLE_MIN`, `MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN`
+and `MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN` to 0): a case must not act on
 the machine it measures. `scripts/ci/backlog-check` refuses a tree in which a build no longer
 sweeps before it starts, a sweep no longer takes cargo's lock or asks the process table, or the
 runner leaves them on (rule `project.accumulation-is-measured`).

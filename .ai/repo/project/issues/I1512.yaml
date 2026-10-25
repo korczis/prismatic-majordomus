@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Give the runtime a capability that answers what the repository's gates are and how the last run of each one went, so that CI status stops being the one observability subject with no reader on any surface."
 why: "The gap matrix records CI status as absent, and it is absent in a specific and avoidable way: the gates and their plan are canonical — .ai/repo/ci/gates.yaml declares them and scripts/ci-plan --check holds the workflow to them — and nothing reads run state on any surface. Quality gates are recorded as canonical, implemented and verified and yet carry the note that there is no capability and no view of gate state. This repository has repeatedly mistaken a gate that never reported for a gate that passed; master carried three branch-breaking defects it never reported, and no required check exists at the merge, so a verdict that never arrives is the normal case rather than the exception. A surface that shows gate state is how that becomes visible."
-current_state: "Gates are declared and planned. Their run state is read by a person on GitHub and by nothing in this repository. No capability, no route, no page."
+current_state: "gates.state (2026-10-15) answers every declared gate and the standing of its last recorded run in this checkout, whichever task recorded it: pass, fail, stale over the files as they stand now, queued and listed under never_reported when no run has reported, unknown when a run cannot be checked; each run names the commit it was taken at and whether that is HEAD. It is offline and names the forge as not consulted on every answer. Projections: MCP majordomus_gate_state and majordomus://gates/state, GET /api/v1/gates/state, majordomus-cli run gates.state. Before it, gates.completion answered only the open task's own runs (every gate unknown with no task), which an earlier record-only pass (refs on chore/gate-state-is-answered-by-the-runtime, 2026-10-14) took as delivery. Named follow-up slices, outside this issue's acceptance: (a) read the recorded forge observation's check runs per gate job for a named head, so a CI verdict on GitHub joins the local one; (b) a Cockpit view of gates.state rather than the generic page."
 desired_state: "The runtime answers the gate set and the standing of each gate's last run, including the case where no run has reported, which is the case that matters most and the one an absent reader hides."
 scope:
   - apps/majordomus-cli/src/capability/builtin
@@ -31,4 +31,25 @@ evidence_required:
   - never_reported_is_distinct_from_passed
 risk: "Medium. The failure to avoid is a reader that renders a missing verdict as a green one; this repository has already paid for that mistake twice."
 created_at: 2026-09-11
-updated_at: 2026-09-11
+updated_at: 2026-10-15T08:49:02Z
+started_at: 2026-10-15T08:07:51Z
+started_event: sha256:26c99efa25b484a96bd66d2420777c12d1d80f2926a267eb56254f8766400297
+verified_at: 2026-10-15T08:48:52Z
+verified_event: sha256:84a013d887cf5f12e756472c65f86bf4fda4b77e263242650fbe46db10815a6a
+completed_at: 2026-10-15T08:49:02Z
+completed_event: sha256:38aa9c3f50e73ff304b9b57d284172dcba21f9d210ea23503a900e77c894fa75
+evidence:
+  - covers: gate_state_is_answerable
+    type: test
+    command: "bash test/run.sh 3059_gate_state_is_answerable; cargo test --lib gates (capability::builtin::gates::tests::the_gate_state_answers_offline_and_never_reported_is_not_passed, gates::state::tests::*)"
+    result: "ok on the branch tree over master c0e3585dc8: gates.state answers the declared gate set and the last recorded run of each, whichever task recorded it (the run outlives finish), with the commit it was taken at and whether that is HEAD; pass, fail and stale over the files as they stand now; offline, naming the forge as not consulted. On this repository it answers 78 gates, 78 never reported. Projections MCP majordomus_gate_state, GET /api/v1/gates/state, majordomus-cli run gates.state. Unit tests 64/64 in gates. An earlier record-only pass (chore/gate-state-is-answered-by-the-runtime, uncommitted) credited gates.model and gates.completion; completion answers only the open task, so this capability closes the gap."
+    artifact: "apps/majordomus-cli/src/gates/state.rs"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T08:28:30Z
+  - covers: never_reported_is_distinct_from_passed
+    type: test
+    command: "bash test/run.sh 3059_gate_state_is_answerable; cargo test --lib gates::state"
+    result: "ok: a gate no run has reported is queued and listed under never_reported, an empty or absent ledger is named as such in findings, a run that cannot be checked against this tree is unknown, and only a run over the current inputs exiting 0 is pass (case 3059, unit tests every_gate_stands_in_exactly_the_word_its_last_run_earns and a_run_that_cannot_be_checked_against_this_tree_is_unknown_never_a_pass)"
+    artifact: "test/cases/3059_gate_state_is_answerable.sh"
+    commit: c0e3585dc836201089d6b5dd49f5a79fe8bff798
+    recorded_at: 2026-10-15T08:28:32Z
