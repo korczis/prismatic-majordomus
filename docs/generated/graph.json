@@ -68673,6 +68673,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4225",
+        "kind": "issue",
+        "label": "I4225",
+        "summary": "A withdrawal whose probe could not say is refined to the verdict that follows it",
+        "route": "/cockpit/objects/issue/i4225",
+        "source": ".ai/repo/project/issues/I4225.yaml",
+        "facts": {
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I2671"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "probe_health's verdicts: a store that closes without a word stays Unknown, as its own unit test holds",
+            "test/cases/3954_a_store_is_offered_in_a_signed_record.sh: its expectation is right, the publisher was not"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/build_cache/offer.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            ".ai/repo/project/issues/I4225.yaml"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "a-store-that-resets-is-unhealthy",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh::build_cache a_build_cache_record_the_journal_refuses",
+            "MJ_TEST_JOBS=2 bash test/run.sh 3954_a_store_is_offered_in_a_signed_record",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -129894,6 +129934,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4225",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4225",
+        "target": "majordomus://issue/I2671",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4225",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -141400,8 +141455,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3934,
-      "edges": 9085,
+      "nodes": 3935,
+      "edges": 9088,
       "acyclic": false,
       "truncated": false
     }
