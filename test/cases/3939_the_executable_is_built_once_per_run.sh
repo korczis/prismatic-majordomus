@@ -13,15 +13,19 @@
 #                 needs) and every job that uses the action for what it produces runs only when
 #                 the producer's `if:` does: each plan output in the consumer's `if:` is in the
 #                 producer's; and the producer's `if:` is those outputs alone, never always(),
-#                 so that a plan that selects no consumer skips both
+#                 so that a plan that selects no consumer skips both. A consumer with no `if:`
+#                 runs on every plan (the structure job, whose gates run the executable and
+#                 build nothing, ADR 0224), so its producer has none either, and a producer
+#                 with no `if:` owes such a consumer
 #   one artifact  `majordomus-exe` is uploaded once, by the build job, with the provenance
 #                 fields scripts/rust-check --artifact writes, and is downloaded in exactly
 #                 one place, the action, which compares the provenance with its checkout and
 #                 builds when it cannot trust it
 #   the verdict   the ci job needs both producers
 #
-# Mutations: a consumer whose condition the producer does not cover, an `always()` in a
-# producer, and a second build step in a consumer each turn the case red.
+# Mutations: a consumer whose condition the producer does not cover, a consumer of every plan
+# under a conditional producer, an `always()` in a producer, and a second build step in a
+# consumer each turn the case red.
 . "$ROOT/test/lib.sh"
 W="$ROOT/.github/workflows/validate.yml"
 A="$ROOT/.github/actions/majordomus-bin/action.yml"
@@ -55,14 +59,18 @@ uses_action_for() { # <workflow> <job> <input>: whether the job passes <input>: 
     END {exit !found}'
 }
 
+if_of() { job_of "$1" "$2" | sed -n 's/^    if: //p' | head -n 1; }
 judge() { # <workflow> -> findings, one per line; nothing when the wiring holds
-  local wf="$1" j p o pout in uses direct
+  local wf="$1" j p o pout pif in uses direct every
   for p in build rustdoc-surface; do
     job_of "$wf" "$p" | grep -q . || { echo "no job $p"; continue; }
     pout="$(outputs_of "$wf" "$p")"
-    [ -n "$pout" ] || echo "job $p has no plan output in its if:"
-    job_of "$wf" "$p" | sed -n 's/^    if: //p' | head -n 1 | grep -q 'always()' \
+    pif="$(if_of "$wf" "$p")"
+    # no `if:` at all is a producer for every plan, which only a consumer of every plan may ask
+    [ -z "$pif" ] || [ -n "$pout" ] || echo "job $p has no plan output in its if:"
+    printf '%s\n' "$pif" | grep -q 'always()' \
       && echo "job $p runs on always(): a plan that selects none of its consumers would build it"
+    every=0
     printf '%s\n' "$(needs_of "$wf" "$p")" | grep -qx plan || echo "job $p does not wait for the plan"
     needs_of "$wf" ci | grep -qx "$p" || echo "the ci job does not need $p"
     in=exe; [ "$p" = rustdoc-surface ] && in=rustdoc
@@ -75,12 +83,21 @@ judge() { # <workflow> -> findings, one per line; nothing when the wiring holds
       [ "$uses" = 1 ] || continue
       # a download of an artifact nothing orders before the job is a race the fallback hides
       waits_for "$wf" "$j" "$p" || echo "job $j downloads from $p and nothing orders it after $p"
+      # a consumer of every plan (no `if:`, the structure job) makes its producer one too
+      if [ -z "$(if_of "$wf" "$j")" ]; then
+        every=1
+        [ -z "$pif" ] || echo "job $j runs on every plan but $p, which it uses, does not: the artifact would be missing"
+        continue
+      fi
       [ -n "$(outputs_of "$wf" "$j")" ] || echo "job $j uses $p and has no plan output in its if: the case cannot cover it"
+      [ -n "$pif" ] || continue
       for o in $(outputs_of "$wf" "$j"); do
         printf '%s\n' "$pout" | grep -qx "$o" \
           || echo "job $j runs on ${o#needs.plan.outputs.} but $p, which it uses, does not: the artifact would be missing"
       done
     done
+    [ -n "$pif" ] || [ "$every" = 1 ] \
+      || echo "job $p runs on every plan and no consumer of it does: a plan that selects none of its consumers would build it"
   done
   # one build of the crate outside macos, in the producer
   awk '
@@ -141,12 +158,14 @@ mutant() { # <name> <awk program over the workflow> <expected finding (ERE)>
   out="$(judge "$T/$1.yml")"
   printf '%s\n' "$out" | grep -qE -- "$3" || { echo "    mutation $1 was not refused as /$3/; findings:"; printf '      %s\n' "$out"; exit 1; }
 }
-mutant uncovered '/^  build:$/ {f=1} f && /^    if: / { sub(/ \|\| needs\.plan\.outputs\.mesh_lab == .true./, ""); f=0 } 1' \
-  'job mesh-lab runs on mesh_lab but build'
+mutant uncovered '/^  rustdoc-surface:$/ {f=1} f && /^    if: / { sub(/ \|\| needs\.plan\.outputs\.ui_audit == .true./, ""); f=0 } 1' \
+  'job ui-shard runs on ui_audit but rustdoc-surface'
+mutant every-plan '/^  build:$/ {f=1} f && /^    needs: / { print; print "    if: needs.plan.outputs.mesh_lab == '"'"'true'"'"'"; f=0; next } 1' \
+  'job structure runs on every plan but build'
 mutant always '/^  rustdoc-surface:$/ {f=1} f && /^    if: / { sub(/^    if: /, "    if: always() \\&\\& "); f=0 } 1' \
   'rustdoc-surface runs on always'
 mutant second-build '/^  mesh-lab:$/ {f=1} f && /^    steps:$/ { print; print "      - run: RUSTFLAGS=\"\" cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml"; f=0; next } 1' \
   'job mesh-lab builds the crate itself'
 mutant unneeded '{ sub(/needs: \[plan, build, rustdoc-surface, structure,/, "needs: [plan, build, structure,") } 1' \
   'the ci job does not need rustdoc-surface'
-echo "    ok: an uncovered consumer, an always() producer, a second build and a verdict that skips a producer are each refused"
+echo "    ok: an uncovered consumer, a consumer of every plan under a conditional producer, an always() producer, a second build and a verdict that skips a producer are each refused"

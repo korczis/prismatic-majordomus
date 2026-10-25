@@ -16,6 +16,7 @@ use std::net::Ipv4Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::cache_provision::{provision, ProvisionInput, ProvisionReport};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
@@ -279,6 +280,141 @@ fn firewall_report(ctx: &Context, input: &FirewallInput) -> FirewallReport {
     let config = declaration(ctx).and_then(|d| d.ok());
     let local: Vec<Ipv4Addr> = interfaces().into_iter().map(|(_, ip)| ip).collect();
     crate::mesh::firewall::report(config.as_ref(), &local, input.port)
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.key`.
+pub struct BuildCacheKeyInput {
+    /// Only this kind; every kind the repository has when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<crate::mesh::build_cache::key::Kind>,
+}
+
+impl BenchmarkCases for BuildCacheKeyInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("every-kind", BuildCacheKeyInput { kind: None }),
+            NamedCase::new(
+                "cargo",
+                BuildCacheKeyInput {
+                    kind: Some(crate::mesh::build_cache::key::Kind::CargoBuildDir),
+                },
+            ),
+        ]
+    }
+}
+
+fn mesh_build_cache_key(
+    ctx: &Context,
+    input: BuildCacheKeyInput,
+) -> Result<crate::mesh::build_cache::key::KeyReport, CapabilityError> {
+    Ok(crate::mesh::build_cache::key::report(
+        std::path::Path::new(&ctx.index.repository.root),
+        input.kind,
+    ))
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.ensure`.
+pub struct BuildCacheEnsureInput {
+    /// What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`.
+    pub kind: crate::mesh::build_cache::key::Kind,
+    /// The directory holding the lockfile, relative to the repository; absent names the only
+    /// one the repository tracks, or the one the command was started in.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dir: Option<String>,
+    /// The install or build command, run in that directory on a miss; required for npm and
+    /// mix, optional for a cargo build directory.
+    #[serde(default)]
+    pub command: Vec<String>,
+}
+
+impl BenchmarkCases for BuildCacheEnsureInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // nothing: it runs a command and writes outside the repository; timing it would
+        // measure the install and the disk, not this executable
+        Vec::new()
+    }
+}
+
+fn mesh_build_cache_ensure(
+    ctx: &Context,
+    input: BuildCacheEnsureInput,
+) -> Result<crate::mesh::build_cache::ensure::EnsureReport, CapabilityError> {
+    use crate::mesh::build_cache::{ensure, key};
+    if input.command.is_empty() && input.kind != key::Kind::CargoBuildDir {
+        return Err(CapabilityError::InvalidInput(format!(
+            "{} needs the install command after `--`",
+            input.kind.as_str()
+        )));
+    }
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let report = key::report(&root, Some(input.kind));
+    let cwd = std::env::current_dir().ok();
+    let cwd_rel = cwd
+        .as_deref()
+        .and_then(|c| c.strip_prefix(&root).ok())
+        .map(|r| r.to_string_lossy().into_owned());
+    // an instance that cannot be named is not a reason to withhold the install: it runs
+    // uncached, and says why (rule project.cache-is-invisible)
+    let kk = ensure::resolve(
+        &report,
+        input.kind,
+        input.dir.as_deref(),
+        cwd_rel.as_deref(),
+    )
+    .unwrap_or_else(|why| {
+        ensure::unresolved(input.kind, input.dir.as_deref().or(cwd_rel.as_deref()), why)
+    });
+    let declared = ctx
+        .repository()
+        .ok()
+        .and_then(|r| crate::policy::LoadedPolicy::load(&r).ok())
+        .and_then(|p| p.policy.build_cache.local_max_gib);
+    let machine = ensure::Machine::from_env(declared);
+    Ok(ensure::ensure(&root, &kk, &input.command, &machine))
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.env`.
+pub struct BuildCacheEnvInput {
+    /// The sccache executable to ask; `sccache` when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sccache: Option<String>,
+    /// The node file naming the store this node offers or knows.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub node_file: Option<String>,
+    /// The AWS-format credential file, mode 0600.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credentials: Option<String>,
+}
+
+impl BenchmarkCases for BuildCacheEnvInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "no-sccache",
+            BuildCacheEnvInput {
+                sccache: Some("no-such-sccache".into()),
+                ..BuildCacheEnvInput::default()
+            },
+        )]
+    }
+}
+
+fn mesh_build_cache_env(
+    _ctx: &Context,
+    input: BuildCacheEnvInput,
+) -> Result<crate::mesh::build_cache::env::EnvReport, CapabilityError> {
+    Ok(crate::mesh::build_cache::env::report(
+        &crate::mesh::build_cache::env::EnvOptions {
+            sccache: input.sccache.unwrap_or_else(|| "sccache".to_string()),
+            node_file: input.node_file.map(std::path::PathBuf::from),
+            credentials: input.credentials.map(std::path::PathBuf::from),
+        },
+    ))
 }
 
 fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
@@ -785,6 +921,10 @@ pub struct MeshStateAnswer {
     pub state: Option<CooperationState>,
     /// Every stream's liveness.
     pub streams: Vec<StreamView>,
+    /// The build-cache offers this runtime reads from the journal, and every record it does
+    /// not read as one with why (I2671); absent when the journal holds none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_cache: Option<crate::mesh::build_cache::offer::OfferReading>,
 }
 
 fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, CapabilityError> {
@@ -797,9 +937,12 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
             summary: None,
             state: None,
             streams: Vec::new(),
+            build_cache: None,
         });
     };
     let state = page::narrow(&c.state(), &query);
+    let build_cache =
+        Some(c.build_cache_offers()).filter(|r| !(r.offers.is_empty() && r.ignored.is_empty()));
     let streams: Vec<StreamView> = c
         .streams()
         .into_iter()
@@ -824,6 +967,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
                 state: None,
                 // the streams are the summary's runtimes, told once
                 streams: Vec::new(),
+                build_cache,
             }
         }
         View::Full => MeshStateAnswer {
@@ -833,6 +977,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
             summary: None,
             state: Some(state),
             streams,
+            build_cache,
         },
     })
 }
@@ -1637,6 +1782,60 @@ pub fn module() -> ModuleDescriptor {
             // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
             .reads_only_locally(),
             capability! {
+                id: "mesh.build_cache.env",
+                title: "The sccache client configuration for the store this node selected",
+                description: "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+                input: BuildCacheEnvInput,
+                output: crate::mesh::build_cache::env::EnvReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_build_cache_env"),
+                    http: get("/api/v1/mesh/build-cache/env"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "env".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_build_cache_env,
+            }
+            // this machine's own sccache, files and store, not the repository's: a loopback caller only
+            .reads_only_locally(),
+            capability! {
+                id: "mesh.build_cache.key",
+                title: "What every dependency install and build directory is cached under",
+                description: "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).",
+                input: BuildCacheKeyInput,
+                output: crate::mesh::build_cache::key::KeyReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_build_cache_key"),
+                    http: get("/api/v1/mesh/build-cache/key"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "key".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_build_cache_key,
+            },
+            capability! {
+                id: "mesh.build_cache.ensure",
+                kind: CapabilityKind::Command,
+                title: "Restore an install before its command, and save it after",
+                description: "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).",
+                input: BuildCacheEnsureInput,
+                output: crate::mesh::build_cache::ensure::EnsureReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "ensure".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_build_cache_ensure,
+            },
+            capability! {
                 id: "mesh.firewall",
                 title: "The host firewall, as the mesh needs it",
                 description: "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
@@ -1672,6 +1871,24 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
                 handler: mesh_firewall_apply,
+            },
+            capability! {
+                id: "mesh.build_cache.provision",
+                kind: CapabilityKind::Command,
+                title: "Provision this node as a mesh build cache provider",
+                description: "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.",
+                input: ProvisionInput,
+                output: ProvisionReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "provision".into()] }),
+                },
+                tags: ["mesh", "build-cache", "provisioning"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: provision,
             },
             capability! {
                 id: "mesh.register",
@@ -1961,12 +2178,25 @@ mod tests {
                 "/api/v1/mesh/doctor",
             ),
             (
+                "mesh.build_cache.env",
+                Some("majordomus_mesh_build_cache_env"),
+                "/api/v1/mesh/build-cache/env",
+            ),
+            (
+                "mesh.build_cache.key",
+                Some("majordomus_mesh_build_cache_key"),
+                "/api/v1/mesh/build-cache/key",
+            ),
+            // a command served nowhere over HTTP or MCP: it runs the caller's install command
+            ("mesh.build_cache.ensure", None, ""),
+            (
                 "mesh.firewall",
                 Some("majordomus_mesh_firewall"),
                 "/api/v1/mesh/firewall",
             ),
             // the one command served nowhere over HTTP: it runs a privileged host tool
             ("mesh.firewall.apply", None, ""),
+            ("mesh.build_cache.provision", None, ""),
             (
                 "mesh.register",
                 Some("majordomus_mesh_register"),
@@ -2090,6 +2320,8 @@ mod tests {
             "mesh.nodes",
             "mesh.identity",
             "mesh.doctor",
+            "mesh.build_cache.env",
+            "mesh.build_cache.key",
             "mesh.firewall",
             "mesh.cooperation",
             "mesh.peers",
@@ -2114,12 +2346,16 @@ mod tests {
                         "{} changes state and must be a POST",
                         c.id
                     ),
-                    // a command served nowhere over HTTP runs a privileged host tool,
-                    // which nothing reachable over the network may do; there is one
-                    None => assert_eq!(
-                        c.id.as_str(),
-                        "mesh.firewall.apply",
-                        "{}: a command without an HTTP route must be the firewall's",
+                    // a command served nowhere over HTTP runs a privileged host tool or a
+                    // caller's own command, which nothing reachable over the network may do
+                    None => assert!(
+                        [
+                            "mesh.firewall.apply",
+                            "mesh.build_cache.ensure",
+                            "mesh.build_cache.provision",
+                        ]
+                        .contains(&c.id.as_str()),
+                        "{}: a command without an HTTP route must run a host or caller command",
                         c.id
                     ),
                 }
@@ -2176,6 +2412,60 @@ mod tests {
             .expect("the registry builds");
         let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
         (repo, ctx)
+    }
+
+    #[test]
+    fn an_ensure_of_npm_or_mix_without_its_install_command_is_refused_by_name() {
+        let (_repo, ctx) = context(false);
+        for kind in [
+            crate::mesh::build_cache::key::Kind::NpmModules,
+            crate::mesh::build_cache::key::Kind::MixDeps,
+        ] {
+            let refused = mesh_build_cache_ensure(
+                &ctx,
+                BuildCacheEnsureInput {
+                    kind,
+                    dir: None,
+                    command: Vec::new(),
+                },
+            );
+            let Err(CapabilityError::InvalidInput(why)) = refused else {
+                panic!("{} without a command was not refused", kind.as_str());
+            };
+            assert_eq!(
+                why,
+                format!("{} needs the install command after `--`", kind.as_str())
+            );
+        }
+    }
+
+    #[test]
+    fn the_env_asks_sccache_by_name_when_no_executable_is_given() {
+        let (repo, ctx) = context(false);
+        // the node file is absent, so no store is asked whatever sccache is installed here
+        let answer = mesh_build_cache_env(
+            &ctx,
+            BuildCacheEnvInput {
+                sccache: None,
+                node_file: Some(repo.root().join("absent.json").display().to_string()),
+                credentials: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            answer.mode,
+            crate::mesh::build_cache::env::Mode::LocalOnly,
+            "{}",
+            answer.reason
+        );
+        assert!(answer.variables.is_empty() && answer.store.is_none());
+        if !answer.sccache.found {
+            assert!(
+                answer.reason.starts_with("sccache does not answer"),
+                "the default executable is `sccache`: {}",
+                answer.reason
+            );
+        }
     }
 
     #[test]

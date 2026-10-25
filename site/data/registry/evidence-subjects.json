@@ -584,6 +584,26 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.build_cache.ensure",
+      "path": "/evidence/capabilities/mesh-build-cache-ensure/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.build_cache.env",
+      "path": "/evidence/capabilities/mesh-build-cache-env/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.build_cache.key",
+      "path": "/evidence/capabilities/mesh-build-cache-key/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.build_cache.provision",
+      "path": "/evidence/capabilities/mesh-build-cache-provision/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:mesh.claim",
       "path": "/evidence/capabilities/mesh-claim/"
     },
@@ -2924,6 +2944,26 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh build-cache ensure",
+      "path": "/evidence/commands/mesh-build-cache-ensure/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh build-cache env",
+      "path": "/evidence/commands/mesh-build-cache-env/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh build-cache key",
+      "path": "/evidence/commands/mesh-build-cache-key/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:mesh build-cache provision",
+      "path": "/evidence/commands/mesh-build-cache-provision/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh claim",
       "path": "/evidence/commands/mesh-claim/"
     },
@@ -5241,6 +5281,88 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:mesh.build_cache.ensure": {
+      "kind": "capability",
+      "id": "mesh.build_cache.ensure",
+      "page": "/evidence/capabilities/mesh-build-cache-ensure/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache ensure"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3952_a_dependency_install_is_restored_and_saved",
+          "path": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.build_cache.env": {
+      "kind": "capability",
+      "id": "mesh.build_cache.env",
+      "page": "/evidence/capabilities/mesh-build-cache-env/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache env"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3953_every_build_path_goes_through_the_cache",
+          "path": "test/cases/3953_every_build_path_goes_through_the_cache.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:3955_the_sccache_client_is_derived_from_the_selected_store",
+          "path": "test/cases/3955_the_sccache_client_is_derived_from_the_selected_store.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.build_cache.key": {
+      "kind": "capability",
+      "id": "mesh.build_cache.key",
+      "page": "/evidence/capabilities/mesh-build-cache-key/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache key"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3950_a_cache_key_is_a_derived_triplet",
+          "path": "test/cases/3950_a_cache_key_is_a_derived_triplet.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.build_cache.provision": {
+      "kind": "capability",
+      "id": "mesh.build_cache.provision",
+      "page": "/evidence/capabilities/mesh-build-cache-provision/",
+      "programs": [],
+      "members": [
+        "command:mesh build-cache provision"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3956_a_node_is_provisioned_as_a_cache_provider",
+          "path": "test/cases/3956_a_node_is_provisioned_as_a_cache_provider.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:mesh.claim": {
       "kind": "capability",
       "id": "mesh.claim",
@@ -5484,7 +5606,14 @@
       "page": "/evidence/capabilities/mesh-state/",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3954_a_store_is_offered_in_a_signed_record",
+          "path": "test/cases/3954_a_store_is_offered_in_a_signed_record.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -5713,7 +5842,14 @@
       "page": "/evidence/capabilities/peers-list/",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3957_every_process_is_traced_to_its_session",
+          "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -15865,6 +16001,82 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh build-cache ensure": {
+      "kind": "command",
+      "id": "mesh build-cache ensure",
+      "page": "/evidence/commands/mesh-build-cache-ensure/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh build-cache env": {
+      "kind": "command",
+      "id": "mesh build-cache env",
+      "page": "/evidence/commands/mesh-build-cache-env/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh build-cache key": {
+      "kind": "command",
+      "id": "mesh build-cache key",
+      "page": "/evidence/commands/mesh-build-cache-key/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:mesh build-cache provision": {
+      "kind": "command",
+      "id": "mesh build-cache provision",
+      "page": "/evidence/commands/mesh-build-cache-provision/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh claim": {
       "kind": "command",
       "id": "mesh claim",
@@ -21152,6 +21364,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_mesh_build_cache_env": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_build_cache_env",
+      "alias_of": "capability:mesh.build_cache.env",
+      "programs": [],
+      "members": [
+        "capability:mesh.build_cache.env"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_build_cache_key": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_build_cache_key",
+      "alias_of": "capability:mesh.build_cache.key",
+      "programs": [],
+      "members": [
+        "capability:mesh.build_cache.key"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_mesh_claim": {
       "kind": "mcp",
       "id": "majordomus_mesh_claim",
@@ -24074,7 +24310,27 @@
           "category": "e2e",
           "inputs": [
             "test/cases/1021_a_push_runs_what_ci_would_find_first.sh",
-            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v1.md"
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:3948_a_local_gate_reports_and_ci_decides",
+          "path": "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3948_a_local_gate_reports_and_ci_decides.sh",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:4008_a_push_that_only_deletes_plans_nothing",
+          "path": "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/4008_a_push_that_only_deletes_plans_nothing.sh",
+            ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md"
           ]
         }
       ],
@@ -24479,7 +24735,18 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3952_a_dependency_install_is_restored_and_saved",
+          "path": "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3952_a_dependency_install_is_restored_and_saved.sh",
+            ".ai/repo/rules/project/cache-is-invisible.v2.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -29279,6 +29546,9 @@
     "suite:3939_the_executable_is_built_once_per_run",
     "suite:3940_every_ui_visit_is_driven_by_exactly_one_shard",
     "suite:3943_a_second_gate_list_is_found",
+    "suite:3946_every_gate_declares_its_lane",
+    "suite:3947_a_tier_selects_its_lanes",
+    "suite:3958_no_entry_path_or_gate_builds",
     "suite:3963_a_merge_of_master_derives_in_one_go",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",

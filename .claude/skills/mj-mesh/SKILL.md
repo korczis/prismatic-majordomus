@@ -1,6 +1,6 @@
 ---
 name: mj-mesh
-description: "Majordomus mesh: Say a session is making progress; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The cooperation journal; The host firewall, as the mesh needs it; Consume a handover from the mesh; Publish a handover to the mesh; This…"
+description: "Majordomus mesh: Say a session is making progress; The sccache client configuration for the store this node selected; What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -16,6 +16,8 @@ $ARGUMENTS
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
 | `mesh.beat` | Say a session is making progress | `majordomus_mesh_beat` | — | changes |
+| `mesh.build_cache.env` | The sccache client configuration for the store this node selected | `majordomus_mesh_build_cache_env` | `majordomus mesh build-cache env` | reads |
+| `mesh.build_cache.key` | What every dependency install and build directory is cached under | `majordomus_mesh_build_cache_key` | `majordomus mesh build-cache key` | reads |
 | `mesh.claim` | Claim a scope across the mesh | `majordomus_mesh_claim` | — | changes |
 | `mesh.cooperation` | Cooperation, at a glance | `majordomus_mesh_cooperation` | — | reads |
 | `mesh.doctor` | The mesh self-check | `majordomus_mesh_doctor` | `majordomus mesh doctor` | reads |

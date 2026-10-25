@@ -4,7 +4,7 @@ description = "What the knowledge deriver left for review and whether it is stil
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 235
+weight = 240
 [extra]
 route = "/docs/cli/knowledge/"
 command = "majordomus knowledge"

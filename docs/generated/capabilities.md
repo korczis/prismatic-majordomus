@@ -43,7 +43,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `layout` | Layer layout | behaviorally_verified | 1 | [`modules/layout.md`](modules/layout.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 26 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 30 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -182,6 +182,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `lifecycle.runtime` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_runtime` | — | `GET /api/v1/lifecycle/runtime` | — | process, 2 entries, 2s | required |
 | `mcp.projection` | `mcp` | query | experimental | `majordomus_mcp` | `majordomus://mcp` | `GET /api/v1/mcp` | — | — | required |
 | `mesh.beat` | `mesh` | command | experimental | `majordomus_mesh_beat` | — | `POST /api/v1/mesh/beats` | — | — | waived (transient_state) |
+| `mesh.build_cache.ensure` | `mesh` | command | experimental | — | — | — | `majordomus mesh build-cache ensure` | — | waived (destructive) |
+| `mesh.build_cache.env` | `mesh` | query | experimental | `majordomus_mesh_build_cache_env` | — | `GET /api/v1/mesh/build-cache/env` | `majordomus mesh build-cache env` | — | waived (external_dependency) |
+| `mesh.build_cache.key` | `mesh` | query | experimental | `majordomus_mesh_build_cache_key` | — | `GET /api/v1/mesh/build-cache/key` | `majordomus mesh build-cache key` | — | waived (external_dependency) |
+| `mesh.build_cache.provision` | `mesh` | command | experimental | — | — | — | `majordomus mesh build-cache provision` | — | waived (destructive) |
 | `mesh.claim` | `mesh` | command | experimental | `majordomus_mesh_claim` | — | `POST /api/v1/mesh/claims` | — | — | waived (transient_state) |
 | `mesh.cooperation` | `mesh` | query | experimental | `majordomus_mesh_cooperation` | — | `GET /api/v1/mesh/cooperation` | — | — | required |
 | `mesh.doctor` | `mesh` | query | experimental | `majordomus_mesh_doctor` | — | `GET /api/v1/mesh/doctor` | `majordomus mesh doctor` | — | required |
