@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 61
+weight = 62
 [extra]
 source = "docs/MCP.md"
 +++
@@ -429,22 +429,22 @@ The provider rows are the providers whose declaration names a client configurati
 set, with what each reads and where it keeps its scratch checkouts, is
 [`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/providers.md), generated from the same declaration.
 
-`bin/majordomus-mcp` builds the executable when it is missing or older than its sources
-(`MAJORDOMUS_BUILD_PROFILE=release` for a release build; `MAJORDOMUS_BIN` names an
-executable and never builds; `MAJORDOMUS_NO_BUILD=1` refuses to build and exits 12 with the
-command to run), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes
-nothing to stdout, and passes every argument to `majordomus mcp`. A client does not wait on a build. `mcp` is the one command a client spawns and then
-waits on, and a client that gets no handshake reports the server as failed and carries on
-without it. So when this checkout has no executable to run, or one it cannot rebuild — no
-cargo, less free space than the build floor (`MAJORDOMUS_MIN_FREE_MB`, 5120 by default), a
-build that failed — `bin/majordomus-mcp` runs the installed release instead
-(`MAJORDOMUS_INSTALLED_BIN`, by default `majordomus` in `~/.local/bin`, where `install.sh`
-puts it), and says on stderr which release and why. A stale executable that can be rebuilt is
-rebuilt as before, `MAJORDOMUS_MCP_BUILD=1` makes `mcp` build like every other command, and
-every other command still exits 12 when it has nothing to run: the fallback is for the client
-that would otherwise be turned away, never a way to run a different release unannounced. A
-file inside the repository is never taken for the installed release, nor one that does not
-answer `--version`. ADR 0172; the case is `test/cases/3177_a_client_always_gets_a_server.sh`.
+`bin/majordomus-mcp` never builds (ADR 0224, which supersedes ADR 0172). It runs this
+checkout's executable (`MAJORDOMUS_BUILD_PROFILE=release` for the release build; `MAJORDOMUS_BIN`
+names another), sets `MAJORDOMUS_SHARE` to the distribution's `share/` beside it, writes nothing
+to stdout, and passes every argument to `majordomus mcp`. When that executable is missing or older
+than its sources, the installed release (`MAJORDOMUS_INSTALLED_BIN`, by default `majordomus` in
+`~/.local/bin`, where `install.sh` puts it) answers instead only when it is of this tree's
+generation: the commit its `RELEASE.json` names is in this repository and carries every crate
+input of the working tree unchanged (`mj_rust_same_generation` in `lib/rust_bin.sh`, the rule the
+gates borrow an executable on). It says so on stderr. A version string is not a generation, so any
+other release is refused: exit 12, naming why and the explicit build, `just build`, which the
+client reports as a failed server — a session told it has no server can be fixed, one served by a
+release of another crate answers for a tree it was not built from. The same answer holds for every
+command of the launcher, not `mcp` alone. A file inside the repository is never taken for the
+installed release, nor one that does not answer `--version`. The case is
+`test/cases/3177_a_client_always_gets_a_server.sh`; every entry path and gate is held to it by
+`test/cases/3958_no_entry_path_or_gate_builds.sh`.
 
 `just mcp`, `just serve`
 and `just inspect` at the root do the same for a person; `just docs-ui` opens the running
@@ -537,6 +537,18 @@ transport, when it attached and when it was last seen. The `initialize` result's
 `instructions` tell a client the server's URL, its own peer id and every other peer with
 what it announced, before its first tool call.
 
+A peer's row also carries its `address` (I3956): where the worker behind it can be reached
+from outside its connection — the machine, the worker's own process (`CLAUDE_PID`, else the
+parent of the process it started), the provider's session id and the socket other sessions
+message it through (`CLAUDE_CODE_SESSION_ID`, `CLAUDE_CODE_MESSAGING_SOCKET`). It is derived
+from the environment the provider hands the process it starts, never announced by hand: the
+server's own stdio client is located from the server's environment, and a bridged
+`majordomus mcp` carries its own under `_meta["dev.majordomus/address"]` in the `initialize`
+it forwards. The provider's messaging token is a credential and is never read. A client that
+exposes none of it is still named by its machine and its process. The provider and session
+id together spell the mesh session the edit guard judges the provider's claims under
+(`claude-code-<session id>`), which joins the board row to the mesh.
+
 <div class="overflow-x-auto" tabindex="0">
 
 | tool | capability | arguments | answers |
@@ -577,9 +589,12 @@ with the reason instead.
 |---|---|
 | `peers[].checkout` | the checkout a peer is on — its id, worktree, branch, and whether it is this one. Not decoration: `p1` is the first session of *every* board, so a merged listing without it holds several `p1`s |
 | `overlaps` | every pair of claims that meet, now across checkouts as well as within one, each naming the checkout the other worker is on |
-| `boards` | one entry per checkout the answer covered, reached or not, with its standing and the reason it was not read |
+| `covered` | how many checkouts the answer covered, listed in `boards` or counted in `omitted` |
+| `boards` | one entry per checkout the answer lists, reached or not, with its standing and the reason it was not read. Under the default `view: summary` that is this checkout, every checkout with a worker or a standing server, and every board that could not be read; `view: full` lists every covered checkout |
+| `omitted` | the covered checkouts the summary counts rather than lists, by standing (`absent`, `stale`): no server, nobody attached, no board. On 2026-10-22 that was 601 of 625, and the default answer went from 168 kB to about 18 kB |
 | `complete` | whether every board covered could be read. `false` means a checkout could not be asked — a short board is never to be mistaken for an empty repository |
-| `checkouts` | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `checkouts` (input) | `repository` (the default) or `this`: this checkout alone, enumerating nothing, probing nothing, reading one board out of memory |
+| `view` (input) | `summary` (the default) or `full`, the same words as `majordomus_mesh_peers` |
 
 </div>
 

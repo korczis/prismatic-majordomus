@@ -1,0 +1,71 @@
+# A pull request carries its metadata, kept current by GitHub itself (I3970).
+#
+# Each pull request's labels (type:*, priority:*, train, records), milestone, assignee and its
+# `Refs #<n>` region are a projection of the canonical records it serves
+# (`scripts/github-sync --prs`). This runs that projection for the one pull request an event
+# names, so nobody has to remember to, and once a day (or on a dispatch) for every open pull
+# request: a record that reached GitHub after a pull request's last event, an issue projected
+# at a landing, is carried to it then. A write with this workflow's token starts no other
+# workflow, so the labels it adds start no validate run (validate.yml runs on `labeled`).
+#
+# The model is .ai/repo/ci/pr-meta.yaml and this file is an adapter over it: the trigger, the
+# permissions, what runs and what is forbidden are declared there, and
+# test/cases/3970_a_pull_request_carries_its_metadata.sh holds the two to each other.
+#
+# What this does NOT do: write a closing keyword, overwrite a region a person edited, create
+# or close an issue, or run the pull request's own code. It runs on pull_request_target, so
+# its token can write to a fork's pull request too, and that is safe only because nothing of
+# the head is ever executed: the checkout is the default branch, and the adapter reads the
+# head's commits and records as data, with git, from the base repository's clone.
+name: pr-meta
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, labeled]
+  schedule:
+    - cron: '41 5 * * *'
+  workflow_dispatch:
+
+# Labels, milestone and assignee of a pull request are written through the issues endpoints,
+# which the pull-requests permission covers for a pull request; issues are read, never written.
+permissions:
+  pull-requests: write
+  issues: read
+  contents: read
+
+# One run per pull request at a time and never cancelled: a cancelled run is a pull request
+# half written. A write with this token starts no workflow, so the projection never answers
+# itself.
+concurrency:
+  group: pr-meta-${{ github.event.pull_request.number || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  project:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # The trunk's adapter and never the head's, with the whole history: the adapter reads
+      # the head's commits and records with git as data, and finds what the head changed from
+      # its merge base with the base branch.
+      - uses: actions/checkout@v4
+        timeout-minutes: 5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: the pull request carries what its records say
+        if: github.event_name == 'pull_request_target'
+        timeout-minutes: 8
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: scripts/github-sync --prs --pr "$PR" --apply
+
+      # every open pull request, paced one second per pull request that changed
+      - name: every open pull request carries what its records say
+        if: github.event_name != 'pull_request_target'
+        timeout-minutes: 30
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/github-sync --prs --apply

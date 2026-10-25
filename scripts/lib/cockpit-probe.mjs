@@ -25,6 +25,8 @@
 // Playwright drives the Chrome that is already installed (`channel: 'chrome'`); nothing is
 // downloaded. The caller decides whether a missing browser is a skip.
 
+import http from 'node:http';
+import https from 'node:https';
 import { chromium } from 'playwright';
 
 import { crawl, documentFetcher, FAMILY_SAMPLE, sample as sampleFamilies, spread } from './ui-routes.mjs';
@@ -46,6 +48,8 @@ let DESIGN = null;
 const MIN_DRAWN = 0.1;
 const findings = [];
 const notes = [];
+// the requests asked a second time on a fresh connection, awaited before the report
+const retried = [];
 
 const fail = (kind, message) => findings.push(`FAIL ${kind.padEnd(10)} ${message}`);
 const ok = (kind, message) => notes.push(`OK   ${kind.padEnd(10)} ${message}`);
@@ -55,9 +59,40 @@ if (!BASE) {
   process.exit(2);
 }
 
-/** Ask the server, as a client would. */
+/**
+ * A failure the server's idle deadline can cause without anything being broken: the server
+ * closes a keep-alive connection after 30 s, and a client that reuses it in the same instant
+ * gets an empty answer (ERR_EMPTY_RESPONSE in Chrome, ECONNRESET or "other side closed" in
+ * Node). Only an idempotent GET may be asked again, and it is asked once.
+ */
+const CLOSED_UNDER_US = /ERR_EMPTY_RESPONSE|ERR_CONNECTION_RESET|ECONNRESET|other side closed|socket hang up/;
+
+/** The status of one GET on a connection of its own, never a pooled one. */
+function freshStatus(url) {
+  const client = url.startsWith('https:') ? https : http;
+  return new Promise((resolve) => {
+    const req = client.get(url, { agent: false }, (res) => {
+      res.resume();
+      res.on('end', () => resolve(res.statusCode));
+    });
+    req.on('error', (e) => resolve(e.code || String(e.message || e)));
+    req.setTimeout(30000, () => {
+      req.destroy();
+      resolve('no answer within 30 s');
+    });
+  });
+}
+
+/** Ask the server, as a client would; a read the idle deadline cut is asked once more. */
 async function api(path) {
-  const response = await fetch(BASE + path);
+  let response;
+  try {
+    response = await fetch(BASE + path);
+  } catch (e) {
+    const why = String(e.cause?.code || e.cause?.message || e.message || e);
+    if (!CLOSED_UNDER_US.test(why)) throw e;
+    response = await fetch(BASE + path);
+  }
   if (!response.ok) throw new Error(`${path} answered ${response.status}`);
   return response.json();
 }
@@ -91,6 +126,9 @@ function watch(page, route) {
     // a vendored library that is not built is an absence the page is designed for, and it
     // says so itself; the probe asserts the saying-so, not the presence
     if (/is not in share\/cockpit\/vendor/.test(text)) return;
+    // the browser logs a request the idle deadline cut before the page asks it again; the
+    // request listener below decides, by asking it again itself, whether it was the page's
+    if (/Failed to load resource: net::/.test(text) && CLOSED_UNDER_US.test(text)) return;
     fail('console', `${route}: ${text.slice(0, 160)}`);
   });
   page.on('pageerror', (e) => fail('pageerror', `${route}: ${String(e).slice(0, 160)}`));
@@ -101,6 +139,18 @@ function watch(page, route) {
     // a navigation cancels the requests the previous page had in flight, and the browser
     // reports each as aborted; that is the driver's own doing, not the page's
     if (why.includes('ERR_ABORTED')) return;
+    // a GET the idle deadline cut is asked again on a fresh connection, and only a second
+    // failure is the page's; a write is never repeated
+    if (r.method() === 'GET' && CLOSED_UNDER_US.test(why)) {
+      const path = url.replace(BASE, '');
+      retried.push(
+        freshStatus(url).then((status) => {
+          if (status === 200) ok('request', `${route}: ${path} — ${why} on a reused connection, 200 on a fresh one`);
+          else fail('request', `${route}: ${path} — ${why}, and ${status} when asked again on a fresh connection`);
+        }),
+      );
+      return;
+    }
     fail('request', `${route}: ${url.replace(BASE, '')} — ${why}`);
   });
 }
@@ -628,6 +678,7 @@ try {
   await browser.close();
 }
 
+await Promise.all(retried);
 for (const line of notes) console.log(line);
 for (const line of findings) console.log(line);
 console.log(`cockpit-probe: the browser sweep found ${findings.length}`);

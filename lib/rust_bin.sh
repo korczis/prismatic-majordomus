@@ -1,10 +1,11 @@
 # Where the Rust executable of this repository is.
 #
-# One question, asked by two callers with different answers to the *next* question:
-# `bin/majordomus-mcp` may build it when it is missing, because an MCP client spawning a
-# server can afford a build; `bin/majordomus-env` may never build it, because it runs on
-# every `cd` and a shell prompt cannot afford one. Both need the same path, so the path is
-# decided here and the build policy is decided by each caller.
+# One question, asked by every caller: the launchers (bin/majordomus-cli, and through it
+# bin/majordomus-mcp, bin/majordomus, the just bridge and the git hooks), test/lib.sh, the
+# gates (scripts/ci/run-plan) and bin/majordomus-env, which runs on every `cd`. None of them
+# builds it (ADR 0224): mj_rust_resolve says which executable answers — the tree's own, or
+# the installed release of the tree's generation — or refuses with exit 12 naming `just
+# build`, and each caller declares what it does with a refusal.
 #
 # Order: an explicit MAJORDOMUS_BIN, then the executable an installed release ships beside
 # bin/, then the crate's target directory, which is what a contributor has.
@@ -82,8 +83,8 @@ mj_rust_bin() {
 # mj_rust_stale <tool-root> <executable>
 #
 # Is that executable missing, or older than any source, manifest or lock file of the crate?
-# True (0) for either. One question with two answers again: `bin/majordomus-cli` builds when
-# this is true, `bin/majordomus-env` only says so — but neither may decide it for itself,
+# True (0) for either. `bin/majordomus-cli` then looks for a release of the tree's generation
+# or refuses, `bin/majordomus-env` only says so — but neither may decide it for itself,
 # because a checkout where the two disagree is a checkout where entering the repository
 # reports one thing and running a command does another.
 #
@@ -121,9 +122,11 @@ mj_rust_stale() {
 
 # mj_rust_installed <repository-root>
 #
-# The executable of the installed release, for the caller that is a client waiting on a
-# handshake and cannot wait on cargo: the one `bin/majordomus-cli mcp` falls back to when this
-# checkout has none to run (ADR 0172). Empty and false when there is none.
+# The executable of the installed release: the fallback a command of this checkout may answer
+# through when the checkout's own executable is missing or stale — and only when
+# mj_rust_same_generation says the release is of this tree's generation (ADR 0224, which
+# supersedes ADR 0172's `mcp`-only fallback on a version string). Empty and false when there
+# is none.
 #
 #   MAJORDOMUS_INSTALLED_BIN  the installed release's launcher (default: majordomus in
 #                             $MJ_INSTALL_DIR, which is ~/.local/bin, where install.sh puts it)
@@ -140,6 +143,119 @@ mj_rust_installed() {
   case "$mj_ri_real" in "$(cd "$mj_ri_root" 2>/dev/null && pwd -P)/"*) return 1 ;; esac
   "$mj_ri_bin" --version >/dev/null 2>&1 || return 1
   printf '%s\n' "$mj_ri_bin"
+}
+
+# The paths of the tree an executable of this crate is built from: the crate, the toolchain
+# pin, and the two files outside it the build compiles in. One list, read by
+# mj_rust_same_generation and by every caller that asks it (scripts/ci/run-plan).
+MJ_RUST_CRATE_INPUTS='apps/majordomus-cli rust-toolchain.toml docs/COCKPIT.md site/data/kit/icons.toml'
+
+# mj_rust_built_commit <executable>
+#
+# The commit an executable was built from, when it can be known without running it — running
+# it is what a stale or foreign executable cannot be trusted to answer, and asking the
+# executable for its build would load a whole index (1.5 s) to read one string. In order:
+#   MAJORDOMUS_BIN_COMMIT     when the executable is the one MAJORDOMUS_BIN names
+#   .../majordomus-master-bin/<sha>/...   the shared cache of master builds names its commit
+#   RELEASE.json              the stamp scripts/release-package writes at the root of a
+#                             distribution: beside the executable's bin/, or beside the bin/ of
+#                             the version an installer's launcher execs
+# Prints nothing and fails (1) when none of them names it.
+mj_rust_built_commit() {
+  mj_bc_exe="$1"
+  if [ -n "${MAJORDOMUS_BIN_COMMIT:-}" ] && [ "$mj_bc_exe" = "${MAJORDOMUS_BIN:-}" ]; then
+    printf '%s\n' "$MAJORDOMUS_BIN_COMMIT"; return 0
+  fi
+  case "$mj_bc_exe" in */majordomus-master-bin/*/*)
+    mj_bc_sha="${mj_bc_exe#*/majordomus-master-bin/}"; printf '%s\n' "${mj_bc_sha%%/*}"; return 0 ;;
+  esac
+  mj_bc_target="$mj_bc_exe"
+  # the installer's launcher is a two-line script that execs the version's bin/majordomus;
+  # a compiled executable is never read as text here
+  if [ "$(head -c 2 "$mj_bc_exe" 2>/dev/null)" = '#!' ]; then
+    mj_bc_exec="$(sed -n 's/^exec "\(.*\)" "\$@"$/\1/p' "$mj_bc_exe" 2>/dev/null | head -n 1)"
+    [ -n "$mj_bc_exec" ] && mj_bc_target="$mj_bc_exec"
+  fi
+  mj_bc_stamp="$(dirname "$mj_bc_target")/../RELEASE.json"
+  [ -f "$mj_bc_stamp" ] || return 1
+  mj_bc_sha="$(sed -n 's/.*"commit": *"\([0-9a-f]\{7,40\}\)".*/\1/p' "$mj_bc_stamp" | head -n 1)"
+  [ -n "$mj_bc_sha" ] || return 1
+  printf '%s\n' "$mj_bc_sha"
+}
+
+# mj_rust_same_generation <repository-root> <executable>
+#
+# Is that executable of this tree's generation? True (0) when the commit it was built from is
+# known (mj_rust_built_commit), is in this repository, and every crate input of this working
+# tree (MJ_RUST_CRATE_INPUTS) is byte-for-byte that commit's, with nothing untracked in it.
+# Otherwise false, with the reason in MJ_RUST_GENERATION_WHY; MJ_RUST_BUILT holds the commit
+# whenever one was found.
+#
+# This is the one notion of generation the shell side has, and it was scripts/ci/run-plan's
+# before it was this function's (I2848): the gates borrowed an executable only on it. A
+# version string is not a generation (rule project.a-tool-that-cannot-match-the-tree-refuses):
+# two releases that call themselves the same version can carry different crates. Neither is
+# `generate --check`, which passes an executable whose registry matches the committed one even
+# when the crate differs — right for a derive, wrong for a command that answers for this tree.
+# The executable's own guard (`majordomus generate`, exit 15) stays the derive's.
+mj_rust_same_generation() {
+  mj_sg_root="$1"; mj_sg_exe="$2"
+  MJ_RUST_GENERATION_WHY=""
+  MJ_RUST_BUILT="$(mj_rust_built_commit "$mj_sg_exe")" || MJ_RUST_BUILT=""
+  # shellcheck disable=SC2086 # the inputs are one space-separated list of literal paths
+  if [ -z "$MJ_RUST_BUILT" ]; then
+    MJ_RUST_GENERATION_WHY="the commit it was built from is unknown (set MAJORDOMUS_BIN_COMMIT)"
+  elif ! git -C "$mj_sg_root" rev-parse -q --verify "$MJ_RUST_BUILT^{commit}" >/dev/null 2>&1; then
+    MJ_RUST_GENERATION_WHY="its commit $MJ_RUST_BUILT is not in this repository"
+  elif ! git -C "$mj_sg_root" diff --quiet "$MJ_RUST_BUILT" -- $MJ_RUST_CRATE_INPUTS 2>/dev/null; then
+    MJ_RUST_GENERATION_WHY="the crate differs from $(printf '%.11s' "$MJ_RUST_BUILT")"
+  elif [ -n "$(git -C "$mj_sg_root" ls-files --others --exclude-standard -- $MJ_RUST_CRATE_INPUTS 2>/dev/null)" ]; then
+    MJ_RUST_GENERATION_WHY="the crate has untracked files"
+  fi
+  [ -z "$MJ_RUST_GENERATION_WHY" ]
+}
+
+# mj_rust_resolve <tool-root> [<prefix>]
+#
+# The executable a command of this tree runs, never built (ADR 0224). Prints its path on
+# stdout and returns 0, or says why there is none on stderr and returns 12:
+#
+#   1. MAJORDOMUS_BIN, as named — trusted about freshness, as it always was; a caller that
+#      must not trust it (a gate) asks mj_rust_same_generation first and unsets it
+#   2. the tree's own executable (mj_rust_bin), when mj_rust_stale says it is current
+#   3. the installed release (mj_rust_installed), only when mj_rust_same_generation says it
+#      is of this tree's generation, saying so on stderr
+#   4. nothing: exit 12, naming the explicit build — `just build` — and why the release was
+#      not used. Nothing here starts cargo, whoever asks: a gate, a hook, a provider hook,
+#      `mcp`, an entry path or a person.
+#
+# The prefix is the caller's own (`majordomus-cli: `, a test harness's four spaces).
+mj_rust_resolve() {
+  mj_rv_root="$1"; mj_rv_p="${2:-majordomus-cli: }"
+  mj_rv_bin="$(mj_rust_bin "$mj_rv_root")"
+  if [ -n "${MAJORDOMUS_BIN:-}" ]; then
+    [ -x "$mj_rv_bin" ] || { mj_rust_bin_missing "$mj_rv_root" "$mj_rv_bin" "$mj_rv_p"; return 12; }
+    printf '%s\n' "$mj_rv_bin"; return 0
+  fi
+  if ! mj_rust_stale "$mj_rv_root" "$mj_rv_bin"; then printf '%s\n' "$mj_rv_bin"; return 0; fi
+  mj_rv_state="missing"
+  [ -x "$mj_rv_bin" ] && mj_rv_state="stale (older than its sources)"
+  mj_rv_release=""
+  if mj_rv_inst="$(mj_rust_installed "$mj_rv_root")"; then
+    if mj_rust_same_generation "$mj_rv_root" "$mj_rv_inst"; then
+      printf '%s%s is %s; answering through the installed release %s, built from %s, whose crate this tree carries unchanged\n' \
+        "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state" "$mj_rv_inst" "$(printf '%.11s' "$MJ_RUST_BUILT")" >&2
+      printf '%s\n' "$mj_rv_inst"; return 0
+    fi
+    mj_rv_release="the installed release $mj_rv_inst is not of this tree's generation: $MJ_RUST_GENERATION_WHY"
+  fi
+  {
+    printf '%s%s is %s, and no ordinary command builds it (ADR 0224)\n' "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state"
+    [ -z "$mj_rv_release" ] || printf '%s  %s\n' "$mj_rv_p" "$mj_rv_release"
+    printf '%s  run: just build   (cargo build --locked --manifest-path %s/apps/majordomus-cli/Cargo.toml), or set MAJORDOMUS_BIN\n' \
+      "$mj_rv_p" "$mj_rv_root"
+  } >&2
+  return 12
 }
 
 # The data directory the executable reads kinds and schemas from at run time, when this
@@ -1089,6 +1205,49 @@ mj_cargo_private_dir() {
     "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
 }
 
+# mj_build_cache_start <tree-root>
+#
+# Give this build the mesh build cache, once, when an sccache server is about to start
+# (project.every-build-path-goes-through-the-cache, ADR 0157, I3953).
+#
+# sccache fixes its levels when its server starts and fails a compile when an S3 level is
+# down at that moment, so the store is asked about exactly then and never per compilation:
+#   - share/libexec/sccache-mesh --start-only does it: a server already listening on its port
+#     is left alone (a connect, no probe, no process); otherwise `majordomus mesh build-cache
+#     env` of this tree's executable derives the configuration (store healthy, credential file
+#     private, sccache with the chain) and the server is started with it; only the credential file's path is ever in the environment, never a key;
+#   - then, and only then, cargo is pointed at sccache (RUSTC_WRAPPER) unless the caller
+#     already named a wrapper, including an empty one.
+# The store down, no sccache, no executable (a cold node), no way to see the port, or
+# MAJORDOMUS_BUILD_CACHE=off: the build is exactly what it was, and one line says why. This
+# never fails a build; it returns 0 always, and once per process.
+mj_build_cache_start() {
+  [ -z "${MJ_BUILD_CACHE_DONE:-}" ] || return 0
+  MJ_BUILD_CACHE_DONE=1
+  [ "${MAJORDOMUS_BUILD_CACHE:-}" = off ] && return 0
+  command -v sccache >/dev/null 2>&1 || return 0
+  [ -z "${RUSTC_WRAPPER+x}" ] && [ -z "${RUSTC_WORKSPACE_WRAPPER+x}" ] || return 0
+  mj_bc_bin="$(mj_rust_bin "$1" 2>/dev/null || true)"
+  if [ ! -x "$mj_bc_bin" ]; then
+    printf 'majordomus: build cache: local-only: no majordomus executable yet (a cold node builds as before)\n' >&2
+    return 0
+  fi
+  mj_bc_wrap="$1/share/libexec/sccache-mesh"
+  if [ ! -x "$mj_bc_wrap" ]; then
+    printf 'majordomus: build cache: local-only: no share/libexec/sccache-mesh in this tree\n' >&2
+    return 0
+  fi
+  # the port check, the question to majordomus and the start live in the wrapper, so that
+  # there is one copy of them and none in lib/ (this directory holds no network client and evaluates no text)
+  if mj_bc_why="$(MAJORDOMUS_BIN="$mj_bc_bin" SCCACHE_MESH_SCCACHE=sccache "$mj_bc_wrap" --start-only 2>&1)"; then
+    RUSTC_WRAPPER=sccache; export RUSTC_WRAPPER
+  else
+    printf 'majordomus: build cache: %s\n' \
+      "$(printf '%s\n' "$mj_bc_why" | head -n 1 | grep . || echo 'local-only: sccache did not start with the store')" >&2
+  fi
+  return 0
+}
+
 # mj_cargo_bounded <tree-root> <cargo arguments...>
 #
 # Run cargo, and never wait in silence behind another build's lock
@@ -1133,6 +1292,7 @@ mj_cargo_bounded() {
   # a build never starts on top of its build directory's idle incremental sessions (I2713);
   # a caller that asked the floor first has swept already, and this is then a no-op
   mj_rust_prune_build_dir "$mj_cb_root"
+  mj_build_cache_start "$mj_cb_root"
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
   [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1

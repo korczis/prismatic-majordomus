@@ -147,13 +147,18 @@ sha256_of_file() { mj_sha256_hex "$1"; }
 
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
-# without it the crate is built once, debug profile, and the target path is printed.
+# without it the tree's own executable, or the installed release of this tree's generation —
+# resolved by lib/rust_bin.sh's mj_rust_resolve, the one answer the launcher and the gates
+# share. The harness never builds (ADR 0224): it ran a raw `cargo build` here once per Rust
+# case, outside the disk floor and the build lock, and a case is not the place to start one.
 # Prints the path on stdout and any complaint on stderr (the caller captures stdout).
-# Returns 3 when there is neither cargo nor MAJORDOMUS_BIN, which is the case's cue to skip
-# as the Rust cases always have, and 1 when the build fails or the named executable does
-# not exist, which is a failure and never a skip.
+# Returns 1 when the named executable does not exist, and 12 when the tree's is missing or
+# stale and no release stands in — the complaint names `just build`. Both are failures and
+# never skips: a suite that skipped every Rust case for a stale executable would read as green.
+# The one skip is the one the Rust cases always had, 3, for a machine with no cargo at all:
+# there the explicit build cannot be run either, and the case says so in its skip line.
+# majordomus-on-stale-executable: fallback, else refuse
 rust_bin() {
-  local manifest="$ROOT/apps/majordomus-cli/Cargo.toml" log
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
     # Not there. The words matter more than the exit code: this failure is about the
     # environment the suite is running in and not about the code the case was written to
@@ -166,21 +171,17 @@ rust_bin() {
     fi
     printf '%s' "$MAJORDOMUS_BIN"; return 0
   fi
-  command -v cargo >/dev/null 2>&1 || return 3
-  log="$(mktemp "${TMPDIR:-/tmp}/mj-rust-bin.XXXXXX")"
-  RUSTFLAGS='' cargo build -q --manifest-path "$manifest" 2>"$log" || { cat "$log" >&2; rm -f "$log"; echo "    cargo build failed" >&2; return 1; }
-  rm -f "$log"
-  # Where cargo put it, not where it would have without CARGO_TARGET_DIR — which is how
-  # several worktrees of this repository share one build directory, and composing the path
-  # under the crate then names a file that was never written. The variable is read rather
-  # than `cargo metadata` asked (lib/rust_bin.sh's mj_cargo_target_dir will ask, for callers
-  # that want a .cargo/config.toml honoured too): this runs once per case, and a suite of
-  # forty Rust cases should not spend forty processes learning that a variable is unset.
-  printf '%s' "${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
+  local rb
+  . "$ROOT/lib/rust_bin.sh"
+  if ! rb="$(mj_rust_resolve "$ROOT" '    ')"; then
+    command -v cargo >/dev/null 2>&1 || return 3
+    return 12
+  fi
+  printf '%s' "$rb"
 }
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
-rust_bin_exit() { [ "$1" = 3 ] && skip "no cargo and no MAJORDOMUS_BIN"; exit 1; }
+rust_bin_exit() { [ "$1" = 3 ] && skip "no executable of this tree, no installed release of its generation and no cargo to build one"; exit 1; }
 
 # The end of a case that cannot measure its subject here, and why.
 #

@@ -388,6 +388,16 @@ pub struct SessionInfo {
     /// The context revision the session works from (a digest the context compiler names).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    /// The client process the session belongs to, on the machine of the runtime holding it.
+    /// A client that crashes never says goodbye, so this is what lets that runtime close the
+    /// session for it once the process is gone (I3810).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_pid: Option<u32>,
+    /// When that process started, as the machine's process table reports it. Compared only
+    /// for equality and only on that machine, so a pid the system handed to another process
+    /// is never taken for the client, and no two clocks are ever compared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_started: Option<String>,
 }
 
 impl SessionInfo {
@@ -520,8 +530,9 @@ impl HandoverBody {
 /// never breaks an older one's replication.
 ///
 /// The vocabulary is small on purpose: everything the mesh coordinates is a session, a
-/// claim, a handover or a review, and an event that would need a ninth kind is a feature
-/// that has not been agreed. The `kind` tag is what goes on the wire, so it is protocol —
+/// claim, a handover or a review, and a node's offer of the build cache it serves (ADR 0157
+/// agreed that one, I2671); an event that would need another kind is a feature that has not
+/// been agreed. The `kind` tag is what goes on the wire, so it is protocol —
 /// two executables of different ages read the same word for the same event.
 ///
 /// ```
@@ -627,14 +638,147 @@ pub enum EventBody {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         note: Option<String>,
     },
+    /// A node offers the build cache it serves, its own probe having found the store healthy
+    /// (ADR 0157 decision 2). Fresh while the writing stream beats within the offer's
+    /// lifetime; read by `mesh::build_cache::offer`, not folded.
+    BuildCacheOffered {
+        /// The offer.
+        offer: BuildCacheOffer,
+    },
+    /// The node's offer ended: its probe stopped passing, or it no longer serves a store.
+    BuildCacheWithdrawn {
+        /// Why, from a fixed vocabulary: one line, never a path or an endpoint.
+        reason: String,
+    },
+}
+
+/// The longest lifetime a build-cache offer may state, in seconds: an hour. An offer lives
+/// past its runtime's last beat for at most its lifetime, and the runtime writes the
+/// cooperation expiry there, so anything longer is a record nobody should keep believing.
+pub const BUILD_CACHE_LIFETIME_MAX: u64 = 3600;
+
+/// A node's offer of the build cache it serves, as the journal carries it (ADR 0157 decision
+/// 2, I2671): what a client needs to reach the store and rank it, and how long past its
+/// runtime's last beat it holds. No field holds a credential, and the endpoint is a scheme
+/// and an address alone, so none can ride in it.
+///
+/// ```
+/// use majordomus_cli::mesh::build_cache::Scope;
+/// use majordomus_cli::mesh::journal::BuildCacheOffer;
+///
+/// let offer = BuildCacheOffer { protocol: "s3".into(), provider: "minio".into(),
+///     scope: Scope::Lan, endpoint: "http://192.0.2.10:9000".into(),
+///     bucket: "majordomus-build-cache".into(), priority: 0, headroom_gib: None,
+///     lifetime_seconds: 30 };
+/// assert!(offer.validate().is_ok());
+/// // user information is where a key would ride: refused before anything is signed
+/// let smuggled = BuildCacheOffer { endpoint: "http://k:s@192.0.2.10:9000".into(), ..offer };
+/// assert!(smuggled.validate().is_err());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct BuildCacheOffer {
+    /// The protocol the store speaks (`s3`).
+    pub protocol: String,
+    /// What serves it (`minio`, `garage`, ...): data, not a code path.
+    pub provider: String,
+    /// How far the endpoint is meant to be reached.
+    pub scope: super::build_cache::Scope,
+    /// `http://` or `https://` and an address: no user information, path, query or fragment.
+    pub endpoint: String,
+    /// The bucket, by S3's naming rules.
+    pub bucket: String,
+    /// The node's preference, higher first.
+    #[serde(default)]
+    pub priority: i32,
+    /// Free space on the store's data path, in GiB, when the node said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub headroom_gib: Option<u64>,
+    /// How long past its runtime's last beat the offer holds, in seconds: 1 to
+    /// [`BUILD_CACHE_LIFETIME_MAX`].
+    pub lifetime_seconds: u64,
+}
+
+impl BuildCacheOffer {
+    /// Check the offer's bounds. A refusal names the field and the rule, never the value: a
+    /// value refused here may be a credential somebody put in the wrong place.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::build_cache::Scope;
+    /// use majordomus_cli::mesh::journal::BuildCacheOffer;
+    ///
+    /// let offer = BuildCacheOffer { protocol: "s3".into(), provider: "minio".into(),
+    ///     scope: Scope::Mesh, endpoint: "https://[2001:db8::1]:9000".into(),
+    ///     bucket: "build.cache-1".into(), priority: 5, headroom_gib: Some(9),
+    ///     lifetime_seconds: 30 };
+    /// assert!(offer.validate().is_ok());
+    /// let queried = BuildCacheOffer { endpoint: "http://192.0.2.1:9000/?X-Amz-Signature=s".into(),
+    ///     ..offer.clone() };
+    /// assert!(!queried.validate().unwrap_err().contains("Signature"));
+    /// let forever = BuildCacheOffer { lifetime_seconds: 0, ..offer };
+    /// assert!(forever.validate().is_err());
+    /// ```
+    pub fn validate(&self) -> Result<(), String> {
+        let word = |name: &str, value: &str, max: usize| {
+            let ok = !value.is_empty()
+                && value.len() <= max
+                && value
+                    .bytes()
+                    .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+            if ok {
+                Ok(())
+            } else {
+                Err(format!("{name} is not 1-{max} of [a-z0-9-]"))
+            }
+        };
+        word("protocol", &self.protocol, 16)?;
+        word("provider", &self.provider, 32)?;
+        let address = self
+            .endpoint
+            .strip_prefix("http://")
+            .or_else(|| self.endpoint.strip_prefix("https://"));
+        let addressed = self.endpoint.len() <= 256
+            && address.is_some_and(|a| {
+                !a.is_empty()
+                    && a.bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b".-:[]".contains(&b))
+            });
+        if !addressed {
+            return Err(
+                "the endpoint is not http:// or https:// and an address alone \
+                 (no user information, path, query or fragment)"
+                    .into(),
+            );
+        }
+        let b = self.bucket.as_bytes();
+        let named = (3..=63).contains(&b.len())
+            && b.iter()
+                .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || b".-".contains(c))
+            && b[0].is_ascii_alphanumeric()
+            && b[b.len() - 1].is_ascii_alphanumeric();
+        if !named {
+            return Err(
+                "the bucket is not 3-63 of [a-z0-9.-], beginning and ending with a \
+                 letter or a digit"
+                    .into(),
+            );
+        }
+        if !(1..=BUILD_CACHE_LIFETIME_MAX).contains(&self.lifetime_seconds) {
+            return Err(format!(
+                "a lifetime of {} s is not 1-{BUILD_CACHE_LIFETIME_MAX}",
+                self.lifetime_seconds
+            ));
+        }
+        Ok(())
+    }
 }
 
 /// The most a review request's body, or a requester's result note, carries: room for the
 /// evidence a reviewer needs without a second channel, and far under the link's bound.
 pub const REVIEW_BODY_MAX: usize = 8 * 1024;
 
-/// The event kinds this executable interprets. An event naming another kind is stored and
-/// relayed, never folded.
+/// The event kinds this executable interprets: the cooperation fold reads the first nine,
+/// `mesh::build_cache::offer` the build-cache two. An event naming another kind is stored and
+/// relayed, never interpreted.
 pub const KNOWN_KINDS: &[&str] = &[
     "session_opened",
     "session_closed",
@@ -645,6 +789,8 @@ pub const KNOWN_KINDS: &[&str] = &[
     "review_requested",
     "review_answered",
     "review_withdrawn",
+    "build_cache_offered",
+    "build_cache_withdrawn",
 ];
 
 impl EventBody {
@@ -672,6 +818,8 @@ impl EventBody {
             EventBody::ReviewRequested { .. } => "review_requested",
             EventBody::ReviewAnswered { .. } => "review_answered",
             EventBody::ReviewWithdrawn { .. } => "review_withdrawn",
+            EventBody::BuildCacheOffered { .. } => "build_cache_offered",
+            EventBody::BuildCacheWithdrawn { .. } => "build_cache_withdrawn",
         }
     }
 
@@ -830,6 +978,8 @@ impl EventBody {
                 }
                 Ok(())
             }
+            EventBody::BuildCacheOffered { offer } => offer.validate(),
+            EventBody::BuildCacheWithdrawn { reason } => line("reason", reason, 256),
         }
     }
 }
@@ -961,6 +1111,109 @@ pub struct MeshEvent {
 pub fn causal_key(event: &MeshEvent) -> (u64, StreamId, u64) {
     (event.lamport, event.stream.clone(), event.seq)
 }
+
+/// Where a walk of the journal stands: the run of the runtime that answered it and the last
+/// arrival number it returned ([`Journal::events_since`]). It is written `<instance>:<n>`,
+/// the instance being the 16 hex digits of that run, so it fits a command line and a query
+/// string however many streams the journal holds.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::Cursor;
+///
+/// let c: Cursor = "0123456789abcdef:42".parse().unwrap();
+/// assert_eq!(c.arrival(), 42);
+/// assert_eq!(c.to_string(), "0123456789abcdef:42");
+/// assert!("42".parse::<Cursor>().is_err(), "a Lamport stamp is not a cursor");
+/// assert!("0123456789ABCDEF:1".parse::<Cursor>().is_err(), "lowercase hex only");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Cursor {
+    instance: String,
+    arrival: u64,
+}
+
+impl Cursor {
+    /// The last arrival number the walk returned.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::Cursor;
+    ///
+    /// assert_eq!("0123456789abcdef:7".parse::<Cursor>().unwrap().arrival(), 7);
+    /// ```
+    pub fn arrival(&self) -> u64 {
+        self.arrival
+    }
+}
+
+impl std::fmt::Display for Cursor {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}:{}", self.instance, self.arrival)
+    }
+}
+
+impl std::str::FromStr for Cursor {
+    type Err = CursorError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let malformed = || CursorError::Malformed(s.to_string());
+        let (instance, arrival) = s.split_once(':').ok_or_else(malformed)?;
+        if instance.len() != 16
+            || !instance
+                .bytes()
+                .all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
+        {
+            return Err(malformed());
+        }
+        let arrival = arrival.parse().map_err(|_| malformed())?;
+        Ok(Cursor {
+            instance: instance.to_string(),
+            arrival,
+        })
+    }
+}
+
+/// Why a cursor was not walked.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::{Cursor, CursorError};
+///
+/// let e = "nope".parse::<Cursor>().unwrap_err();
+/// assert!(matches!(e, CursorError::Malformed(_)));
+/// assert!(e.to_string().contains("nope"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CursorError {
+    /// Not `<16 lowercase hex>:<number>`.
+    Malformed(String),
+    /// Issued by another run: its arrival numbers name nothing in this one. The reader
+    /// starts again from the beginning, or from a Lamport stamp.
+    Stale {
+        /// The run that issued the cursor.
+        issued_by: String,
+        /// The run answering now.
+        current: String,
+    },
+}
+
+impl std::fmt::Display for CursorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CursorError::Malformed(s) => {
+                write!(
+                    f,
+                    "'{s}' is not a cursor: expected <16 hex digits>:<arrival>"
+                )
+            }
+            CursorError::Stale { issued_by, current } => write!(
+                f,
+                "stale_cursor: the cursor was issued by run {issued_by} and this is run \
+                 {current}; walk again from the beginning, or from a Lamport stamp with after"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for CursorError {}
 
 /// The canonical bytes of a JSON value: object keys sorted at every depth, no whitespace.
 /// Signer and verifier compute it identically regardless of how either parser orders keys.
@@ -1492,6 +1745,19 @@ struct Inner {
     streams: BTreeMap<StreamId, StreamLog>,
     lamport: u64,
     tallies: JournalTallies,
+    /// Every held event by the order this run applied it, `(stream, seq)` under its arrival
+    /// number: what a [`Cursor`] walks. An event gets its number when it is applied to its
+    /// stream, not when it is received, so one waiting for its gap is numbered after it.
+    arrivals: BTreeMap<u64, (StreamId, u64)>,
+    /// The last arrival number given; numbers are never reused within a run.
+    arrived: u64,
+}
+
+impl Inner {
+    fn arrive(&mut self, stream: &StreamId, seq: u64) {
+        self.arrived += 1;
+        self.arrivals.insert(self.arrived, (stream.clone(), seq));
+    }
 }
 
 /// The journal of one runtime. `Mutex<BTreeMap>`: a handful of events a second, and a
@@ -1665,6 +1931,8 @@ impl Journal {
                 streams,
                 lamport: 0,
                 tallies: JournalTallies::default(),
+                arrivals: BTreeMap::new(),
+                arrived: 0,
             }),
             rotation: std::sync::atomic::AtomicUsize::new(0),
             reloaded: IngestReport::default(),
@@ -1865,8 +2133,10 @@ impl Journal {
             .expect("own stream")
             .events
             .insert(seq, event.clone());
+        inner.arrive(&self.own, seq);
         inner.tallies.written += 1;
         let durability = self.persist(std::slice::from_ref(&event));
+        crate::change::BLACKBOARD.advance();
         Ok(Appended { event, durability })
     }
 
@@ -2230,6 +2500,9 @@ impl Journal {
             }
         }
         self.persist(&stored);
+        if !stored.is_empty() {
+            crate::change::BLACKBOARD.advance();
+        }
         report
     }
 
@@ -2362,6 +2635,9 @@ impl Journal {
         }
         let max_lamport = applied.iter().map(|e| e.lamport).max().unwrap_or(lamport);
         inner.lamport = inner.lamport.max(max_lamport);
+        for e in &applied {
+            inner.arrive(&e.stream, e.seq);
+        }
         report.accepted += applied.len() as u64;
         if count {
             inner.tallies.received += applied.len() as u64;
@@ -2570,6 +2846,95 @@ impl Journal {
         ordered.into_iter().take(page).collect()
     }
 
+    /// At most `limit` events this run applied after `cursor`, in Lamport order, and the
+    /// cursor of the next page; the whole journal from the beginning when `cursor` is `None`.
+    ///
+    /// The walk is by arrival, not by stamp, and that is what makes it complete: a runtime
+    /// partitioned away keeps stamping with its own clock, so when the link returns its
+    /// events arrive stamped at or below a position a stamp walk already passed
+    /// ([`Journal::events_after`] never returns them). Every event is numbered when it is
+    /// applied to its stream, and a duplicate is never applied twice, so a walk resumed from
+    /// each answered cursor returns every event of the journal exactly once, the late ones
+    /// included. Numbers belong to this run: a cursor another run issued is refused with
+    /// [`CursorError::Stale`], never read as a position it does not name.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// let (first, cursor) = j.events_since(None, 1).unwrap();
+    /// assert_eq!(first.len(), 1, "one page");
+    /// let (rest, end) = j.events_since(Some(&cursor), 100).unwrap();
+    /// assert_eq!(rest.len(), 1, "resumed where the reader left off");
+    /// assert!(j.events_since(Some(&end), 100).unwrap().0.is_empty(), "and nothing twice");
+    /// ```
+    pub fn events_since(
+        &self,
+        cursor: Option<&Cursor>,
+        limit: usize,
+    ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
+        let instance = self.own.instance();
+        let from = match cursor {
+            Some(c) if c.instance != instance => {
+                return Err(CursorError::Stale {
+                    issued_by: c.instance.clone(),
+                    current: instance.to_string(),
+                });
+            }
+            Some(c) => c.arrival,
+            None => 0,
+        };
+        let inner = self.inner.lock().expect("journal lock");
+        let mut last = from;
+        let mut page = Vec::new();
+        for (&arrival, (stream, seq)) in inner.arrivals.range(from.saturating_add(1)..) {
+            if page.len() >= limit {
+                break;
+            }
+            page.extend(
+                inner
+                    .streams
+                    .get(stream)
+                    .and_then(|l| l.events.get(seq))
+                    .cloned(),
+            );
+            last = arrival;
+        }
+        page.sort_by_cached_key(causal_key);
+        let next = Cursor {
+            instance: instance.to_string(),
+            arrival: last,
+        };
+        Ok((page, next))
+    }
+
+    /// The cursor that names everything this run has applied so far: where a reader who has
+    /// just read the journal as it stands resumes, so that only what comes next is returned.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let head = j.head_cursor();
+    /// assert!(j.events_since(Some(&head), 100).unwrap().0.is_empty());
+    /// ```
+    pub fn head_cursor(&self) -> Cursor {
+        Cursor {
+            instance: self.own.instance().to_string(),
+            arrival: self.inner.lock().expect("journal lock").arrived,
+        }
+    }
+
     /// Drop every stream that has been expired for longer than `retention` and that nothing
     /// still needs, when the journal is over its bound or `force` is set; the file is
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
@@ -2683,6 +3048,10 @@ impl Journal {
         };
         let dead = unneeded(&inner.streams, due, &offer_lapsed);
         let mut dropped = 0u64;
+        let gone: BTreeSet<StreamId> = dead.iter().cloned().collect();
+        inner
+            .arrivals
+            .retain(|_, (stream, _)| !gone.contains(stream));
         for id in dead {
             if let Some(log) = inner.streams.remove(&id) {
                 dropped += log.events.len() as u64;
@@ -3691,6 +4060,205 @@ mod tests {
         );
     }
 
+    /// I2733: a runtime partitioned away keeps stamping with its own clock, so its event
+    /// arrives stamped below a position the reader's walk already passed. A walk by stamp
+    /// never returns it; a walk by cursor returns it once, however often it is delivered.
+    #[test]
+    fn events_resume_across_partition_test() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        // linked: A holds B's first event
+        opened(&b, "b1");
+        a.ingest(&b.missing_for(&a.marks(), usize::MAX), &accept_all);
+        // A's own work moves its clock well past B's
+        for n in 0..5 {
+            opened(&a, &format!("a{n}"));
+        }
+        // a reader walks A one event at a time, past B's stamp, to the end
+        let mut read = Vec::new();
+        let mut cursor = None;
+        let mut after = 0;
+        loop {
+            let (page, next) = a.events_since(cursor.as_ref(), 1).unwrap();
+            cursor = Some(next);
+            let Some(last) = page.last() else { break };
+            after = after.max(last.lamport);
+            read.extend(page);
+        }
+        assert_eq!(read.len(), 6, "B's first event and A's five");
+        // the link is cut: B writes under its own clock, below the walk's stamp
+        let late = opened(&b, "b2");
+        assert!(
+            late.lamport <= after,
+            "the fixture is a late stamp, or it proves nothing"
+        );
+        // the link returns, and the late event arrives twice
+        for _ in 0..2 {
+            a.ingest(&b.missing_for(&a.marks(), usize::MAX), &accept_all);
+            a.ingest(std::slice::from_ref(&late), &accept_all);
+        }
+        assert!(
+            a.events_after(after, usize::MAX).is_empty(),
+            "the gap the cursor closes: a walk by stamp never sees it"
+        );
+        let (page, next) = a.events_since(cursor.as_ref(), 1).unwrap();
+        assert_eq!(
+            page,
+            vec![late.clone()],
+            "the resumed walk returns the late event"
+        );
+        let (rest, _) = a.events_since(Some(&next), usize::MAX).unwrap();
+        assert!(rest.is_empty(), "and nothing a second time: {rest:?}");
+        read.extend(page);
+        // over the whole walk, every event of the journal exactly once
+        let mut walked: Vec<_> = read.iter().map(|e| (e.stream.clone(), e.seq)).collect();
+        walked.sort();
+        let mut held: Vec<_> = a
+            .events()
+            .iter()
+            .map(|e| (e.stream.clone(), e.seq))
+            .collect();
+        held.sort();
+        assert_eq!(walked, held);
+    }
+
+    #[test]
+    fn a_cursor_of_another_run_is_refused_and_a_dropped_stream_leaves_no_hole() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let open = |runtime: &str| {
+            Journal::open(
+                Arc::new(NodeIdentity::ephemeral().unwrap()),
+                runtime,
+                "repo".into(),
+                Some(path.clone()),
+            )
+            .unwrap()
+        };
+        let first = open("0000000000000001");
+        opened(&first, "s1");
+        let (_, cursor) = first.events_since(None, 100).unwrap();
+        drop(first);
+        // the same runtime restarted: a new run, whose numbers the old cursor does not name
+        let again = open("0000000000000001");
+        match again.events_since(Some(&cursor), 100) {
+            Err(CursorError::Stale { issued_by, current }) => assert_ne!(issued_by, current),
+            other => panic!("a stale cursor was walked: {other:?}"),
+        }
+        // the restarted run numbers what it reloaded, so a walk from the start reads it all
+        assert_eq!(again.events_since(None, 100).unwrap().0.len(), 1);
+
+        // a stream compaction drops leaves its numbers unanswered, never a page cut short
+        let b = journal("0000000000000002");
+        let c = journal("0000000000000003");
+        opened(&c, "gone");
+        b.ingest(&c.missing_for(&b.marks(), usize::MAX), &accept_all);
+        opened(&b, "kept");
+        assert_eq!(
+            b.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, true),
+            1
+        );
+        let (page, _) = b.events_since(None, 1).unwrap();
+        assert_eq!(
+            page.len(),
+            1,
+            "the kept event, not an empty page for the dropped one"
+        );
+        assert_eq!(page[0].stream, b.own);
+    }
+
+    /// A cursor written out reads back as the same run and arrival; anything that is not
+    /// sixteen lowercase hex digits, a colon and a number is malformed, and every refusal
+    /// names what was given and what to do instead.
+    #[test]
+    fn a_cursor_reads_back_as_written_and_every_refusal_says_why() {
+        let j = journal("0000000000000001");
+        opened(&j, "s1");
+        opened(&j, "s2");
+        let head = j.head_cursor();
+        assert_eq!(head.arrival(), 2);
+        let back: Cursor = head.to_string().parse().unwrap();
+        assert_eq!(back, head);
+        assert!(j.events_since(Some(&back), 10).unwrap().0.is_empty());
+
+        for bad in [
+            "",
+            "0123456789abcdef",
+            "0123456789abcde:1",
+            "0123456789abcdeg:1",
+            "0123456789ABCDEF:1",
+            "0123456789abcdef:",
+            "0123456789abcdef:-1",
+        ] {
+            let e = bad.parse::<Cursor>().expect_err(bad);
+            assert_eq!(e, CursorError::Malformed(bad.into()));
+            let said = e.to_string();
+            assert!(
+                said.contains(&format!("'{bad}'")) && said.contains("<16 hex digits>:<arrival>"),
+                "{said}"
+            );
+        }
+
+        let stale = CursorError::Stale {
+            issued_by: "0000000000000001".into(),
+            current: "0000000000000002".into(),
+        };
+        let said = stale.to_string();
+        assert!(said.starts_with("stale_cursor:"), "{said}");
+        assert!(
+            said.contains("issued by run 0000000000000001")
+                && said.contains("this is run 0000000000000002"),
+            "{said}"
+        );
+        assert!(said.contains("from a Lamport stamp with after"), "{said}");
+    }
+
+    /// Pull every event `from` holds that `into` lacks, as one sync round does.
+    fn synced(into: &Journal, from: &Journal) {
+        into.merge_marks(&from.marks(), &|_| true, Duration::from_secs(30));
+        into.ingest(&from.missing_for(&into.marks(), usize::MAX), &accept_all);
+    }
+
+    #[test]
+    fn paging_while_events_arrive_returns_every_event_exactly_once() {
+        // two runtimes that wrote concurrently, so the journal opens on a tie
+        let reader = journal("0000000000000001");
+        for runtime in ["0000000000000002", "0000000000000003"] {
+            let writer = journal(runtime);
+            opened(&writer, "s1");
+            opened(&writer, "s2");
+            synced(&reader, &writer);
+        }
+        // a runtime that hears everything and keeps writing while the reader pages
+        let late = journal("0000000000000004");
+        let mut read = Vec::new();
+        let mut after = 0;
+        for round in 0.. {
+            let page = reader.events_after(after, 1);
+            assert_eq!(
+                reader.events_after(after, 1),
+                page,
+                "the cursor is stable: asking again with it answers the same page"
+            );
+            let Some(last) = page.last() else { break };
+            after = last.lamport;
+            read.extend(page);
+            if round < 3 {
+                // between pages: one event of the reader's own and one heard from a peer
+                opened(&reader, &format!("own-{round}"));
+                synced(&late, &reader);
+                opened(&late, &format!("late-{round}"));
+                synced(&reader, &late);
+            }
+        }
+        let all = reader.events_after(0, usize::MAX);
+        assert_eq!(all.len(), 4 + 3 + 3, "the fixture appended between pages");
+        assert_eq!(
+            read, all,
+            "every event once, in causal order, though the journal grew while it was paged"
+        );
+    }
+
     #[test]
     fn an_append_after_a_torn_tail_starts_a_line_of_its_own() {
         let dir = tempfile::tempdir().unwrap();
@@ -4600,5 +5168,28 @@ mod tests {
             let r = b.ingest(&[event], &accept_all);
             proptest::prop_assert_eq!(r.accepted, 0);
         }
+    }
+
+    #[test]
+    fn the_build_cache_bodies_name_their_kind_and_the_kind_is_known() {
+        let offered = EventBody::BuildCacheOffered {
+            offer: BuildCacheOffer {
+                protocol: "s3".into(),
+                provider: "minio".into(),
+                scope: super::super::build_cache::Scope::Lan,
+                endpoint: "http://192.0.2.10:9000".into(),
+                bucket: "majordomus-build-cache".into(),
+                priority: 0,
+                headroom_gib: None,
+                lifetime_seconds: 30,
+            },
+        };
+        let withdrawn = EventBody::BuildCacheWithdrawn {
+            reason: "probe failed".into(),
+        };
+        assert_eq!(offered.kind(), "build_cache_offered");
+        assert_eq!(withdrawn.kind(), "build_cache_withdrawn");
+        assert!(KNOWN_KINDS.contains(&offered.kind()));
+        assert!(KNOWN_KINDS.contains(&withdrawn.kind()));
     }
 }
