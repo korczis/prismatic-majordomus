@@ -152,6 +152,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "starts the HTTP server for this checkout as a process of its own when none answers, and waits until it is ready.",
     },
     LocalCommand {
+        command: "ui",
+        reason: LocalReason::ProcessLifecycle,
+        note: "ensures this checkout's server as `serve ensure` does and opens a browser on the invoking user's desktop, which no capability served by that server could do.",
+    },
+    LocalCommand {
         command: "serve stop",
         reason: LocalReason::ProcessLifecycle,
         note: "ends the server this checkout's lease names by signalling the process, which nothing served by that process could do to itself.",

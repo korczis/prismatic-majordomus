@@ -39,6 +39,8 @@ pub enum Command {
     Mcp(McpArgs),
     /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
     Serve(ServeArgs),
+    /// The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of /ui (or of /ui/<screen>) and open it in a browser
+    Ui(UiArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
     /// Write the committed projections of the registry (docs/generated), or check that they are current
@@ -4736,6 +4738,55 @@ pub enum ServeCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus ui`: the primary surface in one step (ADR 0135). It is `serve ensure` and
+/// the address of a screen, with no server and no mode of its own: `serve status` and
+/// `serve stop` answer for the server it ensured.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command};
+///
+/// // without a screen, the dashboard; the browser is opened unless asked not to
+/// let cli = Cli::try_parse_from(["majordomus", "ui"]).unwrap();
+/// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// assert!(args.screen.is_none() && !args.no_open && args.idle.is_none());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "ui", "roadmap", "--no-open"]).unwrap();
+/// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// assert_eq!((args.screen.as_deref(), args.no_open), (Some("roadmap"), true));
+/// ```
+pub struct UiArgs {
+    #[command(flatten)]
+    /// Where the repository is found, and the layer options a server it starts is given.
+    pub repo: RepoArgs,
+
+    /// The screen to open, by the last word of its route (`roadmap` is /ui/roadmap);
+    /// without it, the dashboard
+    #[arg(value_name = "SCREEN")]
+    pub screen: Option<String>,
+
+    /// Print the address and open no browser
+    #[arg(long)]
+    pub no_open: bool,
+
+    /// The port a server this call starts asks for first, as for `serve ensure`
+    #[arg(long)]
+    pub port: Option<u16>,
+
+    /// The idle life of a server this call starts, in seconds, as for `serve ensure`
+    #[arg(long, value_name = "SECONDS")]
+    pub idle: Option<u64>,
+
+    /// How long to wait for a server to become ready
+    #[arg(long, value_name = "SECONDS", default_value_t = 20)]
+    pub wait: u64,
+
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus capabilities`.
 pub struct CapabilitiesArgs {
     #[command(flatten)]
@@ -7114,6 +7165,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 "proposed every-page-answers-within-100-ms-when-warm",
                 ".ai/repo/project/intents/every-page-answers-within-100-ms-when-warm.yaml",
             ]),
+        }],
+    },
+    CommandExamples {
+        command: "ui",
+        examples: &[ExampleDoc {
+            id: "ui-unknown-screen",
+            title: "A screen the UI does not have is refused before a server is started",
+            description: "`majordomus ui` ensures this checkout's shared server as `serve ensure` does, prints the address of /ui (or of /ui/<screen>) and opens it in a browser; `--no-open` only prints it. A screen is named by the last word of its route, and one the navigation does not hold is refused with exit 2 and every screen listed, before the repository is read or anything is started.",
+            argv: &["ui", "nowhere", "--no-open"],
+            setup: &[],
+            expect: Expect::ExitCode(2),
         }],
     },
     CommandExamples {

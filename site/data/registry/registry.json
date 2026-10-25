@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2",
+    "fingerprint": "4046eda936dad447e22778a3ea4fd9ad8505a79ddfc28a8dd44b9ce3d14329f8",
     "summary": {
-      "total": 3474,
+      "total": 3475,
       "builtin": 217,
-      "declarative": 3257,
+      "declarative": 3258,
       "by_kind": {
         "command": 35,
         "query": 182,
-        "resource": 3257
+        "resource": 3258
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 62,
-        "implemented": 3267
+        "implemented": 3268
       },
       "mcp_tools": 203,
-      "mcp_resources": 3312,
+      "mcp_resources": 3313,
       "http_routes": 209,
       "cli_commands": 120,
       "modules": 94,
@@ -90573,7 +90573,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 640,
+        "capabilities": 641,
         "capability_ids": []
       },
       {
@@ -90665,7 +90665,7 @@
     ]
   },
   "index": {
-    "fingerprint": "61b1f2ba820b0ce5c6ab16ee80cd46fe98e555324383eef02f4d20d4485ce3df",
+    "fingerprint": "a5b92acc671fc5059a45385ea02fa82624be9d55af6578250d771e38573aa811",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90719,7 +90719,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 640,
+      "test": 641,
       "use-case": 49,
       "workspace": 1
     },
@@ -97989,7 +97989,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 43439
+        "bytes": 44191
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -121477,6 +121477,14 @@
         "bytes": 4996
       },
       {
+        "uri": "majordomus://test/test/cases/2484_majordomus_ui_opens_the_dashboard.sh",
+        "kind": "test",
+        "identity": "test/cases/2484_majordomus_ui_opens_the_dashboard.sh",
+        "path": "test/cases/2484_majordomus_ui_opens_the_dashboard.sh",
+        "source_class": "case",
+        "bytes": 2755
+      },
+      {
         "uri": "majordomus://test/test/cases/24_prompt_search.sh",
         "kind": "test",
         "identity": "test/cases/24_prompt_search.sh",
@@ -126313,7 +126321,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 640
+      "objects": 641
     },
     {
       "name": "use-case",
@@ -127151,6 +127159,181 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "ui"
+        ],
+        "route": "/docs/cli/ui/",
+        "executable": true,
+        "usage": "majordomus ui [OPTIONS] [SCREEN]",
+        "about": "The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of /ui (or of /ui/<screen>) and open it in a browser",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "screen",
+            "positional": true,
+            "help": "The screen to open, by the last word of its route (`roadmap` is /ui/roadmap); without it, the dashboard",
+            "value_name": "SCREEN",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "no_open",
+            "long": "no-open",
+            "positional": false,
+            "help": "Print the address and open no browser",
+            "value_name": "NO_OPEN",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "port",
+            "long": "port",
+            "positional": false,
+            "help": "The port a server this call starts asks for first, as for `serve ensure`",
+            "value_name": "PORT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "idle",
+            "long": "idle",
+            "positional": false,
+            "help": "The idle life of a server this call starts, in seconds, as for `serve ensure`",
+            "value_name": "SECONDS",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "wait",
+            "long": "wait",
+            "positional": false,
+            "help": "How long to wait for a server to become ready",
+            "value_name": "SECONDS",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "20"
+            ]
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "ui-unknown-screen",
+            "title": "A screen the UI does not have is refused before a server is started",
+            "description": "`majordomus ui` ensures this checkout's shared server as `serve ensure` does, prints the address of /ui (or of /ui/<screen>) and opens it in a browser; `--no-open` only prints it. A screen is named by the last word of its route, and one the navigation does not hold is refused with exit 2 and every screen listed, before the repository is read or anything is started.",
+            "argv": [
+              "ui",
+              "nowhere",
+              "--no-open"
+            ],
+            "command": "majordomus ui nowhere --no-open",
+            "setup": [],
+            "expectation": "exits 2"
+          }
+        ],
+        "subcommands": []
       },
       {
         "path": [
