@@ -644,6 +644,7 @@ gates:
   # `secret-argv` class, so a plan that touches no code that starts a process does not run it.
   - id: secret-argv
     job: structure
+    lane: feedback
     runs: bin/majordomus-cli quality secret-argv
     summary: no Rust source or shell unit hands a child process a value read from a credential source as an argument; standard input, the child's environment and a 0600 file are the forms that pass, and each finding names the file, the line and project.a-secret-never-travels-on-a-command-line
 
