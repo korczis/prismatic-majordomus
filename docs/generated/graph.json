@@ -70414,6 +70414,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4203",
+        "kind": "issue",
+        "label": "I4203",
+        "summary": "The ci verdict judges each gate by the receipt of the attempt that ran it, so a rerun that passes is not judged by the attempt that failed",
+        "route": "/cockpit/objects/issue/i4203",
+        "source": ".ai/repo/project/issues/I4203.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 94 fails against master's verdict on a fixture with a stale red and a fresh green receipt of one gate, and passes with the fix",
+            "A `gh run rerun --failed` whose rerun gate passes yields a green ci verdict"
+          ],
+          "created_at": "2026-10-24",
+          "depends_on": [],
+          "evidence_required": [
+            "a_rerun_is_judged_by_its_own_receipts_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "What any gate checks",
+            "Deleting artifacts of past runs"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4203.yaml",
+            ".github/workflows/validate.yml",
+            "scripts/ci/verdict",
+            "test/cases/94_ci_plan.sh"
+          ],
+          "serves": [],
+          "slug": "a-rerun-is-judged-by-its-own-receipts",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "bash test/run.sh 94_ci_plan"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4220",
         "kind": "issue",
         "label": "I4220",
@@ -132608,6 +132647,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4203",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4203",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4220",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144229,8 +144278,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }
