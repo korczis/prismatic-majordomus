@@ -870,9 +870,17 @@ answer names the one that did not when it is left out:
 
 The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
 `SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
-`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>` and
-`AWS_PROFILE=mesh-build-cache`. A key is never exported: the environment of every compiler and
-build script would carry it, so only the credential file's path is named.
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>`,
+`AWS_PROFILE=mesh-build-cache` and `SCCACHE_DIR`. A key is never exported: the environment of
+every compiler and build script would carry it, so only the credential file's path is named.
+
+`SCCACHE_DIR` is the disk level: its value when the environment sets it, else the directory
+sccache takes by itself (`~/Library/Caches/Mozilla.sccache` on macOS,
+`${XDG_CACHE_HOME:-$HOME/.cache}/sccache` elsewhere), so the chain keeps what the local cache
+holds. It is named because sccache 0.17.0 and 0.18.0 refuse to start a chain whose `disk` level
+has none ("Disk cache specified in levels but not configured"). Until 2026-10-25 the variables
+left it out, and on every node without `SCCACHE_DIR` set, `sccache-mesh --start-only` answered
+`local-only: sccache did not start with the store`, so no build went through the store.
 
 `share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
 on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its
