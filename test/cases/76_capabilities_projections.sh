@@ -123,7 +123,8 @@ expect_grep "kind 'rule' is declared by both"
 # --- the HTTP socket, the Swagger shell and MCP/HTTP parity, through the crate's own black-box
 #     suites; these are cargo's, so a prebuilt executable alone cannot run them
 if command -v cargo >/dev/null 2>&1; then
-  RUSTFLAGS='' cargo test -q --manifest-path "$MANIFEST" --test http_serve --test projections 2>"$S/cargo.log" >"$S/cargo.out" \
+  # two jobs and two test threads, so three neighbours in the parallel phase keep their cores (I4199)
+  CARGO_BUILD_JOBS=2 RUST_TEST_THREADS=2 RUSTFLAGS='' cargo test -q --manifest-path "$MANIFEST" --test http_serve --test projections 2>"$S/cargo.log" >"$S/cargo.out" \
     || { tail -n 40 "$S/cargo.log" "$S/cargo.out"; echo "    the crate's HTTP and projection suites failed"; exit 1; }
 else
   echo "    skip: cargo not installed (the crate's HTTP and projection suites; the executable half ran)"

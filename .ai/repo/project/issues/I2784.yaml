@@ -1,0 +1,41 @@
+id: I2784
+milestone: browser-compute
+title: "One portable core runs on the host and as wasm32, and one executed fixture holds both"
+slug: a-portable-core-runs-in-the-browser
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Create apps/majordomus-core holding canonical JSON, SHA-256 and the canonical digest, depending only on serde_json and sha2 with the executable's features, exporting a three-function C ABI on wasm32; make the executable's two canonical-JSON writers call it; record a fixture of inputs, canonical bytes and independently computed digests; prove the host crate, the executable and the executed wasm32 module against it in a structure gate; and make the core part of the executable's generation."
+why: "On 2026-10-16 the owner asked for a browser to compute for the mesh. A browser can only be checked if it computes exactly what the server computes, and that can only be known when one implementation runs in both places and an executed fixture says they agree (ADR 0170)."
+serves:
+  - a-browser-computes-what-the-server-verifies#core-agrees-everywhere
+current_state: "No portable core; canonical JSON is written twice in the executable; no wasm32 target."
+desired_state: "apps/majordomus-core builds for the host and wasm32; journal.rs and executor.rs call it; the portable-core gate executes the module against the fixture; a core edit changes the executable's generation."
+scope:
+  - "apps/majordomus-core"
+  - "apps/majordomus-cli/Cargo.toml"
+  - "apps/majordomus-cli/Cargo.lock"
+  - "apps/majordomus-cli/build.rs"
+  - "apps/majordomus-cli/src/generation.rs"
+  - "apps/majordomus-cli/src/mesh/journal.rs"
+  - "apps/majordomus-cli/src/capability/executor.rs"
+  - "apps/majordomus-cli/tests/portable_core.rs"
+  - ".ai/repo/ci/gates.yaml"
+  - ".ai/repo/adrs"
+  - "scripts/ci/crate-boundary"
+  - "rust-toolchain.toml"
+depends_on: []
+acceptance_criteria:
+  - "Every fixture row is reproduced by the core on the host, by the executable's two writers, and by the wasm32 module executed under node"
+  - "Text that is not JSON is refused, not digested, on every runtime"
+  - "Neither lock gains a package"
+  - "A core source edit changes the executable's generation; a core test edit does not"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-core/Cargo.toml"
+  - "cargo test --test portable_core"
+  - "cargo test --lib generation"
+evidence_required:
+  - "portable_core_tests"
+created_at: 2026-10-17
+updated_at: 2026-10-17

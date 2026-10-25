@@ -1,0 +1,33 @@
+id: I2871
+milestone: two-folder-integration
+title: "A file in the half whose contract excludes it is refused, naming the path and the contract"
+slug: a-misplaced-artifact-is-refused
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "A check reads I2870's declaration, walks the layer and refuses every path that a contract excludes — control-plane state under .ai/repo, authored knowledge under .ai/local — with '<path> violates <contract>'. doctor reports it and a gate runs it; update refuses a projection target outside the repository, the mj_norm_path guard I1101 found missing."
+why: "The second slice of I1102. On 2026-10-21 nothing refused a cache or index written under .ai/repo, or a copy of a rule under .ai/local: doctor checks only that .ai/local is untracked and that manifest sections exist."
+current_state: "doctor checks .ai/local is git-ignored and nothing in it is tracked; scripts/ci/local-never-published keeps local out of the site; nothing reads a contract to judge a path."
+desired_state: "A misplaced file fails a check that names the path and the contract it violates."
+scope:
+  - apps/majordomus-cli/src
+  - share/kinds.yaml
+  - share/skeleton/ai/repo/README.md
+  - lib/doctor.sh
+  - lib/update.sh
+  - test/cases/3405_a_misplaced_artifact_is_refused.sh
+  - .ai/repo/project/issues/I2871.yaml
+non_scope:
+  - "Moving content between halves (I1109 and the migration issues)"
+depends_on:
+  - I2870
+acceptance_criteria:
+  - "A file a contract excludes is refused, naming the path and the contract; a negative case places one in each half"
+  - "update writes no path outside the repository root (the mj_norm_path guard)"
+validation:
+  - "cargo test --workspace --all-features"
+  - "bin/majordomus doctor"
+evidence_required:
+  - boundary_checked
+created_at: 2026-10-21
+updated_at: 2026-10-21

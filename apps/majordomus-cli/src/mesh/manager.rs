@@ -26,6 +26,7 @@ use super::protocol::{self, Refusal};
 use super::provider::{Beacon, MeshProvider, Observation, ProviderContext, ProviderStatus};
 use super::registry::{MeshRegistry, MeshSource, NodeRecord, Tallies};
 use super::rendezvous::{RegisterAnswer, RendezvousProvider};
+use super::tailscale::TailscaleProvider;
 use super::trust;
 use super::MeshError;
 
@@ -468,6 +469,11 @@ impl MeshRuntime {
                 config.rendezvous.interval_seconds,
             )));
         }
+        // the tailnet's online peers are asked as rendezvous: a machine joining the tailnet
+        // is found with no address written by hand (I2410)
+        if config.tailscale.enabled {
+            providers.push(Box::new(TailscaleProvider::new(config.tailscale.clone())));
+        }
         for provider in providers.iter_mut() {
             if let Err(e) = provider.start(&ctx) {
                 tracing::warn!(provider = provider.id(), error = %e, "mesh provider did not start; the others run on");
@@ -562,6 +568,38 @@ impl MeshRuntime {
         }
     }
 
+    /// Advertise what `source` answers from now on, read again before every beacon (see
+    /// [`Beacon::follow`]). Does nothing while the mesh is not active.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    ///
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mut config: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "majordomus", "enabled": true,
+    ///     "multicast": { "enabled": false },
+    /// })).unwrap();
+    /// let mesh = MeshRuntime::new();
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// config.trust.allow = vec![identity.public.public_key.clone()];
+    ///
+    /// mesh.follow_endpoints(Arc::new(|| vec!["10.0.0.9:8791".to_string()]));
+    /// assert!(mesh.status().advertised.is_empty(), "nothing to follow before activation");
+    ///
+    /// mesh.activate_as(&config, identity, "0000000000000001",
+    ///     vec!["192.168.100.96:8791".into()], vec!["root".into()], "doc").unwrap();
+    /// mesh.follow_endpoints(Arc::new(|| vec!["192.168.100.100:8791".to_string()]));
+    /// assert_eq!(mesh.status().advertised, ["192.168.100.100:8791"]);
+    /// ```
+    pub fn follow_endpoints(&self, source: super::provider::EndpointSource) {
+        if let Some(active) = self.state.lock().expect("mesh state").as_ref() {
+            active.beacon.follow(source);
+        }
+    }
+
     /// The status, as every surface answers it.
     pub fn status(&self) -> MeshStatus {
         let state = self.state.lock().expect("mesh state");
@@ -574,7 +612,7 @@ impl MeshRuntime {
                     active: true,
                     reason: None,
                     identity: Some(active.beacon.identity().public.clone()),
-                    advertised: active.beacon.endpoints().to_vec(),
+                    advertised: active.beacon.endpoints(),
                     trust_policy: Some(active.trust.policy.as_str().into()),
                     providers,
                     tallies: Tallies::default(),
@@ -808,6 +846,10 @@ mod tests {
             },
             broadcast: Default::default(),
             rendezvous: Default::default(),
+            tailscale: crate::mesh::config::TailscaleConfig {
+                enabled: false,
+                ..Default::default()
+            },
             trust: Default::default(),
             cooperation: Default::default(),
         }
@@ -1151,6 +1193,32 @@ mod tests {
             .unwrap();
         let status = runtime.status();
         assert!(status.active);
+        runtime.stop();
+    }
+
+    #[test]
+    fn a_followed_source_moves_the_advertised_endpoints_of_an_active_mesh() {
+        let dir = tempfile::tempdir().unwrap();
+        let identity = Arc::new(identity_in(&dir, "self.json"));
+        let runtime = MeshRuntime::new();
+        runtime.follow_endpoints(Arc::new(|| vec!["10.0.0.9:8791".to_string()]));
+        assert!(
+            runtime.status().advertised.is_empty(),
+            "nothing is followed before an activation"
+        );
+        runtime
+            .activate_as(
+                &listed(&identity),
+                Arc::clone(&identity),
+                "0000000000000001",
+                vec!["192.168.100.96:8791".into()],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        assert_eq!(runtime.status().advertised, ["192.168.100.96:8791"]);
+        runtime.follow_endpoints(Arc::new(|| vec!["192.168.100.100:8791".to_string()]));
+        assert_eq!(runtime.status().advertised, ["192.168.100.100:8791"]);
         runtime.stop();
     }
 }

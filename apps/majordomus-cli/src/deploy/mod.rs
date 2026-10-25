@@ -286,6 +286,11 @@ pub struct Build {
     pub profile: String,
     /// The repository-relative paths the build context carries, and the only ones.
     pub inputs: Vec<String>,
+    /// The path dependencies the package compiles against (`apps/majordomus-core`): in the
+    /// build context and in the builder's dependency stage, never in the runtime image,
+    /// since the running process reads none of them. Absent means the package has none.
+    #[serde(default)]
+    pub crates: Vec<String>,
     /// The directory the canonical site pipeline writes; absent means the image serves no
     /// site.
     #[serde(default)]
@@ -692,11 +697,17 @@ impl Deployment {
         }
 
         // --- a build input that does not resolve makes an image out of nothing
-        for (n, input) in self.build.inputs.iter().enumerate() {
+        let inputs = self.build.inputs.iter().map(|i| ("inputs", i));
+        let crates = self.build.crates.iter().map(|c| ("crates", c));
+        let mut seen = std::collections::BTreeMap::new();
+        for (field, input) in inputs.chain(crates) {
+            let n = seen.entry(field).or_insert(0usize);
+            let at = format!("build.{field}.{n}");
+            *n += 1;
             if input.starts_with('/') || input.split('/').any(|s| s == "..") {
                 out.push(Refusal::new(
                     file,
-                    &format!("build.inputs.{n}"),
+                    &at,
                     input,
                     "not a path inside the repository",
                     "give a repository-relative path with no leading slash and no ..",
@@ -704,7 +715,7 @@ impl Deployment {
             } else if !ws.root.join(input).exists() {
                 out.push(Refusal::new(
                     file,
-                    &format!("build.inputs.{n}"),
+                    &at,
                     input,
                     "a path this repository does not have",
                     "correct the path, or remove it from the build context",
@@ -1041,6 +1052,28 @@ mod tests {
             v["build"]["inputs"] = serde_json::json!(["../elsewhere"]);
             let out = deployment(v).check("x.yaml", &workspace(d.path()));
             assert!(out[0].problem.contains("inside the repository"));
+        }
+
+        #[test]
+        fn a_path_dependency_that_does_not_resolve_or_leaves_the_repository_is_refused() {
+            let d = tree();
+            std::fs::create_dir_all(d.path().join("apps/majordomus-core")).unwrap();
+            let mut v = super::object_text();
+            v["build"]["crates"] = serde_json::json!(["apps/majordomus-core", "apps/not-here"]);
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            assert_eq!(out.len(), 1, "{out:?}");
+            assert_eq!(out[0].key, "build.crates.1", "counted within its own list");
+            assert_eq!(out[0].found, "apps/not-here");
+            assert!(out[0].problem.contains("does not have"));
+
+            let mut v = super::object_text();
+            v["build"]["inputs"] = serde_json::json!(["apps/majordomus-cli", "not/here"]);
+            v["build"]["crates"] = serde_json::json!(["../elsewhere", "/abs"]);
+            let out = deployment(v).check("x.yaml", &workspace(d.path()));
+            let keys: Vec<&str> = out.iter().map(|r| r.key.as_str()).collect();
+            assert_eq!(keys, ["build.inputs.1", "build.crates.0", "build.crates.1"]);
+            assert!(out[1].problem.contains("inside the repository"));
+            assert!(out[2].problem.contains("inside the repository"));
         }
 
         #[test]

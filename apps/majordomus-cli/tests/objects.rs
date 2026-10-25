@@ -286,3 +286,63 @@ fn a_search_stops_at_its_limit() {
         "the first hit, in URI order"
     );
 }
+
+/// An entity's read names the commits that changed its file (I3314): the last one first,
+/// a bound that says when it cut the list, a reason rather than an empty list for a file no
+/// commit has touched, and a read that moves nothing in the repository.
+#[test]
+fn an_entity_read_names_the_commits_that_changed_its_file() {
+    let f = Fixture::new();
+    let alpha = ".ai/repo/rules/project/alpha.v1.md";
+    let show = |f: &Fixture, uri: &str| -> Value {
+        let app = common::load_app(f);
+        app.context
+            .execute("entity.show", json!({ "uri": uri }))
+            .unwrap()["history"]
+            .clone()
+    };
+    let uri = "majordomus://rule/project.alpha@1";
+
+    let before = f.snapshot();
+    let history = show(&f, uri);
+    assert_eq!(
+        f.snapshot(),
+        before,
+        "reading the history moved the repository"
+    );
+    assert_eq!(history["applicable"], true, "{history}");
+    assert_eq!(history["last"]["subject"], "install");
+    assert_eq!(history["last"], history["commits"][0]);
+    assert_eq!(history["cut"], false);
+    assert_eq!(history["commits"].as_array().unwrap().len(), 1);
+
+    // every change is a commit of its history, newest first, up to the bound
+    let bound = history["bound"].as_u64().unwrap() as usize;
+    for n in 0..=bound {
+        f.write(
+            alpha,
+            &common::rule("project.alpha", 1, &format!("Alpha {n}")),
+        );
+        f.commit(&format!("alpha, revision {n}"));
+    }
+    let history = show(&f, uri);
+    assert_eq!(
+        history["last"]["subject"],
+        format!("alpha, revision {bound}")
+    );
+    assert_eq!(history["commits"].as_array().unwrap().len(), bound);
+    assert_eq!(history["cut"], true, "{} commits changed it", bound + 2);
+
+    // a file staged and never committed has no history, and says why
+    f.write(
+        ".ai/repo/rules/project/gamma.v1.md",
+        &common::rule("project.gamma", 1, "Gamma"),
+    );
+    f.git(&["add", ".ai/repo/rules/project/gamma.v1.md"]);
+    let history = show(&f, "majordomus://rule/project.gamma@1");
+    assert_eq!(history["applicable"], false, "{history}");
+    assert!(history["reason"]
+        .as_str()
+        .is_some_and(|r| r.contains("no commit")));
+    assert!(history["commits"].as_array().unwrap().is_empty());
+}

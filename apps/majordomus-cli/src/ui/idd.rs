@@ -27,8 +27,8 @@ use super::dashboard::milestone_row;
 use super::shell::View;
 use super::source::{ask_all, Answer, Source};
 use super::view::{
-    graph, hero, hero_under, kpi, kpi_count, list, nothing, panel, panel_to, state, status_tone,
-    table, text, unanswered, wide, GraphNode, Layout,
+    command, graph, hero, hero_under, items, kpi, kpi_count, list, nothing, panel, panel_to, state,
+    status_tone, table, text, unanswered, wide, GraphNode, Layout,
 };
 
 /// The route of the screen.
@@ -48,6 +48,13 @@ const MOVES: Source = Source::with("executions.list", r#"{"capability":"plan.tra
 /// `intent_realization.explain` takes seconds and the screen's first paint must not wait for
 /// it (I2789).
 pub const STANDING_PANEL: &str = "/ui/panels/standing";
+
+/// The route that lists every scope conflict among an intent's issues, which the workspace
+/// folds to its first few.
+pub const SHARED_SCOPE_PANEL: &str = "/ui/panels/shared-scope";
+
+/// How many scope conflicts the workspace draws in its fold; the rest are one link away.
+pub const SHARED_SCOPE_SHOWN: usize = 25;
 
 /// The stages, in the order the screen prefers them when the link names no intent: the
 /// first intent `intents.list` reports at the earliest of these is opened. A presentation
@@ -146,7 +153,7 @@ fn chip(href: String, label: String) -> El {
 pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
     let answers = ask_all(ctx, &[INTENTS, ROADMAP, ISSUES, WAVES, NEXT, MOVES]);
     // the chosen intent in full, asked by its id, so the headline numbers are its own (I2907)
-    let record = chosen(query, &list(&answers[&INTENTS], "/intents"))
+    let record = chosen(query, items(&answers[&INTENTS], "/intents"))
         .map(|id| super::source::ask_input(ctx, RECORD, serde_json::json!({ "id": id })));
     render(
         ctx,
@@ -199,8 +206,8 @@ fn render(
     moves: &Answer,
     query: &[(String, String)],
 ) -> View {
-    let all = list(intents, "/intents");
-    let id = chosen(query, &all);
+    let all = items(intents, "/intents");
+    let id = chosen(query, all);
     let intent = id
         .as_deref()
         .and_then(|id| all.iter().find(|i| text(i, "id") == id));
@@ -260,7 +267,7 @@ fn render(
             grid = grid
                 .child(wide(milestones(roadmap, intent)))
                 .child(wide(issue_table(issues, waves, next, &mine, id)))
-                .child(wide(wave_panel(waves, &mine, &known(issues, roadmap))))
+                .child(wide(wave_panel(waves, &mine, &known(issues, roadmap), id)))
                 .child(wide(dependency_graph(issues, &mine)))
                 .child(wide(moves_panel(moves, &mine)));
         }
@@ -283,7 +290,7 @@ fn render(
 /// it when the link named none.
 fn choice(intents: &Answer, open: Option<&str>) -> El {
     let body = unanswered(intents).unwrap_or_else(|| {
-        let rows = list(intents, "/intents")
+        let rows = items(intents, "/intents")
             .iter()
             .map(|i| {
                 let id = text(i, "id");
@@ -601,21 +608,23 @@ fn move_panel(ctx: &Context, issues: &Answer, mine: &[Value], issue: &str) -> El
 
 /// The waves the intent's issues occupy, as `plan.waves` layers the whole plan, and the
 /// scope conflicts among them that serialise issues of one wave.
-fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El {
+fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known, intent: &str) -> El {
     let ids: BTreeSet<String> = mine.iter().map(|x| text(x, "id")).collect();
     let body = unanswered(waves).unwrap_or_else(|| {
-        let rows = list(waves, "/waves")
+        // borrowed, never copied: the waves and the scope pairs cover the whole plan, and this
+        // panel keeps only the few that hold an issue of this intent (I4200)
+        let mine_id = |x: &Value| {
+            x.get("id")
+                .and_then(Value::as_str)
+                .is_some_and(|i| ids.contains(i))
+        };
+        let rows = items(waves, "/waves")
             .iter()
             .filter_map(|w| {
-                let members: Vec<Value> = w
+                let members: Vec<&Value> = w
                     .get("issues")
                     .and_then(Value::as_array)
-                    .map(|a| {
-                        a.iter()
-                            .filter(|x| ids.contains(&text(x, "id")))
-                            .cloned()
-                            .collect()
-                    })
+                    .map(|a| a.iter().filter(|x| mine_id(x)).collect())
                     .unwrap_or_default();
                 if members.is_empty() {
                     return None;
@@ -637,17 +646,7 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El
                 )
             })
             .collect::<Vec<_>>();
-        let conflicts: Vec<El> = list(waves, "/serialised_by_scope")
-            .iter()
-            .filter(|f| ids.contains(&text(f, "subject")))
-            .map(|f| {
-                let subject = text(f, "subject");
-                el("li")
-                    .child(chip(issue_href(&subject), subject))
-                    .child(el("span").text(" "))
-                    .nodes(super::prose::inline(&text(f, "message"), known))
-            })
-            .collect();
+        let conflicts = shared_scope(waves, &ids);
         let mut body = el("div").class("mj-ui-stack").child(table(
             &["Wave", "Issues of this intent in it"],
             rows,
@@ -655,15 +654,29 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El
         ));
         if !conflicts.is_empty() {
             // one line says how many pairs share a scope; the pairs are one click away, so they
-            // never outweigh the waves they qualify (I2900)
+            // never outweigh the waves they qualify (I2900). An intent of many issues has
+            // pairs by the thousand, so the fold holds the first of them and the rest are
+            // their own panel: drawn inline they were most of the screen (I3840)
             let pairs = conflicts.len();
-            body = body.child(
-                el("details")
-                    .child(el("summary").text(format!(
-                        "Shared scope: {pairs} pair(s) of these issues may not run at the same time"
-                    )))
-                    .child(el("ul").class("mj-ui-prose-list").children(conflicts)),
-            );
+            let mut fold = el("details")
+                .child(el("summary").text(format!(
+                    "Shared scope: {pairs} pair(s) of these issues may not run at the same time"
+                )))
+                .child(shared_scope_list(
+                    &conflicts[..pairs.min(SHARED_SCOPE_SHOWN)],
+                    known,
+                ));
+            if pairs > SHARED_SCOPE_SHOWN {
+                fold = fold.child(
+                    el("p").child(
+                        el("a")
+                            .class("mj-ui-link")
+                            .attr("href", shared_scope_href(intent))
+                            .text(format!("Open all {pairs} pairs")),
+                    ),
+                );
+            }
+            body = body.child(fold);
         }
         body
     });
@@ -672,6 +685,83 @@ fn wave_panel(waves: &Answer, mine: &[Value], known: &super::prose::Known) -> El
         "An issue enters a wave once every dependency has left it; sharing a wave is necessary to run together, not sufficient.",
         body,
         &[waves],
+    )
+}
+
+/// The scope conflicts `plan.waves` reports whose subject is one of `ids`, in its order.
+fn shared_scope<'a>(waves: &'a Answer, ids: &BTreeSet<String>) -> Vec<&'a Value> {
+    super::view::items(waves, "/serialised_by_scope")
+        .iter()
+        .filter(|f| {
+            f.get("subject")
+                .and_then(Value::as_str)
+                .is_some_and(|s| ids.contains(s))
+        })
+        .collect()
+}
+
+/// Each conflict a line: its subject a link, its message as prose.
+fn shared_scope_list(conflicts: &[&Value], known: &super::prose::Known) -> El {
+    el("ul")
+        .class("mj-ui-prose-list")
+        .children(conflicts.iter().map(|f| {
+            let subject = text(f, "subject");
+            el("li")
+                .child(chip(issue_href(&subject), subject))
+                .child(el("span").text(" "))
+                .nodes(super::prose::inline(&text(f, "message"), known))
+        }))
+}
+
+/// Where every scope conflict among the issues of intent `id` is listed.
+pub fn shared_scope_href(id: &str) -> String {
+    format!("{SHARED_SCOPE_PANEL}?intent={id}")
+}
+
+/// Every scope conflict among the issues serving the intent the query names: what the
+/// workspace's fold holds only the first [`SHARED_SCOPE_SHOWN`] of.
+pub fn shared_scope_panel(ctx: &Context, query: &[(String, String)]) -> View {
+    const TITLE: &str = "Which of its issues share a scope?";
+    let answers = ask_all(ctx, &[INTENTS, ISSUES, ROADMAP, WAVES]);
+    let intent = named_intent(query).and_then(|id| {
+        list(&answers[&INTENTS], "/intents")
+            .into_iter()
+            .find(|i| text(i, "id") == id)
+    });
+    let Some(intent) = intent else {
+        return View::new(
+            TITLE,
+            panel(
+                TITLE,
+                "The pairs of one intent's issues that may not run at the same time.",
+                nothing("Name an intent: open it from the intent workspace."),
+                &[&answers[&INTENTS]],
+            ),
+        );
+    };
+    let id = text(&intent, "id");
+    let waves = &answers[&WAVES];
+    let body = unanswered(waves).unwrap_or_else(|| {
+        let ids: BTreeSet<String> =
+            serving(&intent, super::view::items(&answers[&ISSUES], "/issues"))
+                .iter()
+                .map(|x| text(x, "id"))
+                .collect();
+        let conflicts = shared_scope(waves, &ids);
+        if conflicts.is_empty() {
+            nothing("No two issues of this intent share a scope.")
+        } else {
+            shared_scope_list(&conflicts, &known(&answers[&ISSUES], &answers[&ROADMAP]))
+        }
+    });
+    View::new(
+        TITLE,
+        panel(
+            TITLE,
+            &format!("{id}: the pairs of its issues that may not run at the same time."),
+            body,
+            &[waves],
+        ),
     )
 }
 
@@ -863,10 +953,7 @@ fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El 
                         .child(el("td").child(el("code").text(text(c, "id"))))
                         .child(el("td").text(text(c, "evidence")))
                         .child(el("td").child(state(c, "state")))
-                        .child(
-                            el("td")
-                                .child(el("code").class("mj-ui-mono").text(text(c, "reproduce"))),
-                        )
+                        .child(el("td").child(command(&text(c, "reproduce"))))
                         .child(
                             el("td").child(
                                 el("p").class("mj-ui-badges").children(
@@ -1707,11 +1794,51 @@ mod tests {
             })),
         );
         let mine = vec![serde_json::json!({ "id": "I1" })];
-        let html = wave_panel(&waves, &mine, &Default::default()).render();
+        let html = wave_panel(&waves, &mine, &Default::default(), "it").render();
         assert!(html.contains(">8</td>"), "{html}");
         assert!(!html.contains(">7</td>"), "{html}");
         assert!(!html.contains("OTHER"), "{html}");
         assert!(html.contains("shares lib/a.rs"), "{html}");
+        assert!(
+            !html.contains(SHARED_SCOPE_PANEL),
+            "one pair needs no link to the rest: {html}"
+        );
+    }
+
+    /// The fold draws the first of an intent's scope conflicts and links to the panel that
+    /// lists them all, so a plan with thousands of pairs does not make the screen its size.
+    #[test]
+    fn the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest() {
+        let pairs: Vec<Value> = (0..SHARED_SCOPE_SHOWN + 7)
+            .map(
+                |n| serde_json::json!({ "subject": "I1", "message": format!("shares lib/{n}.rs") }),
+            )
+            .collect();
+        let waves = answer(
+            WAVES,
+            Ok(serde_json::json!({
+                "waves": [{ "wave": 0, "issues": [{ "id": "I1", "status": "READY" }] }],
+                "serialised_by_scope": pairs,
+            })),
+        );
+        let mine = vec![serde_json::json!({ "id": "I1" })];
+        let html = wave_panel(&waves, &mine, &Default::default(), "it").render();
+        let total = SHARED_SCOPE_SHOWN + 7;
+        assert!(
+            html.contains(&format!("Shared scope: {total} pair(s)")),
+            "{html}"
+        );
+        assert_eq!(html.matches("<li>").count(), SHARED_SCOPE_SHOWN, "{html}");
+        assert!(
+            html.contains(&format!("shares lib/{}.rs", SHARED_SCOPE_SHOWN - 1)),
+            "{html}"
+        );
+        assert!(
+            !html.contains(&format!("shares lib/{SHARED_SCOPE_SHOWN}.rs")),
+            "{html}"
+        );
+        assert!(html.contains(&shared_scope_href("it")), "{html}");
+        assert!(html.contains(&format!("Open all {total} pairs")), "{html}");
     }
 
     /// A dependency outside the intent is drawn small, and one the plan does not hold reads
