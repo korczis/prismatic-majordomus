@@ -45,6 +45,9 @@ pub static COUNTERS: Counters = Counters::new();
 pub struct Counters {
     /// `discovery::discover`: one enumeration of the repository's declared sources.
     pub repository_scans: AtomicU64,
+    /// `Repository::open`: one manifest read and parsed. An open answered from what the
+    /// process already read counts nothing, so after startup this stays where it is (I3014).
+    pub repository_discoveries: AtomicU64,
     /// `Index::build`.
     pub index_builds: AtomicU64,
     /// `CapabilityRegistry::builder().build()`.
@@ -177,6 +180,7 @@ impl Counters {
     const fn new() -> Self {
         Counters {
             repository_scans: AtomicU64::new(0),
+            repository_discoveries: AtomicU64::new(0),
             index_builds: AtomicU64::new(0),
             registry_builds: AtomicU64::new(0),
             schema_generations: AtomicU64::new(0),
@@ -213,6 +217,7 @@ impl Counters {
         let read = |c: &AtomicU64| c.load(Ordering::Relaxed);
         CounterSnapshot {
             repository_scans: read(&self.repository_scans),
+            repository_discoveries: read(&self.repository_discoveries),
             index_builds: read(&self.index_builds),
             registry_builds: read(&self.registry_builds),
             schema_generations: read(&self.schema_generations),
@@ -257,6 +262,8 @@ pub struct PhaseTotals {
 pub struct CounterSnapshot {
     /// Enumerations of the repository's declared sources.
     pub repository_scans: u64,
+    /// Manifests read and parsed to discover a repository.
+    pub repository_discoveries: u64,
     /// Index builds.
     pub index_builds: u64,
     /// Registry builds.
@@ -288,9 +295,10 @@ pub struct CounterSnapshot {
 impl CounterSnapshot {
     /// The counters that must not move once a process serves: a request that moves one of
     /// them rebuilt canonical state.
-    pub fn startup_work(&self) -> [(&'static str, u64); 7] {
+    pub fn startup_work(&self) -> [(&'static str, u64); 8] {
         [
             ("repository_scans", self.repository_scans),
+            ("repository_discoveries", self.repository_discoveries),
             ("index_builds", self.index_builds),
             ("registry_builds", self.registry_builds),
             ("schema_generations", self.schema_generations),
@@ -298,5 +306,38 @@ impl CounterSnapshot {
             ("openapi_builds", self.openapi_builds),
             ("http_projection_builds", self.http_projection_builds),
         ]
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A new set of counters reads zero everywhere, with one zero total for every phase,
+    /// each under its serialised name.
+    #[test]
+    fn new_counters_read_zero_with_every_phase_named() {
+        let s = Counters::new().snapshot();
+        assert!(s.startup_work().iter().all(|(_, n)| *n == 0), "{s:?}");
+        assert_eq!(
+            (
+                s.graph_builds,
+                s.executions,
+                s.handler_invocations,
+                s.cache_hits,
+                s.cache_misses,
+                s.cache_evictions
+            ),
+            (0, 0, 0, 0, 0, 0)
+        );
+        assert_eq!(s.phases.len(), Phase::ALL.len());
+        for p in Phase::ALL {
+            assert!(s.phases.contains_key(p.name()), "{} is missing", p.name());
+        }
+        let zero = PhaseTotals {
+            count: 0,
+            total_nanos: 0,
+        };
+        assert!(s.phases.values().all(|t| *t == zero), "{:?}", s.phases);
     }
 }

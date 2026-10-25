@@ -138,6 +138,19 @@ pub enum Transport {
     Http,
 }
 
+/// The most characters [`PeerBoard::summary`] keeps of one claim's intent.
+pub const SUMMARY_INTENT: usize = 60;
+
+/// The most characters [`PeerBoard::summary`] keeps of a client's name or a claim's name.
+pub const SUMMARY_NAME: usize = 32;
+
+/// The most claims [`PeerBoard::summary`] names for one peer; the rest are counted.
+pub const SUMMARY_CLAIMS: usize = 3;
+
+/// The most characters [`PeerBoard::summary`] spends on the whole board, before the peers
+/// that do not fit are counted rather than named.
+pub const SUMMARY_LINE: usize = 600;
+
 /// One claim a peer has made: what it is working on, and where.
 ///
 /// A peer may hold several. The `name` is what tells them apart and what makes announcing
@@ -515,12 +528,10 @@ pub fn with_address(message: &mut serde_json::Value, address: &PeerAddress) {
     let meta = params
         .entry("_meta")
         .or_insert_with(|| serde_json::Value::Object(Default::default()));
-    if let Some(meta) = meta.as_object_mut() {
-        if !meta.contains_key(ADDRESS_META) {
-            if let Ok(v) = serde_json::to_value(address) {
-                meta.insert(ADDRESS_META.to_string(), v);
-            }
-        }
+    // an address always serialises (string keys, plain values); a `_meta` that is not an
+    // object is left as the client sent it
+    if let (Some(meta), Ok(v)) = (meta.as_object_mut(), serde_json::to_value(address)) {
+        meta.entry(ADDRESS_META).or_insert(v);
     }
 }
 
@@ -602,6 +613,7 @@ impl PeerBoard {
                 claims: BTreeMap::new(),
             },
         );
+        crate::change::BLACKBOARD.advance();
         PeerId::new(seq)
     }
 
@@ -609,6 +621,7 @@ impl PeerBoard {
     pub fn identify(&self, id: &PeerId, client: ClientInfo) {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.client = client;
+            crate::change::BLACKBOARD.advance();
             s.last_seen = Instant::now();
         }
     }
@@ -634,6 +647,14 @@ impl PeerBoard {
     pub fn locate(&self, id: &PeerId, address: PeerAddress) {
         if let Some(s) = self.lock().get_mut(&id.seq()) {
             s.address = Some(address);
+        }
+    }
+
+    /// [`PeerBoard::locate`] when there is an address: a process whose machine has no name
+    /// ([`PeerAddress::of_this_process`] answers `None`) leaves the row as it is.
+    pub(crate) fn locate_known(&self, id: &PeerId, address: Option<PeerAddress>) {
+        if let Some(address) = address {
+            self.locate(id, address);
         }
     }
 
@@ -692,6 +713,20 @@ impl PeerBoard {
     /// assert_eq!(named.peer.claims[1].name.as_deref(), Some("worker-a"));
     /// ```
     pub fn announce_claim(
+        &self,
+        id: &PeerId,
+        claim: Option<&str>,
+        intent: &str,
+        scope: Vec<String>,
+    ) -> Option<Announced> {
+        let announced = self.announce_locked(id, claim, intent, scope);
+        if announced.is_some() {
+            crate::change::BLACKBOARD.advance();
+        }
+        announced
+    }
+
+    fn announce_locked(
         &self,
         id: &PeerId,
         claim: Option<&str>,
@@ -771,6 +806,11 @@ impl PeerBoard {
     /// assert_eq!(listed[0].announcement.as_ref().unwrap().intent, "the ordering rule");
     /// ```
     pub fn detach(&self, id: &PeerId) {
+        self.detach_locked(id);
+        crate::change::BLACKBOARD.advance();
+    }
+
+    fn detach_locked(&self, id: &PeerId) {
         let mut slots = self.lock();
         match slots.get_mut(&id.seq()) {
             Some(s) if !s.claims.is_empty() => s.departed = true,
@@ -809,31 +849,62 @@ impl PeerBoard {
         self.len() == 0
     }
 
-    /// The names of every peer, one line, for a log or the `initialize` instructions.
+    /// The peers, one bounded line, for a log or the `initialize` instructions.
+    ///
+    /// Bounded because a client cuts the instructions it is handed: on 2026-10-22 five
+    /// peers with twenty claims made this line about 6 kB, Claude Code cut the
+    /// instructions inside it, and the sentences after it — the ones about the caller
+    /// itself — never reached the caller. Each claim keeps its name and the first
+    /// [`SUMMARY_INTENT`] characters of its intent, each peer at most [`SUMMARY_CLAIMS`]
+    /// claims, and the line at most [`SUMMARY_LINE`] characters; what is past a bound is
+    /// counted, and `majordomus_peers` carries every word of it.
     pub fn summary(&self) -> String {
+        use crate::environment::text::truncate;
         let peers = self.list();
         if peers.is_empty() {
             return "none".into();
         }
-        peers
-            .iter()
-            .map(|p| {
-                if p.claims.is_empty() {
-                    return format!("{} {} ({:?})", p.id, p.client.name, p.transport);
-                }
-                let claims = p
+        let mut line = String::new();
+        for (i, p) in peers.iter().enumerate() {
+            // a client and a claim name are the peer's own words too, and cut like them
+            let client = truncate(&p.client.name, SUMMARY_NAME);
+            let entry = if p.claims.is_empty() {
+                format!("{} {client} ({:?})", p.id, p.transport)
+            } else {
+                let mut claims = p
                     .claims
                     .iter()
-                    .map(|a| match &a.name {
-                        Some(n) => format!("{n}: {}", a.intent),
-                        None => a.intent.clone(),
+                    .take(SUMMARY_CLAIMS)
+                    .map(|a| {
+                        let intent = truncate(a.intent.trim(), SUMMARY_INTENT);
+                        match &a.name {
+                            Some(n) => format!("{}: {intent}", truncate(n, SUMMARY_NAME)),
+                            None => intent,
+                        }
                     })
-                    .collect::<Vec<_>>()
-                    .join(" | ");
-                format!("{} {} ({:?}: {claims})", p.id, p.client.name, p.transport)
-            })
-            .collect::<Vec<_>>()
-            .join("; ")
+                    .collect::<Vec<_>>();
+                if p.claims.len() > SUMMARY_CLAIMS {
+                    claims.push(format!("{} more", p.claims.len() - SUMMARY_CLAIMS));
+                }
+                format!(
+                    "{} {client} ({:?}: {})",
+                    p.id,
+                    p.transport,
+                    claims.join(" | ")
+                )
+            };
+            let sep = if line.is_empty() { "" } else { "; " };
+            if line.chars().count() + sep.len() + entry.chars().count() > SUMMARY_LINE {
+                line.push_str(&format!(
+                    "{sep}{} more peer(s), every claim in full: majordomus_peers",
+                    peers.len() - i
+                ));
+                break;
+            }
+            line.push_str(sep);
+            line.push_str(&entry);
+        }
+        line
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, BTreeMap<u64, Slot>> {
@@ -1150,6 +1221,20 @@ mod tests {
         assert_eq!(&back, gone);
     }
 
+    /// A process that has no address (its machine has no name) leaves its row unlocated; one
+    /// that has one is located as `locate` would.
+    #[test]
+    fn locating_with_no_address_leaves_the_row_as_it_is() {
+        let board = PeerBoard::new();
+        let peer = board.attach(Transport::Stdio);
+        board.locate_known(&peer, None);
+        assert!(board.list()[0].address.is_none());
+        let address = PeerAddress::from_env(|_| None, Some(9), "mac").unwrap();
+        board.locate_known(&peer, Some(address.clone()));
+        assert_eq!(board.list()[0].address.as_ref(), Some(&address));
+        assert_eq!(PeerAddress::from_env(|_| None, Some(9), "  "), None);
+    }
+
     /// The address a bridge carries is put into `initialize` params once: a client that
     /// already carried one keeps its own, and params that are not an object are left alone.
     #[test]
@@ -1176,6 +1261,48 @@ mod tests {
         let a = PeerAddress::of_this_process().expect("a host");
         assert!(!a.host.is_empty());
         assert!(a.pid.is_some(), "a test runs under some parent");
+    }
+
+    /// An address names only what it knows: with no provider or no session there is no mesh
+    /// session to join, and its line leaves out the provider, the pid and the socket it lacks.
+    #[test]
+    fn an_address_without_a_provider_session_pid_or_socket_says_only_what_it_has() {
+        let bare = PeerAddress {
+            provider: None,
+            host: "mac".into(),
+            pid: None,
+            session: Some("s1".into()),
+            socket: None,
+        };
+        assert_eq!(bare.mesh_session(), None, "no provider, no mesh session");
+        assert_eq!(bare.line(), "on mac");
+        let sessionless = PeerAddress {
+            provider: Some("claude-code".into()),
+            session: None,
+            ..bare.clone()
+        };
+        assert_eq!(
+            sessionless.mesh_session(),
+            None,
+            "no session, no mesh session"
+        );
+        assert_eq!(sessionless.line(), "claude-code on mac");
+    }
+
+    /// An `initialize` carries an address only under `_meta["dev.majordomus/address"]`: no
+    /// `_meta`, or a `_meta` without the key, is no address; and a `_meta` that is not an
+    /// object is left as it is rather than replaced.
+    #[test]
+    fn an_address_is_read_and_written_only_under_its_meta_key() {
+        assert!(PeerAddress::from_initialize(&serde_json::json!({})).is_none());
+        assert!(
+            PeerAddress::from_initialize(&serde_json::json!({ "_meta": { "other": 1 } })).is_none()
+        );
+        let mine = PeerAddress::from_env(|_| None, Some(3), "mac").unwrap();
+        let mut odd = serde_json::json!({ "method": "initialize", "params": { "_meta": 5 } });
+        with_address(&mut odd, &mine);
+        assert_eq!(odd["params"]["_meta"], serde_json::json!(5));
+        assert!(PeerAddress::from_initialize(&odd["params"]).is_none());
     }
 
     /// A board is now read back off the wire: `peers.list` gathers a sibling checkout's
@@ -1603,5 +1730,47 @@ mod tests {
         let line = board.summary();
         assert!(line.contains("the whole mandate"), "{line}");
         assert!(line.contains("worker-a: the guard"), "{line}");
+    }
+
+    /// The board measured on 2026-10-22 — five peers, twenty claims, intents of several
+    /// hundred characters — made a 6 kB line, and a client cut the instructions inside it.
+    /// However large the board, the line stays within its bound, every peer that does not
+    /// fit is counted rather than dropped, and the reader is pointed at the full answer.
+    #[test]
+    fn the_summary_stays_bounded_however_large_the_board() {
+        let board = PeerBoard::new();
+        let long = "ID BLOCK TAKEN by a seat for a mission whose intent runs on and on ".repeat(6);
+        // a claim's name is the peer's own words too: a long one must not cost the line
+        let named = format!("a-claim-name-that-goes-on-{}", "x".repeat(200));
+        for _ in 0..12 {
+            let peer = board.attach(Transport::Http);
+            for c in 0..5 {
+                board.announce_claim(&peer, Some(&format!("{named}-{c}")), &long, vec![]);
+            }
+        }
+        let line = board.summary();
+        assert!(
+            !line.contains(&named),
+            "a claim name is cut, never carried whole: {line}"
+        );
+        let room = SUMMARY_LINE + "; 12 more peer(s), every claim in full: majordomus_peers".len();
+        assert!(
+            line.chars().count() <= room,
+            "{} chars: {line}",
+            line.chars().count()
+        );
+        assert!(line.starts_with("p1 "), "the first peer is named: {line}");
+        assert!(
+            line.contains("2 more |") || line.contains("2 more)"),
+            "{line}"
+        );
+        assert!(
+            line.contains("more peer(s), every claim in full: majordomus_peers"),
+            "{line}"
+        );
+        assert!(
+            !line.contains(&long),
+            "an intent is cut, never carried whole: {line}"
+        );
     }
 }

@@ -1,8 +1,5 @@
-# The only hand-written prose on the site: positioning sentences and button labels. No
-# capability claims (features, domains and claims are objects of the layer, derived onto the
-# page) and no numbers (the generator computes every count). Budget: scripts/site-check fails
-# when this file exceeds 90 lines (80 until the landing page was rewritten for a buyer rather
-# than for an engineer, which gave the hero a reassurance line and a works-beside line).
+# The only hand-written prose on the site: positioning sentences and button labels; no claims
+# (derived from the layer) and no numbers (computed). scripts/site-check holds it to 90 lines.
 [hero]
 eyebrow = "The control layer for AI-assisted development"
 title = "Your AI agents say the work is done."
@@ -56,6 +53,7 @@ lead = "Managers follow delivery in a browser. Agents ask through their own tool
 source = ".ai/ declarations and the executable's capabilities"
 registry = "one registry, validated"
 engineers = "For engineers: one declaration reaches every interface"
+size = "The command-line tool is a small shell script; the executable it ships does the rest. A capability is a built-in operation of that executable, and the registry also holds one generated resource for each object of the layer. The MCP tools and HTTP routes are the built-in capabilities, projected."
 [interfaces]
 ui = "For whoever follows the delivery: health, releases, the roadmap, open work, evidence and rules, in one place."
 cockpit = "For whoever wants the detail: every rule, record and check behind a figure, with its source."
@@ -63,10 +61,15 @@ cli = "For whoever does the work, person or agent: start a task, check it, hand 
 api = "For your own tools and dashboards: the same answers, over HTTP."
 mcp = "For coding agents: the same answers, as tools an agent can call."
 docs = "For everyone: the guides, the reference and the decisions behind them."
-local = "Runs on your own machine, beside the repository, once the local server is started. It answers at"
 live = "On your own repository it is live: start the local server and it answers at"
 published = "Open the published snapshot"
 snapshot = "A snapshot of this project's own repository, read once at the commit this site was published from. It is not a live reading, and nothing on it refreshes."
+[blackboard]
+kicker = "who works on what"
+title = "Who is working on what, on one board"
+lead = "Every session attached to a checkout or open on a linked machine, in one picture: what each says it is doing, the claims it holds and which of them meet, the reviews and handovers that wait, and whether every source could be read."
+served = "Start the local server and the board is followed live: the server pushes each change to the page, and a page that is not live says so."
+published = "This site is files, read once at the commit it was built from. It follows no server, so it shows only what was read then, and it changes only when it is built again."
 [proof]
 plain = "Two numbers, kept apart on purpose. Declared is a promise written down together with the test meant to prove it. Supported means that test ran against this exact revision and the run was recorded. A promise without a recorded run is counted as a promise, and as nothing more."
 [chain]

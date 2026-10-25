@@ -1,0 +1,30 @@
+id: I3935
+milestone: measurements-are-tracked-over-time
+title: An agent session's telemetry reaches the same OpenTelemetry endpoint, configured once and projected to every provider
+slug: agent-telemetry-reaches-the-endpoint
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Declare the OpenTelemetry endpoint once in the repository's environment model and project the variables each provider reads (for Claude Code CLAUDE_CODE_ENABLE_TELEMETRY, OTEL_METRICS_EXPORTER, OTEL_LOGS_EXPORTER, OTEL_EXPORTER_OTLP_ENDPOINT and its headers from the person's local environment), so that sessions' cost, tokens and tool time sit beside CI's traces."
+why: "Sessions are most of this repository's work and their cost is read from per-provider screens; with CI traces in one endpoint (I3934), session telemetry in the same place makes a slow pipeline and an expensive session one question."
+current_state: "No provider projection carries telemetry settings; nothing is exported."
+desired_state: "The environment model names the endpoint once; provider projections export it only when the person's local environment supplies it; the headers stay in the local half and are never committed."
+scope:
+  - .ai/repo/providers
+  - share
+  - docs
+  - .ai/repo/project/issues/I3935.yaml
+non_scope:
+  - Committing an endpoint, token or header value
+depends_on:
+  - I3934
+acceptance_criteria:
+  - With the local endpoint set, a Claude Code session exports its metrics to it
+  - With nothing set, no provider exports anything and no projection differs except by the declared names
+validation:
+  - bin/majordomus doctor
+evidence_required:
+  - suite
+risk: "Telemetry settings are per person; projecting a value rather than a name would leak it into the tracked half."
+created_at: 2026-10-22
+updated_at: 2026-10-22

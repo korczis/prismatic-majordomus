@@ -11,6 +11,10 @@
 #                                       the verdicts are rendered in name order at the end
 #   MJ_TEST_REPORT=<file>               also write one TSV row per case:
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
+#   MJ_TEST_FAILURES=<file>             also write the output of every case that failed or
+#                                       timed out, each under a "== <name>" line (with
+#                                       MJ_TEST_JOBS > 1): the reason a case gives reaches a
+#                                       file an artifact can carry, not only the job's log
 #   MJ_TEST_SHARD=<i>/<n>               run only the i-th of n shards (with MJ_TEST_JOBS > 1):
 #                                       cases are dealt longest-first over n x MJ_TEST_JOBS
 #                                       worker slots by the seconds MJ_TEST_DURATIONS records,
@@ -84,9 +88,10 @@ MJ="$ROOT/bin/majordomus"; export MJ ROOT
 MAJORDOMUS_RECLAIM_BELOW_MB=0; export MAJORDOMUS_RECLAIM_BELOW_MB
 # Nor may a case's build sweep the build directory every worktree of this machine shares
 # (lib/rust_bin.sh mj_rust_prune_build_dir): the incremental and deps sweeps are proved
-# against fixtures by cases 3080, 3196 and 3197, which set their own ages.
-MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0
-export MAJORDOMUS_INCREMENTAL_IDLE_MIN MAJORDOMUS_DEPS_IDLE_MIN MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN
+# against fixtures by cases 3080, 3196 and 3197, which set their own ages; the bound's
+# eviction (mj_rust_bound_build_dir) by case 3959, which sets its own.
+MAJORDOMUS_INCREMENTAL_IDLE_MIN=0; MAJORDOMUS_DEPS_IDLE_MIN=0; MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN=0; MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=0
+export MAJORDOMUS_INCREMENTAL_IDLE_MIN MAJORDOMUS_DEPS_IDLE_MIN MAJORDOMUS_PRIVATE_BUILD_IDLE_MIN MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN
 pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
@@ -186,7 +191,7 @@ run_case() {
   # command reads stdin (54's `session close` reads a summary) then waited for ever whenever
   # that was an open pipe: 39 minutes on 2026-10-09, with nothing printed.
   ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
-      MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
+      MJ_TEST_FAILURES MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
     && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" < /dev/null ) &
   pid=$!
   MJ_CASE_PID="$pid"
@@ -309,6 +314,8 @@ jobs="${MJ_TEST_JOBS:-1}"
 case "$jobs" in ''|*[!0-9]*|0) echo "run.sh: MJ_TEST_JOBS must be a positive integer, got '$jobs'" >&2; exit 2 ;; esac
 report="${MJ_TEST_REPORT:-}"
 [ -n "$report" ] && : > "$report"
+failures="${MJ_TEST_FAILURES:-}"
+[ -n "$failures" ] && : > "$failures"
 
 # the cases in name order, the exclusive ones told apart by their header, never by a list here
 parallel_names=""; exclusive_names=""
@@ -341,11 +348,16 @@ if [ -n "${MJ_TEST_SHARD:-}" ]; then
   durations="${MJ_TEST_DURATIONS:-$ROOT/.ai/repo/ci/suite-durations.tsv}"
   [ -f "$durations" ] || durations=/dev/null
   tab="$(printf '\t')"
+  # A case the file does not record is dealt at the recorded median, not at a guess. The guess
+  # was 300 s against a median of 9: 192 unrecorded cases weighed 16 h instead of 89 min, so
+  # the deal put 87 minutes on one shard and 43 on another (run 39762797718, 2026-10-22).
+  unrecorded="$(awk -F'\t' '$2 ~ /^[0-9]+$/ { print $2 }' "$durations" | LC_ALL=C sort -n |
+    awk '{ v[NR] = $1 } END { print (NR ? v[int((NR + 1) / 2)] : 300) }')"
   dealt="$( { for n in $parallel_names; do printf '%s\tp\n' "$n"; done
               for n in $exclusive_names; do printf '%s\te\n' "$n"; done; } |
-    awk -F'\t' -v OFS='\t' -v dur="$durations" '
+    awk -F'\t' -v OFS='\t' -v dur="$durations" -v unk="$unrecorded" '
       BEGIN { while ((getline l < dur) > 0) { split(l, f, "\t"); if (f[2] ~ /^[0-9]+$/) d[f[1]] = f[2] } }
-      { print (($1 in d) ? d[$1] : 300), $1, $2 }' |
+      { print (($1 in d) ? d[$1] : unk), $1, $2 }' |
     LC_ALL=C sort -t "$tab" -k3,3r -k1,1nr -k2,2 |
     awk -F'\t' -v N="$of" -v J="$jobs" -v me="$me" '
       $3 == "p" { b = 0; for (s = 1; s < N * J; s++) if (slot[s] < slot[b]) b = s
@@ -400,6 +412,11 @@ else
     phase=parallel; case " $exclusive_names " in *" $name "*) phase=exclusive ;; esac
     rc="$(cat "$L/$name.rc" 2>/dev/null || echo 2)"; sec="$(cat "$L/$name.sec" 2>/dev/null || echo 0)"
     [ "$rc" = 0 ] || [ "$rc" = 2 ] || [ "$rc" = 4 ] || cat "$L/$name.log" 2>/dev/null
+    # the same reason, kept: a case's own words are the one account of why it failed, and a
+    # job log is read by a person once while an artifact is read by the next tool (I4223)
+    if [ -n "$failures" ] && [ "$rc" != 0 ] && [ "$rc" != 4 ]; then
+      { printf '== %s\n' "$name"; cat "$L/$name.log" 2>/dev/null; } >> "$failures"
+    fi
     verdict "$name" "$rc" "$sec" "$phase"
   done
   rm -rf "$L"

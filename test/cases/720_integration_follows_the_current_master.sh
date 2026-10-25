@@ -13,9 +13,9 @@
 #   3. #1 contains master and passed ci: ready; #2 is behind master: needs_refresh
 #   4. a dry run says it would merge #1 and changes nothing, records nothing but what it
 #      observed
-#   5. drain --max 1 merges exactly #1, with --match-head-commit and never --admin, verifies
-#      that master contains its head, and records the merge — the attempt, with its
-#      evidence, before it, inside the lease
+#   5. drain --max 1 lands exactly #1, by a non-forced fast-forward of master to its head
+#      and never --admin (I3910), verifies that master is its head, and records the landing —
+#      the attempt, with its evidence, before it, inside the lease
 #   6. after the merge the old observation is stale and says so; a refresh re-plans
 #   7. the source never names --admin or a force push, and never reads the forge's mergeable
 . "$ROOT/test/lib.sh"
@@ -66,6 +66,14 @@ case "\$1 \$2" in
       git fetch -q origin "refs/pull/\$n/head" &&
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$n" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$n" ;;
+  # the fast-forward (I3910): master moved to the head, never forced, and refused as the
+  # forge refuses it (HTTP 422) unless master is the head's ancestor
+  "api -X")
+    sha="\${6#sha=}"; old="\$(git -C "$ORIGIN" rev-parse master)"
+    git -C "$ORIGIN" merge-base --is-ancestor "\$old" "\$sha" || { echo 'gh: Update is not a fast forward (HTTP 422)' >&2; exit 1; }
+    git -C "$ORIGIN" update-ref refs/heads/master "\$sha" "\$old" || exit 1
+    n="\$(git -C "$ORIGIN" for-each-ref --format='%(objectname) %(refname)' 'refs/pull/*/head' | awk -v s="\$sha" '\$1 == s { split(\$2, p, "/"); print p[3]; exit }')"
+    touch "$STATE/merged-\$n" ;;
   "pr view")
     if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
   # the declarations read (ADR 0101 §6, D4): every open pull request is an owner's, a branch of
@@ -119,16 +127,16 @@ acts() { grep -vc '"action":"observed"' "$ev" 2>/dev/null || true; }
 acts_before="$(acts)"
 out="$(prs drain --dry-run --max 3)"
 case "$out" in *"would merge #1"*) ;; *) echo "    the dry run did not say it would merge #1: $out"; exit 1 ;; esac
-grep -q "^pr merge" "$STATE/log" && { echo "    the dry run merged"; exit 1; }
+grep -q "^pr merge\|^api -X" "$STATE/log" && { echo "    the dry run landed"; exit 1; }
 [ "$(acts)" = "$acts_before" ] || { echo "    the dry run recorded an action:"; cat "$ev"; exit 1; }
 grep -q '"action":"observed"' "$ev" || { echo "    an observation is not in the trail"; exit 1; }
 
 # ---------------------------------------------------------------- 5. one merge
 out="$(prs drain --max 1)" || { echo "    drain failed: $out"; cat "$STATE/log"; exit 1; }
 case "$out" in *"merged #1"*) ;; *) echo "    drain did not merge #1: $out"; exit 1 ;; esac
-[ "$(grep -c '^pr merge' "$STATE/log")" = 1 ] || { echo "    drain --max 1 merged more than once"; exit 1; }
-grep -q "^pr merge 1 --merge --match-head-commit $H1\$" "$STATE/log" \
-  || { echo "    the merge was not pinned to the decided head:"; grep '^pr merge' "$STATE/log"; exit 1; }
+[ "$(grep -c '^pr merge\|^api -X' "$STATE/log")" = 1 ] || { echo "    drain --max 1 landed more than once"; exit 1; }
+grep -q "^api -X PATCH repos/o/r/git/refs/heads/master -f sha=$H1 -F force=false\$" "$STATE/log" \
+  || { echo "    master was not fast-forwarded to the decided head:"; grep '^pr merge\|^api -X' "$STATE/log"; exit 1; }
 grep -q ADMIN "$STATE/log" && { echo "    the executor passed --admin"; exit 1; }
 git -C "$ORIGIN" merge-base --is-ancestor "$H1" master || { echo "    master does not contain #1's head"; exit 1; }
 # the merge was decided twice: two pr list calls between the dry run and the merge
@@ -136,12 +144,12 @@ n_list="$(sed -n '/^pr list/p' "$STATE/log" | wc -l | tr -d ' ')"
 [ "$n_list" -ge 4 ] || { echo "    the executor did not observe again before merging ($n_list observations)"; exit 1; }
 jq -e 'select(.action == "merge_succeeded" and .pr == 1 and .master_after != null)' "$ev" >/dev/null \
   || { echo "    the merge is not in the audit trail"; cat "$ev"; exit 1; }
-# proved where it landed: the trail names the merge commit, whose parents are the decided
-# master and the decided head (ADR 0101 §4)
+# proved where it landed: the trail names the commit master became, which is the decided head
+# itself after a fast-forward (ADR 0101 §4, I3910)
 mc="$(jq -r 'select(.action == "merge_succeeded" and .pr == 1) | .merge_commit // empty' "$ev" | tail -n 1)"
 [ -n "$mc" ] || { echo "    merge_succeeded names no merge_commit"; exit 1; }
-[ "$(git -C "$ORIGIN" rev-parse "$mc^2")" = "$H1" ] || { echo "    the recorded merge commit $mc does not merge #1's head"; exit 1; }
-git -C "$ORIGIN" merge-base --is-ancestor "$mc" master || { echo "    the recorded merge commit is not on master"; exit 1; }
+[ "$mc" = "$H1" ] || { echo "    the recorded commit $mc is not #1's head"; exit 1; }
+[ "$(git -C "$ORIGIN" rev-parse master)" = "$H1" ] || { echo "    master is not #1's head"; exit 1; }
 # every act was on the trail before it was taken, and the lease that covered them with it
 order="$(jq -r '.action' "$ev" | grep -v '^observed$' | tr '\n' ' ')"
 case "$order" in *"lease_acquired "*"selected "*"merge_attempted merge_succeeded "*"lease_released "*) ;;

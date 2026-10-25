@@ -1,0 +1,29 @@
+id: I3936
+milestone: ci-critical-path
+title: The pages gate judges master's deploy after the run's heavy jobs, not on a clock that expires while the deploy queues behind them
+slug: the-pages-gate-waits-behind-the-heavy-jobs
+priority: p1
+profile: debugging
+parallel_safe: true
+objective: "Order validate's pages job behind the evidence job, so that the 1200 s wait for the deploy of the same push starts once this run's own jobs have released the runners the deploy queues for."
+why: "On master 2034d4a3f0b, pages.yml's push run was created at 13:13Z and served at 14:21Z; validate's pages job started at 13:49Z and gave up its 1200 s bound at 14:18Z, three minutes early. Eight master runs from 2026-10-17 to 10-22 went red on pages-live this way and were rerun by hand, because a rerun of master is outside the standing approval and the loop waits for the owner."
+current_state: "The pages job needs only plan, so it starts in the first wave beside about nineteen jobs and its wait expires while the deploy is still queued behind them."
+desired_state: "The pages job needs plan and evidence and runs unless the run or evidence was cancelled; behind the heavy jobs the deploy has had their time, evidence dispatches pages.yml on master's tip, and a plan that skips evidence judges pages as soon as before."
+scope:
+  - .github/workflows/validate.yml
+  - .ai/repo/project/issues/I3936.yaml
+non_scope:
+  - pages-check's own wait, bound and verdicts (scripts/ci/pages-check)
+  - The pages.yml workflow
+depends_on: []
+acceptance_criteria:
+  - validate's pages job needs evidence and is skipped only when the run or evidence was cancelled, or pages-live is not planned
+  - Every case that reads .github/workflows/validate.yml passes, and actionlint is clean
+  - The next master run's pages-live passes without a rerun, or names a deploy that is slower than the heavy jobs
+validation:
+  - actionlint .github/workflows/validate.yml
+evidence_required:
+  - suite
+risk: "The pages verdict of a master run arrives at its end instead of its first half hour; the ci verdict waited for every job already, so the run ends no later."
+created_at: 2026-10-22
+updated_at: 2026-10-22

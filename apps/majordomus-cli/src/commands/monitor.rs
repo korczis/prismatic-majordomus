@@ -4,13 +4,15 @@
 //! the command finds this checkout's server and asks it over HTTP, like `majordomus mesh`
 //! does. One page is printed with what is for the reader first; `--follow` asks again
 //! with the page's cursor every `--interval` seconds and prints only what is new, so a
-//! reconnect or a restarted server repeats nothing. `--format json` prints the page as the
+//! reconnect or a restarted server repeats nothing. `--cursor-file` keeps that cursor on disk,
+//! so a restarted watcher repeats nothing either. `--format json` prints the page as the
 //! capability answered it, or, while following, one signal per line (NDJSON).
 //!
 //! Exit codes: 0 answered (or a follow ended by `--count` or `--until`); 10 refused (a bad
 //! cursor, an unknown source) or a follow that reached `--timeout` first.
 
 use std::io::{IsTerminal, Write};
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
@@ -47,7 +49,10 @@ fn run_with(
         .or_else(|| std::env::var("MAJORDOMUS_MONITOR_FOR").ok())
         .filter(|r| !r.trim().is_empty());
     let started = Instant::now();
-    let mut after = args.after.clone();
+    let mut after = args
+        .after
+        .clone()
+        .or_else(|| args.cursor_file.as_deref().and_then(saved_cursor));
     let mut shown: u64 = 0;
     let mut warned: Option<String> = None;
     let mut first = true;
@@ -59,7 +64,13 @@ fn run_with(
         };
         match page {
             Err(Asked::Refused(message)) => {
-                eprintln!("monitor: {message}");
+                match &args.cursor_file {
+                    Some(file) if args.after.is_none() && after.is_some() => eprintln!(
+                        "monitor: {message} (the cursor came from {}; remove it to start afresh)",
+                        file.display()
+                    ),
+                    _ => eprintln!("monitor: {message}"),
+                }
                 return Ok(EXIT_REFUSED);
             }
             Err(Asked::NoServer) if !args.follow => {
@@ -98,6 +109,9 @@ fn run_with(
                     .filter(|s| matches(s, args.pattern.as_deref()))
                     .cloned()
                     .collect();
+                if let (Some(file), Some(cursor)) = (&args.cursor_file, page["cursor"].as_str()) {
+                    save_cursor(file, cursor)?;
+                }
                 if !args.follow {
                     match args.query.format {
                         OutputFormat::Json => println!(
@@ -146,6 +160,33 @@ fn run_with(
         }
         std::thread::sleep(Duration::from_secs(args.interval.max(1)));
     }
+}
+
+/// The cursor a `--cursor-file` holds; a missing or empty file holds none.
+fn saved_cursor(file: &Path) -> Option<String> {
+    std::fs::read_to_string(file)
+        .ok()
+        .map(|text| text.trim().to_string())
+        .filter(|cursor| !cursor.is_empty())
+}
+
+/// Write `cursor` to `file` whole: a temporary beside it renamed over it, so a watcher killed
+/// mid-write leaves the previous cursor rather than half of this one.
+fn save_cursor(file: &Path, cursor: &str) -> Result<()> {
+    let name = file
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "cursor".to_string());
+    let temporary = file.with_file_name(format!(".{name}.{}.tmp", std::process::id()));
+    std::fs::write(&temporary, format!("{cursor}\n"))
+        .and_then(|()| std::fs::rename(&temporary, file))
+        .map_err(|source| {
+            let _ = std::fs::remove_file(&temporary);
+            Error::Io {
+                path: file.to_path_buf(),
+                source,
+            }
+        })
 }
 
 /// Whether the text is painted: text, to a terminal, and `NO_COLOR` unset.
@@ -577,6 +618,29 @@ mod tests {
     }
 
     #[test]
+    fn a_cursor_file_is_read_trimmed_and_replaced_whole() {
+        let dir = std::env::temp_dir().join(format!("mj-monitor-cursor-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("cursor");
+        assert_eq!(saved_cursor(&file), None, "a missing file holds no cursor");
+        std::fs::write(&file, "\n").unwrap();
+        assert_eq!(saved_cursor(&file), None, "an empty file holds no cursor");
+        save_cursor(&file, "m9.1.s~x4").unwrap();
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "m9.1.s~x4\n");
+        save_cursor(&file, "m12.0.s~x7~g99").unwrap();
+        assert_eq!(saved_cursor(&file).as_deref(), Some("m12.0.s~x7~g99"));
+        let left: Vec<_> = std::fs::read_dir(&dir).unwrap().flatten().collect();
+        assert_eq!(left.len(), 1, "no temporary is left beside the file");
+        let err = save_cursor(&dir.join("absent/cursor"), "m1").unwrap_err();
+        assert!(matches!(err, Error::Io { .. }), "{err}");
+        assert_eq!(
+            args(&["--cursor-file", "w.cursor"]).cursor_file.as_deref(),
+            Some(Path::new("w.cursor"))
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
     fn a_page_shows_what_is_for_you_first_and_how_to_go_on() {
         let p = page();
         let signals: Vec<Value> = p["signals"].as_array().unwrap().clone();
@@ -723,5 +787,64 @@ mod tests {
         assert_eq!(clock(0), "00:00:00");
         assert_eq!(clock(86_399), "23:59:59");
         assert_eq!(clock(1_791_661_234), "19:40:34");
+    }
+
+    #[test]
+    fn a_cursor_file_is_read_before_asking_and_rewritten_with_the_answers_cursor() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("watch.cursor");
+        std::fs::write(&file, "c-old\n").unwrap();
+        let body = a_page(vec![signal(1, "merged", "#1 merged")], "c-new", false);
+        let url = scripted(vec![(200, body)]);
+        let f = file.to_str().unwrap();
+        let code = run_with(args(&["--cursor-file", f]), at(url)).unwrap();
+        assert_eq!(code, 0);
+        assert_eq!(
+            saved_cursor(&file).as_deref(),
+            Some("c-new"),
+            "the cursor of the answer replaced the one the file held"
+        );
+    }
+
+    #[test]
+    fn a_cursor_file_that_cannot_be_written_fails_the_command() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("absent").join("watch.cursor");
+        let body = a_page(vec![signal(1, "merged", "#1 merged")], "c-new", false);
+        let url = scripted(vec![(200, body)]);
+        let f = file.to_str().unwrap();
+        let err = run_with(args(&["--cursor-file", f]), at(url)).unwrap_err();
+        assert!(matches!(err, Error::Io { .. }), "{err}");
+        assert!(!file.exists(), "nothing was written");
+    }
+
+    #[test]
+    fn a_refusal_of_a_cursor_the_file_supplied_exits_ten_and_leaves_the_file_alone() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("watch.cursor");
+        std::fs::write(&file, "c-stale\n").unwrap();
+        let refusal = json!({"error": {"code": "invalid_input", "message": "bad cursor"}});
+        let url = scripted(vec![(400, refusal.to_string())]);
+        let f = file.to_str().unwrap();
+        let code = run_with(args(&["--cursor-file", f]), at(url)).unwrap();
+        assert_eq!(code, EXIT_REFUSED);
+        assert_eq!(
+            std::fs::read_to_string(&file).unwrap(),
+            "c-stale\n",
+            "a refused cursor is not rewritten"
+        );
+    }
+
+    #[test]
+    fn a_cursor_file_with_no_name_is_written_as_cursor_and_the_failure_is_an_io_error() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir(dir.path().join("sub")).unwrap();
+        // `sub/..` has no file name; the rename onto a directory fails and is reported
+        let file = dir.path().join("sub").join("..");
+        assert!(file.file_name().is_none());
+        let err = save_cursor(&file, "m1").unwrap_err();
+        assert!(matches!(err, Error::Io { .. }), "{err}");
+        let left: Vec<_> = std::fs::read_dir(dir.path()).unwrap().flatten().collect();
+        assert_eq!(left.len(), 1, "the temporary named .cursor.* was removed");
     }
 }

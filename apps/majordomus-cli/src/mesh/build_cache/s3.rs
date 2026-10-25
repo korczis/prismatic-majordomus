@@ -291,19 +291,30 @@ impl Endpoint {
     }
 
     fn address(&self) -> io::Result<SocketAddr> {
-        self.host
-            .to_socket_addrs()?
-            .next()
-            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "no address"))
+        first_address(self.host.to_socket_addrs()?)
     }
 
     fn connect(&self, budget: Duration) -> io::Result<TcpStream> {
         let stream = TcpStream::connect_timeout(&self.address()?, budget)?;
-        stream.set_read_timeout(Some(budget))?;
-        stream.set_write_timeout(Some(budget))?;
-        stream.set_nodelay(true)?;
-        Ok(stream)
+        bounded(stream, budget)
     }
+}
+
+/// `stream` with every read and write bounded by `budget`, and no delay on small writes; the
+/// first setting refused is the error (a zero budget is the one a timeout refuses).
+fn bounded(stream: TcpStream, budget: Duration) -> io::Result<TcpStream> {
+    stream
+        .set_read_timeout(Some(budget))
+        .and_then(|()| stream.set_write_timeout(Some(budget)))
+        .and_then(|()| stream.set_nodelay(true))
+        .map(|()| stream)
+}
+
+/// The first address a name resolved to; a name that resolved to none is not found.
+fn first_address(mut addresses: impl Iterator<Item = SocketAddr>) -> io::Result<SocketAddr> {
+    addresses
+        .next()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "no address"))
 }
 
 /// What a health probe learned.
@@ -457,8 +468,8 @@ impl Store {
 
     /// Store `source` under `key`. The body is streamed; its hash is not signed.
     pub(crate) fn put(&self, key: &str, source: &Path) -> io::Result<()> {
-        let mut file = File::open(source)?;
-        let length = file.metadata()?.len();
+        let (mut file, length) =
+            File::open(source).and_then(|f| f.metadata().map(|m| (f, m.len())))?;
         let mut stream = self.endpoint.connect(self.budget)?;
         stream.write_all(
             self.request(
@@ -470,8 +481,8 @@ impl Store {
             )
             .as_bytes(),
         )?;
+        // a TcpStream writes through: there is nothing to flush before the answer is read
         io::copy(&mut file, &mut stream)?;
-        stream.flush()?;
         let head = read_head(&mut BufReader::new(stream))?;
         match head.status {
             200 => Ok(()),
@@ -493,14 +504,16 @@ fn refused(status: u16) -> io::Error {
 pub(crate) fn probe(endpoint: &Endpoint, budget: Duration) -> Probe {
     let started = Instant::now();
     let answer = endpoint.connect(budget).and_then(|mut stream| {
-        stream.write_all(
-            format!(
-                "GET /minio/health/live HTTP/1.1\r\nhost: {}\r\nconnection: close\r\n\r\n",
-                endpoint.host
+        stream
+            .write_all(
+                format!(
+                    "GET /minio/health/live HTTP/1.1\r\nhost: {}\r\nconnection: close\r\n\r\n",
+                    endpoint.host
+                )
+                .as_bytes(),
             )
-            .as_bytes(),
-        )?;
-        Ok(read_head(&mut BufReader::new(stream))?.status)
+            .and_then(|()| read_head(&mut BufReader::new(stream)))
+            .map(|head| head.status)
     });
     match answer {
         Ok(200) => Probe::Healthy(u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX)),
@@ -809,14 +822,196 @@ mod tests {
             Probe::Unhealthy(503)
         );
         // a port nothing listens on
-        let closed = TcpListener::bind("127.0.0.1:0")
-            .unwrap()
-            .local_addr()
-            .unwrap()
-            .to_string();
         assert_eq!(
-            probe(&Endpoint { host: closed }, Duration::from_millis(200)),
+            probe(&closed_port(), Duration::from_millis(200)),
             Probe::Unknown
         );
+    }
+
+    /// A server that accepts one connection and holds it, reading nothing and answering
+    /// nothing, until `hold` has passed.
+    fn mute(hold: Duration) -> Endpoint {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let host = listener.local_addr().unwrap().to_string();
+        thread::spawn(move || {
+            if let Ok((socket, _)) = listener.accept() {
+                thread::sleep(hold);
+                drop(socket);
+            }
+        });
+        Endpoint { host }
+    }
+
+    /// A loopback endpoint nothing listens on, from the build cache's one source of them.
+    fn closed_port() -> Endpoint {
+        let port = crate::mesh::build_cache::tests::closed_port();
+        Endpoint {
+            host: format!("127.0.0.1:{port}"),
+        }
+    }
+
+    fn quick(endpoint: Endpoint) -> Store {
+        Store {
+            budget: Duration::from_millis(300),
+            ..store(endpoint)
+        }
+    }
+
+    fn is_root() -> bool {
+        // SAFETY: geteuid reads the effective user id and cannot fail.
+        unsafe { libc::geteuid() == 0 }
+    }
+
+    #[test]
+    fn a_credential_path_that_cannot_be_inspected_or_read_is_unreadable_not_absent() {
+        let dir = temp("credunread");
+        let file = dir.join("plain");
+        std::fs::write(&file, "x").unwrap();
+        assert!(matches!(
+            Credential::read(&file.join("credentials")),
+            Err(CredentialError::Unreadable(_))
+        ));
+        if !is_root() {
+            use std::os::unix::fs::PermissionsExt;
+            let path = dir.join("credentials");
+            std::fs::write(&path, "[mesh-build-cache]\n").unwrap();
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o200)).unwrap();
+            assert!(matches!(
+                Credential::read(&path),
+                Err(CredentialError::Unreadable(_))
+            ));
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
+        }
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_name_that_resolves_to_nothing_or_is_no_address_cannot_be_connected() {
+        let none = std::iter::empty::<SocketAddr>();
+        assert_eq!(
+            first_address(none).unwrap_err().kind(),
+            io::ErrorKind::NotFound
+        );
+        let one: SocketAddr = "127.0.0.1:9".parse().unwrap();
+        assert_eq!(first_address(std::iter::once(one)).unwrap(), one);
+        let malformed = Endpoint {
+            host: "no-port-at-all".into(),
+        };
+        assert!(malformed.connect(Duration::from_millis(100)).is_err());
+        assert!(
+            closed_port().connect(Duration::from_millis(200)).is_err(),
+            "nothing listens"
+        );
+    }
+
+    #[test]
+    fn a_response_head_that_breaks_off_is_an_error_and_a_header_without_a_colon_is_skipped() {
+        struct Broken(Vec<Vec<u8>>);
+        impl Read for Broken {
+            fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+                if self.0.is_empty() {
+                    return Err(io::Error::other("connection lost"));
+                }
+                let next = self.0.remove(0);
+                buf[..next.len()].copy_from_slice(&next);
+                Ok(next.len())
+            }
+        }
+        // nothing arrives at all
+        assert!(read_head(&mut BufReader::new(Broken(Vec::new()))).is_err());
+        // the status line arrives, then the connection drops inside the headers
+        let cut = Broken(vec![b"HTTP/1.1 200 OK\r\n".to_vec()]);
+        assert!(read_head(&mut BufReader::new(cut)).is_err());
+        // a header line with no colon is ignored; the next one still counts
+        let mut odd =
+            Cursor::new(b"HTTP/1.1 200 OK\r\nnot a header\r\ncontent-length: 3\r\n\r\n".to_vec());
+        assert_eq!(
+            read_head(&mut odd).unwrap(),
+            Head {
+                status: 200,
+                content_length: Some(3)
+            }
+        );
+    }
+
+    #[test]
+    fn a_store_that_is_down_or_silent_fails_every_call_within_the_budget() {
+        let dir = temp("down");
+        let source = dir.join("up");
+        std::fs::write(&source, b"payload").unwrap();
+        let down = quick(closed_port());
+        assert!(down.head("k").is_err());
+        assert!(down.get("k", &dir.join("g")).is_err());
+        assert!(down.put("k", &source).is_err());
+        assert!(
+            quick(closed_port()).put("k", &dir.join("missing")).is_err(),
+            "a source that is not there is not sent"
+        );
+        // connected, but nothing answers: the read gives up
+        assert!(quick(mute(Duration::from_secs(1))).head("k").is_err());
+        assert!(quick(mute(Duration::from_secs(1)))
+            .get("k", &dir.join("g2"))
+            .is_err());
+        assert!(quick(mute(Duration::from_secs(1)))
+            .put("k", &source)
+            .is_err());
+        assert_eq!(
+            probe(&mute(Duration::from_secs(1)), Duration::from_millis(300)),
+            Probe::Unknown
+        );
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_request_the_store_never_reads_times_out_on_the_write() {
+        let dir = temp("unread");
+        let source = dir.join("up");
+        std::fs::write(&source, b"payload").unwrap();
+        // a key far larger than any socket buffer cannot be sent to a peer that never reads
+        let huge = "k".repeat(32 << 20);
+        assert!(quick(mute(Duration::from_secs(2))).head(&huge).is_err());
+        assert!(quick(mute(Duration::from_secs(2)))
+            .get(&huge, &dir.join("g"))
+            .is_err());
+        assert!(quick(mute(Duration::from_secs(2)))
+            .put(&huge, &source)
+            .is_err());
+        // a body far larger than any socket buffer: the header goes, the body stalls
+        let big = dir.join("big");
+        std::fs::write(&big, vec![0u8; 32 << 20]).unwrap();
+        assert!(quick(mute(Duration::from_secs(2))).put("k", &big).is_err());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn an_object_without_a_declared_length_is_taken_whole_and_an_unwritable_destination_fails() {
+        let dir = temp("nolen");
+        let (endpoint, _seen) = serve(vec![
+            b"HTTP/1.1 200 OK\r\n\r\nwhole".to_vec(),
+            b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\nhello".to_vec(),
+        ]);
+        let s = store(endpoint);
+        let dest = dir.join("got");
+        assert!(s.get("k", &dest).unwrap());
+        assert_eq!(std::fs::read(&dest).unwrap(), b"whole");
+        let nowhere = dir.join("no/such/dir/got");
+        assert!(s.get("k", &nowhere).is_err());
+        assert!(!nowhere.exists());
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn a_stream_is_bounded_by_its_budget_and_a_zero_budget_is_refused() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let at = listener.local_addr().unwrap();
+        let stream = bounded(TcpStream::connect(at).unwrap(), Duration::from_secs(3)).unwrap();
+        assert_eq!(stream.read_timeout().unwrap(), Some(Duration::from_secs(3)));
+        assert_eq!(
+            stream.write_timeout().unwrap(),
+            Some(Duration::from_secs(3))
+        );
+        assert!(stream.nodelay().unwrap());
+        let zero = bounded(TcpStream::connect(at).unwrap(), Duration::ZERO);
+        assert_eq!(zero.unwrap_err().kind(), io::ErrorKind::InvalidInput);
     }
 }

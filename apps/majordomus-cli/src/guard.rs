@@ -342,7 +342,16 @@ pub fn judge_facts(asked: &str, rel: Option<&str>, facts: EditFacts<'_>) -> Edit
 /// std::fs::create_dir_all(&mesh).unwrap();
 /// std::fs::write(mesh.join("mesh.yaml"), "enabled: false\n").unwrap();
 /// assert!(!mesh_declared_enabled(dir.path()));
+/// // enabled and closed to everyone: deny_unknown (the default) and nobody listed, as the
+/// // seed `init` writes (I2412). No machine announces or dials, so it is no mesh here.
 /// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\n").unwrap();
+/// assert!(!mesh_declared_enabled(dir.path()));
+/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\ntrust:\n  policy: deny_unknown\n  allow: []\n").unwrap();
+/// assert!(!mesh_declared_enabled(dir.path()));
+/// // a listed key, or trust on first use, opens it
+/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\ntrust:\n  allow:\n    - \"ab12\"\n").unwrap();
+/// assert!(mesh_declared_enabled(dir.path()));
+/// std::fs::write(mesh.join("mesh.yaml"), "enabled: true\ntrust:\n  policy: tofu\n").unwrap();
 /// assert!(mesh_declared_enabled(dir.path()));
 /// ```
 pub fn mesh_declared_enabled(root: &Path) -> bool {
@@ -355,9 +364,28 @@ pub fn mesh_declared_enabled(root: &Path) -> bool {
             && std::fs::read_to_string(&p)
                 .ok()
                 .and_then(|t| crate::metadata::yaml::parse_mapping(&t).ok())
-                .and_then(|m| m.get("enabled").and_then(|v| v.as_bool()))
-                == Some(true)
+                .is_some_and(|m| declares_open_mesh(&m))
     })
+}
+
+/// Whether a parsed declaration opens a mesh for some machine: enabled, and either trusting
+/// on first use or listing at least one key. One that is closed to everyone (deny_unknown,
+/// the default, with an empty `trust.allow`) runs no mesh on any machine
+/// (`mesh::manager::closed_to`), so nothing can be claimed on it and it asks for nothing.
+fn declares_open_mesh(m: &serde_json::Map<String, serde_json::Value>) -> bool {
+    if m.get("enabled").and_then(|v| v.as_bool()) != Some(true) {
+        return false;
+    }
+    let trust = m.get("trust");
+    let tofu = trust
+        .and_then(|t| t.get("policy"))
+        .and_then(|p| p.as_str())
+        .is_some_and(|p| p == "tofu");
+    let listed = trust
+        .and_then(|t| t.get("allow"))
+        .and_then(|a| a.as_array())
+        .is_some_and(|a| !a.is_empty());
+    tofu || listed
 }
 
 /// `session.edits_require_claim` of the repository at `root`, or why its policy could not
@@ -680,7 +708,12 @@ mod tests {
         assert!(policy.contains(line), "the skeleton declares the switch");
         let policy = policy.replace(line, &format!("edits_require_claim: {required}"));
         std::fs::write(ai.join("repo/policy.yaml"), policy).unwrap();
-        std::fs::write(ai.join("repo/mesh/mesh.yaml"), format!("enabled: {mesh}\n")).unwrap();
+        // open when it is on: trust on first use, so it runs a mesh on some machine
+        std::fs::write(
+            ai.join("repo/mesh/mesh.yaml"),
+            format!("enabled: {mesh}\ntrust:\n  policy: tofu\n"),
+        )
+        .unwrap();
         dir
     }
 
@@ -718,7 +751,11 @@ mod tests {
             !mesh_declared_enabled(off.path()),
             "only a YAML file declares"
         );
-        std::fs::write(mesh.join("other.yml"), "enabled: true\n").unwrap();
+        std::fs::write(
+            mesh.join("other.yml"),
+            "enabled: true\ntrust:\n  policy: tofu\n",
+        )
+        .unwrap();
         assert!(mesh_declared_enabled(off.path()));
     }
 

@@ -105,6 +105,9 @@ handover:
 ledger:
   retention_max_lines: 5000
 
+cache:
+  flatten_max_entries: 2000              # parsed YAML files kept under .ai/local/cache/flat/; 0 is no cache
+
 benchmark:
   samples: 10            # warm samples per target in `majordomus bench`
   warmup: 2              # unsampled runs before them
@@ -635,10 +638,11 @@ record keeps who handed it.
 **This section is ahead of its writer, and says so.** The contract is defined
 (`share/schemas/majordomus/telemetry/telemetry.v1.schema.json`, kind `telemetry` in
 `share/kinds.yaml`, allow-list `share/allow/telemetry.txt`) and a record that breaks it is
-refused wherever a `telemetry` document is validated, but no command writes one yet. The
-command that attaches reported facts to the active task is issue I0302 of the
-`execution-telemetry` milestone; until it lands, the directory does not exist and nothing
-reads it. It is the one format in this document described before something produces it,
+refused wherever a `telemetry` document is validated, but nothing writes one yet. The
+writer is the usage receiver of issue I3288 (`every-sessions-usage-is-observed`), which takes
+a provider's usage from its official seam (ADR 0213, `offers.usage` in `share/providers.yaml`)
+rather than from a command a worker hands numbers to; I0302, which planned that command,
+was cancelled for it. Until I3288 lands, the directory does not exist and nothing reads it. It is the one format in this document described before something produces it,
 because every later statement about what a task consumed rests on this shape and it had to
 be fixed first.
 
@@ -1712,6 +1716,31 @@ layer; never a baseline.
 `status` is `ok`, `setup-failed`, or `exit-<code>` when the command exited with a code its
 scenario does not accept. Percentiles are nearest-rank over the sorted samples. `clock`
 names the source of the milliseconds (`epochrealtime` or `seconds`).
+
+## `.ai/local/cache/flat/<parser>/<slot>` — a parsed YAML file
+
+What the shell tool's YAML reader printed for one file, kept so that the next command on the
+same bytes reads it instead of parsing it again. `<parser>` is the first 16 hex digits of the
+SHA-256 of the parser itself, so an entry is only ever read by the parser that wrote it.
+`<slot>` is where an entry is looked for — the file's length and sixteen of its characters as
+numbers, all computed without starting a process — and never what it is trusted on: hashing
+the file would cost the one process a cached read is there to save. One entry is one file:
+
+```text
+mjflat 1 <source length> <flat length>
+<the source, byte for byte><the flat lines, byte for byte>
+```
+
+An entry is served only when the header adds up to the file's own length and the source it
+holds is exactly the file asked about, compared in full; anything else is a miss, which
+parses the file again and writes the entry back. Two files that land in one slot evict each
+other and neither is ever served the other's lines. A parse that failed is never kept. An
+entry is written beside the others and renamed into place, so a reader never sees half of
+one. After each new entry the directory holds at most the policy's
+`cache.flatten_max_entries`, the oldest written removed first; without the key, or with 0,
+there is no cache. Nothing reads this directory but the reader that wrote it; deleting it
+costs one parse per file. With `MJ_TIMING=1`, `yaml_flatten` still counts every file asked
+for and `flatten_cache_hit` counts the ones served from here.
 
 ## `baseline.json` under `.ai/repo/benchmarks/` — the accepted baseline
 

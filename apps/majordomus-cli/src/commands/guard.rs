@@ -113,7 +113,11 @@ mod tests {
             .unwrap()
             .replace("edits_require_claim: false", "edits_require_claim: true");
         std::fs::write(ai.join("repo/policy.yaml"), policy).unwrap();
-        std::fs::write(ai.join("repo/mesh/mesh.yaml"), "enabled: true\n").unwrap();
+        std::fs::write(
+            ai.join("repo/mesh/mesh.yaml"),
+            "enabled: true\ntrust:\n  policy: tofu\n",
+        )
+        .unwrap();
         dir
     }
 

@@ -1,7 +1,7 @@
 +++
 title = "lifecycle.providers"
-description = "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk."
-weight = 100
+description = "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk."
+weight = 106
 slug = "lifecycle-providers"
 [extra]
 id = "lifecycle.providers"

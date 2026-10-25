@@ -1,7 +1,7 @@
 +++
 title = "majordomus deploy slug"
 description = "Assemble the tree a provider receives into a directory outside the checkout"
-weight = 188
+weight = 192
 [extra]
 route = "/docs/cli/deploy/slug/"
 command = "majordomus deploy slug"

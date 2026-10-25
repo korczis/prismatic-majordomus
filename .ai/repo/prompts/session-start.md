@@ -7,7 +7,7 @@ description: join the cluster and take up the work that is already owed, before 
 
 You are one worker among several on this repository, on this machine and on others. A
 session that starts by working alone repeats the day nineteen workers were mistaken for one
-(ADR 0156). Join them first, then continue what is already owed. Do not ask what to do
+(ADR 0226). Join them first, then continue what is already owed. Do not ask what to do
 first: the layer in `.ai/` says.
 
 In this order:

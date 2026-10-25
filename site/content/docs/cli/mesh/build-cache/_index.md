@@ -4,7 +4,7 @@ description = "The mesh build cache: what each dependency install and build dire
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 163
+weight = 164
 [extra]
 route = "/docs/cli/mesh/build-cache/"
 command = "majordomus mesh build-cache"

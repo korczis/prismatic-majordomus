@@ -1,0 +1,27 @@
+id: I3792
+milestone: one-kit-on-every-surface
+title: "Every chart on every surface is drawn from a table on its page"
+slug: every-chart-is-drawn-from-its-table
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Bring the kit chart (site/templates/kit/dashboard.html) and the /ui server-SVG donut and meter (ui/view.rs) to the contract site/charts.js already follows: the numbers are a table on the page and the chart is drawn from it, so a chart never states a number its reader cannot read."
+why: "On 2026-10-20 four mechanisms drew charts; site/charts.js draws from the page's table (ADR 0152), while the kit chart has no table and the /ui donut a legend only. I2654 holds the site's charts to their tables; nothing holds the others."
+current_state: "charts.js: table first. Kit chart: no table. /ui donut and meter: legend counts, no table. Cytoscape graphs: a table beside each."
+desired_state: "Every chart on the site, /ui and the Cockpit has its table on the page and is drawn from it; the design book's chart section states the contract; I2654's gate covers every surface."
+scope:
+  - "site/templates/kit/dashboard.html"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "site/charts.js"
+  - "scripts/lib/ui-audit.mjs"
+depends_on: [I2654]
+acceptance_criteria:
+  - "The kit chart and the /ui donut and meter each render a table with the numbers they draw"
+  - "A chart planted without its table fails the gate I2654 adds, on the site, /ui and the Cockpit"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --lib ui::view"
+evidence_required:
+  - "every_chart_has_its_table_case"
+created_at: 2026-10-20
+updated_at: 2026-10-20
