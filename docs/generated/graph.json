@@ -70457,6 +70457,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I4222",
+        "kind": "issue",
+        "label": "I4222",
+        "summary": "A forge reply cut off on its way is asked again",
+        "route": "/cockpit/objects/issue/i4222",
+        "source": ".ai/repo/project/issues/I4222.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "retry::transient holds 'unexpected end of JSON input' as an outage; a 401, a 404 and a refusal are still answers",
+            "Case 742: a pr list cut off once is asked exactly twice, the refresh exits 0 and records the observation; the four outage and refusal sections still hold"
+          ],
+          "created_at": "2026-10-24",
+          "current_state": "A cut-off reply is taken as the forge's answer: gh_retrying returns it at once and the observation fails with exit 12.",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Replacing gh pr list with a paged GraphQL read of its own; gh already pages it at a hundred",
+            "Retrying a merge: a merge that timed out may have landed, and it is still never asked again",
+            "A smaller declarations page: the size n=50 is pinned by twelve cases' scripted forges (861, 928-939), and the gh pr list cut-off is not a page-size matter; the retry covers both reads"
+          ],
+          "objective": "When gh reports a forge reply that was cut off ('unexpected end of JSON input'), the integration forge counts it as an outage and asks again within its bounded backoff.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "A forge that keeps cutting replies off now takes about 14 s of backoff before the observation fails, as for any outage.",
+          "scope": [
+            "apps/majordomus-cli/src/integration/retry.rs",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            ".ai/repo/project/issues/I4222.yaml"
+          ],
+          "serves": [],
+          "slug": "a-truncated-forge-reply-is-retried",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "cargo test --lib integration::retry integration::forge::tests::the_forge_is_asked_exactly_this",
+            "bash test/run.sh 742_only_an_outage_is_asked_again"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4223",
         "kind": "issue",
         "label": "I4223",
@@ -132574,6 +132618,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4222",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4222",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4223",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144175,8 +144229,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4001,
-      "edges": 9230,
+      "nodes": 4002,
+      "edges": 9232,
       "acyclic": false,
       "truncated": false
     }
