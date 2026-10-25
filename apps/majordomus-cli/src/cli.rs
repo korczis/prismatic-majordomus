@@ -39,7 +39,7 @@ pub enum Command {
     Mcp(McpArgs),
     /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
     Serve(ServeArgs),
-    /// The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of /ui (or of /ui/<screen>) and open it in a browser
+    /// The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser
     Ui(UiArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),

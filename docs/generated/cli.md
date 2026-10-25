@@ -20,7 +20,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus serve status`](#majordomus-serve-status) | `/docs/cli/serve/status/` | Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository |
 | [`majordomus serve ensure`](#majordomus-serve-ensure) | `/docs/cli/serve/ensure/` | Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands |
 | [`majordomus serve stop`](#majordomus-serve-stop) | `/docs/cli/serve/stop/` | Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo |
-| [`majordomus ui`](#majordomus-ui) | `/docs/cli/ui/` | The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of /ui (or of /ui/<screen>) and open it in a browser |
+| [`majordomus ui`](#majordomus-ui) | `/docs/cli/ui/` | The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser |
 | [`majordomus capabilities`](#majordomus-capabilities) | `/docs/cli/capabilities/` | Introspect the capability registry: what exists, where it came from, how it is exposed |
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
@@ -450,7 +450,7 @@ Examples:
 <a id="majordomus-ui"></a>
 ## `majordomus ui`
 
-The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of /ui (or of /ui/<screen>) and open it in a browser
+The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser
 
 ```text
 majordomus ui [OPTIONS] [SCREEN]
