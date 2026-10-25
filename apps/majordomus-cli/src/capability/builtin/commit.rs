@@ -53,7 +53,7 @@ fn root(ctx: &Context) -> std::path::PathBuf {
 /// read. An unreadable policy is `doctor`'s finding; it is not a reason for a validator to
 /// silently stop checking.
 fn policy(ctx: &Context) -> CommitPolicy {
-    let Ok(repo) = crate::repository::Repository::open(&root(ctx)) else {
+    let Ok(repo) = ctx.repository() else {
         return CommitPolicy::default();
     };
     crate::policy::LoadedPolicy::load(&repo)

@@ -1,7 +1,7 @@
 +++
 title = "majordomus machine slot release"
 description = "Give back the slot a process holds, and withdraw it from the queue"
-weight = 245
+weight = 255
 [extra]
 route = "/docs/cli/machine/slot/release/"
 command = "majordomus machine slot release"

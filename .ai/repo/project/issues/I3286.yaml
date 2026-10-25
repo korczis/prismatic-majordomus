@@ -25,10 +25,13 @@ acceptance_criteria:
   - "A proposal from the vendor caller lands as a proposed intent whose provenance is the workspace reference"
   - "A proposal carrying conversation text beyond the declared fields is refused"
   - "Without the ADR amendment the call is refused as today"
+  - "Local native-client execution and remote workspace proposals retain separate caller identities and trust decisions; a working local subscription does not authorise remote mutation"
+  - "A proposal preserves its source reference and request identity; an unknown mutation outcome is reconciled before retry, rather than blindly replayed"
+  - "Authentication, allowance and unavailable-client failures are explicit; a subscription path never silently falls back to a separately billed API"
 validation:
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test intent"
   - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test remote_callers"
 evidence_required:
   - "case_a_workspace_proposes_an_intent"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-22

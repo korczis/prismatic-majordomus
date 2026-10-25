@@ -183,6 +183,27 @@ pub struct Policy {
     /// (I4006). Absent declares no limit, and an admission says so.
     #[serde(default)]
     pub machine: MachinePolicy,
+    /// `build_cache:` — the bound of this machine's local archive level of the build cache
+    /// (ADR 0157, I3952). Absent keeps the executable's default.
+    #[serde(default)]
+    pub build_cache: BuildCachePolicy,
+}
+
+/// `build_cache:` — what the machine-wide archive level of `mesh build-cache ensure` may hold.
+///
+/// ```
+/// use majordomus_cli::policy::BuildCachePolicy;
+/// assert_eq!(BuildCachePolicy::default().local_max_gib, None, "absent is the default bound");
+/// let p: BuildCachePolicy = serde_json::from_str(r#"{"local_max_gib": 20}"#).unwrap();
+/// assert_eq!(p.local_max_gib, Some(20));
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Default)]
+pub struct BuildCachePolicy {
+    /// `build_cache.local_max_gib:` — the local level is held under this many GiB, oldest
+    /// archives first, whenever an archive is added, and `scripts/reap-orphans` reduces it to
+    /// the same bound.
+    #[serde(default)]
+    pub local_max_gib: Option<u64>,
 }
 
 /// `machine.heavy_work:` of the policy — the two limits of rule

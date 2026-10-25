@@ -25,8 +25,25 @@ evidence_required:
   - "older_replacement_attaches"
   - "newer_replacement_takes_over"
 created_at: 2026-10-20
-updated_at: 2026-10-21T02:42:43Z
+updated_at: 2026-10-23T16:41:55Z
 started_at: 2026-10-21T02:42:11Z
 started_event: sha256:5dc2ab5068c58f0575f1f26322907154b0b928fcde9bc52f5a8f664813f21a4d
 verified_at: 2026-10-21T02:42:43Z
 verified_event: sha256:b5ed5d4ca24b3c7f9d9dc019b31b365943293f43858c9fd8405da701a02acf82
+completed_at: 2026-10-23T16:41:55Z
+completed_event: sha256:e71196527c778fe6252db6f7f5e45429103f7bf872dd5ffb3e190f427475845c
+evidence:
+  - covers: older_replacement_attaches
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease::tests::older_replacement_attaches"
+    result: "ok, the rust job passed in master validate 39784979979 (success at 2034d4a3f0b, which holds lease.rs older_replacement_attaches, landed in a57482183bf)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:35:35Z
+  - covers: newer_replacement_takes_over
+    type: ci
+    command: "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib lease::tests::newer_replacement_takes_over"
+    result: "ok, the rust job passed in master validate 39784979979 (success at 2034d4a3f0b, which holds newer_replacement_takes_over, landed in a57482183bf)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/39784979979"
+    commit: 376493cd4c9ad35892552208e74a8e527f17a73e
+    recorded_at: 2026-10-23T16:35:49Z

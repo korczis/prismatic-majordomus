@@ -170,6 +170,13 @@ knowledge:
   candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
                                          # ignored; doctor names it
 
+# Rebuildable caches under .ai/local/cache/, which no commit carries. Each parsed YAML file
+# is kept under cache/flat/ and served only to a file with exactly the bytes it was parsed
+# from, so a command on unchanged files reads them instead of parsing them again. Past the
+# cap the oldest written go first; 0 is no cache.
+cache:
+  flatten_max_entries: 2000
+
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline's
 # p50, p95 and p99; doctor and watch report their own wall time against these budgets
@@ -294,8 +301,8 @@ enforcement:
     wired_by: git-hook:pre-push
   # What CI would find, found first: the plan's structure gates that CI recorded as cheap and
   # that reach no network, and the suite's fast cases, within a stated bound
-  # (rule project.a-push-runs-what-ci-would-find-first). Doctor refuses a clone whose hook
-  # stops calling it.
+  # (rule project.a-push-runs-what-ci-would-find-first). Doctor finds a clone whose hook
+  # stops calling it; the commit hook reports that and CI's core-check refuses it.
   - name: structure-gates-on-push
     path: scripts/ci/run-plan
     args: [--before-push]
@@ -303,8 +310,9 @@ enforcement:
   # .gitattributes marks the derived artifacts `merge=derived`, but the driver that name
   # resolves to is declared per clone and per worktree. Git says nothing when it is missing:
   # it falls back to the default text merge and conflicts on every generated file, which is
-  # the state this repository was in. Declaring it here is what makes doctor — and therefore
-  # the pre-commit hook — refuse a clone that has not run `just derive-merge-driver`.
+  # the state this repository was in. Declaring it here is what makes doctor name a clone
+  # that has not run `just derive-merge-driver`; the pre-commit hook prints doctor's findings
+  # and does not refuse on them (I3830).
   - name: derived-merge-driver
     path: scripts/merge-derived
     args: []
@@ -313,7 +321,7 @@ enforcement:
   # derived data: the pre-commit gate, `majordomus prs repair --apply`, the integration
   # executor. On a machine without the pinned toolchain each of them fails late, after the
   # merge and the lock, naming `cargo` and nothing about this repository. Declaring it here
-  # makes doctor — and therefore the pre-commit hook — refuse that clone before it starts.
+  # makes doctor name that clone before it starts, in the line the pre-commit hook prints.
   - name: derive-toolchain
     path: scripts/derive
     args: []
@@ -398,6 +406,16 @@ machine:
     slots: 5
     min_free_gib: 35
     wait_seconds: 600
+
+# ---------------------------------------------------------------- the build cache's local level
+# `majordomus mesh build-cache ensure` keeps every npm, mix and cargo build-directory archive it
+# restores or saves under ~/.cache/majordomus/build-cache, shared by every checkout of the
+# machine (ADR 0157 decision 13, I3952). It is held under this bound, oldest archive first,
+# whenever an archive is added, and scripts/reap-orphans measures it and reduces it to the same
+# bound. 20 GiB is several lockfiles' worth of each kind: a cargo build directory archive was
+# measured at about 1 GB compressed (2.9 GB uncompressed) on 2026-10-22.
+build_cache:
+  local_max_gib: 20
 
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four

@@ -1,27 +1,27 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.6
+# Generator: majordomus-cli 1.0.0-alpha.8
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0-alpha.6
+generator: majordomus-cli 1.0.0-alpha.8
 coverage:
   - scope: direct
-    required: 211
-    covered: 176
+    required: 222
+    covered: 182
     missing: 0
-    waived: 35
+    waived: 40
     inapplicable: 0
   - scope: http
-    required: 205
-    covered: 176
+    required: 214
+    covered: 182
     missing: 0
-    waived: 29
+    waived: 32
     inapplicable: 0
   - scope: mcp
-    required: 200
-    covered: 172
+    required: 208
+    covered: 177
     missing: 0
-    waived: 28
+    waived: 31
     inapplicable: 0
   - scope: system
     required: 14
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 630
-    covered: 538
+    required: 658
+    covered: 555
     missing: 0
-    waived: 92
+    waived: 103
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -46,6 +46,16 @@ capabilities:
     cases:
       - all
       - one-encoding
+  - id: blackboard.snapshot
+    module: blackboard
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - this-checkout
+      - addressed
   - id: brief.session
     module: brief
     kind: query
@@ -254,6 +264,15 @@ capabilities:
     mcp: waived
     http: waived
     cases: []
+  - id: delivery.trends
+    module: delivery
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: none
+    http: covered
+    cases:
+      - default
   - id: deploy.check
     module: deploy
     kind: query
@@ -348,6 +367,7 @@ capabilities:
       - issue
       - milestone
       - intent
+      - source-ranges
   - id: devcontext.explain
     module: devcontext
     kind: query
@@ -481,6 +501,16 @@ capabilities:
     cases:
       - default
       - narrowed
+  - id: economics.tasks
+    module: economics
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - all
+      - window
   - id: editors.status
     module: editors
     kind: query
@@ -691,6 +721,24 @@ capabilities:
     module: gates
     kind: query
     cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: gates.policy
+    module: gates
+    kind: query
+    cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: gates.state
+    module: gates
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered
@@ -928,6 +976,15 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: layout.check
+    module: layout
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: lifecycle.closed
     module: lifecycle
     kind: query
@@ -1009,6 +1066,38 @@ capabilities:
     cases:
       - every-tool
       - writers
+  - id: mesh.build_cache.ensure
+    module: mesh
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
+  - id: mesh.build_cache.env
+    module: mesh
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: mesh.build_cache.key
+    module: mesh
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: mesh.build_cache.provision
+    module: mesh
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: mesh.claim
     module: mesh
     kind: command
@@ -1035,6 +1124,14 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: mesh.enrol
+    module: mesh
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: mesh.events
     module: mesh
     kind: query
@@ -2060,12 +2157,20 @@ pages:
     route: /ui/mesh
     view: pinned
     deferred: false
+  - key: system.http.ui.peers
+    route: /ui/peers
+    view: pinned
+    deferred: false
   - key: system.http.ui.delivery
     route: /ui/delivery
     view: pinned
     deferred: false
   - key: system.http.ui.deployments
     route: /ui/deployments
+    view: pinned
+    deferred: false
+  - key: system.http.ui.trends
+    route: /ui/trends
     view: pinned
     deferred: false
   - key: system.http.ui.evidence
@@ -2128,12 +2233,20 @@ pages:
     route: /ui/mesh
     view: live
     deferred: false
+  - key: system.http.live.ui.peers
+    route: /ui/peers
+    view: live
+    deferred: false
   - key: system.http.live.ui.delivery
     route: /ui/delivery
     view: live
     deferred: false
   - key: system.http.live.ui.deployments
     route: /ui/deployments
+    view: live
+    deferred: false
+  - key: system.http.live.ui.trends
+    route: /ui/trends
     view: live
     deferred: false
   - key: system.http.live.ui.evidence
@@ -2170,5 +2283,9 @@ pages:
     deferred: true
   - key: system.http.ui.panels.standing
     route: /ui/panels/standing
+    view: pinned
+    deferred: true
+  - key: system.http.ui.panels.shared_scope
+    route: /ui/panels/shared-scope
     view: pinned
     deferred: true

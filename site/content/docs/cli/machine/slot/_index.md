@@ -4,7 +4,7 @@ description = "The machine's counting slot for heavy work: acquire, release, sta
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 242
+weight = 252
 [extra]
 route = "/docs/cli/machine/slot/"
 command = "majordomus machine slot"

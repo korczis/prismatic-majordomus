@@ -1,10 +1,11 @@
 # Where the Rust executable of this repository is.
 #
-# One question, asked by two callers with different answers to the *next* question:
-# `bin/majordomus-mcp` may build it when it is missing, because an MCP client spawning a
-# server can afford a build; `bin/majordomus-env` may never build it, because it runs on
-# every `cd` and a shell prompt cannot afford one. Both need the same path, so the path is
-# decided here and the build policy is decided by each caller.
+# One question, asked by every caller: the launchers (bin/majordomus-cli, and through it
+# bin/majordomus-mcp, bin/majordomus, the just bridge and the git hooks), test/lib.sh, the
+# gates (scripts/ci/run-plan) and bin/majordomus-env, which runs on every `cd`. None of them
+# builds it (ADR 0224): mj_rust_resolve says which executable answers — the tree's own, or
+# the installed release of the tree's generation — or refuses with exit 12 naming `just
+# build`, and each caller declares what it does with a refusal.
 #
 # Order: an explicit MAJORDOMUS_BIN, then the executable an installed release ships beside
 # bin/, then the crate's target directory, which is what a contributor has.
@@ -82,8 +83,8 @@ mj_rust_bin() {
 # mj_rust_stale <tool-root> <executable>
 #
 # Is that executable missing, or older than any source, manifest or lock file of the crate?
-# True (0) for either. One question with two answers again: `bin/majordomus-cli` builds when
-# this is true, `bin/majordomus-env` only says so — but neither may decide it for itself,
+# True (0) for either. `bin/majordomus-cli` then looks for a release of the tree's generation
+# or refuses, `bin/majordomus-env` only says so — but neither may decide it for itself,
 # because a checkout where the two disagree is a checkout where entering the repository
 # reports one thing and running a command does another.
 #
@@ -121,9 +122,11 @@ mj_rust_stale() {
 
 # mj_rust_installed <repository-root>
 #
-# The executable of the installed release, for the caller that is a client waiting on a
-# handshake and cannot wait on cargo: the one `bin/majordomus-cli mcp` falls back to when this
-# checkout has none to run (ADR 0172). Empty and false when there is none.
+# The executable of the installed release: the fallback a command of this checkout may answer
+# through when the checkout's own executable is missing or stale — and only when
+# mj_rust_same_generation says the release is of this tree's generation (ADR 0224, which
+# supersedes ADR 0172's `mcp`-only fallback on a version string). Empty and false when there
+# is none.
 #
 #   MAJORDOMUS_INSTALLED_BIN  the installed release's launcher (default: majordomus in
 #                             $MJ_INSTALL_DIR, which is ~/.local/bin, where install.sh puts it)
@@ -140,6 +143,119 @@ mj_rust_installed() {
   case "$mj_ri_real" in "$(cd "$mj_ri_root" 2>/dev/null && pwd -P)/"*) return 1 ;; esac
   "$mj_ri_bin" --version >/dev/null 2>&1 || return 1
   printf '%s\n' "$mj_ri_bin"
+}
+
+# The paths of the tree an executable of this crate is built from: the crate, the toolchain
+# pin, and the two files outside it the build compiles in. One list, read by
+# mj_rust_same_generation and by every caller that asks it (scripts/ci/run-plan).
+MJ_RUST_CRATE_INPUTS='apps/majordomus-cli rust-toolchain.toml docs/COCKPIT.md site/data/kit/icons.toml'
+
+# mj_rust_built_commit <executable>
+#
+# The commit an executable was built from, when it can be known without running it — running
+# it is what a stale or foreign executable cannot be trusted to answer, and asking the
+# executable for its build would load a whole index (1.5 s) to read one string. In order:
+#   MAJORDOMUS_BIN_COMMIT     when the executable is the one MAJORDOMUS_BIN names
+#   .../majordomus-master-bin/<sha>/...   the shared cache of master builds names its commit
+#   RELEASE.json              the stamp scripts/release-package writes at the root of a
+#                             distribution: beside the executable's bin/, or beside the bin/ of
+#                             the version an installer's launcher execs
+# Prints nothing and fails (1) when none of them names it.
+mj_rust_built_commit() {
+  mj_bc_exe="$1"
+  if [ -n "${MAJORDOMUS_BIN_COMMIT:-}" ] && [ "$mj_bc_exe" = "${MAJORDOMUS_BIN:-}" ]; then
+    printf '%s\n' "$MAJORDOMUS_BIN_COMMIT"; return 0
+  fi
+  case "$mj_bc_exe" in */majordomus-master-bin/*/*)
+    mj_bc_sha="${mj_bc_exe#*/majordomus-master-bin/}"; printf '%s\n' "${mj_bc_sha%%/*}"; return 0 ;;
+  esac
+  mj_bc_target="$mj_bc_exe"
+  # the installer's launcher is a two-line script that execs the version's bin/majordomus;
+  # a compiled executable is never read as text here
+  if [ "$(head -c 2 "$mj_bc_exe" 2>/dev/null)" = '#!' ]; then
+    mj_bc_exec="$(sed -n 's/^exec "\(.*\)" "\$@"$/\1/p' "$mj_bc_exe" 2>/dev/null | head -n 1)"
+    [ -n "$mj_bc_exec" ] && mj_bc_target="$mj_bc_exec"
+  fi
+  mj_bc_stamp="$(dirname "$mj_bc_target")/../RELEASE.json"
+  [ -f "$mj_bc_stamp" ] || return 1
+  mj_bc_sha="$(sed -n 's/.*"commit": *"\([0-9a-f]\{7,40\}\)".*/\1/p' "$mj_bc_stamp" | head -n 1)"
+  [ -n "$mj_bc_sha" ] || return 1
+  printf '%s\n' "$mj_bc_sha"
+}
+
+# mj_rust_same_generation <repository-root> <executable>
+#
+# Is that executable of this tree's generation? True (0) when the commit it was built from is
+# known (mj_rust_built_commit), is in this repository, and every crate input of this working
+# tree (MJ_RUST_CRATE_INPUTS) is byte-for-byte that commit's, with nothing untracked in it.
+# Otherwise false, with the reason in MJ_RUST_GENERATION_WHY; MJ_RUST_BUILT holds the commit
+# whenever one was found.
+#
+# This is the one notion of generation the shell side has, and it was scripts/ci/run-plan's
+# before it was this function's (I2848): the gates borrowed an executable only on it. A
+# version string is not a generation (rule project.a-tool-that-cannot-match-the-tree-refuses):
+# two releases that call themselves the same version can carry different crates. Neither is
+# `generate --check`, which passes an executable whose registry matches the committed one even
+# when the crate differs — right for a derive, wrong for a command that answers for this tree.
+# The executable's own guard (`majordomus generate`, exit 15) stays the derive's.
+mj_rust_same_generation() {
+  mj_sg_root="$1"; mj_sg_exe="$2"
+  MJ_RUST_GENERATION_WHY=""
+  MJ_RUST_BUILT="$(mj_rust_built_commit "$mj_sg_exe")" || MJ_RUST_BUILT=""
+  # shellcheck disable=SC2086 # the inputs are one space-separated list of literal paths
+  if [ -z "$MJ_RUST_BUILT" ]; then
+    MJ_RUST_GENERATION_WHY="the commit it was built from is unknown (set MAJORDOMUS_BIN_COMMIT)"
+  elif ! git -C "$mj_sg_root" rev-parse -q --verify "$MJ_RUST_BUILT^{commit}" >/dev/null 2>&1; then
+    MJ_RUST_GENERATION_WHY="its commit $MJ_RUST_BUILT is not in this repository"
+  elif ! git -C "$mj_sg_root" diff --quiet "$MJ_RUST_BUILT" -- $MJ_RUST_CRATE_INPUTS 2>/dev/null; then
+    MJ_RUST_GENERATION_WHY="the crate differs from $(printf '%.11s' "$MJ_RUST_BUILT")"
+  elif [ -n "$(git -C "$mj_sg_root" ls-files --others --exclude-standard -- $MJ_RUST_CRATE_INPUTS 2>/dev/null)" ]; then
+    MJ_RUST_GENERATION_WHY="the crate has untracked files"
+  fi
+  [ -z "$MJ_RUST_GENERATION_WHY" ]
+}
+
+# mj_rust_resolve <tool-root> [<prefix>]
+#
+# The executable a command of this tree runs, never built (ADR 0224). Prints its path on
+# stdout and returns 0, or says why there is none on stderr and returns 12:
+#
+#   1. MAJORDOMUS_BIN, as named — trusted about freshness, as it always was; a caller that
+#      must not trust it (a gate) asks mj_rust_same_generation first and unsets it
+#   2. the tree's own executable (mj_rust_bin), when mj_rust_stale says it is current
+#   3. the installed release (mj_rust_installed), only when mj_rust_same_generation says it
+#      is of this tree's generation, saying so on stderr
+#   4. nothing: exit 12, naming the explicit build — `just build` — and why the release was
+#      not used. Nothing here starts cargo, whoever asks: a gate, a hook, a provider hook,
+#      `mcp`, an entry path or a person.
+#
+# The prefix is the caller's own (`majordomus-cli: `, a test harness's four spaces).
+mj_rust_resolve() {
+  mj_rv_root="$1"; mj_rv_p="${2:-majordomus-cli: }"
+  mj_rv_bin="$(mj_rust_bin "$mj_rv_root")"
+  if [ -n "${MAJORDOMUS_BIN:-}" ]; then
+    [ -x "$mj_rv_bin" ] || { mj_rust_bin_missing "$mj_rv_root" "$mj_rv_bin" "$mj_rv_p"; return 12; }
+    printf '%s\n' "$mj_rv_bin"; return 0
+  fi
+  if ! mj_rust_stale "$mj_rv_root" "$mj_rv_bin"; then printf '%s\n' "$mj_rv_bin"; return 0; fi
+  mj_rv_state="missing"
+  [ -x "$mj_rv_bin" ] && mj_rv_state="stale (older than its sources)"
+  mj_rv_release=""
+  if mj_rv_inst="$(mj_rust_installed "$mj_rv_root")"; then
+    if mj_rust_same_generation "$mj_rv_root" "$mj_rv_inst"; then
+      printf '%s%s is %s; answering through the installed release %s, built from %s, whose crate this tree carries unchanged\n' \
+        "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state" "$mj_rv_inst" "$(printf '%.11s' "$MJ_RUST_BUILT")" >&2
+      printf '%s\n' "$mj_rv_inst"; return 0
+    fi
+    mj_rv_release="the installed release $mj_rv_inst is not of this tree's generation: $MJ_RUST_GENERATION_WHY"
+  fi
+  {
+    printf '%s%s is %s, and no ordinary command builds it (ADR 0224)\n' "$mj_rv_p" "$mj_rv_bin" "$mj_rv_state"
+    [ -z "$mj_rv_release" ] || printf '%s  %s\n' "$mj_rv_p" "$mj_rv_release"
+    printf '%s  run: just build   (cargo build --locked --manifest-path %s/apps/majordomus-cli/Cargo.toml), or set MAJORDOMUS_BIN\n' \
+      "$mj_rv_p" "$mj_rv_root"
+  } >&2
+  return 12
 }
 
 # The data directory the executable reads kinds and schemas from at run time, when this
@@ -697,8 +813,18 @@ mj_rust_locked() {
     return 0
   }
   mj_lk_rc=0
-  ( flock -n -x 9 || exit 75; "$@" ) 9< "$mj_lk_file" || mj_lk_rc=$?
-  if [ "$mj_lk_rc" = 75 ]; then
+  # MJ_LOCK_WAIT_S, the bound's background pass alone (mj_rust_bound_after_build): wait that
+  # many seconds for the lock instead of none
+  mj_lk_wait="${MJ_LOCK_WAIT_S:-0}"
+  case "$mj_lk_wait" in ''|*[!0-9]*) mj_lk_wait=0 ;; esac
+  if [ "$mj_lk_wait" -gt 0 ]; then
+    ( flock -w "$mj_lk_wait" -x 9 || exit 75; "$@" ) 9< "$mj_lk_file" || mj_lk_rc=$?
+  else
+    ( flock -n -x 9 || exit 75; "$@" ) 9< "$mj_lk_file" || mj_lk_rc=$?
+  fi
+  if [ "$mj_lk_rc" = 75 ] && [ "$mj_lk_wait" -gt 0 ]; then
+    printf 'majordomus: %s not swept: a build held cargo'"'"'s lock on it for all of %ss\n' "$mj_lk_p" "$mj_lk_wait" >&2
+  elif [ "$mj_lk_rc" = 75 ]; then
     printf 'majordomus: %s not swept: a build holds cargo'"'"'s lock on it\n' "$mj_lk_p" >&2
   fi
   return 0
@@ -923,6 +1049,474 @@ mj_rust_prune_build_dir() {
       "$mj_pb_inc" "$mj_pb_deps" "$mj_pb_stems"
   done < "$mj_pb_stems.profiles"
   rm -f "$mj_pb_stems" "$mj_pb_stems.profiles"
+  # what is left idle is not yet bounded by its size: the bound evicts until it is (I3959)
+  [ "$mj_pb_mode" = incremental ] || mj_rust_bound_build_dir "$mj_pb_dir" "$mj_pb_crate" build || true
+  return 0
+}
+
+# ------------------------------------------------------------------------------ the bound
+#
+# What keeps a build directory under its size bound while builds keep running (I3959).
+#
+# The sweeps above remove what is old; none of them asks how big what remains is. On
+# 2026-10-23 at 16:30Z the shared build directory's debug/deps held 51 GB in eleven
+# generations of this crate, every one of them younger than the deps sweep's 120 minutes,
+# against a 6144MB bound that scripts/reap-orphans applied only when no cargo or rustc ran
+# anywhere on the machine — which, with nine sessions building, was never; that morning it
+# had reached 102 GB and the volume fell to the 35 GiB floor again and again.
+#
+# So the bound is applied between builds, by the builds themselves: after the pre-build
+# sweeps and again when a bounded build has finished, the build directory's stale units are
+# evicted, oldest first, until it is under its bound. A unit is what can be removed whole and
+# rebuilt by cargo alone:
+#
+#   - a coverage run's llvm-cov-target, nothing in which was written within the idle age;
+#   - a generation of a dependency (its deps files, fingerprint and build-script output, by
+#     unit hash) whose crate version no worktree's Cargo.lock names any more;
+#   - a finished incremental session idle for the age;
+#   - a generation of this crate's own units idle for the age.
+#
+# The first two are stale by definition and go first; the last two in order of age. Each
+# profile's units are evicted only inside cargo's own lock on that profile, taken without
+# waiting (mj_rust_locked): a profile a build holds is skipped and said, never waited on.
+# Inside the lock a unit is asked again — written since, held open (lsof), or its profile
+# named by a running process (a test binary or doctest holds no lock) keeps it.
+#
+#   MAJORDOMUS_SHARED_BUILD_CAP_MB          the bound, in MB (default below; ADR 0139's)
+#   MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN  minutes nothing in a unit may have been written
+#                                           before it is evicted (default below); 0 evicts none
+#
+# The idle age is a judgement, said as one: a worktree whose generation is evicted pays one
+# compile of this crate, and an hour is longer than any edit-compile loop here waits between
+# builds. What this cannot evict is what a bound below one generation's size cannot hold:
+# the newest generations of the trees building now. It says so, with what remains.
+MJ_SHARED_BUILD_CAP_MB_DEFAULT=6144
+MJ_EVICT_IDLE_MIN_DEFAULT=60
+# How often one build directory is measured from the build path, at most: the measure is a
+# du of the whole directory, about a second at 60 GB. A rate limit, never a predicate.
+MJ_BOUND_SWEEP_EVERY_S=120
+
+# How long the bound's pass after a build waits, in the background, for cargo's lock on a
+# profile before it gives up on that profile until the next build (seconds):
+#
+#   MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT  0 evicts only from a profile no build holds now
+#
+# Measured 2026-10-23 14:52Z with four cargo processes on the machine: the shared debug
+# profile's lock was held at 40 of 40 probes in a minute, so a pass that only ever took a
+# free lock would almost never run. Waiting is a bound, not a hang: one waiter per build
+# directory, its pid and what it did in the log beside the rate-limit stamp.
+MJ_EVICT_LOCK_WAIT_DEFAULT=900
+
+# mj_rust_bound_state <build-dir> — the path prefix of the bound's own records for that build
+# directory: <prefix>.stamp (rate limit), .log, .pid and .lock (one waiter at a time).
+mj_rust_bound_state() {
+  printf '%s/majordomus/bound-%s\n' "${XDG_CACHE_HOME:-$HOME/.cache}" \
+    "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
+}
+
+# mj_rust_bound_due <build-dir> — is a pass of the bound due for it? True at most once every
+# MJ_BOUND_SWEEP_EVERY_S, and stamps the time when it is; an unreadable stamp means "due".
+mj_rust_bound_due() {
+  mj_bd_stamp="$(mj_rust_bound_state "$1").stamp"
+  mj_bd_last="$(cat "$mj_bd_stamp" 2>/dev/null || true)"
+  case "$mj_bd_last" in ''|*[!0-9]*) mj_bd_last=0 ;; esac
+  [ $(( $(date +%s) - mj_bd_last )) -ge "$MJ_BOUND_SWEEP_EVERY_S" ] || return 1
+  mkdir -p "$(dirname "$mj_bd_stamp")" 2>/dev/null && date +%s > "$mj_bd_stamp" 2>/dev/null || true
+  return 0
+}
+
+# mj_rust_named_versions <crate-directory>
+#
+# Every `<name>-<version>` some worktree's Cargo.lock of this crate names, one per line, from
+# git's own list of worktrees. Fails when the list cannot be read or names none, which a
+# caller takes as "every version is named".
+mj_rust_named_versions() {
+  # the crate's place in its worktree, as git spells it: a prefix, so no spelling of the
+  # path (/tmp or /private/tmp) can make it wrong
+  mj_nv_rel="$(git -C "$1" rev-parse --show-prefix 2>/dev/null)" || return 1
+  mj_nv_rel="${mj_nv_rel%/}"
+  mj_nv_list="$(git -C "$1" worktree list --porcelain 2>/dev/null | sed -n 's/^worktree //p')" \
+    || return 1
+  [ -n "$mj_nv_list" ] || return 1
+  # one awk over every lock file there is, not one per worktree: 143 worktrees cost 4.8s so
+  set --
+  mj_nv_tab="$(printf '\t')"
+  mj_nv_list="$(printf '%s\n' "$mj_nv_list" | tr '\n' "$mj_nv_tab")"
+  mj_nv_ifs="$IFS"; IFS="$mj_nv_tab"
+  for mj_nv_wt in $mj_nv_list; do
+    mj_nv_lock="$mj_nv_wt/${mj_nv_rel:+$mj_nv_rel/}Cargo.lock"
+    [ -f "$mj_nv_lock" ] && set -- "$@" "$mj_nv_lock"
+  done
+  IFS="$mj_nv_ifs"
+  [ "$#" -gt 0 ] || return 1
+  awk '/^name = "/ { gsub(/^name = "|"$/, ""); n = $0 }
+       /^version = "/ { gsub(/^version = "|"$/, ""); if (n != "") print n "-" $0; n = "" }' "$@" \
+    | LC_ALL=C sort -u
+}
+
+# mj_rust_deps_generations <profile-dir> <now> <idle-minutes> <stems-file> <named-file>
+#
+# The generations of a profile's deps directory that no file of was written within the age
+# and that are candidates, as `<hash>\t<stem>\t<newest mtime>\t<KiB>\t<kind>\t<package>`
+# lines. A generation is every file named `[lib]<stem>-<16 hex digits>[.<anything>]`; the hash
+# is the unit's, so it is the key. <kind> is `crate` for a stem of this crate's units, and
+# `unnamed` for a dependency whose dep-info names a registry crate version the named file
+# (mj_rust_named_versions; empty means unreadable, and then nothing is unnamed) does not.
+# Any other generation is not a candidate and is not printed. Fails when the listing could
+# not be read whole.
+mj_rust_deps_generations() {
+  mj_dg_find='find'
+  [ -x /usr/bin/find ] && mj_dg_find=/usr/bin/find
+  mj_dg_out="$(mktemp "${TMPDIR:-/tmp}/mj-gens.XXXXXX")" || return 1
+  # GNU's spelling first, as in mj_rust_mtime: BSD stat refuses -c
+  if ! "$mj_dg_find" "$1/deps" -mindepth 1 -maxdepth 1 -type f -exec stat -c '%Y %b %n' {} + \
+        > "$mj_dg_out" 2>/dev/null; then
+    "$mj_dg_find" "$1/deps" -mindepth 1 -maxdepth 1 -type f -exec stat -f '%m %b %N' {} + \
+      > "$mj_dg_out" 2>/dev/null || { rm -f "$mj_dg_out"; return 1; }
+  fi
+  awk -v now="$2" -v idle="$3" -v stems="$4" -v named="$5" -v deps="$1/deps" '
+    function hashpos(b,   i, h, nx) {
+      for (i = 1; i + 16 <= length(b); i++) {
+        if (substr(b, i, 1) != "-") continue
+        h = substr(b, i + 1, 16)
+        if (length(h) != 16 || h !~ /^[0-9a-f]+$/) continue
+        nx = substr(b, i + 17, 1)
+        if (nx == "" || nx == ".") return i
+      }
+      return 0
+    }
+    {
+      p = $0; sub(/^[0-9]+ [0-9]+ /, "", p)
+      b = p; sub(/.*\//, "", b)
+      i = hashpos(b); if (i == 0) next
+      h = substr(b, i + 1, 16); s = substr(b, 1, i - 1)
+      if (substr(b, i + 17) == ".d") stemd[h] = s
+      else if (!(h in stem)) { if (substr(s, 1, 3) == "lib") s = substr(s, 4); stem[h] = s }
+      if (!(h in newest) || $1 + 0 > newest[h]) newest[h] = $1 + 0
+      kb[h] += int($2 / 2)
+    }
+    END {
+      while ((getline l < stems) > 0) own[l] = 1
+      nn = 0
+      while ((getline l < named) > 0) { nm[l] = 1; nn++ }
+      for (h in newest) {
+        if (now - newest[h] < idle * 60) continue
+        s = (h in stemd) ? stemd[h] : stem[h]
+        if (s in own) { printf "%s\t%s\t%d\t%d\tcrate\t-\n", h, s, newest[h], kb[h]; continue }
+        if (nn == 0 || !(h in stemd)) continue
+        f = deps "/" s "-" h ".d"; pkg = ""
+        if ((getline l < f) > 0 && match(l, /\/registry\/src\/[^\/]*\/[^\/ ]*\//)) {
+          pkg = substr(l, RSTART, RLENGTH - 1); sub(/.*\//, "", pkg)
+        }
+        close(f)
+        if (pkg == "" || (pkg in nm)) continue
+        printf "%s\t%s\t%d\t%d\tunnamed\t%s\n", h, s, newest[h], kb[h], pkg
+      }
+    }' "$mj_dg_out"
+  rm -f "$mj_dg_out"
+}
+
+# mj_rust_bound_plan <build-dir> <crate-directory> <idle-minutes> <now> <stems-file>
+#
+# Every stale unit of that build directory, as tab-separated
+# `<rank>\t<mtime>\t<KiB>\t<kind>\t<profile>\t<label>\t<note>` lines in no order: rank 0 is
+# stale by definition, rank 1 stale by age. <label> is a path, or a generation's hash.
+mj_rust_bound_plan() {
+  mj_bp_dir="$1"; mj_bp_crate="$2"; mj_bp_idle="$3"; mj_bp_now="$4"; mj_bp_stems="$5"
+  mj_bp_tab="$(printf '\t')"
+  mj_bp_find='find'
+  [ -x /usr/bin/find ] && mj_bp_find=/usr/bin/find
+  # the coverage run's target directory, whole, when nothing in it is recent
+  mj_bp_cov="$mj_bp_dir/llvm-cov-target"
+  mj_bp_cov_whole=0
+  if [ -d "$mj_bp_cov" ] && [ ! -L "$mj_bp_cov" ] && mj_rust_owns "$mj_bp_dir" "$mj_bp_cov"; then
+    mj_bp_err="$(mktemp "${TMPDIR:-/tmp}/mj-bound.XXXXXX")" || return 0
+    # files only, and not cargo's lock files: taking a lock writes neither a unit nor a build
+    mj_bp_recent="$("$mj_bp_find" "$mj_bp_cov" -type f ! -name .cargo-build-lock ! -name .cargo-lock \
+      -mmin -"$mj_bp_idle" -print 2>"$mj_bp_err" | head -n 1 || true)"
+    [ ! -s "$mj_bp_err" ] || mj_bp_recent=unreadable
+    rm -f "$mj_bp_err"
+    if [ -z "$mj_bp_recent" ]; then
+      mj_bp_kb="$(mj_rust_kb "$mj_bp_cov" || true)"
+      mj_bp_mt="$(mj_rust_mtime "$mj_bp_cov" || true)"
+      if [ -n "$mj_bp_kb" ] && [ -n "$mj_bp_mt" ]; then
+        mj_bp_lockp="$mj_bp_cov"; [ ! -d "$mj_bp_cov/debug" ] || mj_bp_lockp="$mj_bp_cov/debug"
+        printf '0\t%s\t%s\tcoverage\t%s\t%s\ta coverage run'"'"'s target directory\n' \
+          "$mj_bp_mt" "$mj_bp_kb" "$mj_bp_lockp" "$mj_bp_cov"
+        mj_bp_cov_whole=1
+      fi
+    fi
+  fi
+  # empty when it cannot be read whole, and then no dependency is a candidate
+  mj_bp_named="$(mktemp "${TMPDIR:-/tmp}/mj-named.XXXXXX")" || return 0
+  mj_rust_named_versions "$mj_bp_crate" > "$mj_bp_named" 2>/dev/null || : > "$mj_bp_named"
+  mj_rust_profile_dirs "$mj_bp_dir" | while IFS= read -r mj_bp_p; do
+    [ -n "$mj_bp_p" ] || continue
+    case "$mj_bp_p" in "$mj_bp_cov"/*) [ "$mj_bp_cov_whole" = 0 ] || continue ;; esac
+    # finished incremental sessions idle for the age
+    if [ -d "$mj_bp_p/incremental" ]; then
+      "$mj_bp_find" "$mj_bp_p/incremental" -mindepth 2 -maxdepth 2 -type d -name 's-*' \
+          ! -name '*-working' -mmin +"$mj_bp_idle" 2>/dev/null | while IFS= read -r mj_bp_s; do
+        mj_bp_mt="$(mj_rust_mtime "$mj_bp_s" || true)"
+        mj_bp_kb="$(mj_rust_kb "$mj_bp_s" || true)"
+        [ -n "$mj_bp_mt" ] && [ -n "$mj_bp_kb" ] || continue
+        printf '1\t%s\t%s\tincremental\t%s\t%s\tan incremental session\n' \
+          "$mj_bp_mt" "$mj_bp_kb" "$mj_bp_p" "$mj_bp_s"
+      done
+    fi
+    # generations: this crate's by age, a dependency's when no Cargo.lock names its version
+    [ -d "$mj_bp_p/deps" ] || continue
+    mj_rust_deps_generations "$mj_bp_p" "$mj_bp_now" "$mj_bp_idle" "$mj_bp_stems" "$mj_bp_named" \
+        2>/dev/null | while IFS="$mj_bp_tab" read -r mj_bp_h mj_bp_stem mj_bp_mt mj_bp_kb mj_bp_k mj_bp_pkg; do
+        case "$mj_bp_k" in
+          crate) printf '1\t%s\t%s\tcrate\t%s\t%s\tthis crate'"'"'s %s\n' \
+                   "$mj_bp_mt" "$mj_bp_kb" "$mj_bp_p" "$mj_bp_h" "$mj_bp_stem" ;;
+          unnamed) printf '0\t%s\t%s\tunnamed\t%s\t%s\t%s, which no worktree'"'"'s Cargo.lock names\n' \
+                   "$mj_bp_mt" "$mj_bp_kb" "$mj_bp_p" "$mj_bp_h" "$mj_bp_pkg" ;;
+        esac
+      done
+  done
+  rm -f "$mj_bp_named"
+  return 0
+}
+
+# mj_rust_evict_in_profile <cut-file> <profile-dir> <idle-minutes> <result-file> <build-dir>
+#
+# Evict the units of the cut that belong to that profile, under cargo's lock on it (the
+# caller, mj_rust_locked, holds it), each asked again first. Appends one
+# `<verdict>\t<KiB>\t<kind>\t<label>\t<note>` line per unit to the result file.
+mj_rust_evict_in_profile() {
+  mj_ep_cut="$1"; mj_ep_p="$2"; mj_ep_idle="$3"; mj_ep_res="$4"; mj_ep_dir="$5"
+  mj_ep_tab="$(printf '\t')"
+  mj_ep_find='find'
+  [ -x /usr/bin/find ] && mj_ep_find=/usr/bin/find
+  mj_ep_users="$(mj_rust_profile_users "$mj_ep_p" || echo 'the process table could not be read')"
+  if [ -n "$mj_ep_users" ]; then
+    printf 'majordomus: %s not evicted from: in use by %s\n' "$mj_ep_p" \
+      "$(printf '%s\n' "$mj_ep_users" | head -n 1 | cut -c1-160)" >&2
+    return 0
+  fi
+  mj_ep_open="$(mktemp "${TMPDIR:-/tmp}/mj-open.XXXXXX")" || return 0
+  if ! mj_rust_open_under "$mj_ep_p" > "$mj_ep_open"; then
+    printf 'majordomus: %s not evicted from: what is open in it could not be read (lsof)\n' "$mj_ep_p" >&2
+    rm -f "$mj_ep_open"; return 0
+  fi
+  while IFS="$mj_ep_tab" read -r _ _ mj_ep_kb mj_ep_kind mj_ep_up mj_ep_l mj_ep_note; do
+    [ "$mj_ep_up" = "$mj_ep_p" ] || continue
+    mj_ep_why=''
+    case "$mj_ep_kind" in
+      coverage)
+        if [ -n "$(mj_rust_profile_users "$mj_ep_l" || echo unreadable)" ]; then
+          mj_ep_why='a process names it'
+        elif [ -n "$("$mj_ep_find" "$mj_ep_l" -type f ! -name .cargo-build-lock ! -name .cargo-lock \
+              -mmin -"$mj_ep_idle" -print 2>/dev/null | head -n 1 || true)" ]; then
+          mj_ep_why='written since the plan'
+        elif ! mj_rust_open_under "$mj_ep_l" > "$mj_ep_open.cov" \
+            || grep -v -e '/\.cargo-build-lock$' -e '/\.cargo-lock$' "$mj_ep_open.cov" | grep -q .; then
+          # cargo's lock files are open because this sweep holds them
+          mj_ep_why='something in it is open'
+        else
+          mj_ep_gone="$mj_ep_dir/.evicting-llvm-cov-target-$$"
+          # out of cargo's reach first: a build that starts now finds no directory, never half one
+          if mv "$mj_ep_l" "$mj_ep_gone" 2>/dev/null; then
+            rm -rf "$mj_ep_gone" 2>/dev/null || true   # moved out of cargo's reach a line above
+          else
+            mj_ep_why='it could not be moved aside'
+          fi
+        fi
+        rm -f "$mj_ep_open.cov" ;;
+      incremental)
+        if [ "$("$mj_ep_find" "$mj_ep_l" -maxdepth 0 -type d -name 's-*' ! -name '*-working' \
+              -mmin +"$mj_ep_idle" 2>/dev/null)" != "$mj_ep_l" ]; then
+          mj_ep_why='written to or renamed since the plan'
+        elif grep -qF -- "$mj_ep_l/" "$mj_ep_open"; then
+          mj_ep_why='a file in it is open'
+        elif ! { rm -rf "$mj_ep_l" 2>/dev/null && [ ! -e "$mj_ep_l" ]; }; then
+          mj_ep_why='it could not be removed'
+        fi ;;
+      crate|unnamed)
+        if [ -n "$("$mj_ep_find" "$mj_ep_p/deps" -mindepth 1 -maxdepth 1 -name "*-$mj_ep_l*" \
+              ! -mmin +"$mj_ep_idle" 2>/dev/null)" ]; then
+          mj_ep_why='a file of it was written since the plan'
+        elif grep -qF -- "-$mj_ep_l" "$mj_ep_open"; then
+          mj_ep_why='a file of it is open'
+        else
+          "$mj_ep_find" "$mj_ep_p/deps" -mindepth 1 -maxdepth 1 -name "*-$mj_ep_l*" -exec rm -f {} + \
+            2>/dev/null || mj_ep_why='a file of it could not be removed'
+          for mj_ep_x in "$mj_ep_p/.fingerprint/"*-"$mj_ep_l" "$mj_ep_p/build/"*-"$mj_ep_l"; do
+            [ -d "$mj_ep_x" ] && [ ! -L "$mj_ep_x" ] || continue
+            rm -rf "$mj_ep_x" 2>/dev/null || true   # its fingerprint or build-script output
+          done
+        fi ;;
+      *) continue ;;
+    esac
+    if [ -z "$mj_ep_why" ]; then
+      printf 'evicted\t%s\t%s\t%s\t%s\n' "$mj_ep_kb" "$mj_ep_kind" "$mj_ep_l" "$mj_ep_note" >> "$mj_ep_res"
+    else
+      printf 'kept\t%s\t%s\t%s\t%s\n' "$mj_ep_kb" "$mj_ep_kind" "$mj_ep_l" "$mj_ep_why" >> "$mj_ep_res"
+    fi
+  done < "$mj_ep_cut"
+  rm -f "$mj_ep_open"
+  return 0
+}
+
+# mj_rust_bound_build_dir <build-dir> <crate-directory> [build|quiet|evict|dry-run]
+#
+# Bring that build directory under its bound by evicting stale units, oldest first, and say
+# per unit what was evicted. `build` (the build path's) is rate-limited and says nothing when
+# the directory is within its bound, `quiet` the same without the rate limit; `evict` (the
+# reaper's) always says what it measured; `dry-run`
+# measures, plans and probes the locks, and changes nothing. A deleting sweep, so it fails
+# closed (project.destructive-sweeps-fail-closed): an unreadable size, a directory without
+# cargo's mark or a listing with a hole evicts nothing, and every eviction is asked again
+# under cargo's lock. Returns 0, or 10 from a dry run that would evict something.
+mj_rust_bound_build_dir() {
+  mj_bb_dir="$1"; mj_bb_crate="$2"; mj_bb_mode="${3:-build}"
+  # `build` and `quiet` say nothing when there is nothing to do; `build` is also rate-limited
+  mj_bb_quiet=0
+  case "$mj_bb_mode" in build|quiet) mj_bb_quiet=1 ;; esac
+  mj_bb_say='majordomus: the build directory'
+  mj_bb_cap="${MAJORDOMUS_SHARED_BUILD_CAP_MB:-$MJ_SHARED_BUILD_CAP_MB_DEFAULT}"
+  case "$mj_bb_cap" in ''|*[!0-9]*) mj_bb_cap="$MJ_SHARED_BUILD_CAP_MB_DEFAULT" ;; esac
+  mj_bb_idle="${MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN:-$MJ_EVICT_IDLE_MIN_DEFAULT}"
+  case "$mj_bb_idle" in ''|*[!0-9]*) mj_bb_idle="$MJ_EVICT_IDLE_MIN_DEFAULT" ;; esac
+  if [ "$mj_bb_idle" -le 0 ] || [ "$mj_bb_cap" -le 0 ]; then
+    [ "$mj_bb_quiet" = 1 ] || printf '%s %s: eviction is off (MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=%s, MAJORDOMUS_SHARED_BUILD_CAP_MB=%s)\n' \
+      "$mj_bb_say" "$mj_bb_dir" "$mj_bb_idle" "$mj_bb_cap" >&2
+    return 0
+  fi
+  [ -d "$mj_bb_dir" ] || return 0
+  if [ "$mj_bb_mode" = build ]; then mj_rust_bound_due "$mj_bb_dir" || return 0; fi
+  if ! mj_rust_is_build_dir "$mj_bb_dir"; then
+    printf '%s %s: nothing evicted: it carries no mark of cargo'"'"'s, so it is not provably a build directory\n' \
+      "$mj_bb_say" "$mj_bb_dir" >&2
+    return 0
+  fi
+  mj_bb_bound=$((mj_bb_cap * 1024))
+  mj_bb_size="$(mj_rust_kb "$mj_bb_dir" || true)"
+  if [ -z "$mj_bb_size" ]; then
+    printf '%s %s: nothing evicted: its size could not be read\n' "$mj_bb_say" "$mj_bb_dir" >&2
+    return 0
+  fi
+  if [ "$mj_bb_size" -le "$mj_bb_bound" ]; then
+    [ "$mj_bb_quiet" = 1 ] || printf '%s %s holds %s, within its %s bound: nothing to evict\n' \
+      "$mj_bb_say" "$mj_bb_dir" "$(mj_rust_human_kb "$mj_bb_size")" "$(mj_rust_human_kb "$mj_bb_bound")" >&2
+    return 0
+  fi
+
+  # A build's own pass takes only a free lock; when every profile is held now its plan (several
+  # seconds on a large directory) would find nothing it may evict, so it is not made. The pass
+  # after a build waits for the lock instead (mj_rust_bound_after_build).
+  if [ "$mj_bb_quiet" = 1 ] && [ "${MJ_LOCK_WAIT_S:-0}" = 0 ] && command -v flock >/dev/null 2>&1; then
+    mj_bb_free=0
+    for mj_bb_p in $(mj_rust_profile_dirs "$mj_bb_dir"); do
+      [ -f "$mj_bb_p/.cargo-build-lock" ] || { mj_bb_free=1; break; }
+      if flock -n -x "$mj_bb_p/.cargo-build-lock" true 2>/dev/null; then mj_bb_free=1; break; fi
+    done
+    if [ "$mj_bb_free" = 0 ]; then
+      printf '%s %s holds %s, over its %s bound; every profile is locked by a build now, so nothing is evicted before this build\n' \
+        "$mj_bb_say" "$mj_bb_dir" "$(mj_rust_human_kb "$mj_bb_size")" "$(mj_rust_human_kb "$mj_bb_bound")" >&2
+      return 0
+    fi
+  fi
+  mj_bb_tab="$(printf '\t')"
+  mj_bb_now="$(date +%s)"
+  mj_bb_plan="$(mktemp "${TMPDIR:-/tmp}/mj-bound-plan.XXXXXX")" || return 0
+  mj_rust_crate_stems "$mj_bb_crate" > "$mj_bb_plan.stems"
+  mj_rust_bound_plan "$mj_bb_dir" "$mj_bb_crate" "$mj_bb_idle" "$mj_bb_now" "$mj_bb_plan.stems" \
+    | LC_ALL=C sort -t "$mj_bb_tab" -k1,1n -k2,2n > "$mj_bb_plan"
+  # the cut: the oldest units that together bring the directory under its bound
+  awk -F '\t' -v need=$((mj_bb_size - mj_bb_bound)) '
+    acc < need { print; acc += $3 }' "$mj_bb_plan" > "$mj_bb_plan.cut"
+  mj_bb_n="$(grep -c . "$mj_bb_plan.cut" || true)"
+  mj_bb_cutkb="$(awk -F '\t' '{ s += $3 } END { print s + 0 }' "$mj_bb_plan.cut")"
+  mj_bb_short=0
+  [ "$mj_bb_cutkb" -ge $((mj_bb_size - mj_bb_bound)) ] || mj_bb_short=1
+  mj_bb_verb='evicting'; [ "$mj_bb_mode" != dry-run ] || mj_bb_verb='would evict'
+  printf '%s %s holds %s, over its %s bound: %s %s stale unit(s) holding %s, oldest first, under cargo'"'"'s lock on each profile\n' \
+    "$mj_bb_say" "$mj_bb_dir" "$(mj_rust_human_kb "$mj_bb_size")" "$(mj_rust_human_kb "$mj_bb_bound")" \
+    "$mj_bb_verb" "${mj_bb_n:-0}" "$(mj_rust_human_kb "$mj_bb_cutkb")" >&2
+  mj_bb_rc=0
+  if [ "$mj_bb_mode" = dry-run ]; then
+    while IFS="$mj_bb_tab" read -r _ mj_bb_mt mj_bb_kb mj_bb_kind mj_bb_p mj_bb_l mj_bb_note; do
+      mj_bb_hold=''
+      if command -v flock >/dev/null 2>&1 && [ -f "$mj_bb_p/.cargo-build-lock" ] \
+          && ! flock -n -x "$mj_bb_p/.cargo-build-lock" true 2>/dev/null; then
+        mj_bb_hold=' (its profile is locked by a build now)'
+      fi
+      printf '  would evict  %8s  %-11s  idle %5s min  %s  %s%s\n' "$(mj_rust_human_kb "$mj_bb_kb")" \
+        "$mj_bb_kind" "$(( (mj_bb_now - mj_bb_mt) / 60 ))" "${mj_bb_l#"$mj_bb_dir"/}" "$mj_bb_note" "$mj_bb_hold" >&2
+      mj_bb_rc=10
+    done < "$mj_bb_plan.cut"
+  else
+    mj_bb_before="$(mj_free_mb "$mj_bb_dir" || true)"
+    : > "$mj_bb_plan.res"
+    cut -f5 "$mj_bb_plan.cut" | awk '!seen[$0]++' > "$mj_bb_plan.profiles"
+    while IFS= read -r mj_bb_p; do
+      [ -n "$mj_bb_p" ] || continue
+      mj_rust_locked "$mj_bb_p" mj_rust_evict_in_profile "$mj_bb_plan.cut" "$mj_bb_p" "$mj_bb_idle" \
+        "$mj_bb_plan.res" "$mj_bb_dir"
+    done < "$mj_bb_plan.profiles"
+    while IFS="$mj_bb_tab" read -r mj_bb_v mj_bb_kb mj_bb_kind mj_bb_l mj_bb_note; do
+      printf '  %-8s %8s  %-11s  %s  %s\n' "$mj_bb_v" "$(mj_rust_human_kb "$mj_bb_kb")" "$mj_bb_kind" \
+        "${mj_bb_l#"$mj_bb_dir"/}" "$mj_bb_note" >&2
+    done < "$mj_bb_plan.res"
+    mj_bb_done="$(grep -c '^evicted' "$mj_bb_plan.res" || true)"
+    mj_bb_donekb="$(awk -F '\t' '$1 == "evicted" { s += $2 } END { print s + 0 }' "$mj_bb_plan.res")"
+    mj_bb_unreached=$(( ${mj_bb_n:-0} - $(grep -c . "$mj_bb_plan.res" || true) ))
+    mj_bb_size="$(mj_rust_kb "$mj_bb_dir" || true)"
+    printf '%s %s: evicted %s unit(s) holding %s; %s left unreached in a profile a build holds or a process names; now %s against its %s bound; free on its volume %sMB before, %sMB after\n' \
+      "$mj_bb_say" "$mj_bb_dir" "${mj_bb_done:-0}" "$(mj_rust_human_kb "$mj_bb_donekb")" "$mj_bb_unreached" \
+      "$(mj_rust_human_kb "${mj_bb_size:-0}")" "$(mj_rust_human_kb "$mj_bb_bound")" \
+      "${mj_bb_before:-?}" "$(mj_free_mb "$mj_bb_dir" || echo '?')" >&2
+  fi
+  if [ "$mj_bb_short" = 1 ]; then
+    printf '%s %s stays over its bound: every other unit was written within %s min, or is a dependency some worktree'"'"'s Cargo.lock names, or is no unit\n' \
+      "$mj_bb_say" "$mj_bb_dir" "$mj_bb_idle" >&2
+  fi
+  rm -f "$mj_bb_plan" "$mj_bb_plan".*
+  return "$mj_bb_rc"
+}
+
+# mj_rust_bound_after_build <tree-root> — the bound again once a bounded build has finished,
+# for the build directory that build used: it is when a build has just written a generation
+# that the directory is furthest over. Rate-limited with the pre-build pass.
+#
+# Cargo's lock on the shared profile is rarely free on a busy machine (see
+# MJ_EVICT_LOCK_WAIT_DEFAULT), so when the directory is over its bound the pass waits for it,
+# bounded, in the background: the build that just finished does not wait, and the waiter is
+# one per build directory (a second finds the first's lock and leaves). What it did is
+# appended to <state>.log and its pid written to <state>.pid (mj_rust_bound_state). With a
+# wait of 0 the pass runs here and takes only a lock that is free. Returns 0.
+mj_rust_bound_after_build() {
+  case "${MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN:-$MJ_EVICT_IDLE_MIN_DEFAULT}" in 0) return 0 ;; esac
+  mj_ab_crate="$1/apps/majordomus-cli"
+  mj_ab_dir="$(mj_cargo_build_dir "$mj_ab_crate" || true)"
+  [ -n "$mj_ab_dir" ] && [ -d "$mj_ab_dir" ] || return 0
+  mj_rust_bound_due "$mj_ab_dir" || return 0
+  mj_ab_wait="${MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT:-$MJ_EVICT_LOCK_WAIT_DEFAULT}"
+  case "$mj_ab_wait" in ''|*[!0-9]*) mj_ab_wait="$MJ_EVICT_LOCK_WAIT_DEFAULT" ;; esac
+  if [ "$mj_ab_wait" -le 0 ] || ! command -v flock >/dev/null 2>&1; then
+    mj_rust_bound_build_dir "$mj_ab_dir" "$mj_ab_crate" quiet || true
+    return 0
+  fi
+  # within its bound there is nothing to wait for
+  mj_ab_cap="${MAJORDOMUS_SHARED_BUILD_CAP_MB:-$MJ_SHARED_BUILD_CAP_MB_DEFAULT}"
+  case "$mj_ab_cap" in ''|*[!0-9]*) mj_ab_cap="$MJ_SHARED_BUILD_CAP_MB_DEFAULT" ;; esac
+  mj_ab_kb="$(mj_rust_kb "$mj_ab_dir" || true)"
+  [ -n "$mj_ab_kb" ] && [ "$mj_ab_kb" -gt $((mj_ab_cap * 1024)) ] || return 0
+  mj_ab_state="$(mj_rust_bound_state "$mj_ab_dir")"
+  mkdir -p "$(dirname "$mj_ab_state")" 2>/dev/null || return 0
+  (
+    flock -n -x 8 || exit 0   # a waiter for this directory is already there
+    printf '%s pass after a build of %s, waiting up to %ss for each profile'"'"'s lock\n' \
+      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" "$mj_ab_wait"
+    MJ_LOCK_WAIT_S="$mj_ab_wait" mj_rust_bound_build_dir "$mj_ab_dir" "$mj_ab_crate" evict
+  ) 8>> "$mj_ab_state.lock" >> "$mj_ab_state.log" 2>&1 < /dev/null &
+  mj_ab_pid=$!
+  printf '%s\n' "$mj_ab_pid" > "$mj_ab_state.pid" 2>/dev/null || true
+  printf 'majordomus: %s holds %s, over its %sMB bound: its stale units are evicted in the background once cargo'"'"'s lock is free (pid %s, at most %ss for each profile; log %s.log)\n' \
+    "$mj_ab_dir" "$(mj_rust_human_kb "$mj_ab_kb")" "$mj_ab_cap" "$mj_ab_pid" "$mj_ab_wait" "$mj_ab_state" >&2
   return 0
 }
 
@@ -1089,6 +1683,49 @@ mj_cargo_private_dir() {
     "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
 }
 
+# mj_build_cache_start <tree-root>
+#
+# Give this build the mesh build cache, once, when an sccache server is about to start
+# (project.every-build-path-goes-through-the-cache, ADR 0157, I3953).
+#
+# sccache fixes its levels when its server starts and fails a compile when an S3 level is
+# down at that moment, so the store is asked about exactly then and never per compilation:
+#   - share/libexec/sccache-mesh --start-only does it: a server already listening on its port
+#     is left alone (a connect, no probe, no process); otherwise `majordomus mesh build-cache
+#     env` of this tree's executable derives the configuration (store healthy, credential file
+#     private, sccache with the chain) and the server is started with it; only the credential file's path is ever in the environment, never a key;
+#   - then, and only then, cargo is pointed at sccache (RUSTC_WRAPPER) unless the caller
+#     already named a wrapper, including an empty one.
+# The store down, no sccache, no executable (a cold node), no way to see the port, or
+# MAJORDOMUS_BUILD_CACHE=off: the build is exactly what it was, and one line says why. This
+# never fails a build; it returns 0 always, and once per process.
+mj_build_cache_start() {
+  [ -z "${MJ_BUILD_CACHE_DONE:-}" ] || return 0
+  MJ_BUILD_CACHE_DONE=1
+  [ "${MAJORDOMUS_BUILD_CACHE:-}" = off ] && return 0
+  command -v sccache >/dev/null 2>&1 || return 0
+  [ -z "${RUSTC_WRAPPER+x}" ] && [ -z "${RUSTC_WORKSPACE_WRAPPER+x}" ] || return 0
+  mj_bc_bin="$(mj_rust_bin "$1" 2>/dev/null || true)"
+  if [ ! -x "$mj_bc_bin" ]; then
+    printf 'majordomus: build cache: local-only: no majordomus executable yet (a cold node builds as before)\n' >&2
+    return 0
+  fi
+  mj_bc_wrap="$1/share/libexec/sccache-mesh"
+  if [ ! -x "$mj_bc_wrap" ]; then
+    printf 'majordomus: build cache: local-only: no share/libexec/sccache-mesh in this tree\n' >&2
+    return 0
+  fi
+  # the port check, the question to majordomus and the start live in the wrapper, so that
+  # there is one copy of them and none in lib/ (this directory holds no network client and evaluates no text)
+  if mj_bc_why="$(MAJORDOMUS_BIN="$mj_bc_bin" SCCACHE_MESH_SCCACHE=sccache "$mj_bc_wrap" --start-only 2>&1)"; then
+    RUSTC_WRAPPER=sccache; export RUSTC_WRAPPER
+  else
+    printf 'majordomus: build cache: %s\n' \
+      "$(printf '%s\n' "$mj_bc_why" | head -n 1 | grep . || echo 'local-only: sccache did not start with the store')" >&2
+  fi
+  return 0
+}
+
 # mj_cargo_bounded <tree-root> <cargo arguments...>
 #
 # Run cargo, and never wait in silence behind another build's lock
@@ -1227,6 +1864,7 @@ mj_cargo_bounded_run() {
     case "$mj_cb_arg" in --quiet|-q) mj_cb_quiet=1 ;; *) set -- "$@" "$mj_cb_arg" ;; esac
   done
   # (the sweep of the build directory's idle sessions ran in mj_cargo_bounded, in the slot)
+  mj_build_cache_start "$mj_cb_root"
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
   [ -n "${CARGO_BUILD_BUILD_DIR:-}" ] && mj_cb_private=1
@@ -1266,6 +1904,8 @@ mj_cargo_bounded_run() {
         cat "$mj_cb_log" >&2
       fi
       rm -f "$mj_cb_log"
+      # between this build and the next: the bound, under cargo's lock, now that it is free
+      mj_rust_bound_after_build "$mj_cb_root"
       return "$mj_cb_rc"
     fi
     # the bound: say what was observed, stop waiting, and go where no other tree builds
