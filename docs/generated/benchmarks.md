@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 213 | 179 | 0 | 34 |
-| http | 207 | 179 | 0 | 28 |
-| mcp | 201 | 174 | 0 | 27 |
+| direct | 219 | 181 | 0 | 38 |
+| http | 211 | 181 | 0 | 30 |
+| mcp | 205 | 176 | 0 | 29 |
 | system | 14 | 14 | 0 | 0 |
-| total | 635 | 546 | 0 | 89 |
+| total | 649 | 552 | 0 | 97 |
 
 ## Capabilities
 
@@ -54,7 +54,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
-| `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent` |
+| `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |
 | `devcontext.explain` | devcontext | query | process, 8 entries | covered | covered | covered | `policy`, `absent` |
 | `devcontext.policy` | devcontext | query | — | covered | covered | covered | `default` |
 | `devtask.issue` | devtask | query | — | covered | covered | covered | `records-only`, `with-git` |
@@ -94,6 +94,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `gates.policy` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `gates.state` | gates | query | — | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `guard.edit` | guard | query | — | covered | covered | covered | `in-repository`, `outside` |
@@ -126,6 +128,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `mcp.projection` | mcp | query | — | covered | covered | covered | `every-tool`, `writers` |
+| `mesh.build_cache.ensure` | mesh | command | — | waived | — | — | — |
+| `mesh.build_cache.env` | mesh | query | — | waived | waived | waived | — |
+| `mesh.build_cache.key` | mesh | query | — | waived | waived | waived | — |
+| `mesh.build_cache.provision` | mesh | command | — | waived | — | — | — |
 | `mesh.claim` | mesh | command | — | waived | waived | waived | — |
 | `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
@@ -300,5 +306,6 @@ Every screen and panel of the UI's own route list, read with `GET` and `Accept: 
 | `system.http.ui.panels.delivery` | `/ui/panels/delivery` | pinned | yes |
 | `system.http.ui.panels.drain` | `/ui/panels/drain` | pinned | yes |
 | `system.http.ui.panels.standing` | `/ui/panels/standing` | pinned | yes |
+| `system.http.ui.panels.shared_scope` | `/ui/panels/shared-scope` | pinned | yes |
 
 Cache modes: a cached capability is measured cold (the cache cleared before every sample) and warm (the same input repeated); the direct transport reports the handler invocations of each. Evidence: `.ai/local/benchmarks/` for local runs, `.ai/repo/benchmarks/rust/` for the accepted baselines and the regression policy.

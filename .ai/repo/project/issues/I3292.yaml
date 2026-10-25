@@ -4,7 +4,7 @@ title: "Reported tokens, a price-list estimate and a billed amount are three fie
 slug: usage-quantities-are-never-merged
 priority: p2
 profile: implementation
-objective: "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode (subscription, api_key, api_credits, unknown) declared by the person, so that on a subscription an API-equivalent price is never shown as spend."
+objective: "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode declared by the person, whose values are the model catalogue's funding kinds (local, credit_grant, subscription, metered; I3660) or unknown, so that on a subscription an API-equivalent price is never shown as spend."
 why: "The owner works on subscriptions; Claude Code's cost field is an approximation and Admin cost reports are unavailable to individual accounts (dated vendor claims). docs/ECONOMICS.md already classes every number observed, counted, derived, estimated or counterfactual; this record must use those classes, not a second vocabulary. No provider event carries the plan type, so billing_mode needs a named reporter; the critique also found that 'the execution record' could land on the capability-execution type. It extends milestone execution-telemetry. Proposed in ADR 0213 (Usage is observed through each provider's official telemetry into one provider-neutral record, and reported, estimated and billed amounts are never merged) (proposed; it carries no authority until the owner accepts it). Sources: chatgpt-majordomus:c253#2, chatgpt-majordomus:c267#2, chatgpt-majordomus:c267#7."
 current_state: "The benchmark run record keeps total_cost_usd as reported; no billing mode exists anywhere."
 desired_state: "Every surface prints the class beside each figure and refuses to sum across classes."
@@ -17,6 +17,7 @@ scope:
 depends_on:
   - "I0301"
   - "I3287"
+  - "I3660"
 serves:
   - "every-sessions-usage-is-observed#usage-drills-to-its-event"
 acceptance_criteria:
@@ -31,4 +32,4 @@ validation:
 evidence_required:
   - "test_usage_quantities_are_never_merged"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-21

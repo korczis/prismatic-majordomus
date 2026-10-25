@@ -1,0 +1,30 @@
+id: I4013
+milestone: mesh-connectivity
+title: "A server bound to every interface advertises the addresses it has now"
+slug: a-hub-advertises-the-address-it-has-now
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "A server bound to 0.0.0.0 reads its interface addresses again before every beacon it signs (Beacon::follow), so that its advertisement follows a DHCP move instead of naming the address it held when it started."
+why: "On 2026-10-23 the hub of the owner's MacBook-2 advertised 192.168.100.96:8791 after DHCP had moved the machine to .100, and it had not advertised its tailnet address at all. No other machine could dial it until it was restarted by hand; after the restart it advertised .100 and the tailnet address."
+current_state: "shared.rs derives the advertised endpoints once, at activation; Beacon keeps them for its lifetime."
+desired_state: "A beacon built for a server bound to every interface reads advertised_endpoints again before each envelope; an empty reading keeps the last endpoints; a specific bind or a hosted hub's --advertise URL stays fixed."
+scope:
+  - "apps/majordomus-cli/src/mesh/provider.rs"
+  - "apps/majordomus-cli/src/mesh/manager.rs"
+  - "apps/majordomus-cli/src/shared.rs"
+  - ".ai/repo/project/issues/I4013.yaml"
+acceptance_criteria:
+  - "A followed beacon signs the endpoints its source answers now"
+  - "An empty answer keeps the last endpoints"
+  - "Only a server bound to the unspecified address follows its interfaces"
+validation:
+  - "cargo test --doc mesh::provider"
+  - "cargo test --lib shared::"
+evidence_required:
+  - "only_a_server_bound_to_every_interface_follows_them"
+depends_on: []
+serves:
+  - "an-authorised-node-connects-from-anywhere#path-is-explained"
+created_at: 2026-10-23
+updated_at: 2026-10-23

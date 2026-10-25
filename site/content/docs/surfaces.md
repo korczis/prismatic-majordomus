@@ -1,7 +1,7 @@
 +++
 title = "How Majordomus derives its surfaces"
 description = "how the system fits together: canonical state, discovery, typed registries, derived models, governance and evidence, and every surface projected from them — what is authored, discovered, derived, observed and inferred, a capability and a rule traced end to end, the generation matrix, a claim audit with file references, and the architecture debt that remains"
-weight = 44
+weight = 45
 [extra]
 source = "docs/SURFACES.md"
 +++
@@ -1042,7 +1042,7 @@ flowchart TD
 | worktrees | `worktree topology / status / inspect / migrate …` | `majordomus_worktrees`, … | `/api/v1/worktrees*` | `/cockpit/worktrees` | `WORKTREES.md` |
 | peers | none | `majordomus_peers`, `majordomus_announce` | `/api/v1/peers`, `/peers/announce` | none | `MCP.md` |
 | mesh | `mesh identity / doctor / status / nodes` | `majordomus_mesh*` | `/api/v1/mesh*` | `/cockpit/mesh` | `MESH.md` |
-| gates and completion | shell `check`, `finish` | `majordomus_gates`, `majordomus_completion` | `/api/v1/gates`, `/gates/completion` | generic pages | `CI.md` |
+| gates and completion | shell `check`, `finish`; `majordomus-cli run gates.state` | `majordomus_gates`, `majordomus_completion_policy`, `majordomus_completion`, `majordomus_gate_state` | `/api/v1/gates`, `/gates/policy`, `/gates/completion`, `/gates/state` | generic pages | `CI.md` |
 
 </div>
 

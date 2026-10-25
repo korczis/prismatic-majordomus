@@ -25,6 +25,10 @@ build:
   package: majordomus-cli
   binary: majordomus
   profile: release
+  # The path dependencies the package compiles against: in the build context and the
+  # builder's dependency stage, never in the runtime image.
+  crates:
+    - apps/majordomus-core
   # The build context, and nothing else. The package's own directory is what the builder
   # stage compiles; every other input is what the running process reads — the tool
   # distribution, the layer, and the files this repository's source classes point at, so
