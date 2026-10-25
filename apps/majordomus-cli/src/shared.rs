@@ -211,6 +211,9 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str, hosting: &MeshHos
     };
     match crate::mesh::cooperation::Cooperation::new(setup) {
         Ok(cooperation) => {
+            // the store this node serves, if its own file outside the repository declares one,
+            // is offered on the journal from the first heartbeat (I2671)
+            cooperation.serve_build_cache_from(crate::mesh::build_cache::offer::node_file());
             cooperation.start();
             ctx.mesh.attach_cooperation(cooperation);
         }

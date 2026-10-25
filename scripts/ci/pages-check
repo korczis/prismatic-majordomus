@@ -281,7 +281,7 @@ subject="$(git log -1 --format=%s "$REMOTE/$BRANCH")"
 case "$subject" in
   "deploy: site from "*) ;;
   *) deploy_subject="$(git log -1 --format=%s --grep='^deploy: site from ' "$REMOTE/$BRANCH" 2>/dev/null || true)"
-     if [ -n "$deploy_subject" ] && printf '%s' "$subject" | grep -q '^release: v[^ ]* metadata'; then
+     if [ -n "$deploy_subject" ] && grep -q '^release: v[^ ]* metadata' <<<"$subject"; then
        say "note  the head of $BRANCH is release metadata ($subject); the pages are the newest deploy's"
        subject="$deploy_subject"
      fi ;;
@@ -451,7 +451,8 @@ ui_live() {
   published_model="$(git -C "$ROOT" show "$source_sha:.ai/repo/ci/pages.yaml" 2>/dev/null || true)"
   for other in $(printf '%s\n' "$declared" | awk -F '\t' '$1 != "" && $1 != "ui" { print $1 }'); do
     if [ -n "$published_model" ] \
-      && ! printf '%s\n' "$published_model" | grep -qE "^[[:space:]]*-[[:space:]]+surface:[[:space:]]+${other}[[:space:]]*\$"; then
+      && ! grep -qE "^[[:space:]]*-[[:space:]]+surface:[[:space:]]+${other}[[:space:]]*\$" \
+        <<<"$published_model"; then
       ok "the published commit ${source_sha:0:12} declares no $other snapshot; the one this tree declares is owed by the next publication"
       continue
     fi

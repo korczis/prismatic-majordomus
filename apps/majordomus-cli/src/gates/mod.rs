@@ -73,7 +73,7 @@ use crate::discovery::glob::Glob;
 pub use done::{DoneQuestion, ObligationStanding};
 pub use judge::{Gate, GateRun, GateStatus};
 pub(crate) use model::GateModel;
-pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode};
+pub use model::{GateClass, GateClassMatch, GateDecl, GatePlan, GatePlanMode, Lane};
 
 /// The local half of the layer, relative to the repository root. The same constant
 /// `obligations` and `continuity` state, for the same reason: the shell tool decides where
@@ -339,10 +339,11 @@ pub(crate) fn complete(
     convergence: Option<&crate::convergence::ConvergenceReport>,
     closing: Option<&closing::Closing>,
     on_demand: bool,
+    tier: Option<&model::Tier<'_>>,
     now: &str,
     mut findings: Vec<String>,
 ) -> Completion {
-    let plan = model::plan(model, changed, on_demand);
+    let plan = model::plan(model, changed, on_demand, tier);
     let mut gates = judge::judge(model, &plan, runs, hashes, task.map(|t| t.id.as_str()), now);
     judge::report_order(&mut gates);
 
@@ -556,6 +557,7 @@ classes:
             None,
             None,
             false,
+            None,
             "now",
             vec![],
         );
@@ -589,6 +591,7 @@ classes:
             None,
             None,
             false,
+            None,
             "now",
             vec![],
         );
@@ -629,6 +632,7 @@ classes:
             None,
             None,
             false,
+            None,
             "now",
             vec![],
         );
@@ -648,6 +652,7 @@ classes:
             None,
             None,
             false,
+            None,
             "now",
             vec![],
         );
@@ -675,6 +680,7 @@ classes:
             None,
             None,
             false,
+            None,
             "now",
             vec![],
         );

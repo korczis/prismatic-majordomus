@@ -12,7 +12,10 @@ const RATE = /\b429\b|rate.?limit|quota exceeded|too many requests/i;
 export function classifyExit(code, stderr) {
   // eslint-disable-next-line no-control-regex
   const plain = String(stderr ?? '').replace(/\x1b\[[0-9;]*m/g, '');
-  const tail = plain.split('\n').filter(Boolean).slice(-1)[0] ?? '';
+  // The line that names the cause: a client's own `error:` line when it printed one, else
+  // its last. An argument parser ends with usage and "try '--help'", which names nothing.
+  const lines = plain.split('\n').map((l) => l.trim()).filter(Boolean);
+  const tail = lines.find((l) => /^error:/i.test(l)) ?? lines.slice(-1)[0] ?? '';
   if (AUTH.test(plain)) return new AdvisorFailure('auth_failed', 'the client reports an authentication failure');
   if (RATE.test(plain)) return new AdvisorFailure('rate_limited', 'the client reports a rate limit');
   return new AdvisorFailure('error', `the client exited ${code}: ${tail.slice(0, 160)}`);

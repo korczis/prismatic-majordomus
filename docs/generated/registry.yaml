@@ -1,14 +1,20 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 1.0.0-alpha.6
+# Generator: majordomus-cli 1.0.0-alpha.8
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 1.0.0-alpha.6
+generator: majordomus-cli 1.0.0-alpha.8
 modules:
   - id: artifacts
     title: Generated artifacts
     description: "What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."
     stability: behaviorally_verified
+    source: builtin
+    capabilities: 1
+  - id: blackboard
+    title: The peer blackboard
+    description: "Who works on what in this repository, as one projection of the records that already know it: every checkout's board, the mesh journal's sessions, claims, reviews and handovers on every linked machine, and the monitor's newest signals, joined once so that no surface joins them again (ADR 0176). A board peer and a mesh session are one worker only when an explicit identifier joins them; a source that could not be read makes the answer incomplete and says why."
+    stability: experimental
     source: builtin
     capabilities: 1
   - id: brief
@@ -58,7 +64,7 @@ modules:
     description: "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery."
     stability: experimental
     source: builtin
-    capabilities: 2
+    capabilities: 3
   - id: deploy
     title: Deployment
     description: "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation over HTTP and MCP is a read; the one command, assembling the tree a provider receives, writes outside the checkout and is a command line only: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."
@@ -100,7 +106,7 @@ modules:
     description: "What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 4
+    capabilities: 5
   - id: editors
     title: Editor and agent projections
     description: "The files Zed and Google Antigravity read from this repository, derived from the skills and the tracked justfile: what each product supports and on what evidence, the state and content address of every projected file, and what to do about each finding."
@@ -185,6 +191,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: layout
+    title: Layer layout
+    description: "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: what lives where, and what must never appear there (I1102)."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 1
   - id: lifecycle
     title: Session lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
@@ -202,7 +214,7 @@ modules:
     description: "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here."
     stability: experimental
     source: builtin
-    capabilities: 24
+    capabilities: 29
   - id: models
     title: Models
     description: "The model catalogue the distribution declares — vendors, canonical model references, typed capabilities, context windows, lifecycle — and the explainable routing over it: what a stated need selects, what stands behind it, and why every excluded model fell out. Declared data; nothing here calls a model or reads a credential's value."
@@ -627,6 +639,728 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/artifacts.rs
+  - id: blackboard.snapshot
+    module: blackboard
+    kind: query
+    title: "Who works on what, now"
+    description: "Every worker of this repository — attached to a checkout's board or in an active mesh session on any linked machine — with the client it is, what it announced, its checkout, branch, machine and claims (advisory or exclusive); the claims that meet (potential, or confirmed when both are exclusive or the mesh marked one conflicted); the open reviews and untaken handovers; typed relations between workers, verified only when an explicit identifier joins them; the newest signals with the monitor's cursor a follower resumes from; each source with how it was read, and whether the answer is complete. Reads only."
+    input:
+      name: BlackboardInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          checkouts:
+            "$ref": "#/$defs/Checkouts"
+            description: "Which checkouts' boards it covers: `repository` (every one, the default) or `this`."
+            default: repository
+          for:
+            type:
+              - string
+              - "null"
+            description: "Comma-separated names of the reader — a worker (`1b`), a role, a login — so that the signals addressed to it are marked `for_you`. An MCP caller is also its own board session."
+          signals:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "How many of the newest signals of the last hour it carries (default 30, at most 200); 0 reads no signals at all, for a follower that reads them by its own cursor."
+          sources:
+            type:
+              - string
+              - "null"
+            description: "A comma-separated subset of the monitor's sources, `mesh`, `executor` and `github` (default: `mesh,executor`)."
+        description: "The input of `blackboard.snapshot`: how wide the board is, who reads it, and how much of\nwhat happened it carries."
+        title: BlackboardInput
+        "$defs":
+          Checkouts:
+            oneOf:
+              - type: string
+                const: repository
+                description: "Every checkout git registers for the repository, the primary first — a lease read\nand a probe each. The default, because it is the answer this capability gave before\nthere was anything to ask."
+              - type: string
+                const: this
+                description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
+            description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+    output:
+      name: Blackboard
+      schema:
+        type: object
+        properties:
+          at:
+            type: string
+            description: When it was read (RFC 3339).
+          checkout:
+            type: string
+            description: The identity of the checkout whose server answered.
+          head:
+            type:
+              - string
+              - "null"
+            description: "That checkout's HEAD, when it has one."
+          complete:
+            type: boolean
+            description: "Whether every board was read and the mesh, when the repository declares one, could be\nasked. `false` names its reason in `sources`, so that \"nobody is here\" is never what\n\"I could not ask\" reads as. The monitor's sources are reported in `sources` with their\nstate and do not decide it: an empty executor trail or an absent `gh` is no board that\ncould not be read."
+          sources:
+            type: array
+            items:
+              "$ref": "#/$defs/BlackboardSource"
+            description: Each source and how it was read.
+          boards:
+            type: array
+            items:
+              "$ref": "#/$defs/BoardView"
+            description: "Each checkout's board the summary lists: reached or not, with a server or a worker."
+          covered:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many checkouts the answer covers, listed in `boards` or counted in `omitted`."
+          omitted:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "The covered checkouts `boards` does not list, counted by standing (`absent`, `stale`):\nno server, nobody attached, no board."
+          present:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many workers are here now: attached to a board or in an active mesh session."
+          workers:
+            type: array
+            items:
+              "$ref": "#/$defs/BlackboardWorker"
+            description: "Every worker, this checkout's board first, then the other boards, then the mesh."
+          conflicts:
+            type: array
+            items:
+              "$ref": "#/$defs/BlackboardConflict"
+            description: "The claims that meet, at most a hundred, confirmed first."
+          conflicts_total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many conflicts there are in all.
+          reviews:
+            type: array
+            items:
+              "$ref": "#/$defs/BlackboardReview"
+            description: "The review requests nobody has answered, at most fifty."
+          handovers:
+            type: array
+            items:
+              "$ref": "#/$defs/BlackboardHandover"
+            description: "The handovers nobody has taken, at most fifty."
+          relations:
+            type: array
+            items:
+              "$ref": "#/$defs/BlackboardRelation"
+            description: The typed relations between workers.
+          signals:
+            type: array
+            items:
+              "$ref": "#/$defs/MonitorSignal"
+            description: "The newest signals of the last hour, oldest first."
+          for_you:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of them are for the reader.
+          cursor:
+            type: string
+            description: "The monitor's cursor after these signals: where a follower resumes."
+        required:
+          - at
+          - checkout
+          - complete
+          - sources
+          - boards
+          - covered
+          - present
+          - workers
+          - conflicts
+          - conflicts_total
+          - reviews
+          - handovers
+          - relations
+          - signals
+          - for_you
+          - cursor
+        description: "The answer of `blackboard.snapshot`: who works on what in this repository, on every board\nand every linked machine, with what meets and what waits, read once from the records that\nknow it."
+        title: Blackboard
+        "$defs":
+          BlackboardSource:
+            type: object
+            properties:
+              source:
+                type: string
+                description: "`board`, `mesh`, or a monitor source as `monitor.<name>`."
+              state:
+                "$ref": "#/$defs/BlackboardSourceState"
+                description: How it was read.
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why it is not `ok`."
+            required:
+              - source
+              - state
+            description: One source of the blackboard and how it was read.
+          BlackboardSourceState:
+            oneOf:
+              - type: string
+                const: ok
+                description: Read whole.
+              - type: string
+                const: partial
+                description: "Read, and some of what it covers could not be asked."
+              - type: string
+                const: absent
+                description: Not read; the reason says why.
+              - type: string
+                const: skipped
+                description: Not asked for.
+            description: How one source of the blackboard was read.
+          BoardView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The checkout's identity digest, the same value `server.status` reports as\n`checkout_id`. One per checkout, never a path, and stable across a restart."
+              worktree:
+                type: string
+                description: "Where the checkout is. The one thing on this board that a human can act on\ndirectly, and the one thing that survives a reconnect."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch checked out there, when it could be read."
+              this_checkout:
+                type: boolean
+                description: Whether this is the checkout of the server answering the call.
+              standing:
+                "$ref": "#/$defs/ServerStanding"
+                description: "Where its server stands, by the same reading `server.status` reports."
+              url:
+                type:
+                  - string
+                  - "null"
+                description: "The address its lease names, when it has one."
+              attached:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many of this board's peers are attached."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why this board is not in the answer. `None` when it is."
+              stream:
+                type:
+                  - string
+                  - "null"
+                description: "The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board's peers into as `board-pN` sessions. A position such as\n`p1` is that server's alone, so only this stream ties a board peer to its session."
+            required:
+              - id
+              - worktree
+              - this_checkout
+              - standing
+              - attached
+            description: "One checkout's board, as the gather found it.\n\nPresent for every checkout the answer covers, whether or not its board could be read,\nbecause a listing that silently drops the checkouts it could not reach is the shape of\nanswer that made this capability wrong in the first place: a reader would see a short\nboard and conclude nobody else is working here."
+          ServerStanding:
+            oneOf:
+              - type: string
+                const: absent
+                description: "No lease: nothing serves this checkout."
+              - type: string
+                const: starting
+                description: "A lease without an address, young enough that its owner is still binding."
+              - type: string
+                const: ready
+                description: "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+              - type: string
+                const: outdated
+                description: "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+              - type: string
+                const: stale
+                description: "The lease names a server that does not answer, or is not a lease at all."
+            description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+          BlackboardWorker:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "Stable for as long as the worker is here: `board:<checkout>/<peer>` or\n`mesh:<stream>/<session>`. Never a bare peer id."
+              origin:
+                "$ref": "#/$defs/BlackboardOrigin"
+                description: Where it was found.
+              presence:
+                "$ref": "#/$defs/BlackboardPresence"
+                description: Whether it is here now.
+              client:
+                type: string
+                description: "The client's own name, from its MCP initialize or its mesh session."
+              title:
+                type:
+                  - string
+                  - "null"
+                description: "The client's display title or the worker it says it is, when it gave one."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: "The client's version, from its initialize."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: What it said it is doing; absent means it announced nothing.
+              checkout:
+                type:
+                  - string
+                  - "null"
+                description: "The checkout's identity."
+              worktree:
+                type:
+                  - string
+                  - "null"
+                description: "The checkout's path on its machine."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it works on.
+              board_peer:
+                type:
+                  - string
+                  - "null"
+                description: "Its position on its board (`p3`): meaningful on that board only."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: "Its mesh session's key, when it has one."
+              machine:
+                type:
+                  - string
+                  - "null"
+                description: "The machine's display name."
+              runtime:
+                type:
+                  - string
+                  - "null"
+                description: "The runtime (`<node>-<runtime>`) its mesh session belongs to."
+              task:
+                type:
+                  - string
+                  - "null"
+                description: The task its mesh session names.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue its mesh session names.
+              connected_at:
+                type:
+                  - string
+                  - "null"
+                description: When it attached to its board.
+              last_seen_seconds_ago:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: Seconds since its board last heard from it.
+              last_beat_ms:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Milliseconds since its runtime last beat. A beat is liveness, not work done."
+              claims:
+                type: array
+                items:
+                  "$ref": "#/$defs/BlackboardClaim"
+                description: "Its claims, board announcements and live mesh claims alike."
+            required:
+              - key
+              - origin
+              - presence
+              - client
+            description: "One worker of the repository: a board peer, a mesh session, or one of each that an\nexplicit identifier joins."
+          BlackboardOrigin:
+            oneOf:
+              - type: string
+                const: board
+                description: "On a checkout's board: an MCP client attached to that checkout's server."
+              - type: string
+                const: mesh
+                description: "In the mesh journal only: a session no board of this repository holds — another\nmachine's, a task's, or a client's own."
+            description: Where a worker of the blackboard was found.
+          BlackboardPresence:
+            oneOf:
+              - type: string
+                const: attached
+                description: Attached to its board now.
+              - type: string
+                const: departed
+                description: "Gone from its board, kept because it still holds an announcement."
+              - type: string
+                const: active
+                description: An open mesh session whose runtime still beats.
+            description: Whether a worker is here now.
+          BlackboardClaim:
+            type: object
+            properties:
+              name:
+                type:
+                  - string
+                  - "null"
+                description: "The claim's name, when its worker holds several."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "What it is for, in the worker's words."
+              scope:
+                type: array
+                items:
+                  type: string
+                description: The repository paths it names.
+              mode:
+                "$ref": "#/$defs/ClaimMode"
+                description: "`advisory` (an announcement: overlaps are reported) or `exclusive` (a second exclusive\nclaim meeting it is refused while it lives). A board announcement is advisory."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue it is for, when the claim names one."
+              record:
+                type:
+                  - string
+                  - "null"
+                description: "The mesh claim's key, when it is a journal record; a board announcement has none."
+              conflicted:
+                type: boolean
+                description: Whether the mesh found it conflicting with another live claim.
+            required:
+              - scope
+              - mode
+            description: One claim a worker holds.
+          ClaimMode:
+            oneOf:
+              - type: string
+                const: exclusive
+                description: "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it."
+              - type: string
+                const: advisory
+                description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
+          BlackboardConflict:
+            type: object
+            properties:
+              certainty:
+                "$ref": "#/$defs/BlackboardCertainty"
+                description: Potential or confirmed.
+              first:
+                "$ref": "#/$defs/BlackboardClaimRef"
+                description: "The claim that came first in the answer's order."
+              second:
+                "$ref": "#/$defs/BlackboardClaimRef"
+                description: The claim that meets it.
+              paths:
+                type: array
+                items:
+                  "$ref": "#/$defs/OverlapPath"
+                description: "The paths that meet, `yours` the first's and `theirs` the second's."
+            required:
+              - certainty
+              - first
+              - second
+              - paths
+            description: Two claims of two different workers whose scopes meet.
+          BlackboardCertainty:
+            oneOf:
+              - type: string
+                const: potential
+                description: "Two claims meet and at least one of them is advisory: two workers about to touch the\nsame paths, told and not stopped."
+              - type: string
+                const: confirmed
+                description: "Two exclusive claims meet, or the mesh marked one conflicted: what an exclusive claim\nexists to prevent has happened."
+            description: How sure a conflict is.
+          BlackboardClaimRef:
+            type: object
+            properties:
+              worker:
+                type: string
+                description: "The worker's key."
+              claim:
+                type:
+                  - string
+                  - "null"
+                description: "The claim's name, when it has one."
+              record:
+                type:
+                  - string
+                  - "null"
+                description: "The mesh claim's key, when it is a journal record."
+            required:
+              - worker
+            description: "One side of a conflict: a worker and which of its claims."
+          OverlapPath:
+            type: object
+            properties:
+              yours:
+                type: string
+                description: The path the announcing peer claimed.
+              theirs:
+                type: string
+                description: The path the other peer claimed.
+            required:
+              - yours
+              - theirs
+            description: One pair of claims that contain one another.
+          BlackboardReview:
+            type: object
+            properties:
+              key:
+                type: string
+                description: "The review's key in the journal."
+              from:
+                type: string
+                description: "The requesting worker's key, or its session key when no worker holds it."
+              subject:
+                type: string
+                description: What it asks about.
+              reviewer:
+                type:
+                  - string
+                  - "null"
+                description: "Whom it asks, as the request names it; absent means anyone."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it names.
+            required:
+              - key
+              - from
+              - subject
+            description: A review request nobody has answered.
+          BlackboardHandover:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The handover's id."
+              runtime:
+                type: string
+                description: The runtime that published it.
+              name:
+                type:
+                  - string
+                  - "null"
+                description: "Its name, when it has one."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it continues.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it continues.
+              task:
+                type:
+                  - string
+                  - "null"
+                description: The task it continues.
+              created_at:
+                type:
+                  - string
+                  - "null"
+                description: When it was written.
+            required:
+              - id
+              - runtime
+            description: "A handover published to the mesh that nobody has taken. Its body is not repeated here:\n`mesh.state` holds it. The journal names no recipient for a handover — whoever takes it\nis its addressee — so none is inferred here."
+          BlackboardRelation:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/BlackboardRelationKind"
+                description: What it is.
+              evidence:
+                "$ref": "#/$defs/BlackboardEvidence"
+                description: What it rests on.
+              from:
+                type: string
+                description: "A worker's key."
+              to:
+                type: string
+                description: "A worker's key, or the addressee as the record names it when no worker is it."
+              record:
+                type: string
+                description: "The record it rests on: a session or a review key."
+            required:
+              - kind
+              - evidence
+              - from
+              - to
+              - record
+            description: "A typed relation between two workers, or a worker and the addressee a record names."
+          BlackboardRelationKind:
+            oneOf:
+              - type: string
+                const: same_worker
+                description: A board peer and a mesh session that may be one worker.
+              - type: string
+                const: review
+                description: One worker asked another for a review.
+            description: What a relation between two workers is.
+          BlackboardEvidence:
+            oneOf:
+              - type: string
+                const: verified
+                description: An explicit identifier or a journal record joins the two ends.
+              - type: string
+                const: candidate
+                description: "The ends could be joined and nothing proves it: more than one record fits."
+            description: What a relation rests on.
+          MonitorSignal:
+            type: object
+            properties:
+              at:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "When it happened, in Unix seconds, on the clock of whoever recorded it."
+              source:
+                "$ref": "#/$defs/MonitorSource"
+                description: Which record it comes from.
+              kind:
+                type: string
+                description: "What happened, e.g. `session_joined`, `review_requested`, `merged`, `run_failed`."
+              severity:
+                "$ref": "#/$defs/MonitorSeverity"
+                description: How much it asks of the reader.
+              machine:
+                type:
+                  - string
+                  - "null"
+                description: "The machine it happened on, by its display name when the mesh knows it."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: The session that did it.
+              actor:
+                type:
+                  - string
+                  - "null"
+                description: "Who did it: a session's worker or client, the executor's actor, a GitHub login."
+              pr:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: The pull request it is about.
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: The branch it is about.
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: The issue it is about.
+              paths:
+                type: array
+                items:
+                  type: string
+                description: The repository paths it is about.
+              summary:
+                type: string
+                description: "What happened, in one line of at most 200 characters."
+              for_you:
+                type: boolean
+                description: "Whether it names the reader: a review asked of them, an answer to their request, a\nhandover or a text that names them."
+                default: false
+              link:
+                type:
+                  - string
+                  - "null"
+                description: "Where to read more, when there is a page for it."
+            required:
+              - at
+              - source
+              - kind
+              - severity
+              - summary
+            description: "One thing that happened, as one line a person or an agent can act on."
+          MonitorSource:
+            oneOf:
+              - type: string
+                const: mesh
+                description: "The mesh journal: sessions on every linked machine (this checkout's board among\nthem), their claims, handovers and reviews."
+              - type: string
+                const: executor
+                description: "The executor's trail: the pull-request lane's merges, refreshes, repairs, closures\nand failures."
+              - type: string
+                const: github
+                description: "GitHub: pull requests opened, merged and closed, and finished workflow runs."
+            description: Where a signal comes from.
+          MonitorSeverity:
+            oneOf:
+              - type: string
+                const: info
+                description: Something happened; nothing is asked.
+              - type: string
+                const: attention
+                description: "Something failed or waits for someone: worth a look."
+              - type: string
+                const: action
+                description: "Something waits for the reader: a review asked of them, a handover for them."
+            description: How much a signal asks of its reader.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::blackboard
+    exposure:
+      mcp:
+        tool: majordomus_blackboard
+      http:
+        method: GET
+        path: /api/v1/blackboard
+      cli:
+        path:
+          - blackboard
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - peers
+      - mesh
+      - monitor
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/blackboard.rs
   - id: brief.session
     module: brief
     kind: query
@@ -7799,6 +8533,220 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/delivery.rs
+  - id: delivery.trends
+    module: delivery
+    kind: query
+    title: How CI runs trend
+    description: "The series of CI runs the pages publication recorded in this checkout at site/data/trends.json, oldest first: for each run its wall time, the time its jobs waited for a runner, its jobs, and the coverage it measured (lines, functions and regions as covered over total with the percentage they give); and the median run and queue time of every job over the series, the slowest first. A read of one file: nothing is fetched, derived or written, and no committed file depends on it. A figure the file does not give is absent, never zero, and a run that measured no coverage has none. `recorded: false` with the reason when the file is absent, is not JSON, or is not the trends/v1 series."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: TrendsReport
+      schema:
+        type: object
+        properties:
+          recorded:
+            type: boolean
+            description: Whether the checkout holds a series of this schema.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why it does not, when it does not."
+          generated_from:
+            type: array
+            items:
+              type: string
+            description: "The ids of the runs the series was written from, as the file gives them."
+          runs:
+            type: array
+            items:
+              "$ref": "#/$defs/TrendRun"
+            description: "The runs, oldest first."
+          job_medians:
+            type: array
+            items:
+              "$ref": "#/$defs/JobMedian"
+            description: "The medians of the jobs, the slowest first."
+        required:
+          - recorded
+          - generated_from
+          - runs
+          - job_medians
+        description: "The series, or why this checkout holds none."
+        title: TrendsReport
+        "$defs":
+          TrendRun:
+            type: object
+            properties:
+              run_id:
+                type: string
+                description: "The forge's id of the run, as text."
+              head_sha:
+                type:
+                  - string
+                  - "null"
+                description: The commit the run judged.
+              started_at:
+                type:
+                  - string
+                  - "null"
+                description: "When the run started, as the file wrote it."
+              conclusion:
+                type:
+                  - string
+                  - "null"
+                description: How the run ended.
+              wall_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds from the run's start to its end."
+              queued_seconds_total:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds its jobs waited for a runner, summed."
+              jobs:
+                type: array
+                items:
+                  "$ref": "#/$defs/TrendJob"
+                description: Its jobs.
+              coverage:
+                anyOf:
+                  - "$ref": "#/$defs/TrendCoverage"
+                  - type: "null"
+                description: "The coverage it measured, or `None` when it measured none."
+            required:
+              - run_id
+              - jobs
+            description: One run of the series.
+          TrendJob:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The job's name."
+              queued_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds it waited for a runner, when the file gives them."
+              run_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "Seconds it ran, when the file gives them."
+              conclusion:
+                type:
+                  - string
+                  - "null"
+                description: "How it ended, when the file says."
+            required:
+              - name
+            description: One job of a run.
+          TrendCoverage:
+            type: object
+            properties:
+              lines:
+                anyOf:
+                  - "$ref": "#/$defs/TrendRatio"
+                  - type: "null"
+                description: Source lines.
+              functions:
+                anyOf:
+                  - "$ref": "#/$defs/TrendRatio"
+                  - type: "null"
+                description: Functions.
+              regions:
+                anyOf:
+                  - "$ref": "#/$defs/TrendRatio"
+                  - type: "null"
+                description: Regions.
+            description: "The coverage a run measured; each kind is `None` when the file does not give it."
+          TrendRatio:
+            type: object
+            properties:
+              covered:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What the run covered: lines, functions or regions."
+              total:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What there was to cover.
+              percent:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "`covered` over `total` in percent, or `None` when there was nothing to cover."
+            required:
+              - covered
+              - total
+            description: "One covered-over-total figure of a run, with the percentage the two give."
+          JobMedian:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The job's name."
+              runs:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: How many runs the median is over.
+              median_run_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The median of its run time, in seconds."
+              median_queued_seconds:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The median of its queue time, in seconds."
+            required:
+              - name
+            description: The median of one job over the series.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::delivery
+    exposure:
+      http:
+        method: GET
+        path: /api/v1/delivery/trends
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - delivery
+      - ci
+      - trends
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/delivery.rs
   - id: deploy.check
     module: deploy
     kind: query
@@ -12486,6 +13434,21 @@ capabilities:
                 items:
                   type: string
                 description: "Subtrees below this one that owe nothing: carried, not authored here."
+              layout_lifecycle:
+                type:
+                  - string
+                  - "null"
+                description: "The lifecycle of what lives here, when the contract declares its layout (I2870)."
+              layout_holds:
+                type: array
+                items:
+                  type: string
+                description: "The kinds the directory holds, when the contract says."
+              layout_excludes:
+                type: array
+                items:
+                  type: string
+                description: "Lifecycles or kinds that must never appear here, when the contract says."
             required:
               - id
               - path
@@ -15056,6 +16019,281 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/economics.rs
+  - id: economics.tasks
+    module: economics
+    kind: query
+    title: "Each task's delivery economics"
+    description: "One record per task, folded from the ledger of every checkout `git worktree list` reports and the archives a ledger rotation left: its issue and intent, checkout and branch, first start, last finish or refusal, wall seconds, refusal count, and the episodes that carried it with their spans. Interventions, CI reruns, spend and acceptance are present on every record as not_observed, each with the reason and the issue that will supply it. Lists every ledger read with its line and skipped-line counts and every checkout not read; an optional since/until window filters by each task's start."
+    input:
+      name: TaskEconomicsQuery
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          since:
+            type:
+              - string
+              - "null"
+            description: "Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`)."
+          until:
+            type:
+              - string
+              - "null"
+            description: "Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`)."
+        description: "Which tasks to answer. A window filters by each task's `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\"{\"since\":\"2026-10-21T00:00:00Z\"}\"#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\"2026-10-21T00:00:00Z\"));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::<TaskEconomicsQuery>(\"{}\").unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::<TaskEconomicsQuery>(r#\"{\"after\":\"x\"}\"#).is_err());\n```"
+        title: TaskEconomicsQuery
+    output:
+      name: TaskEconomicsList
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many tasks are answered: the number of distinct task ids within the window."
+          window:
+            "$ref": "#/$defs/TaskEconomicsQuery"
+            description: "The window the tasks were filtered by, as given."
+          tasks:
+            type: array
+            items:
+              "$ref": "#/$defs/TaskEconomicsRecord"
+            description: "One record per task, in the order the tasks started."
+          ledgers:
+            type: array
+            items:
+              "$ref": "#/$defs/TaskEconomicsLedger"
+            description: "Every ledger file read, with its line and skipped-line counts."
+          unread:
+            type: array
+            items:
+              "$ref": "#/$defs/TaskEconomicsUnread"
+            description: "Every checkout whose ledger could not be read, and why."
+        required:
+          - count
+          - window
+          - tasks
+          - ledgers
+          - unread
+        description: "Every task the ledgers read carry, and what was read to answer it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsList, TaskEconomicsQuery, TaskEconomicsSource};\nlet text = r#\"{\"ts\":\"2026-10-21T10:00:00Z\",\"event\":\"task.started\",\"head\":\"h\",\"branch\":\"b\",\"by\":\"me\",\"session\":\"s-1\",\"task_id\":\"t-1\"}\"#;\nlet source = TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", text);\nlet list: TaskEconomicsList = fold(vec![source], &TaskEconomicsQuery::default());\nassert_eq!((list.count, list.tasks.len()), (1, 1));\nassert_eq!(list.ledgers[0].path, \"ledger.jsonl\");\nassert!(list.unread.is_empty(), \"fold reads no checkout, so it names none unread\");\n```"
+        title: TaskEconomicsList
+        "$defs":
+          TaskEconomicsQuery:
+            type: object
+            additionalProperties: false
+            properties:
+              since:
+                type:
+                  - string
+                  - "null"
+                description: "Answer only tasks started at or after this time (`YYYY-MM-DDTHH:MM:SSZ`)."
+              until:
+                type:
+                  - string
+                  - "null"
+                description: "Answer only tasks started before this time (`YYYY-MM-DDTHH:MM:SSZ`)."
+            description: "Which tasks to answer. A window filters by each task's `task.started` time, so a task\nwith no start line in the ledgers read is answered only when no window is given.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsQuery;\nlet q: TaskEconomicsQuery = serde_json::from_str(r#\"{\"since\":\"2026-10-21T00:00:00Z\"}\"#).unwrap();\nassert_eq!(q.since.as_deref(), Some(\"2026-10-21T00:00:00Z\"));\nassert!(q.until.is_none());\nassert_eq!(serde_json::from_str::<TaskEconomicsQuery>(\"{}\").unwrap(), TaskEconomicsQuery::default());\n// a misspelt bound is refused, never read as no bound\nassert!(serde_json::from_str::<TaskEconomicsQuery>(r#\"{\"after\":\"x\"}\"#).is_err());\n```"
+          TaskEconomicsRecord:
+            type: object
+            properties:
+              task_id:
+                type: string
+                description: "The task's id, as `start` wrote it."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue the task was started under, when it named one."
+              intent:
+                type:
+                  - string
+                  - "null"
+                description: "The intent the task was started under, when it named one."
+              checkout:
+                type: string
+                description: The checkout whose ledger carries the task.
+              branch:
+                type: string
+                description: The branch the task started on.
+              state:
+                "$ref": "#/$defs/TaskEconomicsState"
+                description: "`finished` once a `task.finished` line is read, `open` otherwise."
+              outcome:
+                type: string
+                description: "The outcome as recorded: the finish's outcome, or `active` / `handed_over` while open."
+              started_at:
+                type:
+                  - string
+                  - "null"
+                description: "The time of the task's first `task.started` line."
+              ended_at:
+                type:
+                  - string
+                  - "null"
+                description: "The time of the task's last `task.finished` line, or of its last `task.refused` line\nwhile it has none."
+              wall_seconds:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: "Seconds from `started_at` to `ended_at`; absent while either is."
+              refusals:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times `finish` refused the task."
+              episodes:
+                type: array
+                items:
+                  "$ref": "#/$defs/TaskEconomicsEpisode"
+                description: "The episodes that carried the task, each with the span of its lines about it."
+              interventions:
+                "$ref": "#/$defs/TaskEconomicsField"
+                description: Human interventions during the task.
+              ci_reruns:
+                "$ref": "#/$defs/TaskEconomicsField"
+                description: "CI runs of the task's work that were rerun."
+              spend:
+                "$ref": "#/$defs/TaskEconomicsField"
+                description: What the task cost.
+              accepted:
+                "$ref": "#/$defs/TaskEconomicsField"
+                description: "Whether the task's result was accepted."
+            required:
+              - task_id
+              - checkout
+              - branch
+              - state
+              - outcome
+              - refusals
+              - episodes
+              - interventions
+              - ci_reruns
+              - spend
+              - accepted
+            description: "One task's delivery economics: who carried it, when, how often `finish` refused it, and\nthe fields nothing observes yet, each saying why it has no value.\n\n```\nuse majordomus_cli::economics::tasks::{\n    fold, TaskEconomicsRecord, TaskEconomicsSource, TaskEconomicsState,\n};\nlet text = r#\"{\"ts\":\"2026-10-21T10:00:00Z\",\"event\":\"task.started\",\"head\":\"h\",\"branch\":\"b\",\n    \"by\":\"me\",\"session\":\"s-1\",\"task_id\":\"t-1\",\"issue\":\"I3376\"}\"#;\nlet source = TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", &text.replace('\\n', \"\"));\nlet list = fold(vec![source], &Default::default());\nlet r: &TaskEconomicsRecord = &list.tasks[0];\nassert_eq!((r.task_id.as_str(), r.branch.as_str()), (\"t-1\", \"b\"));\nassert_eq!(r.state, TaskEconomicsState::Open);\nassert_eq!(r.outcome, \"active\");\nassert_eq!(r.wall_seconds, None, \"an open task with no refusal has no end\");\nassert_eq!(r.issue.as_deref(), Some(\"I3376\"));\nassert!(r.spend.reason.contains(\"I3379\"));\n```"
+          TaskEconomicsState:
+            oneOf:
+              - type: string
+                const: open
+                description: "No `task.finished` line was read for the task."
+              - type: string
+                const: finished
+                description: "A `task.finished` line was read for the task."
+            description: "Whether a task has finished, as the command line, MCP and HTTP spell it.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsState;\nassert_eq!(serde_json::to_value(TaskEconomicsState::Open).unwrap(), \"open\");\nassert_eq!(serde_json::to_value(TaskEconomicsState::Finished).unwrap(), \"finished\");\n```"
+          TaskEconomicsEpisode:
+            type: object
+            properties:
+              session:
+                type: string
+                description: "The episode's session id."
+              provider:
+                type: string
+                description: "The provider that ran the episode, when the ledger names it. Left out of the answer\nwhen it does not, so it reads back as empty: without `default` the text form, which\nreads the capability's JSON, refused every episode whose provider is unknown."
+              first_at:
+                type: string
+                description: "The time of the episode's first line about the task."
+              last_at:
+                type: string
+                description: "The time of the episode's last line about the task."
+              lines:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many of the episode's lines are about the task."
+            required:
+              - session
+              - first_at
+              - last_at
+              - lines
+            description: "One episode that carried a task, with the span of the lines it wrote about it.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsEpisode, TaskEconomicsSource};\nlet line = |ts: &str, event: &str, session: &str| {\n    format!(r#\"{{\"ts\":\"{ts}\",\"event\":\"{event}\",\"head\":\"h\",\"branch\":\"b\",\"by\":\"me\",\"session\":\"{session}\",\"task_id\":\"t-1\"}}\"#)\n};\nlet text = [\n    line(\"2026-10-21T10:00:00Z\", \"task.started\", \"s-1\"),\n    line(\"2026-10-21T11:00:00Z\", \"task.finished\", \"s-2\"),\n]\n.join(\"\\n\");\nlet list = fold(vec![TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", &text)], &Default::default());\nlet episodes: &[TaskEconomicsEpisode] = &list.tasks[0].episodes;\nassert_eq!(episodes.len(), 2, \"two session stamps are two episodes\");\nassert_eq!((episodes[1].session.as_str(), episodes[1].lines), (\"s-2\", 1));\nassert_eq!(episodes[1].first_at, \"2026-10-21T11:00:00Z\");\n```"
+          TaskEconomicsField:
+            type: object
+            properties:
+              status:
+                "$ref": "#/$defs/TaskEconomicsFieldStatus"
+                description: "Always `not_observed` until the field's supplier lands."
+              reason:
+                type: string
+                description: "Why there is no value, naming what will supply it."
+            required:
+              - status
+              - reason
+            description: "A field of the record that nothing observes yet, carrying the reason and the issue that\nwill supply it in place of a value.\n\n```\nuse majordomus_cli::economics::tasks::{fold, TaskEconomicsField, TaskEconomicsSource};\nlet text = r#\"{\"ts\":\"2026-10-21T10:00:00Z\",\"event\":\"task.started\",\"head\":\"h\",\"branch\":\"b\",\"by\":\"me\",\"task_id\":\"t-1\"}\"#;\nlet list = fold(vec![TaskEconomicsSource::parse(\"repo\", \"ledger.jsonl\", text)], &Default::default());\nlet field: &TaskEconomicsField = &list.tasks[0].ci_reruns;\nlet v = serde_json::to_value(field).unwrap();\nassert_eq!(v[\"status\"], \"not_observed\");\nassert!(field.reason.contains(\"I3378\"), \"{}\", field.reason);\n```"
+          TaskEconomicsFieldStatus:
+            oneOf:
+              - type: string
+                const: not_observed
+                description: "Nothing observes the field yet: there is no value, which is not a zero."
+            description: "Whether a field holds an observation. Its one variant says there is none, which is not a\nzero.\n\n```\nuse majordomus_cli::economics::tasks::TaskEconomicsFieldStatus;\nlet v = serde_json::to_value(TaskEconomicsFieldStatus::NotObserved).unwrap();\nassert_eq!(v, \"not_observed\");\n```"
+          TaskEconomicsLedger:
+            type: object
+            properties:
+              checkout:
+                type: string
+                description: The checkout the ledger belongs to.
+              path:
+                type: string
+                description: "The file, relative to the checkout."
+              lines:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many lines were read as ledger entries.
+              skipped:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many non-empty lines could not be read as ledger entries.
+            required:
+              - checkout
+              - path
+              - lines
+              - skipped
+            description: "One ledger file that was read, with how many of its lines were entries and how many\ncould not be read as one.\n\n```\nuse majordomus_cli::economics::tasks::{TaskEconomicsLedger, TaskEconomicsSource};\nlet s = TaskEconomicsSource::parse(\"repo\", \".ai/local/state/ledger.jsonl\", \"{}\\nnot json\\n\");\nlet ledger: &TaskEconomicsLedger = &s.ledgers[0];\nassert_eq!(ledger.checkout, \"repo\");\nassert_eq!(ledger.path, \".ai/local/state/ledger.jsonl\");\nassert_eq!((ledger.lines, ledger.skipped), (0, 2), \"neither line is a ledger entry\");\n```"
+          TaskEconomicsUnread:
+            type: object
+            properties:
+              checkout:
+                type: string
+                description: The checkout.
+              reason:
+                type: string
+                description: Why its ledger was not read.
+            required:
+              - checkout
+              - reason
+            description: "A checkout whose ledger was not read, and the reason, so a missing ledger is never read\nas a checkout with no tasks.\n\n```\nuse majordomus_cli::economics::tasks::{tasks, TaskEconomicsQuery, TaskEconomicsUnread};\nlet dir = tempfile::tempdir().unwrap();\nlet list = tasks(dir.path(), &TaskEconomicsQuery::default());\nlet unread: &TaskEconomicsUnread = &list.unread[0];\nassert_eq!(unread.checkout, dir.path().display().to_string());\nassert_eq!(unread.reason, \"no ledger under .ai/local/state\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::economics
+    exposure:
+      mcp:
+        tool: majordomus_economics_tasks
+      http:
+        method: GET
+        path: /api/v1/economics/tasks
+      cli:
+        path:
+          - economics
+          - tasks
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - economics
+      - evidence
+      - delivery
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/economics.rs
   - id: editors.status
     module: editors
     kind: query
@@ -15583,6 +16821,14 @@ capabilities:
               - type: "null"
             description: "Its public documentation page, derived from the repository's publication declaration\n(`site/data/publication.toml`) and the site's `base_url` by the same function the site\ngenerator writes the page with. Null when the repository declares no publication or\ndoes not declare this kind; a kind declared as not published carries the reason."
             default: null
+          history:
+            "$ref": "#/$defs/History"
+            description: "The commits that changed its file, read from git when it is read and never stored in\nthe index (I3314)."
+            default:
+              applicable: false
+              commits: []
+              bound: 0
+              cut: false
         required:
           - uri
           - id
@@ -15801,6 +17047,58 @@ capabilities:
               - projection
               - declared_in
             description: "The public documentation page of one entity, as its kind's publication decision derives\nit. Every surface that shows an entity carries this value and renders it; none of them\nderives a public address of its own.\n\n```\nuse majordomus_cli::entity::Documentation;\n\nlet d = Documentation {\n    projection: \"entity\".into(),\n    route: Some(\"/adrs/adr-0056/\".into()),\n    url: Some(\"https://majordomus.dev/adrs/adr-0056/\".into()),\n    reason: None,\n    declared_in: \"site/data/publication.toml\".into(),\n};\nlet wire = serde_json::to_value(&d).unwrap();\nassert_eq!(wire[\"url\"], serde_json::json!(\"https://majordomus.dev/adrs/adr-0056/\"));\n// a field that does not apply is absent, not an empty string\nassert!(wire.get(\"reason\").is_none());\n```"
+          History:
+            type: object
+            properties:
+              applicable:
+                type: boolean
+                description: "Whether a history applies. False when git cannot answer for the file or no commit\nhas touched it yet; `reason` says which. Never an empty history that reads as none."
+              reason:
+                type:
+                  - string
+                  - "null"
+                description: "Why no history applies, when none does."
+              last:
+                anyOf:
+                  - "$ref": "#/$defs/HistoryCommit"
+                  - type: "null"
+                description: "The commit that last changed the file: the first of `commits`."
+              commits:
+                type: array
+                items:
+                  "$ref": "#/$defs/HistoryCommit"
+                description: "The commits that changed it, newest first, at most `bound`."
+                default: []
+              bound:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The most commits listed.
+              cut:
+                type: boolean
+                description: "Whether more commits changed the file than `bound` lets through."
+            required:
+              - applicable
+              - bound
+              - cut
+            description: "The commits that changed an object's file, newest first (I3314). An object that is one\nmember of a collection file has the file's history.\n\nA history that does not apply says why rather than reading as an empty one, and the\nmembers it has no value for are left out of its JSON:\n\n```\nuse majordomus_cli::capability::builtin::entity::{History, HistoryCommit};\nlet none = History {\n    reason: Some(\"no commit has changed this file yet\".into()),\n    bound: 20,\n    ..History::default()\n};\nlet json = serde_json::to_value(&none).unwrap();\nassert_eq!(json[\"applicable\"], false);\nassert_eq!(json[\"reason\"], \"no commit has changed this file yet\");\nassert!(json.get(\"last\").is_none(), \"no last commit is written, not a null\");\n\nlet commit = HistoryCommit {\n    commit: \"0123456789abcdef0123456789abcdef01234567\".into(),\n    date: \"2026-10-21T12:00:00+00:00\".into(),\n    subject: \"feat(entity): the entity page lists its history\".into(),\n};\nlet some = History {\n    applicable: true,\n    last: Some(commit.clone()),\n    commits: vec![commit],\n    bound: 20,\n    ..History::default()\n};\nlet back: History = serde_json::from_value(serde_json::to_value(&some).unwrap()).unwrap();\nassert_eq!(back.last, back.commits.first().cloned());\nassert!(back.reason.is_none() && !back.cut);\n```"
+          HistoryCommit:
+            type: object
+            properties:
+              commit:
+                type: string
+                description: The full commit id.
+              date:
+                type: string
+                description: "The committer date, ISO 8601."
+              subject:
+                type: string
+                description: The first line of its message.
+            required:
+              - commit
+              - date
+              - subject
+            description: "One commit that changed an entity's file, as `git log --follow` named it: what a reader\nfollows from the entity page to the change itself, newest first in `History::commits`.\n\n```\nuse majordomus_cli::capability::builtin::entity::HistoryCommit;\nlet c: HistoryCommit = serde_json::from_str(\n    r#\"{\"commit\":\"0123456789abcdef0123456789abcdef01234567\",\n        \"date\":\"2026-10-21T12:00:00+00:00\",\n        \"subject\":\"fix(layout): a copy is named with its original\"}\"#,\n)\n.unwrap();\nassert_eq!(c.subject, \"fix(layout): a copy is named with its original\");\n// every member is required: a commit without its date or subject is not one\nassert!(serde_json::from_str::<HistoryCommit>(r#\"{\"commit\":\"0123\"}\"#).is_err());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::entity
@@ -22307,6 +23605,11 @@ capabilities:
               - boolean
               - "null"
             description: "Also plan the gates the model marks on-demand. Off by default, because a plan that\nselects a gate whose runner is unavailable is a plan whose verdict never arrives."
+          tier:
+            type:
+              - string
+              - "null"
+            description: "Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does\nnot run is left out, and nothing implies or requires it back. Absent plans every lane.\nA model that declares no tiers, or a tier it does not declare, is refused as invalid\ninput, in the words `scripts/ci-plan --tier` refuses it with."
         description: "```\nuse majordomus_cli::capability::builtin::gates::CompletionInput;\n\n// the default asks about the active task's own change set\nlet mine = CompletionInput::default();\nassert!(mine.changed.is_none() && mine.base.is_none());\n\n// and a caller may name the change instead, which is how a test drives it\nlet named = CompletionInput {\n    changed: Some(vec![\"docs/CLI.md\".into()]),\n    ..Default::default()\n};\nassert_eq!(named.changed.unwrap(), [\"docs/CLI.md\"]);\n```\nWhich change to judge completion over."
         title: CompletionInput
     output:
@@ -22806,6 +24109,18 @@ capabilities:
                   type: string
                 description: Gates this one cannot run without.
                 default: []
+              subsumed-by:
+                type:
+                  - string
+                  - "null"
+                description: "The one other gate that runs everything this gate runs: a plan that selects that gate\ndoes not select this one beside it, and says so. It is how a gate that exists for the\nplans that do not run the suite (the case gates of the record shapes) stops running\nthe same cases a second time in a plan that does. It is decided last, after `implies`\nand `requires` have closed the selection, so a subsuming gate that was only implied\nstill subsumes; a subsuming gate the plan does not select subsumes nothing.\n\n```\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"plan-record-cases\",\n    \"job\": \"rust\",\n    \"runs\": \"bash test/run.sh 26_ci_wiring\",\n    \"subsumed-by\": \"shell-suite\"\n}))\n.unwrap();\n// the field is spelled with a hyphen in the model, as `on-demand` and `at-finish` are\nassert_eq!(decl.subsumed_by.as_deref(), Some(\"shell-suite\"));\n```"
+                default: null
+              lane:
+                anyOf:
+                  - "$ref": "#/$defs/Lane"
+                  - type: "null"
+                description: "The lane the gate's verdict belongs to (ADR 0186). Optional in a model that declares\nno `tiers`, which is read exactly as before; required of every gate once it does. A\nplan asked at a tier leaves out every gate whose lane the tier does not run (I3947).\n\n```\nuse majordomus_cli::gates::{GateDecl, Lane};\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"shell-suite\",\n    \"job\": \"suite\",\n    \"runs\": \"bash test/run.sh\",\n    \"lane\": \"proof\"\n}))\n.unwrap();\nassert_eq!(decl.lane, Some(Lane::Proof));\n```"
+                default: null
               inputs:
                 type: array
                 items:
@@ -22817,6 +24132,18 @@ capabilities:
               - runs
               - inputs
             description: "```\nuse majordomus_cli::capability::builtin::gates::GateModelEntry;\nuse majordomus_cli::gates::GateDecl;\n\nlet decl: GateDecl = serde_json::from_value(serde_json::json!({\n    \"id\": \"site-check\",\n    \"job\": \"site\",\n    \"runs\": \"scripts/site-check\",\n    \"summary\": \"the site is whole\"\n}))\n.unwrap();\nlet entry = GateModelEntry { declared: decl, inputs: vec![\"site/**\".into()] };\n// the declaration as the file carries it, plus the paths its evidence is taken over —\n// derived from the classes that select it, never written down a second time\nassert_eq!(entry.declared.id, \"site-check\");\nassert_eq!(entry.inputs, [\"site/**\"]);\n```\nOne gate of the model, with what the model implies about it."
+          Lane:
+            oneOf:
+              - type: string
+                const: feedback
+                description: "Cheap, fast and decisive: a pull request's required verdict needs it green."
+              - type: string
+                const: proof
+                description: "The heavy half, which judges the combined top before it lands."
+              - type: string
+                const: release
+                description: A gate only a release asks.
+            description: "```\nuse majordomus_cli::gates::Lane;\n\n// the three lanes of ADR 0186, spelled as the model spells them\nlet lane: Lane = serde_json::from_value(serde_json::json!(\"feedback\")).unwrap();\nassert_eq!(lane, Lane::Feedback);\nassert_eq!(Lane::Proof.as_str(), \"proof\");\n// a word that is none of the three is no lane\nassert!(serde_json::from_value::<Lane>(serde_json::json!(\"fast\")).is_err());\n```\nThe time horizon a gate's verdict belongs to (ADR 0186). The model's `tiers` name, for\neach moment a plan is asked at, the lanes it runs."
           GateClass:
             type: object
             properties:
@@ -23854,7 +25181,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "On `merge_succeeded`: the merge commit, once it is read."
+                description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
             required:
               - at
               - actor
@@ -25360,7 +26687,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. A head that contains master is landed by a\nfast-forward instead (`super::drain::landing_method`); this is the method of one that\ncarries master without containing it. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
               merge_settings_unread:
                 type: boolean
                 description: "Whether the repository's merge settings went unread (the forge's answer carried none\nof them): `merge_method` is then `None` because nothing is known, not because a merge\ncommit is refused, and a held pull request says `merge_settings_unread` (I2966). Absent\nin a policy recorded before it was read, which read them."
@@ -26418,7 +27745,7 @@ capabilities:
                 type:
                   - string
                   - "null"
-                description: "On `merge_succeeded`: the merge commit, once it is read."
+                description: "On `merge_succeeded`: the merge commit, once it is read; the head itself after a\nfast-forward."
             required:
               - at
               - actor
@@ -31286,6 +32613,102 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: layout.check
+    module: layout
+    kind: query
+    title: Refuse a misplaced artifact
+    description: "Every path a declared layout excludes, named with the contract it violates: a tracked file under the tracked half that git's ignore rules match (state that does not travel, under a contract that excludes cache or runtime), and a file under the local half that is a byte copy of a tracked canonical file or declares the schema of a kind share/kinds.yaml calls canonical (under the manifest's `local.excludes: [canonical]`). Only what a contract declares is judged. Reads git and the local half's files; no build and no network."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: LayoutReport
+      schema:
+        type: object
+        properties:
+          measured:
+            type: boolean
+            description: "Whether the halves could be read at all. `false` is not a pass."
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why they could not, when they could not."
+          checked:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many paths were judged.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/LayoutFinding"
+            description: "Every path a contract excludes, in canonical order. Empty is the passing answer."
+          passes:
+            type: boolean
+            description: "`true` when the halves were read and nothing was found."
+        required:
+          - measured
+          - checked
+          - findings
+          - passes
+        description: "The answer of the layout check: whether the halves were read, how many paths were\njudged, and every path a contract excludes. A report that could not read the halves\nnever passes, so silence about a tree nobody measured cannot read as a clean tree.\n\n```\nuse majordomus_cli::layout::LayoutReport;\nlet clean = LayoutReport::of(true, None, 12, Vec::new());\nassert!(clean.passes);\nassert_eq!(clean.checked, 12);\nlet unread = LayoutReport::of(false, Some(\"git could not start\".into()), 0, Vec::new());\nassert!(!unread.passes, \"nothing found because nothing was read\");\nassert_eq!(unread.reason.as_deref(), Some(\"git could not start\"));\n```"
+        title: LayoutReport
+        "$defs":
+          LayoutFinding:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The path, repository-relative."
+              contract:
+                type: string
+                description: "The contract it violates: a context document's id, or `manifest local`."
+              excludes:
+                type: string
+                description: What the contract excludes that this path is.
+              reason:
+                type: string
+                description: "What the path was found to be, and how."
+            required:
+              - path
+              - contract
+              - excludes
+              - reason
+            description: "One misplaced artifact: a path found in a half whose declared layout excludes it, with the\ncontract that excludes it and why, so a refusal names what to move and where it belongs.\n\nIt travels as the JSON of the `layout.check` capability, so its member names are the\nwire contract every projection reads:\n\n```\nuse majordomus_cli::layout::LayoutFinding;\nlet finding = LayoutFinding {\n    path: \".ai/local/notes/rule.md\".into(),\n    contract: \"manifest local\".into(),\n    excludes: \"canonical\".into(),\n    reason: \"a copy of .ai/repo/rules/rule.md\".into(),\n};\nlet json = serde_json::to_value(&finding).unwrap();\nassert_eq!(json[\"contract\"], \"manifest local\");\nassert_eq!(json[\"excludes\"], \"canonical\");\nlet back: LayoutFinding = serde_json::from_value(json).unwrap();\nassert_eq!(back, finding);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::layout
+    exposure:
+      mcp:
+        tool: majordomus_layout_check
+      http:
+        method: GET
+        path: /api/v1/layout/check
+      cli:
+        path:
+          - layout
+          - check
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - layout
+      - governance
+      - two-folder
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/layout.rs
   - id: lifecycle.closed
     module: lifecycle
     kind: query
@@ -32255,6 +33678,876 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/mcp.rs
+  - id: mesh.build_cache.ensure
+    module: mesh
+    kind: command
+    title: "Restore an install before its command, and save it after"
+    description: "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952)."
+    input:
+      name: BuildCacheEnsureInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          kind:
+            "$ref": "#/$defs/Kind"
+            description: "What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`."
+          dir:
+            type:
+              - string
+              - "null"
+            description: "The directory holding the lockfile, relative to the repository; absent names the only\none the repository tracks, or the one the command was started in."
+          command:
+            type: array
+            items:
+              type: string
+            description: "The install or build command, run in that directory on a miss; required for npm and\nmix, optional for a cargo build directory."
+            default: []
+        required:
+          - kind
+        description: "The input of `mesh.build_cache.ensure`."
+        title: BuildCacheEnsureInput
+        "$defs":
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+    output:
+      name: BuildCacheEnsureReport
+      schema:
+        type: object
+        properties:
+          kind:
+            "$ref": "#/$defs/Kind"
+            description: What is cached.
+          dir:
+            type: string
+            description: "The directory holding the lockfile, relative to the repository."
+          target:
+            type: string
+            description: Where the content lives.
+          key:
+            type:
+              - string
+              - "null"
+            description: "The key, when one could be derived."
+          source:
+            "$ref": "#/$defs/Source"
+            description: Where the content came from.
+          command:
+            anyOf:
+              - "$ref": "#/$defs/CommandRun"
+              - type: "null"
+            description: "The command, when it ran."
+          saved:
+            type: array
+            items:
+              "$ref": "#/$defs/Level"
+            description: The levels a new archive was saved to.
+          notes:
+            type: array
+            items:
+              type: string
+            description: "Every miss, refusal and skip, in the order they happened."
+          local:
+            "$ref": "#/$defs/LocalLevel"
+            description: The local level after this run.
+        required:
+          - kind
+          - dir
+          - target
+          - source
+          - saved
+          - notes
+          - local
+        description: "What `mesh build-cache ensure` did."
+        title: BuildCacheEnsureReport
+        "$defs":
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+          Source:
+            oneOf:
+              - type: string
+                const: bypassed
+                description: "`MAJORDOMUS_BUILD_CACHE=off`: no level was asked, the command ran."
+              - type: string
+                const: uncached
+                description: "No key could be derived (a toolchain did not answer): the command ran uncached."
+              - type: string
+                const: in_place
+                description: "The marker already named this key: nothing was done."
+              - type: string
+                const: local
+                description: "Restored from this machine's local level."
+              - type: string
+                const: store
+                description: Restored from the store.
+              - type: string
+                const: command
+                description: "Every level missed: the command made it."
+              - type: string
+                const: nothing
+                description: Nothing was restored and no command was given.
+            description: "Where the target's content came from."
+          CommandRun:
+            type: object
+            properties:
+              argv:
+                type: array
+                items:
+                  type: string
+                description: What ran.
+              exit:
+                type:
+                  - integer
+                  - "null"
+                format: int32
+                description: Its exit code; absent when it could not start or a signal ended it.
+            required:
+              - argv
+            description: "The command, and how it ended."
+          Level:
+            oneOf:
+              - type: string
+                const: local
+                description: "`~/.cache/majordomus/build-cache`."
+              - type: string
+                const: store
+                description: The selected store.
+            description: A level an archive was saved to.
+          LocalLevel:
+            type: object
+            properties:
+              dir:
+                type: string
+                description: Where it is.
+              bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "What it holds, in bytes."
+              bound_bytes:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: What it may hold.
+              pruned:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Archives removed by this run to stay under the bound, oldest first."
+            required:
+              - dir
+              - bytes
+              - bound_bytes
+              - pruned
+            description: "The local level, measured after this run."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - ensure
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - build
+      - cache
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.build_cache.env
+    module: mesh
+    kind: query
+    title: The sccache client configuration for the store this node selected
+    description: "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673)."
+    input:
+      name: BuildCacheEnvInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          sccache:
+            type:
+              - string
+              - "null"
+            description: "The sccache executable to ask; `sccache` when absent."
+          node_file:
+            type:
+              - string
+              - "null"
+            description: The node file naming the store this node offers or knows.
+          credentials:
+            type:
+              - string
+              - "null"
+            description: "The AWS-format credential file, mode 0600."
+        description: "The input of `mesh.build_cache.env`."
+        title: BuildCacheEnvInput
+    output:
+      name: BuildCacheEnvReport
+      schema:
+        type: object
+        properties:
+          mode:
+            "$ref": "#/$defs/Mode"
+            description: What the client is configured as.
+          reason:
+            type: string
+            description: "Why, always one sentence; for a local-only answer, the condition that did not hold."
+          sccache:
+            "$ref": "#/$defs/BuildCacheSccache"
+            description: The installed sccache.
+          store:
+            anyOf:
+              - "$ref": "#/$defs/BuildCacheStore"
+              - type: "null"
+            description: "The selected store, when one was."
+          credentials_file:
+            type:
+              - string
+              - "null"
+            description: The path of the credential file the variables name; never its content.
+          variables:
+            type: array
+            items:
+              "$ref": "#/$defs/BuildCacheEnvVar"
+            description: "The variables to set in the environment of the process that starts the sccache\nserver; empty when the client is local-only."
+          passed_over:
+            type: array
+            items:
+              "$ref": "#/$defs/BuildCachePassedOver"
+            description: "The offers selection passed over, with the rule."
+        required:
+          - mode
+          - reason
+          - sccache
+          - variables
+        description: "The answer of `report`.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::{EnvReport, Mode, Sccache};\nlet r = EnvReport {\n    mode: Mode::LocalOnly, reason: \"sccache is not installed\".into(),\n    sccache: Sccache { found: false, version: None, multilevel: None, detail: String::new() },\n    store: None, credentials_file: None, variables: vec![], passed_over: vec![],\n};\nassert!(r.variables.is_empty());\n```"
+        title: BuildCacheEnvReport
+        "$defs":
+          Mode:
+            oneOf:
+              - type: string
+                const: mesh
+                description: "Local disk first, the selected store second."
+              - type: string
+                const: local-only
+                description: "The local disk alone: the build is what it was."
+            description: "What the client is configured as.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Mode;\nassert_ne!(Mode::Mesh, Mode::LocalOnly);\n```"
+          BuildCacheSccache:
+            type: object
+            properties:
+              found:
+                type: boolean
+                description: "Whether `--version` was answered."
+              version:
+                type:
+                  - string
+                  - "null"
+                description: The version it stated.
+              multilevel:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether it has the multi-level chain: measured, and unknown when the measurement\ncould not be made."
+              detail:
+                type: string
+                description: "How that was found out, in words."
+            required:
+              - found
+              - detail
+            description: "What the installed sccache is, as measured.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Sccache;\nlet s = Sccache { found: false, version: None, multilevel: None, detail: \"absent\".into() };\nassert!(!s.found);\n```"
+          BuildCacheStore:
+            type: object
+            properties:
+              node:
+                type: string
+                description: The offering node.
+              provider:
+                type: string
+                description: What serves the store.
+              endpoint:
+                type: string
+                description: The non-secret endpoint.
+              bucket:
+                type: string
+                description: The bucket.
+            required:
+              - node
+              - provider
+              - endpoint
+              - bucket
+            description: "The store the second level is.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::Store;\nlet s = Store { node: \"n1\".into(), provider: \"minio\".into(),\n    endpoint: \"http://192.168.100.30:9000\".into(), bucket: \"b\".into() };\nassert_eq!(s.provider, \"minio\");\n```"
+          BuildCacheEnvVar:
+            type: object
+            properties:
+              name:
+                type: string
+                description: The variable.
+              value:
+                type: string
+                description: "Its value: never a key, at most the path of a credential file."
+            required:
+              - name
+              - value
+            description: "One variable of the client's environment.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::env::EnvVar;\nlet v = EnvVar { name: \"SCCACHE_REGION\".into(), value: \"us-east-1\".into() };\nassert_eq!(v.name, \"SCCACHE_REGION\");\n```"
+          BuildCachePassedOver:
+            type: object
+            properties:
+              node:
+                type: string
+                description: "The offer's node."
+              why:
+                type: string
+                description: "The rule, in words."
+            required:
+              - node
+              - why
+            description: "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_build_cache_env
+      http:
+        method: GET
+        path: /api/v1/mesh/build-cache/env
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - env
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - build
+      - cache
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+      local_only: true
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.build_cache.key
+    module: mesh
+    kind: query
+    title: What every dependency install and build directory is cached under
+    description: "Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950)."
+    input:
+      name: BuildCacheKeyInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          kind:
+            anyOf:
+              - "$ref": "#/$defs/Kind"
+              - type: "null"
+            description: Only this kind; every kind the repository has when absent.
+        description: "The input of `mesh.build_cache.key`."
+        title: BuildCacheKeyInput
+        "$defs":
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+    output:
+      name: BuildCacheKeyReport
+      schema:
+        type: object
+        properties:
+          platform:
+            type: string
+            description: "This machine's platform triple."
+          kinds:
+            type: array
+            items:
+              "$ref": "#/$defs/BuildCacheKindKey"
+            description: "One entry per lockfile the repository tracks, by kind then directory."
+        required:
+          - platform
+          - kinds
+        description: "Every cached thing a repository has, as `cache.key` answers it.\n\n```\nuse majordomus_cli::mesh::build_cache::key::KeyReport;\nlet r = KeyReport { platform: \"x86_64-unknown-linux-gnu\".into(), kinds: vec![] };\nassert!(r.kinds.is_empty());\n```"
+        title: BuildCacheKeyReport
+        "$defs":
+          BuildCacheKindKey:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/Kind"
+                description: What is cached.
+              dir:
+                type: string
+                description: "The directory holding the lockfile, relative to the repository root (`.` for the root)."
+              location:
+                type: string
+                description: "Where the entry is restored to: relative to the repository, or `~/`-relative when it\nlies under the home directory (a shared cargo build directory)."
+              platform:
+                type: string
+                description: The platform triple the entry is built for.
+              toolchain:
+                type:
+                  - string
+                  - "null"
+                description: The toolchain as its executables state it; absent when they could not be asked.
+              inputs:
+                type: array
+                items:
+                  type: string
+                description: "The files hashed into the digest, relative to the repository root."
+              digest:
+                type: string
+                description: The first 32 hex digits of the SHA-256 over the inputs and the declared environment.
+              key:
+                type:
+                  - string
+                  - "null"
+                description: "`v1/<kind>/<platform>/<toolchain>/<digest>`; absent when the toolchain is."
+              unavailable:
+                type:
+                  - string
+                  - "null"
+                description: "Why there is no key, when there is none."
+            required:
+              - kind
+              - dir
+              - location
+              - platform
+              - inputs
+              - digest
+            description: "One cached thing of a repository, with its key or the reason it has none.\n\n```\nuse majordomus_cli::mesh::build_cache::key::{Kind, KindKey};\nlet k = KindKey {\n    kind: Kind::NpmModules,\n    dir: \"site\".into(),\n    location: \"site/node_modules\".into(),\n    platform: \"aarch64-apple-darwin\".into(),\n    toolchain: Some(\"node-24.8.0-npm-11\".into()),\n    inputs: vec![\"site/package-lock.json\".into()],\n    digest: \"0\".repeat(32),\n    key: Some(format!(\"v1/npm-modules/aarch64-apple-darwin/node-24.8.0-npm-11/{}\", \"0\".repeat(32))),\n    unavailable: None,\n};\nassert!(k.key.unwrap().starts_with(\"v1/npm-modules/\"));\n```"
+          Kind:
+            oneOf:
+              - type: string
+                const: cargo-build-dir
+                description: "The cargo build directory of a workspace: the dependencies compiled on the way, without\nincremental state. Restored only into a directory that is cold."
+              - type: string
+                const: mix-deps
+                description: "The `deps/` directory `mix deps.get` fills."
+              - type: string
+                const: npm-modules
+                description: "The `node_modules/` directory `npm ci` fills."
+            description: "What is cached: the thing a lockfile makes reusable, named by the directory an install or\na build fills. The word is part of every key, so two kinds never share an entry.\n\n```\nuse majordomus_cli::mesh::build_cache::key::Kind;\nassert_eq!(Kind::NpmModules.as_str(), \"npm-modules\");\nassert_eq!(Kind::parse(\"mix-deps\"), Some(Kind::MixDeps));\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_build_cache_key
+      http:
+        method: GET
+        path: /api/v1/mesh/build-cache/key
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - key
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - build
+      - cache
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.build_cache.provision
+    module: mesh
+    kind: command
+    title: Provision this node as a mesh build cache provider
+    description: "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do."
+    input:
+      name: ProvisionInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          apply:
+            type: boolean
+            description: "Carry the plan out. Absent, the capability only plans and changes nothing. Under the\ndefault root `/` it needs root and refuses without it."
+            default: false
+          root:
+            type:
+              - string
+              - "null"
+            description: "The directory the host's paths are read from and written under; default `/`. Any other\nroot is a staging directory: files only, no privilege, no command."
+        description: "The input of `mesh.build_cache.provision`."
+        title: ProvisionInput
+    output:
+      name: ProvisionReport
+      schema:
+        type: object
+        properties:
+          mode:
+            type: string
+            description: "`plan` or `apply`."
+          root:
+            type: string
+            description: The root read.
+          policy:
+            "$ref": "#/$defs/Policy"
+            description: "The policy in force: declared, not a secret."
+          plan:
+            "$ref": "#/$defs/Plan"
+            description: What the host owed when asked.
+          apply:
+            anyOf:
+              - "$ref": "#/$defs/ApplyReport"
+              - type: "null"
+            description: What the apply did; absent for a plan.
+          ok:
+            type: boolean
+            description: A plan always holds; an apply holds when nothing failed and nothing is owed after it.
+        required:
+          - mode
+          - root
+          - policy
+          - plan
+          - ok
+        description: "The answer: the plan against the host as observed, and the apply's report when asked."
+        title: ProvisionReport
+        "$defs":
+          Policy:
+            type: object
+            additionalProperties: false
+            properties:
+              user:
+                type: string
+                description: The user whose builds use the cache on this host.
+              home:
+                type: string
+                description: "That user's home directory."
+              alias:
+                type: string
+                description: "The `mc` alias of the store."
+              tailnet_address:
+                type: string
+                description: The address other nodes reach the store at.
+              port:
+                type: integer
+                format: uint16
+                minimum: 0
+                maximum: 65535
+                description: "The store's port."
+              bucket:
+                type: string
+                description: The cache bucket.
+              region:
+                type: string
+                description: The region sccache signs for.
+              expire_days:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Days after which an entry expires.
+              bucket_quota_gib:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "The cache bucket's hard quota, in GiB."
+              gitlab_bucket:
+                type: string
+                description: "The CI cache bucket this host already serves, bounded the same way."
+              gitlab_quota_gib:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Its quota, in GiB."
+              policy_name:
+                type: string
+                description: The name of the least-privilege policy every node identity carries.
+              local_node:
+                type: string
+                description: "The node this host is: its builds use the loopback endpoint."
+              nodes:
+                type: array
+                items:
+                  type: string
+                description: Every node that receives an identity.
+              critical_services:
+                type: array
+                items:
+                  type: string
+                description: The services that restart always and are the last the OOM killer takes.
+            required:
+              - user
+              - home
+              - alias
+              - tailnet_address
+              - port
+              - bucket
+              - region
+              - expire_days
+              - bucket_quota_gib
+              - gitlab_bucket
+              - gitlab_quota_gib
+              - policy_name
+              - local_node
+              - nodes
+              - critical_services
+            description: "What the provisioning declares: who runs the builds, which store, how bounded, which\nnodes receive an identity."
+          Plan:
+            type: object
+            properties:
+              files:
+                type: array
+                items:
+                  "$ref": "#/$defs/FileAction"
+                description: Every file the policy owns.
+              edits:
+                type: array
+                items:
+                  "$ref": "#/$defs/EditAction"
+                description: The line edits.
+              steps:
+                type: array
+                items:
+                  "$ref": "#/$defs/Step"
+                description: "The commands, in the order they run."
+              changes:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many files are missing, different or of the wrong mode, plus edits owed."
+              unobservable:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many files this process could not observe.
+            required:
+              - files
+              - edits
+              - steps
+              - changes
+              - unobservable
+            description: "The plan: every file, edit and command the host still owes."
+          FileAction:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The path on the host.
+              mode:
+                type: string
+                description: "The mode it must have, in octal."
+              owner:
+                type:
+                  - string
+                  - "null"
+                description: "The owner it must have, when not root."
+              source:
+                type: string
+                description: "Where its content comes from: `declared`, `generated` or `copy:<path>`. Never the content."
+              state:
+                "$ref": "#/$defs/FileState"
+                description: Where it stands.
+            required:
+              - path
+              - mode
+              - source
+              - state
+            description: One file of the plan.
+          FileState:
+            oneOf:
+              - type: string
+                const: missing
+                description: Absent.
+              - type: string
+                const: different
+                description: Present with other content.
+              - type: string
+                const: mode
+                description: "Right content, wrong mode."
+              - type: string
+                const: current
+                description: As wanted.
+              - type: string
+                const: unobservable
+                description: Could not be observed by this process; apply as root decides.
+            description: Where a file stands against what the policy wants.
+          EditAction:
+            type: object
+            properties:
+              path:
+                type: string
+                description: The file edited.
+              from:
+                type: string
+                description: The line replaced.
+              to:
+                type: string
+                description: The line it becomes.
+              owed:
+                type: boolean
+                description: The edit is still owed.
+            required:
+              - path
+              - from
+              - to
+              - owed
+            description: "A line edit the plan owes: the cargo config of the build user."
+          Step:
+            type: object
+            properties:
+              id:
+                type: string
+                description: A stable name.
+              line:
+                type: string
+                description: "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+              when:
+                type: string
+                description: "Run only when a file of the named group changed (`systemd`, `journald`, `docker`), or always."
+            required:
+              - id
+              - line
+              - when
+            description: "A command the apply runs once the files are in place, as root."
+          ApplyReport:
+            type: object
+            properties:
+              ok:
+                type: boolean
+                description: Nothing failed and nothing was refused.
+              refused:
+                type:
+                  - string
+                  - "null"
+                description: "Why nothing was done, when it was refused."
+              root:
+                type: string
+                description: The root the files were written under.
+              written:
+                type: array
+                items:
+                  type: string
+                description: "Paths written or corrected, never their content."
+              generated:
+                type: array
+                items:
+                  type: string
+                description: Paths of credentials this run generated.
+              ran:
+                type: array
+                items:
+                  "$ref": "#/$defs/Ran"
+                description: "The command lines that ran, each with its outcome."
+              skipped:
+                type: array
+                items:
+                  type: string
+                description: "Commands that did not run, and why."
+              after:
+                anyOf:
+                  - "$ref": "#/$defs/Plan"
+                  - type: "null"
+                description: "The plan after the apply: `changes` is 0 when the host now holds the policy."
+            required:
+              - ok
+              - root
+              - written
+              - generated
+              - ran
+              - skipped
+            description: What an apply did.
+          Ran:
+            type: object
+            properties:
+              line:
+                type: string
+                description: "The line, with a secret as a placeholder."
+              ok:
+                type: boolean
+                description: It exited zero.
+              output:
+                type: string
+                description: Its output when it failed (a secret removed).
+            required:
+              - line
+              - ok
+              - output
+            description: One command that ran.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      cli:
+        path:
+          - mesh
+          - build-cache
+          - provision
+    availability: runtime
+    visibility: developer
+    stability: experimental
+    tags:
+      - mesh
+      - build-cache
+      - provisioning
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.claim
     module: mesh
     kind: command
@@ -33082,11 +35375,77 @@ capabilities:
       concurrency: unrestricted
       local_only: true
     source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
+  - id: mesh.enrol
+    module: mesh
+    kind: command
+    title: Enrol this machine in the mesh
+    description: "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: MeshEnrolment
+      schema:
+        type: object
+        properties:
+          path:
+            type: string
+            description: "The declaration file, repository-relative."
+          key:
+            type: string
+            description: "This machine's public key: what is listed, never a secret."
+          added:
+            type: boolean
+            description: "Whether the key was added now; `false` when it was listed already."
+          next:
+            type: string
+            description: "What to do next: commit the file, or nothing."
+        required:
+          - path
+          - key
+          - added
+          - next
+        description: "The answer of `mesh.enrol`: which declaration, which key, and whether it changed."
+        title: MeshEnrolment
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::mesh
+    exposure:
+      mcp:
+        tool: majordomus_mesh_enrol
+      http:
+        method: POST
+        path: /api/v1/mesh/enrol
+      cli:
+        path:
+          - mesh
+          - enrol
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - mesh
+      - identity
+      - trust
+    benchmark:
+      policy: waived
+      reason: destructive
+    cache:
+      policy: disabled
+    execution:
+      effect: repository_mutation
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/mesh.rs
   - id: mesh.events
     module: mesh
     kind: query
     title: The cooperation journal
-    description: "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`."
+    description: "The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp."
     input:
       name: MeshEventsInput
       schema:
@@ -33099,7 +35458,12 @@ capabilities:
               - "null"
             format: uint64
             minimum: 0
-            description: Only events whose Lamport stamp is above this.
+            description: "Only events whose Lamport stamp is above this: a walk by stamp, which never returns\nan event a partitioned runtime stamped at or below it and delivered later. Prefer\n`cursor`, which returns those too."
+          cursor:
+            type:
+              - string
+              - "null"
+            description: "The `cursor` the previous page answered: the next page is what this run of the\nruntime applied after it, every event exactly once across the whole walk, a late one\nfrom a healed partition included (I2733). A cursor another run issued is refused as\n`stale_cursor`. Without `cursor` and `after` the walk starts at the beginning."
           limit:
             type:
               - integer
@@ -33131,7 +35495,12 @@ capabilities:
             type: integer
             format: uint64
             minimum: 0
-            description: "The `after` of the next page: the stamp of the last event this page carries, or the\n`after` that was asked when it carries none. A page never ends inside a run of equal\nstamps, so resuming after it misses nothing (I2140)."
+            description: "The `after` of the next page of a walk by stamp: the stamp of the last event this\npage carries, or the `after` that was asked when it carries none. A page never ends\ninside a run of equal stamps (I2140)."
+          cursor:
+            type:
+              - string
+              - "null"
+            description: "The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly\nafter what this page returned (I2733). Absent from an answer to a walk by `after`."
           events:
             type: array
             items:
@@ -34673,6 +37042,9 @@ capabilities:
                 const: rendezvous
                 description: A rendezvous answer or registration.
               - type: string
+                const: tailscale
+                description: A tailnet peer asked as a rendezvous.
+              - type: string
                 const: synthetic
                 description: "A synthetic provider (tests, self-check)."
             description: "Where an observation came from. A record accumulates these; provenance is the answer\nto \"why do I see this node\"."
@@ -35114,6 +37486,18 @@ capabilities:
                   - string
                   - "null"
                 description: The context revision the session works from (a digest the context compiler names).
+              client_pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The client process the session belongs to, on the machine of the runtime holding it.\nA client that crashes never says goodbye, so this is what lets that runtime close the\nsession for it once the process is gone (I3810)."
+              client_started:
+                type:
+                  - string
+                  - "null"
+                description: "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
             required:
               - session
               - client
@@ -35893,6 +38277,18 @@ capabilities:
                   - string
                   - "null"
                 description: The context revision the session works from (a digest the context compiler names).
+              client_pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The client process the session belongs to, on the machine of the runtime holding it.\nA client that crashes never says goodbye, so this is what lets that runtime close the\nsession for it once the process is gone (I3810)."
+              client_started:
+                type:
+                  - string
+                  - "null"
+                description: "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
             required:
               - session
               - client
@@ -36812,6 +39208,18 @@ capabilities:
               - string
               - "null"
             description: The context revision it works from.
+          client_pid:
+            type:
+              - integer
+              - "null"
+            format: uint32
+            minimum: 0
+            description: "The client process the session belongs to, on this machine: the runtime closes the\nsession once that process has ended (I3810)."
+          client_started:
+            type:
+              - string
+              - "null"
+            description: "When that process started, as this machine's process table reports it."
         description: "The input of `mesh.session.open`: what a session says about itself."
         title: SessionInput
     output:
@@ -37012,6 +39420,11 @@ capabilities:
             items:
               "$ref": "#/$defs/StreamView"
             description: "Every stream's liveness."
+          build_cache:
+            anyOf:
+              - "$ref": "#/$defs/BuildCacheOfferReading"
+              - type: "null"
+            description: "The build-cache offers this runtime reads from the journal, and every record it does\nnot read as one with why (I2671); absent when the journal holds none."
         required:
           - active
           - view
@@ -37426,6 +39839,18 @@ capabilities:
                   - string
                   - "null"
                 description: The context revision the session works from (a digest the context compiler names).
+              client_pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The client process the session belongs to, on the machine of the runtime holding it.\nA client that crashes never says goodbye, so this is what lets that runtime close the\nsession for it once the process is gone (I3810)."
+              client_started:
+                type:
+                  - string
+                  - "null"
+                description: "When that process started, as the machine's process table reports it. Compared only\nfor equality and only on that machine, so a pid the system handed to another process\nis never taken for the client, and no two clocks are ever compared."
             required:
               - session
               - client
@@ -37751,6 +40176,121 @@ capabilities:
               - stream
               - liveness
             description: "One stream's liveness."
+          BuildCacheOfferReading:
+            type: object
+            properties:
+              offers:
+                type: array
+                items:
+                  "$ref": "#/$defs/BuildCacheNodeOffer"
+                description: "The offers of trusted runtimes whose beat rose within the offer's lifetime, one per\nnode, in node order: what `super::select` takes."
+              ignored:
+                type: array
+                items:
+                  "$ref": "#/$defs/BuildCachePassedOver"
+                description: "Every build-cache record that is not read as an offer, by node, each with its stream\nand the reason: untrusted, withdrawn, stale, unverified or out of bounds."
+            required:
+              - offers
+              - ignored
+            description: "What the journal offers now: the offers a client may select among, and every record that\nis not one, with why.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::offer::{read, OfferReading};\nuse std::time::Duration;\nlet reading: OfferReading = read(&[], &|_| true, &|_| None, Duration::from_secs(30));\nassert!(reading.offers.is_empty());\n```"
+          BuildCacheNodeOffer:
+            type: object
+            properties:
+              node:
+                type: string
+                description: "The offering node's id: the last tie-break, so ordering is total."
+              protocol:
+                type: string
+                description: "The protocol the store speaks (`s3`)."
+              provider:
+                type: string
+                description: "What serves it (`minio`, `garage`, ...): data, not a code path."
+              scope:
+                "$ref": "#/$defs/BuildCacheScope"
+                description: How far the endpoint is meant to be reached.
+              endpoint:
+                type: string
+                description: The non-secret address a client connects to.
+              bucket:
+                type: string
+                description: The bucket the cache lives in.
+              priority:
+                type: integer
+                format: int32
+                description: "The offering node's own preference, higher first."
+              headroom_gib:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Free space on the data path, in GiB, when the node said."
+              health:
+                "$ref": "#/$defs/BuildCacheHealth"
+                description: "The node's own judgement of the store."
+              age_seconds:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Seconds since the offer was last refreshed.
+              rtt_ms:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "A measured round trip from the asking node, in milliseconds, when one was."
+            required:
+              - node
+              - protocol
+              - provider
+              - scope
+              - endpoint
+              - bucket
+              - priority
+              - health
+              - age_seconds
+            description: "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+          BuildCacheScope:
+            oneOf:
+              - type: string
+                const: host
+                description: Reachable from the machine that offers it and no other.
+              - type: string
+                const: lan
+                description: "Reachable on the offering machine's local network."
+              - type: string
+                const: mesh
+                description: Reachable by every node of the mesh.
+            description: "How far an offer's endpoint is meant to be reached, nearest first.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Scope;\n// nearest first: a host-only store is preferred to a LAN one, and a LAN one to the mesh\nassert!(Scope::Host < Scope::Lan && Scope::Lan < Scope::Mesh);\n```"
+          BuildCacheHealth:
+            oneOf:
+              - type: string
+                const: healthy
+                description: Ready and answering.
+              - type: string
+                const: degraded
+                description: "Answering, but something the policy cares about is wrong (low headroom, slow)."
+              - type: string
+                const: unhealthy
+                description: "Not answering, or refusing."
+              - type: string
+                const: unknown
+                description: "The probe could not say: never `Healthy`."
+            description: "How the offering node's own probe judges the store.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::Health;\n// only a healthy store is used; an unknown one is never promoted\nassert_ne!(Health::Unknown, Health::Healthy);\n```"
+          BuildCachePassedOver:
+            type: object
+            properties:
+              node:
+                type: string
+                description: "The offer's node."
+              why:
+                type: string
+                description: "The rule, in words."
+            required:
+              - node
+              - why
+            description: "An offer that was not chosen, and the rule that said no.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{select, PassedOver, Policy};\nlet answer = select(&[], &Policy::default());\nlet passed: Vec<PassedOver> = answer.passed_over;\nassert!(passed.is_empty());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -40585,6 +43125,11 @@ capabilities:
               - "$ref": "#/$defs/PeerCheckout"
               - type: "null"
             description: "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+          address:
+            anyOf:
+              - "$ref": "#/$defs/PeerAddress"
+              - type: "null"
+            description: "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
           overlaps:
             type: array
             items:
@@ -40681,6 +43226,37 @@ capabilities:
               - worktree
               - this_checkout
             description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
+          PeerAddress:
+            type: object
+            properties:
+              provider:
+                type:
+                  - string
+                  - "null"
+                description: "The provider whose session this is (`claude-code`), when its environment says so."
+              host:
+                type: string
+                description: The machine the worker runs on.
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The worker's own process: the provider's pid, not the MCP bridge it started."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: "The provider's id for the session, the one its lifecycle hooks are given."
+              socket:
+                type:
+                  - string
+                  - "null"
+                description: The socket other sessions on the same machine message this one through.
+            required:
+              - host
+            description: "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
           Overlap:
             type: object
             properties:
@@ -40750,7 +43326,7 @@ capabilities:
     module: peers
     kind: query
     title: List peers
-    description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'boards' says which checkouts were covered and 'complete' whether every one of them could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
+    description: "Every worker of this repository: id, the client's own name and version from its initialize, transport, when it attached, when it was last seen, what it announced, and which checkout it is attached to. A server serves one checkout, so the board of a repository worked on through linked worktrees is gathered: this checkout's board out of memory, every other checkout's from the server its lease names, asked for its own board alone. 'covered' says how many checkouts were covered, 'boards' lists each one with a server, a worker or a board that could not be read (the rest counted in 'omitted'; 'view: full' lists every one), and 'complete' whether every board could be read, so a short board is never mistaken for an empty repository. 'checkouts: this' reads one board and enumerates, probes and asks nothing else. In-memory on every server; gone with the processes."
     input:
       name: PeerListInput
       schema:
@@ -40760,6 +43336,10 @@ capabilities:
             "$ref": "#/$defs/Checkouts"
             description: "Which checkouts the board covers. Absent means `repository`; `this` is the checkout the call reached and nothing else, and it is what a sibling server is asked so that a gather can never ask back."
             default: repository
+          view:
+            "$ref": "#/$defs/PeerListView"
+            description: "How many of the covered checkouts are listed in `boards`. Absent means `summary`: every checkout with a server, a worker, or a board that could not be read, the rest counted in `omitted`; `full` lists every one."
+            default: summary
         description: "What to ask of `peers.list`: how wide the board is.\n\nThe same one field, the same word and the same default as\n`super::server::ServerStatusInput`, because it is the same question asked of the same\nset of checkouts, and a caller should not have to learn it twice.\n\nThe evidence for that is `the_default_board_is_the_repositorys` below rather than a doc\nexample here: this module is `pub(crate)`, so a doc test — which compiles as an external\ncrate — cannot name the type at all."
         title: PeerListInput
         "$defs":
@@ -40772,6 +43352,15 @@ capabilities:
                 const: this
                 description: "This checkout alone. No other checkout is enumerated, no other lease is read and no\nother server is probed; `servers` holds the one entry, and it is this one."
             description: "Which checkouts a reading of the server status covers.\n\nThe two answers cost differently and that is the whole reason the choice exists: the\nrepository's checkouts are read from git's registry of them and each one costs a lease\nread and a probe, while this checkout alone costs one of each and enumerates nothing.\nThe word each variant serialises to is the word the query parameter, the tool input and\nthe command-line flag all take.\n\n```\nuse majordomus_cli::capability::builtin::server::Checkouts;\nassert_eq!(serde_json::to_value(Checkouts::This).unwrap(), \"this\");\nassert_eq!(serde_json::to_value(Checkouts::Repository).unwrap(), \"repository\");\nassert_eq!(Checkouts::default(), Checkouts::Repository, \"the wide answer is what a caller who says nothing has always got\");\n```"
+          PeerListView:
+            oneOf:
+              - type: string
+                const: summary
+                description: "This checkout, every checkout with a worker attached or a server standing, and every\nboard that could not be read; the checkouts with no server and nobody attached are\ncounted in `omitted` by standing."
+              - type: string
+                const: full
+                description: "Every covered checkout, one entry each."
+            description: "How many of the covered checkouts `peers.list` lists one by one — the same two words, and\nthe same default, as the mesh's own `view` (`mesh::page::View`), for the same reason.\n\nOn 2026-10-22 this repository registered 625 checkouts, 601 of them with no server and\nnobody attached, and the default answer was 168 kB: past what an MCP client shows, so\nthe read every worker is told to make before it starts went through a saved file. A\ncheckout with no server holds no board (`ServerStanding::Absent`, or a `Stale` lease that\nnames a process that is gone), so listing it says only that it exists; the summary counts\nthose by standing and lists every other. The evidence is\n`the_summary_counts_only_checkouts_that_hold_no_board` below."
     output:
       name: PeerList
       schema:
@@ -40797,17 +43386,35 @@ capabilities:
             items:
               "$ref": "#/$defs/Overlap"
             description: "Every pair of peers whose claimed scope meets, each pair once — now across\ncheckouts as well as within one. Empty is the ordinary case, and a reader who sees\nan entry here is looking at two workers about to do the same work."
+          covered:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many checkouts the answer covers, listed in `boards` or counted in `omitted` — a\ncount, where the input `checkouts` is a choice of which to cover."
           boards:
             type: array
             items:
               "$ref": "#/$defs/BoardView"
-            description: "One entry per checkout the answer covers, reached or not."
+            description: "One entry per checkout the answer lists, reached or not: every covered checkout under\n`view: full`; under the default summary, every one but those `omitted` counts. A board\nthat could not be read is always listed."
+          omitted:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "The covered checkouts the summary does not list, counted by standing (`absent`,\n`stale`): no server, nobody attached, no board. Empty under `view: full`."
           complete:
             type: boolean
             description: "Whether every board the answer covers was read. `false` when a checkout's server\ncould not be asked, and `BoardView::reason` says which and why — so that \"nobody\nelse is here\" is never reported when the truth is \"I could not ask\"."
+          stream:
+            type:
+              - string
+              - "null"
+            description: "The mesh stream of the server that answered, when its mesh runs: the stream its own\nboard's peers are projected into. A sibling's answer carries it so that the gatherer\ncan name it on that sibling's `BoardView`."
         required:
           - count
           - peers
+          - covered
           - boards
           - complete
         description: "The answer of `peers.list`: every worker of this repository, from every checkout's board."
@@ -40854,6 +43461,11 @@ capabilities:
                   - "$ref": "#/$defs/PeerCheckout"
                   - type: "null"
                 description: "Which checkout of the repository this peer is attached to; see `PeerCheckout`.\n\nThe board itself never sets it — a board does not know where it is — and it is\nstamped by the reader that gathered this peer, which is the one thing that knows\nwhich checkout's server it asked."
+              address:
+                anyOf:
+                  - "$ref": "#/$defs/PeerAddress"
+                  - type: "null"
+                description: "Where the worker behind this peer can be reached from outside its connection: its\nmachine, its process, its provider session and the socket other sessions message it\non; see `PeerAddress`. Derived when the peer attached, never announced by hand.\nAbsent for a client that exposes none of it."
             required:
               - id
               - client
@@ -40935,6 +43547,37 @@ capabilities:
               - worktree
               - this_checkout
             description: "Which checkout of the repository a peer is attached to.\n\nA board is one process's memory and a server serves one checkout, so a peer read from\na sibling checkout's server and a peer of this one are otherwise indistinguishable —\nand worse than indistinguishable, because the ids collide: `p1` is the first session\nof *every* board, so a repository-wide listing without this field would hold several\npeers called `p1` and no way to tell them apart. This is the qualification. The\nworktree path is the durable half of a worker's identity: the peer id is a position on\none board and is handed out again after a reconnect (`p3` this morning, `p1` after the\nbridge re-attached), while the checkout a worker is working in outlives its connection.\n\nAbsent on a peer a server reports about its own board without being asked which\ncheckout that is — `peers.announce` answers about the announcing session and the\nanswer is this server's by construction. The repository-wide listing stamps every\npeer it gathers, its own included, so that no entry of that answer is unqualified.\n\n```\nuse majordomus_cli::peers::PeerCheckout;\nlet c = PeerCheckout {\n    id: \"b8293f11\".into(),\n    worktree: \"/repo-wt/feature/x\".into(),\n    branch: Some(\"feature/x\".into()),\n    this_checkout: false,\n};\nlet v = serde_json::to_value(&c).unwrap();\nassert_eq!(v[\"branch\"], \"feature/x\");\nassert_eq!(v[\"this_checkout\"], false);\n```"
+          PeerAddress:
+            type: object
+            properties:
+              provider:
+                type:
+                  - string
+                  - "null"
+                description: "The provider whose session this is (`claude-code`), when its environment says so."
+              host:
+                type: string
+                description: The machine the worker runs on.
+              pid:
+                type:
+                  - integer
+                  - "null"
+                format: uint32
+                minimum: 0
+                description: "The worker's own process: the provider's pid, not the MCP bridge it started."
+              session:
+                type:
+                  - string
+                  - "null"
+                description: "The provider's id for the session, the one its lifecycle hooks are given."
+              socket:
+                type:
+                  - string
+                  - "null"
+                description: The socket other sessions on the same machine message this one through.
+            required:
+              - host
+            description: "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
           Overlap:
             type: object
             properties:
@@ -41011,6 +43654,11 @@ capabilities:
                   - string
                   - "null"
                 description: "Why this board is not in the answer. `None` when it is."
+              stream:
+                type:
+                  - string
+                  - "null"
+                description: "The mesh stream of the server whose memory holds this board, when its mesh runs: the\nstream it projects the board's peers into as `board-pN` sessions. A position such as\n`p1` is that server's alone, so only this stream ties a board peer to its session."
             required:
               - id
               - worktree
@@ -41083,6 +43731,11 @@ capabilities:
             format: uint64
             minimum: 0
             description: "Enumerations of the repository's declared sources."
+          repository_discoveries:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: Manifests read and parsed to discover a repository.
           index_builds:
             type: integer
             format: uint64
@@ -41150,6 +43803,7 @@ capabilities:
             description: Phase totals by phase name.
         required:
           - repository_scans
+          - repository_discoveries
           - index_builds
           - registry_builds
           - schema_generations
@@ -54350,7 +57004,7 @@ capabilities:
     module: served
     kind: command
     title: Observe what a deployment serves
-    description: "Fetches the build identity the site serves (`build.json` under the configured base URL, one bounded probe, no shell), judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks)."
+    description: "Fetches the build identity a deployment serves (one bounded probe, no shell): for a `deployment` naming an object with a provider, its liveness route at the provider's URL; otherwise `build.json` under the configured base URL. It judges it against the expected commit (HEAD unless named) by containment and appends the observation to the checkout-local record. Exit 0 when the deployment serves a build containing the commit, 10 when it measurably does not (behind, or built dirty), 12 when the question could not be answered (unreachable, unreadable, or a served commit this clone lacks)."
     input:
       name: ObserveInput
       schema:
@@ -54366,12 +57020,12 @@ capabilities:
             type:
               - string
               - "null"
-            description: "The site's base URL; `base_url` of `site/config.toml` when absent."
+            description: "The base URL; when absent, the `provider.url` of the deployment object `deployment`\nnames, else `base_url` of `site/config.toml` (I3822)."
           identity:
             type:
               - string
               - "null"
-            description: "The identity file under the base; `build.json` when absent."
+            description: "The identity under the base; when absent, the `health.liveness` route of the\ndeployment object `deployment` names (which answers `commit` and `dirty`), else\n`build.json`."
           commit:
             type:
               - string
@@ -54524,7 +57178,7 @@ capabilities:
     module: served
     kind: query
     title: What each deployment was last seen serving
-    description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
+    description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named), and for a deployment the layer declares as an object its status derived from that: `active` only while it serves the commit. A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
     input:
       name: ShowInput
       schema:
@@ -54584,6 +57238,11 @@ capabilities:
               now:
                 "$ref": "#/$defs/Judgement"
                 description: "That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on."
+              status:
+                anyOf:
+                  - "$ref": "#/$defs/DeploymentStatus"
+                  - type: "null"
+                description: "For a deployment the layer declares as an object: `active` while `now` is served,\n`declared` otherwise, `retired` when the object says so. Derived from the newest\nobservation, never set by hand (I3822); absent for a name no object carries."
             required:
               - deployment
               - observation
@@ -54684,6 +57343,18 @@ capabilities:
               - verdict
               - reason
             description: "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
+          DeploymentStatus:
+            oneOf:
+              - type: string
+                const: declared
+                description: The object exists and nothing is deployed from it yet.
+              - type: string
+                const: active
+                description: It is deployed.
+              - type: string
+                const: retired
+                description: "It was, and the object is kept for the record."
+            description: "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::served

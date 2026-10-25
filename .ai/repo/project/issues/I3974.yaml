@@ -1,0 +1,43 @@
+id: I3974
+milestone: merging-and-referencing-are-enforced
+title: "One allocator surveys every number (issue ids, ADR numbers, case numbers), and two branches adding one number under different names are refused"
+slug: one-allocator-for-every-number
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "The survey lib/adr.sh (mj_adr_claims) and scripts/case-numbers each implement for one identifier (this tree, the sibling worktrees, every ref, the peer board) is shared by both and extended to a third kind, issue ids, inside the existing units rather than a new one: majordomus adr next keeps its output, scripts/case-numbers next keeps its output, and a kind argument (issue, adr, case) makes either answer for any kind from the one survey. The board source is defined with its producer and its parser in the same unit: next --reserve announces a named claim id:<kind>:<number> on the peer board, and the survey reads exactly those claim names; no free-text announcement is parsed. The collision gate (scripts/ci/collision-gate) gains the number check: a pull request adding an issue id, ADR number or case number that another unmerged branch adds under a different file name is refused (exit 11) naming that branch; the same path with different content is already refused by path. The first step diagnoses why adr check, which doctor runs in pre-commit and case 271 holds, did not stop ADR 0168 being taken twice, and records the cause in this issue before the code changes."
+why: "Numbers collided repeatedly on 2026-10-21 and 2026-10-22: ADR 0168 was taken by two branches and train 4 had to renumber one to 0221; issue id blocks are handed out per seat by message because no allocator surveys issue ids; the parallel-forks memory records forks taking one number. Path-based collision detection cannot see 0168-a.md and 0168-b.md as one claim."
+current_state: "Verified at 355a0cee79a: lib/adr.sh mj_adr_claims and scripts/case-numbers survey tree, worktrees, refs and board for ADR and case numbers separately; adr check asks the other refs whether a different decision stands at an identity the tree adds (case 271_adr_allocation); nothing surveys issue ids; no code writes or parses an id reservation on the board; scripts/ci/collision-gate compares added paths only and so misses one number under two names. Why adr check did not stop 0168 is not yet diagnosed."
+desired_state: "One command answers the next free number of each kind from one survey, and the collision gate refuses one number under two names across branches."
+scope:
+  - "lib/adr.sh"
+  - "scripts/case-numbers"
+  - "scripts/ci/collision-gate"
+  - "scripts/collision-check"
+  - "test/cases/99_adr.sh"
+  - "test/cases/271_adr_allocation.sh"
+  - "test/cases/560_a_case_number_names_one_case.sh"
+  - "test/cases/566_the_collision_guard_has_a_caller.sh"
+  - ".ai/repo/rules/project/a-number-names-one-case.v1.md"
+  - ".ai/repo/project/issues/I3974.yaml"
+non_scope:
+  - "Renumbering any existing record; the case-numbers baseline stays the record of old collisions"
+acceptance_criteria:
+  - "Two fixture branches adding .ai/repo/adrs/0300-a.md and .ai/repo/adrs/0300-b.md, and two adding test/cases/9990_a.sh and test/cases/9990_b.sh, are each refused by the collision gate naming both branches (case two_branches_taking_one_number_are_refused)"
+  - "next for kind issue names a number above every issue id in the tree, the worktrees, every ref and every id:issue claim on the board, and lists each source"
+  - "next --reserve announces id:<kind>:<number>, and a second session's next skips it"
+  - "adr next and case-numbers next answer exactly as before on the repository"
+  - "The cause of the 0168 collision is recorded in this issue"
+validation:
+  - "bin/majordomus plan validate"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 99_adr"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 271_adr_allocation"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 560_a_case_number_names_one_case"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 566_the_collision_guard_has_a_caller"
+evidence_required:
+  - "one_allocator"
+depends_on: []
+serves:
+  - "merging-and-referencing-are-enforced#one-allocator"
+created_at: 2026-10-22
+updated_at: 2026-10-22

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `gates` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 # Module `gates` — Completion gates
 
 Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task's own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.
@@ -30,6 +30,10 @@ everything between the commit the task started at and the working tree. |
 | `base` | string or null | no | The commit to compare with, when the task's own starting commit is not wanted. |
 | `on_demand` | boolean or null | no | Also plan the gates the model marks on-demand. Off by default, because a plan that
 selects a gate whose runner is unavailable is a plan whose verdict never arrives. |
+| `tier` | string or null | no | Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does
+not run is left out, and nothing implies or requires it back. Absent plans every lane.
+A model that declares no tiers, or a tier it does not declare, is refused as invalid
+input, in the words `scripts/ci-plan --tier` refuses it with. |
 
 Output: `Completion`.
 

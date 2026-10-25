@@ -180,10 +180,19 @@
       "id": "ci-critical-path",
       "kind": "milestone",
       "label": "ci-critical-path",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/ci-critical-path/",
       "external": false,
       "summary": "The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm"
+    },
+    {
+      "id": "measurements-are-tracked-over-time",
+      "kind": "milestone",
+      "label": "measurements-are-tracked-over-time",
+      "status": "PLANNED",
+      "route": "/plan/measurements-are-tracked-over-time/",
+      "external": false,
+      "summary": "Coverage and CI cost are kept, exported and drawn over time, from the one measurement each has"
     },
     {
       "id": "automation",
@@ -378,7 +387,7 @@
       "id": "an-authorised-node-connects-from-anywhere",
       "kind": "milestone",
       "label": "an-authorised-node-connects-from-anywhere",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/an-authorised-node-connects-from-anywhere/",
       "external": false,
       "summary": "An authorised node reaches another across LAN, tailnet or NAT, and says how"
@@ -400,6 +409,15 @@
       "route": "/plan/finished-work-reaches-a-verified-release/",
       "external": false,
       "summary": "Finished work reaches a verified release at the pace it is finished"
+    },
+    {
+      "id": "ordinary-commands-never-build",
+      "kind": "milestone",
+      "label": "ordinary-commands-never-build",
+      "status": "PLANNED",
+      "route": "/plan/ordinary-commands-never-build/",
+      "external": false,
+      "summary": "No ordinary command builds: every entry path fails fast or answers through a release of the same generation"
     },
     {
       "id": "every-surface-follows-what-changed",
@@ -645,6 +663,15 @@
       "summary": "Landed work is released as a measured version, and how long it has waited is a finding"
     },
     {
+      "id": "peer-blackboard",
+      "kind": "milestone",
+      "label": "peer-blackboard",
+      "status": "PLANNED",
+      "route": "/plan/peer-blackboard/",
+      "external": false,
+      "summary": "The peer blackboard is one projection, pushed live to every surface"
+    },
+    {
       "id": "a-derive-does-only-the-work-its-inputs-changed",
       "kind": "milestone",
       "label": "a-derive-does-only-the-work-its-inputs-changed",
@@ -663,6 +690,15 @@
       "summary": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence"
     },
     {
+      "id": "one-kit-on-every-surface",
+      "kind": "milestone",
+      "label": "one-kit-on-every-surface",
+      "status": "PLANNED",
+      "route": "/plan/one-kit-on-every-surface/",
+      "external": false,
+      "summary": "Code, charts, controls, embeds and shell blocks are one kit on every surface, declared in the design book and held there by a gate"
+    },
+    {
       "id": "landing-survives-any-session",
       "kind": "milestone",
       "label": "landing-survives-any-session",
@@ -670,6 +706,15 @@
       "route": "/plan/landing-survives-any-session/",
       "external": false,
       "summary": "Landing green work survives any session, any restart and any machine"
+    },
+    {
+      "id": "merging-and-referencing-are-enforced",
+      "kind": "milestone",
+      "label": "merging-and-referencing-are-enforced",
+      "status": "PLANNED",
+      "route": "/plan/merging-and-referencing-are-enforced/",
+      "external": false,
+      "summary": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once"
     },
     {
       "id": "runtime-adapters",
@@ -778,6 +823,15 @@
       "route": "/plan/a-release-is-proven-end-to-end/",
       "external": false,
       "summary": "Whether a commit may be released, and whether its release arrived, is proved by one read and one case"
+    },
+    {
+      "id": "builds-reuse-the-mesh-cache",
+      "kind": "milestone",
+      "label": "builds-reuse-the-mesh-cache",
+      "status": "BLOCKED",
+      "route": "/plan/builds-reuse-the-mesh-cache/",
+      "external": false,
+      "summary": "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs"
     },
     {
       "id": "the-ui-works-on-a-phone",
@@ -1008,6 +1062,11 @@
     {
       "source": "test-evidence",
       "target": "a-release-is-proven-end-to-end",
+      "kind": "unblocks"
+    },
+    {
+      "source": "development-runtime",
+      "target": "builds-reuse-the-mesh-cache",
       "kind": "unblocks"
     },
     {

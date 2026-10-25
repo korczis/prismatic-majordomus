@@ -180,6 +180,12 @@ pub struct CompletionInput {
     /// Also plan the gates the model marks on-demand. Off by default, because a plan that
     /// selects a gate whose runner is unavailable is a plan whose verdict never arrives.
     pub on_demand: Option<bool>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Plan at this tier of the model's `tiers` (ADR 0186): a gate whose lane the tier does
+    /// not run is left out, and nothing implies or requires it back. Absent plans every lane.
+    /// A model that declares no tiers, or a tier it does not declare, is refused as invalid
+    /// input, in the words `scripts/ci-plan --tier` refuses it with.
+    pub tier: Option<String>,
 }
 
 impl BenchmarkCases for CompletionInput {
@@ -245,6 +251,7 @@ fn load_model(root: &Path) -> (model::GateModel, Option<String>) {
                 version: 0,
                 gates: Vec::new(),
                 classes: Vec::new(),
+                tiers: None,
             },
             Some(reason),
         ),
@@ -282,6 +289,14 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
     let mut findings: Vec<String> = Vec::new();
 
     let (m, unreadable) = load_model(&root);
+    // the tier is resolved before anything is read or measured: a tier the model cannot plan
+    // is the caller's mistake, refused as ci-plan refuses it, never a plan of every lane
+    let tier = input
+        .tier
+        .as_deref()
+        .map(|t| m.tier(t))
+        .transpose()
+        .map_err(CapabilityError::InvalidInput)?;
     if let Some(reason) = unreadable {
         // no model is not no answer: every gate is unknown, said out loud, and `finishable`
         // is left to the obligations rather than granted by a silence
@@ -441,6 +456,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         convergence.as_ref(),
         closing.as_ref(),
         input.on_demand.unwrap_or(false),
+        tier.as_ref(),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
         findings,
     ))
@@ -689,5 +705,28 @@ mod tests {
             unreadable.findings
         );
         assert_eq!(stale(&unreadable), crate::gates::GateStatus::Unknown);
+    }
+
+    /// A tier the model cannot plan is the caller's mistake, refused before anything is read,
+    /// never answered as a plan of every lane. The synthetic repository declares no CI model,
+    /// so it declares no tiers either, and any tier asked of it is refused in ci-plan's words.
+    #[test]
+    fn a_tier_the_model_cannot_plan_is_refused_not_answered() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let err = ctx
+            .execute(
+                "gates.completion",
+                serde_json::json!({ "changed": [], "tier": "pull-request" }),
+            )
+            .expect_err("a tier the model does not declare is refused");
+        let said = format!("{err:?}");
+        assert!(said.contains("tier pull-request"), "{said}");
     }
 }

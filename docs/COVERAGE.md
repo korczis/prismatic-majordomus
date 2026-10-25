@@ -119,6 +119,34 @@ record is local state, so the answer covers only this checkout. A CI measurement
 it. `test/cases/552_coverage_is_recorded_for_the_preflight.sh` runs the real script against a
 stand-in `cargo` and has the real executable judge each record it writes.
 
+## Exports
+
+The measurement was kept nowhere: the `cargo llvm-cov` JSON is a CI artifact that expires
+after fourteen days, so no trend could be read from it. `scripts/rust-coverage` therefore
+writes it in the two standard formats the trackers read:
+
+- `--lcov FILE` — LCOV: per source file `SF`, `FN`/`FNDA`/`FNF`/`FNH` for functions and
+  `DA`/`LF`/`LH` for lines, closed by `end_of_record`.
+- `--cobertura FILE` — Cobertura XML: `line-rate`, `lines-covered` and `lines-valid` on the
+  root, one package per directory and one class per file, with each counted line and its hits.
+
+Both are the same measurement, not a second one. They are written from the tallies the report
+prints, after the same test-code exclusion, so the sum of `LH` and of `LF` over the LCOV, and
+Cobertura's `lines-covered` and `lines-valid`, equal the lines figure on the report's
+`the crate, test code excluded` row (and `FNH`/`FNF` its functions figure). A raw
+`cargo llvm-cov report --lcov` would count the test modules and the files under `tests/` and
+publish a number the gate never reports; it is not used. Paths are relative to the repository
+root. Regions have no place in either format and are not exported.
+`test/cases/3932_the_coverage_export_is_its_one_measurement.sh` holds the equality against a
+fixture export that contains test code.
+
+CI writes both files in the `coverage` job's one instrumented run (the `measure` step) and
+keeps them with the raw export in the `ci-metrics-coverage` artifact, as `coverage.lcov` and
+`coverage.cobertura.xml`. The same job then uploads `coverage.lcov` to Coveralls and to
+Codecov, each step only when the repository has that tracker's secret
+(`COVERALLS_REPO_TOKEN`, `CODECOV_TOKEN`, which the owner adds) and neither able to fail the
+job. Without the secrets the uploads are skipped and the artifact is all there is.
+
 ## What this is not, yet
 
 The differential gate holds line, function and region coverage — the dimensions
