@@ -58,8 +58,19 @@ fn note_request() {
     LAST_REQUEST_MS.store(ms.max(1), Ordering::Relaxed);
 }
 
-/// Whether this process was used over HTTP within the last `window`: a request answered in
-/// it, or a live channel open now. The idle timer asks this beside the MCP sessions.
+/// How many live `/events` channels are open right now.
+///
+/// ```
+/// // a process that opened no channel holds none
+/// assert_eq!(majordomus_cli::http::server::open_channels(), 0);
+/// ```
+pub fn open_channels() -> usize {
+    OPEN_CHANNELS.load(Ordering::Relaxed)
+}
+
+/// Whether this process was used over HTTP within the last `window`: a request a client sent
+/// answered in it (machine traffic is not counted: [`crate::idle::counts_as_use`]), or a live
+/// channel open now. The idle timer asks this beside the MCP sessions.
 ///
 /// ```
 /// use std::time::Duration;
@@ -312,7 +323,15 @@ fn released_unless_spawned(spawned: std::io::Result<JoinHandle<()>>, handlers: &
 }
 
 fn answer(router: &Router, watch: &Watch, request: tiny_http::Request) {
-    note_request();
+    // another Majordomus process keeping the machine's servers in touch — a mesh link, a
+    // probe, a sibling's board gather — is not somebody using this one (I4007)
+    let probe = request
+        .headers()
+        .iter()
+        .any(|h| h.field.equiv(crate::idle::PROBE_HEADER));
+    if crate::idle::counts_as_use(&request.method().to_string(), request.url(), probe) {
+        note_request();
+    }
     let peer = request.remote_addr().copied();
     watch.reading(peer.as_ref());
     if let Some(request) = upgrade(router, watch, request) {

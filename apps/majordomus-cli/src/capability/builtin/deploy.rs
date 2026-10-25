@@ -84,6 +84,11 @@ pub struct SlugInput {
     pub executable: String,
     /// The directory the slug is written into: outside the checkout, absent or empty.
     pub out: String,
+    /// The site built at that commit (`scripts/site-build --serve`), required exactly when the
+    /// deployment declares `build.site`: the object says the slug carries one, this says where
+    /// the build left it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site: Option<String>,
 }
 
 /// Whether the deployments this repository declares would work, decided locally: against
@@ -218,6 +223,7 @@ fn deploy_slug(
         commit: input.commit.as_deref().unwrap_or("HEAD"),
         executable: std::path::Path::new(&input.executable),
         out: std::path::Path::new(&input.out),
+        site: input.site.as_deref().map(std::path::Path::new),
     };
     crate::deploy::slug::assemble(&request).map_err(|e| match e {
         crate::deploy::slug::SlugError::Refused(m) => CapabilityError::Refused(m),
@@ -494,6 +500,7 @@ mod tests {
                     commit: None,
                     executable: "majordomus".into(),
                     out: out.path().join("slug").display().to_string(),
+                    site: None,
                 },
             )
         };
@@ -531,6 +538,7 @@ mod tests {
             commit: commit.map(String::from),
             executable: executable.display().to_string(),
             out: out.display().to_string(),
+            site: None,
         }
     }
 

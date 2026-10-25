@@ -33,7 +33,7 @@ use super::provider::{
     ProviderStatus,
 };
 use super::registry::MeshSource;
-use super::rendezvous::register_once;
+use super::rendezvous::register;
 use super::MeshError;
 
 /// How long `tailscale status --json` may take before the reading counts as failed.
@@ -139,7 +139,7 @@ impl MeshProvider for TailscaleProvider {
                                 }
                                 // a peer with no server on the port is the common case, and
                                 // the next reading asks it again
-                                let Ok(answer) = register_once(&endpoint, &beacon.next_envelope())
+                                let Ok(answer) = register(&endpoint, &beacon.next_envelope())
                                 else {
                                     continue;
                                 };

@@ -465,6 +465,8 @@ jobs:
           MJ_TEST_JOBS: 4
           MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
+          # outside the checkout, so the tree the suite ran in stays the tree it ran in
+          MJ_TEST_FAILURES: ${{ runner.temp }}/suite-failures.log
         run: bash test/run.sh --no-skips
       # The tree the suite ran in, measured here, right after its run: the evidence job records
       # the suite's report against this measurement, never against its own fresh checkout
@@ -494,6 +496,15 @@ jobs:
           name: suite-shard-${{ matrix.shard }}
           path: suite.tsv
           retention-days: 3
+      # what each failed case said, beside the verdict: the reason a case gave is otherwise
+      # only in this job's log, and a failure counted later is a name without it (I4223)
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-failures-${{ matrix.shard }}
+          path: ${{ runner.temp }}/suite-failures.log
+          if-no-files-found: ignore
+          retention-days: 14
       # I2664: a run on a branch ends at its first red. Last, so this job's uploads and
       # summary have run; never on master, the schedule or a dispatch (see `concurrency`).
       - name: a failed branch run ends here
