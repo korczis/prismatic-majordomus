@@ -1411,11 +1411,7 @@ mod tests {
             .unwrap_err()
             .contains("not a build-cache file"));
         // a port nothing listens on: unhealthy, passed over with the rule
-        let port = TcpListener::bind("127.0.0.1:0")
-            .unwrap()
-            .local_addr()
-            .unwrap()
-            .port();
+        let port = crate::mesh::build_cache::tests::closed_port();
         declare_store(&f.m, &format!("http://127.0.0.1:{port}"));
         assert!(select_store(&f.m).unwrap_err().contains("unhealthy"));
         let (url, _) = stub_store();

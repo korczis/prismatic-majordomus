@@ -40,6 +40,12 @@ when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
 may not drop. |
+| `source_ranges` | boolean or null | no | Outline the Rust source under the work's paths into ranges, one candidate per
+definition, spent by the same budget beside the layer's objects (`source`).
+
+Off unless asked for: it reads files the index does not hold, and an answer every
+existing caller already depends on — `economics measure` counts the files a context
+names — does not change under it. |
 
 Output: `CompiledContext`.
 
@@ -77,6 +83,12 @@ when absent. |
 | `all_blocking_rules` | boolean or null | no | Every blocking rule of the layer, not only the ones the work reaches. Honest and
 usually over budget: the answer then says `over_budget` rather than dropping what it
 may not drop. |
+| `source_ranges` | boolean or null | no | Outline the Rust source under the work's paths into ranges, one candidate per
+definition, spent by the same budget beside the layer's objects (`source`).
+
+Off unless asked for: it reads files the index does not hold, and an answer every
+existing caller already depends on — `economics measure` counts the files a context
+names — does not change under it. |
 
 Output: `Explanation`.
 
