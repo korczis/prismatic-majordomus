@@ -125,18 +125,19 @@ fi
 # derive cost. On 2026-10-09 that cost a release two extra derives on a machine at load 40,
 # and a memory note that already said "stage new files before derive" did not prevent it.
 # So the derive refuses before it waits for the lock or builds anything
-# (project.a-derive-sees-what-the-commit-will). The same holds for a merge that is not yet a
-# commit (I2863, below).
+# (project.a-derive-sees-what-the-commit-will). A cherry-pick or revert that is not yet a
+# commit is refused too (I2863), and a merge is derived as the commit it will be (I3963, below).
+IN_MERGE=""
 derive_preflight() {
   local untracked n gd head
-  # A merge, cherry-pick or revert that is not yet committed: HEAD is still the commit being
-  # left, and every projection that reads history reads HEAD's. On 2026-10-21 #1753 merged
-  # master and was derived before the merge commit existed; the released_in rule found an
-  # older merge in the old base's history, recorded idd-workspace as released in v0.30.0, and
-  # CI's site job called roadmap.json stale (I2863). So the derive refuses until it is committed.
+  # A cherry-pick or revert that is not yet committed: HEAD is still the commit being left,
+  # and every projection that reads history reads HEAD's. On 2026-10-21 #1753 merged master
+  # and was derived before the merge commit existed; the released_in rule found an older merge
+  # in the old base's history, recorded idd-workspace as released in v0.30.0, and CI's site
+  # job called roadmap.json stale (I2863). So the derive refuses until it is committed.
   gd="$(git -C "$ROOT" rev-parse --git-dir 2>/dev/null || true)"
   case "$gd" in /*) ;; ?*) gd="$ROOT/$gd" ;; esac
-  for head in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+  for head in CHERRY_PICK_HEAD REVERT_HEAD; do
     [ -n "$gd" ] && [ -e "$gd/$head" ] || continue
     printf '==> derive: refused before anything ran: %s is present, so %s is uncommitted;\n' \
       "$head" "$(printf '%s' "$head" | sed 's/_HEAD$//; s/_/-/' | tr '[:upper:]' '[:lower:]')" >&2
@@ -145,6 +146,26 @@ derive_preflight() {
     printf '    Commit it (git commit), then derive again.\n' >&2
     exit 10
   done
+  # A merge is the one half-done state a derive is asked to finish: the derived files are the
+  # merge's conflicts, and the pre-commit pages gate refuses the merge commit until they are
+  # current, so refusing it as well left a merge of master that could be neither derived nor
+  # committed — every `prs repair --apply` failed at its derive (I3963). It is derived as the
+  # commit it will be (derive_the_merge, below), and what that cannot represent is refused
+  # here: an unresolved path has no content, and an unstaged change would not be in it.
+  if [ -n "$gd" ] && [ -e "$gd/MERGE_HEAD" ]; then
+    if [ -n "$(git -C "$ROOT" diff --name-only --diff-filter=U 2>/dev/null)" ]; then
+      printf '==> derive: refused before anything ran: the merge still has unresolved paths;\n' >&2
+      git -C "$ROOT" diff --name-only --diff-filter=U | sed 's/^/      /' >&2
+      printf '    resolve and git add each one, then derive again.\n' >&2
+      exit 10
+    fi
+    if ! git -C "$ROOT" diff --quiet 2>/dev/null; then
+      printf '==> derive: refused before anything ran: the merge has unstaged changes, and the\n' >&2
+      printf '    staged merge is what is derived; git add them, then derive again.\n' >&2
+      exit 10
+    fi
+    IN_MERGE=1
+  fi
   untracked="$(git -C "$ROOT" ls-files --others --exclude-standard 2>/dev/null || true)"
   [ -n "$untracked" ] || return 0
   n="$(printf '%s\n' "$untracked" | wc -l | tr -d ' ')"
@@ -161,7 +182,9 @@ derive_preflight() {
 }
 if [ "${1:-}" = --preflight ]; then
   [ $# = 1 ] || { printf 'usage: scripts/derive --preflight\n' >&2; exit 2; }
-  derive_preflight; printf '==> derive: preflight clean; every file is tracked or ignored\n' >&2; exit 0
+  derive_preflight; printf '==> derive: preflight clean; every file is tracked or ignored\n' >&2
+  [ -z "$IN_MERGE" ] || printf '==> derive: a merge is in progress; it is derived as the commit it will be, with both parents as history\n' >&2
+  exit 0
 fi
 [ "${1:-}" = --locked ] || derive_preflight
 
@@ -205,6 +228,57 @@ fi
 # caller happened to set MAJORDOMUS_BIN (CI does, a laptop does not), and the evidence it
 # publishes would differ between the two.
 MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
+
+# ---------------------------------------------------------------- a merge in progress (I3963)
+# HEAD is still the first parent, and the projections that read history (released_in, the
+# changelog's added_at, delivery.json's history) walk from HEAD. So the staged merge is
+# written as the commit it will be — both parents, the staged tree, a throwaway identity, no
+# ref — and derived in a detached scratch worktree of that commit, where HEAD is the merge and
+# both parents are history: by that tree's own scripts/derive, under the lock this run already
+# holds (lib/machine_lock.sh: a caller's lock is its callee's), with the executable built above
+# from the merged tree. delivery.json observes this checkout's HEAD (MJ_DERIVE_OBSERVE, I3836),
+# never the scratch commit, which reaches no remote. What the derive changed there is copied
+# here and staged, and the merge is committed as any other commit is. The offload derives a
+# merge the same way (apps/majordomus-cli/src/offload/run.rs, input_commit). A run stopped
+# half-way leaves the scratch directory under TMPDIR, which `git worktree prune` forgets.
+if [ -n "$IN_MERGE" ]; then
+  step "a merge in progress: deriving the commit it will be, both parents as history"
+  merge_tree="$(git -C "$ROOT" write-tree)"
+  merge_commit="$(git -C "$ROOT" -c user.name=derive -c user.email=derive@invalid \
+    commit-tree "$merge_tree" -p HEAD -p MERGE_HEAD -m 'derive input: a merge in progress')"
+  scratch_parent="$(mktemp -d "${TMPDIR:-/tmp}/derive-merge.XXXXXX")"
+  scratch="$scratch_parent/tree"
+  git -C "$ROOT" worktree add --quiet --detach "$scratch" "$merge_commit"
+  step_done
+  rc=0
+  mj_lock_run env MJ_DERIVE_OBSERVE="$(git -C "$ROOT" rev-parse HEAD)" \
+    MAJORDOMUS_SHARE="$scratch/share" MAJORDOMUS_BIN="$RB" "$scratch/scripts/derive" || rc=$?
+  if [ "$rc" = 0 ]; then
+    step "a merge in progress: staging what the derive changed"
+    changed="$scratch_parent/changed"; removed="$scratch_parent/removed"; : > "$changed"; : > "$removed"
+    while IFS= read -r -d '' entry; do
+      case "${entry:0:2}" in
+        *D*) printf '%s\0' "${entry:3}" >> "$removed" ;;
+        *)   p="${entry:3}"; mkdir -p "$(dirname "$ROOT/$p")"; cp -pP "$scratch/$p" "$ROOT/$p"
+             printf '%s\0' "$p" >> "$changed" ;;
+      esac
+    done < <(git -C "$scratch" status --porcelain=v1 -z --untracked-files=all)
+    if [ -s "$removed" ]; then
+      git -C "$ROOT" rm -q --cached --ignore-unmatch --pathspec-from-file="$removed" --pathspec-file-nul
+      tr '\0' '\n' < "$removed" | while IFS= read -r p; do rm -f "$ROOT/$p"; done
+    fi
+    [ ! -s "$changed" ] || git -C "$ROOT" add --pathspec-from-file="$changed" --pathspec-file-nul
+    printf '==> derive: %s file(s) staged, %s removed\n' \
+      "$(tr -cd '\0' < "$changed" | wc -c | tr -d ' ')" "$(tr -cd '\0' < "$removed" | wc -c | tr -d ' ')" >&2
+    step_done
+  fi
+  git -C "$ROOT" worktree remove --force "$scratch" >/dev/null 2>&1 || true
+  rm -rf "$scratch_parent"; git -C "$ROOT" worktree prune >/dev/null 2>&1 || true
+  timings_record
+  [ "$rc" = 0 ] && printf '==> derive: the merge is derived and staged; commit it (git commit)\n' >&2
+  exit "$rc"
+fi
+
 step "stage A: majordomus generate (code-only projections)"
 # --strict: an error diagnostic must not pass for success. A duplicate identity excludes
 # every claimant and the index goes on without them, so without this a derivation writes

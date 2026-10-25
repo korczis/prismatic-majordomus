@@ -1,0 +1,42 @@
+id: browser-compute
+title: A browser computes for the project with the server's own code, and the server verifies every result
+slug: browser-compute
+order: 147
+priority: p1
+problem: "On 2026-10-16 the owner asked for a project's page to let a visitor lend their browser's computing to the project, inside the existing mesh, with every result verified and visible. The repository has one crate and no wasm32 build; canonical JSON is written twice; the mesh executes nothing a peer sends; a caller beyond loopback writes nothing and the server authenticates no caller (ADR 0126)."
+outcome: "One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170)."
+current_state: "No portable core, no wasm32 target, no fixture shared by the runtimes; two canonical-JSON writers in the executable."
+desired_state: "apps/majordomus-core is linked by the executable and built for wasm32; the portable-core gate executes the module against the fixture (I2784). The server-side recompute and a same-origin Worker page (next slice) prove that a browser computes and the server agrees, recording nothing."
+scope:
+  - apps/majordomus-core
+  - apps/majordomus-cli/Cargo.toml
+  - apps/majordomus-cli/Cargo.lock
+  - apps/majordomus-cli/build.rs
+  - apps/majordomus-cli/src/generation.rs
+  - apps/majordomus-cli/src/mesh/journal.rs
+  - apps/majordomus-cli/src/capability/executor.rs
+  - apps/majordomus-cli/tests/portable_core.rs
+  - .ai/repo/ci/gates.yaml
+  - .ai/repo/adrs
+  - .ai/repo/project
+  - scripts/ci/crate-boundary
+  - rust-toolchain.toml
+  - docs
+non_scope:
+  - Writing anything on a browser's behalf before ADR 0170's open question is decided
+  - WebRTC, peer-to-peer transfer, reputation
+acceptance_criteria:
+  - "The portable core reproduces the shared fixture on the host, in the executable and as an executed wasm32 module"
+  - "An edit to the core is a new generation of the executable"
+  - "Nothing a browser returns enters a record before the owner accepts how it is authenticated"
+validation:
+  - majordomus plan validate
+  - majordomus intent validate
+  - cargo test --manifest-path apps/majordomus-core/Cargo.toml
+  - cargo test --test portable_core
+evidence_required: []
+depends_on: []
+risks:
+  - "The structure job installs the wasm32 target for the portable-core gate; a runner without network for rustup fails that gate loudly rather than skipping it."
+created_at: 2026-10-17
+updated_at: 2026-10-17

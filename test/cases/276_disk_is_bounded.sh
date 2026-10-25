@@ -300,33 +300,31 @@ out="$(XDG_CACHE_HOME="$T/cache" CARGO_TARGET_DIR="$T/no-target" MAJORDOMUS_RECL
 expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
 
 # ---------------------------------------------------------------- at a real call site
-# The launcher builds when the executable it resolves is missing or stale. Below the floor it
-# must refuse before cargo starts rather than after the volume is full. The release profile is
-# used because a suite that has built the debug one would otherwise have nothing to build.
+# Amended for ADR 0224 (I3957): the launcher no longer builds at all, so it can no longer start
+# a build below the floor — it refuses a missing or stale executable with exit 12 naming the
+# explicit build, `just build`, and that recipe asks the floor first (.just/build.just, held by
+# scripts/ci/backlog-check). What is asserted here is the half that moved: below the floor, from
+# a person or from a hook, nothing compiles and the refusal names the build. The release
+# profile is used because a suite that has built the debug one would otherwise have nothing
+# missing to resolve.
 if [ ! -x "$ROOT/apps/majordomus-cli/target/release/majordomus" ] && [ -z "${CARGO_TARGET_DIR:-}" ]; then
-  rc=0
-  # The launcher a person runs: MAJORDOMUS_HOOK unset, because the pre-push hook that runs
-  # this suite exports it and the hook launcher answers differently (below).
-  out="$(env -u MAJORDOMUS_BIN -u MAJORDOMUS_HOOK MAJORDOMUS_RECLAIM_BELOW_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_MIN_FREE_MB=99999999 \
-    "$ROOT/bin/majordomus-cli" --version 2>&1)" || rc=$?
-  LAST_OUT="$out"
-  [ "$rc" = 12 ] || { echo "    the launcher started a build below the floor (exit $rc): $out"; exit 1; }
-  expect_grep 'refusing to start'
-  # The hook's launcher (I3831) never cold-builds either: with an installed release it asks
-  # that one instead, and without one it refuses like the launcher above. Either way, nothing
-  # compiles below the floor.
-  rc=0
-  out="$(env -u MAJORDOMUS_BIN MAJORDOMUS_HOOK=1 MAJORDOMUS_RECLAIM_BELOW_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_MIN_FREE_MB=99999999 \
-    "$ROOT/bin/majordomus-cli" --version 2>&1)" || rc=$?
-  LAST_OUT="$out"
-  case "$rc" in
-    0) expect_grep 'instead of a cold build' ;;
-    12) expect_grep 'refusing to start' ;;
-    *) echo "    the hook launcher neither asked the installed release nor refused (exit $rc): $out"; exit 1 ;;
-  esac
-  if printf '%s\n' "$out" | grep -q 'Compiling'; then
-    echo "    the hook launcher compiled below the floor: $out"; exit 1
-  fi
+  for hook in 0 1; do
+    rc=0
+    out="$(env -u MAJORDOMUS_BIN -u MAJORDOMUS_HOOK MAJORDOMUS_HOOK="$hook" MAJORDOMUS_RECLAIM_BELOW_MB=0 MAJORDOMUS_INCREMENTAL_IDLE_MIN=0 MAJORDOMUS_BUILD_PROFILE=release MAJORDOMUS_MIN_FREE_MB=99999999 \
+      "$ROOT/bin/majordomus-cli" --version 2>&1)" || rc=$?
+    LAST_OUT="$out"
+    case "$rc" in
+      # a release of this tree's generation may answer; nothing else does
+      0) expect_grep 'answering through the installed release .* whose crate this tree carries unchanged' ;;
+      12) expect_grep 'run: just build' ;;
+      *) echo "    the launcher (hook=$hook) neither answered through a release of this generation nor refused (exit $rc): $out"; exit 1 ;;
+    esac
+    if printf '%s\n' "$out" | grep -q 'Compiling'; then
+      echo "    the launcher (hook=$hook) compiled below the floor: $out"; exit 1
+    fi
+  done
+  grep -q 'mj_rust_space_check' "$ROOT/.just/build.just" \
+    || { echo "    just build no longer asks the floor before it builds"; exit 1; }
 else
   echo "    (a release executable is already built: the launcher's refusal is not exercised)"
 fi

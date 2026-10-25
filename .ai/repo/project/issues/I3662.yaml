@@ -1,0 +1,32 @@
+id: I3662
+milestone: every-model-call-is-paid-from-a-declared-source
+title: "models.route names the funding source a route would draw on, as an inference with its basis, in the declared source order"
+slug: a-route-names-its-funding-source
+priority: p2
+profile: implementation
+objective: "Extend models::route so that its RoutingDecision carries the funding source the chosen model would draw on, labelled inferred with the credential presence and holding that implied it, chosen by a repository policy that orders source kinds (local, then credit_grant, then metered; a subscription only for the client that owns the seat); a held source whose credential is unset is excluded with that reason."
+why: "Routing today picks a model by capability and credential presence alone. With several sources on one vendor, the same model can be paid by a credit grant or by metered billing, and the owner wants the grant used first; the choice must be policy data the route reads, and what it says about payment must be a prediction, not a measurement."
+current_state: "RoutingDecision names a model and the models it excluded; nothing names how the call would be paid."
+desired_state: "Every route names its predicted source and the basis of the prediction, and the order is declared policy."
+scope:
+  - "apps/majordomus-cli/src/models/mod.rs"
+  - "apps/majordomus-cli/src/capability/builtin/models.rs"
+  - ".ai/repo/policy.yaml"
+  - "docs/generated"
+depends_on:
+  - "I3660"
+  - "I3661"
+cancelled: true
+completion: "Cancelled 2026-10-21 on feature/intent-funding-sources by the plan's critique (findings one-credential-cannot-carry-a-source-order and route-loses-its-purity): the credit grant and metered billing are reached through one ANTHROPIC_API_KEY, so which balance a call draws on is the vendor's billing order and no source order Majordomus declares changes it; and reading the environment and holdings in models::route would break ADR 0049's pure routing. Reopen only with vendor evidence of draw order, or for an order across different credentials, passed to route as an explicit input."
+acceptance_criteria:
+  - "With a held credit grant and a held metered source on one credential, the route names the credit grant, labelled inferred, with its basis"
+  - "Reordering the declared policy changes the answer without a code change (test)"
+  - "A subscription source is never chosen for a headless caller"
+  - "No held source usable: the route answers local or none, as a status, never an error"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml models::"
+  - "majordomus generate --check"
+evidence_required:
+  - "test_a_route_names_its_funding_source_as_an_inference"
+created_at: 2026-10-20
+updated_at: 2026-10-21

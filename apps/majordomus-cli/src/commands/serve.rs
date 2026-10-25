@@ -7,7 +7,8 @@
 //! file (the parent closed its end) starts the shutdown, which waits for attached peers to
 //! leave. When stdin is anything else (a terminal, `/dev/null` under nohup or a service
 //! manager, a file) nothing is watched and the process runs until it is stopped — or, with
-//! `--idle`, until no peer has been attached for that long. There is no daemon mode either
+//! `--idle`, until nothing has used it for that long (`crate::idle` says what counts as use,
+//! and why another server's traffic does not). There is no daemon mode either
 //! way: whoever started the process owns it.
 //!
 //! Stopped means stopped in order. `SIGTERM` (which `serve stop` sends), `SIGINT` and
@@ -67,7 +68,9 @@ pub fn run(args: ServeArgs) -> Result<u8> {
     let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),
-        Some(ServeCommand::Status { checkouts, format }) => status(&args, *checkouts, *format),
+        Some(ServeCommand::Status { checkouts, format }) => {
+            status(&args, &repo, *checkouts, *format)
+        }
         Some(ServeCommand::Ensure {
             port,
             idle,
@@ -112,7 +115,7 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
     // the lease is kept young while the layer loads, so that a peer waiting on it never
     // mistakes a slow start for an abandoned one
     lease.keep_alive();
-    let mut app = App::load(&args.repo)?;
+    let mut app = App::load_from(&args.repo, repo.clone())?;
     // The executions this server accepts outlive it (ADR 0225): written down as they
     // happen and folded back here, before anything can start a new one.
     match crate::execution::ExecutionJournal::at(repo.root().join(crate::execution::journal::DIR)) {
@@ -198,10 +201,11 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
         let idle = Duration::from_secs(args.idle);
         tracing::info!(
             idle_seconds = args.idle,
-            "stdin is not a pipe; the server stops when no peer has been attached for {} second(s)",
+            "stdin is not a pipe; the server stops when nothing has used it for {} second(s): no peer attached, no execution queued or running, no live channel, no client request (mesh links, probes and sibling board reads are not use)",
             args.idle
         );
-        let mut idle_since = Instant::now();
+        // idle is decided from what the server holds, by `crate::idle` (I2131, I4007)
+        let mut timer = crate::idle::IdleTimer::new(idle, Instant::now());
         let mut counted = Instant::now();
         loop {
             std::thread::sleep(STOP_POLL);
@@ -215,16 +219,15 @@ fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
             if superseded_and_alone(&shared) {
                 break None;
             }
-            // in use: an MCP session attached, a request answered within the last second, or a
-            // live channel open — the Cockpit and the REST API count as much as a client (I2131)
-            if shared.peers_attached() > 0
-                || crate::http::server::used_within(Duration::from_secs(1))
-            {
-                idle_since = Instant::now();
-            } else if idle_since.elapsed() >= idle {
+            // in use: a peer attached, an execution not finished, a live channel open, or a
+            // client's request answered within the last second — the Cockpit and the REST API
+            // count as much as an MCP client; another server's traffic does not
+            let activity = shared.activity(Duration::from_secs(1));
+            if let Some(why) = timer.observe(&activity, Instant::now()) {
                 tracing::info!(
-                    "no peer for {} second(s); stopping",
-                    idle_since.elapsed().as_secs()
+                    idle_seconds = why.idle_for.as_secs(),
+                    bound_seconds = why.bound.as_secs(),
+                    "{why}; stopping"
                 );
                 break None;
             }
@@ -284,8 +287,13 @@ const STOP_POLL: Duration = Duration::from_millis(100);
 /// The flag is the capability's input field and nothing else: it is serialised into the
 /// same JSON whether the question travels over the loopback socket or is executed here, so
 /// `--checkouts this` costs one lease read and one probe on either path.
-fn status(args: &ServeArgs, checkouts: Checkouts, format: OutputFormat) -> Result<u8> {
-    let app = App::load(&args.repo)?;
+fn status(
+    args: &ServeArgs,
+    repo: &Repository,
+    checkouts: Checkouts,
+    format: OutputFormat,
+) -> Result<u8> {
+    let app = App::load_from(&args.repo, repo.clone())?;
     let ctx = &app.context;
     let id = cli_capability(ctx, &["serve", "status"])?;
     let input = json!({ "checkouts": checkouts });
@@ -1362,6 +1370,43 @@ mod tests {
         assert!(
             !lease::lease_path(&repo).exists(),
             "the lease of a server that never bound is released"
+        );
+    }
+
+    /// `serve` and `serve status` over a share that is not there: the layer does not load,
+    /// that is the answer, and the server elected on the way gives its lease back.
+    #[test]
+    fn a_layer_that_does_not_load_is_the_answer_of_serve_and_of_its_status() {
+        use clap::Parser;
+        let (_dir, root) = layer_only();
+        let missing = root.join("no-share-here");
+        let parsed = |tail: &[&str]| {
+            let mut argv = vec![
+                "majordomus",
+                "serve",
+                "--repo",
+                root.to_str().unwrap(),
+                "--share",
+                missing.to_str().unwrap(),
+            ];
+            argv.extend_from_slice(tail);
+            let cli = crate::cli::Cli::try_parse_from(argv).unwrap();
+            let crate::cli::Command::Serve(args) = cli.command else {
+                panic!("not the serve command")
+            };
+            args
+        };
+        for tail in [&[][..], &["status"][..]] {
+            let err = run(parsed(tail)).expect_err("a share that is not there loads no layer");
+            assert!(
+                matches!(err, Error::ShareNotFound { .. }),
+                "{tail:?}: {err:?}"
+            );
+        }
+        let repo = Repository::discover(&root).unwrap();
+        assert!(
+            !lease::lease_path(&repo).exists(),
+            "the lease of a server whose layer never loaded is released"
         );
     }
 

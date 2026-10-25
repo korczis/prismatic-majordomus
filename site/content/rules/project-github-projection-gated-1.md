@@ -1,7 +1,7 @@
 +++
 title = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
 description = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
-weight = 116
+weight = 117
 [extra]
 kind = "rule"
 slug = "project-github-projection-gated-1"
@@ -54,7 +54,7 @@ stays a deliberate human act. CI proves agreement; it does not create issues." O
 the window passed with I2460 to I2478 behind, because the person whose act it was had gone on
 to the next landing, and master was refused (validate run 38278173940 at `81178f5362`). The
 owner ordered the apply to follow the landing. The line now names the rule that says who
-applies, `project.the-projection-is-applied-at-landing@1`; nothing this rule refuses is
+applies, `project.the-projection-is-applied-at-landing@2`; nothing this rule refuses is
 refused less, and the window still bounds how late the trunk may be. Amended in version 1
 for the reason the amendment above gives.
 
@@ -93,7 +93,7 @@ for the reason the amendment above gives.
   and says which, and never exits clean. A projection gate that skips quietly reintroduces
   the exact defect it was written to remove.
 - This gate proves agreement and applies nothing. Who applies is
-  `project.the-projection-is-applied-at-landing@1`: the landing, through a workflow that runs
+  `project.the-projection-is-applied-at-landing@2`: the landing, through a workflow that runs
   this gate after its apply; a person's apply is the fallback.
 
 ## Failure behaviour

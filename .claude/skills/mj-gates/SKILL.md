@@ -1,11 +1,11 @@
 ---
 name: mj-gates
-description: "Majordomus gates: Whether this task may be called finished; The CI model."
+description: "Majordomus gates: Whether this task may be called finished; The CI model; The completion policy; How each gate last went."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:gates; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.6 -->
+     Generator: majordomus-cli 1.0.0-alpha.8 -->
 
 # Majordomus `gates`
 
@@ -17,6 +17,8 @@ $ARGUMENTS
 |---|---|---|---|---|
 | `gates.completion` | Whether this task may be called finished | `majordomus_completion` | — | reads |
 | `gates.model` | The CI model | `majordomus_gates` | — | reads |
+| `gates.policy` | The completion policy | `majordomus_completion_policy` | — | reads |
+| `gates.state` | How each gate last went | `majordomus_gate_state` | — | reads |
 
 A capability that *changes* something runs only when the person asked for that change: call it once, and if it is refused or its outcome is not known, report that as it is and do not try again by another way. One that *reads* may be called whenever the request needs it.
 

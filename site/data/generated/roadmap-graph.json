@@ -60,6 +60,15 @@
       "summary": "A supervisory control layer that is real rather than described"
     },
     {
+      "id": "execution-telemetry",
+      "kind": "milestone",
+      "label": "execution-telemetry",
+      "status": "ACTIVE",
+      "route": "/plan/execution-telemetry/",
+      "external": false,
+      "summary": "Execution telemetry, only from providers that expose it honestly"
+    },
+    {
       "id": "fly-deployment",
       "kind": "milestone",
       "label": "fly-deployment",
@@ -171,7 +180,7 @@
       "id": "a-second-adopter-is-served",
       "kind": "milestone",
       "label": "a-second-adopter-is-served",
-      "status": "VERIFY",
+      "status": "ACTIVE",
       "route": "/plan/a-second-adopter-is-served/",
       "external": false,
       "summary": "A second adopter is served: what a foreign repository met on its first day is fixed in the tool"
@@ -180,10 +189,19 @@
       "id": "ci-critical-path",
       "kind": "milestone",
       "label": "ci-critical-path",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/ci-critical-path/",
       "external": false,
       "summary": "The critical path from a change to its verdict, and from a merge to its verified deploy, runs under a minute warm"
+    },
+    {
+      "id": "measurements-are-tracked-over-time",
+      "kind": "milestone",
+      "label": "measurements-are-tracked-over-time",
+      "status": "PLANNED",
+      "route": "/plan/measurements-are-tracked-over-time/",
+      "external": false,
+      "summary": "Coverage and CI cost are kept, exported and drawn over time, from the one measurement each has"
     },
     {
       "id": "automation",
@@ -294,6 +312,15 @@
       "summary": "The plan's surfaces are inferred from delivery, and nothing they show is typed beside the repository"
     },
     {
+      "id": "browser-compute",
+      "kind": "milestone",
+      "label": "browser-compute",
+      "status": "PLANNED",
+      "route": "/plan/browser-compute/",
+      "external": false,
+      "summary": "A browser computes for the project with the server's own code, and the server verifies every result"
+    },
+    {
       "id": "idd-workspace",
       "kind": "milestone",
       "label": "idd-workspace",
@@ -378,7 +405,7 @@
       "id": "an-authorised-node-connects-from-anywhere",
       "kind": "milestone",
       "label": "an-authorised-node-connects-from-anywhere",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/an-authorised-node-connects-from-anywhere/",
       "external": false,
       "summary": "An authorised node reaches another across LAN, tailnet or NAT, and says how"
@@ -400,6 +427,15 @@
       "route": "/plan/finished-work-reaches-a-verified-release/",
       "external": false,
       "summary": "Finished work reaches a verified release at the pace it is finished"
+    },
+    {
+      "id": "ordinary-commands-never-build",
+      "kind": "milestone",
+      "label": "ordinary-commands-never-build",
+      "status": "PLANNED",
+      "route": "/plan/ordinary-commands-never-build/",
+      "external": false,
+      "summary": "No ordinary command builds: every entry path fails fast or answers through a release of the same generation"
     },
     {
       "id": "every-surface-follows-what-changed",
@@ -468,7 +504,7 @@
       "id": "every-sessions-usage-is-observed",
       "kind": "milestone",
       "label": "every-sessions-usage-is-observed",
-      "status": "PLANNED",
+      "status": "ACTIVE",
       "route": "/plan/every-sessions-usage-is-observed/",
       "external": false,
       "summary": "What every AI session consumed is observed from the provider, attributed to the work it served, and never estimated into a fact"
@@ -645,6 +681,15 @@
       "summary": "Landed work is released as a measured version, and how long it has waited is a finding"
     },
     {
+      "id": "peer-blackboard",
+      "kind": "milestone",
+      "label": "peer-blackboard",
+      "status": "PLANNED",
+      "route": "/plan/peer-blackboard/",
+      "external": false,
+      "summary": "The peer blackboard is one projection, pushed live to every surface"
+    },
+    {
       "id": "a-derive-does-only-the-work-its-inputs-changed",
       "kind": "milestone",
       "label": "a-derive-does-only-the-work-its-inputs-changed",
@@ -663,6 +708,15 @@
       "summary": "A derivation computed once is reused by every worktree and by CI, and the incremental path becomes the default on evidence"
     },
     {
+      "id": "one-kit-on-every-surface",
+      "kind": "milestone",
+      "label": "one-kit-on-every-surface",
+      "status": "PLANNED",
+      "route": "/plan/one-kit-on-every-surface/",
+      "external": false,
+      "summary": "Code, charts, controls, embeds and shell blocks are one kit on every surface, declared in the design book and held there by a gate"
+    },
+    {
       "id": "landing-survives-any-session",
       "kind": "milestone",
       "label": "landing-survives-any-session",
@@ -670,6 +724,15 @@
       "route": "/plan/landing-survives-any-session/",
       "external": false,
       "summary": "Landing green work survives any session, any restart and any machine"
+    },
+    {
+      "id": "merging-and-referencing-are-enforced",
+      "kind": "milestone",
+      "label": "merging-and-referencing-are-enforced",
+      "status": "PLANNED",
+      "route": "/plan/merging-and-referencing-are-enforced/",
+      "external": false,
+      "summary": "Merging and referencing are enforced: every pull request carries its metadata, every reference resolves, every number is taken once"
     },
     {
       "id": "one-click-implement",
@@ -681,6 +744,24 @@
       "summary": "One click on a ready issue starts a durable execution that works it, followed live across a browser close and a server restart"
     },
     {
+      "id": "every-model-call-is-paid-from-a-declared-source",
+      "kind": "milestone",
+      "label": "every-model-call-is-paid-from-a-declared-source",
+      "status": "PLANNED",
+      "route": "/plan/every-model-call-is-paid-from-a-declared-source/",
+      "external": false,
+      "summary": "How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on"
+    },
+    {
+      "id": "a-session-proceeds-through-the-mesh",
+      "kind": "milestone",
+      "label": "a-session-proceeds-through-the-mesh",
+      "status": "PLANNED",
+      "route": "/plan/a-session-proceeds-through-the-mesh/",
+      "external": false,
+      "summary": "A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met"
+    },
+    {
       "id": "runtime-adapters",
       "kind": "milestone",
       "label": "runtime-adapters",
@@ -688,6 +769,15 @@
       "route": "/plan/runtime-adapters/",
       "external": false,
       "summary": "Profiles become runtime constraints rather than advice"
+    },
+    {
+      "id": "cost-per-accepted-outcome",
+      "kind": "milestone",
+      "label": "cost-per-accepted-outcome",
+      "status": "BLOCKED",
+      "route": "/plan/cost-per-accepted-outcome/",
+      "external": false,
+      "summary": "Cost per accepted outcome, only on measured data"
     },
     {
       "id": "intent-planning",
@@ -789,6 +879,15 @@
       "summary": "Whether a commit may be released, and whether its release arrived, is proved by one read and one case"
     },
     {
+      "id": "builds-reuse-the-mesh-cache",
+      "kind": "milestone",
+      "label": "builds-reuse-the-mesh-cache",
+      "status": "BLOCKED",
+      "route": "/plan/builds-reuse-the-mesh-cache/",
+      "external": false,
+      "summary": "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs"
+    },
+    {
       "id": "the-ui-works-on-a-phone",
       "kind": "milestone",
       "label": "the-ui-works-on-a-phone",
@@ -843,13 +942,13 @@
       "summary": "Every inference a decision rests on names its model and source, stays inside a declared budget, counts independent sources rather than answers, and is never reached from a hook path"
     },
     {
-      "id": "execution-telemetry",
+      "id": "routing-recommendations",
       "kind": "milestone",
-      "label": "execution-telemetry",
+      "label": "routing-recommendations",
       "status": "BLOCKED",
-      "route": "/plan/execution-telemetry/",
+      "route": "/plan/routing-recommendations/",
       "external": false,
-      "summary": "Execution telemetry, only from providers that expose it honestly"
+      "summary": "Routing recommendations derived from measured cost"
     },
     {
       "id": "intent-bound-work",
@@ -870,6 +969,15 @@
       "summary": "Work is offered to a peer by capability under a fenced lease, and runs there as an execution"
     },
     {
+      "id": "operation-convergence",
+      "kind": "milestone",
+      "label": "operation-convergence",
+      "status": "BLOCKED",
+      "route": "/plan/operation-convergence/",
+      "external": false,
+      "summary": "After the alpha, the time from an intent to its verified satisfaction is measured from the records"
+    },
+    {
       "id": "a-prompt-reaches-the-work-it-serves",
       "kind": "milestone",
       "label": "a-prompt-reaches-the-work-it-serves",
@@ -888,13 +996,13 @@
       "summary": "What a session proposes as knowledge is reconciled with what the repository already knows before a person reviews it, and a promotion stands on evidence that resolves"
     },
     {
-      "id": "cost-per-accepted-outcome",
+      "id": "shared-policy",
       "kind": "milestone",
-      "label": "cost-per-accepted-outcome",
+      "label": "shared-policy",
       "status": "BLOCKED",
-      "route": "/plan/cost-per-accepted-outcome/",
+      "route": "/plan/shared-policy/",
       "external": false,
-      "summary": "Cost per accepted outcome, only on measured data"
+      "summary": "Shared policy across repositories and workers"
     },
     {
       "id": "a-finish-reads-the-criteria-its-work-serves",
@@ -904,39 +1012,17 @@
       "route": "/plan/a-finish-reads-the-criteria-its-work-serves/",
       "external": false,
       "summary": "A finish reads what its work serves"
-    },
-    {
-      "id": "routing-recommendations",
-      "kind": "milestone",
-      "label": "routing-recommendations",
-      "status": "BLOCKED",
-      "route": "/plan/routing-recommendations/",
-      "external": false,
-      "summary": "Routing recommendations derived from measured cost"
-    },
-    {
-      "id": "operation-convergence",
-      "kind": "milestone",
-      "label": "operation-convergence",
-      "status": "BLOCKED",
-      "route": "/plan/operation-convergence/",
-      "external": false,
-      "summary": "After the alpha, the time from an intent to its verified satisfaction is measured from the records"
-    },
-    {
-      "id": "shared-policy",
-      "kind": "milestone",
-      "label": "shared-policy",
-      "status": "BLOCKED",
-      "route": "/plan/shared-policy/",
-      "external": false,
-      "summary": "Shared policy across repositories and workers"
     }
   ],
   "edges": [
     {
       "source": "foundation",
       "target": "runtime-adapters",
+      "kind": "unblocks"
+    },
+    {
+      "source": "execution-telemetry",
+      "target": "cost-per-accepted-outcome",
       "kind": "unblocks"
     },
     {
@@ -1020,6 +1106,11 @@
       "kind": "unblocks"
     },
     {
+      "source": "development-runtime",
+      "target": "builds-reuse-the-mesh-cache",
+      "kind": "unblocks"
+    },
+    {
       "source": "idd-workspace",
       "target": "the-ui-works-on-a-phone",
       "kind": "unblocks"
@@ -1055,8 +1146,8 @@
       "kind": "unblocks"
     },
     {
-      "source": "runtime-adapters",
-      "target": "execution-telemetry",
+      "source": "cost-per-accepted-outcome",
+      "target": "routing-recommendations",
       "kind": "unblocks"
     },
     {
@@ -1077,6 +1168,11 @@
     {
       "source": "runtime-adapters",
       "target": "mesh-peers-execute-assigned-work",
+      "kind": "unblocks"
+    },
+    {
+      "source": "cost-per-accepted-outcome",
+      "target": "operation-convergence",
       "kind": "unblocks"
     },
     {
@@ -1105,28 +1201,13 @@
       "kind": "unblocks"
     },
     {
-      "source": "execution-telemetry",
-      "target": "cost-per-accepted-outcome",
+      "source": "routing-recommendations",
+      "target": "shared-policy",
       "kind": "unblocks"
     },
     {
       "source": "intent-bound-work",
       "target": "a-finish-reads-the-criteria-its-work-serves",
-      "kind": "unblocks"
-    },
-    {
-      "source": "cost-per-accepted-outcome",
-      "target": "routing-recommendations",
-      "kind": "unblocks"
-    },
-    {
-      "source": "cost-per-accepted-outcome",
-      "target": "operation-convergence",
-      "kind": "unblocks"
-    },
-    {
-      "source": "routing-recommendations",
-      "target": "shared-policy",
       "kind": "unblocks"
     }
   ]
