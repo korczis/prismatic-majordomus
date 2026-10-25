@@ -16,6 +16,7 @@ use std::net::Ipv4Addr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::cache_provision::{provision, ProvisionInput, ProvisionReport};
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{
@@ -28,7 +29,9 @@ use crate::mesh::cooperation::{
     Written,
 };
 use crate::mesh::firewall::{FirewallApplyReport, FirewallReport};
-use crate::mesh::journal::{ClaimMode, MeshEvent, SessionInfo, StreamId, StreamLiveness};
+use crate::mesh::journal::{
+    ClaimMode, Cursor, CursorError, MeshEvent, SessionInfo, StreamId, StreamLiveness,
+};
 use crate::mesh::link::{LinkReply, RefusalCode, Signed, HELLO_PATH, SYNC_PATH};
 use crate::mesh::page::{self, ClaimBrief, Query, Summary, View};
 use crate::mesh::rendezvous::REGISTER_PATH;
@@ -118,6 +121,110 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<MeshIdentityReport, Capability
             identity: None,
             error: Some(e.to_string()),
         }),
+    }
+}
+
+// ---------------------------------------------------------------- mesh.enrol
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+/// The answer of `mesh.enrol`: which declaration, which key, and whether it changed.
+pub struct MeshEnrolment {
+    /// The declaration file, repository-relative.
+    pub path: String,
+    /// This machine's public key: what is listed, never a secret.
+    pub key: String,
+    /// Whether the key was added now; `false` when it was listed already.
+    pub added: bool,
+    /// What to do next: commit the file, or nothing.
+    pub next: String,
+}
+
+/// The name a machine's allowlist entry carries: its node id, its host name and its
+/// platform, the shape a person writes by hand ("641bdb94 — a MacBook (macos aarch64)").
+fn machine_label(identity: &PublicIdentity) -> String {
+    let host = std::process::Command::new("hostname")
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|h| !h.is_empty())
+        .unwrap_or_else(|| "this machine".into());
+    format!(
+        "{} — {host} ({} {})",
+        identity.display_name,
+        std::env::consts::OS,
+        std::env::consts::ARCH
+    )
+}
+
+fn mesh_enrol(ctx: &Context, _: Empty) -> Result<MeshEnrolment, CapabilityError> {
+    let root = std::path::Path::new(&ctx.index.repository.root);
+    let object = ctx
+        .index
+        .objects
+        .iter()
+        .find(|o| o.kind == crate::mesh::KIND)
+        .ok_or_else(|| {
+            CapabilityError::NotFound(
+                "this repository declares no mesh: `majordomus init --extend` seeds .ai/repo/mesh/mesh.yaml".into(),
+            )
+        })?;
+    let relative = object.provenance.path.clone();
+    let path = root.join(&relative);
+    let identity_path = default_identity_path().ok_or_else(|| {
+        CapabilityError::Refused(
+            "no HOME and no XDG_STATE_HOME: nowhere to keep this machine's node identity".into(),
+        )
+    })?;
+    let identity = NodeIdentity::load_or_create(&identity_path)
+        .map_err(|e| CapabilityError::Refused(e.to_string()))?;
+    let key = identity.public.public_key.clone();
+    // read, edit and write as one step: the index has read and parsed this declaration
+    // already, so in practice only the write can fail, and every failure names the file
+    let added = std::fs::read_to_string(&path)
+        .map_err(io_reason)
+        .and_then(|text| crate::mesh::enrol::enrol(&text, &key, &machine_label(&identity.public)))
+        .and_then(|edited| write_enrolled(&path, edited))
+        .map_err(|e| CapabilityError::Internal(format!("{relative}: {e}")))?;
+    Ok(if added {
+        MeshEnrolment {
+            next: format!(
+                "commit {relative}, so every machine that pulls it trusts this one; restart this checkout's server (`majordomus serve stop`, then `majordomus serve ensure`) to open the mesh here"
+            ),
+            path: relative,
+            key,
+            added: true,
+        }
+    } else {
+        MeshEnrolment {
+            path: relative,
+            key,
+            added: false,
+            next: "nothing: this machine's key is listed already".into(),
+        }
+    })
+}
+
+/// Write an enrolled declaration over `path`: whether a key was added, `false` when the
+/// declaration listed it already and nothing was written.
+fn write_enrolled(path: &std::path::Path, edited: Option<String>) -> Result<bool, String> {
+    match edited {
+        None => Ok(false),
+        Some(text) => std::fs::write(path, text).map(|()| true).map_err(io_reason),
+    }
+}
+
+/// An I/O failure as the reason a capability gives.
+fn io_reason(e: std::io::Error) -> String {
+    e.to_string()
+}
+
+/// How a cursor the reader cannot use is refused: one of another run is stale, and one that
+/// is not a cursor is invalid input.
+fn cursor_refusal(e: CursorError) -> CapabilityError {
+    match e {
+        CursorError::Stale { .. } => CapabilityError::Refused(e.to_string()),
+        CursorError::Malformed(_) => CapabilityError::InvalidInput(e.to_string()),
     }
 }
 
@@ -231,6 +338,108 @@ fn mesh_who(
     let subject =
         crate::mesh::who::Subject::parse(&input.subject).map_err(CapabilityError::InvalidInput)?;
     Ok(crate::mesh::who::who(ctx, input.subject.trim(), &subject))
+}
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.ensure`.
+pub struct BuildCacheEnsureInput {
+    /// What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`.
+    pub kind: crate::mesh::build_cache::key::Kind,
+    /// The directory holding the lockfile, relative to the repository; absent names the only
+    /// one the repository tracks, or the one the command was started in.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dir: Option<String>,
+    /// The install or build command, run in that directory on a miss; required for npm and
+    /// mix, optional for a cargo build directory.
+    #[serde(default)]
+    pub command: Vec<String>,
+}
+
+impl BenchmarkCases for BuildCacheEnsureInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // nothing: it runs a command and writes outside the repository; timing it would
+        // measure the install and the disk, not this executable
+        Vec::new()
+    }
+}
+
+fn mesh_build_cache_ensure(
+    ctx: &Context,
+    input: BuildCacheEnsureInput,
+) -> Result<crate::mesh::build_cache::ensure::EnsureReport, CapabilityError> {
+    use crate::mesh::build_cache::{ensure, key};
+    if input.command.is_empty() && input.kind != key::Kind::CargoBuildDir {
+        return Err(CapabilityError::InvalidInput(format!(
+            "{} needs the install command after `--`",
+            input.kind.as_str()
+        )));
+    }
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let report = key::report(&root, Some(input.kind));
+    let cwd = std::env::current_dir().ok();
+    let cwd_rel = cwd
+        .as_deref()
+        .and_then(|c| c.strip_prefix(&root).ok())
+        .map(|r| r.to_string_lossy().into_owned());
+    // an instance that cannot be named is not a reason to withhold the install: it runs
+    // uncached, and says why (rule project.cache-is-invisible)
+    let kk = ensure::resolve(
+        &report,
+        input.kind,
+        input.dir.as_deref(),
+        cwd_rel.as_deref(),
+    )
+    .unwrap_or_else(|why| {
+        ensure::unresolved(input.kind, input.dir.as_deref().or(cwd_rel.as_deref()), why)
+    });
+    let declared = ctx
+        .repository()
+        .ok()
+        .and_then(|r| crate::policy::LoadedPolicy::load(&r).ok())
+        .and_then(|p| p.policy.build_cache.local_max_gib);
+    let machine = ensure::Machine::from_env(declared);
+    Ok(ensure::ensure(&root, &kk, &input.command, &machine))
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.build_cache.env`.
+pub struct BuildCacheEnvInput {
+    /// The sccache executable to ask; `sccache` when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sccache: Option<String>,
+    /// The node file naming the store this node offers or knows.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub node_file: Option<String>,
+    /// The AWS-format credential file, mode 0600.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub credentials: Option<String>,
+}
+
+impl BenchmarkCases for BuildCacheEnvInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "no-sccache",
+            BuildCacheEnvInput {
+                sccache: Some("no-such-sccache".into()),
+                ..BuildCacheEnvInput::default()
+            },
+        )]
+    }
+}
+
+fn mesh_build_cache_env(
+    _ctx: &Context,
+    input: BuildCacheEnvInput,
+) -> Result<crate::mesh::build_cache::env::EnvReport, CapabilityError> {
+    Ok(crate::mesh::build_cache::env::report(
+        &crate::mesh::build_cache::env::EnvOptions {
+            sccache: input.sccache.unwrap_or_else(|| "sccache".to_string()),
+            node_file: input.node_file.map(std::path::PathBuf::from),
+            credentials: input.credentials.map(std::path::PathBuf::from),
+        },
+    ))
 }
 
 fn mesh_firewall(ctx: &Context, input: FirewallInput) -> Result<FirewallReport, CapabilityError> {
@@ -720,6 +929,10 @@ pub struct MeshStateAnswer {
     pub state: Option<CooperationState>,
     /// Every stream's liveness.
     pub streams: Vec<StreamView>,
+    /// The build-cache offers this runtime reads from the journal, and every record it does
+    /// not read as one with why (I2671); absent when the journal holds none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub build_cache: Option<crate::mesh::build_cache::offer::OfferReading>,
 }
 
 fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, CapabilityError> {
@@ -732,9 +945,12 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
             summary: None,
             state: None,
             streams: Vec::new(),
+            build_cache: None,
         });
     };
     let state = page::narrow(&c.state(), &query);
+    let build_cache =
+        Some(c.build_cache_offers()).filter(|r| !(r.offers.is_empty() && r.ignored.is_empty()));
     let streams: Vec<StreamView> = c
         .streams()
         .into_iter()
@@ -759,6 +975,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
                 state: None,
                 // the streams are the summary's runtimes, told once
                 streams: Vec::new(),
+                build_cache,
             }
         }
         View::Full => MeshStateAnswer {
@@ -768,6 +985,7 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
             summary: None,
             state: Some(state),
             streams,
+            build_cache,
         },
     })
 }
@@ -778,9 +996,17 @@ fn mesh_state(ctx: &Context, query: Query) -> Result<MeshStateAnswer, Capability
 #[serde(deny_unknown_fields)]
 /// The input of `mesh.events`.
 pub struct MeshEventsInput {
-    /// Only events whose Lamport stamp is above this.
+    /// Only events whose Lamport stamp is above this: a walk by stamp, which never returns
+    /// an event a partitioned runtime stamped at or below it and delivered later. Prefer
+    /// `cursor`, which returns those too.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after: Option<u64>,
+    /// The `cursor` the previous page answered: the next page is what this run of the
+    /// runtime applied after it, every event exactly once across the whole walk, a late one
+    /// from a healed partition included (I2733). A cursor another run issued is refused as
+    /// `stale_cursor`. Without `cursor` and `after` the walk starts at the beginning.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
     /// At most this many (default 100, at most 1000).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limit: Option<u64>,
@@ -798,6 +1024,7 @@ impl BenchmarkCases for MeshEventsInput {
             "default",
             MeshEventsInput {
                 after: None,
+                cursor: None,
                 limit: Some(100),
                 newest: None,
             },
@@ -812,10 +1039,14 @@ pub struct EventList {
     pub active: bool,
     /// How many events this answer carries.
     pub count: usize,
-    /// The `after` of the next page: the stamp of the last event this page carries, or the
-    /// `after` that was asked when it carries none. A page never ends inside a run of equal
-    /// stamps, so resuming after it misses nothing (I2140).
+    /// The `after` of the next page of a walk by stamp: the stamp of the last event this
+    /// page carries, or the `after` that was asked when it carries none. A page never ends
+    /// inside a run of equal stamps (I2140).
     pub lamport: u64,
+    /// The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly
+    /// after what this page returned (I2733). Absent from an answer to a walk by `after`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<String>,
     /// The events, in Lamport order.
     pub events: Vec<MeshEvent>,
 }
@@ -826,25 +1057,43 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
             active: false,
             count: 0,
             lamport: 0,
+            cursor: None,
             events: Vec::new(),
         });
     };
     let limit = input.limit.unwrap_or(100).clamp(1, 1000) as usize;
+    if input.after.is_some() && input.cursor.is_some() {
+        return Err(CapabilityError::InvalidInput(
+            "after and cursor are two different walks: pass one of them".into(),
+        ));
+    }
     let after = input.after.unwrap_or(0);
-    let events = if input.newest == Some(true) {
+    let (events, cursor) = if input.newest == Some(true) {
         // the whole tail above `after`, in order, and then its end: the journal is in memory
         // and bounded by its own retention, so this is a walk and not a second index
+        let head = c.journal().head_cursor();
         let mut all = c.journal().events_after(after, usize::MAX);
         let from = all.len().saturating_sub(limit);
         all.drain(..from);
-        all
+        (all, Some(head))
+    } else if input.after.is_some() {
+        (c.journal().events_after(after, limit), None)
     } else {
-        c.journal().events_after(after, limit)
+        let from = match &input.cursor {
+            Some(text) => Some(text.parse::<Cursor>().map_err(cursor_refusal)?),
+            None => None,
+        };
+        let (events, next) = c
+            .journal()
+            .events_since(from.as_ref(), limit)
+            .map_err(cursor_refusal)?;
+        (events, Some(next))
     };
     Ok(EventList {
         active: true,
         count: events.len(),
         lamport: events.last().map_or(after, |e| e.lamport),
+        cursor: cursor.map(|c| c.to_string()),
         events,
     })
 }
@@ -902,6 +1151,13 @@ pub struct SessionInput {
     /// The context revision it works from.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context: Option<String>,
+    /// The client process the session belongs to, on this machine: the runtime closes the
+    /// session once that process has ended (I3810).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_pid: Option<u32>,
+    /// When that process started, as this machine's process table reports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_started: Option<String>,
 }
 
 impl BenchmarkCases for SessionInput {
@@ -920,6 +1176,8 @@ impl BenchmarkCases for SessionInput {
                 head: None,
                 dirty: None,
                 context: None,
+                client_pid: None,
+                client_started: None,
             },
         )]
     }
@@ -941,6 +1199,8 @@ fn mesh_session_open(ctx: &Context, input: SessionInput) -> Result<Written, Capa
         head: input.head,
         dirty: input.dirty,
         context: input.context,
+        client_pid: input.client_pid,
+        client_started: input.client_started,
     })
     .map_err(map_error)
 }
@@ -1409,6 +1669,24 @@ pub fn module() -> ModuleDescriptor {
             // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
             .reads_only_locally(),
             capability! {
+                id: "mesh.enrol",
+                kind: CapabilityKind::Command,
+                title: "Enrol this machine in the mesh",
+                description: "Add this machine's public key to trust.allow of the repository's mesh declaration, under a comment naming the machine, creating the node identity first when there is none. Idempotent: a listed key changes nothing. The comments and every other line of the declaration stay as they were, and an edit that would not parse back as a declaration is refused before anything is written. Under deny_unknown a machine opens its mesh only once its key is listed, so this is the one step that joins a machine; commit the file and restart the server.",
+                input: Empty,
+                output: MeshEnrolment,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_enrol"),
+                    http: post("/api/v1/mesh/enrol"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "enrol".into()] }),
+                },
+                tags: ["mesh", "identity", "trust"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_enrol,
+            }
+            .writes_repository(),
+            capability! {
                 id: "mesh.identity",
                 title: "This machine's node identity",
                 description: "The node identity kept under the user's state directory, public half only: node id, public key, display name. The signing key appears in no projection. Absent is an answer, not an error — the identity is created when a mesh first activates.",
@@ -1439,6 +1717,25 @@ pub fn module() -> ModuleDescriptor {
                 handler: mesh_doctor,
             }
             // the mesh's working state, not the repository's: a loopback caller only (ADR 0220)
+            .reads_only_locally(),
+            capability! {
+                id: "mesh.build_cache.env",
+                title: "The sccache client configuration for the store this node selected",
+                description: "What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).",
+                input: BuildCacheEnvInput,
+                output: crate::mesh::build_cache::env::EnvReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_mesh_build_cache_env"),
+                    http: get("/api/v1/mesh/build-cache/env"),
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "env".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: mesh_build_cache_env,
+            }
+            // this machine's own sccache, files and store, not the repository's: a loopback caller only
             .reads_only_locally(),
             capability! {
                 id: "mesh.build_cache.key",
@@ -1477,6 +1774,24 @@ pub fn module() -> ModuleDescriptor {
             // the machine's processes and the board, not the repository's: a loopback caller only
             .reads_only_locally(),
             capability! {
+                id: "mesh.build_cache.ensure",
+                kind: CapabilityKind::Command,
+                title: "Restore an install before its command, and save it after",
+                description: "For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).",
+                input: BuildCacheEnsureInput,
+                output: crate::mesh::build_cache::ensure::EnsureReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "ensure".into()] }),
+                },
+                tags: ["mesh", "build", "cache"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: mesh_build_cache_ensure,
+            },
+            capability! {
                 id: "mesh.firewall",
                 title: "The host firewall, as the mesh needs it",
                 description: "What inbound traffic the declaration implies this machine must admit — the multicast group's port, the broadcast port when it is a permitted fallback, every declared hub port whose address is this machine's, and the server's own port when it listens beyond loopback — from the private networks the declaration names; which firewall front this host runs (ufw, nftables, the macOS application firewall); the commands that admit the plan there; what the firewall itself says about the plan now (present, missing, inactive, or unobservable without root); and what the kernel logged it dropping toward those ports in the last five minutes. Fails when a rule is observed missing or a drop was logged. Reads the host; changes nothing.",
@@ -1512,6 +1827,24 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
                 handler: mesh_firewall_apply,
+            },
+            capability! {
+                id: "mesh.build_cache.provision",
+                kind: CapabilityKind::Command,
+                title: "Provision this node as a mesh build cache provider",
+                description: "The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.",
+                input: ProvisionInput,
+                output: ProvisionReport,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: None,
+                    http: None,
+                    cli: Some(CliExposure { path: vec!["mesh".into(), "build-cache".into(), "provision".into()] }),
+                },
+                tags: ["mesh", "build-cache", "provisioning"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::Destructive },
+                handler: provision,
             },
             capability! {
                 id: "mesh.register",
@@ -1583,7 +1916,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.events",
                 title: "The cooperation journal",
-                description: "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
+                description: "The journal's events a page at a time, in Lamport order: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's cursor is the next page's `cursor`, and a walk resumed from each one returns every event exactly once, a partitioned runtime's late event included; `after` still walks by Lamport stamp.",
                 input: MeshEventsInput,
                 output: EventList,
                 stability: Stability::Experimental,
@@ -1773,6 +2106,11 @@ mod tests {
                 "/api/v1/mesh/nodes",
             ),
             (
+                "mesh.enrol",
+                Some("majordomus_mesh_enrol"),
+                "/api/v1/mesh/enrol",
+            ),
+            (
                 "mesh.identity",
                 Some("majordomus_mesh_identity"),
                 "/api/v1/mesh/identity",
@@ -1783,11 +2121,18 @@ mod tests {
                 "/api/v1/mesh/doctor",
             ),
             (
+                "mesh.build_cache.env",
+                Some("majordomus_mesh_build_cache_env"),
+                "/api/v1/mesh/build-cache/env",
+            ),
+            (
                 "mesh.build_cache.key",
                 Some("majordomus_mesh_build_cache_key"),
                 "/api/v1/mesh/build-cache/key",
             ),
             ("mesh.who", Some("majordomus_mesh_who"), "/api/v1/mesh/who"),
+            // a command served nowhere over HTTP or MCP: it runs the caller's install command
+            ("mesh.build_cache.ensure", None, ""),
             (
                 "mesh.firewall",
                 Some("majordomus_mesh_firewall"),
@@ -1795,6 +2140,7 @@ mod tests {
             ),
             // the one command served nowhere over HTTP: it runs a privileged host tool
             ("mesh.firewall.apply", None, ""),
+            ("mesh.build_cache.provision", None, ""),
             (
                 "mesh.register",
                 Some("majordomus_mesh_register"),
@@ -1913,6 +2259,7 @@ mod tests {
             "mesh.nodes",
             "mesh.identity",
             "mesh.doctor",
+            "mesh.build_cache.env",
             "mesh.build_cache.key",
             "mesh.who",
             "mesh.firewall",
@@ -1939,20 +2286,26 @@ mod tests {
                         "{} changes state and must be a POST",
                         c.id
                     ),
-                    // a command served nowhere over HTTP runs a privileged host tool,
-                    // which nothing reachable over the network may do; there is one
-                    None => assert_eq!(
-                        c.id.as_str(),
-                        "mesh.firewall.apply",
-                        "{}: a command without an HTTP route must be the firewall's",
+                    // a command served nowhere over HTTP runs a privileged host tool or a
+                    // caller's own command, which nothing reachable over the network may do
+                    None => assert!(
+                        [
+                            "mesh.firewall.apply",
+                            "mesh.build_cache.ensure",
+                            "mesh.build_cache.provision",
+                        ]
+                        .contains(&c.id.as_str()),
+                        "{}: a command without an HTTP route must run a host or caller command",
                         c.id
                     ),
                 }
             }
-            assert_ne!(
-                c.execution.effect,
-                crate::capability::model::Effect::RepositoryMutation,
-                "{}: the mesh writes no tracked file",
+            // one tracked file is written, by one capability: the declaration's trust list,
+            // by `mesh.enrol` (ADR 0137); nothing the mesh hears ever writes the repository
+            assert_eq!(
+                c.execution.effect == crate::capability::model::Effect::RepositoryMutation,
+                c.id.as_str() == "mesh.enrol",
+                "{}: only enrolment writes a tracked file",
                 c.id
             );
         }
@@ -1999,6 +2352,60 @@ mod tests {
             .expect("the registry builds");
         let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
         (repo, ctx)
+    }
+
+    #[test]
+    fn an_ensure_of_npm_or_mix_without_its_install_command_is_refused_by_name() {
+        let (_repo, ctx) = context(false);
+        for kind in [
+            crate::mesh::build_cache::key::Kind::NpmModules,
+            crate::mesh::build_cache::key::Kind::MixDeps,
+        ] {
+            let refused = mesh_build_cache_ensure(
+                &ctx,
+                BuildCacheEnsureInput {
+                    kind,
+                    dir: None,
+                    command: Vec::new(),
+                },
+            );
+            let Err(CapabilityError::InvalidInput(why)) = refused else {
+                panic!("{} without a command was not refused", kind.as_str());
+            };
+            assert_eq!(
+                why,
+                format!("{} needs the install command after `--`", kind.as_str())
+            );
+        }
+    }
+
+    #[test]
+    fn the_env_asks_sccache_by_name_when_no_executable_is_given() {
+        let (repo, ctx) = context(false);
+        // the node file is absent, so no store is asked whatever sccache is installed here
+        let answer = mesh_build_cache_env(
+            &ctx,
+            BuildCacheEnvInput {
+                sccache: None,
+                node_file: Some(repo.root().join("absent.json").display().to_string()),
+                credentials: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            answer.mode,
+            crate::mesh::build_cache::env::Mode::LocalOnly,
+            "{}",
+            answer.reason
+        );
+        assert!(answer.variables.is_empty() && answer.store.is_none());
+        if !answer.sccache.found {
+            assert!(
+                answer.reason.starts_with("sccache does not answer"),
+                "the default executable is `sccache`: {}",
+                answer.reason
+            );
+        }
     }
 
     #[test]

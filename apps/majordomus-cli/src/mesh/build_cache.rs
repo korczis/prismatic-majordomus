@@ -30,7 +30,11 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub(crate) mod archive;
+pub(crate) mod ensure;
+pub mod env;
 pub mod key;
+pub mod offer;
 pub(crate) mod s3;
 
 /// The only protocol a client of this model speaks.
@@ -49,6 +53,7 @@ pub const PROTOCOL_S3: &str = "s3";
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "BuildCacheScope")]
 pub enum Scope {
     /// Reachable from the machine that offers it and no other.
     Host,
@@ -69,6 +74,7 @@ pub enum Scope {
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[schemars(rename = "BuildCacheHealth")]
 pub enum Health {
     /// Ready and answering.
     Healthy,
@@ -78,6 +84,19 @@ pub enum Health {
     Unhealthy,
     /// The probe could not say: never `Healthy`.
     Unknown,
+}
+
+impl Health {
+    /// Why a store in this state is not used, in the fixed vocabulary an offer's withdrawal
+    /// carries; `None` for a healthy one.
+    pub(crate) fn refusal(self) -> Option<&'static str> {
+        match self {
+            Health::Healthy => None,
+            Health::Degraded => Some("its own probe says degraded"),
+            Health::Unhealthy => Some("its own probe says unhealthy"),
+            Health::Unknown => Some("its own probe could not say"),
+        }
+    }
 }
 
 /// One node's offer. Carries no credential and no secret of any kind.
@@ -96,6 +115,7 @@ pub enum Health {
 /// assert!(!serde_json::to_string(&offer).unwrap().contains("secret"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "BuildCacheNodeOffer")]
 pub struct Offer {
     /// The offering node's id: the last tie-break, so ordering is total.
     pub node: String,
@@ -174,6 +194,7 @@ impl Default for Policy {
 /// assert!(passed.is_empty());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "BuildCachePassedOver")] // integration::model has a PassedOver: one component namespace
 pub struct PassedOver {
     /// The offer's node.
     pub node: String,
@@ -225,11 +246,8 @@ fn refusal(offer: &Offer, policy: &Policy) -> Option<String> {
             offer.node
         ));
     }
-    match offer.health {
-        Health::Healthy => {}
-        Health::Degraded => return Some("its own probe says degraded".into()),
-        Health::Unhealthy => return Some("its own probe says unhealthy".into()),
-        Health::Unknown => return Some("its own probe could not say".into()),
+    if let Some(why) = offer.health.refusal() {
+        return Some(why.into());
     }
     if offer.age_seconds > policy.max_age_seconds {
         return Some(format!(
@@ -625,6 +643,28 @@ pub fn offers_of(file: &NodeFile, own_node: &str, budget: Duration) -> Vec<Offer
 mod tests {
     use super::*;
 
+    /// A loopback port nothing listens on: bound, released, then asked and found refusing.
+    /// A released port 0 can be taken by another test's listener before the caller probes
+    /// it — under coverage thousands of tests bind port 0 at once, and that is how
+    /// "nothing listens" read as Unknown or as connected — so a port is only handed out
+    /// once a connection to it has been refused. Every closed-port test of the build cache
+    /// asks here.
+    pub(super) fn closed_port() -> u16 {
+        for _ in 0..20 {
+            let port = std::net::TcpListener::bind("127.0.0.1:0")
+                .expect("binds")
+                .local_addr()
+                .expect("addr")
+                .port();
+            let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+            match std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(200)) {
+                Err(e) if e.kind() == std::io::ErrorKind::ConnectionRefused => return port,
+                _ => continue,
+            }
+        }
+        panic!("no loopback port refused a connection in 20 tries");
+    }
+
     fn offer(node: &str) -> Offer {
         Offer {
             node: node.into(),
@@ -855,12 +895,8 @@ mod tests {
 
     #[test]
     fn a_closed_port_is_unhealthy_and_a_name_or_a_non_url_is_unknown_never_healthy() {
-        // a port nothing listens on: bind, note it, drop the listener
-        let port = {
-            let l = std::net::TcpListener::bind("127.0.0.1:0").expect("binds");
-            l.local_addr().expect("addr").port()
-        };
-        let closed = format!("http://127.0.0.1:{port}");
+        // a port nothing listens on
+        let closed = format!("http://127.0.0.1:{}", closed_port());
         assert_eq!(probe_health(&closed, "/x", PROBE_BUDGET), Health::Unhealthy);
         // a name would need DNS, which a probe never does
         assert_eq!(
@@ -1058,6 +1094,22 @@ mod tests {
             headroom_gib(Path::new("/no/such/path/for/build-cache")),
             None
         );
+    }
+
+    #[test]
+    fn every_health_but_healthy_carries_the_one_refusal_selection_and_offering_share() {
+        assert_eq!(Health::Healthy.refusal(), None);
+        for (health, word) in [
+            (Health::Degraded, "degraded"),
+            (Health::Unhealthy, "unhealthy"),
+            (Health::Unknown, "could not say"),
+        ] {
+            let why = health.refusal().unwrap();
+            assert!(
+                why.starts_with("its own probe ") && why.contains(word),
+                "{why}"
+            );
+        }
     }
 
     #[test]

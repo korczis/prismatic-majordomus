@@ -5,10 +5,10 @@ slug: flatten-cache
 priority: p0
 profile: implementation
 parallel_safe: false
-objective: "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing."
+objective: "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<parser sha256>/, keyed by the file's content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener's own version, so a second command on unchanged files does no parsing."
 why: "doctor flattens 181 files and knowledge nodes 146; across the hook, watch and context the same files are parsed again and again."
 current_state: ".ai/README.md already reserves local/cache/ for rebuildable caches; nothing uses it."
-desired_state: "A miss parses and writes atomically; a hit copies; a changed file cannot hit because its hash changed; the cache is bounded by an entry cap in the policy and trimmed oldest first."
+desired_state: "A miss parses and writes atomically; a hit copies; a changed file cannot hit because its bytes are not the ones the entry holds; the cache is bounded by an entry cap in the policy and trimmed oldest first."
 scope:
   - lib/common.sh
   - share/allow/policy.txt
@@ -21,15 +21,26 @@ non_scope:
 depends_on:
   - I0817
 acceptance_criteria:
-  - Byte-identical output of every read-only command with a cold and a warm cache, proved by case 77
+  - Byte-identical output of every read-only command with a cold and a warm cache, proved by case 3090
   - A changed file is re-parsed, proved by mutation
   - The cache never grows past the cap
   - yaml_flatten count is unchanged; a new counter flatten_cache_hit reports hits
 validation:
-  - bash test/run.sh 77_flatten_cache
+  - bash test/run.sh 3090_a_flatten_is_cached_by_its_content
   - MJ_TIMING=1 bin/majordomus doctor
 evidence_required:
   - flatten_cache
 risk: "Hashing a file costs a subprocess too; the cache pays only when a flatten is materially dearer than a hash, which the counters must show before this lands."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-16T09:51:08Z
+started_at: 2026-10-16T09:50:41Z
+started_event: sha256:48973b22009f2da9d36792957a4ae77fa3397e684a2b19f2b5b6ff925e48511d
+verified_at: 2026-10-16T09:50:55Z
+verified_event: sha256:b20fac4bacd40572e3acc70fc7b5a0d59787dd40e9f9eb37f2e1af0c3b504b01
+evidence:
+  - covers: flatten_cache
+    type: test
+    command: "bash test/run.sh 3090_a_flatten_is_cached_by_its_content && MJ_TIMING=1 bin/majordomus doctor"
+    result: "ok 3090: every parseable tracked YAML file (546 of 551) flattens byte-identically to the parser alone, cold and warm, each warm call a counted hit; a same-length change in the same slot is parsed again; truncated, garbage, forged-source, forged-length, empty and unreadable entries are never served and are rewritten; a failed parse prints and exits 3 as before and is never kept; the directory never exceeds a cap of 3, oldest written removed first; no key or 0 is no cache; a changed parser gets another directory; doctor, context, history, prompt list, skills list and check print the same cold and warm in a fresh repository with yaml_flatten counted equally. Per call on 44 issue files: uncached 171-175 ms (about 4.0 ms each), warm 49-68 ms (about 1.2 ms), cold 400-606 ms once (the write and rename). doctor on this repository: yaml_flatten 571 cold and warm, flatten_cache_hit 16 cold and 337 warm, output identical but for clock-driven lines; wall time 511 s cold and 523 s warm at load average 40-62, which the load dominates. The other 234 calls run in processes that never load the policy and stay uncached."
+    commit: d1162668036170d42b6c9038d82dfa67064ba561
+    recorded_at: 2026-10-16T09:51:08Z

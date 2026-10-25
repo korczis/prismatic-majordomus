@@ -244,13 +244,14 @@ fn the_mesh_is_a_dimension_of_health_and_unknown_where_no_server_decided_it() {
 }
 
 /// A committed declaration that enables the mesh, with every socket-opening transport off.
-const MESH_ENABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntrust:\n  policy: tofu\n";
+const MESH_ENABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\nmulticast:\n  enabled: false\ntailscale:\n  enabled: false\ntrust:\n  policy: tofu\n";
 
 /// [`MESH_ENABLED`] as the value a server activates its mesh from.
 fn declared() -> majordomus_cli::mesh::MeshConfig {
     serde_json::from_value(json!({
         "schema": "mesh/v1", "kind": "mesh-declaration", "id": "majordomus", "enabled": true,
-        "multicast": { "enabled": false }, "trust": { "policy": "tofu" },
+        "multicast": { "enabled": false }, "tailscale": { "enabled": false },
+        "trust": { "policy": "tofu" },
     }))
     .expect("a declaration")
 }

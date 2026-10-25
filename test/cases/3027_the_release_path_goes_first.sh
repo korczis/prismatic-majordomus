@@ -16,7 +16,8 @@
 #      cancels itself; a push, a dispatch and a record branch never yield
 #   4  preempt: every pull-request validate queued or running is labelled, told and cancelled;
 #      the record's verdict, master's validate, the caller and a run with no pull request are
-#      not; clear, and nothing is touched
+#      not; a cancelled run still running after the wait is force-cancelled, a completed one
+#      and one that cannot be read are not; clear, and nothing is touched
 #   5  resume: busy, nothing; clear, the cancelled newest run of a labelled head runs again,
 #      a head whose newest run is not the cancelled one is only unlabelled
 #   6  a forge that cannot be read decides nothing: status says 12, yield lets the run proceed
@@ -46,6 +47,10 @@ case "$*" in
     if [ -f "$GH_STUB_FX/runs-$s.json" ]; then cat "$GH_STUB_FX/runs-$s.json"; else echo '{"workflow_runs":[]}'; fi ;;
   *"/issues?labels="*) if [ -f "$GH_STUB_FX/issues.json" ]; then cat "$GH_STUB_FX/issues.json"; else echo '[]'; fi ;;
   *"/pulls/"*) cat "$GH_STUB_FX/pull-${*##*/}.json" ;;
+  *"/actions/runs/"[0-9]*)
+    id="${*##*/}"
+    [ ! -f "$GH_STUB_FX/run-$id.down" ] || { echo "HTTP 502: run $id did not answer" >&2; exit 1; }
+    if [ -f "$GH_STUB_FX/run-$id.json" ]; then cat "$GH_STUB_FX/run-$id.json"; else printf '{"id":%s,"status":"completed","conclusion":"cancelled"}' "$id"; fi ;;
   *"/actions/workflows/validate.yml/runs?"*)
     sha="${*#*head_sha=}"; sha="${sha%%&*}"; cat "$GH_STUB_FX/vruns-$sha.json" ;;
   *) echo "stub gh: no answer for: $*" >&2; exit 1 ;;
@@ -148,6 +153,25 @@ done
 grep -q 'issues/8/' "$LOG" && { echo "    the record's own pull request was touched"; exit 1; }
 expect_grep '^left   validate run 204' || { echo "    a run with no pull request was not named as left alone"; exit 1; }
 expect_grep '2 pull-request validate run\(s\) yielded' || { echo "    preempt did not count what yielded"; exit 1; }
+[ "$(wrote '/force-cancel$')" = 0 ] || { echo "    preempt force-cancelled a run whose cancel had completed:"; cat "$LOG"; exit 1; }
+# A cancel GitHub accepted can leave a job running (2026-10-19: a suite job held its slot until
+# force-cancel). After the wait each cancelled run is read again: one still in progress is
+# force-cancelled after its cancel, one that completed is not, one that cannot be read is left.
+reset
+runs in_progress "$(run 101 release.yml push v9.9.9 in_progress)" \
+                 "$(run 201 validate.yml pull_request feature/a in_progress 7)" \
+                 "$(run 205 validate.yml pull_request feature/b in_progress 9)" \
+                 "$(run 206 validate.yml pull_request feature/c in_progress 10)"
+printf '{"id":201,"status":"in_progress","conclusion":null}' > "$FX/run-201.json"
+: > "$FX/run-206.down"
+expect_exit 0 rp preempt --self 900 || { echo "    preempt did not exit 0 when a cancel did not land"; exit 1; }
+forced="$(sed -n 's#^api -X POST repos/o/r/actions/runs/\([0-9]*\)/force-cancel$#\1#p' "$LOG" | tr '\n' ' ')"
+[ "$forced" = "201 " ] || { echo "    preempt force-cancelled '$forced', not the one run still in progress, 201:"; cat "$LOG"; exit 1; }
+awk '$0 == "-X POST repos/o/r/actions/runs/201/cancel" {c=NR} $0 == "repos/o/r/actions/runs/201" {r=NR}
+     $0 == "-X POST repos/o/r/actions/runs/201/force-cancel" {f=NR} END {exit !(c && r && f && c < r && r < f)}' \
+  <(sed 's/^api //' "$LOG") || { echo "    run 201 was not cancelled, read again, then force-cancelled, in that order:"; cat "$LOG"; exit 1; }
+expect_grep '^force  validate run 201 was still in_progress' || { echo "    the force-cancel was not said"; exit 1; }
+expect_grep 'validate run 206 could not be read after its cancel' || { echo "    a run that could not be read was not named as left"; exit 1; }
 reset; runs in_progress "$(run 201 validate.yml pull_request feature/a in_progress 7)"
 expect_exit 0 rp preempt --self 900 || exit 1
 [ "$(wrote '^api -X')" = 0 ] || { echo "    preempt touched branch runs with no release path running"; cat "$LOG"; exit 1; }
@@ -209,5 +233,6 @@ grep -B4 'run: scripts/ci/release-path preempt' "$WF" | grep -q "if: github.even
 grep -q 'run: scripts/ci/release-path resume' "$WF" || { echo "    release-path.yml does not resume"; exit 1; }
 # the enforcer cancels by one call only, and the workflow names no run of its own to cancel
 [ "$(grep -c '/cancel"' "$RP")" = 2 ] || { echo "    release-path cancels from more places than yield and preempt"; exit 1; }
+[ "$(grep -c '/force-cancel"' "$RP")" = 1 ] || { echo "    release-path force-cancels from more places than preempt"; exit 1; }
 
-echo "    the release run, the record's verdict and the release's deploy make the path busy and nothing else does; a pull request's run yields to them by labelling, telling and cancelling itself, a tag push preempts the branch runs, master, dispatches and record branches never yield, the yielded runs are re-requested once the path is clear, and an unreadable forge decides nothing"
+echo "    the release run, the record's verdict and the release's deploy make the path busy and nothing else does; a pull request's run yields to them by labelling, telling and cancelling itself, a tag push preempts the branch runs and force-cancels one whose cancel did not land, master, dispatches and record branches never yield, the yielded runs are re-requested once the path is clear, and an unreadable forge decides nothing"
