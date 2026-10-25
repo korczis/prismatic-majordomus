@@ -43576,6 +43576,8 @@
         "route": "/cockpit/objects/issue/i2733",
         "source": ".ai/repo/project/issues/I2733.yaml",
         "facts": {
+          "completed_at": "2026-10-25T18:53:43Z",
+          "completed_event": "sha256:3393645c376270ce1995425bb8d928dd5a6b00c05d956c7e48e789670a7c1ca2",
           "created_at": "2026-10-15",
           "depends_on": [
             "I2140"
@@ -43600,7 +43602,9 @@
             "docs/MESH.md"
           ],
           "slug": "a-resumed-walk-misses-a-partitioned-event",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-25T18:52:58Z",
+          "started_event": "sha256:0f8f05c2c3e232527245b3586180a46cb1f41251adf863ae9183a493fa684ace",
+          "updated_at": "2026-10-25T18:53:43Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh",
@@ -63862,6 +63866,8 @@
             "A malformed MJ_PROBE_SHARD is refused before a browser is opened",
             "A probe finding still fails the shard that found it, naming the page and the spec"
           ],
+          "completed_at": "2026-10-25T18:51:58Z",
+          "completed_event": "sha256:dc3edbf1703850a60cd025827dd6562a23510e2bff3e6baf5b25f4f0bd44f6f7",
           "created_at": "2026-10-20",
           "current_state": "One interactions job rebuilds the site (rustdoc included) and drives every page in one step under a bound that has had to grow with every route the site adds.",
           "depends_on": [
@@ -63887,7 +63893,9 @@
             "docs/CI.md"
           ],
           "slug": "the-interaction-probe-is-split",
-          "updated_at": "2026-10-20",
+          "started_at": "2026-10-25T18:51:14Z",
+          "started_event": "sha256:00f9afcf6f14c3e94f7457cff198bea1d056734500b60f56452037dfe6b921f5",
+          "updated_at": "2026-10-25T18:51:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 3603_every_page_is_exercised_by_exactly_one_shard 337_every_control_does_what_it_says 3602_every_route_is_probed_by_exactly_one_shard"
@@ -67726,6 +67734,8 @@
             "A raw string with hashes and braces is skipped whole",
             "Case 132 fails if the scanner closes the module early"
           ],
+          "completed_at": "2026-10-25T18:45:51Z",
+          "completed_event": "sha256:d0f6d76eb9db71f93530138d640df8ef1e2723b967b931817d7129b430ef2cce",
           "created_at": "2026-10-22",
           "current_state": "test_lines (scripts/rust-coverage:268-318) skips a string only within one line and does not know raw strings.",
           "depends_on": [],
@@ -67744,7 +67754,9 @@
           ],
           "serves": [],
           "slug": "the-coverage-scanner-reads-raw-strings",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-25T18:45:02Z",
+          "started_event": "sha256:efa216f027295d3f0a75e2a6df6ac5d6ce56a7bdb90ce85202afb5d174b1c087",
+          "updated_at": "2026-10-25T18:45:51Z",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 132_coverage_differential"
@@ -70337,6 +70349,8 @@
             "76 and 493 run their cargo test with CARGO_BUILD_JOBS=2 and RUST_TEST_THREADS=2",
             "Case 4199 passes on the tree and, on a fixture, flags exactly an uncapped compile while a capped one, an exclusive one and cargo written only as text pass"
           ],
+          "completed_at": "2026-10-25T18:47:57Z",
+          "completed_event": "sha256:80bab1d2e8a3a5ba6518a59efefc60be45fed8ed21a0df1281372637c53e9c1c",
           "created_at": "2026-10-24",
           "depends_on": [],
           "evidence_required": [
@@ -70360,7 +70374,9 @@
           ],
           "serves": [],
           "slug": "a-case-that-compiles-never-starves-its-neighbours",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T18:47:20Z",
+          "started_event": "sha256:dd8db5979724b7a2f7ca98f6f6ae0f93bdeb6415306b8182dbf4203e32b828ad",
+          "updated_at": "2026-10-25T18:47:57Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours 431_economics_claims_gated",
             "majordomus plan validate"
@@ -70426,6 +70442,8 @@
             "A link to the run site/data/evidence.json names is still decided",
             "A link to a run neither file names is still refused as undecidable offline (exit 10)"
           ],
+          "completed_at": "2026-10-25T18:49:56Z",
+          "completed_event": "sha256:7c22819f39b4e32fc31467dc5991719771f32438ad6898fdb26a17bdd405190d",
           "created_at": "2026-10-24",
           "current_state": "link-check builds its set of decided runs from site/data/evidence.json alone; every other Actions run link is refused.",
           "depends_on": [],
@@ -70450,7 +70468,9 @@
           ],
           "serves": [],
           "slug": "a-trends-run-is-decided-by-provenance",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T18:49:05Z",
+          "started_event": "sha256:7fe0141012ab0ced7e96cf991feeeabe269a5e02dd7cfeaaaf4ef4d3e7bec709",
+          "updated_at": "2026-10-25T18:49:56Z",
           "validation": [
             "bash test/run.sh 335_every_link_resolves"
           ]
