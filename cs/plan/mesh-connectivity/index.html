@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -173,11 +173,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
-<span class="text-sm text-body">0 z 4 úkolů hotovo</span></p>
+<span class="text-sm text-body">0 z 6 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">6</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">hotovo</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -244,6 +244,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/plan/i3189/" class="text-fg-brand hover:underline">I3189</a></td>
           <td class="px-4 py-2 text-heading">Laboratoř meshe prokazuje spojení za NAT, s relay, výpadkem hubu a změnou adresy</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4012/" class="text-fg-brand hover:underline">I4012</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A remote node&#39;s loopback runtimes are not dialed, so its hub is</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4013/" class="text-fg-brand hover:underline">I4013</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A server bound to every interface advertises the addresses it has now</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -252,11 +268,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">Graf závislostí mesh-connectivity</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-mesh-connectivity" data-diagram="mesh-connectivity" data-nodes="I3187 I3188 I3189 I3190">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-mesh-connectivity" data-diagram="mesh-connectivity" data-nodes="I3187 I3188 I3189 I3190 I4012 I4013">flowchart LR
     I3187[&quot;I3187&lt;br/&gt;A link names the endpoint candidates it tried, the one it chose and why&quot;]:::blocked
     I3188[&quot;I3188&lt;br/&gt;A cold node finds the mesh from a signed manifest on Pages, and refuses a stale, rolled-back or unsigned one&quot;]:::blocked
     I3189[&quot;I3189&lt;br/&gt;Two nodes with no direct path cooperate through a trusted hub that relays their authenticated frames&quot;]:::blocked
     I3190[&quot;I3190&lt;br/&gt;The mesh lab proves links behind NAT, with the relay, a hub outage and an address change&quot;]:::blocked
+    I4012[&quot;I4012&lt;br/&gt;A remote node&#39;s loopback runtimes are not dialed, so its hub is&quot;]:::blocked
+    I4013[&quot;I4013&lt;br/&gt;A server bound to every interface advertises the addresses it has now&quot;]:::blocked
     I3187 --&gt; I3189
     I3189 --&gt; I3190
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
@@ -266,11 +284,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram mesh-connectivity" aria-controls="diagram-mesh-connectivity" data-diagram-bar="diagram-mesh-connectivity" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-mesh-connectivity"><summary>Odkazuje z tohoto diagramu (4)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i3187/" data-node="I3187" data-kind="issue">I3187 Spojení jmenuje kandidáty koncových bodů, které zkusilo, zvolený a proč</a></li><li><a href="https://majordomus.dev/cs/plan/i3188/" data-node="I3188" data-kind="issue">I3188 Studený uzel najde mesh z podepsaného manifestu na Pages a odmítne zastaralý, vrácený zpět nebo nepodepsaný</a></li><li><a href="https://majordomus.dev/cs/plan/i3189/" data-node="I3189" data-kind="issue">I3189 Dva uzly bez přímé cesty spolupracují přes důvěryhodný hub, který přeposílá jejich autentizované rámce</a></li><li><a href="https://majordomus.dev/cs/plan/i3190/" data-node="I3190" data-kind="issue">I3190 Laboratoř meshe prokazuje spojení za NAT, s relay, výpadkem hubu a změnou adresy</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram mesh-connectivity" aria-controls="diagram-mesh-connectivity" data-diagram-bar="diagram-mesh-connectivity" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-mesh-connectivity"><summary>Odkazuje z tohoto diagramu (6)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i3187/" data-node="I3187" data-kind="issue">I3187 Spojení jmenuje kandidáty koncových bodů, které zkusilo, zvolený a proč</a></li><li><a href="https://majordomus.dev/cs/plan/i3188/" data-node="I3188" data-kind="issue">I3188 Studený uzel najde mesh z podepsaného manifestu na Pages a odmítne zastaralý, vrácený zpět nebo nepodepsaný</a></li><li><a href="https://majordomus.dev/cs/plan/i3189/" data-node="I3189" data-kind="issue">I3189 Dva uzly bez přímé cesty spolupracují přes důvěryhodný hub, který přeposílá jejich autentizované rámce</a></li><li><a href="https://majordomus.dev/cs/plan/i3190/" data-node="I3190" data-kind="issue">I3190 Laboratoř meshe prokazuje spojení za NAT, s relay, výpadkem hubu a změnou adresy</a></li><li><a href="https://majordomus.dev/cs/plan/i4012/" data-node="I4012" data-kind="issue">I4012 A remote node's loopback runtimes are not dialed, so its hub is</a></li><li><a href="https://majordomus.dev/cs/plan/i4013/" data-node="I4013" data-kind="issue">I4013 A server bound to every interface advertises the addresses it has now</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/.ai/repo/project/milestones/mesh-connectivity.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/mesh-connectivity.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show mesh-connectivity</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/.ai/repo/project/milestones/mesh-connectivity.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/mesh-connectivity.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show mesh-connectivity</code>.</p>
 </div>
 
 </div>
@@ -320,9 +338,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -330,7 +348,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

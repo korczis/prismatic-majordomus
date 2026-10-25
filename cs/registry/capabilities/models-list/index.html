@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -290,6 +290,113 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;FundingEvidence&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;Where a funding declaration was read, and when.\n\n```\nuse majordomus_cli::models::FundingEvidence;\n\nlet e: FundingEvidence = serde_json::from_str(\n    r#\&quot;{\&quot;url\&quot;:\&quot;https://acme.example/docs\&quot;,\&quot;checked\&quot;:\&quot;2026-10-21\&quot;,\&quot;quote\&quot;:\&quot;Pay as you go.\&quot;}\&quot;#,\n).unwrap();\nassert_eq!(e.checked, \&quot;2026-10-21\&quot;);\nassert!(serde_json::from_str::&lt;FundingEvidence&gt;(r#\&quot;{\&quot;url\&quot;:\&quot;x\&quot;,\&quot;checked\&quot;:\&quot;y\&quot;,\&quot;note\&quot;:1}\&quot;#).is_err(),\n    \&quot;a field the evidence does not declare is refused, so none could carry an amount\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;checked&quot;: {
+          &quot;description&quot;: &quot;The day it was read, `YYYY-MM-DD`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;quote&quot;: {
+          &quot;description&quot;: &quot;The vendor&#39;s own words, verbatim, when a sentence settles it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;url&quot;: {
+          &quot;description&quot;: &quot;The page or record it was read from.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;url&quot;,
+        &quot;checked&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;FundingKind&quot;: {
+      &quot;description&quot;: &quot;The kinds of funding source, in the order a policy most often prefers them.\n\n```\nuse majordomus_cli::models::FundingKind;\n\nlet kind: FundingKind = serde_json::from_str(r#\&quot;\&quot;credit_grant\&quot;\&quot;#).unwrap();\nassert_eq!(kind, FundingKind::CreditGrant);\nassert!(serde_json::from_str::&lt;FundingKind&gt;(r#\&quot;\&quot;voucher\&quot;\&quot;#).is_err(), \&quot;the set is closed\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;local&quot;,
+          &quot;description&quot;: &quot;Inference on this machine; no money changes hands.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;credit_grant&quot;,
+          &quot;description&quot;: &quot;A recurring allowance of API usage that comes with something else the owner\npays for, such as the API credits a subscription plan includes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;subscription&quot;,
+          &quot;description&quot;: &quot;A subscription seat, used through the client signed in with it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;metered&quot;,
+          &quot;description&quot;: &quot;Pay-as-you-go usage, billed by what was used.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;FundingSource&quot;: {
+      &quot;additionalProperties&quot;: false,
+      &quot;description&quot;: &quot;One way a vendor lets a call be paid. A kind and a credential, never an amount: a\nprice or a balance this tool cannot verify is a fact it must not state.\n\n```\nuse majordomus_cli::models::{FundingKind, FundingSource, ModelCatalogue};\n\nlet c = ModelCatalogue::parse(concat!(\n    \&quot;version: 1\\nvendors:\\n  - id: acme\\n    title: Acme\\n    funding:\\n\&quot;,\n    \&quot;      - id: grant\\n        kind: credit_grant\\n        credential_env: ACME_API_KEY\\n\&quot;,\n    \&quot;        renews: monthly\\n        claim_url: https://acme.example/claim\\n\&quot;,\n    \&quot;        evidence:\\n          url: https://acme.example/docs\\n          checked: 2026-10-21\\n\&quot;,\n)).unwrap();\nlet grant: &amp;FundingSource = &amp;c.vendors[0].funding[0];\nassert_eq!(grant.kind, FundingKind::CreditGrant);\nassert_eq!(grant.credential_env.as_deref(), Some(\&quot;ACME_API_KEY\&quot;));\nassert!(c.diagnostics().is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;claim_url&quot;: {
+          &quot;description&quot;: &quot;Where the owner claims or links the source, as the vendor published it. Shown as\nevidence; Majordomus never follows it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;credential_env&quot;: {
+          &quot;description&quot;: &quot;The environment variable whose presence reaches this source. Two sources may\nname the same one: a credit grant and metered billing are both reached through\none API credential, and nothing local tells them apart.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;evidence&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FundingEvidence&quot;,
+          &quot;description&quot;: &quot;What the declaration stands on.&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The source id, unique within its vendor.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/FundingKind&quot;,
+          &quot;description&quot;: &quot;What kind of source it is.&quot;
+        },
+        &quot;note&quot;: {
+          &quot;description&quot;: &quot;One line a person needs when choosing.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;renews&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Renewal&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The period an allowance renews over, for a source that has one.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;kind&quot;,
+        &quot;evidence&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;Inference&quot;: {
       &quot;description&quot;: &quot;Where a vendor&#39;s inference runs.&quot;,
       &quot;oneOf&quot;: [
@@ -396,6 +503,16 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
+    &quot;Renewal&quot;: {
+      &quot;description&quot;: &quot;The period an allowance renews over.\n\n```\nuse majordomus_cli::models::Renewal;\n\nassert_eq!(serde_json::from_str::&lt;Renewal&gt;(r#\&quot;\&quot;monthly\&quot;\&quot;#).unwrap(), Renewal::Monthly);\nassert_eq!(serde_json::to_string(&amp;Renewal::Monthly).unwrap(), r#\&quot;\&quot;monthly\&quot;\&quot;#);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;monthly&quot;,
+          &quot;description&quot;: &quot;Every calendar month, or every billing month, as the vendor states it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;VendorView&quot;: {
       &quot;description&quot;: &quot;One vendor with whether its credential is configured — presence of the named\nenvironment variable and nothing more. No value is read.&quot;,
       &quot;properties&quot;: {
@@ -412,6 +529,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
             &quot;string&quot;,
             &quot;null&quot;
           ]
+        },
+        &quot;funding&quot;: {
+          &quot;description&quot;: &quot;How a call to this vendor can be paid: the sources the vendor offers, each with\nthe evidence it was read from. What the vendor *offers* is the distribution&#39;s;\nwhich of them the owner *holds*, and any amount, is the owner&#39;s and never here.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/FundingSource&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
         },
         &quot;id&quot;: {
           &quot;description&quot;: &quot;The vendor id, unique in the catalogue.&quot;,
@@ -501,7 +625,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::models</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">ModelsFilter</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">ModelsReport</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/docs/generated/modules/models.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/models.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/docs/generated/modules/models.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/models.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">94055f5c02d96de4ffe4d549beb908a692df3e3aa2a71b6c29dec8b1a5b96c36</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.8</dd></div>
       </dl>
     </div>
@@ -557,9 +681,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -567,7 +691,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

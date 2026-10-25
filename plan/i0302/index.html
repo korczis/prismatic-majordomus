@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--cancelled relative" data-status="cancelled"><span aria-hidden="true">!</span>CANCELLED</span>
 <span class="text-sm text-body">wave 1 · p2 · implementation profile · runs alone</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/execution-telemetry/" class="text-fg-brand underline">execution-telemetry — Execution telemetry, only from providers that expose it honestly</a>.</p>
-  <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Blocked. This issue cannot start until <a href="https://majordomus.dev/plan/i0301/" class="font-mono underline">I0301</a>, <a href="https://majordomus.dev/plan/execution-telemetry/" class="font-mono underline">milestone:execution-telemetry</a> are done. The status is derived from that, not declared.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Add the command that attaches measured execution facts to the active task, accepting only values a provider actually reported and refusing any field the caller cannot attribute to a reporter.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The tool never invokes a model, so it cannot measure a session itself; the numbers have to be handed to it. The boundary where they arrive is the only place their provenance can still be checked.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The record has a shape and nothing writes one.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A worker or a wrapper hands measured facts to one command, they are validated and stored against the task, and a value with no reporter is refused with a finding that names the field.</p>
@@ -201,12 +198,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Any network call, poll, or background collection</li><li>Deriving one field from another to fill a gap</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0301/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0301</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0301/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0301</span><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="min-w-0 break-words text-sm text-heading">Define the execution record, including what an absence looks like</span></a></li>
-  </ul>
-  <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0303/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0303</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
-<span class="min-w-0 break-words text-sm text-heading">Prove a silent provider produces an explicit absence, never a guess</span></a></li>
   </ul>
 
   
@@ -220,7 +213,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">suite</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A provider&#39;s self-reported usage may itself be wrong; the record says who reported it so that a later correction has something to correct.</p>
+  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A provider&#39;s self-reported usage may itself be wrong; the record says who reported it so that a later correction has something to correct.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Completion report</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cancelled 2026-10-22 by I3287 as superseded by I3288: ADR 0213 receives a provider&#39;s usage through its official seam into the Rust economics fabric, not through a shell command a worker hands numbers to, so the command this issue planned in lib and bin is not built. Its criteria are carried into I3288: a field without a named reporter is refused and no code path fabricates, interpolates or defaults a measured value; measured facts attach to the work they served and survive into its completed record; the receiving needs no network beyond the loopback and leaves no background process of its own.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -230,7 +223,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/.ai/repo/project/issues/I0302.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0302.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0302</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/.ai/repo/project/issues/I0302.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0302.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0302</code>.</p>
 </div>
 
 </div>
@@ -280,9 +273,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -290,7 +283,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

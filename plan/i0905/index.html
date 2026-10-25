@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 2 · p0 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/fly-deployment/" class="text-fg-brand underline">fly-deployment — The container image is a projection of the repository model, and its smoke is its evidence</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I0905</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Expose cheap liveness and readiness endpoints through the capability registry, so that the provider health check, the container test and the smoke suite all point at routes the registry knows about.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A health route added directly to the router would be invisible to OpenAPI, to the documentation and to the route-derived smoke suite — three projections silently missing the one endpoint the platform polls most.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">system.health still aggregates index diagnostics, benchmark coverage and projection staleness, and liveness and readiness are now separate registered capabilities in apps/majordomus-cli/src/capability/builtin/health.rs, each with its own handler and unit tests. 2026-09-10 changed the surrounding half as well: ADR 0035 made the server&#39;s own state a capability (server.status, GET /api/v1/server), the health report names the process behind the address, and readiness stopped meaning three unrelated things (PR #153, PR #164). What is not established here is the rest of the contract -- the measured cost inside the blocking-check budget, and a deployment object whose validation refuses a reference to a route that is not registered. Measured on master 6042f4286, 2026-09-10.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Liveness answers whether this process is alive, cheaply and without touching the layer. Readiness answers whether it can serve traffic, checking only local initialisation. Both are registered, both are documented, and both have measured cost.</p>
@@ -205,7 +202,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <span class="min-w-0 break-words text-sm text-heading">The deployment object becomes typed Rust that refuses nonsense</span></a></li>
   </ul>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0909/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0909</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0909/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0909</span><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
 <span class="min-w-0 break-words text-sm text-heading">The production image is a generated projection of the build specification</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i0916/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0916</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOCKED</span>
 <span class="min-w-0 break-words text-sm text-heading">The smoke suite is derived from the route registry, never written twice</span></a></li>
   </ul>
@@ -221,17 +218,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">healthz_registered</li><li class="font-mono text-heading break-words">readyz_registered</li><li class="font-mono text-heading break-words">cheap_measured</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A readiness check that grows into a dependency probe will fail a deployment because an unrelated service is down. Readiness answers one question: can this process serve a page.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">healthz_registered</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::health</td><td class="px-4 py-2 text-body">test result: ok. 12 passed; 0 failed — incl. both_are_registered_routes (health.rs:963), liveness_is_the_same_answer_whatever_the_layer_holds (:924), readiness_reports_what_this_process_already_holds (:947); run 2026-10-22 ~22:40Z on macbook-2 at e2c9675d6df (master 2034d4a + one health change)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">355a0ce</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">readyz_registered</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::health</td><td class="px-4 py-2 text-body">test result: ok. 12 passed; 0 failed — incl. both_are_registered_routes (health.rs:963), liveness_is_the_same_answer_whatever_the_layer_holds (:924), readiness_reports_what_this_process_already_holds (:947); run 2026-10-22 ~22:40Z on macbook-2 at e2c9675d6df (master 2034d4a + one health change)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">355a0ce</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">cheap_measured</td><td class="px-4 py-2 font-mono text-xs text-body">artifact</td><td class="px-4 py-2 font-mono text-xs text-body break-words"></td><td class="px-4 py-2 text-body">majordomus bench health.live / health.ready, quick profile, debug build: p99 2.1 ms and 6.4 ms over HTTP, under blocking_check_ms 25 (recorded in the deployment object)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">355a0ce</td></tr></tbody>
+    </table>
+  </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A readiness check that grows into a dependency probe will fail a deployment because an unrelated service is down. Readiness answers one question: can this process serve a page.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-23T00:48:36Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-23T00:49:20Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-23T00:49:53Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/.ai/repo/project/issues/I0905.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0905.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0905</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/.ai/repo/project/issues/I0905.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0905.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0905</code>.</p>
 </div>
 
 </div>
@@ -281,9 +283,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -291,7 +293,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

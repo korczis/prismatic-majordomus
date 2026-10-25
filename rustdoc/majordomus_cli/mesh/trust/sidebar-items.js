@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["TrustPolicy","TrustState"],"fn":["evaluate"]};
+window.SIDEBAR_ITEMS = {"enum":["TrustPolicy","TrustState"],"fn":["evaluate","evaluate_with_successions"]};

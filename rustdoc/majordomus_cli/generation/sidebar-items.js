@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["GENERATION_INPUTS"],"fn":["crate_generation"]};
+window.SIDEBAR_ITEMS = {"constant":["GENERATION_INPUTS","PATH_DEPENDENCY_INPUTS"],"fn":["crate_generation"]};

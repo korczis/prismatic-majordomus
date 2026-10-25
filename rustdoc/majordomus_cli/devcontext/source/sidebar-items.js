@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KIND","MAX_RANGES_PER_FILE","MAX_SOURCE_BYTES","MAX_SOURCE_FILES","PARSER","SCHEME"],"fn":["outline"],"struct":["Definition"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["BUILDPACKS_FILE","SOURCE_FILE","SOURCE_SCHEMA"],"enum":["SlugError"],"struct":["Slug","Source"]};
+window.SIDEBAR_ITEMS = {"constant":["BUILDPACKS_FILE","SITE_SURFACE_FILE","SOURCE_FILE","SOURCE_SCHEMA"],"enum":["SlugError"],"struct":["Slug","Source"]};

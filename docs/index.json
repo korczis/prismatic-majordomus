@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "71857dbb609169eafa7a411db5013ec93b58a661",
+  "commit": "2efeacea03158615db2b497117a8da35b264909b",
   "source_version": "1.0.0-alpha.8",
-  "registry_fingerprint": "b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2"
+  "registry_fingerprint": "94055f5c02d96de4ffe4d549beb908a692df3e3aa2a71b6c29dec8b1a5b96c36"
  },
  "counts": {
-  "pages": 5867,
-  "capabilities": 3474,
+  "pages": 5962,
+  "capabilities": 3538,
   "cli_commands": 120,
-  "http_routes": 209,
-  "mcp_tools": 203,
-  "mcp_resources": 3312,
+  "http_routes": 211,
+  "mcp_tools": 205,
+  "mcp_resources": 3376,
   "modules": 94
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 163
+   "count": 166
   },
   {
    "kind": "application",
@@ -78,7 +78,7 @@
    "route": null,
    "title": null,
    "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-   "count": 35
+   "count": 37
   },
   {
    "kind": "deployment",
@@ -134,7 +134,7 @@
    "route": null,
    "title": null,
    "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
-   "count": 4
+   "count": 5
   },
   {
    "kind": "implementation",
@@ -150,7 +150,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-   "count": 40
+   "count": 43
   },
   {
    "kind": "issue",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 990
+   "count": 1027
   },
   {
    "kind": "knowledge",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 108
+   "count": 111
   },
   {
    "kind": "moment",
@@ -230,7 +230,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 189
+   "count": 190
   },
   {
    "kind": "scope",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 640
+   "count": 652
   },
   {
    "kind": "use-case",
@@ -1386,6 +1386,15 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0170/",
+   "title": "A browser computes with the portable core, and the server verifies by recomputing",
+   "description": "A browser computes with the portable core, and the server verifies by recomputing",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0170",
+   "source": ".ai/repo/adrs/0170-a-browser-computes-and-the-server-verifies-by-recomputing.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/adrs/adr-0172/",
    "title": "A client always gets a server, and a session that is opened starts by joining the cluster",
    "description": "A client always gets a server, and a session that is opened starts by joining the cluster",
@@ -1791,12 +1800,30 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0223/",
+   "title": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+   "description": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0223",
+   "source": ".ai/repo/adrs/0223-a-deployment-carries-the-site-built-at-its-own-commit.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/adrs/adr-0224/",
    "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
    "description": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
    "kind": "adr",
    "id": "majordomus://adr/adr-0224",
    "source": ".ai/repo/adrs/0224-no-ordinary-command-builds.md",
+   "section": "Decisions"
+  },
+  {
+   "route": "/adrs/adr-0226/",
+   "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+   "description": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0226",
+   "source": ".ai/repo/adrs/0226-a-session-joins-the-cluster-before-it-works.md",
    "section": "Decisions"
   },
   {
@@ -2814,6 +2841,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/adrs/adr-0170/",
+   "title": "A browser computes with the portable core, and the server verifies by recomputing",
+   "description": "A browser computes with the portable core, and the server verifies by recomputing",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/adrs/adr-0172/",
    "title": "Klient vždy dostane server a otevřená relace začíná připojením ke clusteru",
    "description": "Klient vždy dostane server a otevřená relace začíná připojením ke clusteru",
@@ -3084,9 +3117,21 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/adrs/adr-0223/",
+   "title": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+   "description": "A deployment carries the site built at its own commit, and the hosted server serves it at /docs",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/adrs/adr-0224/",
    "title": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
    "description": "No ordinary command builds; a missing or stale executable fails fast or answers through a release of the same generation, and only an explicit build builds",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/adrs/adr-0226/",
+   "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+   "description": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -7357,7 +7402,7 @@
   },
   {
    "route": "/cs/guarantees/provider-capability-evidence/",
-   "title": "What each provider can do about the session lifecycle, prompt capture and driving a browser beside this server is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+   "title": "What each provider can do about the session lifecycle, prompt capture, driving a browser beside this server and reporting what a session consumed is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
    "description": "Nástroj, který říká, co umí produkt někoho jiného, činí tvrzení o třetí straně. Tento repozitář jich činil dvě chybně najednou.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
@@ -8016,6 +8061,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/a-session-proceeds-through-the-mesh/",
+   "title": "a-session-proceeds-through-the-mesh — A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met",
+   "description": "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/a-stranger-adopts-it-unaided/",
    "title": "a-stranger-adopts-it-unaided — Cizí člověk nainstaluje Majordomus a během deseti minut je zastaven před falešným „hotovo“ a každé externí první spuštění nástroj něčemu naučí",
    "description": "Prvních deset minut cizího člověka je jedna měřená kontrola, init sdělí adopterovi něco pravdivého o jeho vlastním repozitáři a každý skutečný externí běh se zaznamená bez úprav a promění v případy.",
@@ -8094,6 +8145,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/browser-compute/",
+   "title": "browser-compute — A browser computes for the project with the server's own code, and the server verifies every result",
+   "description": "One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/builds-reuse-the-mesh-cache/",
    "title": "builds-reuse-the-mesh-cache — Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs",
    "description": "Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass.",
@@ -8163,6 +8220,12 @@
    "route": "/cs/plan/entry-proves-what-it-handed/",
    "title": "entry-proves-what-it-handed — Epizoda zaznamenává governance a briefing, které jí byly předány, a změna se oznámí",
    "description": "Jeden digest governance počítaný jednou funkcí, zaznamenaný pro každou epizodu spolu s digestem briefingu, porovnaný při další interakci, nesený předávkami a shodný napříč všemi vstupními povrchy; každá cesta kolem preflightu je případ nebo uvedené omezení; start úlohy uvádí, o kolik je jeho základ pozadu za masterem remote.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/every-model-call-is-paid-from-a-declared-source/",
+   "title": "every-model-call-is-paid-from-a-declared-source — How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on",
+   "description": "Each vendor declares its funding sources with vendor evidence, an Anthropic API advisor lets a held grant pay for review, and each run and consultation carries the funding kind the owner declared for it, in I3292's one vocabulary.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -8402,7 +8465,7 @@
   {
    "route": "/cs/plan/i0304/",
    "title": "I0304 — Číst měření zpět přes rozhraní historie, v omezeném rozsahu",
-   "description": "Zpřístupnit zaznamenaná fakta o provedení přes povrch, který už odpovídá na otázky o minulých úlohách, se stejnou mezí retence, jakou nesou ostatní trvalá úložiště.",
+   "description": "Make recorded execution facts readable through the Rust economics read surface (the capability that answers about past tasks and sessions, projected to CLI, HTTP, MCP and /ui), with a retention bound declared in policy and enforced like the other durable stores carry.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -8636,7 +8699,7 @@
   {
    "route": "/cs/plan/i0821/",
    "title": "I0821 — Zploštělé YAML se cachuje v .ai/local/cache podle hashe obsahu",
-   "description": "Cachovat výstup mj_yaml_flatten pod .ai/local/cache/flat/<sha256>, klíčovaný hashem obsahu souboru a vlastní verzí zploštěče, takže druhý příkaz nad nezměněnými soubory nic neparsuje.",
+   "description": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<parser sha256>/, keyed by the file's content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener's own version, so a second command on unchanged files does no parsing.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -10014,6 +10077,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i2148/",
+   "title": "I2148 — Every provider's MCP launch configuration is a projection of one declaration, and a drifted one fails a gate",
+   "description": "Render .mcp.json, .gemini/settings.json and .codex/config.toml from the provider declaration in share/providers.yaml, write them on init, diagnose them by parsing the server entry rather than searching the text, and fail a gate when a committed configuration differs from its projection.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i2151/",
    "title": "I2151 — Stránka servírovaná vedle zapisovacích tras spouští jen skript, který dodala, a rebindující host nic nepřečte",
    "description": "Dát /swagger bezpečnostní hlavičky Cockpitu a skripty kontrolované na integritu, odmítnout GET, jehož Host jmenuje jiný server, a escapovat sekvence rozbíjející skript tam, kde web vkládá JSON.",
@@ -10458,6 +10527,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i2588/",
+   "title": "I2588 — A region projection's host document is not judged as a bootstrap",
+   "description": "Make the bootstrap check read only the generated region of a target projected in region mode.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i2601/",
    "title": "I2601 — majordomus evidence dosáhne na record, stamp a show",
    "description": "Zprovoznit zdokumentované `majordomus evidence record|stamp|show` z launcheru.",
@@ -10587,6 +10662,30 @@
    "route": "/cs/plan/i2680/",
    "title": "I2680 — Kontroly Observatory se uzavírají důkazy: snímky obrazovky, naměřené snímkové frekvence, soak, cvičení obnovy",
    "description": "Uzavřít každou přejímací kontrolu specifikace Observatory od vlastníka příkazem, jeho výsledkem, prostředím a cestou k důkazu, nebo zaznamenat, že nebyla spuštěna.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2690/",
+   "title": "I2690 — A session reads whether it is current, attached, announced and useful, from one capability",
+   "description": "Derive the four facts of ADR 0226 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2691/",
+   "title": "I2691 — start, check, finish and the commit and push hooks refuse a change from a session that has not joined",
+   "description": "Make the derived state of I2690 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2692/",
+   "title": "I2692 — The join state is projected to the briefing, the Cockpit, the UI, the handbook, the site and GitHub Pages",
+   "description": "Show every surface the same derived state and the same rule, authored once, so that no page restates it by hand and a worker, a person and a visitor read one account of how workers keep together.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2693/",
+   "title": "I2693 — A session whose MCP server did not connect says so on the board, and a worker with nothing to do takes an open ask",
+   "description": "Close the two behavioural gaps of 2026-10-13: a silent fall-back from MCP to the bare CLI, and a free worker that looks for work of its own while asks to everybody are open.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -10770,6 +10869,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i2732/",
+   "title": "I2732 — The MCP reference repeats no registry entry: no hand-written document lists tools",
+   "description": "Remove the second inventory of MCP tools from docs/MCP.md and hold every hand-written document under docs/ to naming tools in prose, so the next composed module cannot be missing from a list nobody regenerates.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i2733/",
    "title": "I2733 — Obnovený průchod mesh.events vrátí každou událost přesně jednou, napříč oddíly",
    "description": "Čtenář, který prochází mesh.events stránku po stránce a po každé odpovědi pokračuje od kurzoru, obdrží každou událost, kterou runtime přijme, právě jednou, včetně události od zapisovatele, který byl od meshe oddělen a označil ji razítkem na pozici, kterou procházení už minulo, nebo pod ní.",
@@ -10860,6 +10965,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i2761/",
+   "title": "I2761 — A branch that renumbered its decision away claims nothing at the old number",
+   "description": "Count a ref as claiming an ADR identity only while its tip carries the document, so that renumbering one of two colliding decisions clears the collision for the other branch.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i2770/",
    "title": "I2770 — majordomus ui a Cockpit nosí navigační lištu webu: jeden renderer, stejné styly a skripty a porovnání v prohlížeči, které odmítne jakýkoli rozdíl",
    "description": "Udělat z majordomus.dev referenci vzhledu produktu tím, že každá obrazovka majordomus ui a každá stránka Cockpitu dostane vlastní navigační lištu webu: lištu, kterou vykresluje partial webu nad site/data/nav.toml, vyříznutou ze sestaveného webu a zkompilovanou do spustitelného souboru, ostylovanou stejným buildem Tailwindu nad stejnými tokeny, řízenou vlastními skripty webu a držené laťky webu porovnáním v prohlížeči v obou tématech a při každé deklarované šířce.",
@@ -10881,6 +10992,12 @@
    "route": "/cs/plan/i2783/",
    "title": "I2783 — Pracovní prostor záměrů se znovu načte, když přesun skončí na jeho serveru",
    "description": "/ui/idd drží jeden kanál k /events přes socket.js Cockpitu, pojmenovaný stránkou s cestou kanálu, a znovu načte obrazovku, když tam skončí provádění, nejvýše jednou na dávku; řádek vedle času čtení říká podle stavu samotného socketu, zda je kanál živý, znovu se připojuje, nebo je offline.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i2784/",
+   "title": "I2784 — One portable core runs on the host and as wasm32, and one executed fixture holds both",
+   "description": "Create apps/majordomus-core holding canonical JSON, SHA-256 and the canonical digest, depending only on serde_json and sha2 with the executable's features, exporting a three-function C ABI on wasm32; make the executable's two canonical-JSON writers call it; record a fixture of inputs, canonical bytes and independently computed digests; prove the host crate, the executable and the executed wasm32 module against it in a structure gate; and make the core part of the executable's generation.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -11457,6 +11574,12 @@
    "route": "/cs/plan/i3060/",
    "title": "I3060 — Hook poskytovatele deklaruje svůj timeout a konec relace uzavře svou epizodu v rámci rozpočtu",
    "description": "`capture install` zapisuje `timeout` pro každý hook, který generuje. Hodnoty pocházejí z jedné deklarované tabulky na poskytovatele a událost, kterou čte zapisovač konfigurace i koncový handler. Handler SessionEnd drží uzavření epizody v tomto rozpočtu: přeskočí volitelný závěrečný checkpoint a pokračování, jako typovaná selhání, když by jejich spuštění nechalo uzavření příliš málo rozpočtu. Konfigurace, která bajt po bajtu odpovídá tvaru, který tento nástroj psal před existencí timeoutů, se přepíše na nový tvar. Jakákoli jiná konfigurace zůstane, jak je, a install jmenuje timeouty, které jí chybí.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3061/",
+   "title": "I3061 — A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record",
+   "description": "The lifecycle tells a provider session that is the worker apart from one the worker spawned, for example a headless `claude -p` run by an adopter's review script inside a supervised worktree, or a session started under another live session of the same checkout. A start event from such a session opens at most a local episode bound to nothing; it never adopts the checkout's active task. Its end event, interrupted or not, never marks the active task handed_over and never writes a tracked record under .ai/repo/sessions/; anything it keeps stays under .ai/local. The distinction is read from what the provider's payload and environment actually say (the CLAUDE_CODE_SESSION_ID column of MJ_CAPTURE_LIFECYCLE, the start source, whether a live episode of another provider session already holds the task), and the rule is stated where the lifecycle is declared.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -12638,7 +12761,7 @@
   {
    "route": "/cs/plan/i3292/",
    "title": "I3292 — Hlášené tokeny, odhad podle ceníku a fakturovaná částka jsou tři pole a režim fakturace říká, který účet platil",
-   "description": "Dát záznamu spotřeby z I3288 pole reported_tokens, estimated_cost (třída estimated) a billed_cost (chybí, pokud není odsouhlaseno), plus billing_mode (subscription, api_key, api_credits, unknown) deklarovaný člověkem, aby se u předplatného nikdy neukazovala cena ekvivalentní API jako útrata.",
+   "description": "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode declared by the person, whose values are the model catalogue's funding kinds (local, credit_grant, subscription, metered; I3660) or unknown, so that on a subscription an API-equivalent price is never shown as spend.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -13452,6 +13575,54 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i3660/",
+   "title": "I3660 — A vendor declares its funding sources in the model catalogue, each with dated, quoted vendor evidence",
+   "description": "Add a `funding` list to each vendor of share/models.yaml (ADR 0049): each source with an id, a kind (local, credit_grant, subscription or metered), the credential variable that reaches it or a note that a client login does, the period it renews over where the vendor states one, the vendor-domain page where the owner claims it, and evidence (page, day read, the vendor's own words); extend models::Vendor; report a source that cannot be read (no evidence, an unknown kind) as a diagnostic naming the vendor and the source while the rest of the catalogue loads; make reasoning check forbid every declared credential variable in CI, not only the vendor's.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3661/",
+   "title": "I3661 — Which funding sources the owner holds, and their caps, are the owner's local declaration and never projected",
+   "description": "Read the owner's holdings (which declared sources they hold, and an optional monthly cap per source) from a record under .ai/local and from the environment, resolve each against the vendor sources of I3660, and refuse a holdings record written under .ai/repo; no generated, projected or published file carries a holding.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3662/",
+   "title": "I3662 — models.route names the funding source a route would draw on, as an inference with its basis, in the declared source order",
+   "description": "Extend models::route so that its RoutingDecision carries the funding source the chosen model would draw on, labelled inferred with the credential presence and holding that implied it, chosen by a repository policy that orders source kinds (local, then credit_grant, then metered; a subscription only for the client that owns the seat); a held source whose credential is unset is excluded with that reason.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3663/",
+   "title": "I3663 — An Anthropic API advisor is declared, so a held Anthropic credit grant can pay for review",
+   "description": "Declare an advisor in share/advisors.yaml reached over the Anthropic Messages API through the vendor's credential variable, with a model from share/models.yaml (claude-opus-5-5, which this issue adds to the catalogue with its provenance) and an adapter scripts/lib/advisors/anthropic-messages.mjs that speaks the same contract as openai-chat.mjs; reasoning check resolves it, and an absent credential reads not_configured (rule project.advisors-are-optional). No Rust change: the advisor is data and an adapter.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3664/",
+   "title": "I3664 — doctor and the brief tell the owner a held funding source no credential reaches, with the vendor's claim link",
+   "description": "Add a typed check (ADR 0069) that doctor and the brief read: for each source the owner holds (I3661) whose credential variable is unset, name the vendor, the source, the vendor's claim link and the date of its evidence; say it once per renewal period, and say nothing for a source the owner declares they do not hold.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3665/",
+   "title": "I3665 — A benchmark run and an advisor consultation carry the funding kind the owner declared for them, or unknown",
+   "description": "Add an optional funding kind to the economics run record (EconomicsRun, not EconomicsRequest) and to the reasoning consultation record, in the catalogue's vocabulary (I3660), filled from the owner's I3289 declaration through I3292's billing_mode and otherwise unknown; an existing run file without the field reads unknown and is not rewritten; nothing infers the kind from which credential was present.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3666/",
+   "title": "I3666 — Spend against a funding source is observed from a named vendor seam or recorded absent, and no balance is derived from a price",
+   "description": "Give each held source a spend figure that is observed only when a vendor seam named in share/models.yaml with dated evidence reports it; otherwise record it absent with the reason (for an individual account: the vendor's cost report is not available to it), and refuse in economics check any remaining-credit or spent-credit figure computed from tokens and a price.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3667/",
+   "title": "I3667 — A run that would fall through to metered billing while a grant is held, or cross a declared cap, is told before it starts",
+   "description": "Before the economics runner or an execution starts a model client, compare the route's source (I3662) with the owner's holdings and caps (I3661): tell the caller when the route would draw on a metered source while a credit grant is held, or when observed spend (I3666) already meets a declared cap, naming the source, the cap and the figure's class; refuse only where the repository policy declares refuse, through the same mechanism as I3295's over-budget telling.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i3750/",
    "title": "I3750 — The milestone graph reads each edge in the direction it means, in its text and in its detail panel",
    "description": "Make every reading of the roadmap's milestone graph say which milestone unblocks which: the edge a milestone's depends_on produces is named by the direction it is drawn in (the dependency unblocks the dependent), and the text fallback lists each edge under both of its ends, so no surface reads a dependency backwards.",
@@ -13794,6 +13965,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i3840/",
+   "title": "I3840 — The intent workspace answers within its 100 ms budget: its shared-scope fold holds the first pairs, not every pair",
+   "description": "Bring /ui/idd back under the warm p95 budget of .ai/repo/benchmarks/rust/policy.yaml without touching the budget. The 'What can run together?' panel's shared-scope fold draws its first SHARED_SCOPE_SHOWN pairs and links to /ui/panels/shared-scope, a panel route that lists every pair; the screen borrows the plan's lists (view::items) instead of cloning them on every request.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i3841/",
    "title": "I3841 — The plan's graph is drawn by milestone, so /plan/dag/ answers the site probe within its budget however large the backlog grows",
    "description": "Bound what /plan/dag/ and /plan/ draw by the number of milestones rather than the number of issues: scripts/generate-site-data adds to plan.json a milestone graph (milestone_edges, one entry per pair of milestones an issue dependency crosses, counted, and milestone_mermaid, one node per milestone with its done count and status), both pages draw it, /plan/dag/ lists the milestone edges as its text equivalent and points to the waves on /plan/, and every milestone node links to the milestone's own page, which already draws its issues; a case holds /plan/dag/ to an element ceiling and its graph to one node per milestone.",
@@ -13827,6 +14004,18 @@
    "route": "/cs/plan/i3862/",
    "title": "I3862 — The shell floor is held by a case that reads what the rule forbids",
    "description": "Give rule project.portable-shell a case that exercises what it states. The case reads every shell unit the shell-lint gate lints and refuses an associative array, mapfile or readarray, and a GNU-only flag (stat -c, date -d, readlink -f, grep -P, sed -r, xargs -r, find -printf, cp --parents) unless the same line carries its BSD form after ||. Its scanner is first held to a fixture whose answer is known, so a scanner that stopped finding them cannot pass for a clean tree. test/mesh-lab/run, the one unit that broke the floor, keeps its scenario verdicts in one JSON object instead of two associative arrays. The rule names the new case beside case 08 and says what each holds, with shellcheck as the shell-lint gate's half.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3902/",
+   "title": "I3902 — A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed",
+   "description": "GitHub's own Pages build that stays `building` or `queued` longer than deploy.build_hung_after (.ai/repo/ci/pages.yaml) is hung: `scripts/pages rebuild` replaces it and says why, a younger one is waited on with its own exit (13), and the scheduled publisher hands a build in flight of the right tree to the rebuild instead of redeploying an identical tree.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i3903/",
+   "title": "I3903 — A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule",
+   "description": "A typed forge capability beside apps/majordomus-cli/src/integration/forge.rs lists the repository's in-flight GitHub Actions runs. It cancels three kinds: a run queued longer than its declared bound, a run in progress past its workflow's bound, and a pull-request run whose head is no longer its branch's head. Each cancellation is recorded with its reason in the integration audit trail. It runs on a schedule, the way queue.yml runs `majordomus prs`, and absorbs the cancel logic scripts/ci/release-path carries in shell.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14052,6 +14241,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i3959/",
+   "title": "I3959 — The shared build directory stays under its bound while builds run: between builds, under cargo's lock, its stale units are evicted oldest first until it is under the bound",
+   "description": "Make the shared build directory's 6144MB bound (MAJORDOMUS_SHARED_BUILD_CAP_MB) hold on a machine where some cargo always runs: before and after every bounded build, and from scripts/reap-orphans when a build is running, evict whole stale units of the build directory, oldest first, until it is under its bound: a coverage run's llvm-cov-target, dependency generations whose crate version no worktree's Cargo.lock names, idle incremental sessions and idle generations of this crate's own units. Each profile's units are evicted only while cargo's lock on that profile is taken without waiting and no process names or holds them; a held lock is skipped and said, and what was evicted is reported per unit.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i3960/",
    "title": "I3960 — The initialize instructions tell the caller about itself before the board, and the board line is bounded",
    "description": "Bound PeerBoard::summary (each claim's intent cut, at most three claims a peer, the whole line capped, the rest counted with a pointer to majordomus_peers) and move it after the sentences about the caller in the MCP initialize instructions.",
@@ -14142,6 +14337,84 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i3999/",
+   "title": "I3999 — A fixture holds the skills the site generator reads",
+   "description": "fixture_repo copies .claude/skills, which scripts/generate-site-data reads for every skill its artifacts manifest names, so the cases that build a fixture and run the generator (10, 11, 37) pass on a checkout that has the skills.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4000/",
+   "title": "I4000 — A repeated executions.start with the same key answers one execution",
+   "description": "Give executions.start an optional idempotency key; ExecutionStore::create returns the existing execution id for a key it has already seen instead of creating a second execution (Mission Control B1).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4001/",
+   "title": "I4001 — The execution state machine has Authorizing, Claimed, Verifying, Refused and UnknownOutcome",
+   "description": "Add Authorizing, Claimed, Verifying, Refused and UnknownOutcome to the execution state machine with may_move_to for each edge and a versioned event schema (Mission Control B3).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4002/",
+   "title": "I4002 — Worktree.create is a typed writing capability",
+   "description": "Declare worktree.create as a capability with a repository_mutation effect over the git calls integration/drain.rs already makes, so a worker creates a canonical worktree through the registry rather than a shell (Mission Control B5).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4003/",
+   "title": "I4003 — Devtask.implement runs readiness, preflight, claim, worktree and one execution",
+   "description": "devtask.implement: issue readiness and intents.preflight, then mesh.claim, worktree.create and an agent run through executions.start; it refuses an overlap or an invalid intent with a reason and answers pending when no worker is attached (Mission Control B4).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4004/",
+   "title": "I4004 — The executor takes the issue's mesh claim in the handler and releases it when the run ends",
+   "description": "The executor takes the issue's mesh claim in the handler of an execution and releases it when the run ends, however it ends; fencing is deferred to I3174 (Mission Control B6).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4005/",
+   "title": "I4005 — Proceed.step answers one idempotent work order",
+   "description": "proceed.step derives one step from intent_realization and the claim-aware plan.next into a work order (do, fan_out, report, next_due_at); the /proceed skill is generated from its .skill() declaration. It builds on the pushed stack feature/proceed-names-the-next-admissible-work (I2972-I2976, I3040, ADR 0177) and writes no second body.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4006/",
+   "title": "I4006 — Machine.slot is a counting machine-wide slot for heavy work",
+   "description": "machine.slot: a counting slot, N and the disk floor read from rule data, taken by pre-push, coverage and builds; a full queue answers a bounded wait naming its holders.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4007/",
+   "title": "I4007 — An idle serve exits by itself after a bound",
+   "description": "An idle serve that holds no lease, has no peers and no executions exits by itself after a bound read from policy.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4008/",
+   "title": "I4008 — A push that only deletes refs runs no plan in the pre-push hook",
+   "description": "A push whose every ref is a deletion runs no plan in the pre-push hook, by the reasoning of the refs/majordomus/* exemption: no source travels.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4009/",
+   "title": "I4009 — /watchdog reads liveness and runs wake, handover, reap",
+   "description": "/watchdog: the session-side verb that reads the liveness signals of I3990-I3994 (suspended claims, phase beats, overdue) and runs wake, then handover, then reap; reap only by the owner or a seat and only after assess-before-deleting.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4012/",
+   "title": "I4012 — A remote node's loopback runtimes are not dialed, so its hub is",
+   "description": "dial_targets leaves out a record of another node whose endpoints are all loopback: such a runtime cannot be reached from this machine, and counted against MAX_TARGETS_PER_NODE it crowds out the node's hub, the one runtime of that machine bound beyond loopback.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4013/",
+   "title": "I4013 — A server bound to every interface advertises the addresses it has now",
+   "description": "A server bound to 0.0.0.0 reads its interface addresses again before every beacon it signs (Beacon::follow), so that its advertisement follows a DHCP move instead of naming the address it held when it started.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4154/",
    "title": "I4154 — The follow backlog test waits on the follower's cursor, not on fifty milliseconds",
    "description": "http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again writes its backlog only once the follower's cursor stands, and writes it whole, so a loaded runner cannot turn it red.",
@@ -14169,6 +14442,18 @@
    "route": "/cs/plan/i4220/",
    "title": "I4220 — A run that /trends/ draws is a link the site check decides by provenance",
    "description": "scripts/ci/link-check admits every run that site/data/trends.json names as a decided Actions link, as it already admits the run that site/data/evidence.json names, so the /trends/ page I3933 publishes passes the deploy check and master's pages publish.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4222/",
+   "title": "I4222 — A forge reply cut off on its way is asked again",
+   "description": "When gh reports a forge reply that was cut off ('unexpected end of JSON input'), the integration forge counts it as an outage and asks again within its bounded backoff.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4223/",
+   "title": "I4223 — The pre-commit generation gate answers inside its bound, and a failed case's reason reaches an artifact",
+   "description": "Make `generate --check`, which `scripts/pages current` runs in front of every commit, stop paying for the plan's scope-conflict scan: choose the runnable issues once, normalise every scope entry once, and compare normalised entries without allocating, with the same findings in the same order. And make the reason a failed case prints reach a file CI keeps: test/run.sh writes every failed or timed-out case's output to MJ_TEST_FAILURES, and validate.yml uploads it per suite shard.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -15026,13 +15311,25 @@
   {
    "route": "/cs/registry/capabilities/gates-completion/",
    "title": "gates.completion",
-   "description": "Vlastní sada změn aktivní úlohy — od commitu, ve kterém začala, po pracovní strom včetně necommitnutých souborů — protažená modelem CI: které kontroly vybírá a proč, co každá naposledy hlásila a nad kterými soubory, které verdikty zastaraly, protože se strom pod nimi pohnul, které požadované kontroly nikdy nic nehlásily a které povinnosti změna implikuje, ať je úloha deklarovala, nebo ne. `finishable` je false jen tehdy, když je známo, že požadovaná kontrola selhává, je zastaralá nebo je blokována takovou; absence verdiktu se hlásí jako neověřeno, ne potichu přijímá.",
+   "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
    "route": "/cs/registry/capabilities/gates-model/",
    "title": "gates.model",
    "description": "Každá validační kontrola, kterou tento repozitář deklaruje — úloha, která ji spouští, příkaz, který spouští, co dokazuje, zda ji vybírá každý plán a zda lze její runner vůbec mít na požádání — s třídami cest, které rozhodují, jaká změna vybere kterou kontrolu, a, odvozeně z těchto tříd, s pathspecs, nad nimiž se berou důkazy každé kontroly.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/gates-policy/",
+   "title": "gates.policy",
+   "description": "The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/registry/capabilities/gates-state/",
+   "title": "gates.state",
+   "description": "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -15206,7 +15503,7 @@
   {
    "route": "/cs/registry/capabilities/lifecycle-providers/",
    "title": "lifecycle.providers",
-   "description": "Podle providera: události životního cyklu, které jeho adaptér deklaruje ve slovníku samotného providera, zda může archivovat prompty a které vynucovací položky tohoto repozitáře jmenují jeho hook. Deklarováno v share/providers.yaml a v politice; nikdy neodvozeno z toho, zda je shim náhodou na disku.",
+   "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -15770,7 +16067,7 @@
   {
    "route": "/cs/registry/capabilities/shell-check/",
    "title": "shell.check",
-   "description": "Každá shellová jednotka pod bin/, lib/, scripts/, share/, .githooks/ a .claude/hooks/ — podle řádku interpretu nebo názvu .sh, tak jak by ji commitnul git, bez následování odkazů — vůči .ai/repo/automation/inventory.jsonl: nedeklarovaná jednotka, záznam, jehož jednotka zmizela, výjimka bez důvodu nebo podmínky odstranění, dispozice mimo A-F, duplicita a záznam mimo kanonické pořadí jsou každý nález, který jmenuje soubor a nápravu. Čte jen strom a index gitu; žádný build ani síť.",
+   "description": "Every shell unit under bin/, lib/, scripts/, share/, apps/majordomus-cli/assets/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -16728,7 +17025,7 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
-   "route": "/cs/rules/project-a-provider-capability-cites-its-evidence-2/",
+   "route": "/cs/rules/project-a-provider-capability-cites-its-evidence-3/",
    "title": "Schopnost poskytovatele se deklaruje jednou, s citací, ze které byla ověřena",
    "description": "Schopnost providera se deklaruje jednou, s citací, ze které byla ověřena",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
@@ -16737,6 +17034,12 @@
    "route": "/cs/rules/project-a-push-runs-what-ci-would-find-first-2/",
    "title": "A push runs what CI would find first, and CI decides",
    "description": "A push runs what CI would find first, and CI decides",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/rules/project-a-session-joins-the-cluster-before-it-works-1/",
+   "title": "A session is current, attached, announced and useful before it changes anything",
+   "description": "A session is current, attached, announced and useful before it changes anything",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -22885,7 +23188,7 @@
   },
   {
    "route": "/guarantees/provider-capability-evidence/",
-   "title": "What each provider can do about the session lifecycle, prompt capture and driving a browser beside this server is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+   "title": "What each provider can do about the session lifecycle, prompt capture, driving a browser beside this server and reporting what a session consumed is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
    "description": "A tool that says what somebody else's product can do is making a claim about a third party. This repository was making two of them wrong at once.",
    "section": "Guaranteed, advisory, planned"
   },
@@ -23544,6 +23847,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/a-session-proceeds-through-the-mesh/",
+   "title": "a-session-proceeds-through-the-mesh — A session proceeds through the mesh: it finds the work, claims it once, runs it watched and stops when the intent is met",
+   "description": "A session asks /proceed what to do, receives one idempotent work order derived from intent_realization and the claim-aware plan, takes it under a mesh claim held by the run, starts it once, reports it and schedules its own next step until the intent is met; /watchdog wakes, hands over and reaps a stalled loop from deadlines; heavy work shares the machine through one slot.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/a-stranger-adopts-it-unaided/",
    "title": "a-stranger-adopts-it-unaided — A stranger installs Majordomus and is stopped from a false done in ten minutes, and every outside first run teaches the tool",
    "description": "The stranger's first ten minutes are one measured gate, init tells an adopter something true about their own repository, and each real outside run is recorded unedited and turned into cases.",
@@ -23622,6 +23931,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/browser-compute/",
+   "title": "browser-compute — A browser computes for the project with the server's own code, and the server verifies every result",
+   "description": "One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170).",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/builds-reuse-the-mesh-cache/",
    "title": "builds-reuse-the-mesh-cache — Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs",
    "description": "Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass.",
@@ -23691,6 +24006,12 @@
    "route": "/plan/entry-proves-what-it-handed/",
    "title": "entry-proves-what-it-handed — An episode records the governance and briefing it was handed, and a change is told",
    "description": "One governance digest computed by one function, recorded per episode with the briefing digest, compared at the next interaction, carried by handovers, identical across every entry surface; every route around the preflight is a case or a stated limit; task start states how far its base is behind the remote's master.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/every-model-call-is-paid-from-a-declared-source/",
+   "title": "every-model-call-is-paid-from-a-declared-source — How a model call Majordomus starts can be paid is declared by the vendor with evidence, and each call names the source it was declared to draw on",
+   "description": "Each vendor declares its funding sources with vendor evidence, an Anthropic API advisor lets a held grant pay for review, and each run and consultation carries the funding kind the owner declared for it, in I3292's one vocabulary.",
    "section": "The plan"
   },
   {
@@ -23930,7 +24251,7 @@
   {
    "route": "/plan/i0304/",
    "title": "I0304 — Read the measurements back through the history surface, under a bound",
-   "description": "Make recorded execution facts readable through the surface that already answers questions about past tasks, with the same retention bound the other durable stores carry.",
+   "description": "Make recorded execution facts readable through the Rust economics read surface (the capability that answers about past tasks and sessions, projected to CLI, HTTP, MCP and /ui), with a retention bound declared in policy and enforced like the other durable stores carry.",
    "section": "The plan"
   },
   {
@@ -24164,7 +24485,7 @@
   {
    "route": "/plan/i0821/",
    "title": "I0821 — Flattened YAML is cached under .ai/local/cache by content hash",
-   "description": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<sha256>, keyed by the file's content hash and the flattener's own version, so a second command on unchanged files does no parsing.",
+   "description": "Cache the output of mj_yaml_flatten under .ai/local/cache/flat/<parser sha256>/, keyed by the file's content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener's own version, so a second command on unchanged files does no parsing.",
    "section": "The plan"
   },
   {
@@ -25542,6 +25863,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2148/",
+   "title": "I2148 — Every provider's MCP launch configuration is a projection of one declaration, and a drifted one fails a gate",
+   "description": "Render .mcp.json, .gemini/settings.json and .codex/config.toml from the provider declaration in share/providers.yaml, write them on init, diagnose them by parsing the server entry rather than searching the text, and fail a gate when a committed configuration differs from its projection.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2151/",
    "title": "I2151 — A page served beside the write routes runs only script it shipped, and a rebinding host reads nothing",
    "description": "Give /swagger the Cockpit's security headers and integrity-checked scripts, refuse a GET whose Host names another server, and escape script-breaking sequences where the site embeds JSON.",
@@ -25986,6 +26313,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2588/",
+   "title": "I2588 — A region projection's host document is not judged as a bootstrap",
+   "description": "Make the bootstrap check read only the generated region of a target projected in region mode.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2601/",
    "title": "I2601 — majordomus evidence reaches record, stamp and show",
    "description": "Make the documented `majordomus evidence record|stamp|show` work from the launcher.",
@@ -26115,6 +26448,30 @@
    "route": "/plan/i2680/",
    "title": "I2680 — The Observatory's gates are closed with evidence: screenshots, measured frame rates, a soak, the recovery drills",
    "description": "Close each acceptance gate of the owner's Observatory specification with a command, its result, its environment and a path to the evidence, or record it as not run.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2690/",
+   "title": "I2690 — A session reads whether it is current, attached, announced and useful, from one capability",
+   "description": "Derive the four facts of ADR 0226 for the calling worker and answer them as one read: how far the checkout is behind the remote trunk after a bounded fetch, the newest release tag, the transport to the shared server, whether an open mesh session names this worker, and what the board leaves unheld.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2691/",
+   "title": "I2691 — start, check, finish and the commit and push hooks refuse a change from a session that has not joined",
+   "description": "Make the derived state of I2690 binding: a non-trivial change from a session that is announced nowhere, or is behind the trunk by more than the policy's bound, is refused with the command that repairs it, and a read never is.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2692/",
+   "title": "I2692 — The join state is projected to the briefing, the Cockpit, the UI, the handbook, the site and GitHub Pages",
+   "description": "Show every surface the same derived state and the same rule, authored once, so that no page restates it by hand and a worker, a person and a visitor read one account of how workers keep together.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2693/",
+   "title": "I2693 — A session whose MCP server did not connect says so on the board, and a worker with nothing to do takes an open ask",
+   "description": "Close the two behavioural gaps of 2026-10-13: a silent fall-back from MCP to the bare CLI, and a free worker that looks for work of its own while asks to everybody are open.",
    "section": "The plan"
   },
   {
@@ -26298,6 +26655,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2732/",
+   "title": "I2732 — The MCP reference repeats no registry entry: no hand-written document lists tools",
+   "description": "Remove the second inventory of MCP tools from docs/MCP.md and hold every hand-written document under docs/ to naming tools in prose, so the next composed module cannot be missing from a list nobody regenerates.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2733/",
    "title": "I2733 — A resumed mesh.events walk returns every event exactly once, across partitions",
    "description": "A reader that walks mesh.events page by page and resumes from the cursor each page answers receives every event the runtime accepts, exactly once, including an event from a writer that was partitioned from the mesh and stamped it at or below a position the walk already passed.",
@@ -26388,6 +26751,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i2761/",
+   "title": "I2761 — A branch that renumbered its decision away claims nothing at the old number",
+   "description": "Count a ref as claiming an ADR identity only while its tip carries the document, so that renumbering one of two colliding decisions clears the collision for the other branch.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i2770/",
    "title": "I2770 — majordomus ui and the Cockpit wear the site's navbar: one renderer, the same styles and scripts, and a browser comparison that refuses a difference",
    "description": "Make majordomus.dev the reference for the product's look by giving every screen of majordomus ui and every page of the Cockpit the site's own navbar: the bar the site's partial renders over site/data/nav.toml, cut out of the built site and compiled into the executable, styled by the same Tailwind build over the same tokens, driven by the site's own scripts, and held to the site's bar by a browser comparison in both themes and at every declared width.",
@@ -26409,6 +26778,12 @@
    "route": "/plan/i2783/",
    "title": "I2783 — The intent workspace reads itself again when a move ends on its server",
    "description": "Have /ui/idd hold one channel to /events through the Cockpit's socket.js, named by the page with the channel's path, and read the screen again when an execution ends there, at most once per burst; the line beside the read time says whether that channel is live, reconnecting or offline, from the socket's own state.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i2784/",
+   "title": "I2784 — One portable core runs on the host and as wasm32, and one executed fixture holds both",
+   "description": "Create apps/majordomus-core holding canonical JSON, SHA-256 and the canonical digest, depending only on serde_json and sha2 with the executable's features, exporting a three-function C ABI on wasm32; make the executable's two canonical-JSON writers call it; record a fixture of inputs, canonical bytes and independently computed digests; prove the host crate, the executable and the executed wasm32 module against it in a structure gate; and make the core part of the executable's generation.",
    "section": "The plan"
   },
   {
@@ -26985,6 +27360,12 @@
    "route": "/plan/i3060/",
    "title": "I3060 — A provider hook declares its timeout, and the session end closes its episode inside the budget",
    "description": "`capture install` writes a per-hook `timeout` for every hook it generates. The values come from one declared table per provider and event, read by both the configuration writer and the end handler. The SessionEnd handler keeps the episode close inside that budget: it skips the optional closing checkpoint and continuation, as typed failures, when running them would leave the close too little of the budget. A configuration that byte-for-byte matches the shape this tool wrote before timeouts existed is rewritten to the new shape. Any other configuration is left as it is, and install names the timeouts it lacks.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3061/",
+   "title": "I3061 — A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record",
+   "description": "The lifecycle tells a provider session that is the worker apart from one the worker spawned, for example a headless `claude -p` run by an adopter's review script inside a supervised worktree, or a session started under another live session of the same checkout. A start event from such a session opens at most a local episode bound to nothing; it never adopts the checkout's active task. Its end event, interrupted or not, never marks the active task handed_over and never writes a tracked record under .ai/repo/sessions/; anything it keeps stays under .ai/local. The distinction is read from what the provider's payload and environment actually say (the CLAUDE_CODE_SESSION_ID column of MJ_CAPTURE_LIFECYCLE, the start source, whether a live episode of another provider session already holds the task), and the rule is stated where the lifecycle is declared.",
    "section": "The plan"
   },
   {
@@ -28166,7 +28547,7 @@
   {
    "route": "/plan/i3292/",
    "title": "I3292 — Reported tokens, a price-list estimate and a billed amount are three fields, and the billing mode says which account paid",
-   "description": "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode (subscription, api_key, api_credits, unknown) declared by the person, so that on a subscription an API-equivalent price is never shown as spend.",
+   "description": "Give the usage record of I3288 reported_tokens, estimated_cost (class estimated) and billed_cost (absent unless reconciled), plus billing_mode declared by the person, whose values are the model catalogue's funding kinds (local, credit_grant, subscription, metered; I3660) or unknown, so that on a subscription an API-equivalent price is never shown as spend.",
    "section": "The plan"
   },
   {
@@ -28980,6 +29361,54 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3660/",
+   "title": "I3660 — A vendor declares its funding sources in the model catalogue, each with dated, quoted vendor evidence",
+   "description": "Add a `funding` list to each vendor of share/models.yaml (ADR 0049): each source with an id, a kind (local, credit_grant, subscription or metered), the credential variable that reaches it or a note that a client login does, the period it renews over where the vendor states one, the vendor-domain page where the owner claims it, and evidence (page, day read, the vendor's own words); extend models::Vendor; report a source that cannot be read (no evidence, an unknown kind) as a diagnostic naming the vendor and the source while the rest of the catalogue loads; make reasoning check forbid every declared credential variable in CI, not only the vendor's.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3661/",
+   "title": "I3661 — Which funding sources the owner holds, and their caps, are the owner's local declaration and never projected",
+   "description": "Read the owner's holdings (which declared sources they hold, and an optional monthly cap per source) from a record under .ai/local and from the environment, resolve each against the vendor sources of I3660, and refuse a holdings record written under .ai/repo; no generated, projected or published file carries a holding.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3662/",
+   "title": "I3662 — models.route names the funding source a route would draw on, as an inference with its basis, in the declared source order",
+   "description": "Extend models::route so that its RoutingDecision carries the funding source the chosen model would draw on, labelled inferred with the credential presence and holding that implied it, chosen by a repository policy that orders source kinds (local, then credit_grant, then metered; a subscription only for the client that owns the seat); a held source whose credential is unset is excluded with that reason.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3663/",
+   "title": "I3663 — An Anthropic API advisor is declared, so a held Anthropic credit grant can pay for review",
+   "description": "Declare an advisor in share/advisors.yaml reached over the Anthropic Messages API through the vendor's credential variable, with a model from share/models.yaml (claude-opus-5-5, which this issue adds to the catalogue with its provenance) and an adapter scripts/lib/advisors/anthropic-messages.mjs that speaks the same contract as openai-chat.mjs; reasoning check resolves it, and an absent credential reads not_configured (rule project.advisors-are-optional). No Rust change: the advisor is data and an adapter.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3664/",
+   "title": "I3664 — doctor and the brief tell the owner a held funding source no credential reaches, with the vendor's claim link",
+   "description": "Add a typed check (ADR 0069) that doctor and the brief read: for each source the owner holds (I3661) whose credential variable is unset, name the vendor, the source, the vendor's claim link and the date of its evidence; say it once per renewal period, and say nothing for a source the owner declares they do not hold.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3665/",
+   "title": "I3665 — A benchmark run and an advisor consultation carry the funding kind the owner declared for them, or unknown",
+   "description": "Add an optional funding kind to the economics run record (EconomicsRun, not EconomicsRequest) and to the reasoning consultation record, in the catalogue's vocabulary (I3660), filled from the owner's I3289 declaration through I3292's billing_mode and otherwise unknown; an existing run file without the field reads unknown and is not rewritten; nothing infers the kind from which credential was present.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3666/",
+   "title": "I3666 — Spend against a funding source is observed from a named vendor seam or recorded absent, and no balance is derived from a price",
+   "description": "Give each held source a spend figure that is observed only when a vendor seam named in share/models.yaml with dated evidence reports it; otherwise record it absent with the reason (for an individual account: the vendor's cost report is not available to it), and refuse in economics check any remaining-credit or spent-credit figure computed from tokens and a price.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3667/",
+   "title": "I3667 — A run that would fall through to metered billing while a grant is held, or cross a declared cap, is told before it starts",
+   "description": "Before the economics runner or an execution starts a model client, compare the route's source (I3662) with the owner's holdings and caps (I3661): tell the caller when the route would draw on a metered source while a credit grant is held, or when observed spend (I3666) already meets a declared cap, naming the source, the cap and the figure's class; refuse only where the repository policy declares refuse, through the same mechanism as I3295's over-budget telling.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i3750/",
    "title": "I3750 — The milestone graph reads each edge in the direction it means, in its text and in its detail panel",
    "description": "Make every reading of the roadmap's milestone graph say which milestone unblocks which: the edge a milestone's depends_on produces is named by the direction it is drawn in (the dependency unblocks the dependent), and the text fallback lists each edge under both of its ends, so no surface reads a dependency backwards.",
@@ -29322,6 +29751,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3840/",
+   "title": "I3840 — The intent workspace answers within its 100 ms budget: its shared-scope fold holds the first pairs, not every pair",
+   "description": "Bring /ui/idd back under the warm p95 budget of .ai/repo/benchmarks/rust/policy.yaml without touching the budget. The 'What can run together?' panel's shared-scope fold draws its first SHARED_SCOPE_SHOWN pairs and links to /ui/panels/shared-scope, a panel route that lists every pair; the screen borrows the plan's lists (view::items) instead of cloning them on every request.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i3841/",
    "title": "I3841 — The plan's graph is drawn by milestone, so /plan/dag/ answers the site probe within its budget however large the backlog grows",
    "description": "Bound what /plan/dag/ and /plan/ draw by the number of milestones rather than the number of issues: scripts/generate-site-data adds to plan.json a milestone graph (milestone_edges, one entry per pair of milestones an issue dependency crosses, counted, and milestone_mermaid, one node per milestone with its done count and status), both pages draw it, /plan/dag/ lists the milestone edges as its text equivalent and points to the waves on /plan/, and every milestone node links to the milestone's own page, which already draws its issues; a case holds /plan/dag/ to an element ceiling and its graph to one node per milestone.",
@@ -29355,6 +29790,18 @@
    "route": "/plan/i3862/",
    "title": "I3862 — The shell floor is held by a case that reads what the rule forbids",
    "description": "Give rule project.portable-shell a case that exercises what it states. The case reads every shell unit the shell-lint gate lints and refuses an associative array, mapfile or readarray, and a GNU-only flag (stat -c, date -d, readlink -f, grep -P, sed -r, xargs -r, find -printf, cp --parents) unless the same line carries its BSD form after ||. Its scanner is first held to a fixture whose answer is known, so a scanner that stopped finding them cannot pass for a clean tree. test/mesh-lab/run, the one unit that broke the floor, keeps its scenario verdicts in one JSON object instead of two associative arrays. The rule names the new case beside case 08 and says what each holds, with shellcheck as the shell-lint gate's half.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3902/",
+   "title": "I3902 — A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed",
+   "description": "GitHub's own Pages build that stays `building` or `queued` longer than deploy.build_hung_after (.ai/repo/ci/pages.yaml) is hung: `scripts/pages rebuild` replaces it and says why, a younger one is waited on with its own exit (13), and the scheduled publisher hands a build in flight of the right tree to the rebuild instead of redeploying an identical tree.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i3903/",
+   "title": "I3903 — A stuck or superseded CI run is found and stopped by a declared bound, by a typed capability on a schedule",
+   "description": "A typed forge capability beside apps/majordomus-cli/src/integration/forge.rs lists the repository's in-flight GitHub Actions runs. It cancels three kinds: a run queued longer than its declared bound, a run in progress past its workflow's bound, and a pull-request run whose head is no longer its branch's head. Each cancellation is recorded with its reason in the integration audit trail. It runs on a schedule, the way queue.yml runs `majordomus prs`, and absorbs the cancel logic scripts/ci/release-path carries in shell.",
    "section": "The plan"
   },
   {
@@ -29580,6 +30027,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3959/",
+   "title": "I3959 — The shared build directory stays under its bound while builds run: between builds, under cargo's lock, its stale units are evicted oldest first until it is under the bound",
+   "description": "Make the shared build directory's 6144MB bound (MAJORDOMUS_SHARED_BUILD_CAP_MB) hold on a machine where some cargo always runs: before and after every bounded build, and from scripts/reap-orphans when a build is running, evict whole stale units of the build directory, oldest first, until it is under its bound: a coverage run's llvm-cov-target, dependency generations whose crate version no worktree's Cargo.lock names, idle incremental sessions and idle generations of this crate's own units. Each profile's units are evicted only while cargo's lock on that profile is taken without waiting and no process names or holds them; a held lock is skipped and said, and what was evicted is reported per unit.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i3960/",
    "title": "I3960 — The initialize instructions tell the caller about itself before the board, and the board line is bounded",
    "description": "Bound PeerBoard::summary (each claim's intent cut, at most three claims a peer, the whole line capped, the rest counted with a pointer to majordomus_peers) and move it after the sentences about the caller in the MCP initialize instructions.",
@@ -29670,6 +30123,84 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i3999/",
+   "title": "I3999 — A fixture holds the skills the site generator reads",
+   "description": "fixture_repo copies .claude/skills, which scripts/generate-site-data reads for every skill its artifacts manifest names, so the cases that build a fixture and run the generator (10, 11, 37) pass on a checkout that has the skills.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4000/",
+   "title": "I4000 — A repeated executions.start with the same key answers one execution",
+   "description": "Give executions.start an optional idempotency key; ExecutionStore::create returns the existing execution id for a key it has already seen instead of creating a second execution (Mission Control B1).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4001/",
+   "title": "I4001 — The execution state machine has Authorizing, Claimed, Verifying, Refused and UnknownOutcome",
+   "description": "Add Authorizing, Claimed, Verifying, Refused and UnknownOutcome to the execution state machine with may_move_to for each edge and a versioned event schema (Mission Control B3).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4002/",
+   "title": "I4002 — Worktree.create is a typed writing capability",
+   "description": "Declare worktree.create as a capability with a repository_mutation effect over the git calls integration/drain.rs already makes, so a worker creates a canonical worktree through the registry rather than a shell (Mission Control B5).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4003/",
+   "title": "I4003 — Devtask.implement runs readiness, preflight, claim, worktree and one execution",
+   "description": "devtask.implement: issue readiness and intents.preflight, then mesh.claim, worktree.create and an agent run through executions.start; it refuses an overlap or an invalid intent with a reason and answers pending when no worker is attached (Mission Control B4).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4004/",
+   "title": "I4004 — The executor takes the issue's mesh claim in the handler and releases it when the run ends",
+   "description": "The executor takes the issue's mesh claim in the handler of an execution and releases it when the run ends, however it ends; fencing is deferred to I3174 (Mission Control B6).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4005/",
+   "title": "I4005 — Proceed.step answers one idempotent work order",
+   "description": "proceed.step derives one step from intent_realization and the claim-aware plan.next into a work order (do, fan_out, report, next_due_at); the /proceed skill is generated from its .skill() declaration. It builds on the pushed stack feature/proceed-names-the-next-admissible-work (I2972-I2976, I3040, ADR 0177) and writes no second body.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4006/",
+   "title": "I4006 — Machine.slot is a counting machine-wide slot for heavy work",
+   "description": "machine.slot: a counting slot, N and the disk floor read from rule data, taken by pre-push, coverage and builds; a full queue answers a bounded wait naming its holders.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4007/",
+   "title": "I4007 — An idle serve exits by itself after a bound",
+   "description": "An idle serve that holds no lease, has no peers and no executions exits by itself after a bound read from policy.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4008/",
+   "title": "I4008 — A push that only deletes refs runs no plan in the pre-push hook",
+   "description": "A push whose every ref is a deletion runs no plan in the pre-push hook, by the reasoning of the refs/majordomus/* exemption: no source travels.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4009/",
+   "title": "I4009 — /watchdog reads liveness and runs wake, handover, reap",
+   "description": "/watchdog: the session-side verb that reads the liveness signals of I3990-I3994 (suspended claims, phase beats, overdue) and runs wake, then handover, then reap; reap only by the owner or a seat and only after assess-before-deleting.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4012/",
+   "title": "I4012 — A remote node's loopback runtimes are not dialed, so its hub is",
+   "description": "dial_targets leaves out a record of another node whose endpoints are all loopback: such a runtime cannot be reached from this machine, and counted against MAX_TARGETS_PER_NODE it crowds out the node's hub, the one runtime of that machine bound beyond loopback.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4013/",
+   "title": "I4013 — A server bound to every interface advertises the addresses it has now",
+   "description": "A server bound to 0.0.0.0 reads its interface addresses again before every beacon it signs (Beacon::follow), so that its advertisement follows a DHCP move instead of naming the address it held when it started.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4154/",
    "title": "I4154 — The follow backlog test waits on the follower's cursor, not on fifty milliseconds",
    "description": "http::follow::tests::a_backlog_beyond_the_bound_in_the_stream_starts_the_client_again writes its backlog only once the follower's cursor stands, and writes it whole, so a loaded runner cannot turn it red.",
@@ -29697,6 +30228,18 @@
    "route": "/plan/i4220/",
    "title": "I4220 — A run that /trends/ draws is a link the site check decides by provenance",
    "description": "scripts/ci/link-check admits every run that site/data/trends.json names as a decided Actions link, as it already admits the run that site/data/evidence.json names, so the /trends/ page I3933 publishes passes the deploy check and master's pages publish.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4222/",
+   "title": "I4222 — A forge reply cut off on its way is asked again",
+   "description": "When gh reports a forge reply that was cut off ('unexpected end of JSON input'), the integration forge counts it as an outage and asks again within its bounded backoff.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4223/",
+   "title": "I4223 — The pre-commit generation gate answers inside its bound, and a failed case's reason reaches an artifact",
+   "description": "Make `generate --check`, which `scripts/pages current` runs in front of every commit, stop paying for the plan's scope-conflict scan: choose the runnable issues once, normalise every scope entry once, and compare normalised entries without allocating, with the same findings in the same order. And make the reason a failed case prints reach a file CI keeps: test/run.sh writes every failed or timed-out case's output to MJ_TEST_FAILURES, and validate.yml uploads it per suite shard.",
    "section": "The plan"
   },
   {
@@ -30554,13 +31097,25 @@
   {
    "route": "/registry/capabilities/gates-completion/",
    "title": "gates.completion",
-   "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.",
+   "description": "The active task's own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.",
    "section": "Registry"
   },
   {
    "route": "/registry/capabilities/gates-model/",
    "title": "gates.model",
    "description": "Every validation gate this repository declares — the job that runs it, the command it runs, what it proves, whether every plan selects it and whether its runner can be had on demand at all — with the path classes that decide which change selects which gate, and, derived from those classes, the pathspecs each gate's evidence is taken over.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/gates-policy/",
+   "title": "gates.policy",
+   "description": "The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository's convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository's CI model never answers is listed by name.",
+   "section": "Registry"
+  },
+  {
+   "route": "/registry/capabilities/gates-state/",
+   "title": "gates.state",
+   "description": "Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout's own record; what it did not consult, the forge's CI runs, is named under `unreached` rather than left out.",
    "section": "Registry"
   },
   {
@@ -30734,7 +31289,7 @@
   {
    "route": "/registry/capabilities/lifecycle-providers/",
    "title": "lifecycle.providers",
-   "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
+   "description": "Per provider: the lifecycle events its adapter declares in the provider's own vocabulary, whether it can archive prompts, the official seams through which it reports what a session consumed (usage, with the citation), and which of this repository's enforcement entries name its hook. Declared in share/providers.yaml and in the policy; never inferred from whether a shim happens to be on disk.",
    "section": "Registry"
   },
   {
@@ -31298,7 +31853,7 @@
   {
    "route": "/registry/capabilities/shell-check/",
    "title": "shell.check",
-   "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
+   "description": "Every shell unit under bin/, lib/, scripts/, share/, apps/majordomus-cli/assets/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
    "section": "Registry"
   },
   {
@@ -32475,12 +33030,12 @@
    "section": "Rules"
   },
   {
-   "route": "/rules/project-a-provider-capability-cites-its-evidence-2/",
+   "route": "/rules/project-a-provider-capability-cites-its-evidence-3/",
    "title": "A provider capability is declared once, with the citation it was verified from",
    "description": "A provider capability is declared once, with the citation it was verified from",
    "kind": "rule",
-   "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@2",
-   "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v2.md",
+   "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@3",
+   "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v3.md",
    "section": "Rules"
   },
   {
@@ -32490,6 +33045,15 @@
    "kind": "rule",
    "id": "majordomus://rule/project.a-push-runs-what-ci-would-find-first@2",
    "source": ".ai/repo/rules/project/a-push-runs-what-ci-would-find-first.v2.md",
+   "section": "Rules"
+  },
+  {
+   "route": "/rules/project-a-session-joins-the-cluster-before-it-works-1/",
+   "title": "A session is current, attached, announced and useful before it changes anything",
+   "description": "A session is current, attached, announced and useful before it changes anything",
+   "kind": "rule",
+   "id": "majordomus://rule/project.a-session-joins-the-cluster-before-it-works@1",
+   "source": ".ai/repo/rules/project/a-session-joins-the-cluster-before-it-works.v1.md",
    "section": "Rules"
   },
   {
@@ -33521,7 +34085,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.8 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.8, built from commit 71857dbb609169eafa7a411db5013ec93b58a661: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.8, built from commit 2efeacea03158615db2b497117a8da35b264909b: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
   },
   {
@@ -34047,6 +34611,12 @@
    "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
   },
   {
+   "route": "/rustdoc/majordomus_cli/devcontext/source/",
+   "title": "majordomus_cli::devcontext::source - Rust",
+   "description": "The source ranges a request’s paths reach: where each Rust definition under them lies, offered to the budget as a range rather than as a whole file.",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
    "route": "/rustdoc/majordomus_cli/devtask/",
    "title": "majordomus_cli::devtask - Rust",
    "description": "The executable development task: one issue or one milestone read as work to be done, with the origin of every value on the value.",
@@ -34410,6 +34980,12 @@
    "route": "/rustdoc/majordomus_cli/http/ws/",
    "title": "majordomus_cli::http::ws - Rust",
    "description": "WebSocket, by hand: the handshake and the frames of RFC 6455, and nothing else.",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/idle/",
+   "title": "majordomus_cli::idle - Rust",
+   "description": "When a server that no client owns is idle, and when it leaves (I4007).",
    "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
   },
   {
@@ -34920,6 +35496,12 @@
    "route": "/rustdoc/majordomus_cli/served/",
    "title": "majordomus_cli::served - Rust",
    "description": "What a deployment actually serves, observed from outside and judged against the commit that was meant to be there.",
+   "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/served_executable/",
+   "title": "majordomus_cli::served_executable - Rust",
+   "description": "A server runs from a copy of a build output, so that a rebuild never replaces the file a live lease names (I2059).",
    "section": "majordomus-cli 1.0.0-alpha.8 — Rust API reference"
   },
   {

@@ -25,13 +25,16 @@
 <a href=#25 id=25 data-nosnippet>25</a>            };
 <a href=#26 id=26 data-nosnippet>26</a>        }
 <a href=#27 id=27 data-nosnippet>27</a>    };
-<a href=#28 id=28 data-nosnippet>28</a>    majordomus_cli::logging::init();
-<a href=#29 id=29 data-nosnippet>29</a>    <span class="kw">match </span>majordomus_cli::commands::run(cli) {
-<a href=#30 id=30 data-nosnippet>30</a>        <span class="prelude-val">Ok</span>(code) =&gt; ExitCode::from(code),
-<a href=#31 id=31 data-nosnippet>31</a>        <span class="prelude-val">Err</span>(err) =&gt; {
-<a href=#32 id=32 data-nosnippet>32</a>            <span class="macro">eprintln!</span>(<span class="string">"majordomus: {err}"</span>);
-<a href=#33 id=33 data-nosnippet>33</a>            ExitCode::from(err.exit_code())
-<a href=#34 id=34 data-nosnippet>34</a>        }
-<a href=#35 id=35 data-nosnippet>35</a>    }
-<a href=#36 id=36 data-nosnippet>36</a>}
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="comment">// a process that may hold the lease runs from a copy of a build output, so that a
+<a href=#29 id=29 data-nosnippet>29</a>    // rebuild of that output never replaces the file the lease names (I2059)
+<a href=#30 id=30 data-nosnippet>30</a>    </span>majordomus_cli::served_executable::serve_from_a_copy(<span class="kw-2">&amp;</span>cli.command);
+<a href=#31 id=31 data-nosnippet>31</a>    majordomus_cli::logging::init();
+<a href=#32 id=32 data-nosnippet>32</a>    <span class="kw">match </span>majordomus_cli::commands::run(cli) {
+<a href=#33 id=33 data-nosnippet>33</a>        <span class="prelude-val">Ok</span>(code) =&gt; ExitCode::from(code),
+<a href=#34 id=34 data-nosnippet>34</a>        <span class="prelude-val">Err</span>(err) =&gt; {
+<a href=#35 id=35 data-nosnippet>35</a>            <span class="macro">eprintln!</span>(<span class="string">"majordomus: {err}"</span>);
+<a href=#36 id=36 data-nosnippet>36</a>            ExitCode::from(err.exit_code())
+<a href=#37 id=37 data-nosnippet>37</a>        }
+<a href=#38 id=38 data-nosnippet>38</a>    }
+<a href=#39 id=39 data-nosnippet>39</a>}
 </code></pre></div></section></main></body></html>

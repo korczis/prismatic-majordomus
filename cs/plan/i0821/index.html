@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>I0821 — Zploštělé YAML se cachuje v .ai/local/cache podle hashe obsahu — Prismatic Majordomus</title>
-<meta name="description" content="Cachovat výstup mj_yaml_flatten pod .ai/local/cache/flat/&lt;sha256>, klíčovaný hashem obsahu souboru a vlastní verzí zploštěče, takže druhý příkaz nad nezměněnými soubory nic neparsuje.">
+<meta name="description" content="Cache the output of mj_yaml_flatten under .ai/local/cache/flat/&lt;parser sha256&gt;/, keyed by the file&#39;s content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener&#39;s own version, so a second command on unchanged files does no parsing.">
 <link rel="canonical" href="https://majordomus.dev/cs/plan/i0821/"><meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="I0821 — Zploštělé YAML se cachuje v .ai/local/cache podle hashe obsahu — Prismatic Majordomus">
-<meta property="og:description" content="Cachovat výstup mj_yaml_flatten pod .ai/local/cache/flat/&lt;sha256>, klíčovaný hashem obsahu souboru a vlastní verzí zploštěče, takže druhý příkaz nad nezměněnými soubory nic neparsuje.">
+<meta property="og:description" content="Cache the output of mj_yaml_flatten under .ai/local/cache/flat/&lt;parser sha256&gt;/, keyed by the file&#39;s content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener&#39;s own version, so a second command on unchanged files does no parsing.">
 <meta property="og:url" content="https://majordomus.dev/cs/plan/i0821/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -167,20 +167,20 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">I0821 — Zploštělé YAML se cachuje pod .ai/local/cache podle hashe obsahu</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Cachovat výstup mj_yaml_flatten pod .ai/local/cache/flat/&lt;sha256&gt;, klíčovaný hashem obsahu souboru a vlastní verzí flatteneru, aby druhý příkaz nad nezměněnými soubory neparsoval nic.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Cache the output of mj_yaml_flatten under .ai/local/cache/flat/&lt;parser sha256&gt;/, keyed by the file&#39;s content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener&#39;s own version, so a second command on unchanged files does no parsing.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--verify relative" data-status="verify"><span aria-hidden="true">!</span>OVĚŘIT</span>
 <span class="text-sm text-body">vlna 1 · p0 · profil implementation · běží samostatně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/m004/" class="text-fg-brand underline">M004 — Výkon je spustitelný důkaz a horká cesta nedělá žádnou kanonickou práci dvakrát</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Připraveno. Všechny závislosti jsou hotové, takže <code class="font-mono text-heading">majordomus plan start I0821</code> bude přijato.</p>
+  <div class="mt-6 rounded-base border border-warning-subtle bg-warning-soft p-4">
+    <p class="text-sm text-fg-warning">Implementace je hotová a požadované důkazy ne. Zůstává tady, dokud za každým tokenem níže nestojí příkaz: dokončení se řídí důkazy, ne tvrzením.</p>
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cachovat výstup mj_yaml_flatten pod .ai/local/cache/flat/&lt;sha256&gt;, klíčovaný hashem obsahu souboru a vlastní verzí flatteneru, aby druhý příkaz nad nezměněnými soubory neparsoval nic.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">doctor zplošťuje 181 souborů a uzly znalostí 146; napříč hookem, watch a kontextem se tytéž soubory parsují znovu a znovu.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">.ai/README.md již vyhrazuje local/cache/ pro přestavitelné cache; nic je nepoužívá.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Minutí parsuje a zapisuje atomicky; zásah kopíruje; změněný soubor nemůže zasáhnout, protože se změnil jeho hash; cache je omezena stropem položek v politice a ořezává se od nejstarších.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Cache the output of mj_yaml_flatten under .ai/local/cache/flat/&lt;parser sha256&gt;/, keyed by the file&#39;s content (held in the entry and compared in full, because hashing the file costs the process a hit is there to save) and the flattener&#39;s own version, so a second command on unchanged files does no parsing.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">doctor zplošťuje 181 souborů a uzly znalostí 146; napříč hookem, watch a kontextem se tytéž soubory parsují znovu a znovu.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">.ai/README.md již vyhrazuje local/cache/ pro přestavitelné cache; nic je nepoužívá.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A miss parses and writes atomically; a hit copies; a changed file cannot hit because its bytes are not the ones the entry holds; the cache is bounded by an entry cap in the policy and trimmed oldest first.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rozsah</h2>
@@ -198,26 +198,31 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Kritéria přijetí</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Bajt po bajtu shodný výstup každého příkazu jen pro čtení se studenou i teplou cache, dokázáno případem 77</li><li>Změněný soubor se parsuje znovu, dokázáno mutací</li><li>Cache nikdy nepřeroste limit</li><li>počet yaml_flatten je beze změny; nový čítač flatten_cache_hit hlásí zásahy</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Bajt po bajtu shodný výstup každého příkazu jen pro čtení se studenou i teplou cache, dokázáno případem 3090</li><li>Změněný soubor se parsuje znovu, dokázáno mutací</li><li>Cache nikdy nepřeroste limit</li><li>počet yaml_flatten je beze změny; nový čítač flatten_cache_hit hlásí zásahy</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validace</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh 77_flatten_cache</li><li class="font-mono text-heading break-words">MJ_TIMING=1 bin/majordomus doctor</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">bash test/run.sh 3090_a_flatten_is_cached_by_its_content</li><li class="font-mono text-heading break-words">MJ_TIMING=1 bin/majordomus doctor</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Požadované důkazy</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">flatten_cache</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
-  <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Riziko</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Hashování souboru také stojí podproces; cache se vyplatí jen tehdy, když je zploštění podstatně dražší než hash, což musí čítače ukázat, než to přistane.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">flatten_cache</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bash test/run.sh 3090_a_flatten_is_cached_by_its_content &amp;&amp; MJ_TIMING=1 bin/majordomus doctor</td><td class="px-4 py-2 text-body">ok 3090: every parseable tracked YAML file (546 of 551) flattens byte-identically to the parser alone, cold and warm, each warm call a counted hit; a same-length change in the same slot is parsed again; truncated, garbage, forged-source, forged-length, empty and unreadable entries are never served and are rewritten; a failed parse prints and exits 3 as before and is never kept; the directory never exceeds a cap of 3, oldest written removed first; no key or 0 is no cache; a changed parser gets another directory; doctor, context, history, prompt list, skills list and check print the same cold and warm in a fresh repository with yaml_flatten counted equally. Per call on 44 issue files: uncached 171-175 ms (about 4.0 ms each), warm 49-68 ms (about 1.2 ms), cold 400-606 ms once (the write and rename). doctor on this repository: yaml_flatten 571 cold and warm, flatten_cache_hit 16 cold and 337 warm, output identical but for clock-driven lines; wall time 511 s cold and 523 s warm at load average 40-62, which the load dominates. The other 234 calls run in processes that never load the policy and stay uncached.</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">d116266</td></tr></tbody>
+    </table>
+  </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Riziko</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Hashování souboru také stojí podproces; cache se vyplatí jen tehdy, když je zploštění podstatně dražší než hash, což musí čítače ukázat, než to přistane.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Časová osa</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-16T09:50:41Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-16T09:50:55Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/.ai/repo/project/issues/I0821.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0821.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show I0821</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/.ai/repo/project/issues/I0821.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0821.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show I0821</code>.</p>
 </div>
 
 </div>
@@ -267,9 +272,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -277,7 +282,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

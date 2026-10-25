@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -172,14 +172,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--verify relative" data-status="verify"><span aria-hidden="true">!</span>OVĚŘIT</span>
-<span class="text-sm text-body">4 z 4 úkolů hotovo</span></p>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
+<span class="text-sm text-body">4 z 5 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">hotovo</dt><dd class="mt-1 text-2xl font-semibold text-heading">4</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zrušeno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
   </dl>
@@ -212,6 +212,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <table class="w-full min-w-[38rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">issue</th><th scope="col" class="px-4 py-2">status</th><th scope="col" class="px-4 py-2">vlna</th><th scope="col" class="px-4 py-2">závisí na</th><th scope="col" class="px-4 py-2">název</th></tr></thead>
       <tbody>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i2588/" class="text-fg-brand hover:underline">I2588</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--verify relative" data-status="verify"><span aria-hidden="true">!</span>OVĚŘIT</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A region projection&#39;s host document is not judged as a bootstrap</td>
+        </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i2601/" class="text-fg-brand hover:underline">I2601</a></td>
           <td class="px-4 py-2"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
@@ -252,7 +260,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">graf závislostí a-second-adopter-is-served</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-a-second-adopter-is-served" data-diagram="a-second-adopter-is-served" data-nodes="I2601 I2987 I2993 I2995">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-a-second-adopter-is-served" data-diagram="a-second-adopter-is-served" data-nodes="I2588 I2601 I2987 I2993 I2995">flowchart LR
+    I2588[&quot;I2588&lt;br/&gt;A region projection&#39;s host document is not judged as a bootstrap&quot;]:::verify
     I2601[&quot;I2601&lt;br/&gt;majordomus evidence reaches record, stamp and show&quot;]:::done
     I2987[&quot;I2987&lt;br/&gt;server.status and peers.list ask every checkout at once, a bounded number at a time&quot;]:::done
     I2993[&quot;I2993&lt;br/&gt;doctor counts the work no remote holds in one walk, whatever the number of branches&quot;]:::done
@@ -264,11 +273,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram a-second-adopter-is-served" aria-controls="diagram-a-second-adopter-is-served" data-diagram-bar="diagram-a-second-adopter-is-served" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-a-second-adopter-is-served"><summary>Odkazuje z tohoto diagramu (4)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2601/" data-node="I2601" data-kind="issue">I2601 majordomus evidence umí record, stamp a show</a></li><li><a href="https://majordomus.dev/cs/plan/i2987/" data-node="I2987" data-kind="issue">I2987 server.status a peers.list se ptají všech checkoutů najednou, omezeným počtem naráz</a></li><li><a href="https://majordomus.dev/cs/plan/i2993/" data-node="I2993" data-kind="issue">I2993 doctor spočítá práci, kterou nedrží žádný remote, jedním průchodem, ať je větví kolik chce</a></li><li><a href="https://majordomus.dev/cs/plan/i2995/" data-node="I2995" data-kind="issue">I2995 doctor nedělá práci, jejíž odpověď nemůže změnit nález: vyhledávání v plánu rozvoje a široký stav nástěnky</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram a-second-adopter-is-served" aria-controls="diagram-a-second-adopter-is-served" data-diagram-bar="diagram-a-second-adopter-is-served" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-a-second-adopter-is-served"><summary>Odkazuje z tohoto diagramu (5)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2588/" data-node="I2588" data-kind="issue">I2588 A region projection's host document is not judged as a bootstrap</a></li><li><a href="https://majordomus.dev/cs/plan/i2601/" data-node="I2601" data-kind="issue">I2601 majordomus evidence umí record, stamp a show</a></li><li><a href="https://majordomus.dev/cs/plan/i2987/" data-node="I2987" data-kind="issue">I2987 server.status a peers.list se ptají všech checkoutů najednou, omezeným počtem naráz</a></li><li><a href="https://majordomus.dev/cs/plan/i2993/" data-node="I2993" data-kind="issue">I2993 doctor spočítá práci, kterou nedrží žádný remote, jedním průchodem, ať je větví kolik chce</a></li><li><a href="https://majordomus.dev/cs/plan/i2995/" data-node="I2995" data-kind="issue">I2995 doctor nedělá práci, jejíž odpověď nemůže změnit nález: vyhledávání v plánu rozvoje a široký stav nástěnky</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/.ai/repo/project/milestones/a-second-adopter-is-served.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/a-second-adopter-is-served.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show a-second-adopter-is-served</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/.ai/repo/project/milestones/a-second-adopter-is-served.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/a-second-adopter-is-served.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show a-second-adopter-is-served</code>.</p>
 </div>
 
 </div>
@@ -318,9 +327,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -328,7 +337,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

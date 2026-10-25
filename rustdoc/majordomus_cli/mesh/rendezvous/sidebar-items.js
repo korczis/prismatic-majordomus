@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["REGISTER_PATH"],"struct":["RegisterAnswer","RendezvousProvider"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_ANSWER_CANDIDATES","MAX_CANDIDATES","MAX_REGISTER_ANSWER","REGISTER_PATH"],"enum":["RegisterError"],"fn":["register"],"struct":["RegisterAnswer","RendezvousProvider"]};

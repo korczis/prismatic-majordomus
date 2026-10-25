@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -251,6 +251,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Cesty relativní k repozitáři, kterých se práce dotýká, přidané k tomu, co deklarují seedy.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">source_ranges</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Outline the Rust source under the work's paths into ranges, one candidate per
+definition, spent by the same budget beside the layer's objects (<code>source</code>).</p>
+<p>Off unless asked for: it reads files the index does not hold, and an answer every
+existing caller already depends on — <code>economics measure</code> counts the files a context
+names — does not change under it.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">uris</td>
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
@@ -323,6 +332,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;type&quot;: &quot;string&quot;
       },
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;source_ranges&quot;: {
+      &quot;description&quot;: &quot;Outline the Rust source under the work&#39;s paths into ranges, one candidate per\ndefinition, spent by the same budget beside the layer&#39;s objects (`source`).\n\nOff unless asked for: it reads files the index does not hold, and an answer every\nexisting caller already depends on — `economics measure` counts the files a context\nnames — does not change under it.&quot;,
+      &quot;type&quot;: [
+        &quot;boolean&quot;,
+        &quot;null&quot;
+      ]
     },
     &quot;uris&quot;: {
       &quot;description&quot;: &quot;Canonical identifiers to seed with directly, for a request about something that is\nneither an issue nor a milestone.&quot;,
@@ -421,6 +437,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2 font-mono text-xs text-body">array</td>
         <td class="px-3 py-2 font-mono text-xs text-body">ano</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Co relaci dát, v pořadí, v jakém se utrácí rozpočet: úroveň, pak relevance, pak kanonický identifikátor.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">zdroje</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">ne</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The source files the request's paths reach, outlined into ranges: what each whole
+file would cost, what its selected ranges cost instead, and what was not read and
+why. Absent when the request reaches no tracked source, so an answer about the layer
+alone is unchanged.</td>
       </tr></tbody>
     </table>
   </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
@@ -1001,6 +1025,119 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         }
       ]
     },
+    &quot;SourceCoverage&quot;: {
+      &quot;description&quot;: &quot;What the compiler read of the source under a request&#39;s paths, and what that saved.\n\nThe index `fingerprint` covers the layer&#39;s objects, not\nthe source files the ranges come from, so each file carries the digest of the bytes\nthat were parsed: a range is true of those bytes, which may be a dirty work tree&#39;s\nrather than any commit&#39;s, and two answers agree about a file exactly when its digests\ndo.\n\nEvery number here is an estimate in the same unit as the budget (`BYTES_PER_TOKEN`),\nand the saving is measured against reading each outlined file whole — the reading this\nreplaces — not against an ideal reader.\n\n```\nuse majordomus_cli::devcontext::{SourceCoverage, SourceFile};\n\nlet file = SourceFile {\n    path: \&quot;src/big.rs\&quot;.into(),\n    digest: \&quot;sha256:00\&quot;.into(),\n    bytes: 40_000,\n    whole_tokens: 10_000,\n    definitions: 120,\n    ranges: 120, truncated: 0,\n    selected: 3,\n    selected_tokens: 900,\n    saved_tokens: 9_100,\n};\nlet c = SourceCoverage { files: vec![file], ..Default::default() };\nassert!(!c.is_empty());\nassert_eq!(c.whole_tokens(), 10_000);\nassert_eq!(c.selected_tokens(), 900);\nassert_eq!(c.saved_tokens(), 9_100);\n\n// an answer that read no source has no coverage section at all\nassert!(SourceCoverage::default().is_empty());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;files&quot;: {
+          &quot;description&quot;: &quot;The files outlined, in path order.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/SourceFile&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;parser&quot;: {
+          &quot;description&quot;: &quot;What parsed the files, and what that parser does not see.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;truncated&quot;: {
+          &quot;description&quot;: &quot;Source files past the per-request bound, counted and not read.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;unparsed&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;Tracked files under the paths that no parser here covers, counted by extension.\nThese have no ranges; an empty outline for them would read as complete.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;unread&quot;: {
+          &quot;description&quot;: &quot;Source the paths reach and the compiler did not outline, with the reason: out of\nthe repository scope, a symbolic link, over the size bound, not valid syntax.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/UnreadSource&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;SourceFile&quot;: {
+      &quot;description&quot;: &quot;One source file the compiler outlined.\n\n```\nuse majordomus_cli::devcontext::SourceFile;\n\nlet f: SourceFile = serde_json::from_value(serde_json::json!({\n    \&quot;path\&quot;: \&quot;src/big.rs\&quot;, \&quot;digest\&quot;: \&quot;sha256:00\&quot;, \&quot;bytes\&quot;: 4000, \&quot;whole_tokens\&quot;: 1000,\n    \&quot;definitions\&quot;: 12, \&quot;ranges\&quot;: 11, \&quot;truncated\&quot;: 0, \&quot;selected\&quot;: 2, \&quot;selected_tokens\&quot;: 120,\n    \&quot;saved_tokens\&quot;: 880,\n})).unwrap();\nassert_eq!(f.whole_tokens - f.selected_tokens, f.saved_tokens);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;bytes&quot;: {
+          &quot;description&quot;: &quot;Its size.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;definitions&quot;: {
+          &quot;description&quot;: &quot;How many definitions the parser found in it.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;digest&quot;: {
+          &quot;description&quot;: &quot;`sha256:&lt;hex&gt;` of the bytes parsed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;ranges&quot;: {
+          &quot;description&quot;: &quot;How many ranges they were offered as: definitions written on the same lines share\none. Every range is either selected or excluded, so this is `selected` plus the\nfile&#39;s ranges in `excluded`.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;saved_tokens&quot;: {
+          &quot;description&quot;: &quot;`whole_tokens - selected_tokens`: what reading the selected ranges instead of the\nfile saves. Zero when the ranges cost as much as the file, and zero when none of its\nranges was selected: a file the answer gives nothing of was not read more cheaply,\nit was not read at all.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;selected&quot;: {
+          &quot;description&quot;: &quot;How many of its ranges the budget selected.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;selected_tokens&quot;: {
+          &quot;description&quot;: &quot;What those ranges cost, in estimated tokens.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;truncated&quot;: {
+          &quot;description&quot;: &quot;Definitions past the per-file bound, not offered.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;whole_tokens&quot;: {
+          &quot;description&quot;: &quot;What reading it whole costs, in estimated tokens.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;digest&quot;,
+        &quot;bytes&quot;,
+        &quot;whole_tokens&quot;,
+        &quot;definitions&quot;,
+        &quot;ranges&quot;,
+        &quot;truncated&quot;,
+        &quot;selected&quot;,
+        &quot;selected_tokens&quot;,
+        &quot;saved_tokens&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
     &quot;Tier&quot;: {
       &quot;description&quot;: &quot;Where an entry sits in the order the budget spends in.\n\nThe order is this repository&#39;s own: `lib/context.sh` assembles its sections \&quot;in\nauthority order, highest first, because a worker that runs out of budget must lose the\nleast reliable evidence rather than the most: git, then the task and its policy, then\nblockers, then authored records, then event history.\&quot; These six tiers are that\nsentence, applied to objects instead of to sections.\n\nThe derived `Ord` is load-bearing: the variants are declared in authority order, so\n`&lt;` means \&quot;spent before\&quot; and \&quot;harder to drop\&quot;, and the budget&#39;s ordering is a plain\n`sort` rather than a table mapping tiers to ranks. A variant added in the wrong place\nwould silently re-rank the whole answer, which is why the declaration order is the one\nthing about this enum to be careful with.\n\n```\nuse majordomus_cli::devcontext::Tier;\n\n// the declaration order *is* the order the budget spends in\nlet mut sorted = Tier::ORDER.to_vec();\nsorted.sort();\nassert_eq!(sorted, Tier::ORDER.to_vec());\n\n// so the strongest authority is the smallest, and it is the one never dropped\nassert_eq!(Tier::ORDER.iter().copied().min(), Some(Tier::Task));\nassert!(Tier::Task &lt; Tier::Governance &amp;&amp; Tier::Governance &lt; Tier::History);\n\n// and the serialised word is the lowercase one the report is read under\nassert_eq!(\n    serde_json::to_value(Tier::Governance).unwrap(),\n    serde_json::json!(Tier::Governance.as_str()),\n);\n```&quot;,
       &quot;oneOf&quot;: [
@@ -1081,6 +1218,24 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;required&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;UnreadSource&quot;: {
+      &quot;description&quot;: &quot;A source file reached and not outlined.\n\n```\nuse majordomus_cli::devcontext::UnreadSource;\n\nlet u = UnreadSource { path: \&quot;src/link.rs\&quot;.into(), reason: \&quot;a symbolic link; not followed\&quot;.into() };\nassert_eq!(serde_json::to_value(&amp;u).unwrap()[\&quot;reason\&quot;], \&quot;a symbolic link; not followed\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;reason&quot;: {
+          &quot;description&quot;: &quot;Which guard refused it, or what the parser said.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;reason&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
     }
   },
   &quot;description&quot;: &quot;A compiled development context: what to give a session, what was left out, what\ncollapsed into what, and the budget it was all decided under.\n\nThis is the canonical form. Rendering it as a prompt is a downstream projection of this\nvalue and is not performed here — the structure is what lets a caller re-budget, re-order\nor explain the selection without recompiling it.\n\nTwo invariants hold over every answer, and they are what make it safe to cache and to\ncompare. `fingerprint` is over the index this was compiled from, so the same request\nagainst the same fingerprint is the same answer and a different fingerprint is a\ndifferent tree — a caller can tell two trees apart without asking. And\n`budget.used_tokens` is exactly the sum of `selected`&#39;s costs, so the arithmetic in the\nbudget describes the list beside it rather than a walk that has since been filtered.\n\n```\nuse majordomus_cli::devcontext::{compile, CompileInput, CompiledContext};\nuse majordomus_cli::devcontext::{Tier, DEFAULT_BUDGET_TOKENS};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\n\nlet c: CompiledContext = compile(&amp;ctx, CompileInput::default()).unwrap();\n\n// the answer says which tree it is true of, and nothing else has to be asked\nassert_eq!(c.schema, 1);\nassert!(!c.fingerprint.is_empty(), \&quot;an answer that names no tree is not one\&quot;);\n\n// the budget describes the list beside it\nlet spent: u64 = c.selected.iter().map(|e| e.cost_tokens).sum();\nassert_eq!(c.budget.used_tokens, spent);\nassert_eq!(c.budget.limit_tokens, DEFAULT_BUDGET_TOKENS);\n\n// every tier is reported, so an empty tier is visibly empty rather than missing\nassert_eq!(c.budget.tiers.len(), Tier::ORDER.len());\n\n// a request that named nothing has no seeds and is still an answer\nassert!(c.seeds.is_empty());\n\n// and recompiling the same request over the same tree gives the same answer\nlet again: CompiledContext = compile(&amp;ctx, CompileInput::default()).unwrap();\nassert_eq!(again.fingerprint, c.fingerprint);\nassert_eq!(again.selected.len(), c.selected.len());\n```&quot;,
@@ -1144,6 +1299,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         &quot;$ref&quot;: &quot;#/$defs/ContextEntry&quot;
       },
       &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;sources&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/SourceCoverage&quot;,
+      &quot;description&quot;: &quot;The source files the request&#39;s paths reach, outlined into ranges: what each whole\nfile would cost, what its selected ranges cost instead, and what was not read and\nwhy. Absent when the request reaches no tracked source, so an answer about the layer\nalone is unchanged.&quot;
     }
   },
   &quot;required&quot;: [
@@ -1176,7 +1335,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
       <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
         <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">případy</th><th class="px-3 py-2">targets</th></tr></thead>
-        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">pokryto</td><td class="px-3 py-2 font-mono text-xs text-body">4</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-no-seed" class="break-all text-fg-brand hover:underline inline-block py-1">no-seed</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-issue" class="break-all text-fg-brand hover:underline inline-block py-1">issue</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-milestone" class="break-all text-fg-brand hover:underline inline-block py-1">milestone</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-intent" class="break-all text-fg-brand hover:underline inline-block py-1">intent</a> <span class="text-body-subtle">studený+teplý</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">pokryto</td><td class="px-3 py-2 font-mono text-xs text-body">4</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-no-seed" class="break-all text-fg-brand hover:underline inline-block py-1">no-seed</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-issue" class="break-all text-fg-brand hover:underline inline-block py-1">issue</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-milestone" class="break-all text-fg-brand hover:underline inline-block py-1">milestone</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-intent" class="break-all text-fg-brand hover:underline inline-block py-1">intent</a> <span class="text-body-subtle">studený+teplý</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">pokryto</td><td class="px-3 py-2 font-mono text-xs text-body">4</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-no-seed" class="break-all text-fg-brand hover:underline inline-block py-1">no-seed</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-issue" class="break-all text-fg-brand hover:underline inline-block py-1">issue</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-milestone" class="break-all text-fg-brand hover:underline inline-block py-1">milestone</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-intent" class="break-all text-fg-brand hover:underline inline-block py-1">intent</a> <span class="text-body-subtle">studený+teplý</span><br></td></tr></tbody>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">pokryto</td><td class="px-3 py-2 font-mono text-xs text-body">5</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-no-seed" class="break-all text-fg-brand hover:underline inline-block py-1">no-seed</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-issue" class="break-all text-fg-brand hover:underline inline-block py-1">issue</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-milestone" class="break-all text-fg-brand hover:underline inline-block py-1">milestone</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-intent" class="break-all text-fg-brand hover:underline inline-block py-1">intent</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-direct-source-ranges" class="break-all text-fg-brand hover:underline inline-block py-1">source-ranges</a> <span class="text-body-subtle">studený+teplý</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">pokryto</td><td class="px-3 py-2 font-mono text-xs text-body">5</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-no-seed" class="break-all text-fg-brand hover:underline inline-block py-1">no-seed</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-issue" class="break-all text-fg-brand hover:underline inline-block py-1">issue</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-milestone" class="break-all text-fg-brand hover:underline inline-block py-1">milestone</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-intent" class="break-all text-fg-brand hover:underline inline-block py-1">intent</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-mcp-source-ranges" class="break-all text-fg-brand hover:underline inline-block py-1">source-ranges</a> <span class="text-body-subtle">studený+teplý</span><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">pokryto</td><td class="px-3 py-2 font-mono text-xs text-body">5</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-no-seed" class="break-all text-fg-brand hover:underline inline-block py-1">no-seed</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-issue" class="break-all text-fg-brand hover:underline inline-block py-1">issue</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-milestone" class="break-all text-fg-brand hover:underline inline-block py-1">milestone</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-intent" class="break-all text-fg-brand hover:underline inline-block py-1">intent</a> <span class="text-body-subtle">studený+teplý</span><br><a href="https://majordomus.dev/cs/registry/benchmarks/#target-devcontext-compile-http-source-ranges" class="break-all text-fg-brand hover:underline inline-block py-1">source-ranges</a> <span class="text-body-subtle">studený+teplý</span><br></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -1190,7 +1349,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <div><dt class="text-body-subtle">modul Rust</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::devcontext</dd></div>
         <div><dt class="text-body-subtle">typ vstupu</dt><dd class="font-mono text-heading">DevContextInput</dd></div>
         <div><dt class="text-body-subtle">typ výstupu</dt><dd class="font-mono text-heading">CompiledContext</dd></div>
-        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2</dd></div>
+        <div><dt class="text-body-subtle">reference na GitHubu</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/docs/generated/modules/devcontext.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/devcontext.md</a></dd></div><div><dt class="text-body-subtle">otisk registru</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">94055f5c02d96de4ffe4d549beb908a692df3e3aa2a71b6c29dec8b1a5b96c36</dd></div>
         <div><dt class="text-body-subtle">vygenerováno nástrojem</dt><dd class="font-mono text-heading">majordomus-cli 1.0.0-alpha.8</dd></div>
       </dl>
     </div>
@@ -1246,9 +1405,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1256,7 +1415,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

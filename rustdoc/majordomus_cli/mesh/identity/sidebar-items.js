@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["default_identity_path","node_id_of_key","relabel","verify"],"struct":["InstanceId","NodeId","NodeIdentity","PublicIdentity"]};
+window.SIDEBAR_ITEMS = {"constant":["SUCCESSION_SCHEMA"],"fn":["default_identity_path","node_id_of_key","relabel","verify"],"struct":["InstanceId","NodeId","NodeIdentity","PublicIdentity","Succession"]};

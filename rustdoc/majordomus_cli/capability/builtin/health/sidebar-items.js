@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["HEALTH_URI","PROCESS_DIMENSIONS"],"enum":["HealthStatus"],"fn":["module","repository_status"],"struct":["Health","HealthCheck","Liveness","Readiness"]};
+window.SIDEBAR_ITEMS = {"constant":["HEALTH_URI","PROCESS_DIMENSIONS"],"enum":["HealthStatus"],"fn":["git_verdict","module","repository_status"],"struct":["Health","HealthCheck","Liveness","Readiness"]};

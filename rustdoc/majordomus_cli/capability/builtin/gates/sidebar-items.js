@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["COMPLETION_URI","GATES_URI"],"fn":["module"],"struct":["CompletionInput","GateModelEntry","GateModelReport"]};
+window.SIDEBAR_ITEMS = {"constant":["COMPLETION_URI","GATES_URI","POLICY_URI","STATE_URI"],"fn":["module"],"struct":["CompletionInput","CompletionPolicyReport","GateModelEntry","GateModelReport"]};

@@ -33,7 +33,7 @@
 <a href=#33 id=33 data-nosnippet>33</a>    ProviderStatus,
 <a href=#34 id=34 data-nosnippet>34</a>};
 <a href=#35 id=35 data-nosnippet>35</a><span class="kw">use </span><span class="kw">super</span>::registry::MeshSource;
-<a href=#36 id=36 data-nosnippet>36</a><span class="kw">use </span><span class="kw">super</span>::rendezvous::register_once;
+<a href=#36 id=36 data-nosnippet>36</a><span class="kw">use </span><span class="kw">super</span>::rendezvous::register;
 <a href=#37 id=37 data-nosnippet>37</a><span class="kw">use </span><span class="kw">super</span>::MeshError;
 <a href=#38 id=38 data-nosnippet>38</a>
 <a href=#39 id=39 data-nosnippet>39</a><span class="doccomment">/// How long `tailscale status --json` may take before the reading counts as failed.
@@ -139,7 +139,7 @@
 <a href=#139 id=139 data-nosnippet>139</a>                                }
 <a href=#140 id=140 data-nosnippet>140</a>                                <span class="comment">// a peer with no server on the port is the common case, and
 <a href=#141 id=141 data-nosnippet>141</a>                                // the next reading asks it again
-<a href=#142 id=142 data-nosnippet>142</a>                                </span><span class="kw">let </span><span class="prelude-val">Ok</span>(answer) = register_once(<span class="kw-2">&amp;</span>endpoint, <span class="kw-2">&amp;</span>beacon.next_envelope())
+<a href=#142 id=142 data-nosnippet>142</a>                                </span><span class="kw">let </span><span class="prelude-val">Ok</span>(answer) = register(<span class="kw-2">&amp;</span>endpoint, <span class="kw-2">&amp;</span>beacon.next_envelope())
 <a href=#143 id=143 data-nosnippet>143</a>                                <span class="kw">else </span>{
 <a href=#144 id=144 data-nosnippet>144</a>                                    <span class="kw">continue</span>;
 <a href=#145 id=145 data-nosnippet>145</a>                                };

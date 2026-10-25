@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["OBSERVATION_QUEUE"],"enum":["MeshProviderState"],"fn":["jitter_ms"],"struct":["Beacon","Counters","Observation","ObservationSender","ProviderContext","ProviderStatus"],"trait":["MeshProvider"]};
+window.SIDEBAR_ITEMS = {"constant":["OBSERVATION_QUEUE"],"enum":["MeshProviderState"],"fn":["jitter_ms"],"struct":["Beacon","Counters","Observation","ObservationSender","ProviderContext","ProviderStatus"],"trait":["MeshProvider"],"type":["EndpointSource"]};

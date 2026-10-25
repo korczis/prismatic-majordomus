@@ -70,118 +70,122 @@
 <a href=#70 id=70 data-nosnippet>70</a>        <span class="string">"unexpected eof"</span>,
 <a href=#71 id=71 data-nosnippet>71</a>        <span class="string">"the remote end hung up unexpectedly"</span>,
 <a href=#72 id=72 data-nosnippet>72</a>        <span class="string">"early eof"</span>,
-<a href=#73 id=73 data-nosnippet>73</a>    ];
-<a href=#74 id=74 data-nosnippet>74</a>    WORDS.iter().any(|w| m.contains(w))
-<a href=#75 id=75 data-nosnippet>75</a>}
-<a href=#76 id=76 data-nosnippet>76</a>
-<a href=#77 id=77 data-nosnippet>77</a><span class="doccomment">/// Run `op` until it succeeds, fails semantically, or `policy.attempts` are spent. `sleep`
-<a href=#78 id=78 data-nosnippet>78</a>/// is how a wait is taken: the forge passes `std::thread::sleep`, a test records the waits.
-<a href=#79 id=79 data-nosnippet>79</a>/// A failure after retries says how many attempts were made.
-<a href=#80 id=80 data-nosnippet>80</a></span><span class="kw">pub fn </span>with_backoff&lt;T&gt;(
-<a href=#81 id=81 data-nosnippet>81</a>    policy: <span class="kw-2">&amp;</span>Backoff,
-<a href=#82 id=82 data-nosnippet>82</a>    sleep: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(Duration),
-<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw-2">mut </span>op: <span class="kw">impl </span>FnMut() -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt;,
-<a href=#84 id=84 data-nosnippet>84</a>) -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt; {
-<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span><span class="kw-2">mut </span>attempt = <span class="number">1</span>;
-<a href=#86 id=86 data-nosnippet>86</a>    <span class="kw">loop </span>{
-<a href=#87 id=87 data-nosnippet>87</a>        <span class="kw">match </span>op() {
-<a href=#88 id=88 data-nosnippet>88</a>            <span class="prelude-val">Ok</span>(v) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(v),
-<a href=#89 id=89 data-nosnippet>89</a>            <span class="prelude-val">Err</span>(e) <span class="kw">if </span>transient(<span class="kw-2">&amp;</span>e) &amp;&amp; attempt &lt; policy.attempts =&gt; {
-<a href=#90 id=90 data-nosnippet>90</a>                attempt += <span class="number">1</span>;
-<a href=#91 id=91 data-nosnippet>91</a>                sleep(policy.delay(attempt));
-<a href=#92 id=92 data-nosnippet>92</a>            }
-<a href=#93 id=93 data-nosnippet>93</a>            <span class="prelude-val">Err</span>(e) <span class="kw">if </span>attempt &gt; <span class="number">1 </span>=&gt; {
-<a href=#94 id=94 data-nosnippet>94</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{e} (after {attempt} attempts)"</span>));
+<a href=#73 id=73 data-nosnippet>73</a>        <span class="comment">// a reply cut off on its way: `gh` read the first part of a JSON answer and the
+<a href=#74 id=74 data-nosnippet>74</a>        // connection ended (I4222, master's pages runs 40086406838 and 40093453442)
+<a href=#75 id=75 data-nosnippet>75</a>        </span><span class="string">"unexpected end of json input"</span>,
+<a href=#76 id=76 data-nosnippet>76</a>    ];
+<a href=#77 id=77 data-nosnippet>77</a>    WORDS.iter().any(|w| m.contains(w))
+<a href=#78 id=78 data-nosnippet>78</a>}
+<a href=#79 id=79 data-nosnippet>79</a>
+<a href=#80 id=80 data-nosnippet>80</a><span class="doccomment">/// Run `op` until it succeeds, fails semantically, or `policy.attempts` are spent. `sleep`
+<a href=#81 id=81 data-nosnippet>81</a>/// is how a wait is taken: the forge passes `std::thread::sleep`, a test records the waits.
+<a href=#82 id=82 data-nosnippet>82</a>/// A failure after retries says how many attempts were made.
+<a href=#83 id=83 data-nosnippet>83</a></span><span class="kw">pub fn </span>with_backoff&lt;T&gt;(
+<a href=#84 id=84 data-nosnippet>84</a>    policy: <span class="kw-2">&amp;</span>Backoff,
+<a href=#85 id=85 data-nosnippet>85</a>    sleep: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(Duration),
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="kw-2">mut </span>op: <span class="kw">impl </span>FnMut() -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt;,
+<a href=#87 id=87 data-nosnippet>87</a>) -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt; {
+<a href=#88 id=88 data-nosnippet>88</a>    <span class="kw">let </span><span class="kw-2">mut </span>attempt = <span class="number">1</span>;
+<a href=#89 id=89 data-nosnippet>89</a>    <span class="kw">loop </span>{
+<a href=#90 id=90 data-nosnippet>90</a>        <span class="kw">match </span>op() {
+<a href=#91 id=91 data-nosnippet>91</a>            <span class="prelude-val">Ok</span>(v) =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(v),
+<a href=#92 id=92 data-nosnippet>92</a>            <span class="prelude-val">Err</span>(e) <span class="kw">if </span>transient(<span class="kw-2">&amp;</span>e) &amp;&amp; attempt &lt; policy.attempts =&gt; {
+<a href=#93 id=93 data-nosnippet>93</a>                attempt += <span class="number">1</span>;
+<a href=#94 id=94 data-nosnippet>94</a>                sleep(policy.delay(attempt));
 <a href=#95 id=95 data-nosnippet>95</a>            }
-<a href=#96 id=96 data-nosnippet>96</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e),
-<a href=#97 id=97 data-nosnippet>97</a>        }
-<a href=#98 id=98 data-nosnippet>98</a>    }
-<a href=#99 id=99 data-nosnippet>99</a>}
-<a href=#100 id=100 data-nosnippet>100</a>
-<a href=#101 id=101 data-nosnippet>101</a><span class="doccomment">/// [`with_backoff`] with the forge's policy and a real sleep.
-<a href=#102 id=102 data-nosnippet>102</a></span><span class="kw">pub fn </span>forge&lt;T&gt;(op: <span class="kw">impl </span>FnMut() -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt; {
-<a href=#103 id=103 data-nosnippet>103</a>    with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>std::thread::sleep, op)
-<a href=#104 id=104 data-nosnippet>104</a>}
-<a href=#105 id=105 data-nosnippet>105</a>
-<a href=#106 id=106 data-nosnippet>106</a><span class="attr">#[cfg(test)]
-<a href=#107 id=107 data-nosnippet>107</a></span><span class="kw">mod </span>tests {
-<a href=#108 id=108 data-nosnippet>108</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#109 id=109 data-nosnippet>109</a>
-<a href=#110 id=110 data-nosnippet>110</a>    <span class="attr">#[test]
-<a href=#111 id=111 data-nosnippet>111</a>    </span><span class="kw">fn </span>a_transient_failure_is_retried_with_doubling_waits_and_then_succeeds() {
-<a href=#112 id=112 data-nosnippet>112</a>        <span class="kw">let </span><span class="kw-2">mut </span>waits = Vec::new();
-<a href=#113 id=113 data-nosnippet>113</a>        <span class="kw">let </span><span class="kw-2">mut </span>calls = <span class="number">0</span>;
-<a href=#114 id=114 data-nosnippet>114</a>        <span class="kw">let </span>r = with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>|d| waits.push(d), || {
-<a href=#115 id=115 data-nosnippet>115</a>            calls += <span class="number">1</span>;
-<a href=#116 id=116 data-nosnippet>116</a>            <span class="kw">if </span>calls &lt; <span class="number">3 </span>{
-<a href=#117 id=117 data-nosnippet>117</a>                <span class="prelude-val">Err</span>(<span class="string">"HTTP 502: Bad Gateway (https://api.github.com/graphql)"</span>.to_string())
-<a href=#118 id=118 data-nosnippet>118</a>            } <span class="kw">else </span>{
-<a href=#119 id=119 data-nosnippet>119</a>                <span class="prelude-val">Ok</span>(calls)
-<a href=#120 id=120 data-nosnippet>120</a>            }
-<a href=#121 id=121 data-nosnippet>121</a>        });
-<a href=#122 id=122 data-nosnippet>122</a>        <span class="macro">assert_eq!</span>(r, <span class="prelude-val">Ok</span>(<span class="number">3</span>));
-<a href=#123 id=123 data-nosnippet>123</a>        <span class="macro">assert_eq!</span>(waits, [Duration::from_secs(<span class="number">2</span>), Duration::from_secs(<span class="number">4</span>)]);
-<a href=#124 id=124 data-nosnippet>124</a>    }
-<a href=#125 id=125 data-nosnippet>125</a>
-<a href=#126 id=126 data-nosnippet>126</a>    <span class="attr">#[test]
-<a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">fn </span>a_semantic_failure_is_returned_at_once() {
-<a href=#128 id=128 data-nosnippet>128</a>        <span class="kw">let </span><span class="kw-2">mut </span>calls = <span class="number">0</span>;
-<a href=#129 id=129 data-nosnippet>129</a>        <span class="kw">let </span>r: <span class="prelude-ty">Result</span>&lt;(), String&gt; = with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>|<span class="kw">_</span>| {}, || {
-<a href=#130 id=130 data-nosnippet>130</a>            calls += <span class="number">1</span>;
-<a href=#131 id=131 data-nosnippet>131</a>            <span class="prelude-val">Err</span>(
-<a href=#132 id=132 data-nosnippet>132</a>                <span class="string">"Pull request #7 is not mergeable: the base branch policy prohibits the merge"
-<a href=#133 id=133 data-nosnippet>133</a>                    </span>.into(),
-<a href=#134 id=134 data-nosnippet>134</a>            )
-<a href=#135 id=135 data-nosnippet>135</a>        });
-<a href=#136 id=136 data-nosnippet>136</a>        <span class="macro">assert_eq!</span>(calls, <span class="number">1</span>, <span class="string">"a refusal is the answer, not an outage"</span>);
-<a href=#137 id=137 data-nosnippet>137</a>        <span class="macro">assert!</span>(r.unwrap_err().starts_with(<span class="string">"Pull request #7"</span>));
-<a href=#138 id=138 data-nosnippet>138</a>    }
-<a href=#139 id=139 data-nosnippet>139</a>
-<a href=#140 id=140 data-nosnippet>140</a>    <span class="attr">#[test]
-<a href=#141 id=141 data-nosnippet>141</a>    </span><span class="kw">fn </span>retries_are_bounded_and_the_failure_says_how_many() {
-<a href=#142 id=142 data-nosnippet>142</a>        <span class="kw">let </span><span class="kw-2">mut </span>waits = Vec::new();
-<a href=#143 id=143 data-nosnippet>143</a>        <span class="kw">let </span><span class="kw-2">mut </span>calls = <span class="number">0</span>;
-<a href=#144 id=144 data-nosnippet>144</a>        <span class="kw">let </span>r: <span class="prelude-ty">Result</span>&lt;(), String&gt; = with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>|d| waits.push(d), || {
-<a href=#145 id=145 data-nosnippet>145</a>            calls += <span class="number">1</span>;
-<a href=#146 id=146 data-nosnippet>146</a>            <span class="prelude-val">Err</span>(<span class="string">"API rate limit exceeded for user"</span>.into())
-<a href=#147 id=147 data-nosnippet>147</a>        });
-<a href=#148 id=148 data-nosnippet>148</a>        <span class="macro">assert_eq!</span>(calls, FORGE.attempts <span class="kw">as </span>usize);
-<a href=#149 id=149 data-nosnippet>149</a>        <span class="macro">assert_eq!</span>(waits.len(), FORGE.attempts <span class="kw">as </span>usize - <span class="number">1</span>);
-<a href=#150 id=150 data-nosnippet>150</a>        <span class="kw">let </span>e = r.unwrap_err();
-<a href=#151 id=151 data-nosnippet>151</a>        <span class="macro">assert!</span>(e.ends_with(<span class="string">"(after 4 attempts)"</span>), <span class="string">"{e}"</span>);
-<a href=#152 id=152 data-nosnippet>152</a>    }
-<a href=#153 id=153 data-nosnippet>153</a>
-<a href=#154 id=154 data-nosnippet>154</a>    <span class="attr">#[test]
-<a href=#155 id=155 data-nosnippet>155</a>    </span><span class="kw">fn </span>the_wait_doubles_up_to_its_ceiling() {
-<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw">let </span>b = Backoff {
-<a href=#157 id=157 data-nosnippet>157</a>            attempts: <span class="number">10</span>,
-<a href=#158 id=158 data-nosnippet>158</a>            initial: Duration::from_secs(<span class="number">2</span>),
-<a href=#159 id=159 data-nosnippet>159</a>            max: Duration::from_secs(<span class="number">30</span>),
-<a href=#160 id=160 data-nosnippet>160</a>        };
-<a href=#161 id=161 data-nosnippet>161</a>        <span class="kw">let </span>waits: Vec&lt;u64&gt; = (<span class="number">2</span>..=<span class="number">7</span>).map(|n| b.delay(n).as_secs()).collect();
-<a href=#162 id=162 data-nosnippet>162</a>        <span class="macro">assert_eq!</span>(waits, [<span class="number">2</span>, <span class="number">4</span>, <span class="number">8</span>, <span class="number">16</span>, <span class="number">30</span>, <span class="number">30</span>]);
-<a href=#163 id=163 data-nosnippet>163</a>    }
-<a href=#164 id=164 data-nosnippet>164</a>
-<a href=#165 id=165 data-nosnippet>165</a>    <span class="attr">#[test]
-<a href=#166 id=166 data-nosnippet>166</a>    </span><span class="kw">fn </span>only_outage_words_are_transient() {
-<a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">for </span>t <span class="kw">in </span>[
-<a href=#168 id=168 data-nosnippet>168</a>            <span class="string">"dial tcp: i/o timeout"</span>,
-<a href=#169 id=169 data-nosnippet>169</a>            <span class="string">"error connecting to api.github.com: connection reset by peer"</span>,
-<a href=#170 id=170 data-nosnippet>170</a>            <span class="string">"You have exceeded a secondary rate limit"</span>,
-<a href=#171 id=171 data-nosnippet>171</a>            <span class="string">"fatal: the remote end hung up unexpectedly"</span>,
-<a href=#172 id=172 data-nosnippet>172</a>            <span class="string">"HTTP 503"</span>,
-<a href=#173 id=173 data-nosnippet>173</a>        ] {
-<a href=#174 id=174 data-nosnippet>174</a>            <span class="macro">assert!</span>(transient(t), <span class="string">"{t}"</span>);
-<a href=#175 id=175 data-nosnippet>175</a>        }
-<a href=#176 id=176 data-nosnippet>176</a>        <span class="kw">for </span>s <span class="kw">in </span>[
-<a href=#177 id=177 data-nosnippet>177</a>            <span class="string">"HTTP 401: Bad credentials"</span>,
-<a href=#178 id=178 data-nosnippet>178</a>            <span class="string">"HTTP 404: Not Found"</span>,
-<a href=#179 id=179 data-nosnippet>179</a>            <span class="string">"Head branch was modified. Review and try the merge again."</span>,
-<a href=#180 id=180 data-nosnippet>180</a>            <span class="string">"could not find pull request"</span>,
-<a href=#181 id=181 data-nosnippet>181</a>            <span class="string">""</span>,
-<a href=#182 id=182 data-nosnippet>182</a>        ] {
-<a href=#183 id=183 data-nosnippet>183</a>            <span class="macro">assert!</span>(!transient(s), <span class="string">"{s}"</span>);
-<a href=#184 id=184 data-nosnippet>184</a>        }
-<a href=#185 id=185 data-nosnippet>185</a>    }
-<a href=#186 id=186 data-nosnippet>186</a>}
+<a href=#96 id=96 data-nosnippet>96</a>            <span class="prelude-val">Err</span>(e) <span class="kw">if </span>attempt &gt; <span class="number">1 </span>=&gt; {
+<a href=#97 id=97 data-nosnippet>97</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{e} (after {attempt} attempts)"</span>));
+<a href=#98 id=98 data-nosnippet>98</a>            }
+<a href=#99 id=99 data-nosnippet>99</a>            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(e),
+<a href=#100 id=100 data-nosnippet>100</a>        }
+<a href=#101 id=101 data-nosnippet>101</a>    }
+<a href=#102 id=102 data-nosnippet>102</a>}
+<a href=#103 id=103 data-nosnippet>103</a>
+<a href=#104 id=104 data-nosnippet>104</a><span class="doccomment">/// [`with_backoff`] with the forge's policy and a real sleep.
+<a href=#105 id=105 data-nosnippet>105</a></span><span class="kw">pub fn </span>forge&lt;T&gt;(op: <span class="kw">impl </span>FnMut() -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;T, String&gt; {
+<a href=#106 id=106 data-nosnippet>106</a>    with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>std::thread::sleep, op)
+<a href=#107 id=107 data-nosnippet>107</a>}
+<a href=#108 id=108 data-nosnippet>108</a>
+<a href=#109 id=109 data-nosnippet>109</a><span class="attr">#[cfg(test)]
+<a href=#110 id=110 data-nosnippet>110</a></span><span class="kw">mod </span>tests {
+<a href=#111 id=111 data-nosnippet>111</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#112 id=112 data-nosnippet>112</a>
+<a href=#113 id=113 data-nosnippet>113</a>    <span class="attr">#[test]
+<a href=#114 id=114 data-nosnippet>114</a>    </span><span class="kw">fn </span>a_transient_failure_is_retried_with_doubling_waits_and_then_succeeds() {
+<a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span><span class="kw-2">mut </span>waits = Vec::new();
+<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">let </span><span class="kw-2">mut </span>calls = <span class="number">0</span>;
+<a href=#117 id=117 data-nosnippet>117</a>        <span class="kw">let </span>r = with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>|d| waits.push(d), || {
+<a href=#118 id=118 data-nosnippet>118</a>            calls += <span class="number">1</span>;
+<a href=#119 id=119 data-nosnippet>119</a>            <span class="kw">if </span>calls &lt; <span class="number">3 </span>{
+<a href=#120 id=120 data-nosnippet>120</a>                <span class="prelude-val">Err</span>(<span class="string">"HTTP 502: Bad Gateway (https://api.github.com/graphql)"</span>.to_string())
+<a href=#121 id=121 data-nosnippet>121</a>            } <span class="kw">else </span>{
+<a href=#122 id=122 data-nosnippet>122</a>                <span class="prelude-val">Ok</span>(calls)
+<a href=#123 id=123 data-nosnippet>123</a>            }
+<a href=#124 id=124 data-nosnippet>124</a>        });
+<a href=#125 id=125 data-nosnippet>125</a>        <span class="macro">assert_eq!</span>(r, <span class="prelude-val">Ok</span>(<span class="number">3</span>));
+<a href=#126 id=126 data-nosnippet>126</a>        <span class="macro">assert_eq!</span>(waits, [Duration::from_secs(<span class="number">2</span>), Duration::from_secs(<span class="number">4</span>)]);
+<a href=#127 id=127 data-nosnippet>127</a>    }
+<a href=#128 id=128 data-nosnippet>128</a>
+<a href=#129 id=129 data-nosnippet>129</a>    <span class="attr">#[test]
+<a href=#130 id=130 data-nosnippet>130</a>    </span><span class="kw">fn </span>a_semantic_failure_is_returned_at_once() {
+<a href=#131 id=131 data-nosnippet>131</a>        <span class="kw">let </span><span class="kw-2">mut </span>calls = <span class="number">0</span>;
+<a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">let </span>r: <span class="prelude-ty">Result</span>&lt;(), String&gt; = with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>|<span class="kw">_</span>| {}, || {
+<a href=#133 id=133 data-nosnippet>133</a>            calls += <span class="number">1</span>;
+<a href=#134 id=134 data-nosnippet>134</a>            <span class="prelude-val">Err</span>(
+<a href=#135 id=135 data-nosnippet>135</a>                <span class="string">"Pull request #7 is not mergeable: the base branch policy prohibits the merge"
+<a href=#136 id=136 data-nosnippet>136</a>                    </span>.into(),
+<a href=#137 id=137 data-nosnippet>137</a>            )
+<a href=#138 id=138 data-nosnippet>138</a>        });
+<a href=#139 id=139 data-nosnippet>139</a>        <span class="macro">assert_eq!</span>(calls, <span class="number">1</span>, <span class="string">"a refusal is the answer, not an outage"</span>);
+<a href=#140 id=140 data-nosnippet>140</a>        <span class="macro">assert!</span>(r.unwrap_err().starts_with(<span class="string">"Pull request #7"</span>));
+<a href=#141 id=141 data-nosnippet>141</a>    }
+<a href=#142 id=142 data-nosnippet>142</a>
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="attr">#[test]
+<a href=#144 id=144 data-nosnippet>144</a>    </span><span class="kw">fn </span>retries_are_bounded_and_the_failure_says_how_many() {
+<a href=#145 id=145 data-nosnippet>145</a>        <span class="kw">let </span><span class="kw-2">mut </span>waits = Vec::new();
+<a href=#146 id=146 data-nosnippet>146</a>        <span class="kw">let </span><span class="kw-2">mut </span>calls = <span class="number">0</span>;
+<a href=#147 id=147 data-nosnippet>147</a>        <span class="kw">let </span>r: <span class="prelude-ty">Result</span>&lt;(), String&gt; = with_backoff(<span class="kw-2">&amp;</span>FORGE, <span class="kw-2">&amp;mut </span>|d| waits.push(d), || {
+<a href=#148 id=148 data-nosnippet>148</a>            calls += <span class="number">1</span>;
+<a href=#149 id=149 data-nosnippet>149</a>            <span class="prelude-val">Err</span>(<span class="string">"API rate limit exceeded for user"</span>.into())
+<a href=#150 id=150 data-nosnippet>150</a>        });
+<a href=#151 id=151 data-nosnippet>151</a>        <span class="macro">assert_eq!</span>(calls, FORGE.attempts <span class="kw">as </span>usize);
+<a href=#152 id=152 data-nosnippet>152</a>        <span class="macro">assert_eq!</span>(waits.len(), FORGE.attempts <span class="kw">as </span>usize - <span class="number">1</span>);
+<a href=#153 id=153 data-nosnippet>153</a>        <span class="kw">let </span>e = r.unwrap_err();
+<a href=#154 id=154 data-nosnippet>154</a>        <span class="macro">assert!</span>(e.ends_with(<span class="string">"(after 4 attempts)"</span>), <span class="string">"{e}"</span>);
+<a href=#155 id=155 data-nosnippet>155</a>    }
+<a href=#156 id=156 data-nosnippet>156</a>
+<a href=#157 id=157 data-nosnippet>157</a>    <span class="attr">#[test]
+<a href=#158 id=158 data-nosnippet>158</a>    </span><span class="kw">fn </span>the_wait_doubles_up_to_its_ceiling() {
+<a href=#159 id=159 data-nosnippet>159</a>        <span class="kw">let </span>b = Backoff {
+<a href=#160 id=160 data-nosnippet>160</a>            attempts: <span class="number">10</span>,
+<a href=#161 id=161 data-nosnippet>161</a>            initial: Duration::from_secs(<span class="number">2</span>),
+<a href=#162 id=162 data-nosnippet>162</a>            max: Duration::from_secs(<span class="number">30</span>),
+<a href=#163 id=163 data-nosnippet>163</a>        };
+<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">let </span>waits: Vec&lt;u64&gt; = (<span class="number">2</span>..=<span class="number">7</span>).map(|n| b.delay(n).as_secs()).collect();
+<a href=#165 id=165 data-nosnippet>165</a>        <span class="macro">assert_eq!</span>(waits, [<span class="number">2</span>, <span class="number">4</span>, <span class="number">8</span>, <span class="number">16</span>, <span class="number">30</span>, <span class="number">30</span>]);
+<a href=#166 id=166 data-nosnippet>166</a>    }
+<a href=#167 id=167 data-nosnippet>167</a>
+<a href=#168 id=168 data-nosnippet>168</a>    <span class="attr">#[test]
+<a href=#169 id=169 data-nosnippet>169</a>    </span><span class="kw">fn </span>only_outage_words_are_transient() {
+<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">for </span>t <span class="kw">in </span>[
+<a href=#171 id=171 data-nosnippet>171</a>            <span class="string">"dial tcp: i/o timeout"</span>,
+<a href=#172 id=172 data-nosnippet>172</a>            <span class="string">"error connecting to api.github.com: connection reset by peer"</span>,
+<a href=#173 id=173 data-nosnippet>173</a>            <span class="string">"You have exceeded a secondary rate limit"</span>,
+<a href=#174 id=174 data-nosnippet>174</a>            <span class="string">"fatal: the remote end hung up unexpectedly"</span>,
+<a href=#175 id=175 data-nosnippet>175</a>            <span class="string">"HTTP 503"</span>,
+<a href=#176 id=176 data-nosnippet>176</a>            <span class="string">"gh pr list --state open --limit 500 failed: unexpected end of JSON input"</span>,
+<a href=#177 id=177 data-nosnippet>177</a>        ] {
+<a href=#178 id=178 data-nosnippet>178</a>            <span class="macro">assert!</span>(transient(t), <span class="string">"{t}"</span>);
+<a href=#179 id=179 data-nosnippet>179</a>        }
+<a href=#180 id=180 data-nosnippet>180</a>        <span class="kw">for </span>s <span class="kw">in </span>[
+<a href=#181 id=181 data-nosnippet>181</a>            <span class="string">"HTTP 401: Bad credentials"</span>,
+<a href=#182 id=182 data-nosnippet>182</a>            <span class="string">"HTTP 404: Not Found"</span>,
+<a href=#183 id=183 data-nosnippet>183</a>            <span class="string">"Head branch was modified. Review and try the merge again."</span>,
+<a href=#184 id=184 data-nosnippet>184</a>            <span class="string">"could not find pull request"</span>,
+<a href=#185 id=185 data-nosnippet>185</a>            <span class="string">""</span>,
+<a href=#186 id=186 data-nosnippet>186</a>        ] {
+<a href=#187 id=187 data-nosnippet>187</a>            <span class="macro">assert!</span>(!transient(s), <span class="string">"{s}"</span>);
+<a href=#188 id=188 data-nosnippet>188</a>        }
+<a href=#189 id=189 data-nosnippet>189</a>    }
+<a href=#190 id=190 data-nosnippet>190</a>}
 </code></pre></div></section></main></body></html>

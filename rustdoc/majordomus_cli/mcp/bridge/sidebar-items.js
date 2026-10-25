@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["CONNECT_TIMEOUT","HEARTBEAT","MAX_REPLY_BYTES","REQUEST_TIMEOUT"],"enum":["BridgeError","Transport"],"fn":["cleartext_allowed","idempotent","request","transport"],"struct":["Bridge","Reply"]};
+window.SIDEBAR_ITEMS = {"constant":["CONNECT_TIMEOUT","HEARTBEAT","MAX_HEAD_BYTES","MAX_REPLY_BYTES","REQUEST_TIMEOUT"],"enum":["BridgeError","ReplyRefused","Transport"],"fn":["cleartext_allowed","idempotent","request","request_json_within","transport"],"struct":["Bridge","Reply","ReplyBound"]};

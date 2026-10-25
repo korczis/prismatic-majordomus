@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=6b4859b2dc5f0fa05b91">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -186,11 +186,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
     <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
-    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-gates-model" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">gates.model</a></li><li><a href="#op-gates-completion" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">gates.completion</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-gates-model" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">gates.model</a></li><li><a href="#op-gates-completion" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">gates.completion</a></li><li><a href="#op-gates-policy" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">gates.policy</a></li><li><a href="#op-gates-state" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">gates.state</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-gates" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-gates" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">gates</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task&#39;s own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.</p><article id="op-gates-model" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -206,7 +206,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=4, ttl_seconds=5)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_gates</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP resource {&quot;name&quot;: &quot;gates&quot;, &quot;uri&quot;: &quot;majordomus://gates&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/gates&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/gates&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -243,7 +243,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <a href="#op-gates-completion" class="font-mono text-xs text-body-subtle hover:underline">gates.completion</a>
   </div>
   <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Whether this task may be called finished</h3>
-  <p class="mt-1 break-words text-sm text-body">The active task&#39;s own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted.</p>
+  <p class="mt-1 break-words text-sm text-body">The active task&#39;s own change set — from the commit it started at to the working tree, uncommitted files included — put through the CI model: which gates it selects and why, what each one last reported and over which files, which verdicts have gone stale because the tree moved underneath them, which required gates have never reported at all, and which obligations the change implies whether or not the task declared them. `finishable` is false only when a required gate is known to be failing, stale or blocked by one that is; absence of a verdict is reported as unverified rather than silently accepted. The done invariant is the questions of share/completion.yaml, in its order, each answered from the source it names; `stage` is the stage of the work those answers fold to, and `complete` is true only when every question passes or is exempt — finishable and complete are two different words.</p>
   <ul class="mt-3 flex flex-wrap gap-2 text-xs">
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
@@ -285,7 +285,7 @@ input, in the words `scripts/ci-plan --tier` refuses it with.</td>
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/gates/completion?changed=%5B%22docs%2FCLI.md%22%5D&amp;on_demand=true&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/gates/completion?changed=%5B%22docs%2FCLI.md%22%5D&amp;on_demand=true&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -295,6 +295,94 @@ input, in the words `scripts/ci-plan --tier` refuses it with.</td>
           <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
           <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/gates/#schema-Completion" class="text-fg-brand hover:underline">Completion</a></td>
           <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether this task may be called finished: the result.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>not_found</code>: The input names something the repository does not hold.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>internal</code>: The capability failed for a reason of its own; the message names it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</div></td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-gates-policy" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/gates/policy</code>
+    <a href="#op-gates-policy" class="font-mono text-xs text-body-subtle hover:underline">gates.policy</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The completion policy</h3>
+  <p class="mt-1 break-words text-sm text-body">The one definition of done: the stages of the work in order, every question a task must answer before it may be called finished, the stage each question belongs to and the source its answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the change set, the repository&#39;s convergence or the closing readings. Read from share/completion.yaml, the file `gates.completion` takes its questions from. A token the policy names and the vocabulary lacks is reported as a problem, and a gate question this repository&#39;s CI model never answers is listed by name.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache process (max_entries=4, ttl_seconds=5)</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_completion_policy</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP resource {&quot;name&quot;: &quot;completion-policy&quot;, &quot;uri&quot;: &quot;majordomus://gates/policy&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/gates/policy&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/gates/#schema-CompletionPolicyReport" class="text-fg-brand hover:underline">CompletionPolicyReport</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The completion policy: the result.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>not_found</code>: The input names something the repository does not hold.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto"><code>internal</code>: The capability failed for a reason of its own; the message names it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</div></td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-gates-state" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/gates/state</code>
+    <a href="#op-gates-state" class="font-mono text-xs text-body-subtle hover:underline">gates.state</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">How each gate last went</h3>
+  <p class="mt-1 break-words text-sm text-body">Every gate the CI model declares with the standing of its last recorded run in this checkout, whichever task recorded it: `pass` or `fail` over the files as they stand now, `stale` when those files have changed since the run, `queued` when no run has ever reported — listed again under `never_reported`, because a missing verdict is the case an absent reader renders green — and `unknown` when a run exists and cannot be checked against this tree. Each run carries the commit it was taken at and whether that is the commit checked out now. Read offline from this checkout&#39;s own record; what it did not consult, the forge&#39;s CI runs, is named under `unreached` rather than left out.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_gate_state</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP resource {&quot;name&quot;: &quot;gate-state&quot;, &quot;uri&quot;: &quot;majordomus://gates/state&quot;}</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/gates/state&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/gates/#schema-GateStateReport" class="text-fg-brand hover:underline">GateStateReport</a></td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">How each gate last went: the result.</div></td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
           <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -336,12 +424,20 @@ input, in the words `scripts/ci-plan --tier` refuses it with.</td>
 <span class="giallo-l"><span>    &quot;tallies&quot;: { &quot;queued&quot;: 1 },</span></span>
 <span class="giallo-l"><span>    &quot;gates&quot;: [],</span></span>
 <span class="giallo-l"><span>    &quot;obligations&quot;: [],</span></span>
-<span class="giallo-l"><span>    &quot;questions&quot;: []</span></span>
+<span class="giallo-l"><span>    &quot;questions&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;policy&quot;: &quot;share/completion.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;stage&quot;: { &quot;id&quot;: &quot;gates&quot;, &quot;title&quot;: &quot;Gates&quot;, &quot;state&quot;: &quot;pending&quot;, &quot;complete&quot;: false,</span></span>
+<span class="giallo-l"><span>               &quot;owing&quot;: [&quot;ci&quot;], &quot;stages&quot;: [] },</span></span>
+<span class="giallo-l"><span>    &quot;complete&quot;: false</span></span>
 <span class="giallo-l"><span>}))</span></span>
 <span class="giallo-l"><span>.unwrap();</span></span>
 <span class="giallo-l"><span>assert!(c.finishable, &quot;absence of a verdict does not refuse&quot;);</span></span>
 <span class="giallo-l"><span>assert_eq!(c.unverified, [&quot;reference-check&quot;], &quot;and it is never silently accepted&quot;);</span></span>
-<span class="giallo-l"><span>assert!(c.blocking.is_empty());</span></span></code></pre>
+<span class="giallo-l"><span>assert!(c.blocking.is_empty());</span></span>
+<span class="giallo-l"><span>// finishable is not complete: the stage the answers fold to still owes the ci question</span></span>
+<span class="giallo-l"><span>assert!(!c.complete);</span></span>
+<span class="giallo-l"><span>assert_eq!(c.stage.id, &quot;gates&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(c.stage.owing, [&quot;ci&quot;]);</span></span></code></pre>
 <p>Whether the active task may be called finished, and everything the answer rests on.</p>
 <p><code>finishable</code> is the field a caller acts on and the one thing no surface may recompute:
 the shell tool's <code>check</code> and <code>finish</code> read it, the HTTP API serves it, the Cockpit
@@ -409,7 +505,29 @@ judgement of a declared one is <code>obligations.closure</code>'s, not this modu
 finished, each with the source that answered it and the evidence it read. Composed
 from the obligation closure, the gates, the change set, the repository's convergence
 and the closing readings; a question nothing here reaches is <code>unknown</code> and names the
-command that would answer it.</div></td>
+command that would answer it. Exactly the questions of the completion policy, in its
+order, each with the stage the policy places it in.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">policy</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The completion policy the questions were taken from, as the distribution names it.
+Absent when no policy could be read; a finding then says why, the one question asked
+is whether it can be, and nothing is complete.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stage</td>
+          <td class="px-3 py-2 font-mono text-body">LifecycleStage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-LifecycleStage" class="text-fg-brand underline">LifecycleStage</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the task stands in the lifecycle, folded from the answers in the policy's
+stage order: the first stage blocked, else the first stage pending, else the last.
+Derived on every reading and never written down by anybody.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">complete</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">True only when a task is present and every question of the policy passes or is
+exempt. The one field that may be read as "done": it is the stage fold's word, and
+no surface computes it a second time from the parts.</div></td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
@@ -419,6 +537,77 @@ skipped: a gap is reported rather than left to be inferred.</div></td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#op-gates-completion" class="font-mono text-fg-brand hover:underline">gates.completion</a></p></article>
+<article id="schema-CompletionPolicyReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CompletionPolicyReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The completion policy, as <code>gates.policy</code> serves it: the stages, the questions and the
+source each is answered from, with what the policy resolves to in this repository.
+The policy is flattened into the report, so a reader sees the keys the file carries
+with the derived fields beside them.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::gates::CompletionPolicyReport;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::gates::CompletionPolicy;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let policy = CompletionPolicy::parse(</span></span>
+<span class="giallo-l"><span>    &quot;version: 1\nstages:\n  - id: a\n    title: Alpha\n    summary: s\nquestions:\n  - id: q\n    stage: a\n    question: Is it?\n    source: gate:site-check\n    remediation: run it\n&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;share/completion.yaml&quot;,</span></span>
+<span class="giallo-l"><span>)</span></span>
+<span class="giallo-l"><span>.unwrap();</span></span>
+<span class="giallo-l"><span>let report = CompletionPolicyReport {</span></span>
+<span class="giallo-l"><span>    outline: policy.outline(),</span></span>
+<span class="giallo-l"><span>    problems: policy.validate(&amp;[]),</span></span>
+<span class="giallo-l"><span>    unanswered_gates: policy.unanswered_gates(&amp;[]),</span></span>
+<span class="giallo-l"><span>    policy,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(report.outline, &quot;- Alpha: q\n&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(report.unanswered_gates, [&quot;q:site-check&quot;]);</span></span>
+<span class="giallo-l"><span>let json = serde_json::to_value(&amp;report).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;stages&quot;][0][&quot;id&quot;], &quot;a&quot;, &quot;the policy&#39;s own keys, flattened&quot;);</span></span>
+<span class="giallo-l"><span>assert!(json.get(&quot;problems&quot;).is_none(), &quot;a coherent distribution writes no problems&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">version</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint32)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The format version the file states.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where it was read from.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stages</td>
+          <td class="px-3 py-2 font-mono text-body">array of StageDecl <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-StageDecl" class="text-fg-brand underline">StageDecl</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The lifecycle, in order.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">questions</td>
+          <td class="px-3 py-2 font-mono text-body">array of QuestionDecl <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-QuestionDecl" class="text-fg-brand underline">QuestionDecl</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every question, in declaration order.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">outline</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The definition of done in a dozen lines: one per stage that asks anything, its
+questions after a colon.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">problems</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What does not resolve against the vocabulary the policy is shipped beside: a token
+<code>share/obligations.yaml</code> lacks. Empty in a coherent distribution, and never silently so.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">unanswered_gates</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The questions answered by a gate this repository's CI model does not declare, as
+<code>question:gate</code>. Not a problem of the policy — the model is the repository's — but a
+question this repository never gets a verdict for, listed so that it is seen.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#op-gates-policy" class="font-mono text-fg-brand hover:underline">gates.policy</a></p></article>
 <article id="schema-DoneQuestion" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">DoneQuestion</h3>
@@ -427,6 +616,7 @@ skipped: a gap is reported rather than left to be inferred.</div></td>
 <span class="giallo-l"></span>
 <span class="giallo-l"><span>let q = DoneQuestion {</span></span>
 <span class="giallo-l"><span>    id: &quot;pushed&quot;.into(),</span></span>
+<span class="giallo-l"><span>    stage: &quot;commit&quot;.into(),</span></span>
 <span class="giallo-l"><span>    question: &quot;Has the commit reached the remote?&quot;.into(),</span></span>
 <span class="giallo-l"><span>    status: GateStatus::Queued,</span></span>
 <span class="giallo-l"><span>    evidence: &quot;the obligation is owed&quot;.into(),</span></span>
@@ -445,6 +635,11 @@ skipped: a gap is reported rather than left to be inferred.</div></td>
           <td class="px-3 py-2 font-mono text-body">string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The question's identity, stable across reports.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stage</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The lifecycle stage the policy places it in.</div></td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">question</td>
           <td class="px-3 py-2 font-mono text-body">string</td>
@@ -967,7 +1162,157 @@ not have to declare a CI model, and a reader is entitled to the difference betwe
           <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The session that recorded it.</div></td>
         </tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-Gate" class="font-mono text-fg-brand underline">Gate</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-Gate" class="font-mono text-fg-brand underline">Gate</a> <a href="https://majordomus.dev/docs/api/gates/#schema-GateState" class="font-mono text-fg-brand underline">GateState</a></p></article>
+<article id="schema-GateState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">GateState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One declared gate and the standing of its last recorded run.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::{GateState, GateStatus};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let never: GateState = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;id&quot;: &quot;rust-check&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;job&quot;: &quot;rust&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;always&quot;: true,</span></span>
+<span class="giallo-l"><span>    &quot;on_demand&quot;: false,</span></span>
+<span class="giallo-l"><span>    &quot;status&quot;: &quot;queued&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;reason&quot;: &quot;no run of this gate has ever been recorded in this checkout&quot;,</span></span>
+<span class="giallo-l"><span>}))</span></span>
+<span class="giallo-l"><span>.unwrap();</span></span>
+<span class="giallo-l"><span>// no run, no head, and a word that is not `pass`</span></span>
+<span class="giallo-l"><span>assert!(never.last_run.is_none() &amp;&amp; never.on_head.is_none());</span></span>
+<span class="giallo-l"><span>assert_eq!(never.status, GateStatus::Queued);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The gate's identity in the model.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">job</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The CI job that runs it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">always</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether every plan selects it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">on_demand</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether its runner can be had only on demand, so no routine plan runs it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
+          <td class="px-3 py-2 font-mono text-body">GateStatus <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-GateStatus" class="text-fg-brand underline">GateStatus</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What is known about its last run: <code>pass</code>, <code>fail</code>, <code>stale</code>, <code>queued</code> (never
+reported) or <code>unknown</code> (a run exists and cannot be checked against this tree).</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Why it is in that status, in words a person can act on.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">last_run</td>
+          <td class="px-3 py-2 font-mono text-body">GateRun | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-GateRun" class="text-fg-brand underline">GateRun</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The run that last reported, whichever task recorded it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">on_head</td>
+          <td class="px-3 py-2 font-mono text-body">boolean | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether that run was taken at the commit this checkout is at now. Absent when there
+is no run or when the current commit could not be read.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">inputs_hash</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The hash of the gate's inputs as they stand now, when it could be taken.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-GateStateReport" class="font-mono text-fg-brand underline">GateStateReport</a></p></article>
+<article id="schema-GateStateReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">GateStateReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The declared gate set and the standing of each gate's last recorded run.</p>
+<p><code>count</code>, <code>tallies</code> and <code>never_reported</code> are measured from <code>gates</code>, never written down,
+and <code>unreached</code> always names what was not consulted.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::GateStateReport;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let r: GateStateReport = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;source&quot;: &quot;.ai/repo/ci/gates.yaml&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;ledger&quot;: &quot;.ai/local/state/ledger.jsonl&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;count&quot;: 0,</span></span>
+<span class="giallo-l"><span>    &quot;tallies&quot;: {},</span></span>
+<span class="giallo-l"><span>    &quot;never_reported&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;gates&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;unreached&quot;: [&quot;the forge&#39;s CI runs were not consulted&quot;],</span></span>
+<span class="giallo-l"><span>    &quot;findings&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;evaluated_at&quot;: &quot;2026-10-15T00:00:00Z&quot;,</span></span>
+<span class="giallo-l"><span>}))</span></span>
+<span class="giallo-l"><span>.unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(r.count, r.gates.len());</span></span>
+<span class="giallo-l"><span>assert!(r.head.is_none(), &quot;a checkout without git still answers, and says so&quot;);</span></span>
+<span class="giallo-l"><span>assert!(!r.unreached.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the gate set was read from, repository-relative.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">ledger</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the recorded runs were read from, repository-relative.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The commit this checkout is at, when git could say.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">count</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">How many gates the model declares; measured.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tallies</td>
+          <td class="px-3 py-2 font-mono text-body">map of integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">How many gates stand in each status, by the status word.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">never_reported</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The gates no run has ever reported, in declaration order.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">gates</td>
+          <td class="px-3 py-2 font-mono text-body">array of GateState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-GateState" class="text-fg-brand underline">GateState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every declared gate, in declaration order.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">unreached</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What this answer did not consult, so its silence about it is not read as a verdict.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What could not be read, and what that means for the answer.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evaluated_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">When this answer was taken, RFC 3339 UTC.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#op-gates-state" class="font-mono text-fg-brand hover:underline">gates.state</a></p></article>
 <article id="schema-GateStatus" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">GateStatus</h3>
@@ -989,7 +1334,7 @@ tree that no longer exists. Completion is refused, because the alternative is
 treating a claim about the past as a claim about the present.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Something it cannot run without has not passed, so its own silence means nothing.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">queued</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The plan selects it and no run has ever reported. Not <code>unknown</code>: the question was
 asked and no answer came, which is a debt somebody owes, and not <code>pass</code>, which is
 the mistake this word exists to make impossible.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">exempt</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The plan does not select it: nothing the task changed can make it true or false.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It cannot be judged here at all — no model, no git, a ledger that would not read.
-An honest gap, and never a pass.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-DoneQuestion" class="font-mono text-fg-brand underline">DoneQuestion</a> <a href="https://majordomus.dev/docs/api/gates/#schema-Gate" class="font-mono text-fg-brand underline">Gate</a></p></article>
+An honest gap, and never a pass.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-DoneQuestion" class="font-mono text-fg-brand underline">DoneQuestion</a> <a href="https://majordomus.dev/docs/api/gates/#schema-Gate" class="font-mono text-fg-brand underline">Gate</a> <a href="https://majordomus.dev/docs/api/gates/#schema-GateState" class="font-mono text-fg-brand underline">GateState</a></p></article>
 <article id="schema-ImpliedObligation" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">ImpliedObligation</h3>
@@ -1068,6 +1413,216 @@ the task declares them and reported as not applicable when it does not.</div><di
 <span class="giallo-l"><span>assert!(serde_json::from_value::&lt;Lane&gt;(serde_json::json!(&quot;fast&quot;)).is_err());</span></span></code></pre>
 <p>The time horizon a gate's verdict belongs to (ADR 0186). The model's <code>tiers</code> name, for
 each moment a plan is asked at, the lanes it runs.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">feedback</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Cheap, fast and decisive: a pull request's required verdict needs it green.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">proof</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The heavy half, which judges the combined top before it lands.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">release</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A gate only a release asks.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-GateModelEntry" class="font-mono text-fg-brand underline">GateModelEntry</a></p></article>
+<article id="schema-LifecycleStage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LifecycleStage</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the task stands: the one stage a reader acts on, and every stage behind and
+ahead of it. Produced by <code>derive_stage</code> and by nothing else, so the stage a report
+names is always the fold over the answers and never a word somebody wrote down.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let stages = [StageDecl { id: &quot;build&quot;.into(), title: &quot;Build&quot;.into(), summary: &quot;s&quot;.into() }];</span></span>
+<span class="giallo-l"><span>let owed = DoneQuestion {</span></span>
+<span class="giallo-l"><span>    id: &quot;committed&quot;.into(), stage: &quot;build&quot;.into(), question: &quot;Is it committed?&quot;.into(),</span></span>
+<span class="giallo-l"><span>    status: GateStatus::Queued, evidence: &quot;owed&quot;.into(), source: &quot;s&quot;.into(), remediation: &quot;git commit&quot;.into(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>let stage: LifecycleStage = derive_stage(&amp;stages, &amp;[owed]);</span></span>
+<span class="giallo-l"><span>assert_eq!((stage.id.as_str(), stage.state), (&quot;build&quot;, StageState::Pending));</span></span>
+<span class="giallo-l"><span>assert_eq!(stage.owing, [&quot;committed&quot;]);</span></span>
+<span class="giallo-l"><span>assert!(!stage.complete, &quot;a question still owed is a task not completed&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(stage.stages.len(), 1);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The stage the task stands at: the first one blocked, else the first one pending,
+else the last stage of the policy.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">That stage as a heading.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">StageState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-StageState" class="text-fg-brand underline">StageState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where it stands.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">complete</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">True only when every stage is complete or empty. The word <code>completed</code> is earned
+here and nowhere else.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">owing</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The questions still owed or refusing at the stage the task stands at.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stages</td>
+          <td class="px-3 py-2 font-mono text-body">array of StageReport <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-StageReport" class="text-fg-brand underline">StageReport</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Every stage of the policy, in order.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-Completion" class="font-mono text-fg-brand underline">Completion</a></p></article>
+<article id="schema-QuestionDecl" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">QuestionDecl</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One question of the policy, as declared.</p>
+<p><code>source</code> is carried as the text the file states (<code>obligation:tests</code>, <code>gates</code>,
+<code>closing:debt</code>), never as a structure: the policy file, <code>gates.policy</code> and the
+questions of the completion report then state the same bytes for the same question,
+and a reader compares them by eye. <code>Self::kind</code>
+parses it; <code>CompletionPolicy::parse</code> has already refused a text nothing answers.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::{QuestionDecl, QuestionSource};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let decl = QuestionDecl {</span></span>
+<span class="giallo-l"><span>    id: &quot;pushed&quot;.into(),</span></span>
+<span class="giallo-l"><span>    stage: &quot;commit&quot;.into(),</span></span>
+<span class="giallo-l"><span>    question: &quot;Has the commit reached the remote?&quot;.into(),</span></span>
+<span class="giallo-l"><span>    source: &quot;obligation:push&quot;.into(),</span></span>
+<span class="giallo-l"><span>    remediation: &quot;git push&quot;.into(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(decl.kind(), QuestionSource::Obligation(&quot;push&quot;.into()));</span></span>
+<span class="giallo-l"><span>// the source is carried as text, and serialises as the text the file stated</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::to_value(&amp;decl).unwrap()[&quot;source&quot;], &quot;obligation:push&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The question's identity, stable across reports.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stage</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The stage it belongs to.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">question</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The question, as a person would ask it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What answers it, as the policy states it.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">remediation</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What would settle it, as a command.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-CompletionPolicyReport" class="font-mono text-fg-brand underline">CompletionPolicyReport</a></p></article>
+<article id="schema-StageDecl" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StageDecl</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One stage of the lifecycle, in the order the policy states them. A stage carries no
+question of its own: the questions name it by <code>id</code>, and
+<code>CompletionPolicy::questions_of</code> gathers them back, so a stage is a heading over
+whatever the policy hangs under it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::StageDecl;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let stage = StageDecl {</span></span>
+<span class="giallo-l"><span>    id: &quot;commit&quot;.into(),</span></span>
+<span class="giallo-l"><span>    title: &quot;Commit and push&quot;.into(),</span></span>
+<span class="giallo-l"><span>    summary: &quot;The work is in the branch&#39;s history.&quot;.into(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>// the same shape the file carries, so a report and the policy agree byte for byte</span></span>
+<span class="giallo-l"><span>let json = serde_json::to_value(&amp;stage).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;id&quot;], &quot;commit&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::from_value::&lt;StageDecl&gt;(json).unwrap(), stage);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The stage's identity, stable across reports.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The stage as a heading.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">summary</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">What it means for the stage to be complete.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-CompletionPolicyReport" class="font-mono text-fg-brand underline">CompletionPolicyReport</a></p></article>
+<article id="schema-StageReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StageReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One stage of the lifecycle, with what its questions said. Every stage of the policy
+gets one, in the policy's order, so a reader sees the stages behind the task as well
+as the one it stands at; <code>owing</code> is written only when something is owed.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::{StageReport, StageState};</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let report = StageReport {</span></span>
+<span class="giallo-l"><span>    id: &quot;commit&quot;.into(),</span></span>
+<span class="giallo-l"><span>    title: &quot;Commit and push&quot;.into(),</span></span>
+<span class="giallo-l"><span>    state: StageState::Complete,</span></span>
+<span class="giallo-l"><span>    questions: vec![&quot;committed&quot;.into(), &quot;pushed&quot;.into()],</span></span>
+<span class="giallo-l"><span>    owing: Vec::new(),</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>let json = serde_json::to_value(&amp;report).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(json[&quot;state&quot;], &quot;complete&quot;);</span></span>
+<span class="giallo-l"><span>assert!(json.get(&quot;owing&quot;).is_none(), &quot;nothing owed is nothing written&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The stage's identity.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The stage as a heading.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">StageState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/gates/#schema-StageState" class="text-fg-brand underline">StageState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where it stands.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">questions</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The questions of this stage, in policy order.</div></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">owing</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body"><div class="min-w-0 [&_pre]:max-w-full [&_pre]:overflow-x-auto">The questions still owed or refusing, in policy order.</div></td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-LifecycleStage" class="font-mono text-fg-brand underline">LifecycleStage</a></p></article>
+<article id="schema-StageState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">StageState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;complete&quot; | &quot;pending&quot; | &quot;blocked&quot; | &quot;empty&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where one stage stands, folded from the answers to its questions and never set by
+anybody. A refusal anywhere in the stage makes it blocked whatever else passed; a
+stage with nothing owed is complete; one with an unanswered question is pending; and
+a stage the change asks nothing of is empty, which neither blocks nor completes.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::gates::StageState;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert_eq!(StageState::Blocked.as_str(), &quot;blocked&quot;);</span></span>
+<span class="giallo-l"><span>// serialised as the same word the report prints, so no reader meets two spellings</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::to_string(&amp;StageState::Pending).unwrap(), &quot;\&quot;pending\&quot;&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::from_str::&lt;StageState&gt;(&quot;\&quot;empty\&quot;&quot;).unwrap(), StageState::Empty);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">complete</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every question of the stage passes or is exempt.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pending</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A question of the stage has not been answered: queued or unknown.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A question of the stage refuses: failing, stale, or blocked by one that is.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">empty</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The stage declares no question that applies here.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/gates/#schema-LifecycleStage" class="font-mono text-fg-brand underline">LifecycleStage</a> <a href="https://majordomus.dev/docs/api/gates/#schema-StageReport" class="font-mono text-fg-brand underline">StageReport</a></p></article>
 </section>
   </div>
 </div>
@@ -1119,9 +1674,9 @@ each moment a plan is asked at, the lanes it runs.</div><ul class="mt-3 space-y-
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/71857dbb609169eafa7a411db5013ec93b58a661/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/2efeacea03158615db2b497117a8da35b264909b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -1129,7 +1684,7 @@ each moment a plan is asked at, the lanes it runs.</div><ul class="mt-3 space-y-
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/71857dbb609169eafa7a411db5013ec93b58a661" class="font-mono underline">71857db</a> · inputs <span class="font-mono">57d9ce05474b</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2efeacea03158615db2b497117a8da35b264909b" class="font-mono underline">2efeace</a> · inputs <span class="font-mono">088add0de5c6</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
