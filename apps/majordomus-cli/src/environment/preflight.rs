@@ -3471,6 +3471,59 @@ mod tests {
         );
     }
 
+    /// A server still binding, or one still being built, is not yet known either way: the
+    /// server and its surfaces are not judged until it publishes an address (I3179).
+    #[test]
+    fn a_server_binding_or_being_built_is_unknown_until_it_publishes() {
+        for standing in [ServerStanding::Starting, ServerStanding::Building] {
+            let mut o = at_head();
+            o.server = ServerObservation {
+                standing: Some(standing),
+                ..Default::default()
+            };
+            let p = derive(&o);
+            let server = p.check("integration.server").unwrap();
+            assert_eq!(server.verdict, Verdict::Unknown, "{standing:?}");
+            assert_eq!(
+                server.summary, "a server is binding and has not published an address yet",
+                "{standing:?}"
+            );
+            assert_eq!(server.next.as_deref(), Some("majordomus serve status"));
+        }
+    }
+
+    /// A server that answers, in any of the runtime's answering states, and does not list a
+    /// surface has failed that surface, whatever it lists besides (I3179).
+    #[test]
+    fn an_answering_server_that_does_not_list_a_surface_fails_it() {
+        for standing in [
+            ServerStanding::Operational,
+            ServerStanding::MeshAttaching,
+            ServerStanding::Degraded,
+            ServerStanding::Stopping,
+        ] {
+            let mut o = at_head();
+            o.server = ServerObservation {
+                standing: Some(standing),
+                url: Some("http://127.0.0.1:8742".into()),
+                surfaces: vec![("mcp".into(), "/mcp".into(), true)],
+                ..Default::default()
+            };
+            let p = derive(&o);
+            assert_eq!(
+                p.check("integration.mcp").unwrap().verdict,
+                Verdict::Verified,
+                "{standing:?}"
+            );
+            let cockpit = p.check("integration.cockpit").unwrap();
+            assert_eq!(cockpit.verdict, Verdict::Failed, "{standing:?}");
+            assert_eq!(
+                cockpit.summary,
+                "the server answers and does not list cockpit"
+            );
+        }
+    }
+
     #[test]
     fn the_scalar_reader_takes_top_level_keys_only() {
         let dir = tempfile::tempdir().unwrap();

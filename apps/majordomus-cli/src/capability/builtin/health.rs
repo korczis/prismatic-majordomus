@@ -388,6 +388,36 @@ fn record(checks: &mut Vec<HealthCheck>, p: &crate::execution::Progress, check: 
     p.progress(checks.len() as u64, None, "dimension(s) decided");
 }
 
+/// The server dimension's status for a checkout whose server stands at `standing`, in a
+/// process that still holds its lease. Decided for every state, the runtime's included,
+/// although `standing_at` says only the lease's five words today: a surface that is handed
+/// a runtime state judges it here, and is not left to guess.
+fn server_status_of(standing: ServerStanding) -> HealthStatus {
+    match standing {
+        // A checkout nobody serves is not an unhealthy one: nothing is running and nothing
+        // claims to be. A lease still binding resolves itself within the bind grace, and is
+        // reported as stale by this same engine when it does not. Neither is a fault of what
+        // this process serves.
+        ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
+            HealthStatus::Ok
+        }
+        // the runtime's refinements are never what `standing_at` decides; each is judged as
+        // the lease's word it refines would be, and a gone or not whole runtime is
+        // somebody's to clear like a stale lease
+        ServerStanding::Building
+        | ServerStanding::MeshAttaching
+        | ServerStanding::Operational
+        | ServerStanding::Stopping
+        | ServerStanding::Stopped => HealthStatus::Ok,
+        ServerStanding::Degraded | ServerStanding::Failed => HealthStatus::Warn,
+        // A server answering from code this tree no longer has says yesterday's truth in
+        // today's words, and a lease naming one that answers for nobody sends the next reader
+        // at a dead address. Both are somebody's to clear; neither stops this process from
+        // serving, so neither is a failure.
+        ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
+    }
+}
+
 /// The attached-clients dimension, from the board this process holds (`None` when it holds
 /// none). Live peers only are counted as attached; a peer that is gone with its claims still
 /// shown, or one attached that has announced nothing, is worth a look, because the board then
@@ -726,30 +756,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             status: if orphaned {
                 HealthStatus::Warn
             } else {
-                match standing {
-                    // A checkout nobody serves is not an unhealthy one: nothing is running
-                    // and nothing claims to be. A lease still binding resolves itself
-                    // within the bind grace, and is reported as stale by this same engine
-                    // when it does not. Neither is a fault of what this process serves.
-                    ServerStanding::Absent | ServerStanding::Starting | ServerStanding::Ready => {
-                        HealthStatus::Ok
-                    }
-                    // the runtime's refinements are never what `standing_at` decides; each is
-                    // judged as the lease's word it refines would be, and a gone or not whole
-                    // runtime is somebody's to clear like a stale lease
-                    ServerStanding::Building
-                    | ServerStanding::MeshAttaching
-                    | ServerStanding::Operational
-                    | ServerStanding::Stopping
-                    | ServerStanding::Stopped => HealthStatus::Ok,
-                    ServerStanding::Degraded | ServerStanding::Failed => HealthStatus::Warn,
-                    // A server answering from code this tree no longer has says yesterday's
-                    // truth in today's words, and a lease naming one that answers for
-                    // nobody sends the next reader at a dead address. Both are somebody's
-                    // to clear; neither stops this process from serving, so neither is a
-                    // failure.
-                    ServerStanding::Outdated | ServerStanding::Stale => HealthStatus::Warn,
-                }
+                server_status_of(standing)
             },
             detail: if orphaned {
                 format!("{detail}; and this process is not it")
@@ -1061,6 +1068,32 @@ mod tests {
             !not_declared.attaching && not_declared.ok,
             "{not_declared:?}"
         );
+    }
+
+    /// Every one of the twelve states has a server status: a runtime state is judged as the
+    /// lease's word it refines, except that a runtime gone or not whole warns like a stale
+    /// lease does (I3179).
+    #[test]
+    fn every_server_state_has_a_health_status() {
+        use ServerStanding as S;
+        let ok = [
+            S::Absent,
+            S::Starting,
+            S::Ready,
+            S::Building,
+            S::MeshAttaching,
+            S::Operational,
+            S::Stopping,
+            S::Stopped,
+        ];
+        let warn = [S::Outdated, S::Stale, S::Degraded, S::Failed];
+        for s in ok {
+            assert_eq!(server_status_of(s), HealthStatus::Ok, "{s:?}");
+        }
+        for s in warn {
+            assert_eq!(server_status_of(s), HealthStatus::Warn, "{s:?}");
+        }
+        assert_eq!(ok.len() + warn.len(), 12, "every state is judged");
     }
 
     /// A deployed tree has no checkout: its commit comes from the build identity, a dirty or

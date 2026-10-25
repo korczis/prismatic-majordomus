@@ -1888,6 +1888,57 @@ mod tests {
         });
     }
 
+    /// The holder of a lease whose runtime record cannot be written says it did not write,
+    /// and leaves the lease alone; a token that no longer holds the lease writes nothing
+    /// (I3179).
+    #[test]
+    fn a_runtime_record_the_holder_cannot_write_is_not_claimed() {
+        use crate::capability::builtin::server::{read_transition, ServerStanding};
+        let dir = tempfile::tempdir().unwrap();
+        let path = lease_file(dir.path(), ".ai/local");
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code the server loaded").unwrap();
+        let held = lease_from(&identity_of(&exe), crate::VERSION);
+        fs::write(&path, serde_json::to_string(&held).unwrap()).unwrap();
+        // a file where the runtime record's directory would be
+        let runtime = dir.path().join(".ai/local/state/runtime");
+        fs::write(&runtime, "not a directory").unwrap();
+        // under a subscriber, so the warning that names the record is written, not skipped
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(std::io::sink)
+            .finish();
+        tracing::subscriber::with_default(subscriber, || {
+            assert!(!record_runtime(
+                &path,
+                &held.token,
+                ServerStanding::Starting,
+                "took the lease"
+            ));
+        });
+        assert!(holds(&path, &held.token), "the lease is left alone");
+        assert!(read_transition(&runtime.join("state.json")).is_none());
+        // once the record can be written, the holder writes it and another token does not
+        fs::remove_file(&runtime).unwrap();
+        assert!(!record_runtime(
+            &path,
+            "another",
+            ServerStanding::Starting,
+            "not ours"
+        ));
+        assert!(record_runtime(
+            &path,
+            &held.token,
+            ServerStanding::Starting,
+            "took the lease"
+        ));
+        assert_eq!(
+            read_transition(&runtime.join("state.json")).map(|t| t.state),
+            Some(ServerStanding::Starting)
+        );
+    }
+
     #[test]
     fn a_lease_of_this_process_as_it_runs_is_not_superseded() {
         // the judgement over the executable this process was started from: unchanged, it

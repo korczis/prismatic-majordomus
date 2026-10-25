@@ -752,10 +752,12 @@ pub fn runtime_file_beside(lease: &Path) -> Option<PathBuf> {
     if !lease.ends_with(lease::LEASE_PATH) {
         return None;
     }
-    let local = lease
+    // a path that ends with the lease's has the local half as an ancestor, so this always
+    // finds one
+    lease
         .ancestors()
-        .nth(Path::new(lease::LEASE_PATH).components().count())?;
-    Some(local.join(RUNTIME_PATH))
+        .nth(Path::new(lease::LEASE_PATH).components().count())
+        .map(|local| local.join(RUNTIME_PATH))
 }
 
 /// The last transition recorded at `path`; `None` when nothing was recorded, or the file is
@@ -799,7 +801,7 @@ pub fn record_transition(
         return Ok(false);
     }
     let record = RuntimeTransition::new(to, previous.map(|p| p.state), reason, by, pid);
-    let text = serde_json::to_string_pretty(&record).map_err(std::io::Error::other)?;
+    let text = serde_json::to_string_pretty(&record).expect("a runtime transition is plain data");
     if let Some(dir) = path.parent() {
         std::fs::create_dir_all(dir)?;
     }
@@ -1018,20 +1020,17 @@ pub(crate) fn readiness_for(
 /// for `health.ready`, bounded by the declared probe timeout. `None` when it does not answer
 /// with one.
 fn readiness_of(ctx: &Context, url: &str) -> Option<super::health::Readiness> {
-    let path = ctx
-        .registry
-        .get("health.ready")?
-        .exposure
-        .http
-        .as_ref()?
-        .path
-        .clone();
-    let reply =
-        crate::mcp::bridge::request(url, "GET", &path, &[], None, lease::timings().probe_timeout)
-            .ok()?;
-    (reply.status == 200)
-        .then(|| serde_json::from_str(&reply.body).ok())
-        .flatten()
+    // `health.ready` is a built-in capability with an HTTP route, so the route is always
+    // found: one chain, with no early return standing for a route that cannot be missing
+    ctx.registry
+        .get("health.ready")
+        .and_then(|c| c.exposure.http.as_ref())
+        .and_then(|http| {
+            let timeout = lease::timings().probe_timeout;
+            crate::mcp::bridge::request(url, "GET", &http.path, &[], None, timeout).ok()
+        })
+        .filter(|reply| reply.status == 200)
+        .and_then(|reply| serde_json::from_str(&reply.body).ok())
 }
 
 /// How many peers the server at `url` reports, through the route the registry declares
@@ -1959,6 +1958,76 @@ mod tests {
         assert!(read_transition(&path).is_none());
         std::fs::write(&path, "not JSON").unwrap();
         assert!(read_transition(&path).is_none());
+    }
+
+    /// A writer whose every clone appends to one buffer: what a test reads the log from.
+    #[derive(Clone, Default)]
+    struct Logged(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+    impl std::io::Write for Logged {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// A record that cannot be put in place leaves nothing half-written behind: not at a path
+    /// with no directory, and not where a directory stands in the record's place, whose
+    /// temporary file is removed again. The reader that found the server gone and could not
+    /// record it says so in the log, and claims no transition.
+    #[test]
+    fn a_record_that_cannot_be_put_in_place_leaves_nothing_and_is_logged() {
+        let failed = |file: &Path| {
+            record_transition(
+                file,
+                ServerStanding::Failed,
+                "gone",
+                RuntimeWriter::ServerStatus,
+                None,
+            )
+        };
+        // a path with no directory at all: nothing to create, nothing written
+        assert!(failed(Path::new("")).is_err());
+
+        // a directory where the record would be: the temporary file is written, the rename
+        // over the directory is refused, and the temporary file goes with the refusal
+        let dir = tempfile::tempdir().unwrap();
+        let file = runtime_file(dir.path(), ".ai/local");
+        std::fs::create_dir_all(&file).unwrap();
+        assert!(failed(&file).is_err());
+        let left: Vec<_> = std::fs::read_dir(file.parent().unwrap())
+            .unwrap()
+            .map(|e| e.unwrap().file_name())
+            .collect();
+        assert_eq!(left, ["state.json"], "a temporary file was left behind");
+
+        let logged = Logged::default();
+        let writer = logged.clone();
+        let subscriber = tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::WARN)
+            .with_writer(move || writer.clone())
+            .finish();
+        let r = tracing::subscriber::with_default(subscriber, || {
+            runtime_at(
+                dir.path(),
+                ".ai/local",
+                ServerStanding::Stale,
+                &lease_of(DEAD, None),
+                None,
+                RuntimeWriter::ServerStatus,
+            )
+        });
+        assert_eq!(r.state, ServerStanding::Failed);
+        assert!(r.transition.is_none(), "{r:?}");
+        let log = String::from_utf8(logged.0.lock().unwrap().clone()).unwrap();
+        assert!(
+            log.contains("could not record the runtime's transition"),
+            "{log}"
+        );
+        assert!(log.contains(&file.display().to_string()), "{log}");
     }
 
     /// A loopback HTTP server answering each request by its path; its URL.
