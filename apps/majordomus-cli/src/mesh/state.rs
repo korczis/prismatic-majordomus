@@ -760,6 +760,10 @@ pub fn fold_with(
                     view.result = note;
                 }
             }
+            // An offer's freshness is the age of its stream's beat on the reader's clock,
+            // not a verdict every runtime shares, so it stays out of the state two runtimes
+            // compare: mesh::build_cache::offer reads it.
+            EventBody::BuildCacheOffered { .. } | EventBody::BuildCacheWithdrawn { .. } => {}
         }
     }
 
@@ -1568,5 +1572,33 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn a_build_cache_offer_stays_out_of_the_folded_state() {
+        let a = journal("0000000000000001");
+        claim(&a, "c1", "s1", &["apps"], ClaimMode::Exclusive);
+        let before = fold(&a.events(), &all_live);
+        a.append_own(EventBody::BuildCacheOffered {
+            offer: crate::mesh::journal::BuildCacheOffer {
+                protocol: "s3".into(),
+                provider: "minio".into(),
+                scope: crate::mesh::build_cache::Scope::Lan,
+                endpoint: "http://192.0.2.10:9000".into(),
+                bucket: "majordomus-build-cache".into(),
+                priority: 0,
+                headroom_gib: None,
+                lifetime_seconds: 30,
+            },
+        })
+        .unwrap();
+        a.append_own(EventBody::BuildCacheWithdrawn {
+            reason: "probe failed".into(),
+        })
+        .unwrap();
+        let after = fold(&a.events(), &all_live);
+        assert_eq!(after.claims.len(), before.claims.len());
+        assert_eq!(after.claims[0].state, ClaimState::Held);
+        assert!(after.reviews.is_empty(), "an offer is not a review");
     }
 }

@@ -1,7 +1,7 @@
 +++
 title = "Every page of the site is offered in every declared language, derived from the English and held to it in a browser"
 description = "Every page of the site is offered in every declared language, derived from the English and held to it in a browser"
-weight = 176
+weight = 177
 [extra]
 kind = "rule"
 slug = "project-the-site-is-offered-in-every-language-1"

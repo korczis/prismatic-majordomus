@@ -101,6 +101,21 @@ expect_finding 10 'FAIL refused .*a bare "#" goes nowhere' 'a bare fragment'
 fresh sitemap; sed -i.bak 's|</urlset>|<url><loc>https://example.test/gone/</loc></url></urlset>|' "$F/site/public/sitemap.xml"; rm -f "$F/site/public/sitemap.xml.bak"
 expect_finding 10 'FAIL internal +/sitemap\.xml: https://example\.test/gone/ resolves to no file' 'a sitemap entry with no page'
 
+# ---------------------------------------------------------------- an actions run, by provenance
+# A run link is decided only when the publication's own data read that run from the forge: the
+# evidence's run, and every run /trends/ draws (I4220). Any other run stays undecidable.
+break_with norun "<a href=\"$REPO/actions/runs/999\">x</a>"
+expect_finding 10 'FAIL refused .*actions/runs/999: a actions link cannot be decided offline' 'a run nothing published names'
+break_with evrun "<a href=\"$REPO/actions/runs/777\">x</a>"
+printf '{"run": {"id": 777}}\n' > "$F/site/data/evidence.json"; run
+[ "$(cat rc.txt)" = 0 ] || { echo "    the evidence's own run was not decided"; cat out.txt; exit 1; }
+break_with trendrun "<a href=\"$REPO/actions/runs/888\">x</a>"
+printf '{"schema": "trends/v1", "runs": [{"run_id": 887}, {"run_id": 888}]}\n' > "$F/site/data/trends.json"; run
+[ "$(cat rc.txt)" = 0 ] || { echo "    a run trends.json names was not decided"; cat out.txt; exit 1; }
+break_with trendother "<a href=\"$REPO/actions/runs/999\">x</a>"
+printf '{"schema": "trends/v1", "runs": [{"run_id": 888}]}\n' > "$F/site/data/trends.json"
+expect_finding 10 'FAIL refused .*actions/runs/999: a actions link cannot be decided offline' 'a run trends.json does not name'
+
 # ---------------------------------------------------------------- the composed surface
 fresh composed; run
 [ "$(cat rc.txt)" = 0 ] || { echo "    a clean site with a composed surface did not pass"; cat out.txt; exit 1; }

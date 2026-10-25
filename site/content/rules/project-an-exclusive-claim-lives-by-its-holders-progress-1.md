@@ -1,7 +1,7 @@
 +++
 title = "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat"
 description = "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat"
-weight = 82
+weight = 83
 [extra]
 kind = "rule"
 slug = "project-an-exclusive-claim-lives-by-its-holders-progress-1"

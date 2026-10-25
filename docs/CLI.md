@@ -42,6 +42,13 @@ a check passed, it failed.
   the context's reading of the repository (`generation`), or the checkout's state as well
   (`checkout`: HEAD, the staging index, the refs, and every changed or untracked path).
   The switch also makes a page's reading of a source run its handler and wait for it.
+- `MAJORDOMUS_BUILD_CACHE=off` makes `majordomus mesh build-cache ensure` ask no level of
+  the build cache: neither the key marked in place, nor the local archive level under
+  `~/.cache/majordomus/build-cache`, nor the store; the command after `--` runs, and nothing
+  is saved or marked. A cold, a warm and a bypassed install leave the same files
+  (`project.cache-is-invisible`); the switch settles a doubt by installing without the
+  cache. A restore and a save also respect the build's free-space floor,
+  `MAJORDOMUS_MIN_FREE_MB` (5120 by default, 0 disables it).
 - `MAJORDOMUS_READING_PATIENCE_MS` sets how long a page waits for a source after the
   repository changed before it shows the reading it has, marked stale (50 by default; see
   [`MAJORDOMUS_UI.md`](MAJORDOMUS_UI.md#fast-and-current)). `wait` makes every read wait for
@@ -861,13 +868,28 @@ branch-breaking defects overnight because they looked identical
 (`project.never-reported-is-not-green`).
 
 The whole judgement — every gate, the plan that selected it, which obligations the change
-implies, and the twenty-two questions of the done invariant with the source that answered
-each — is one document, `gates.completion`, read the same way by the command line, the HTTP
-API, MCP and the Cockpit:
+implies, and the questions of the done invariant with the source that answered each — is
+one document, `gates.completion`, read the same way by the command line, the HTTP API, MCP
+and the Cockpit:
 
 ```
 majordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'
 ```
+
+The questions are declared once, in `share/completion.yaml`, which the tool ships: the
+stages of the work in order (implementation, validation, documentation, commit, gates,
+version, integration, deployment, verification, closing, provenance), every question in the
+stage it belongs to, and the source its answer is taken from — an obligation, a gate, the
+change set, the repository's convergence or a closing reading. `gates.policy`
+(`majordomus_completion_policy`, `GET /api/v1/gates/policy`) serves the file with what it
+resolves to here: a token the vocabulary lacks is a `problem`, and a gate question this
+repository's CI model never answers is listed under `unanswered_gates`. The report asks
+exactly those questions in that order, and folds the answers into `stage` — the first stage
+blocked, else the first with a question still owed, else the last — which is derived on
+every reading and written down by nobody. `complete` is true only when a task is present
+and every question passes or is exempt; `finishable` and `complete` are two different
+words. A distribution whose policy cannot be read is asked one question, `policy`, answered
+`unknown`, and nothing is complete.
 
 ### The closing questions
 
@@ -2043,9 +2065,9 @@ majordomus adr affected [--base <ref>|--staged|--worktree] [--json]   the decisi
   merging. The verdict always states its subject — how many identities were added and what
   they were measured against — and when the base does not resolve it says the other refs were
   **not** surveyed rather than exiting clean with nothing said. `doctor` runs the same
-  examination, and `doctor` is the pre-commit hook, so a collision is refused on the branch
-  rather than at the merge where `generate --strict` would exclude every claimant and name
-  only the identity. `ADR 0053` is the reasoning.
+  examination: the pre-commit hook prints it on the branch, and CI's core-check refuses it
+  there, rather than at the merge where `generate --strict` would exclude every claimant and
+  name only the identity. `ADR 0053` is the reasoning.
 
 - `affected` reads a change set — the working tree against `HEAD` by default, `--staged`
   for the index, `--base <ref>` for `<ref>..HEAD` plus the working tree — and names every

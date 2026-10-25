@@ -135,6 +135,55 @@ rm -f "$F/scripts/legacy"
 expect_exit 0 env MJ_ROOT="$F" "$GATE"
 expect_grep 'FIXED scripts/legacy'
 
+# ---------------------------------------------------------------- 4. the reader that stops first
+# Under pipefail, `printf '%s\n' "$list" | grep -q "$key"` returns 141 whenever grep exits on
+# its match before printf has finished writing, so a match reads as no match (I3949). It is
+# refused by file and line wherever pipefail is set, and the here-string is accepted.
+F="$(fixture 10)"
+cat > "$F/scripts/lookup" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+set -o pipefail
+list="$(seq 1 9)"
+# printf '%s\n' "$list" | grep -q 7 is the spelling this comment describes, not a call
+printf '%s\n' "$list" | grep -qxF 7 && echo seven
+if echo "$list" | grep -Eq '^9$'; then echo nine; fi
+grep -qxF -e 7 <<<"$list" && echo seven again
+printf '%s\n' "$list" || grep -q 7 /dev/null
+seq 1 3 | tail -1
+EOF
+chmod +x "$F/scripts/lookup"
+expect_exit 10 env MJ_ROOT="$F" "$GATE"
+expect_grep 'a printf or echo piped into grep -q fails with 141 when grep stops first'
+expect_grep 'RACE scripts/lookup:6:printf'
+expect_grep 'RACE scripts/lookup:7:if echo'
+expect_grep 'give grep the text as a here-string'
+# the comment, the here-string, the `||` and a pipe into tail are not findings
+expect_no_grep 'RACE scripts/lookup:5:'
+expect_no_grep 'RACE scripts/lookup:8:'
+expect_no_grep 'RACE scripts/lookup:9:'
+expect_no_grep 'RACE scripts/lookup:10:'
+
+# the same lines written as here-strings are accepted
+cat > "$F/scripts/lookup" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+set -o pipefail
+list="$(seq 1 9)"
+grep -qxF 7 <<<"$list" && echo seven
+if grep -Eq '^9$' <<<"$list"; then echo nine; fi
+seq 1 3 | tail -1
+EOF
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+expect_no_grep 'RACE'
+
+# and in a script without pipefail the pipeline's status is grep's own, so there is no race
+# to refuse: that script is the baseline's business, not this check's
+F="$(fixture 11)"
+printf '#!/usr/bin/env bash\nset -eu\nprintf "%%s\\n" a | grep -q a\n' > "$F/scripts/legacy"
+expect_exit 0 env MJ_ROOT="$F" "$GATE"
+expect_no_grep 'RACE'
+
 # ---------------------------------------------------------------- --strict
 # The sweep the ratchet is deliberately not. It is what a repository runs on the day it
 # decides to pay the whole debt, and it must refuse a tree the default mode accepts — or
@@ -158,4 +207,4 @@ expect_grep 'no baseline at .ai/repo/pipefail-baseline.txt \(run --write-baselin
 expect_exit 2 env MJ_ROOT="$F" "$GATE" --sweep
 expect_grep 'unknown option --sweep'
 
-echo "    the pipefail ratchet refuses new debt, reports paid debt, and measures its own denominator"
+echo "    the pipefail ratchet refuses new debt and a grep -q race, reports paid debt, and measures its own denominator"
