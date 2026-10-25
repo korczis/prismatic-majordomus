@@ -1074,18 +1074,27 @@ impl crate::order::Ordered for DialCandidate<'_> {
 /// [`MAX_TARGETS_PER_NODE`] of one node, taken in [`DialCandidate`] order, so a node's present
 /// runtimes are dialed before its stopped ones. The same records in any order choose the
 /// same targets.
+///
+/// A record of another node that advertises loopback alone is left out: `127.0.0.1` on that
+/// machine is not `127.0.0.1` on this one, so the dial can only fail, and a machine runs
+/// many loopback worktree servers beside the one hub that listens beyond it. Counted against
+/// the cap, they filled it, and the hub — the only runtime of that machine another one can
+/// reach — was never dialed.
 fn dial_targets(
     records: &[NodeRecord],
     repository: &str,
     own_key: &str,
     trusted: impl Fn(&str) -> bool,
 ) -> Vec<Target> {
+    let own_node = own_key.split_once('-').map_or(own_key, |(node, _)| node);
     let mut candidates: Vec<DialCandidate<'_>> = records
         .iter()
         .filter(|record| {
             !record.runtime.is_empty()
                 && !record.endpoints.is_empty()
                 && record.repositories.iter().any(|r| r == repository)
+                && (record.node_id.as_str() == own_node
+                    || !super::address::loopback_only(&record.endpoints))
         })
         .map(|record| DialCandidate {
             key: format!("{}-{}", record.node_id, record.runtime),
@@ -5740,6 +5749,38 @@ mod tests {
             siblings.len(),
             live.len() - 1,
             "every live sibling is dialed; chosen: {chosen:?}"
+        );
+    }
+
+    /// On 2026-10-23 two MacBooks shared no claim for hours: each ran a dozen loopback
+    /// worktree servers and one hub bound beyond loopback, the loopback records sorted first
+    /// and filled the per-node cap, and neither machine ever dialed the other's hub.
+    #[test]
+    fn another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is() {
+        let mut records: Vec<NodeRecord> = (0..12)
+            .map(|i| {
+                let mut r = record(1, &format!("{i:016}"), Presence::Present, "trusted");
+                r.endpoints = vec![format!("127.0.0.1:{}", 9000 + i)];
+                r
+            })
+            .collect();
+        let mut hub = record(1, "ffffffffffffffff", Presence::Present, "trusted");
+        hub.endpoints = vec!["192.168.100.100:8791".into(), "127.0.0.1:8791".into()];
+        records.push(hub);
+        let mut sibling = record(0, "0000000000000002", Presence::Present, "trusted");
+        sibling.endpoints = vec!["127.0.0.1:9454".into()];
+        records.push(sibling);
+        let own = format!("{:032x}-{:016x}", 0, 1);
+
+        let chosen = ids(&dial_targets(&records, "root", &own, |k| k == "trusted"));
+
+        assert_eq!(
+            chosen,
+            vec![
+                format!("{:032x}-0000000000000002", 0),
+                format!("{:032x}-ffffffffffffffff", 1),
+            ],
+            "this node's loopback sibling and the other node's hub, nothing it cannot reach"
         );
     }
 

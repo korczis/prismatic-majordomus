@@ -107,7 +107,10 @@ majordomus doctor        # hashes the region, and reports the host document's le
 What that buys you: an edit outside the markers is the repository's own business and is
 never reported as drift, while an edit inside them is caught exactly as a whole-file
 projection would be. The budget, the link check and the count check all measure the
-region, so every failure `doctor` reports can be fixed by editing the policy.
+region, so every failure `doctor` reports can be fixed by editing the policy. The bootstrap
+check reads the region too: the pointer at `.ai/README.md` has to be inside the markers, and
+rule bullets, a rules heading or a profile table fail only there. The same text in the rest
+of the document is the governance the repository already had, and is not a finding.
 
 Malformed markers — unclosed, out of order, or repeated — are refused rather than
 guessed at, and nothing is written.

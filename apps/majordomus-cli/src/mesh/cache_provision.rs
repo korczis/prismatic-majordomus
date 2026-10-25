@@ -3,8 +3,10 @@
 //! The reviewed host layer of the build host — a disk guard, services that restart always,
 //! a bounded journal and container log, a bounded MinIO bucket with expiry and a
 //! least-privilege identity per node, and the rustc wrapper that makes a node's own builds
-//! use the cache — as one declared policy (`share/mesh-cache-provider/policy.json`) and the
-//! files it installs, instead of a shell script an operator runs once.
+//! use the cache — as one declared policy
+//! (`apps/majordomus-cli/assets/mesh-cache-provider/policy.json`) and the files it installs,
+//! instead of a shell script an operator runs once. The files live inside the package
+//! because they are compiled in, and the image's builder stage compiles the package alone.
 //!
 //! [`plan`] is a pure function of the policy and what was observed on the host: it names
 //! every file, edit and command the host still owes and changes nothing. [`observe`] reads
@@ -37,18 +39,16 @@ use std::process::Command;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// The declared policy, embedded from `share/mesh-cache-provider/policy.json`.
-const POLICY: &str = include_str!("../../../../share/mesh-cache-provider/policy.json");
-const CRITICAL: &str = include_str!("../../../../share/mesh-cache-provider/critical.conf");
-const JOURNALD: &str = include_str!("../../../../share/mesh-cache-provider/journald.conf");
-const DAEMON: &str = include_str!("../../../../share/mesh-cache-provider/daemon.json");
-const GUARD: &str = include_str!("../../../../share/mesh-cache-provider/disk-guard");
-const GUARD_SERVICE: &str =
-    include_str!("../../../../share/mesh-cache-provider/disk-guard.service");
-const GUARD_TIMER: &str = include_str!("../../../../share/mesh-cache-provider/disk-guard.timer");
-const RW_POLICY: &str =
-    include_str!("../../../../share/mesh-cache-provider/mesh-build-cache-rw.json");
-const WRAPPER: &str = include_str!("../../../../share/mesh-cache-provider/sccache-mesh");
+/// The declared policy, embedded from `assets/mesh-cache-provider/policy.json` in the package.
+const POLICY: &str = include_str!("../../assets/mesh-cache-provider/policy.json");
+const CRITICAL: &str = include_str!("../../assets/mesh-cache-provider/critical.conf");
+const JOURNALD: &str = include_str!("../../assets/mesh-cache-provider/journald.conf");
+const DAEMON: &str = include_str!("../../assets/mesh-cache-provider/daemon.json");
+const GUARD: &str = include_str!("../../assets/mesh-cache-provider/disk-guard");
+const GUARD_SERVICE: &str = include_str!("../../assets/mesh-cache-provider/disk-guard.service");
+const GUARD_TIMER: &str = include_str!("../../assets/mesh-cache-provider/disk-guard.timer");
+const RW_POLICY: &str = include_str!("../../assets/mesh-cache-provider/mesh-build-cache-rw.json");
+const WRAPPER: &str = include_str!("../../assets/mesh-cache-provider/sccache-mesh");
 
 /// Where the per-node credentials and environments live on the provider, outside any
 /// repository and readable by root alone.
@@ -94,7 +94,7 @@ pub struct Policy {
 impl Policy {
     /// The policy this repository declares.
     pub fn declared() -> Policy {
-        serde_json::from_str(POLICY).expect("share/mesh-cache-provider/policy.json parses")
+        serde_json::from_str(POLICY).expect("assets/mesh-cache-provider/policy.json parses")
     }
 
     fn endpoint(&self, node: &str) -> String {

@@ -31,5 +31,5 @@ It does not install a release, and it does not build one: with no release of thi
 
 ## Why it exists
 
-On 2026-10-16 a session opened in a checkout whose executable had never been built, on a volume with 4.5GB free against a floor of 5120MB; the launcher exited 12 and the client reported `CONNECTION_CLOSED` while a release that speaks the same protocol was installed beside it (ADR 0156). ADR 0172 answered with a fallback for `mcp` on a version string and kept the build for a stale executable. On 2026-10-22 a pre-push timed out at ninety minutes behind the shared build lock, and ADR 0224 replaced it: no ordinary command builds, and a fallback is a release of the same generation.
+On 2026-10-16 a session opened in a checkout whose executable had never been built, on a volume with 4.5GB free against a floor of 5120MB; the launcher exited 12 and the client reported `CONNECTION_CLOSED` while a release that speaks the same protocol was installed beside it (ADR 0226). ADR 0172 answered with a fallback for `mcp` on a version string and kept the build for a stale executable. On 2026-10-22 a pre-push timed out at ninety minutes behind the shared build lock, and ADR 0224 replaced it: no ordinary command builds, and a fallback is a release of the same generation.
 {% endraw %}

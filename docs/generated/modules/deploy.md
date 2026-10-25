@@ -106,6 +106,9 @@ Writes, into a directory outside the checkout that is absent or empty, the tree 
 | `commit` | string or null | no | The commit every file is read at, any revision git resolves; `HEAD` when absent. |
 | `executable` | string | yes | The executable built at that commit. |
 | `out` | string | yes | The directory the slug is written into: outside the checkout, absent or empty. |
+| `site` | string or null | no | The site built at that commit (`scripts/site-build --serve`), required exactly when the
+deployment declares `build.site`: the object says the slug carries one, this says where
+the build left it. |
 
 Output: `Slug`.
 
