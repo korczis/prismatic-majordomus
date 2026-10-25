@@ -800,6 +800,16 @@ with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every Ma
 protocol 2, and every other machine on its board read `expired`. After the upgrade its `mesh
 doctor` held every check, and the hubs of both MacBooks listed it live.
 
+jetson also serves a build-cache store (ADR 0157): MinIO on `100.92.246.32:9000`, the systemd
+unit `majordomus-build-cache.service`, bucket `majordomus-build-cache` with a 200 GiB hard quota,
+one client identity under the policy `mj-build-cache-rw` (object read, write and delete in that
+bucket, listing it), and the port admitted from loopback, the LAN and the tailnet only. Its node
+file declares the store under `provider`, but 1.0.0-alpha.5 publishes no offer — offers landed
+after it — so a client names the store under `known` in its own node file, with the node id
+`9d652b2c7d06b12bfc5c3f8325e6618c`, and holds the identity in its credential file. On 2026-10-25
+a MacBook so configured selected it, wrote a 15 KiB entry under `rust/aarch64-apple-darwin/`, and
+a second compile with an empty disk level hit it in 94 ms and backfilled the disk.
+
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
 under its service manager when no session is attached or after a bounded grace, checks its
