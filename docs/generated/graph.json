@@ -68469,6 +68469,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I3996",
+        "kind": "issue",
+        "label": "I3996",
+        "summary": "A node's provisioning secret is read on mc's standard input, never from a command line",
+        "route": "/cockpit/objects/issue/i3996",
+        "source": ".ai/repo/project/issues/I3996.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a recording runner, no argv of any command the apply runs contains any node's secret, and each node's secret, followed by a newline, is the standard input of exactly its own admin user add",
+            "The real runner gives a stand-in mc the input on its standard input and nothing on its command line; a command given no input reads an empty, closed standard input"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I2674"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "A gate and rule that refuse a secret on any command line the repository runs (I4224, train 8)",
+            "Rotating identities: none was ever created through the argv form"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            ".ai/repo/project/issues/I3996.yaml"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "a-provisioning-secret-is-read-on-standard-input",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4154",
         "kind": "issue",
         "label": "I4154",
@@ -129839,6 +129881,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3996",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3996",
+        "target": "majordomus://issue/I2674",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3996",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4154",
         "target": "kind:issue",
         "kind": "is_a"
@@ -141400,8 +141457,8 @@
       }
     ],
     "metadata": {
-      "nodes": 3934,
-      "edges": 9085,
+      "nodes": 3935,
+      "edges": 9088,
       "acyclic": false,
       "truncated": false
     }

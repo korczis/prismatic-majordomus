@@ -34449,7 +34449,7 @@ capabilities:
                 description: A stable name.
               line:
                 type: string
-                description: "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+                description: "The command as it is run. A node's secret is never on it: `<secret of NODE>` names\nwhat the command reads on its standard input."
               when:
                 type: string
                 description: "Run only when a file of the named group changed (`systemd`, `journald`, `docker`), or always."

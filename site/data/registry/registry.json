@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "b8d099b536f9e02fb9fc17c866bb370a305fe17fc5cf19c9c5703792afe888c2",
+    "fingerprint": "2a5f10bf1cd7cc43ea711855d520593095b3da959673bad1ea4aa6258b54866f",
     "summary": {
-      "total": 3474,
+      "total": 3475,
       "builtin": 217,
-      "declarative": 3257,
+      "declarative": 3258,
       "by_kind": {
         "command": 35,
         "query": 182,
-        "resource": 3257
+        "resource": 3258
       },
       "by_stability": {
         "behaviorally_verified": 145,
         "experimental": 62,
-        "implemented": 3267
+        "implemented": 3268
       },
       "mcp_tools": 203,
-      "mcp_resources": 3312,
+      "mcp_resources": 3313,
       "http_routes": 209,
       "cli_commands": 120,
       "modules": 94,
@@ -48307,7 +48307,7 @@
                   },
                   "line": {
                     "type": "string",
-                    "description": "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+                    "description": "The command as it is run. A node's secret is never on it: `<secret of NODE>` names\nwhat the command reads on its standard input."
                   },
                   "when": {
                     "type": "string",
@@ -89976,7 +89976,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 990,
+        "capabilities": 991,
         "capability_ids": []
       },
       {
@@ -90665,7 +90665,7 @@
     ]
   },
   "index": {
-    "fingerprint": "61b1f2ba820b0ce5c6ab16ee80cd46fe98e555324383eef02f4d20d4485ce3df",
+    "fingerprint": "daeabb08fa99bfdafce32be03ca5388e12b29e9d7d18f8ab5bc3c45f02997e85",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -90705,7 +90705,7 @@
       "gap": 4,
       "implementation": 52,
       "intent": 40,
-      "issue": 990,
+      "issue": 991,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 108,
@@ -98079,7 +98079,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 891340
+        "bytes": 891536
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -112799,6 +112799,17 @@
         "bytes": 3073
       },
       {
+        "uri": "majordomus://issue/I3996",
+        "kind": "issue",
+        "identity": "I3996",
+        "title": "A node's provisioning secret is read on mc's standard input, never from a command line",
+        "description": "mesh build-cache provision creates a node's MinIO identity with `mc admin user add <alias> <access key>` and passes the secret on the command's standard input. That is mc's own documented form (minio/mc cmd/admin-user-add.go, fetchUserKeys), so the secret is in no process's argv.",
+        "path": ".ai/repo/project/issues/I3996.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2772
+      },
+      {
         "uri": "majordomus://issue/I4154",
         "kind": "issue",
         "identity": "I4154",
@@ -126151,7 +126162,7 @@
       "identity": [
         "id"
       ],
-      "objects": 990
+      "objects": 991
     },
     {
       "name": "knowledge",

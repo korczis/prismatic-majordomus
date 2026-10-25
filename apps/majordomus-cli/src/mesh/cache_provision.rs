@@ -17,6 +17,17 @@
 //! on the host into a mode 0600 file outside the repository, and every report names its path
 //! only.
 //!
+//! No secret travels on a command line either (I3996): an argument is readable by every user
+//! of the host in `ps` and `/proc/<pid>/cmdline` for as long as the command runs. A node's
+//! identity is made with `mc admin user add <alias> <access key>`, and its secret is the
+//! command's standard input. That is mc's own documented form: in `cmd/admin-user-add.go`
+//! (`fetchUserKeys`, minio/mc master at 77f82e18b54) a call with the alias and the access
+//! key alone, on a standard input that is not a terminal, reads the secret as the first line
+//! of that input, and the command's help shows it piped ("using piped keys"). Standard input
+//! was chosen over `MC_HOST_<alias>`, which would carry the admin's credential in the
+//! environment of the child, and over an alias file, which would put a secret on disk for the
+//! length of the call.
+//!
 
 use std::collections::BTreeMap;
 use std::io::Write;
@@ -206,7 +217,8 @@ pub struct EditAction {
 pub struct Step {
     /// A stable name.
     pub id: String,
-    /// The command as it is run; a node's secret appears only as `<secret of NODE>`.
+    /// The command as it is run. A node's secret is never on it: `<secret of NODE>` names
+    /// what the command reads on its standard input.
     pub line: String,
     /// Run only when a file of the named group changed (`systemd`, `journald`, `docker`), or always.
     pub when: String,
@@ -488,7 +500,7 @@ fn steps(policy: &Policy) -> Vec<Step> {
             &format!("identity-{node}"),
             mc(
                 policy,
-                &format!("admin user add {a} {id} <secret of {node}>"),
+                &format!("admin user add {a} {id} (standard input: <secret of {node}>)"),
             ),
             "always",
         ));
@@ -643,14 +655,33 @@ pub fn apply(policy: &Policy, root: &Path) -> ApplyReport {
     apply_with(policy, root, is_root(), &run_command)
 }
 
-/// Runs one argv and answers whether it succeeded and what it said.
-type Runner<'a> = &'a dyn Fn(&[String]) -> (bool, String);
+/// Runs one argv, with what its standard input carries (a secret travels there and never in
+/// the argv), and answers whether it succeeded and what it said.
+type Runner<'a> = &'a dyn Fn(&[String], Option<&str>) -> (bool, String);
 
-fn run_command(argv: &[String]) -> (bool, String) {
+fn run_command(argv: &[String], stdin: Option<&str>) -> (bool, String) {
+    use std::process::Stdio;
     let Some((program, args)) = argv.split_first() else {
         return (false, "empty command".into());
     };
-    match Command::new(program).args(args).output() {
+    let mut cmd = Command::new(program);
+    cmd.args(args)
+        .stdin(if stdin.is_some() {
+            Stdio::piped()
+        } else {
+            Stdio::null()
+        })
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    let output = cmd.spawn().and_then(|mut child| {
+        // the input is written and its pipe closed before the wait, so a child that reads to
+        // the end sees the end; a child that exits without reading is not an error here
+        if let (Some(input), Some(mut pipe)) = (stdin, child.stdin.take()) {
+            let _ = pipe.write_all(input.as_bytes());
+        }
+        child.wait_with_output()
+    });
+    match output {
         Ok(o) => (
             o.status.success(),
             format!(
@@ -747,8 +778,10 @@ fn apply_in(
                 }
                 if system {
                     if let Some(owner) = &w.owner {
-                        let (ok, out) =
-                            run(&["chown".into(), format!("{owner}:{owner}"), w.path.clone()]);
+                        let (ok, out) = run(
+                            &["chown".into(), format!("{owner}:{owner}"), w.path.clone()],
+                            None,
+                        );
                         report.ran.push(Ran {
                             line: format!("chown {owner}:{owner} {}", w.path),
                             ok,
@@ -826,9 +859,12 @@ fn run_steps(
     run: Runner<'_>,
     report: &mut ApplyReport,
 ) {
-    let push = |report: &mut ApplyReport, line: &str, argv: Vec<String>, redact: Option<&str>| {
-        let (ok, out) = run(&argv);
-        let out = match redact {
+    // `secret`, when there is one, is the command's standard input and is redacted from what
+    // it said; it is never an element of `argv`
+    let push = |report: &mut ApplyReport, line: &str, argv: Vec<String>, secret: Option<&str>| {
+        let stdin = secret.map(|s| format!("{s}\n"));
+        let (ok, out) = run(&argv, stdin.as_deref());
+        let out = match secret {
             Some(s) if !s.is_empty() => out.replace(s, "<redacted>"),
             _ => out,
         };
@@ -862,7 +898,7 @@ fn run_steps(
         let b = &policy.bucket;
         match step.id.as_str() {
             "docker-restart" => {
-                let (ok, out) = run(&sh("docker ps -q"));
+                let (ok, out) = run(&sh("docker ps -q"), None);
                 if ok && out.trim().is_empty() {
                     push(
                         report,
@@ -878,7 +914,7 @@ fn run_steps(
                 }
             }
             "expiry" => {
-                let (_, out) = run(&mcv(&format!("ilm rule ls {a}/{b}")));
+                let (_, out) = run(&mcv(&format!("ilm rule ls {a}/{b}")), None);
                 if out.contains(&format!("{} ", policy.expire_days)) {
                     report
                         .skipped
@@ -905,8 +941,9 @@ fn run_steps(
                         .push(format!("{id}: the credential file has no secret"));
                     continue;
                 };
-                let mut argv = mcv(&format!("admin user add {a} {}", Policy::identity(node)));
-                argv.push(secret.clone());
+                // the alias and the access key alone: mc reads the secret from its standard
+                // input (cmd/admin-user-add.go, fetchUserKeys), so it is in no process's argv
+                let argv = mcv(&format!("admin user add {a} {}", Policy::identity(node)));
                 push(report, &step.line, argv, Some(&secret));
             }
             _ => {
@@ -1072,7 +1109,7 @@ mod tests {
     #[test]
     fn the_system_root_is_refused_without_root_before_anything_is_touched() {
         let called = RefCell::new(0);
-        let run = |_: &[String]| {
+        let run = |_: &[String], _: Option<&str>| {
             *called.borrow_mut() += 1;
             (true, String::new())
         };
@@ -1089,7 +1126,7 @@ mod tests {
         apply(&p, &root);
         let lines = RefCell::new(Vec::<String>::new());
         let secret = secret_of(&physical(&root, &format!("{NODE_DIR}/imac/credentials"))).unwrap();
-        let run = |argv: &[String]| {
+        let run = |argv: &[String], _: Option<&str>| {
             lines.borrow_mut().push(argv.join(" "));
             (true, format!("echo {secret}"))
         };
@@ -1104,6 +1141,117 @@ mod tests {
         let attach = all.find("admin policy attach").unwrap();
         assert!(reload < attach);
     }
+
+    /// I3996: every node's secret is the standard input of its own `admin user add`, and no
+    /// argv of any command the apply runs carries any node's secret.
+    #[test]
+    fn a_node_secret_is_the_standard_input_of_its_identity_step_and_in_no_argv() {
+        let (root, p) = staged("stdin");
+        let secrets: Vec<(String, String)> = p
+            .nodes
+            .iter()
+            .map(|n| {
+                let cred = physical(&root, &format!("{NODE_DIR}/{n}/credentials"));
+                (n.clone(), secret_of(&cred).unwrap())
+            })
+            .collect();
+        let calls = RefCell::new(Vec::<(Vec<String>, Option<String>)>::new());
+        let run = |argv: &[String], stdin: Option<&str>| {
+            calls
+                .borrow_mut()
+                .push((argv.to_vec(), stdin.map(str::to_string)));
+            (true, String::new())
+        };
+        let mut report = apply_with(&p, &root, true, &run);
+        run_steps(&p, &root, &[], &run, &mut report);
+        let calls = calls.into_inner();
+        for (_, secret) in &secrets {
+            assert!(
+                calls
+                    .iter()
+                    .all(|(argv, _)| argv.iter().all(|a| !a.contains(secret.as_str()))),
+                "a secret is in an argv"
+            );
+        }
+        for (node, secret) in &secrets {
+            let id = Policy::identity(node);
+            let tail = ["add".to_string(), p.alias.clone(), id.clone()];
+            let add: Vec<_> = calls
+                .iter()
+                .filter(|(argv, _)| argv.ends_with(&tail))
+                .collect();
+            // a staging root runs no command of its own: the steps run once, from run_steps
+            assert_eq!(add.len(), 1, "{node}: its identity step runs once");
+            for (argv, stdin) in add {
+                // mc's form with the secret read from standard input: alias and access key only
+                assert_eq!(
+                    &argv[argv.len() - 5..argv.len() - 2],
+                    ["admin", "user", "add"]
+                );
+                assert_eq!(stdin.as_deref(), Some(format!("{secret}\n").as_str()));
+            }
+        }
+        // every other command reads nothing
+        assert!(calls
+            .iter()
+            .filter(|(argv, _)| !argv.iter().any(|a| a == "add"))
+            .all(|(_, stdin)| stdin.is_none()));
+        // and the plan says where the secret goes, by name only
+        let step = steps(&p)
+            .into_iter()
+            .find(|s| s.id == "identity-mbp")
+            .unwrap();
+        assert!(step.line.ends_with("(standard input: <secret of mbp>)"));
+    }
+
+    /// The real runner hands the input to a stand-in `mc` on its standard input and nothing
+    /// else on its command line; a command given no input reads an empty, closed stdin.
+    #[test]
+    fn the_runner_gives_the_secret_to_the_childs_stdin_and_never_to_its_argv() {
+        let dir = scratch("standin");
+        let mc = dir.join("mc");
+        let argv_log = dir.join("argv");
+        let stdin_log = dir.join("stdin");
+        std::fs::write(
+            &mc,
+            format!(
+                "#!/bin/sh\nprintf '%s\\n' \"$@\" > '{}'\ncat > '{}'\necho done\n",
+                argv_log.display(),
+                stdin_log.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&mc, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let secret = secret_from(|b| {
+            b.fill(0x5a);
+            Ok::<(), String>(())
+        })
+        .unwrap();
+        let mut argv = vec![mc.display().to_string()];
+        argv.extend(
+            ["admin", "user", "add", "vtminio", "mesh-cache-mbp"]
+                .iter()
+                .map(|s| s.to_string()),
+        );
+        let (ok, out) = run_command(&argv, Some(&format!("{secret}\n")));
+        assert!(ok, "{out}");
+        assert_eq!(out.trim(), "done");
+        let seen_argv = std::fs::read_to_string(&argv_log).unwrap();
+        assert_eq!(seen_argv, "admin\nuser\nadd\nvtminio\nmesh-cache-mbp\n");
+        assert!(!seen_argv.contains(&secret));
+        assert_eq!(
+            std::fs::read_to_string(&stdin_log).unwrap(),
+            format!("{secret}\n")
+        );
+        // no input: the child's stdin is empty, never the parent's
+        let (ok, _) = run_command(&argv, None);
+        assert!(ok);
+        assert_eq!(std::fs::read_to_string(&stdin_log).unwrap(), "");
+        // a child that exits without reading its input is not an error of the runner
+        let (ok, _) = run_command(&["true".into()], Some("unread\n"));
+        assert!(ok);
+    }
+
     fn staged(name: &str) -> (PathBuf, Policy) {
         let root = scratch(name);
         let p = Policy::declared();
@@ -1115,12 +1263,12 @@ mod tests {
         root: &Path,
         p: &Policy,
         groups: &[&str],
-        answer: impl Fn(&str) -> (bool, String),
+        answer: impl Fn(&str, Option<&str>) -> (bool, String),
     ) -> (ApplyReport, Vec<String>) {
         let lines = RefCell::new(Vec::<String>::new());
-        let run = |argv: &[String]| {
+        let run = |argv: &[String], stdin: Option<&str>| {
             let line = argv.join(" ");
-            let out = answer(&line);
+            let out = answer(&line, stdin);
             lines.borrow_mut().push(line);
             out
         };
@@ -1135,13 +1283,13 @@ mod tests {
     #[test]
     fn docker_restarts_only_when_no_container_runs() {
         let (root, p) = staged("docker");
-        let (idle, lines) = run_all(&root, &p, &["docker"], |_| (true, String::new()));
+        let (idle, lines) = run_all(&root, &p, &["docker"], |_, _| (true, String::new()));
         assert!(lines.iter().any(|l| l == "systemctl restart docker"));
         assert!(idle
             .ran
             .iter()
             .any(|r| r.line == "systemctl restart docker"));
-        let (busy, lines) = run_all(&root, &p, &["docker"], |l| {
+        let (busy, lines) = run_all(&root, &p, &["docker"], |l, _| {
             if l == "docker ps -q" {
                 (true, "abc123\n".into())
             } else {
@@ -1156,7 +1304,7 @@ mod tests {
     fn the_expiry_rule_is_added_once() {
         let (root, p) = staged("expiry");
         let has = format!("{} ", p.expire_days);
-        let (present, lines) = run_all(&root, &p, &[], |l| {
+        let (present, lines) = run_all(&root, &p, &[], |l, _| {
             if l.contains("ilm rule ls") {
                 (true, format!("rule {has}days"))
             } else {
@@ -1165,7 +1313,7 @@ mod tests {
         });
         assert!(!lines.iter().any(|l| l.contains("ilm rule add")));
         assert!(present.skipped.iter().any(|s| s.starts_with("expiry")));
-        let (_, lines) = run_all(&root, &p, &[], |_| (true, String::new()));
+        let (_, lines) = run_all(&root, &p, &[], |_, _| (true, String::new()));
         assert!(lines
             .iter()
             .any(|l| l.contains("ilm rule add --expire-days")));
@@ -1175,12 +1323,11 @@ mod tests {
     fn a_failing_command_is_reported_without_the_secret_and_fails_the_report() {
         let (root, p) = staged("fail");
         let secret = secret_of(&physical(&root, &format!("{NODE_DIR}/mbp/credentials"))).unwrap();
-        let (report, _) = run_all(&root, &p, &[], |l| {
+        // a failing mc that repeats what it read: the secret reaches the output and must not
+        // reach the report
+        let (report, _) = run_all(&root, &p, &[], |l, stdin| {
             if l.contains("admin user add") {
-                (
-                    false,
-                    format!("denied for {}", l.rsplit(' ').next().unwrap()),
-                )
+                (false, format!("denied for {}", stdin.unwrap_or("").trim()))
             } else {
                 (true, String::new())
             }
@@ -1196,7 +1343,7 @@ mod tests {
         let (root, p) = staged("nosecret");
         let cred = physical(&root, &format!("{NODE_DIR}/mbp/credentials"));
         std::fs::write(&cred, "[mesh-build-cache]\n").unwrap();
-        let (report, lines) = run_all(&root, &p, &[], |_| (true, String::new()));
+        let (report, lines) = run_all(&root, &p, &[], |_, _| (true, String::new()));
         assert!(!report.ok);
         assert!(report.skipped.iter().any(|s| s.starts_with("identity-mbp")));
         assert!(!lines.iter().any(|l| l.contains("mesh-cache-mbp ")));
@@ -1277,9 +1424,9 @@ mod tests {
         assert_eq!(a.len(), 48);
         assert_ne!(a, secret_hex().unwrap());
         assert_eq!(secret_of(&root.join("missing")), None);
-        assert!(!run_command(&[]).0);
-        assert!(!run_command(&["/no/such/program".into()]).0);
-        assert!(run_command(&["true".into()]).0);
+        assert!(!run_command(&[], None).0);
+        assert!(!run_command(&["/no/such/program".into()], None).0);
+        assert!(run_command(&["true".into()], None).0);
     }
 
     #[test]
@@ -1360,7 +1507,7 @@ mod tests {
     fn no_entropy_for_a_new_credential_skips_it_and_fails_the_report() {
         let root = scratch("noentropy");
         let p = Policy::declared();
-        let run = |_: &[String]| (true, String::new());
+        let run = |_: &[String], _: Option<&str>| (true, String::new());
         let r = apply_in(&p, &root, false, &run, &|| Err("no entropy: test".into()));
         assert!(!r.ok, "{r:?}");
         assert!(r.generated.is_empty());
@@ -1375,7 +1522,7 @@ mod tests {
         let root = scratch("system");
         let p = Policy::declared();
         let lines = RefCell::new(Vec::<String>::new());
-        let run = |argv: &[String]| {
+        let run = |argv: &[String], _: Option<&str>| {
             lines.borrow_mut().push(argv.join(" "));
             (true, String::new())
         };
@@ -1408,7 +1555,8 @@ mod tests {
     fn a_failed_chown_fails_the_report() {
         let root = scratch("chownfail");
         let p = Policy::declared();
-        let run = |argv: &[String]| (argv[0] != "chown", "no such user".to_string());
+        let run =
+            |argv: &[String], _: Option<&str>| (argv[0] != "chown", "no such user".to_string());
         let r = apply_in(&p, &root, true, &run, &secret_hex);
         assert!(!r.ok);
         assert!(r.ran.iter().any(|x| x.line.starts_with("chown ") && !x.ok));
