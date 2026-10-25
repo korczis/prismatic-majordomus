@@ -70414,6 +70414,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4207",
+        "kind": "issue",
+        "label": "I4207",
+        "summary": "Only a trends series of the shape the publication writes decides a run link",
+        "route": "/cockpit/objects/issue/i4207",
+        "source": ".ai/repo/project/issues/I4207.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A run a trends/v1 series names is still decided",
+            "The same run named by a series of schema trends/v0 is refused as undecidable offline (exit 10)",
+            "The same run named by a top-level JSON list is refused (exit 10), not a crash"
+          ],
+          "current_state": "link-check reads `.get('runs')` of whatever site/data/trends.json parses to: any object's runs are decided, and a JSON list raises AttributeError.",
+          "depends_on": [],
+          "desired_state": "Only an object whose schema is trends/v1 contributes runs; a series of another schema or none leaves those run links refused as undecidable offline (exit 10), and case 335 holds both.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "non_scope": [
+            "What scripts/pages trends writes, which already carries schema trends/v1",
+            "Deciding any other forge path offline"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "None: the only series the publication writes is trends/v1 (scripts/pages, `schema: \\\"trends/v1\\\"`), so a published site decides exactly what it did.",
+          "scope": [
+            "scripts/ci/link-check",
+            "test/cases/335_every_link_resolves.sh",
+            ".ai/repo/project/issues/I4207.yaml"
+          ],
+          "serves": [],
+          "slug": "a-trends-series-is-trusted-by-its-schema",
+          "validation": [
+            "bash test/run.sh 335_every_link_resolves"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4220",
         "kind": "issue",
         "label": "I4220",
@@ -132608,6 +132648,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4207",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4207",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4220",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144229,8 +144279,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9234,
       "acyclic": false,
       "truncated": false
     }
