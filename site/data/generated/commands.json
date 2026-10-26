@@ -534,6 +534,7 @@
           "32_refusal_lifecycle",
           "33_event_registry",
           "3995_a_task_started_before_the_first_commit_finishes",
+          "4233_start_refuses_unsafe_scalars",
           "821_a_session_moves_between_machines",
           "824_separate_work_on_two_machines_is_not_a_conflict"
         ],
@@ -542,7 +543,8 @@
           "05_handover",
           "16_profiles",
           "3160_a_scope_entry_is_one_path",
-          "32_refusal_lifecycle"
+          "32_refusal_lifecycle",
+          "4233_start_refuses_unsafe_scalars"
         ]
       },
       "demo_data": {
@@ -601,7 +603,7 @@
           }
         ]
       },
-      "doc_md": "\nBegin a scoped task.\n\n**Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile\n<name>` default from `policy.profiles.default`. `--owner <string>` free-form, default\n`$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because \"<reason>\"` name\nwhat the task serves.\n\n**Reads:** policy, profile, git state, and `intents.binding` through the built executable\nwhen the binding is asked.\n**Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.\n\n**Behaviour:**\n- Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One\n  active task per checkout: hand the existing task over (`handover --close`) or finish\n  it first. No flag discards an active task.\n- Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside\n  the repository. Records the normalised form.\n- Reads every other worktree from `git worktree list` and, where one has an active\n  task, reports any scope that contains or is contained by this scope. Reported, not\n  blocked: that is a coordination fact for the person, not a rule. Git is the registry;\n  there is no sidecar file.\n- Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from\n  arguments.\n- Asks what the task is bound to (ADR 0111) when given `--issue`, `--intent` or\n  `--exempt`, and on every start when the policy's `intent.binding` is `advisory` or\n  `required`. A refused answer to a question the worker put, or any refused or unreadable\n  answer under `required`, refuses (`15`) and writes nothing, naming each cause and the\n  three ways through. Under `advisory` a refusal is a warning. The record keeps what was\n  named, the standing, and two pins (`plan_revision`, `evidence_standing`); nothing of the\n  intent itself is stored. [Planning](https://majordomus.dev/docs/planning/) has the standings and causes.\n\n```\n$ majordomus start \"fix OAuth callback\" --scope lib/auth --profile debugging\nstarted t-20260903-193012-a4f1  profile=debugging  scope=lib/auth\nINFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by your scope  [reproduce: majordomus check --overlap]\nnext: worker reads AGENTS.md; checkpoint every 15m; majordomus check\n```"
+      "doc_md": "\nBegin a scoped task.\n\n**Arguments:** `<task>` one line. `--scope <path>[,<path>...]` required. `--profile\n<name>` default from `policy.profiles.default`. `--owner <string>` free-form on one line,\ndefault `$USER`. `--issue <id>`, `--intent <id>`, or `--exempt <class> --because \"<reason>\"` name\nwhat the task serves.\n\n**Reads:** policy, profile, git state, and `intents.binding` through the built executable\nwhen the binding is asked.\n**Writes:** `state/current.yaml` and one `task.started` line to `state/ledger.jsonl`.\n\n**Behaviour:**\n- Refuses (`15`) if `state/current.yaml` exists and its outcome is not terminal. One\n  active task per checkout: hand the existing task over (`handover --close`) or finish\n  it first. No flag discards an active task.\n- Refuses (`2`) a task, `--owner` or `--because` that holds a line break, a tab or any\n  other control character, before a finished record is archived or anything is written:\n  the record keeps each of them as one scalar on one line, which is all the layer's YAML\n  readers accept. Every other character is kept: the three are written single-quoted, so\n  a quote, a backslash and a non-ASCII letter come back from `check` exactly as given.\n- Normalises each scope path: strips trailing `/`, canonicalises, refuses paths outside\n  the repository. Records the normalised form.\n- Reads every other worktree from `git worktree list` and, where one has an active\n  task, reports any scope that contains or is contained by this scope. Reported, not\n  blocked: that is a coordination fact for the person, not a rule. Git is the registry;\n  there is no sidecar file.\n- Records `repository_id`, `branch`, `head`, `working_tree` from git. Never from\n  arguments.\n- Asks what the task is bound to (ADR 0111) when given `--issue`, `--intent` or\n  `--exempt`, and on every start when the policy's `intent.binding` is `advisory` or\n  `required`. A refused answer to a question the worker put, or any refused or unreadable\n  answer under `required`, refuses (`15`) and writes nothing, naming each cause and the\n  three ways through. Under `advisory` a refusal is a warning. The record keeps what was\n  named, the standing, and two pins (`plan_revision`, `evidence_standing`); nothing of the\n  intent itself is stored. [Planning](https://majordomus.dev/docs/planning/) has the standings and causes.\n\n```\n$ majordomus start \"fix OAuth callback\" --scope lib/auth --profile debugging\nstarted t-20260903-193012-a4f1  profile=debugging  scope=lib/auth\nINFO overlap  ../wt-alice-oauth-refresh claims lib/auth/oauth — contained by your scope  [reproduce: majordomus check --overlap]\nnext: worker reads AGENTS.md; checkpoint every 15m; majordomus check\n```"
     },
     {
       "name": "context",
@@ -963,6 +965,7 @@
           "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "3995_a_task_started_before_the_first_commit_finishes",
+          "4233_start_refuses_unsafe_scalars",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
         ],
