@@ -182,17 +182,39 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <p>Přítomnost je aktuální, nikdy ne „jednou viděno dnes ráno“. Runtime ukončený bez vypnutí nic neuvolní, přesto do <code>cooperation.expiry_seconds</code> je jeho spojení na každém peeru <code>expired</code>, jeho relace jsou <code>expired</code> a jeho výhradní claimy už nikoho neodmítají. Když se restartuje ve stejném checkoutu se stejným klíčem uzlu, je to tentýž runtime — jeho nová instance — a znovu se připojí: jeho peery jej uvedou jednou, s <code>restarts</code> započítanými, a claimy jeho předchozího běhu zůstanou vypršené, místo aby ožily.</p>
 <h2 id="how-it-works"><a class="zola-anchor" href="#how-it-works" aria-label="Odkaz na kotvu: how-it-works">Princip</a></h2>
 <p>Při každém heartbeatu runtime zvýší svůj vlastní tep; synchronizační kola přenášejí tep každého proudu s údajem, jak dávno jej odesílatel viděl stoupnout, takže živost se počítá na vlastních monotónních hodinách každého runtime a nikdy se neporovnávají hodiny dvou strojů (<code>apps/majordomus-cli/src/mesh/journal.rs</code>). Linka bez výměny po polovinu expirace je <code>unreachable</code>, po expiraci <code>expired</code> a zahozena; volající couvá exponenciálně, s limitem na expiraci, a pozdraví znovu, když peer odpoví (<code>apps/majordomus-cli/src/mesh/cooperation.rs</code>). Znovu načtený žurnál obnoví události, ale ne čerstvost, takže nic není živé, dokud znovu nezatepe.</p>
+<p>A live runtime does not let a stalled worker's exclusive claims refuse anyone (I3990). While a
+session works — an MCP request other than <code>ping</code>, an announcement, a claim, or <code>majordomus mesh beat --phase "waiting on CI"</code> from a long-running process — its runtime writes a
+<code>session_beat</code> carrying the session's ttl (<code>cooperation.session_ttl_seconds</code>, default 600);
+every runtime ages the newest one on its own clock, and an exclusive claim whose session has
+not beaten within the ttl (plus the expiry, on a runtime other than the holder's) reads
+<code>suspended</code>: it refuses nobody until its session beats again. Nothing is closed and nothing is
+taken over — the session and its advisory claims are untouched, and fencing a resumed holder
+waits for an epoch (I3174). A session that never beat — a command-line claim, a runtime older
+than the rule — keeps the stream rule alone.</p>
 <h2 id="how-to-see-it"><a class="zola-anchor" href="#how-to-see-it" aria-label="Odkaz na kotvu: how-to-see-it">Jak to vidět</a></h2>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus mesh peers                       # link state and &quot;beat Ns ago&quot; per runtime</span></span>
 <span class="giallo-l"><span>curl &#39;http://127.0.0.1:8741/api/v1/mesh/state?view=full&#39; | jq &#39;.streams&#39;</span></span>
 <span class="giallo-l"><span>cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test mesh_cooperation a_killed_runtime</span></span></code></pre>
-<p><code>a_killed_runtime_expires_and_its_restart_reconnects_as_the_same_runtime</code> zabije serverový proces signálem SIGKILL a restartuje ho; <code>test/mesh-lab/run</code> (scénáře <code>process_crash_recovery</code> a <code>network_partition</code>) zabije kontejner a odpojí jeden od sítě.</p>
+<p><code>a_killed_runtime_expires_and_its_restart_reconnects_as_the_same_runtime</code> kills a server
+process with SIGKILL and restarts it; <code>test/mesh-lab/run</code> (scenarios <code>process_crash_recovery</code>
+and <code>network_partition</code>) kills a container and disconnects one from the network.
+<code>test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh</code> serves a runtime, takes
+an exclusive claim over MCP, keeps it with tool calls, then only pings until the claim reads
+<code>suspended</code> while the runtime beats on, its advisory claim and a command-line claim still hold,
+a second exclusive claimer is admitted, and a claim kept by <code>mesh beat --phase "waiting on CI"</code>
+holds.</p>
 <h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Odkaz na kotvu: what-it-does-not-cover">Co nepokrývá</a></h2>
 <p>Vypršení je omezeno deklarovaným vypršením plus jedním heartbeatem na každý relay hop; není okamžité. Runtime, který žije, ale je nedosažitelný z jednoho peera a dosažitelný z jiného, zůstává díky relay živý, a to záměrně.</p>
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Odkaz na kotvu: why-it-exists">Proč existuje</a></h2>
-<p>Tvrzení, které přežije svého držitele, blokuje práci navždy; tvrzení uvolněné vypršením časového limitu na jednom stroji, ale ne na jiném, jsou dvě pravdy. Živost z tepů, které vyprší na hodinách každého runtime, je to, co způsobí, že tvrzení mrtvého držitele skončí všude, aniž je kdokoli uvolňuje.</p>
+<p>A claim that outlives its holder blocks work forever; a claim that is released by a timeout
+on one machine but not another is two truths. Liveness from beats that expire on every
+runtime's own clock is what makes a dead holder's claims end everywhere without anyone
+releasing them. A holder must stop excluding when its worker stops, not only when its server
+does: on 2026-10-22 an executor waiting on nobody held the integration lease for hours while
+its server beat, and the owner ordered that no work may stall on a peer that waits on a
+dialog, crashed or hung.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail vykreslen z <a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/docs/claims/mesh-liveness-expiry.md" class="font-mono underline">docs/claims/mesh-liveness-expiry.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">Od tvrzení k důkazu</h2>
+    <p class="mt-2 text-xs text-body-subtle">Detail vykreslen z <a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/docs/claims/mesh-liveness-expiry.md" class="font-mono underline">docs/claims/mesh-liveness-expiry.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">Od tvrzení k důkazu</h2>
     <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="mesh-liveness-expiry">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; veřejné tvrzení</p>
@@ -202,15 +224,15 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; kanonické tvrzení</p>
         <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">mesh-liveness-expiry</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span>
-<span class="text-body">v <a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
-        <p class="mt-1 mb-0 min-w-0 break-all text-body">Definováno v <a href="https://majordomus.dev/cs/docs/mesh/" class="font-medium text-fg-brand hover:underline">přečtěte si to na tomto webu</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/docs/MESH.md" class="font-mono text-fg-brand hover:underline">docs/MESH.md</a></p>
+<span class="text-body">v <a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Definováno v <a href="https://majordomus.dev/cs/docs/mesh/" class="font-medium text-fg-brand hover:underline">přečtěte si to na tomto webu</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/docs/MESH.md" class="font-mono text-fg-brand hover:underline">docs/MESH.md</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; implementace</p>
-        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/apps/majordomus-cli/src/mesh/cooperation.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/mesh/cooperation.rs</a></p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/apps/majordomus-cli/src/mesh/cooperation.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/mesh/cooperation.rs</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; test a scénáře</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/apps/majordomus-cli/tests/mesh_cooperation.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/tests/mesh_cooperation.rs</a></p>
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; test a scénáře</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/apps/majordomus-cli/tests/mesh_cooperation.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/tests/mesh_cooperation.rs</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; zaznamenané běhy</p>
@@ -298,9 +320,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/6259dac47afb5b01008725c6040f366feb458578/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/22a914d002ab6d24733dae890a4dc17bcede2f81/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -308,7 +330,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.8</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6259dac47afb5b01008725c6040f366feb458578" class="font-mono underline">6259dac</a> · inputs <span class="font-mono">69537f8ea85e</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/22a914d002ab6d24733dae890a4dc17bcede2f81" class="font-mono underline">22a914d</a> · inputs <span class="font-mono">8920653ffaa3</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
