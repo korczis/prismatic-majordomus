@@ -1227,18 +1227,68 @@ pub struct Cooperation {
     /// The session beats of the last [`SESSION_BEAT_WINDOW`], the counters of every beat
     /// written and withheld, and when one was last withheld.
     beat_window: Mutex<BeatWindow>,
+    /// The same count for the beats that say a session waits on a person, and the ones that
+    /// clear that (I3992): kept apart, so that a session whose turns end often cannot spend
+    /// the beats that keep other sessions' exclusive claims excluding.
+    mark_window: Mutex<BeatWindow>,
     build_cache: Mutex<BuildCachePublisher>,
 }
 
 /// The newest session beat a run wrote for one session (I3990).
 struct LastBeat {
-    /// When it was written, on this process's clock.
-    at: Instant,
+    /// When the newest beat that was progress was written, on this process's clock; `None`
+    /// while the session has only said it waits on a person (I3992), which is not progress.
+    at: Option<Instant>,
     /// The phase it named, or the newer one a beat inside the interval said since: what
     /// the session is doing now, shown before the next beat carries it.
     phase: Option<String>,
     /// What writing it answered, given again to a beat that writes nothing new.
     written: Written,
+    /// The wait on a person the newest written beat named, until a beat that is progress
+    /// clears it (I3992).
+    marked: Option<String>,
+}
+
+/// What a session beat is (I3992): progress, the first progress after a wait on a person —
+/// which clears the mark, and is written at once whatever the session holds — or the mark.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BeatKind {
+    Progress,
+    Clear,
+    Mark,
+}
+
+/// What a beat naming `phase` writes as of `now`, for a session whose newest beat this run
+/// wrote is `last`; `None` when it writes nothing and only the phase shown changes.
+///
+/// Progress is written at most once a quarter of the ttl, whatever the phase says (I3990).
+/// A wait on a person is written at once, so that peers see it within seconds, and said
+/// again it is the same mark; the first beat after it that is not a wait clears it, at once
+/// as well (I3992).
+fn beat_kind(
+    last: Option<&LastBeat>,
+    phase: Option<&str>,
+    now: Instant,
+    ttl: Duration,
+) -> Option<BeatKind> {
+    let mark = phase.is_some_and(super::journal::waits_on_a_person);
+    let Some(last) = last else {
+        return Some(if mark {
+            BeatKind::Mark
+        } else {
+            BeatKind::Progress
+        });
+    };
+    if mark {
+        return (last.marked.as_deref() != phase).then_some(BeatKind::Mark);
+    }
+    if last.marked.is_some() {
+        return Some(BeatKind::Clear);
+    }
+    match last.at {
+        Some(at) if now.saturating_duration_since(at) < ttl / 4 => None,
+        _ => Some(BeatKind::Progress),
+    }
 }
 
 /// The rolling count of one runtime's session beats (I3990).
@@ -1446,6 +1496,7 @@ impl Cooperation {
             rounds: Mutex::new(BTreeMap::new()),
             beats: Mutex::new(BTreeMap::new()),
             beat_window: Mutex::new(BeatWindow::default()),
+            mark_window: Mutex::new(BeatWindow::default()),
             build_cache: Mutex::new(BuildCachePublisher::default()),
         }))
     }
@@ -1627,15 +1678,89 @@ impl Cooperation {
     /// another session holds a live exclusive claim over — admitted while this one was
     /// silent — is released with [`OVERTAKEN`] rather than made to hold again, so two
     /// sessions never both hold one scope; the holder claims again through admission.
+    ///
+    /// `kind` says what the beat is (I3992). A [`BeatKind::Mark`] — the session waits on a
+    /// person — is not progress: it touches no claim, needs none, and leaves the time of the
+    /// session's last progress as it was. A [`BeatKind::Clear`] is progress that ends a mark,
+    /// written whether or not the session holds an exclusive claim, so that every runtime
+    /// that saw the mark sees it end. Both are counted in their own window.
     fn beat_session(
         &self,
         session: &str,
         ttl: Duration,
         phase: Option<String>,
         now: Instant,
+        kind: BeatKind,
     ) -> Option<Written> {
-        let state = self.state_at(now);
         let mine = self.own(session);
+        // a mark is not progress, so it re-arms nothing and releases nothing
+        let armed = kind != BeatKind::Mark && self.rearm(session, &mine, now);
+        if kind == BeatKind::Progress && !armed {
+            return None;
+        }
+        let windows = if kind == BeatKind::Progress {
+            &self.beat_window
+        } else {
+            &self.mark_window
+        };
+        {
+            let limit = session_beat_limit(ttl);
+            let mut window = windows.lock().expect("cooperation beat window");
+            while window
+                .times
+                .front()
+                .is_some_and(|t| now.saturating_duration_since(*t) >= SESSION_BEAT_WINDOW)
+            {
+                window.times.pop_front();
+            }
+            if window.times.len() >= limit {
+                window.withheld += 1;
+                window.withheld_at = Some(now);
+                if !window.warned {
+                    window.warned = true;
+                    tracing::warn!(runtime_id = %self.own_key, session_id = %session, limit, window_seconds = SESSION_BEAT_WINDOW.as_secs(), kind = ?kind, "session beats withheld: this runtime reached its limit per window; the exclusive claims of sessions it cannot beat for will suspend, and a wait on a person it cannot mark is shown here only, until the window moves (mesh doctor reports the progress beats)");
+                }
+                return None;
+            }
+        }
+        let body = EventBody::SessionBeat {
+            session: session.to_string(),
+            ttl_seconds: u32::try_from(ttl.as_secs()).unwrap_or(u32::MAX),
+            phase: phase.clone(),
+        };
+        // The journal cannot refuse this beat: the session is one this runtime opened, so its
+        // name passed the same bound; the ttl passed the declaration's check; and the phase
+        // was clipped to one line of its bound. Only a refused write would answer `None` here.
+        self.write(body, mine).ok().inspect(|written| {
+            {
+                let mut window = windows.lock().expect("cooperation beat window");
+                window.times.push_back(now);
+                window.written += 1;
+                window.warned = false;
+            }
+            let mut beats = self.beats.lock().expect("cooperation beats");
+            let progressed = beats.get(session).and_then(|last| last.at);
+            beats.insert(
+                session.to_string(),
+                LastBeat {
+                    at: if kind == BeatKind::Mark {
+                        progressed
+                    } else {
+                        Some(now)
+                    },
+                    marked: (kind == BeatKind::Mark).then(|| phase.clone()).flatten(),
+                    phase,
+                    written: written.clone(),
+                },
+            );
+        })
+    }
+
+    /// Whether `session` (`mine` as the fold names it) holds an exclusive claim a beat would
+    /// keep, as of `now`, after letting go of the suspended ones another session was
+    /// admitted over (see [`Cooperation::beat_session`]).
+    fn rearm(&self, session: &str, mine: &str, now: Instant) -> bool {
+        let state = self.state_at(now);
         let mut armed = 0usize;
         for claim in state
             .claims
@@ -1663,53 +1788,7 @@ impl Cooperation {
                 ClaimState::Released | ClaimState::Expired(_) => {}
             }
         }
-        if armed == 0 {
-            return None;
-        }
-        {
-            let limit = session_beat_limit(ttl);
-            let mut window = self.beat_window.lock().expect("cooperation beat window");
-            while window
-                .times
-                .front()
-                .is_some_and(|t| now.saturating_duration_since(*t) >= SESSION_BEAT_WINDOW)
-            {
-                window.times.pop_front();
-            }
-            if window.times.len() >= limit {
-                window.withheld += 1;
-                window.withheld_at = Some(now);
-                if !window.warned {
-                    window.warned = true;
-                    tracing::warn!(runtime_id = %self.own_key, session_id = %session, limit, window_seconds = SESSION_BEAT_WINDOW.as_secs(), "session beats withheld: this runtime reached its limit per window; the exclusive claims of sessions it cannot beat for will suspend until the window moves (mesh doctor reports it)");
-                }
-                return None;
-            }
-        }
-        let body = EventBody::SessionBeat {
-            session: session.to_string(),
-            ttl_seconds: u32::try_from(ttl.as_secs()).unwrap_or(u32::MAX),
-            phase: phase.clone(),
-        };
-        // The journal cannot refuse this beat: the session is one this runtime opened, so its
-        // name passed the same bound; the ttl passed the declaration's check; and the phase
-        // was clipped to one line of its bound. Only a refused write would answer `None` here.
-        self.write(body, mine).ok().inspect(|written| {
-            {
-                let mut window = self.beat_window.lock().expect("cooperation beat window");
-                window.times.push_back(now);
-                window.written += 1;
-                window.warned = false;
-            }
-            self.beats.lock().expect("cooperation beats").insert(
-                session.to_string(),
-                LastBeat {
-                    at: now,
-                    phase,
-                    written: written.clone(),
-                },
-            );
-        })
+        armed > 0
     }
 
     /// The session beats this runtime wrote and withheld, for `mesh doctor` (I3990).
@@ -1827,24 +1906,32 @@ impl Cooperation {
             })
             .or_else(|| pid.map(|pid| format!("pid {pid}")))
             .map(|p| clip(&p, super::journal::MAX_PHASE_BYTES));
-        // At most one beat a quarter of the ttl, whatever the phase says: a new phase inside
-        // the interval is held here and shown, and the next beat carries it to the journal.
-        if let Some(last) = self
-            .beats
-            .lock()
-            .expect("cooperation beats")
-            .get_mut(session)
-        {
-            if now.saturating_duration_since(last.at) < ttl / 4 {
-                last.phase = phase;
-                return Ok(last.written.clone());
+        let kind = {
+            let mut beats = self.beats.lock().expect("cooperation beats");
+            let last = beats.get_mut(session);
+            match beat_kind(last.as_deref(), phase.as_deref(), now, ttl) {
+                Some(kind) => kind,
+                // nothing new to write: the phase is held and shown, and the last beat answers
+                None => {
+                    let last = last.expect("only a session that beat is held");
+                    last.phase = phase;
+                    return Ok(last.written.clone());
+                }
             }
-        }
-        self.beat_session(session, ttl, phase, now).ok_or_else(|| {
-            CooperationError::Invalid(format!(
-                "no beat was written for '{session}': it holds no exclusive claim a beat would keep, this runtime reached its limit of session beats per window (mesh doctor says which), or the journal refused it"
-            ))
-        })
+        };
+        let held = phase.clone();
+        self.beat_session(session, ttl, phase, now, kind)
+            .ok_or_else(|| {
+                // a wait that could not be written is still shown here, once the session beat
+                if kind == BeatKind::Mark {
+                    if let Some(last) = self.beats.lock().expect("cooperation beats").get_mut(session) {
+                        last.phase = held;
+                    }
+                }
+                CooperationError::Invalid(format!(
+                    "no beat was written for '{session}': it holds no exclusive claim a beat would keep, this runtime reached its limit of session beats per window (mesh doctor says which), or the journal refused it"
+                ))
+            })
     }
 
     /// Keep the exclusive claims of every working board session excluding (I3990). Runs
@@ -1931,13 +2018,13 @@ impl Cooperation {
                 .lock()
                 .expect("cooperation beats")
                 .get(&session)
-                .map(|last| last.at);
+                .and_then(|last| last.at);
             let due = match last {
                 None => true,
                 Some(at) => progressed > at && now.saturating_duration_since(at) >= ttl / 4,
             };
             if due {
-                self.beat_session(&session, ttl, None, now);
+                self.beat_session(&session, ttl, None, now, BeatKind::Progress);
             }
         }
     }
@@ -4226,12 +4313,13 @@ impl Cooperation {
                 .lock()
                 .expect("cooperation beats")
                 .get(&session.session)
-                .is_some_and(|last| now.saturating_duration_since(last.at) < ttl / 4);
+                .and_then(|last| last.at)
+                .is_some_and(|at| now.saturating_duration_since(at) < ttl / 4);
             if mode == ClaimMode::Exclusive
                 && !covered
                 && self.board_peer(&session.session).is_some()
             {
-                self.beat_session(&session.session, ttl, None, now);
+                self.beat_session(&session.session, ttl, None, now, BeatKind::Progress);
             }
         }
         Ok(written)
@@ -6386,6 +6474,165 @@ mod tests {
         assert!(
             refused.to_string().contains("no exclusive claim"),
             "{refused}"
+        );
+    }
+
+    /// I3992: what a beat writes, by what the session's newest written beat was.
+    #[test]
+    fn a_beat_is_progress_a_mark_or_the_clear_of_one() {
+        let ttl = Duration::from_secs(8);
+        let now = Instant::now();
+        let written = Written {
+            key: "s/k".into(),
+            event: "s/1".into(),
+            lamport: 1,
+            durability: Durability::default(),
+        };
+        let last = |at: Option<Instant>, marked: Option<&str>| LastBeat {
+            at,
+            phase: marked.map(str::to_string),
+            written: written.clone(),
+            marked: marked.map(str::to_string),
+        };
+        let dialog = Some("blocked: permission dialog");
+        // a first beat
+        assert_eq!(beat_kind(None, None, now, ttl), Some(BeatKind::Progress));
+        assert_eq!(beat_kind(None, dialog, now, ttl), Some(BeatKind::Mark));
+        // progress inside a quarter of the ttl writes nothing; past it, it does
+        let worked = last(Some(now), None);
+        assert_eq!(beat_kind(Some(&worked), Some("x"), now, ttl), None);
+        let later = now + ttl / 4;
+        assert_eq!(
+            beat_kind(Some(&worked), None, later, ttl),
+            Some(BeatKind::Progress)
+        );
+        // a wait is written at once, and said again it is the same mark
+        assert_eq!(
+            beat_kind(Some(&worked), dialog, now, ttl),
+            Some(BeatKind::Mark)
+        );
+        let waiting = last(Some(now), dialog);
+        assert_eq!(beat_kind(Some(&waiting), dialog, now, ttl), None);
+        let input = Some("blocked: awaiting input");
+        assert_eq!(
+            beat_kind(Some(&waiting), input, now, ttl),
+            Some(BeatKind::Mark)
+        );
+        // the first beat after it that is not a wait clears it at once
+        assert_eq!(
+            beat_kind(Some(&waiting), None, now, ttl),
+            Some(BeatKind::Clear)
+        );
+        let only_waited = last(None, dialog);
+        assert_eq!(
+            beat_kind(Some(&only_waited), None, now, ttl),
+            Some(BeatKind::Clear)
+        );
+    }
+
+    /// I3992: a wait on a person is written at once, whatever the interval and whether or
+    /// not the session holds an exclusive claim, and is no progress: it re-arms nothing,
+    /// moves no clock and spends none of the progress beats; the next real work clears it
+    /// at once, and progress keeps its interval after that.
+    #[test]
+    fn a_wait_on_a_person_is_written_at_once_and_spends_no_progress_beat() {
+        let a = progress_runtime(8, None);
+        a.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        let start = Instant::now();
+        let at = |ms: u64| start + Duration::from_millis(ms);
+        a.beat_at("lander", Some("waiting on CI".into()), None, at(0))
+            .unwrap();
+        assert_eq!(session_beats(&a).len(), 1);
+        let dialog = "blocked: permission dialog";
+        a.beat_at("lander", Some(dialog.into()), None, at(500))
+            .unwrap();
+        assert_eq!(session_beats(&a).len(), 2, "inside the interval, at once");
+        a.beat_at("lander", Some(dialog.into()), None, at(600))
+            .unwrap();
+        assert_eq!(session_beats(&a).len(), 2, "the same wait said again");
+        let key = format!("{}/lander", a.journal().own_stream());
+        let (age, phase) = a.journal().session_beat_age(&key).unwrap();
+        assert_eq!(phase.as_deref(), Some(dialog));
+        assert!(age.is_some(), "the clock the progress started still runs");
+        assert_eq!(
+            a.beats.lock().unwrap().get("lander").unwrap().at,
+            Some(at(0)),
+            "the mark is not progress"
+        );
+        assert_eq!(a.session_beat_tally().written, 1, "no progress beat spent");
+        // the next real work clears it at once, and is progress
+        a.beat_at("lander", None, None, at(700)).unwrap();
+        assert_eq!(session_beats(&a).len(), 3);
+        assert_eq!(a.journal().session_beat_age(&key).unwrap().1, None);
+        assert_eq!(a.session_phase(&key), None);
+        assert_eq!(
+            a.beats.lock().unwrap().get("lander").unwrap().at,
+            Some(at(700))
+        );
+        a.beat_at("lander", Some("editing".into()), None, at(800))
+            .unwrap();
+        assert_eq!(session_beats(&a).len(), 3, "progress keeps its interval");
+
+        // a session holding nothing is marked and cleared, and beats nothing else
+        a.open_session(SessionInfo::named("claude-code-s1", "claude-code"))
+            .unwrap();
+        a.beat_at(
+            "claude-code-s1",
+            Some("blocked: awaiting input".into()),
+            None,
+            at(0),
+        )
+        .expect("a wait needs no claim");
+        a.beat_at("claude-code-s1", None, None, at(100))
+            .expect("nor does its clear");
+        assert_eq!(session_beats(&a).len(), 5);
+        a.beat_at("claude-code-s1", None, None, at(5000))
+            .expect_err("then nothing a beat would keep");
+        assert_eq!(session_beats(&a).len(), 5);
+    }
+
+    /// I3992: the waits on a person have a window of their own; past its limit a wait is
+    /// withheld and still shown by the runtime that holds it, and the progress beats are
+    /// untouched.
+    #[test]
+    fn waits_past_their_limit_are_withheld_and_still_shown() {
+        let ttl = 3600;
+        let a = progress_runtime(ttl, None);
+        a.open_session(SessionInfo::named("s", "cli")).unwrap();
+        let limit = session_beat_limit(Duration::from_secs(ttl));
+        let start = Instant::now();
+        for n in 0..limit {
+            let phase = if n % 2 == 0 {
+                Some("blocked: awaiting input".to_string())
+            } else {
+                None
+            };
+            a.beat_at("s", phase, None, start + Duration::from_secs(n as u64))
+                .unwrap();
+        }
+        assert_eq!(session_beats(&a).len(), limit);
+        let past = start + Duration::from_secs(limit as u64);
+        a.beat_at("s", Some("blocked: permission dialog".into()), None, past)
+            .expect_err("the window is spent");
+        assert_eq!(session_beats(&a).len(), limit);
+        let key = format!("{}/s", a.journal().own_stream());
+        assert_eq!(
+            a.session_phase(&key).as_deref(),
+            Some("blocked: permission dialog"),
+            "shown by the runtime that holds it"
+        );
+        let tally = a.session_beat_tally();
+        assert_eq!(
+            (tally.written, tally.withheld),
+            (0, 0),
+            "no progress beat spent"
         );
     }
 

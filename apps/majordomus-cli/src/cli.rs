@@ -1384,6 +1384,11 @@ pub struct MeshReleaseArgs {
 /// suspended, refusing nobody, once no beat arrives within the declared progress ttl — so a
 /// lander waiting on a CI run beats with `--phase "waiting on CI run 123"` while it waits.
 ///
+/// `--hook <provider>` is what a provider's hook runs instead (I3992): the session and the
+/// phase are read from the hook payload on stdin — a permission dialog or the end of a turn
+/// marks the session `blocked: …`, a prompt or a tool call clears it — and the command
+/// prints nothing and exits 0 whatever happens, because a hook must never stop the session.
+///
 /// ```
 /// use clap::Parser;
 /// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshBeatArgs};
@@ -1392,23 +1397,33 @@ pub struct MeshReleaseArgs {
 ///     "--phase", "waiting on CI", "--pid", "4242"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
-/// assert_eq!(beat.session, "lander");
+/// assert_eq!(beat.session.as_deref(), Some("lander"));
 /// assert_eq!(beat.phase.as_deref(), Some("waiting on CI"));
 /// assert_eq!(beat.pid, Some(4242));
+/// assert_eq!(beat.hook, None);
 ///
-/// // a beat speaks for a named session
+/// // a beat speaks for a named session, or for the one a hook payload names
 /// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat"]).is_err());
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "beat", "--hook", "claude-code"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
+/// assert_eq!((beat.hook.as_deref(), beat.session), (Some("claude-code"), None));
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat", "--hook", "claude-code",
+///     "--session", "lander"]).is_err(), "the payload names the session");
 /// ```
 pub struct MeshBeatArgs {
     /// The session making progress, as it was claimed under
-    #[arg(long)]
-    pub session: String,
-    /// What it is doing, one line: `waiting on CI run 123`
+    #[arg(long, required_unless_present = "hook")]
+    pub session: Option<String>,
+    /// What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person
     #[arg(long)]
     pub phase: Option<String>,
     /// The running process of this machine the beat speaks for
     #[arg(long)]
     pub pid: Option<u32>,
+    /// Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0
+    #[arg(long, value_name = "PROVIDER", conflicts_with_all = ["session", "phase", "pid"])]
+    pub hook: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
