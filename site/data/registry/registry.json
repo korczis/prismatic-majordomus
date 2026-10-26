@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "afa58d714c5eb403af614b2ab8de0ca49bf343bc982e97289172cf0501c4fee0",
+    "fingerprint": "2679544e96086703647161afc7a30d70b19c5a609983131977d94080ec4c207e",
     "summary": {
-      "total": 3550,
-      "builtin": 220,
-      "declarative": 3330,
+      "total": 3561,
+      "builtin": 221,
+      "declarative": 3340,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3330
+        "query": 185,
+        "resource": 3340
       },
       "by_stability": {
         "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3340
+        "experimental": 64,
+        "implemented": 3350
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3387,
-      "http_routes": 212,
-      "cli_commands": 120,
+      "mcp_tools": 207,
+      "mcp_resources": 3397,
+      "http_routes": 213,
+      "cli_commands": 121,
       "modules": 94,
       "benchmark_required": 181,
-      "benchmark_waived": 39,
+      "benchmark_waived": 40,
       "cached": 55
     },
     "builtin": [
@@ -35966,6 +35966,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -37467,6 +37472,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39331,6 +39341,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39517,6 +39532,24 @@
                       "null"
                     ],
                     "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
+                  },
+                  "progressed_at": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote."
+                  },
+                  "progress_ttl_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`)."
                   }
                 },
                 "required": [
@@ -48162,7 +48195,7 @@
                   "string",
                   "null"
                 ],
-                "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+                "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it."
               },
               "pid": {
                 "type": [
@@ -53563,7 +53596,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                    "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
                   },
                   "phase": {
                     "type": [
@@ -53571,6 +53604,13 @@
                       "null"
                     ],
                     "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+                  },
+                  "blocked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
                   }
                 },
                 "required": [
@@ -54751,7 +54791,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                    "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
                   },
                   "phase": {
                     "type": [
@@ -54759,6 +54799,13 @@
                       "null"
                     ],
                     "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+                  },
+                  "blocked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
                   }
                 },
                 "required": [
@@ -58325,6 +58372,498 @@
           "effect": "process_state",
           "cancellable": false,
           "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+      },
+      {
+        "id": "mesh.who",
+        "module": "mesh",
+        "kind": "query",
+        "title": "Who runs this",
+        "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
+        "input": {
+          "name": "WhoInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "subject": {
+                "type": "string",
+                "description": "A pid, `host:pid`, a run tag, `host:tag`, an issue (`I<digits>`) or a path."
+              }
+            },
+            "required": [
+              "subject"
+            ],
+            "description": "The input of `mesh.who`.",
+            "title": "WhoInput"
+          }
+        },
+        "output": {
+          "name": "WhoReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "subject": {
+                "type": "string",
+                "description": "The subject as asked."
+              },
+              "kind": {
+                "type": "string",
+                "description": "`pid`, `tag`, `issue` or `path`."
+              },
+              "host": {
+                "type": "string",
+                "description": "The machine the subject was read on."
+              },
+              "known": {
+                "type": "boolean",
+                "description": "Whether an owner was named; `false` is \"unknown\", with `missing` saying why."
+              },
+              "leftover": {
+                "type": "boolean",
+                "description": "Whether the process is a leftover: init is its parent and its directory is gone."
+              },
+              "owners": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WhoOwner"
+                },
+                "description": "Every worker the evidence names."
+              },
+              "chain": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProcessFact"
+                },
+                "description": "The process and its parents, for a pid."
+              },
+              "run": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RunRecord"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The run record the subject belongs to."
+              },
+              "evidence": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/WhoEvidence"
+                },
+                "description": "Every source consulted."
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be named, and the evidence that would have named it."
+              }
+            },
+            "required": [
+              "subject",
+              "kind",
+              "host",
+              "known",
+              "leftover",
+              "owners",
+              "chain",
+              "evidence",
+              "missing"
+            ],
+            "description": "The answer of `mesh.who`.",
+            "title": "WhoReport",
+            "$defs": {
+              "WhoOwner": {
+                "type": "object",
+                "properties": {
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's id on the mesh (`claude-code-<id>`)."
+                  },
+                  "peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The board peer, when a board row is this worker's."
+                  },
+                  "checkout": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The checkout that board row is attached to."
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's name, as its provider shows it in its session list."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue the work is for."
+                  },
+                  "address": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PeerAddress"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Where the worker is reached: its machine, process, provider session and socket."
+                  },
+                  "basis": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What named each of these, one line per fact used."
+                  }
+                },
+                "required": [
+                  "basis"
+                ],
+                "description": "One worker the answer names."
+              },
+              "PeerAddress": {
+                "type": "object",
+                "properties": {
+                  "provider": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider whose session this is (`claude-code`), when its environment says so."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The machine the worker runs on."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's own process: the provider's pid, not the MCP bridge it started."
+                  },
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's id for the session, the one its lifecycle hooks are given."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions on the same machine message this one through."
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```"
+              },
+              "ProcessFact": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process."
+                  },
+                  "ppid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its parent; 1 is init, which a process whose parent died is handed to."
+                  },
+                  "pgid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "Its process group."
+                  },
+                  "started": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When it started, as the host's `ps` says it."
+                  },
+                  "command": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its command line: reported, never used to decide whose it is."
+                  },
+                  "cwd": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Its working directory."
+                  },
+                  "cwd_gone": {
+                    "type": "boolean",
+                    "description": "Whether that directory no longer exists (a removed worktree)."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's messaging socket for this pid, when one exists."
+                  },
+                  "env": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The owner variables of its environment (never a token)."
+                  },
+                  "provider_session": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ProviderSession"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The provider's session registry entry for this pid, when there is one."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "ppid",
+                  "pgid",
+                  "cwd_gone",
+                  "env"
+                ],
+                "description": "One process of a parent chain, as its host reports it."
+              },
+              "ProviderSession": {
+                "type": "object",
+                "properties": {
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The provider's id for the session."
+                  },
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's name, as the provider shows it in its session list."
+                  },
+                  "socket": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The socket other sessions message it on."
+                  },
+                  "started": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "When the registry says its process started."
+                  },
+                  "verified": {
+                    "type": "boolean",
+                    "description": "Whether that start is this process's: a pid the host handed on since is not the\nsession's, and its entry is then not used."
+                  }
+                },
+                "required": [
+                  "verified"
+                ],
+                "description": "What a provider's session registry says about one of its processes."
+              },
+              "RunRecord": {
+                "type": "object",
+                "properties": {
+                  "tag": {
+                    "type": "string",
+                    "description": "The offload tag: the first ten characters of the commit that travelled."
+                  },
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The run's shell on the host."
+                  },
+                  "pgid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The run's process group; absent where the host could not start one."
+                  },
+                  "started_at": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When it started, seconds since the epoch."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The host it runs on."
+                  },
+                  "cwd": {
+                    "type": "string",
+                    "description": "The worktree it runs in."
+                  },
+                  "owner": {
+                    "$ref": "#/$defs/RunOwner",
+                    "description": "Who it belongs to."
+                  }
+                },
+                "required": [
+                  "tag",
+                  "pid",
+                  "started_at",
+                  "host",
+                  "cwd",
+                  "owner"
+                ],
+                "description": "A run record as the host keeps it while the run lives."
+              },
+              "RunOwner": {
+                "type": "object",
+                "properties": {
+                  "session": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The session's id on the mesh (`claude-code-<id>`), or the one this process inherited."
+                  },
+                  "peer": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The board peer whose address is this worker's, or the one this process inherited."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue the work is for: the active task's, or the one this process inherited."
+                  },
+                  "host": {
+                    "type": "string",
+                    "description": "The machine the run was started from."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The worker's process on that machine."
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "description": "Who a run belongs to: what a person needs to reach the worker that started it."
+              },
+              "WhoEvidence": {
+                "type": "object",
+                "properties": {
+                  "source": {
+                    "type": "string",
+                    "description": "`process`, `run_records`, `board` or `mesh_claims`."
+                  },
+                  "used": {
+                    "type": "boolean",
+                    "description": "Whether the answer used it."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "What it said, or why it said nothing."
+                  }
+                },
+                "required": [
+                  "source",
+                  "used",
+                  "detail"
+                ],
+                "description": "One source of evidence, and what it gave."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::mesh"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_mesh_who"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/mesh/who"
+          },
+          "cli": {
+            "path": [
+              "mesh",
+              "who"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "mesh",
+          "coordination",
+          "diagnostics"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted",
+          "local_only": true
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -91372,7 +91911,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1034,
+        "capabilities": 1041,
         "capability_ids": []
       },
       {
@@ -91463,7 +92002,7 @@
         "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 30,
+        "capabilities": 31,
         "capability_ids": [
           "mesh.beat",
           "mesh.build_cache.ensure",
@@ -91494,7 +92033,8 @@
           "mesh.session.open",
           "mesh.state",
           "mesh.status",
-          "mesh.verify"
+          "mesh.verify",
+          "mesh.who"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
       },
@@ -91970,7 +92510,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 657,
         "capability_ids": []
       },
       {
@@ -92062,7 +92602,7 @@
     ]
   },
   "index": {
-    "fingerprint": "d5d9e1e892a82108fe0c01ea041eccfe3d8a76091db531ab6a8baccea67a2eb0",
+    "fingerprint": "883f7a8e48eacb7362588ae94fd4f392abab45210f7773659de0112e04552acc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92102,7 +92642,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1034,
+      "issue": 1041,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92116,7 +92656,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 657,
       "use-case": 49,
       "workspace": 1
     },
@@ -99259,7 +99799,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40647
+        "bytes": 40638
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99421,7 +99961,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75048
+        "bytes": 76598
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -99475,7 +100015,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 87563
+        "bytes": 93685
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99502,7 +100042,7 @@
         "title": "The derive offload",
         "path": "docs/OFFLOAD.md",
         "source_class": "document",
-        "bytes": 11917
+        "bytes": 20486
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -99547,7 +100087,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993877
+        "bytes": 925714
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99727,7 +100267,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 52647
+        "bytes": 53219
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -102928,7 +103468,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 105288
+        "bytes": 107875
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -103979,7 +104519,7 @@
         "path": ".ai/repo/project/issues/I0703.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3263
+        "bytes": 4345
       },
       {
         "uri": "majordomus://issue/I0704",
@@ -104221,7 +104761,7 @@
         "path": ".ai/repo/project/issues/I0821.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3467
+        "bytes": 4285
       },
       {
         "uri": "majordomus://issue/I0822",
@@ -107070,7 +107610,7 @@
         "path": ".ai/repo/project/issues/I2410.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2123
+        "bytes": 3702
       },
       {
         "uri": "majordomus://issue/I2411",
@@ -107092,7 +107632,7 @@
         "path": ".ai/repo/project/issues/I2412.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1702
+        "bytes": 3283
       },
       {
         "uri": "majordomus://issue/I2413",
@@ -107576,7 +108116,7 @@
         "path": ".ai/repo/project/issues/I2588.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2626
+        "bytes": 3305
       },
       {
         "uri": "majordomus://issue/I2601",
@@ -108203,7 +108743,7 @@
         "path": ".ai/repo/project/issues/I2732.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2554
+        "bytes": 3743
       },
       {
         "uri": "majordomus://issue/I2733",
@@ -108214,7 +108754,7 @@
         "path": ".ai/repo/project/issues/I2733.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4463
+        "bytes": 5300
       },
       {
         "uri": "majordomus://issue/I2734",
@@ -108379,7 +108919,7 @@
         "path": ".ai/repo/project/issues/I2761.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2157
+        "bytes": 3157
       },
       {
         "uri": "majordomus://issue/I2770",
@@ -108434,7 +108974,7 @@
         "path": ".ai/repo/project/issues/I2784.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2502
+        "bytes": 3980
       },
       {
         "uri": "majordomus://issue/I2786",
@@ -113109,7 +113649,7 @@
         "path": ".ai/repo/project/issues/I3602.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2885
+        "bytes": 3625
       },
       {
         "uri": "majordomus://issue/I3606",
@@ -113164,7 +113704,7 @@
         "path": ".ai/repo/project/issues/I3660.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3552
+        "bytes": 5052
       },
       {
         "uri": "majordomus://issue/I3661",
@@ -114066,7 +114606,7 @@
         "path": ".ai/repo/project/issues/I3918.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2461
+        "bytes": 3663
       },
       {
         "uri": "majordomus://issue/I3919",
@@ -114077,7 +114617,7 @@
         "path": ".ai/repo/project/issues/I3919.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1924
+        "bytes": 2695
       },
       {
         "uri": "majordomus://issue/I3920",
@@ -114363,7 +114903,7 @@
         "path": ".ai/repo/project/issues/I3956.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3648
+        "bytes": 3903
       },
       {
         "uri": "majordomus://issue/I3957",
@@ -114553,6 +115093,50 @@
         "bytes": 7833
       },
       {
+        "uri": "majordomus://issue/I3991",
+        "kind": "issue",
+        "identity": "I3991",
+        "title": "The integration lease lives by its executor's progress through the queue, not by its process existing",
+        "description": "Make the integration executor's exclusive mesh claim on integration/<repository>/<base> beat only when the executor advances its queue (a pull request planned, repaired, merged or refused, a derive or a CI verdict observed), so an executor that holds the lease and does nothing is suspended by the rule of I3990 and another machine's executor is admitted; and make the clone's flock lease carry the same progress stamp, so prs brief and the Cockpit show how long the holder has made no progress.",
+        "path": ".ai/repo/project/issues/I3991.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3220
+      },
+      {
+        "uri": "majordomus://issue/I3992",
+        "kind": "issue",
+        "identity": "I3992",
+        "title": "A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh",
+        "description": "When a Claude Code session raises a permission dialog or an idle notification (the Notification hook) or ends its turn waiting for input (the Stop hook), record on the mesh that the session is blocked on a person, with the reason, so peers and the landing seat see it at once instead of after the progress ttl; and clear the mark at the session's next real work.",
+        "path": ".ai/repo/project/issues/I3992.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3882
+      },
+      {
+        "uri": "majordomus://issue/I3993",
+        "kind": "issue",
+        "identity": "I3993",
+        "title": "Every wait on a peer is bounded and says what it waited for when the bound is reached",
+        "description": "Find every place the executable waits on another session or runtime (a mesh review answer, a handover consumer, a derive or offload queue, a lease, a claim admission retry) and give each an explicit bound read from the declaration, after which it stops waiting, names what it waited for and who held it, and routes around (another host, another seat, or a report) instead of hanging.",
+        "path": ".ai/repo/project/issues/I3993.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2271
+      },
+      {
+        "uri": "majordomus://issue/I3994",
+        "kind": "issue",
+        "identity": "I3994",
+        "title": "Superseded session beats are compacted, so liveness never spends a node's event quota",
+        "description": "Compact a session's superseded session_beat events in the journal (only the newest beat of a session decides its liveness), so a long-lived runtime's beats do not accumulate toward the per-node event quota that I2825 showed can deadlock a node, while keeping the (stream, seq) order every consumer relies on.",
+        "path": ".ai/repo/project/issues/I3994.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1948
+      },
+      {
         "uri": "majordomus://issue/I3995",
         "kind": "issue",
         "identity": "I3995",
@@ -114583,7 +115167,7 @@
         "path": ".ai/repo/project/issues/I3999.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1659
+        "bytes": 3047
       },
       {
         "uri": "majordomus://issue/I4000",
@@ -114682,7 +115266,7 @@
         "path": ".ai/repo/project/issues/I4008.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1460
+        "bytes": 2634
       },
       {
         "uri": "majordomus://issue/I4009",
@@ -114748,7 +115332,7 @@
         "path": ".ai/repo/project/issues/I4199.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2983
+        "bytes": 4129
       },
       {
         "uri": "majordomus://issue/I4200",
@@ -114792,7 +115376,7 @@
         "path": ".ai/repo/project/issues/I4220.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2333
+        "bytes": 3002
       },
       {
         "uri": "majordomus://issue/I4221",
@@ -114814,7 +115398,7 @@
         "path": ".ai/repo/project/issues/I4222.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2621
+        "bytes": 3894
       },
       {
         "uri": "majordomus://issue/I4223",
@@ -114825,7 +115409,18 @@
         "path": ".ai/repo/project/issues/I4223.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3420
+        "bytes": 5097
+      },
+      {
+        "uri": "majordomus://issue/I4226",
+        "kind": "issue",
+        "identity": "I4226",
+        "title": "Case 1096 matches a page from a here-string, so a match is never read as a miss",
+        "description": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+        "path": ".ai/repo/project/issues/I4226.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1911
       },
       {
         "uri": "majordomus://issue/I4227",
@@ -114848,6 +115443,28 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2220
+      },
+      {
+        "uri": "majordomus://issue/I4230",
+        "kind": "issue",
+        "identity": "I4230",
+        "title": "Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+        "description": "When the volume has less free than the reclaim mark, mj_rust_bound_build_dir counts a unit idle for MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN minutes (default 10) as stale, so the bound can bring the shared build directory down while many worktrees build inside an hour.",
+        "path": ".ai/repo/project/issues/I4230.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2916
+      },
+      {
+        "uri": "majordomus://issue/I4232",
+        "kind": "issue",
+        "identity": "I4232",
+        "title": "A build of the portable core from the repository's root keeps the executable's rlib of it",
+        "description": "apps/majordomus-core declares an rlib only, so cargo names that rlib by its hash. `cargo test --manifest-path apps/majordomus-core/Cargo.toml`, run from the root where the shared build-dir applies, can then no longer replace the rlib every executable links. The wasm32 module is the cdylib that scripts/rust-check --portable-core asks for on its command line.",
+        "path": ".ai/repo/project/issues/I4232.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2806
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -119074,7 +119691,7 @@
         "path": ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3976,
+        "bytes": 4573,
         "tags": [
           "derived",
           "machine",
@@ -122930,7 +123547,7 @@
         "identity": "test/cases/1096_no_screen_waits_for_a_source.sh",
         "path": "test/cases/1096_no_screen_waits_for_a_source.sh",
         "source_class": "case",
-        "bytes": 4408
+        "bytes": 4506
       },
       {
         "uri": "majordomus://test/test/cases/1097_the_projection_is_applied_at_landing.sh",
@@ -125570,7 +126187,7 @@
         "identity": "test/cases/3957_every_process_is_traced_to_its_session.sh",
         "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
         "source_class": "case",
-        "bytes": 5713
+        "bytes": 27974
       },
       {
         "uri": "majordomus://test/test/cases/3958_no_entry_path_or_gate_builds.sh",
@@ -125586,7 +126203,7 @@
         "identity": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
         "path": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
         "source_class": "case",
-        "bytes": 17141
+        "bytes": 19332
       },
       {
         "uri": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
@@ -125611,6 +126228,22 @@
         "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "source_class": "case",
         "bytes": 10404
+      },
+      {
+        "uri": "majordomus://test/test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "kind": "test",
+        "identity": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "path": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "source_class": "case",
+        "bytes": 10890
+      },
+      {
+        "uri": "majordomus://test/test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "kind": "test",
+        "identity": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "path": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "source_class": "case",
+        "bytes": 7753
       },
       {
         "uri": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
@@ -125771,6 +126404,14 @@
         "path": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "source_class": "case",
         "bytes": 3613
+      },
+      {
+        "uri": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "kind": "test",
+        "identity": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "path": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "source_class": "case",
+        "bytes": 5122
       },
       {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -128335,7 +128976,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1034
+      "objects": 1041
     },
     {
       "name": "knowledge",
@@ -128497,7 +129138,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 657
     },
     {
       "name": "use-case",
@@ -143133,6 +143774,182 @@
               }
             ],
             "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "offload",
+              "stop"
+            ],
+            "route": "/docs/cli/offload/stop/",
+            "executable": true,
+            "usage": "majordomus offload stop [OPTIONS] <TAG>",
+            "about": "Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session",
+            "args": [
+              {
+                "name": "tag",
+                "positional": true,
+                "help": "The run's tag, as `offload derive` printed it",
+                "value_name": "TAG",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "host",
+                "long": "host",
+                "positional": false,
+                "help": "A declared host, by id or address; the declaration's only host when absent",
+                "value_name": "HOST",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "force",
+                "long": "force",
+                "positional": false,
+                "help": "Stop it although its record names another session, or none",
+                "value_name": "FORCE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "grace",
+                "long": "grace",
+                "positional": false,
+                "help": "Seconds between TERM and KILL",
+                "value_name": "SECONDS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "10"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "declaration",
+                "long": "declaration",
+                "positional": false,
+                "help": "Read this derive-offload declaration file instead of the repository's",
+                "value_name": "FILE",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "offload-stop-undeclared",
+                "title": "A stop with no declared host signals nothing",
+                "description": "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything.",
+                "argv": [
+                  "offload",
+                  "stop",
+                  "0123456789"
+                ],
+                "command": "majordomus offload stop 0123456789",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -148193,7 +149010,7 @@
             "route": "/docs/cli/guard/hook/",
             "executable": true,
             "usage": "majordomus guard hook [OPTIONS]",
-            "about": "Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise",
+            "about": "Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise",
             "args": [
               {
                 "name": "provider",
@@ -148226,7 +149043,7 @@
               {
                 "id": "guard-hook",
                 "title": "Judge the edit a provider's pre-tool payload names",
-                "description": "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+                "description": "What a provider's pre-tool hook runs before an edit or a shell command: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, or when its command starts a build over ssh on a host the offload declaration names (the way is `majordomus offload derive`), 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
                 "argv": [
                   "guard",
                   "hook",
@@ -150279,7 +151096,7 @@
                 "help": "The session making progress, as it was claimed under",
                 "value_name": "SESSION",
                 "takes_value": true,
-                "required": true,
+                "required": false,
                 "global": false,
                 "possible_values": [],
                 "defaults": []
@@ -150288,7 +151105,7 @@
                 "name": "phase",
                 "long": "phase",
                 "positional": false,
-                "help": "What it is doing, one line: `waiting on CI run 123`",
+                "help": "What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person",
                 "value_name": "PHASE",
                 "takes_value": true,
                 "required": false,
@@ -150302,6 +151119,18 @@
                 "positional": false,
                 "help": "The running process of this machine the beat speaks for",
                 "value_name": "PID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "hook",
+                "long": "hook",
+                "positional": false,
+                "help": "Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0",
+                "value_name": "PROVIDER",
                 "takes_value": true,
                 "required": false,
                 "global": false,
@@ -152218,6 +153047,130 @@
                 "subcommands": []
               }
             ]
+          },
+          {
+            "path": [
+              "majordomus",
+              "mesh",
+              "who"
+            ],
+            "route": "/docs/cli/mesh/who/",
+            "executable": true,
+            "usage": "majordomus mesh who [OPTIONS] <SUBJECT>",
+            "about": "Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one",
+            "args": [
+              {
+                "name": "subject",
+                "positional": true,
+                "help": "A pid, host:pid, run tag, host:tag, issue (I3956) or path",
+                "value_name": "SUBJECT",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "`text` for a person, `json` for a machine; both render the same answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "mesh-who-issue",
+                "title": "Who works on an issue, and what says so",
+                "description": "Every live mesh claim, board announcement and run record that names the issue, each owner with its board peer, issue and address and the facts that named it. A pid is read where it runs — its parent chain up to the provider's process and socket, its directory and the owner variables of its environment — and `host:pid` reads a declared offload host through its ssh path. Here nobody names the issue, so the answer is unknown, lists the evidence it lacked, and exits 10.",
+                "argv": [
+                  "mesh",
+                  "who",
+                  "I1"
+                ],
+                "command": "majordomus mesh who I1",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
           }
         ]
       },
@@ -165128,6 +166081,23 @@
         "output": "MeshVerifyReport"
       },
       {
+        "name": "majordomus_mesh_who",
+        "id": "mesh.who",
+        "title": "Who runs this",
+        "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "WhoInput",
+        "output": "WhoReport"
+      },
+      {
         "name": "majordomus_models",
         "id": "models.list",
         "title": "The model catalogue",
@@ -167673,6 +168643,12 @@
         "path": "/api/v1/mesh/verify",
         "id": "mesh.verify",
         "kind": "command"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/mesh/who",
+        "id": "mesh.who",
+        "kind": "query"
       },
       {
         "method": "GET",
@@ -178990,6 +179966,30 @@
           "reason": "external_dependency"
         },
         {
+          "subject": "mesh.who",
+          "module": "mesh",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "mesh.who",
+          "module": "mesh",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "mesh.who",
+          "module": "mesh",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "models.list",
           "module": "models",
           "transport": "direct",
@@ -180777,24 +181777,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
+          "required": 221,
           "covered": 181,
           "missing": 0,
-          "waived": 39,
+          "waived": 40,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
+          "required": 213,
           "covered": 181,
           "missing": 0,
-          "waived": 31,
+          "waived": 32,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
+          "required": 207,
           "covered": 176,
           "missing": 0,
-          "waived": 30,
+          "waived": 31,
           "inapplicable": 0
         },
         "system": {
@@ -180805,10 +181805,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
+          "required": 655,
           "covered": 552,
           "missing": 0,
-          "waived": 100,
+          "waived": 103,
           "inapplicable": 0
         }
       }

@@ -4862,7 +4862,7 @@
           "type": "string | null"
         },
         {
-          "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere.",
+          "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it.",
           "name": "phase",
           "refs": [],
           "required": false,
@@ -28672,7 +28672,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\" | \"lease_lost\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -28802,6 +28802,10 @@
         {
           "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`).",
           "value": "observe_failed"
+        },
+        {
+          "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken.",
+          "value": "lease_lost"
         }
       ],
       "variants": []
@@ -33263,6 +33267,20 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote.",
+          "name": "progressed_at",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`).",
+          "name": "progress_ttl_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
         }
       ],
       "type": "object",
@@ -55210,7 +55228,7 @@
           "type": "array of string"
         },
         {
-          "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age.",
+          "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage.",
           "name": "progress_ms",
           "refs": [],
           "required": false,
@@ -55219,6 +55237,13 @@
         {
           "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990).",
           "name": "phase",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone.",
+          "name": "blocked",
           "refs": [],
           "required": false,
           "type": "string | null"

@@ -16293,14 +16293,14 @@ cli:
               help: "The session making progress, as it was claimed under"
               value_name: SESSION
               takes_value: true
-              required: true
+              required: false
               global: false
               possible_values: []
               defaults: []
             - name: phase
               long: phase
               positional: false
-              help: "What it is doing, one line: `waiting on CI run 123`"
+              help: "What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person"
               value_name: PHASE
               takes_value: true
               required: false
@@ -16312,6 +16312,16 @@ cli:
               positional: false
               help: The running process of this machine the beat speaks for
               value_name: PID
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: hook
+              long: hook
+              positional: false
+              help: "Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0"
+              value_name: PROVIDER
               takes_value: true
               required: false
               global: false

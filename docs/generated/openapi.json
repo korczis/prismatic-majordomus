@@ -23407,7 +23407,7 @@
               "string",
               "null"
             ],
-            "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+            "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it."
           },
           "pid": {
             "type": [
@@ -41758,6 +41758,11 @@
             "type": "string",
             "const": "observe_failed",
             "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+          },
+          {
+            "type": "string",
+            "const": "lease_lost",
+            "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
           }
         ],
         "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -45273,6 +45278,24 @@
               "null"
             ],
             "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
+          },
+          "progressed_at": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote."
+          },
+          "progress_ttl_seconds": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`)."
           }
         },
         "required": [
@@ -62273,7 +62296,7 @@
             ],
             "format": "uint64",
             "minimum": 0,
-            "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+            "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
           },
           "phase": {
             "type": [
@@ -62281,6 +62304,13 @@
               "null"
             ],
             "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+          },
+          "blocked": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
           }
         },
         "required": [

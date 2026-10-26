@@ -4899,9 +4899,10 @@ majordomus mesh beat [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--session` | `<SESSION>` | required | The session making progress, as it was claimed under |
-| `--phase` | `<PHASE>` | — | What it is doing, one line: `waiting on CI run 123` |
+| `--session` | `<SESSION>` | — | The session making progress, as it was claimed under |
+| `--phase` | `<PHASE>` | — | What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person |
 | `--pid` | `<PID>` | — | The running process of this machine the beat speaks for |
+| `--hook` | `<PROVIDER>` | — | Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0 |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

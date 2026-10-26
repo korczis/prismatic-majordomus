@@ -312,6 +312,24 @@ Three layers, deliberately separate:
   (`learned_at`): a session silent before the restart reads as progressing for at most its
   ttl plus the expiry after it. The key is left out of the repository's declaration on
   purpose: an older executable refuses a key it does not know.
+- **A session waiting on a person says so** (I3992). A beat whose phase opens with `blocked:`
+  — `blocked: permission dialog (Claude needs your permission to use Bash)`, `blocked:
+  awaiting input` — marks the session as waiting on a person, so that peers and the landing
+  seat see it within seconds, and why, instead of reading a ttl's silence. A mark is
+  information and never progress: it moves no session's progress clock on any runtime that
+  knows marks, so a session that worked and then only waits is suspended by its ttl exactly
+  as before, however often it says so, and a session that only ever waited starts no clock
+  and keeps the stream rule; it re-arms and releases nothing. A mark is written at once —
+  inside the interval, and for a session holding no exclusive claim too — and saying the same
+  wait again writes nothing. The first beat after it that is not a wait is the session's next
+  real work: it clears the mark at once, is progress, and progress keeps its interval after
+  it. Marks and their clears are counted in a window of their own, of the same size as the
+  progress beats', so that a session whose turns end often cannot spend the beats that keep
+  other sessions' claims excluding; past it a mark is withheld, logged, and still shown by
+  the runtime that holds it. `mesh.peers` carries the reason as `blocked` beside the
+  `phase`, and `mesh peers`, the Cockpit and `/ui/mesh` show it with the session. A runtime
+  older than marks reads a mark as a phase like any other, so on it a mark keeps the claims
+  of a session that is already waiting for up to one more ttl.
 
 ## Events, ordering and deduplication
 
@@ -646,6 +664,31 @@ reads its hooks when it starts:
 The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
 edit is let through.
 
+A provider session that waits on a person says so on the mesh (I3992). The hook
+`.claude/hooks/majordomus-session-wait` hands each payload to `majordomus mesh beat --hook
+claude-code`, which reads the session (`claude-code-<session id>`, the one the start event
+opened) and the event out of it and beats for it on this checkout's ready server: a permission
+dialog, an MCP server's question or an idle prompt (`Notification`) and the end of a turn
+(`Stop`) mark it `blocked: …` with the reason, and its next prompt (`UserPromptSubmit`) or tool
+call (`PreToolUse`) is real work, which clears the mark. Since a provider session beats on its
+tool calls, an exclusive claim held under its own id lives by its progress like a board
+session's (I3990). The command builds no index — it runs before every tool call, in about
+twenty milliseconds — prints nothing and exits 0 whatever happens: no payload, an event that is
+no beat, no executable, no server, a refusal. Like the edit guard it is not written by
+`capture install` and not wired in this repository's `.claude/settings.json` yet; a person
+wires it by hand, as above, and starts a new session:
+
+```json
+"Notification": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"Stop": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"PreToolUse": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ]
+```
+
+and the same handler beside `majordomus-capture` in the existing `UserPromptSubmit` group.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
@@ -656,7 +699,7 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
-| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no progress beat is written — where the provider's wait hook is wired, the dialog writes a `blocked: permission dialog` mark at once, which every peer sees and which is not progress either (I3992); once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
@@ -830,6 +873,37 @@ the checkout a person works in already runs its own shared server and a second o
 The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.hub.plist` with
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
+
+**The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
+systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, `Restart=always`. Two
+facts of that machine decide how it is upgraded. Its glibc is older than the
+`aarch64-unknown-linux-gnu` archive needs — the 1.0.0-alpha.5 executable asks for `GLIBC_2.32`
+and stops before it starts — while the installer picks the gnu archive on any glibc machine; so
+jetson runs the `aarch64-unknown-linux-musl` archive, verified against its digest, unpacked
+beside the older trees under `~/.local/share/majordomus/versions/`, with both launchers in
+`~/.local/bin` pointed at it. And an executable refuses a manifest newer than itself
+(1.0.0-alpha.5 against the trunk of 2026-10-25: `unknown key(s): lifecycle`), so a hub's
+checkout is never ahead of the executable that serves it: detached at the release's tag, which
+is the trunk when the release was cut from it. A hub left behind falls a protocol behind and
+links with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every MacBook spoke
+protocol 2, and every other machine on its board read `expired`. That day every node and hub
+moved to 1.0.0-alpha.8, cut from the trunk at `2efeacea031`, and every hub checkout to that
+commit; the site published no `releases/v1.0.0-alpha.8.json` until later, so the archives were
+taken from the GitHub release and verified against its digests. jetson's `mesh doctor` held every
+check, and all four hubs listed all five machines live.
+
+jetson also serves a build-cache store (ADR 0157): MinIO on `100.92.246.32:9000`, the systemd
+unit `majordomus-build-cache.service`, bucket `majordomus-build-cache` with a 200 GiB hard quota,
+one client identity under the policy `mj-build-cache-rw` (object read, write and delete in that
+bucket, listing it), and the port admitted from loopback, the LAN and the tailnet only. Its node
+file declares the store under `provider`, and from 1.0.0-alpha.8 its runtime publishes the signed
+offer (`mesh state` reads it under `build_cache`, healthy, with its headroom); a client that
+also names it under `known` in its own node file, with the node id
+`9d652b2c7d06b12bfc5c3f8325e6618c`, still finds it when no runtime is reachable. Each client
+holds the identity in its credential file. On 2026-10-25 a MacBook so configured selected it,
+wrote a 15 KiB entry under `rust/aarch64-apple-darwin/`, and a second compile with an empty disk
+level hit it in 94 ms and backfilled the disk.
 
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
