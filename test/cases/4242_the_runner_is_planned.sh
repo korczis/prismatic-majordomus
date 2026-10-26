@@ -7,9 +7,13 @@
 # meaning to change this:
 #
 #   1  the plan job runs on ubuntu-latest, so a verdict is planned while the pool is offline;
-#   2  every other job names its platform (macos-latest, a matrix) or takes exactly
+#   2  the first wave (FIRST below) takes exactly
 #      `fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')`, so a failed plan still
-#      lets `ci` report and no job picks a runner of its own;
+#      lets `ci` report; every other Linux job stays on ubuntu-latest. The first wave is the
+#      jobs that run once beside the critical path (plan -> build -> the suite and ui shards
+#      -> suite -> evidence -> ci) or are its cheap unions: three runners of one machine
+#      serialise a full run's thirty jobs into hours (run 40407809503), while the shards run
+#      twenty at once on GitHub-hosted runners;
 #   3  the plan's runner step sends a fork's pull request to ubuntu-latest whatever the
 #      variable says, a same-repository one and a push to the chosen pool, and an unset or
 #      unreadable choice to ubuntu-latest.
@@ -20,6 +24,7 @@
 W="$ROOT/.github/workflows/validate.yml"
 [ -f "$W" ] || { echo "    .github/workflows/validate.yml is missing"; exit 1; }
 EXPR="\${{ fromJSON(needs.plan.outputs.runner || '\"ubuntu-latest\"') }}"
+FIRST=" structure suite coverage evidence site-probe interactions ui cockpit mesh-lab pages ci "
 
 # "<job>\t<runs-on>" for every job
 runs_on() {
@@ -37,14 +42,17 @@ while IFS="$(printf '\t')" read -r job value; do
     plan:ubuntu-latest) ;;
     plan:*) echo "    the plan job runs on '$value', not ubuntu-latest"; fail=1 ;;
     *:macos-latest|*:'${{ matrix.runner }}') ;;
-    *) [ "$value" = "$EXPR" ] || { echo "    job $job runs on '$value', not the planned runner"; fail=1; } ;;
+    *) case "$FIRST" in
+         *" $job "*) [ "$value" = "$EXPR" ] || { echo "    first-wave job $job runs on '$value', not the planned runner"; fail=1; } ;;
+         *) [ "$value" = ubuntu-latest ] || { echo "    job $job runs on '$value'; only the first wave takes the planned runner"; fail=1; } ;;
+       esac ;;
   esac
 done <<EOF
 $(runs_on "$W")
 EOF
 [ "$(runs_on "$W" | wc -l)" -gt 10 ] || { echo "    fewer than ten jobs were read from the workflow"; fail=1; }
 [ "$fail" = 0 ] || exit 1
-echo "    every job but plan takes the planned runner or names its platform"
+echo "    the first wave takes the planned runner; every other job stays hosted or names its platform"
 
 # 3: the step's own script, out of the workflow
 STEP="$(mktemp)"; OUT="$(mktemp)"

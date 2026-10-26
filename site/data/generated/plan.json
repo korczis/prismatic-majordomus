@@ -66568,12 +66568,12 @@
         "The macOS jobs and the install matrix, which name their platform",
         "Provisioning the runners: done by hand on lundra on 2026-10-26"
       ],
-      "objective": "The plan job of validate.yml chooses the runner every other job of the run takes: the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it.",
+      "objective": "The plan job of validate.yml chooses the runner of the first wave, the jobs that run once beside the critical path or are its cheap unions (the shards stay on GitHub-hosted runners, which take them twenty at once): the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it.",
       "why": "On 2026-10-26 train 8's verdict crawled because sixteen validate-sized runs shared the account's GitHub-hosted concurrency, and the owner asked for lundra, a machine of the fleet that costs nothing per minute, to be the first wave. Three runners (lundra-1..3, label lundra) were registered and sat idle: every job of validate.yml named ubuntu-latest, so nothing could reach them. The repository is public, so a fork's pull request must never run on a machine of the fleet.",
       "current_state": "Every Linux job of validate.yml says runs-on: ubuntu-latest; the three lundra runners are online and idle.",
       "desired_state": "One expression in the plan job decides the runner; every Linux job reads it from needs.plan.outputs.runner; a fork's pull request is refused the self-hosted pool by the plan itself; unsetting MJ_RUNNER returns every run to GitHub-hosted runners with no other change.",
       "acceptance_criteria": [
-        "Every Linux job of validate.yml but plan takes runs-on from needs.plan.outputs.runner, and a case fails when one names a runner of its own",
+        "Every first-wave job of validate.yml takes runs-on from needs.plan.outputs.runner, every other Linux job stays on ubuntu-latest, and a case fails when either names another runner",
         "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it",
         "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
       ],

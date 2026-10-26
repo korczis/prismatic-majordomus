@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "1a7ecce36584d1c4ef03fa516d284179f52e7a80f6712647213b4f47af5ac4a4",
+    "fingerprint": "577b92e9551e6a4eafd41708c2702580fd278b757cfa404ed8f4a8b80716f246",
     "summary": {
       "total": 3552,
       "builtin": 220,
@@ -92062,7 +92062,7 @@
     ]
   },
   "index": {
-    "fingerprint": "eecb4c0297ebc4cc749be7c5df4dbea07eae5ccc04e8f4fc91438c2df008e086",
+    "fingerprint": "cd160d160837b56a8a16624320196db6fb8f02b96b2ba8bf9d5307b6d588bec9",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99124,7 +99124,7 @@
         "title": "Continuous integration",
         "path": "docs/CI.md",
         "source_class": "document",
-        "bytes": 46667
+        "bytes": 47102
       },
       {
         "uri": "majordomus://document/docs/CLI.md",
@@ -114854,11 +114854,11 @@
         "kind": "issue",
         "identity": "I4242",
         "title": "Lundra is the first wave: the validate jobs of trusted events run on the repository's own runners",
-        "description": "The plan job of validate.yml chooses the runner every other job of the run takes: the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it.",
+        "description": "The plan job of validate.yml chooses the runner of the first wave, the jobs that run once beside the critical path or are its cheap unions (the shards stay on GitHub-hosted runners, which take them twenty at once): the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it.",
         "path": ".ai/repo/project/issues/I4242.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2915
+        "bytes": 3088
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -125789,7 +125789,7 @@
         "identity": "test/cases/4242_the_runner_is_planned.sh",
         "path": "test/cases/4242_the_runner_is_planned.sh",
         "source_class": "case",
-        "bytes": 3673
+        "bytes": 4323
       },
       {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",

@@ -82,13 +82,16 @@ if [ -z "$BASE" ]; then
   "$BIN" serve --repo "$ROOT" --host 127.0.0.1 --port "${COCKPIT_PROBE_PORT:-0}" > "$LOG" 2>&1 < /dev/null &
   SRV=$!
   trap 'if [ -n "$SRV" ]; then kill "$SRV" 2>/dev/null || true; fi; rm -f "$LOG"' EXIT
-  for _ in $(seq 1 60); do
+  # Bounded, and long enough for a slower machine of the fleet: on lundra the index alone
+  # takes nine seconds idle and the server missed a 30 s wait under three concurrent jobs
+  # (run 40407809503, I4242). COCKPIT_PROBE_SERVE_WAIT is the bound in seconds.
+  for _ in $(seq 1 $(( ${COCKPIT_PROBE_SERVE_WAIT:-120} * 2 ))); do
     BASE="$(sed -n 's/.*listening on \(http:\/\/[0-9.]*:[0-9]*\).*/\1/p' "$LOG" | head -1)"
     [ -n "$BASE" ] && break
     kill -0 "$SRV" 2>/dev/null || { echo "cockpit-probe: the server exited:" >&2; tail -3 "$LOG" >&2; exit 12; }
     sleep 0.5
   done
-  [ -n "$BASE" ] || { echo "cockpit-probe: the server did not report an address" >&2; tail -3 "$LOG" >&2; exit 12; }
+  [ -n "$BASE" ] || { echo "cockpit-probe: the server did not report an address in ${COCKPIT_PROBE_SERVE_WAIT:-120} s" >&2; tail -3 "$LOG" >&2; exit 12; }
 fi
 if ! curl -sf -o /dev/null "$BASE/cockpit"; then
   echo "cockpit-probe: $BASE serves no /cockpit." >&2

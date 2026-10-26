@@ -70874,7 +70874,7 @@
         "source": ".ai/repo/project/issues/I4242.yaml",
         "facts": {
           "acceptance_criteria": [
-            "Every Linux job of validate.yml but plan takes runs-on from needs.plan.outputs.runner, and a case fails when one names a runner of its own",
+            "Every first-wave job of validate.yml takes runs-on from needs.plan.outputs.runner, every other Linux job stays on ubuntu-latest, and a case fails when either names another runner",
             "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it",
             "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
           ],

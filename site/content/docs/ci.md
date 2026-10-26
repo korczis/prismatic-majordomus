@@ -332,9 +332,14 @@ browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts
 
 ## Where the jobs run
 
-The plan job decides the runner of every other Linux job of the run, once, and every job
-reads it as `fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')` (I4242). The first
-wave is the repository's own machines: the repository variable `MJ_RUNNER` names them, as a
+The plan job decides, once, the runner of the first wave, and each first-wave job reads it
+as `fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')` (I4242). The first wave is
+the jobs that run once beside the critical path (plan, build, the suite and ui shards, suite,
+evidence, ci) or are its cheap unions: structure, suite, coverage, evidence, site-probe,
+interactions, ui, cockpit, mesh-lab, pages and ci. Everything else stays on `ubuntu-latest`:
+three runners of one machine serialise a full run's thirty jobs into hours (run
+40407809503), while GitHub-hosted runners take the shards twenty at once. The pool is the
+repository's own machines: the repository variable `MJ_RUNNER` names them, as a
 runner label (`lundra`, meaning `[self-hosted, lundra]`) or a JSON list of labels. They cost
 nothing per minute and do not share the account's hosted concurrency, which sixteen
 validate runs exhausted on 2026-10-26.

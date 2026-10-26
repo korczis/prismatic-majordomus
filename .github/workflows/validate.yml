@@ -196,7 +196,7 @@ jobs:
             echo
             jq -r 'if (.classes | length) > 0 then "Classes: " + (.classes | map("\(.id) (\(.paths | length))") | join(", ")) else "" end' plan.json
           } >> "$GITHUB_STEP_SUMMARY"
-      # I4242: the runner every other Linux job of this run takes, decided once, here. The
+      # I4242: the runner of the first wave (docs/CI.md, case 4242), decided once, here. The
       # repository's own machines (MJ_RUNNER, e.g. lundra) are the first wave: they cost nothing
       # per minute and do not share the account's hosted concurrency. A pull request from a fork
       # is routed off them, because this repository is public and they are machines of the fleet;
@@ -264,7 +264,7 @@ jobs:
   build:
     needs: plan
     timeout-minutes: 45
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - id: rust
@@ -304,7 +304,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.ui_audit == 'true'
     timeout-minutes: 30
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: the crate's Rust API reference
@@ -457,7 +457,7 @@ jobs:
     # suite-budget step below refuses growth while the bound still has room. One declaration,
     # two readers — test/cases/417 refuses the workflow and the model when they disagree.
     timeout-minutes: 225
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
@@ -691,7 +691,7 @@ jobs:
     # at 21:28 after 10 of its minutes. 90 leaves that gate about 25 minutes and a slow runner
     # its margin; lanes 1 and 2 finish far inside it.
     timeout-minutes: 90
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1121,7 +1121,7 @@ jobs:
     # on the next head (39317142394): its bound is 60 min; the steps before it now take 25 min
     # with the Czech copy built, so the job is 105
     timeout-minutes: 105
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1276,7 +1276,7 @@ jobs:
     # a sixth of a sweep that no longer fits 45 minutes (the Czech copies doubled the routes:
     # run 39317142394 stopped the single step at its 2700 s bound), plus the build and setup
     timeout-minutes: 30
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1375,7 +1375,7 @@ jobs:
     # a sixth of a probe that no longer fits 55 minutes, plus the setup; the slowest shard ran
     # 1450-1527 s of its former 1500 s bound on every run of 2026-10-21/22, so the bound is 1800 s
     timeout-minutes: 36
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1492,7 +1492,7 @@ jobs:
     # about 13 minutes of setup and a build of the site that is bounded at 40, then the audit step's
     # 35 minutes: the step is the one that runs out of time, never the job
     timeout-minutes: 70
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1552,7 +1552,7 @@ jobs:
     if: needs.plan.outputs.ui_audit == 'true'
     # the bounded steps add up to 40 + 10 + 10 + 15 minutes, and the setup is about 13
     timeout-minutes: 90
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
