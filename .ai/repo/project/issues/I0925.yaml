@@ -14,8 +14,7 @@ scope:
 non_scope:
   - A rule with no executable check
   - Restating an existing rule that already covers the constraint
-depends_on:
-  - I0915
+depends_on: []
 acceptance_criteria:
   - Deployment configuration originates from the canonical object, and editing a generated provider artifact by hand is refused by a check
   - Generated deployment artifacts must match the canonical object, and CI fails on drift
@@ -34,4 +33,4 @@ evidence_required:
   - ci_runs_them
 risk: "Seven new rules is a lot of doctrine for one subsystem. Any constraint an existing rule already covers should be referenced rather than restated."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

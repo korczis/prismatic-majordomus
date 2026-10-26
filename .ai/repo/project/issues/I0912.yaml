@@ -7,10 +7,10 @@ profile: implementation
 parallel_safe: true
 objective: "Build the served documentation and site assets in the container with the same pipeline local development and the Pages deployment already use, and carry exactly those outputs into the runtime stage."
 why: "A second site build inside a Dockerfile is a second source of truth for the documentation, and the two will disagree the day one of them is fixed. The pipeline already exists and already has a check."
-current_state: "One pipeline builds the site and scripts/site-deploy publishes it to Pages. Nothing builds it for a container."
+current_state: "ADR 0223 carries the site in the Gigalixir slug: slug.rs supports build.site and refuses a site built at another commit. The deployment object declares no build.site yet, provider.yml calls deploy slug without a site, and the GHCR image carries none."
 desired_state: "The container build calls the canonical generation and site build, copies their outputs, and the runtime serves those assets through the existing server architecture with no duplicated content."
 scope:
-  - deploy/fly
+  - apps/majordomus-cli/src/deploy/slug.rs
   - scripts
 non_scope:
   - A second site generator, a second Zola invocation path or a shell reimplementation of the build
@@ -31,4 +31,4 @@ evidence_required:
   - asset_size
 risk: "The derived site content is gitignored, so a clean checkout has to generate it before it can be built. A container build that skips generation produces an image with no documentation and no error."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

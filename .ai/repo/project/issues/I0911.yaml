@@ -7,11 +7,11 @@ profile: implementation
 parallel_safe: true
 objective: "Make the container build reuse dependency layers and caches so that a source-only change does not rebuild every dependency, and keep the build context to the inputs the deployment object declares."
 why: "A remote builder that receives the whole worktree uploads the history, the node modules and every worktree artifact, then rebuilds every crate for a one-line change. Both costs are avoidable and both are measurable."
-current_state: "No container build exists, so neither the context size nor the build duration has ever been measured."
+current_state: "docker-image.yml builds the image with a deps stage, an sccache mount and a registry build cache, and render.rs generates .dockerignore from build.inputs (case 86 checks the stage order). Neither the context size nor the warm and cold build durations has been measured; I3245 owns that measurement."
 desired_state: "Clean and warm build durations and the context size are measured and bounded, and the ignore rules derive from the declared build inputs rather than from a second hand-kept list."
 scope:
-  - deploy/fly
-  - apps/majordomus-cli/src/deploy/build.rs
+  - deploy
+  - apps/majordomus-cli/src/deploy/render.rs
 non_scope:
   - A build system replacing Cargo
   - Any caching that changes what the produced binary contains
@@ -32,4 +32,4 @@ evidence_required:
   - context_budget
 risk: "An ignore file tuned for size can silently drop a workspace member and produce a build that fails only on the remote builder, where the feedback loop is slowest."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

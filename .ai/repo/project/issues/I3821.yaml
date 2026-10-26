@@ -30,4 +30,23 @@ depends_on:
   - "I3820"
 serves: []
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-25T17:01:44Z
+started_at: 2026-10-25T17:01:10Z
+started_event: sha256:f118e9b34b993be0d4f5533805fa620d88e9c4e601ee4ed9d66c110aeb2812f8
+verified_at: 2026-10-25T17:01:27Z
+verified_event: sha256:66bc369a18b58b14c67f4b73a22e1b06b63208d9fdc797960bb3e61017c5ebc5
+completed_at: 2026-10-25T17:01:44Z
+completed_event: sha256:9f0c2303342df4d4c28cc095f0e5371fde87164650cde81ebabf54414440be01
+evidence:
+  - covers: slug_assembled_from_object
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3821_a_providers_tree_is_assembled_from_the_object"
+    result: "ok 3821_a_providers_tree_is_assembled_from_the_object (tests: 1 passed, 0 failed) at master 2efeacea031"
+    commit: e75d3c393588765d09eb5b2c1375cb8b6b5fb953
+    recorded_at: 2026-10-25T16:54:48Z
+  - covers: master_publishes_after_green_ci
+    type: ci
+    command: "gh run view 40212452406 (provider.yml, workflow_run after master validate on 2efeacea031); curl https://prismatic-majordomus.gigalixirapp.com/api/v1/live"
+    result: "provider run 40212452406 completed success at 2efeacea03158615db2b497117a8da35b264909b; /api/v1/live answers version 1.0.0-alpha.8, commit 2efeacea03158615db2b497117a8da35b264909b, dirty false (2026-10-25T16:53Z); the earlier run 40189935640 at 71857db failed at checkout with the pre-#2412 workflow"
+    commit: e75d3c393588765d09eb5b2c1375cb8b6b5fb953
+    recorded_at: 2026-10-25T16:54:56Z

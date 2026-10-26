@@ -32,4 +32,17 @@ depends_on:
 serves:
   - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-25T20:13:35Z
+started_at: 2026-10-25T20:12:32Z
+started_event: sha256:0f797c30c0c8c4ba93468c31fb55c41989e08817e97f3c2854c1cdb07d4c8eae
+verified_at: 2026-10-25T20:12:59Z
+verified_event: sha256:6419b97c5b0757532339e223d56d4bf632c0375041465c72eed563eb4ef3be40
+completed_at: 2026-10-25T20:13:35Z
+completed_event: sha256:6911f3ea98135b7aac113783bfe41111c1cee870a2a1091283fc1df135525e50
+evidence:
+  - covers: case_a_remote_caller_never_sees_the_executions
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3861_a_remote_caller_never_sees_the_executions; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib http::router"
+    result: "at master 2efeacea031: case 3861 ok (a remote caller is refused every execution read, the live channel and its page; liveness and the repository still answer it), http::router 16 passed 0 failed incl. the_live_channel_never_opens_for_a_remote_caller. Landed in train 3b (a57482183bf). Live at the Gigalixir hub 2efeace, as a remote caller 2026-10-25T20:12Z: /api/v1/executions 403, /cockpit/executions 403, /api/v1/live 200"
+    commit: e75d3c393588765d09eb5b2c1375cb8b6b5fb953
+    recorded_at: 2026-10-25T20:13:23Z

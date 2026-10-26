@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Expose the version, revision, build profile, target and the safe platform facts of a hosted process through the existing metadata surface, with every field explicitly allowlisted."
 why: "Verifying that the deployed image is the one that was built requires the running process to say which revision it is. Doing that by reflecting the environment would publish whatever the platform happens to inject, including things that must never leave the Machine."
-current_state: "about.rs carries the executable's own description. Nothing reports the build revision or any platform fact, because nothing is deployed."
+current_state: "/api/v1/live answers alive, version, commit and dirty from the build arguments MAJORDOMUS_BUILD_COMMIT and MAJORDOMUS_BUILD_DIRTY (health.rs), and majordomus version names its target. Owed: the build profile and target on the metadata read, platform facts from an allowlist, and the redaction test. The image is published to GHCR and the hub runs on Gigalixir (ADR 0219); Fly.io, which fly_platform_fields named, is not a target since 2026-10-12."
 desired_state: "One metadata read reports an allowlisted set of build and platform fields, and a test proves that a value outside the allowlist cannot reach it."
 scope:
   - apps/majordomus-cli/src/about.rs
@@ -31,4 +31,4 @@ evidence_required:
   - redaction_test
 risk: "A build timestamp defeats reproducibility. It is included only if the reproducibility decision in I0910 permits it."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

@@ -10,7 +10,7 @@ why: "Every list of Cargo size flags on the internet is asserted rather than mea
 current_state: "The workspace has its existing release profile and no deployment-specific profile. No size or startup numbers exist for any configuration."
 desired_state: "A deployment profile exists if and only if it is justified by measurement, the existing release semantics are unchanged for everyone else, and the numbers behind the decision are recorded."
 scope:
-  - Cargo.toml
+  - apps/majordomus-cli/Cargo.toml
   - .ai/repo/benchmarks/rust
 non_scope:
   - Profile-guided optimisation
@@ -31,4 +31,4 @@ evidence_required:
   - profile_chosen
 risk: "panic=abort changes observable behaviour for a process that currently unwinds. If any test or capability depends on unwinding, the flag costs correctness rather than bytes."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

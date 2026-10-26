@@ -10,8 +10,8 @@ why: "A hand-written Dockerfile is a second description of the binary, the asset
 current_state: "deploy/Dockerfile exists and is generated: apps/majordomus-cli/src/deploy/render.rs renders it and .dockerignore from the deployment object, and generate.rs owns them as targets; docker-image.yml and release.yml's image job build it into ghcr.io/korczis/prismatic-majordomus. fly.toml was rendered beside them until 2026-10-12, when Fly.io was ruled out as a target and the file left the tree. The statement this field used to carry -- that no Dockerfile exists anywhere -- was falsified before 2026-09-10 and never corrected. Measured on master 6042f4286, 2026-09-10; fly.toml removal on 722228ef3c, 2026-10-12."
 desired_state: "The generated Dockerfile is idiomatic and reviewable, carries a header naming its source and its regeneration command, and is refused by generate --check when edited by hand."
 scope:
-  - deploy/fly
-  - apps/majordomus-cli/src/deploy/container.rs
+  - deploy
+  - apps/majordomus-cli/src/deploy/render.rs
 non_scope:
   - Buildpacks, Nixpacks or a second container implementation
   - Any build argument, layer or file carrying a credential
@@ -37,4 +37,4 @@ evidence_required:
   - musl_decision
 risk: "Generation can make the Dockerfile unreadable, which is worse than duplication. The source describes intent, the output describes mechanics, and the output has to survive review by someone who has never seen the generator."
 created_at: 2026-09-06
-updated_at: 2026-10-12
+updated_at: 2026-10-26

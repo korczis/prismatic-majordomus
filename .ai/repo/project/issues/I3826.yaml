@@ -32,4 +32,23 @@ depends_on:
 serves:
   - "an-authorised-node-connects-from-anywhere#relay-when-no-direct-path"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-25T19:15:59Z
+started_at: 2026-10-25T19:14:46Z
+started_event: sha256:39eeb7e9a6ec2e677e9c9b1773af7d6b64d5ec5a7036f7ea9c2156095d468e79
+verified_at: 2026-10-25T19:15:11Z
+verified_event: sha256:59e663a5b69160d518e7123e5e7269155c8a1ad100b7e43d4677d7f879195aea
+completed_at: 2026-10-25T19:15:59Z
+completed_event: sha256:fff58ea669c633c10be9728129861e2a8b0769e2619eba383a0865db8df36f75
+evidence:
+  - covers: seed_from_secret
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 3826_a_hosted_hub_is_trusted_and_closed_to_strangers"
+    result: "ok at master 2efeacea031: one seed is one node across restarts, an unset secret closes the mesh, the URL is advertised, and the seed is never printed (1 passed, 0 failed). Live: the Gigalixir hub at 2efeace reports mesh fail naming MAJORDOMUS_MESH_NODE_SEED, never its value"
+    commit: e75d3c393588765d09eb5b2c1375cb8b6b5fb953
+    recorded_at: 2026-10-25T19:15:33Z
+  - covers: mesh_reads_gated
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- a_remote_caller_reads_the_repository_and_never_the_mesh a_stranger_learns_this_hub_and_never_who_trusts_it"
+    result: "2 passed, 0 failed at master 2efeacea031. Live, as a remote caller of https://prismatic-majordomus.gigalixirapp.com at 2efeace: /api/v1/mesh/peers 403, /ui/mesh 403, /api/v1/live 200 (2026-10-25T19:15Z)"
+    commit: e75d3c393588765d09eb5b2c1375cb8b6b5fb953
+    recorded_at: 2026-10-25T19:15:44Z
