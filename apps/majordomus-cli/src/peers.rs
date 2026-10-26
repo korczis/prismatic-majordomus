@@ -1931,4 +1931,18 @@ mod tests {
         assert!(bridges.iter().any(|p| p.address.is_some() && !p.attached));
         assert_eq!(bridges.iter().filter(|p| p.attached).count(), 1);
     }
+
+    /// An id the board no longer holds drops nothing: an announce that raced its own detach
+    /// leaves every retained departure where it was (I4227).
+    #[test]
+    fn an_id_the_board_does_not_hold_drops_no_departure() {
+        let board = PeerBoard::new();
+        let left = board.attach(Transport::Stdio);
+        board.announce_claim(&left, Some("relay"), "a session that left", vec![]);
+        board.detach(&left);
+        board.drop_repeated_departures(&PeerId::new(99));
+        let listed = board.list();
+        assert_eq!(listed.len(), 1, "{listed:?}");
+        assert!(!listed[0].attached, "{listed:?}");
+    }
 }
