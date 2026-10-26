@@ -16,6 +16,12 @@
 #                                           it; a routine push does not, because three macOS
 #                                           jobs per push is demand no runner pool answers and
 #                                           the verdict that needs them then never arrives
+#   --tier T                                plan at the tier T of the model's `tiers` (ADR 0186):
+#                                           a gate whose lane T does not run is left out, and
+#                                           neither implies nor requires brings it back. A
+#                                           model without tiers, or a tier it does not
+#                                           declare, is a usage error. Without --tier every
+#                                           lane is planned
 #   --format json|text|github               json (default): the plan; text: one line per gate;
 #                                           github: name=value lines for $GITHUB_OUTPUT
 #   --model FILE                            another model (the tests mutate a copy)
@@ -46,7 +52,7 @@ MJ_VERSION="ci-plan"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_
 command -v jq >/dev/null || { echo "ci-plan: jq is required" >&2; exit 12; }
 
 MODEL="$ROOT/.ai/repo/ci/gates.yaml"; BASE=""; HEAD=""; FILES=""; FULL=0; WHY=""; FORMAT=json; CHECK=0; ONDEMAND=0
-ATTR_ROOT="$ROOT"; INVENTORY=0; BASELINE=""; TREE="$ROOT"
+ATTR_ROOT="$ROOT"; INVENTORY=0; BASELINE=""; TREE="$ROOT"; TIER=""; TIER_SET=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --base) BASE="$2"; shift 2 ;;
@@ -54,6 +60,7 @@ while [ $# -gt 0 ]; do
     --files) FILES="$2"; shift 2 ;;
     --full) FULL=1; shift; if [ $# -gt 0 ] && [ "${1#--}" = "$1" ]; then WHY="$1"; shift; fi ;;
     --on-demand) ONDEMAND=1; shift ;;
+    --tier) TIER="$2"; TIER_SET=1; shift 2 ;;
     --format) FORMAT="$2"; shift 2 ;;
     --model) MODEL="$2"; shift 2 ;;
     --attr-root) ATTR_ROOT="$2"; shift 2 ;;
@@ -146,7 +153,54 @@ i=0; while [ "$i" -lt "$n_shapes" ]; do
   i=$((i+1))
 done
 [ "$(printf '%s' "$shape_ids" | LC_ALL=C sort | uniq -d | grep -c . || true)" = 0 ] || { echo "ci-plan: a shape id is declared twice" >&2; bad=1; }
+# Lanes and tiers (ADR 0186, the model's header). A lane is feedback, proof or release, whether
+# or not tiers are declared; once they are, every gate declares one and every lane a tier names
+# is one of the three. A model with neither is read exactly as before. The executable's reader
+# (src/gates/model.rs, GateModel::lane_problems) refuses the same things in the same words and
+# in the same order: the gates in declaration order, then the tiers in the order written. A
+# list or a map where a lane belongs is named as such, as the executable names it.
+lane_problems="$(awk -F= '
+  function known(v) { return v == "feedback" || v == "proof" || v == "release" }
+  function kind(seg) { return seg ~ /^[0-9]+$/ ? "a list" : "a map" }
+  $1 ~ /^gates\.[0-9]+\./ { split($1, a, "."); if (a[2] + 1 > ng) ng = a[2] + 1 }
+  $1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2] + 0] = $2 }
+  $1 ~ /^gates\.[0-9]+\.lane$/ { split($1, a, "."); v = substr($0, length($1) + 2); lane[a[2] + 0] = (v == "[]" ? "a list" : v) }
+  $1 ~ /^gates\.[0-9]+\.lane\./ { split($1, a, "."); if (!((a[2] + 0) in lane)) lane[a[2] + 0] = kind(a[4]) }
+  $1 == "tiers" { tiers = 1; shape = 1 }
+  index($1, "tiers.") == 1 {
+    tiers = 1; n = split($1, a, "."); v = substr($0, length($1) + 2)
+    if (a[2] ~ /^[0-9]+$/) { shape = 1; next }
+    if (!(a[2] in seen)) { seen[a[2]] = 1; tier[++nt] = a[2] }
+    if (n == 2) { if (v != "[]") notlist[a[2]] = 1; next }
+    if (a[3] !~ /^[0-9]+$/) { notlist[a[2]] = 1; next }
+    k = a[2] SUBSEP a[3]; if (k in tl) next
+    tl[k] = (n > 3 ? kind(a[4]) : (v == "[]" ? "a list" : v)); items[a[2]] = items[a[2]] " " a[3]
+  }
+  END {
+    for (i = 0; i < ng; i++) {
+      if (!(i in lane)) { if (tiers) print "gate " id[i] " declares no lane, and with tiers declared every gate is in one of feedback, proof and release" }
+      else if (!known(lane[i])) print "gate " id[i] ": lane is feedback, proof or release, not " lane[i]
+    }
+    if (shape) { print "tiers maps each tier to a list of the lanes it runs"; exit }
+    for (t = 1; t <= nt; t++) {
+      if (tier[t] in notlist) { print "tier " tier[t] " names its lanes as a list"; continue }
+      m = split(items[tier[t]], o, " ")
+      for (j = 1; j <= m; j++) if (!known(tl[tier[t] SUBSEP o[j]])) print "tier " tier[t] " names a lane that does not exist: " tl[tier[t] SUBSEP o[j]]
+    }
+  }' "$FLAT")"
+[ -z "$lane_problems" ] || { printf '%s\n' "$lane_problems" | sed 's/^/ci-plan: /' >&2; bad=1; }
 [ "$bad" = 0 ] || exit 10
+# The tier a plan is asked at (ADR 0186, I3947): the lanes its entry in `tiers` names. A model
+# without tiers, or a tier it does not declare, is refused as a usage error, before anything is
+# planned; the executable (GateModel::tier in src/gates/model.rs) refuses both in these words.
+tier_lanes=""
+if [ "$TIER_SET" = 1 ]; then
+  tier_names="$(awk -F= 'index($1, "tiers.") == 1 { split($1, a, "."); print a[2] }' "$FLAT" | LC_ALL=C sort -u)"
+  [ -n "$tier_names" ] || { echo "ci-plan: tier $TIER: the model declares no tiers, so it cannot plan one" >&2; exit 2; }
+  grep -qxF -e "$TIER" <<<"$tier_names" \
+    || { echo "ci-plan: tier $TIER: the model declares no such tier; it declares $(printf '%s' "$tier_names" | tr '\n' ',' | sed 's/,/, /g')" >&2; exit 2; }
+  tier_lanes=" $(mj_ylist "$FLAT" "tiers.$TIER" | tr '\n' ' ')"
+fi
 gate_jobs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.job$/ { split($1, a, "."); job[a[2]] = $2 } END { for (i in id) print id[i] "\t" job[i] }' "$FLAT")"
 gate_runs="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.runs$/ { split($1, a, "."); r[a[2]] = substr($0, length($1) + 2) } END { for (i in id) print id[i] "\t" r[i] }' "$FLAT")"
 network_ids="$(awk -F= '
@@ -158,7 +212,18 @@ ondemand_ids="$(awk -F= '
   $1 ~ /^gates\.[0-9]+\.on-demand$/ && $2 == "true" { split($1, a, "."); od[a[2]] = 1 }
   END { for (i in id) if (i in od) print id[i] }' "$FLAT" | LC_ALL=C sort | tr '\n' ' ')"
 on_demand() { case " $ondemand_ids " in *" $1 "*) return 0 ;; *) return 1 ;; esac; }
-[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, $n_shapes shape(s), every reference resolves"; exit 0; }
+gate_lanes="$(awk -F= '$1 ~ /^gates\.[0-9]+\.id$/ { split($1, a, "."); id[a[2]] = $2 } $1 ~ /^gates\.[0-9]+\.lane$/ { split($1, a, "."); l[a[2]] = $2 } END { for (i in id) if (i in l) print id[i] "\t" l[i] }' "$FLAT")"
+lane_of() { printf '%s\n' "$gate_lanes" | awk -F'\t' -v g="$1" '$1 == g { print $2; exit }'; }
+# 0 when no tier was asked for or the tier runs the gate's lane. Once tiers are declared every
+# gate has a lane (the check above refuses a model where one does not)
+in_tier() { [ "$TIER_SET" = 0 ] && return 0; case "$tier_lanes " in *" $(lane_of "$1") "*) return 0 ;; esac; return 1; }
+# the lanes are counted only where tiers make them complete; a model without tiers says nothing of them
+lanes_said=""
+if grep -q '^tiers[.=]' "$FLAT"; then
+  n_tiers="$(awk -F= 'index($1, "tiers.") == 1 { split($1, a, "."); if (!(a[2] in s)) { s[a[2]] = 1; n++ } } END { print n + 0 }' "$FLAT")"
+  lanes_said="$(printf '%s\n' "$gate_lanes" | awk -F'\t' -v t="$n_tiers" '{ n[$2]++ } END { printf ", %d tier(s), lanes %d feedback, %d proof, %d release", t, n["feedback"], n["proof"], n["release"] }')"
+fi
+[ "$CHECK" = 1 ] && { echo "ci-plan: $MODEL: $(printf '%s\n' "$gate_ids" | wc -l | tr -d ' ') gates ($(printf '%s' "$ondemand_ids" | wc -w | tr -d ' ') on demand), $n_classes classes, $n_shapes shape(s)$lanes_said, every reference resolves"; exit 0; }
 
 # ---------------------------------------------------------------- the inventory
 # No script outside the model carries a list of gates (I2350). A gate added to the model and
@@ -491,6 +556,15 @@ add() { case " $selected " in *" $1 "*) ;; *) selected="$selected $1" ;; esac; w
 $1	$2"; }
 for g in $gate_ids; do
   i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
+  # A gate whose lane the tier asked for does not run is left out first, and says so: it is
+  # out whatever else is asked (--on-demand, --full), and it is out before implies, requires
+  # and subsumed-by are applied, so that nothing brings it back and nothing is dropped for it
+  # (I3947; the executable decides it at the same point, in the same words).
+  if ! in_tier "$g"; then
+    why_of="$why_of
+$g	lane $(lane_of "$g"): not in the $TIER tier"
+    continue
+  fi
   # An on-demand gate is left out of every plan that did not ask for it — including the full
   # one — and says so, so that a reader of the plan sees a gate that was not planned rather
   # than a job that will be pending for ever.
@@ -508,13 +582,13 @@ $g	on demand only: its runner is not available on demand; the schedule, a dispat
     [ -n "$by" ] && add "$g" "class ${by% }"
   fi
 done
-# a selected gate brings what it implies and what it requires
+# a selected gate brings what it implies and what it requires, never a gate the tier left out
 changed=1; while [ "$changed" = 1 ]; do
   changed=0
   for g in $selected; do
     i="$(awk -F= -v g="$g" '$1 ~ /^gates\.[0-9]+\.id$/ && $2 == g { split($1, a, "."); print a[2]; exit }' "$FLAT")"
-    for ref in $(mj_ylist "$FLAT" "gates.$i.implies"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "implied by $g"; changed=1 ;; esac; done
-    for ref in $(mj_ylist "$FLAT" "gates.$i.requires"); do case " $selected " in *" $ref "*) ;; *) add "$ref" "required by $g"; changed=1 ;; esac; done
+    for ref in $(mj_ylist "$FLAT" "gates.$i.implies"); do case " $selected " in *" $ref "*) ;; *) in_tier "$ref" || continue; add "$ref" "implied by $g"; changed=1 ;; esac; done
+    for ref in $(mj_ylist "$FLAT" "gates.$i.requires"); do case " $selected " in *" $ref "*) ;; *) in_tier "$ref" || continue; add "$ref" "required by $g"; changed=1 ;; esac; done
   done
 done
 # ... but nothing implies or requires its way past the plan the caller asked for: an
@@ -576,13 +650,14 @@ case "$FORMAT" in
     jq -n --arg mode "$mode" --arg reason "$reason" --arg base "$BASE" --arg head "$HEAD" --arg model "${MODEL#"$ROOT"/}" \
       --rawfile changed "$LIST" --rawfile classes "$FLAT.classes" \
       --arg selected "$selected" --arg gates "$gate_ids" --arg why "$why_of" --arg jobs "$gate_jobs" --arg runs "$gate_runs" \
-      --arg network "$network_ids" \
+      --arg network "$network_ids" --arg lanes "$gate_lanes" \
       --arg unclassified "$(printf '%s\n' "$MATCH" | awk -F'\t' '$1=="unclassified"{print $3}')" \
       --arg skip_why "$skip_why" --arg shape "$shape" --arg shape_records "$shape_records" --arg shape_derived "$shape_derived" '
       def lines: split("\n") | map(select(length > 0));
       ($why | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $w
       | ($jobs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $jobs
       | ($runs | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $runs
+      | ($lanes | lines | map(split("\t") | {key: .[0], value: .[1]}) | from_entries) as $lanes
       | ($selected | split(" ") | map(select(length > 0))) as $sel
       | ($network | split(" ") | map(select(length > 0))) as $net
       | { schema: 1, model: $model, mode: $mode, reason: $reason, base: $base, head: $head,
@@ -590,7 +665,7 @@ case "$FORMAT" in
           classes: ($classes | lines | map(split("\t")) | group_by(.[0]) | map({id: .[0][0], paths: map(.[1])})),
           unclassified: ($unclassified | lines),
           shape: (if $shape == "" then null else {id: $shape, records: ($shape_records | lines), derived: ($shape_derived | tonumber)} end),
-          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), network: (. as $g | $net | index($g) != null), reason: ($w[.] // $skip_why)})),
+          gates: ($gates | lines | map({id: ., job: ($jobs[.] // ""), lane: ($lanes[.] // null), runs: ($runs[.] // ""), selected: (. as $g | $sel | index($g) != null), network: (. as $g | $net | index($g) != null), reason: ($w[.] // $skip_why)})),
           selected: $sel }'
     rm -f "$FLAT.classes" ;;
 esac

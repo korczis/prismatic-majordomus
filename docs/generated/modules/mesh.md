@@ -5,7 +5,7 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 26.
+Stability: experimental. Capabilities: 30.
 
 ## `mesh.beat` — Say a session is making progress
 
@@ -33,6 +33,99 @@ dialog`): it is written at once, is not progress, and the next beat that is clea
 | `pid` | integer or null | no | The process the beat speaks for; refused unless it is running on this machine. |
 
 Output: `Written`.
+
+## `mesh.build_cache.ensure` — Restore an install before its command, and save it after
+
+For one lockfile the repository tracks (npm node_modules, mix deps, or the cargo build directory), skip an install whose key is already in place; otherwise restore it from this machine's local archive level (~/.cache/majordomus/build-cache) and then from the store this node declares when its own probe finds it healthy and a credential file is present, each only after the archive's SHA-256 matches the digest recorded when it was saved and every entry is judged safe (no absolute name, no `..`, no link leaving the target). On a miss the command runs, and when it succeeds what it left is archived to the local level and the store. A failure of any level is a miss: the command runs exactly as without the cache. npm's command is not run on a hit; mix's is; a cargo build directory is restored only when cold, under cargo's own lock, without incremental state, and never saved above one PUT. A restore and a save respect the build's free-space floor (MAJORDOMUS_MIN_FREE_MB); the local level is held under the policy's build_cache.local_max_gib, oldest first. MAJORDOMUS_BUILD_CACHE=off bypasses every level. Offered on the command line only: it runs a command (ADR 0157, I3952).
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh build-cache ensure` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | Kind | yes | What is cached: `npm-modules`, `mix-deps` or `cargo-build-dir`. |
+| `dir` | string or null | no | The directory holding the lockfile, relative to the repository; absent names the only
+one the repository tracks, or the one the command was started in. |
+| `command` | array | no | The install or build command, run in that directory on a miss; required for npm and
+mix, optional for a cargo build directory. |
+
+Output: `BuildCacheEnsureReport`.
+
+## `mesh.build_cache.env` — The sccache client configuration for the store this node selected
+
+What the process that starts the sccache server should have in its environment on this machine, derived and never typed: the local disk as the first level and the selected store as the second (SCCACHE_MULTILEVEL_CHAIN=disk,s3, the bucket, the endpoint, the region, whether TLS is used, a key prefix of rustc's host triple, the credential FILE path and its profile) only when sccache has the multi-level chain (measured on a throwaway server, not assumed), a credential file of mode 0600 holding the profile exists, and the store answered its readiness route now; otherwise no variable at all, with the one condition that did not hold. sccache fixes its chain at server start and fails the compile when a level is down then, so a store is added only to a server that is starting. No key is ever in the answer, only the credential file's path (ADR 0157, I2673).
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_build_cache_env` |
+| HTTP | `GET /api/v1/mesh/build-cache/env` |
+| CLI | `majordomus mesh build-cache env` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `sccache` | string or null | no | The sccache executable to ask; `sccache` when absent. |
+| `node_file` | string or null | no | The node file naming the store this node offers or knows. |
+| `credentials` | string or null | no | The AWS-format credential file, mode 0600. |
+
+Output: `BuildCacheEnvReport`.
+
+## `mesh.build_cache.key` — What every dependency install and build directory is cached under
+
+Every lockfile the repository tracks — Cargo.lock, mix.lock, package-lock.json — as the thing it makes cacheable (a cargo build directory, mix dependencies, npm node_modules), each with its key: a schema version, the platform (the toolchain's own host triple, or `any` for platform-independent source), the toolchain as its executables state it, and the digest of every input and environment variable that changes what the install leaves. Where the entry is restored to is a separate field, so two checkouts with one lockfile share one entry. A kind whose toolchain is absent says why and has no key (ADR 0157, I3950).
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_build_cache_key` |
+| HTTP | `GET /api/v1/mesh/build-cache/key` |
+| CLI | `majordomus mesh build-cache key` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build, cache |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | object | no | Only this kind; every kind the repository has when absent. |
+
+Output: `BuildCacheKeyReport`.
+
+## `mesh.build_cache.provision` — Provision this node as a mesh build cache provider
+
+The host layer of a cache provider as one declared policy: a disk guard on a timer, services that restart always and are last for the OOM killer, a bounded journal and container log, a private bucket with expiry and a hard quota beside the CI cache's own bound, one least-privilege identity per node whose credential is generated on the host into a mode 0600 file outside any repository, and the rustc wrapper that makes the node's own builds use the cache. Without `apply` it plans only: every file, edit and command still owed, from what the host holds, with no secret named. With `apply` it writes what is missing or drifted and runs the commands, as root, refusing without it before touching anything; a second apply changes nothing. A `root` other than `/` is a staging directory: files only, no privilege, no command. Offered on the command line only: it installs services and writes credentials, which nothing reachable over HTTP or MCP may do.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| CLI | `majordomus mesh build-cache provision` |
+| cache | — |
+| benchmark | waived (destructive) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, build-cache, provisioning |
+
+| input | type | required | description |
+|---|---|---|---|
+| `apply` | boolean | no | Carry the plan out. Absent, the capability only plans and changes nothing. Under the
+default root `/` it needs root and refuses without it. |
+| `root` | string or null | no | The directory the host's paths are read from and written under; default `/`. Any other
+root is a staging directory: files only, no privilege, no command. |
+
+Output: `ProvisionReport`.
 
 ## `mesh.claim` — Claim a scope across the mesh
 

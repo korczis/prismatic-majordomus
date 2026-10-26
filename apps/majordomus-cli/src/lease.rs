@@ -769,9 +769,17 @@ fn superseded_by(
 ) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
     if recorded.path != mine.path {
-        return None;
-    }
-    if recorded.mtime == mine.mtime && recorded.size == mine.size {
+        // a server started from the build output this process runs a copy of (I2059)
+        let origin = crate::served_executable::copied_from(&mine.path)?;
+        let same = origin == recorded.path
+            || matches!(
+                (fs::canonicalize(&origin), fs::canonicalize(&recorded.path)),
+                (Ok(a), Ok(b)) if a == b
+            );
+        if !same || recorded.replaced().is_none() {
+            return None;
+        }
+    } else if recorded.mtime == mine.mtime && recorded.size == mine.size {
         return None;
     }
     if version_verdict(doc.version.as_deref(), my_version) == VersionVerdict::ServerNewer {
@@ -786,7 +794,7 @@ fn superseded_by(
     Some(format!(
         "superseded lease: the server was started from {} and that file has been replaced since \
          (it is serving code that is no longer on disk)",
-        mine.path.display()
+        recorded.path.display()
     ))
 }
 
@@ -1345,7 +1353,10 @@ enum Answer {
 /// Ask a published URL the probe's three questions within `timeout`, telling a server that
 /// said no apart from one that said nothing in time.
 fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
-    match bridge::request(url, "GET", "/", &[], None, timeout) {
+    // marked as a probe, so that asking whether a server is there does not keep it there
+    // (I4007): a server's idle timer counts a client reading its home page, not this
+    let probe = [(crate::idle::PROBE_HEADER, "1")];
+    match bridge::request(url, "GET", "/", &probe, None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
@@ -2681,6 +2692,81 @@ mod tests {
             LeaseFile::read(&dir.path().join("server.json")),
             LeaseFile::Absent,
             "the lease was released on the way out"
+        );
+    }
+
+    /// A profile directory holding the build output `majordomus` (recorded in a lease as it
+    /// was) and a served copy of it, which is what a launcher runs (I2059).
+    fn copy_of_a_build(dir: &Path) -> (ExecutableIdentity, ExecutableIdentity) {
+        let build = dir.join("majordomus");
+        fs::write(&build, b"the code the server loaded").unwrap();
+        let recorded = identity_of(&build);
+        let served = dir.join("served");
+        fs::create_dir(&served).unwrap();
+        let copy = served.join("majordomus-1-2");
+        fs::write(&copy, b"the code the server loaded").unwrap();
+        (recorded, identity_of(&copy))
+    }
+
+    #[test]
+    fn a_rebuild_of_the_output_a_served_copy_runs_supersedes_the_lease() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, mine) = copy_of_a_build(dir.path());
+        fs::write(&recorded.path, b"a rebuild of the same tree, longer").unwrap();
+        let reason = superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0")
+            .expect("the output the copy came from was replaced");
+        assert!(reason.contains("has been replaced since"), "{reason}");
+    }
+
+    #[test]
+    fn an_unreplaced_build_output_is_not_superseded_by_its_served_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, mine) = copy_of_a_build(dir.path());
+        assert_eq!(
+            superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_lease_naming_another_build_is_not_superseded_by_a_served_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (_, mine) = copy_of_a_build(dir.path());
+        let other = dir.path().join("other");
+        fs::write(&other, b"another build").unwrap();
+        let recorded = identity_of(&other);
+        fs::write(&other, b"another build, rewritten longer").unwrap();
+        assert_eq!(
+            superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0"),
+            None
+        );
+    }
+
+    #[test]
+    fn a_lease_path_spelled_another_way_is_the_same_origin_as_the_copy() {
+        let dir = tempfile::tempdir().unwrap();
+        let (mut recorded, mine) = copy_of_a_build(dir.path());
+        fs::write(&recorded.path, b"a rebuild of the same tree, longer").unwrap();
+        // the same file under a different spelling of its path
+        recorded.path = dir.path().join("served").join("..").join("majordomus");
+        let reason = superseded_by(&lease_from(&recorded, "1.0.0"), &mine, "1.0.0")
+            .expect("canonical paths agree, and the output was replaced");
+        assert!(reason.contains("has been replaced since"), "{reason}");
+    }
+
+    #[test]
+    fn a_path_that_is_no_served_copy_is_not_superseded_by_a_lease_for_another_path() {
+        let dir = tempfile::tempdir().unwrap();
+        let (recorded, _) = copy_of_a_build(dir.path());
+        let elsewhere = dir.path().join("elsewhere");
+        fs::write(&elsewhere, b"a build run in place").unwrap();
+        assert_eq!(
+            superseded_by(
+                &lease_from(&recorded, "1.0.0"),
+                &identity_of(&elsewhere),
+                "1.0.0"
+            ),
+            None
         );
     }
 }

@@ -88,6 +88,8 @@ runs:
           # upload-artifact keeps no file mode
           chmod +x "$dest/majordomus"
           echo "MAJORDOMUS_BIN=$dest/majordomus" >> "$GITHUB_ENV"
+          # the commit its provenance names, so that a gate trusts it (lib/rust_bin.sh, ADR 0224)
+          echo "MAJORDOMUS_BIN_COMMIT=$got" >> "$GITHUB_ENV"
           echo "source=download" >> "$GITHUB_OUTPUT"
           echo "ok=true" >> "$GITHUB_OUTPUT"
           echo "::notice::the executable of $want was downloaded, not built"
@@ -146,6 +148,7 @@ runs:
       run: |
         RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
         echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+        echo "MAJORDOMUS_BIN_COMMIT=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
     - name: the crate's Rust API reference, built here after all
       if: inputs.rustdoc == 'true' && steps.doc.outputs.ok != 'true'
       uses: ./.github/actions/rustdoc

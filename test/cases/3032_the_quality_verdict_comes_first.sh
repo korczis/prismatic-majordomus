@@ -14,6 +14,11 @@
 # already-built executable with those arguments (or with a canned answer). The judge is the
 # real executable, over a fixture repository whose crate this case writes, so the finding is
 # the one the structure job prints; what the stand-in replaces is only the build.
+#
+# The gate and the script reach the executable differently, on purpose (ADR 0224): the gate
+# runs the tree's executable through bin/majordomus-cli and never builds, while
+# scripts/rust-check is a declared build and asks cargo. What they share is the subcommand and
+# its arguments, read here from the gate's `bin/majordomus-cli <args>` line.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
@@ -71,8 +76,8 @@ check() { # <exit> <rust-check args...>: one run, its cargo calls in $STUB_LOG
 # ---------------------------------------------------------------- the gate's own arguments
 # what rust-check hands the executable is what the rust-quality gate hands it, read from the
 # model, so the finding text is the gate's
-gate_args="$(awk '/^  - id: rust-quality$/{f=1} f && /^    runs: /{sub(/.* -- /, ""); print; exit}' "$MODEL")"
-[ -n "$gate_args" ] || { echo "    the model declares no rust-quality gate with a 'cargo run ... --' command"; exit 1; }
+gate_args="$(awk '/^  - id: rust-quality$/{f=1} f && /^    runs: /{if (sub(/^    runs: bin\/majordomus-cli /, "")) print; exit}' "$MODEL")"
+[ -n "$gate_args" ] || { echo "    the model declares no rust-quality gate with a 'bin/majordomus-cli <args>' command"; exit 1; }
 STUB_EXE="" STUB_QUALITY_EXIT=0 check 0 --quality
 [ "$(cat "$STUB_LOG")" = "run -- $gate_args" ] \
   || { echo "    --quality asked cargo for '$(tr '\n' '|' < "$STUB_LOG")', the gate runs '$gate_args'"; exit 1; }
