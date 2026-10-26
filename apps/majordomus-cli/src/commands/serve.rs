@@ -58,13 +58,20 @@ use crate::shared::SharedServer;
 
 use super::executions::{ask_server, cli_capability, map};
 
-/// Run `majordomus serve`.
-pub fn run(args: ServeArgs) -> Result<u8> {
-    let start = match &args.repo.repo {
+/// The repository a command that elects this checkout's server works on: the one named by
+/// `--repo`, else the one around the working directory. Found here, before the layer loads,
+/// for `serve` and for `ui`, which converges on the same server (I3017's owners).
+pub(crate) fn discover(args: &RepoArgs) -> Result<Repository> {
+    let start = match &args.repo {
         Some(p) => p.clone(),
         None => std::env::current_dir().map_err(|e| Error::io(".", e))?,
     };
-    let repo = Repository::discover(&start)?;
+    Repository::discover(&start)
+}
+
+/// Run `majordomus serve`.
+pub fn run(args: ServeArgs) -> Result<u8> {
+    let repo = discover(&args.repo)?;
     let layer = layer_args(&args.repo)?;
     match &args.command {
         None => serve(&args, &repo),
@@ -734,7 +741,14 @@ fn ensure(
     layer: &[OsString],
 ) -> Result<u8> {
     let c = converge_with(repo, port, idle, wait, layer)?;
-    let reason = if c.ready() {
+    let reason = not_ready(&c, wait);
+    report(c.standing, c.document, reason, c.started, &c.log, format)
+}
+
+/// Why a convergence did not reach a ready server, in the words `serve ensure` prints:
+/// `None` when it did. `majordomus ui` says the same, because it is the same convergence.
+pub(crate) fn not_ready(c: &Convergence, wait: Duration) -> Option<String> {
+    if c.ready() {
         None
     } else if c.timed_out {
         Some(format!(
@@ -753,8 +767,7 @@ fn ensure(
         ))
     } else {
         c.reason.clone()
-    };
-    report(c.standing, c.document, reason, c.started, &c.log, format)
+    }
 }
 
 /// Print the report and decide the exit code: 0 for a ready server, 10 for anything else,
@@ -821,7 +834,7 @@ fn report(
 /// started that way served a stale checkout's 0.21.0 share, which has no `ui/`, and every
 /// screen of the UI lost its stylesheet and scripts. A relative share is made absolute
 /// here, because the started server's directory is not promised to be this one's.
-fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
+pub(crate) fn layer_args(repo: &RepoArgs) -> Result<Vec<OsString>> {
     let mut out = Vec::new();
     if let Some(share) = &repo.share {
         let share = std::path::absolute(share).map_err(|e| Error::io(share, e))?;
