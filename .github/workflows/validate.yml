@@ -40,6 +40,12 @@ on:
         description: "empty: every gate, on-demand included. 'change': the gates of the head commit's own change, as a pull request's run plans them"
         required: false
         default: ''
+      # I4242: the runner of this one run, in place of the repository variable MJ_RUNNER — how
+      # a self-hosted pool is proved on a branch before the variable sends every run to it.
+      runner:
+        description: "empty: vars.MJ_RUNNER. A runner label (e.g. lundra), or a JSON list of labels"
+        required: false
+        default: ''
   schedule:
     # Every night, and this is the run that carries the on-demand gates: a gate nothing
     # selected for a while still has a run, and a gate no push can afford a runner for still
@@ -107,6 +113,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     outputs:
+      runner: ${{ steps.runner.outputs.runner }}
       mode: ${{ steps.plan.outputs.mode }}
       selected: ${{ steps.plan.outputs.selected }}
       shell_suite: ${{ steps.plan.outputs.shell_suite }}
@@ -189,6 +196,36 @@ jobs:
             echo
             jq -r 'if (.classes | length) > 0 then "Classes: " + (.classes | map("\(.id) (\(.paths | length))") | join(", ")) else "" end' plan.json
           } >> "$GITHUB_STEP_SUMMARY"
+      # I4242: the runner every other Linux job of this run takes, decided once, here. The
+      # repository's own machines (MJ_RUNNER, e.g. lundra) are the first wave: they cost nothing
+      # per minute and do not share the account's hosted concurrency. A pull request from a fork
+      # never reaches them, because this repository is public and they are machines of the fleet;
+      # an unset or unreadable variable means GitHub-hosted. This job stays hosted so that a
+      # verdict is planned even when the pool is offline; the remedy for an offline pool is to
+      # unset MJ_RUNNER. Every job reads `needs.plan.outputs.runner || "ubuntu-latest"`, so a
+      # plan that failed still lets `ci` report. Case 4242 drives this step.
+      - id: runner
+        env:
+          CHOSEN: ${{ github.event.inputs.runner || vars.MJ_RUNNER }}
+          EVENT: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          runner='"ubuntu-latest"'
+          if [ "$EVENT" = pull_request ] && [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "::notice::a pull request from ${HEAD_REPO:-an unknown repository} runs on GitHub-hosted runners"
+          elif [ -n "${CHOSEN:-}" ]; then
+            case "$CHOSEN" in
+              '['*) labels=$CHOSEN ;;
+              *) labels=$(jq -cn --arg l "$CHOSEN" '["self-hosted", $l]') ;;
+            esac
+            if jq -e 'type == "array" and length > 0 and all(type == "string")' <<<"$labels" >/dev/null 2>&1; then
+              runner=$(jq -c . <<<"$labels")
+            else
+              echo "::warning::MJ_RUNNER is neither a runner label nor a JSON list of labels; GitHub-hosted runners"
+            fi
+          fi
+          echo "runner=$runner" >> "$GITHUB_OUTPUT"
+          echo "Runner of this run's jobs: \`$runner\`" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
       - uses: actions/upload-artifact@v4
         with:
           name: ci-plan
@@ -225,7 +262,7 @@ jobs:
   build:
     needs: plan
     timeout-minutes: 45
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: rust
@@ -265,7 +302,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true' || needs.plan.outputs.ui_audit == 'true'
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - name: the crate's Rust API reference
@@ -298,7 +335,7 @@ jobs:
   structure:
     needs: [plan, build]
     timeout-minutes: 55
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -418,7 +455,7 @@ jobs:
     # suite-budget step below refuses growth while the bound still has room. One declaration,
     # two readers — test/cases/417 refuses the workflow and the model when they disagree.
     timeout-minutes: 225
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
       # (96_site_deploy does, to a bare repository of its own) cannot push a shallow clone
@@ -526,7 +563,7 @@ jobs:
     # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
     # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
     timeout-minutes: 225
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -652,7 +689,7 @@ jobs:
     # at 21:28 after 10 of its minutes. 90 leaves that gate about 25 minutes and a slow runner
     # its margin; lanes 1 and 2 finish far inside it.
     timeout-minutes: 90
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -832,7 +869,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
     timeout-minutes: 55
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -962,7 +999,7 @@ jobs:
     needs: [plan, suite, rust, coverage, build]
     if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     permissions:
       contents: read
       # `gh workflow run pages.yml`, and nothing else of Actions
@@ -1082,7 +1119,7 @@ jobs:
     # on the next head (39317142394): its bound is 60 min; the steps before it now take 25 min
     # with the Czech copy built, so the job is 105
     timeout-minutes: 105
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1237,7 +1274,7 @@ jobs:
     # a sixth of a sweep that no longer fits 45 minutes (the Czech copies doubled the routes:
     # run 39317142394 stopped the single step at its 2700 s bound), plus the build and setup
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1279,7 +1316,7 @@ jobs:
     needs: [plan, site-probe-shard]
     if: always() && needs.plan.outputs.site_probe == 'true'
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
@@ -1336,7 +1373,7 @@ jobs:
     # a sixth of a probe that no longer fits 55 minutes, plus the setup; the slowest shard ran
     # 1450-1527 s of its former 1500 s bound on every run of 2026-10-21/22, so the bound is 1800 s
     timeout-minutes: 36
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1380,7 +1417,7 @@ jobs:
     needs: [plan, interaction-probe-shard]
     if: always() && needs.plan.outputs.interaction_probe == 'true'
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1453,7 +1490,7 @@ jobs:
     # about 13 minutes of setup and a build of the site that is bounded at 40, then the audit step's
     # 35 minutes: the step is the one that runs out of time, never the job
     timeout-minutes: 70
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - id: site
@@ -1513,7 +1550,7 @@ jobs:
     if: needs.plan.outputs.ui_audit == 'true'
     # the bounded steps add up to 40 + 10 + 10 + 15 minutes, and the setup is about 13
     timeout-minutes: 90
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1580,7 +1617,7 @@ jobs:
     if: always() && needs.plan.outputs.ui_audit == 'true'
     # the join is seconds; the report needs the executable, which the Rust cache restores
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1664,7 +1701,7 @@ jobs:
     # 2026-10-19 (39285861377), then over it as the routes grew a fifth (6554 -> 7699 crawled);
     # the bound and the job keep a third's headroom
     timeout-minutes: 35
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1716,7 +1753,7 @@ jobs:
     needs: [plan, build]
     if: needs.plan.outputs.mesh_lab == 'true'
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1907,7 +1944,7 @@ jobs:
     # pages-check's bounded wait for the deploy of this commit (PAGES_CHECK_DEPLOY_WAIT, twenty
     # minutes), its five-minute wait for gh-pages' head to be served, and the checks after them
     timeout-minutes: 35
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1965,7 +2002,7 @@ jobs:
     needs: [plan, build, rustdoc-surface, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4

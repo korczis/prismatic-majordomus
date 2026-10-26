@@ -70866,6 +70866,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I4242",
+        "kind": "issue",
+        "label": "I4242",
+        "summary": "Lundra is the first wave: the validate jobs of trusted events run on the repository's own runners",
+        "route": "/cockpit/objects/issue/i4242",
+        "source": ".ai/repo/project/issues/I4242.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every Linux job of validate.yml but plan takes runs-on from needs.plan.outputs.runner, and a case fails when one names a runner of its own",
+            "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it",
+            "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
+          ],
+          "created_at": "2026-10-26",
+          "current_state": "Every Linux job of validate.yml says runs-on: ubuntu-latest; the three lundra runners are online and idle.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_runner_is_planned"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "pages.yml and release.yml: the deploy and the release hold secrets and stay on GitHub-hosted runners",
+            "The macOS jobs and the install matrix, which name their platform",
+            "Provisioning the runners: done by hand on lundra on 2026-10-26"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "docs/CI.md",
+            "test/cases",
+            ".ai/repo/project/issues/I4242.yaml"
+          ],
+          "serves": [
+            "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes",
+            "a-change-is-judged-in-minutes#no-required-check-is-dropped"
+          ],
+          "slug": "lundra-is-the-first-wave",
+          "started_at": "2026-10-26T20:21:23Z",
+          "started_event": "sha256:c93de354943c8c0250b11df2bb6fc53e853400d42d3f7a7e24e0c1895a93f257",
+          "updated_at": "2026-10-26T20:21:23Z",
+          "validation": [
+            "majordomus plan validate",
+            "bash test/run.sh 4242"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94370,6 +94418,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4242_the_runner_is_planned.sh",
+        "kind": "test",
+        "label": "test/cases/4242_the_runner_is_planned.sh",
+        "route": "/cockpit/objects/test/test-cases-4242-the-runner-is-planned-sh",
+        "source": "test/cases/4242_the_runner_is_planned.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133107,6 +133162,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4242",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4242",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139637,6 +139702,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4242_the_runner_is_planned.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144733,8 +144803,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4016,
+      "edges": 9260,
       "acyclic": false,
       "truncated": false
     }

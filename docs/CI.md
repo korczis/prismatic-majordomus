@@ -320,6 +320,28 @@ No page is sampled, the Czech copies included. A finding still fails the shard t
 page and names the page and the spec. Case 3603 drives three shards of a fixture site in a
 browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts/interaction-probe`.
 
+## Where the jobs run
+
+The plan job decides the runner of every other Linux job of the run, once, and every job
+reads it as `fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')` (I4242). The first
+wave is the repository's own machines: the repository variable `MJ_RUNNER` names them, as a
+runner label (`lundra`, meaning `[self-hosted, lundra]`) or a JSON list of labels. They cost
+nothing per minute and do not share the account's hosted concurrency, which sixteen
+validate runs exhausted on 2026-10-26.
+
+| event | runner |
+|---|---|
+| push, schedule, a pull request from a branch of this repository | `MJ_RUNNER`, else `ubuntu-latest` |
+| a dispatch | its `runner` input, else `MJ_RUNNER`, else `ubuntu-latest` |
+| a pull request from a fork | `ubuntu-latest`, whatever `MJ_RUNNER` says: the repository is public and the pool is machines of the fleet |
+| the plan job itself; macOS and the install matrix | as written: the plan stays hosted so a verdict is planned while the pool is offline |
+
+An offline pool queues jobs rather than failing them, so the remedy is
+`gh variable delete MJ_RUNNER`: the next run is hosted, with no other change. A pool is
+proved on a branch first with `gh workflow run validate.yml --ref <branch> -f runner=lundra`.
+`pages.yml` and `release.yml` hold deploy and release credentials and stay hosted. Case 4242
+holds every job to the planned runner and drives the plan's runner step with a fork's event.
+
 ## Caches and artifacts
 
 Caches hold reusable dependency and build state; artifacts carry a job's outputs to a

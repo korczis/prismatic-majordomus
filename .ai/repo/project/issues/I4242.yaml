@@ -1,0 +1,37 @@
+id: I4242
+milestone: ci-critical-path
+title: "Lundra is the first wave: the validate jobs of trusted events run on the repository's own runners"
+slug: lundra-is-the-first-wave
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - a-change-is-judged-in-minutes#pr-verdict-within-five-minutes
+  - a-change-is-judged-in-minutes#no-required-check-is-dropped
+objective: "The plan job of validate.yml chooses the runner every other job of the run takes: the repository variable MJ_RUNNER (a label, or a JSON list of labels) for a push, the schedule, a dispatch and a pull request from a branch of this repository; GitHub-hosted ubuntu-latest for a pull request from a fork, for an unset or unreadable variable, and for the macOS jobs. A dispatch may name the runner for one run, so the self-hosted pool is proved on a branch before the variable sends every run to it."
+why: "On 2026-10-26 train 8's verdict crawled because sixteen validate-sized runs shared the account's GitHub-hosted concurrency, and the owner asked for lundra, a machine of the fleet that costs nothing per minute, to be the first wave. Three runners (lundra-1..3, label lundra) were registered and sat idle: every job of validate.yml named ubuntu-latest, so nothing could reach them. The repository is public, so a fork's pull request must never run on a machine of the fleet."
+current_state: "Every Linux job of validate.yml says runs-on: ubuntu-latest; the three lundra runners are online and idle."
+desired_state: "One expression in the plan job decides the runner; every Linux job reads it from needs.plan.outputs.runner; a fork's pull request is refused the self-hosted pool by the plan itself; unsetting MJ_RUNNER returns every run to GitHub-hosted runners with no other change."
+scope:
+  - ".github/workflows/validate.yml"
+  - "docs/CI.md"
+  - "test/cases"
+  - ".ai/repo/project/issues/I4242.yaml"
+non_scope:
+  - "pages.yml and release.yml: the deploy and the release hold secrets and stay on GitHub-hosted runners"
+  - "The macOS jobs and the install matrix, which name their platform"
+  - "Provisioning the runners: done by hand on lundra on 2026-10-26"
+depends_on: []
+acceptance_criteria:
+  - "Every Linux job of validate.yml but plan takes runs-on from needs.plan.outputs.runner, and a case fails when one names a runner of its own"
+  - "A pull request whose head repository is not this one is planned onto ubuntu-latest whatever MJ_RUNNER says, and the case drives the plan's runner step with a fork's event to show it"
+  - "A dispatch with runner=lundra on this branch runs its jobs on lundra runners and reaches its ci verdict"
+validation:
+  - "majordomus plan validate"
+  - "bash test/run.sh 4242"
+evidence_required:
+  - case_runner_is_planned
+created_at: 2026-10-26
+updated_at: 2026-10-26T20:21:23Z
+started_at: 2026-10-26T20:21:23Z
+started_event: sha256:c93de354943c8c0250b11df2bb6fc53e853400d42d3f7a7e24e0c1895a93f257
