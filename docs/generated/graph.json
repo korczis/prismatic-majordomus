@@ -29304,6 +29304,8 @@
             "A kind added to the layer appears in the overview with no change to the overview's own code",
             "The counts on the page match the artifact, proved by a test"
           ],
+          "completed_at": "2026-10-26T01:47:08Z",
+          "completed_event": "sha256:21d70c07eef01ab0267610edb6b48064a3e1a9f0af5f7d623fde69b8fcd091ea",
           "created_at": "2026-09-06",
           "current_state": "The Cockpit renders pages derived from the registry and the index. Section presence and any counts are decided in code.",
           "depends_on": [
@@ -29328,11 +29330,15 @@
             "apps/majordomus-cli/src/cockpit/pages.rs"
           ],
           "slug": "derived-overview",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-26T01:46:05Z",
+          "started_event": "sha256:48ff177d818196b285365432010908937d6e76f8f0e4570cc7f873ec4346ecfd",
+          "updated_at": "2026-10-26T01:47:08Z",
           "validation": [
             "cargo test --workspace --all-features",
             "bash test/run.sh"
           ],
+          "verified_at": "2026-10-26T01:46:28Z",
+          "verified_event": "sha256:9c8d0ced763e3cbd37aa199add934592a57b4c03c909c2211e5c583f83c499b2",
           "why": "A dashboard with headings for things that do not exist teaches readers to distrust it, and hand-maintained counts are wrong within a week. Both problems disappear when the overview is a query."
         }
       },
@@ -29463,10 +29469,11 @@
           "profile": "implementation",
           "risk": "A client-side index grows with the repository until it dominates the page weight. Measuring it now is what makes the later decision to page or trim it a measurement rather than a surprise.",
           "scope": [
-            "share/cockpit/src"
+            "site/search.js",
+            "scripts/lib/docs-index.mjs"
           ],
           "slug": "capability-search",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "majordomus generate --check"
@@ -29514,10 +29521,10 @@
           "profile": "implementation",
           "risk": "Rendering every node at once is slow and unreadable at the same time. The default view is filtered, and expansion is progressive.",
           "scope": [
-            "share/cockpit/src"
+            "share/cockpit/graph.js"
           ],
           "slug": "graph-visualisation",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "cargo test --workspace --all-features"
@@ -29657,10 +29664,11 @@
           "profile": "implementation",
           "risk": "Live overlays are where credentials leak into browsers. Everything sent to the client is an allowlisted safe field.",
           "scope": [
-            "apps/majordomus-cli/src/cockpit/html.rs"
+            "apps/majordomus-cli/src/cockpit/html.rs",
+            "share/cockpit/socket.js"
           ],
           "slug": "live-state-overlay",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "scripts/cockpit-probe",
             "cargo test --workspace --all-features"
@@ -73565,7 +73573,7 @@
             ".github/workflows"
           ],
           "slug": "capability-graph",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26T03:00:00Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor",

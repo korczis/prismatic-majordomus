@@ -10,7 +10,8 @@ why: "A repository this size does not need a search service, and adding one woul
 current_state: "No unified search exists over the layer."
 desired_state: "One generated index serves both projections, its contents derive from the graph, and it costs nothing to operate."
 scope:
-  - share/cockpit/src
+  - site/search.js
+  - scripts/lib/docs-index.mjs
 non_scope:
   - An external search service for a graph of this size
   - A hand-maintained index or keyword list
@@ -29,4 +30,4 @@ evidence_required:
   - static_search_works
 risk: "A client-side index grows with the repository until it dominates the page weight. Measuring it now is what makes the later decision to page or trim it a measurement rather than a surprise."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

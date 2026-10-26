@@ -29,4 +29,23 @@ evidence_required:
   - counts_computed
 risk: "Counts on a page are the sort of thing the repository's own rule against numbers in prose exists for. They are computed and rendered, never written."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26T01:47:08Z
+started_at: 2026-10-26T01:46:05Z
+started_event: sha256:48ff177d818196b285365432010908937d6e76f8f0e4570cc7f873ec4346ecfd
+verified_at: 2026-10-26T01:46:28Z
+verified_event: sha256:9c8d0ced763e3cbd37aa199add934592a57b4c03c909c2211e5c583f83c499b2
+completed_at: 2026-10-26T01:47:08Z
+completed_event: sha256:21d70c07eef01ab0267610edb6b48064a3e1a9f0af5f7d623fde69b8fcd091ea
+evidence:
+  - covers: sections_derived
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib the_overview_lists_the_kinds_with_members_and_counts_them; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib a_statistic_names_and_links_the_capability_it_was_asked_of"
+    result: "at master 6259dac47af on 2026-10-26: 1 passed each. cockpit::pages::titled_tests::the_overview_lists_the_kinds_with_members_and_counts_them proves a kind with no member has no row, one row per kind held and no other, and a kind added to the fixture (prompt) gains its row with no change to the overview's code"
+    commit: a9b3fa480641469eb3cbca21fd21bd5eb21754c6
+    recorded_at: 2026-10-26T01:46:50Z
+  - covers: counts_computed
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib the_overview_lists_the_kinds_with_members_and_counts_them; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib a_statistic_names_and_links_the_capability_it_was_asked_of"
+    result: "at master 6259dac47af on 2026-10-26: each row's count equals the index's count for its kind and links its listing; every overview statistic is asked of repository.info at request time and names it (cockpit::view::tests::a_statistic_names_and_links_the_capability_it_was_asked_of). The counts come from the index the graph artifact is derived from, not from graph.json itself"
+    commit: a9b3fa480641469eb3cbca21fd21bd5eb21754c6
+    recorded_at: 2026-10-26T01:46:59Z

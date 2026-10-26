@@ -11,6 +11,7 @@ current_state: "The process has a health capability and peers. No surface subscr
 desired_state: "Live values arrive over the existing transport, are visibly distinct from the snapshot, and are absent rather than stale where no backend answers."
 scope:
   - apps/majordomus-cli/src/cockpit/html.rs
+  - share/cockpit/socket.js
 non_scope:
   - A transport invented for the Cockpit alongside one that already exists
   - A reconnect loop with no bound
@@ -29,4 +30,4 @@ evidence_required:
   - degrades_cleanly
 risk: "Live overlays are where credentials leak into browsers. Everything sent to the client is an allowlisted safe field."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

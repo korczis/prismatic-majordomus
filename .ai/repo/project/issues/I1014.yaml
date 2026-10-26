@@ -10,7 +10,7 @@ why: "The edges are the reason the model exists, and a static list cannot show t
 current_state: "The layer's graphs are derived and rendered for the site. There is no interactive relation view over the composed model."
 desired_state: "One view reads the artifact, filters by the model's own fields, and is not loaded by pages that do not use it."
 scope:
-  - share/cockpit/src
+  - share/cockpit/graph.js
 non_scope:
   - Nodes or edges written into JavaScript
   - A visualisation library loaded on pages that do not render a graph
@@ -34,4 +34,4 @@ evidence_required:
   - textual_equivalent
 risk: "Rendering every node at once is slow and unreadable at the same time. The default view is filtered, and expansion is progressive."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26
