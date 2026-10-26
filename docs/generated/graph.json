@@ -25209,6 +25209,8 @@
             "A refusal names the rule and the command that resolves it",
             "If the rule is enforced, it is declared in share/doctrines.yaml and doctor proves it reaches its command"
           ],
+          "completed_at": "2026-10-26T03:03:26Z",
+          "completed_event": "sha256:d5712bb877b9ce5151309c35b495fd635f9bb1b90da614da632df72d7498823e",
           "created_at": "2026-09-04",
           "depends_on": [
             "I0702"
@@ -25232,11 +25234,15 @@
             "test/cases"
           ],
           "slug": "implement-attribution",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-25T20:39:51Z",
+          "started_event": "sha256:b1981b4fe87da0141dea895c73c3b01134092403660c1cb3e28bc97cae321ec5",
+          "updated_at": "2026-10-26T03:03:26Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
           ],
+          "verified_at": "2026-10-26T03:03:01Z",
+          "verified_event": "sha256:2591b93f407e84cc6badb438ed68670a47fcf5f6f590a2680b4c7dc8b032342e",
           "why": "A defect is fixed when the case that reproduced it goes from describing the gap to describing the guarantee. Anything less leaves the next worker unable to tell which of the two the code is in."
         }
       },
@@ -25253,6 +25259,8 @@
             "The detail page says the identity is supplied, not verified",
             "The generated site data regenerates with no stale file"
           ],
+          "completed_at": "2026-10-26T21:50:13Z",
+          "completed_event": "sha256:ac8433f3f58be6bd30fa3f5d05703cfc36ce5e0e71087636b6baefb0208e0bf1",
           "created_at": "2026-09-04",
           "current_state": "The behaviour will exist and be tested. Nothing on the public surface says what it covers.",
           "depends_on": [
@@ -25276,11 +25284,15 @@
             "site/data/generated"
           ],
           "slug": "publish-attribution",
-          "updated_at": "2026-09-04",
+          "started_at": "2026-10-26T21:41:50Z",
+          "started_event": "sha256:a25d09dd7d105b9e9b5cfcbbe95b81f964ebc95240f9c7950a7f7aace91b8826",
+          "updated_at": "2026-10-26T21:50:13Z",
           "validation": [
             "scripts/generate-site-data --check",
             "bash test/run.sh"
-          ]
+          ],
+          "verified_at": "2026-10-26T21:49:45Z",
+          "verified_event": "sha256:0c24a4393adf8fbf4f205276857985f23e42b53cd4965565e1620011c92fe640"
         }
       },
       {
@@ -72088,7 +72100,9 @@
             "No new record type and no registry of workers is introduced",
             "A behavioural case reproduces two workers writing in one checkout"
           ],
-          "claims": [],
+          "claims": [
+            "record-attribution"
+          ],
           "created_at": "2026-09-04",
           "depends_on": [],
           "desired_state": "Attribution is verifiable from the record alone. Where the tool cannot establish who wrote something, it says so and refuses rather than guessing from what happens to be active.",
@@ -72110,7 +72124,7 @@
             "docs"
           ],
           "slug": "record-attribution",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26T21:50:50Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -133466,6 +133480,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/M002",
+        "target": "majordomus://claim/record-attribution",
+        "kind": "evidences"
+      },
+      {
         "source": "majordomus://milestone/M003",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -144783,7 +144802,7 @@
     ],
     "metadata": {
       "nodes": 4016,
-      "edges": 9262,
+      "edges": 9263,
       "acyclic": false,
       "truncated": false
     }
