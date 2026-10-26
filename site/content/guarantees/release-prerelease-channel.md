@@ -1,7 +1,7 @@
 +++
 title = "A tag with a pre-release part is published as a prerelease, recorded on the prerelease channel, and never resolved as the stable release, so an unpinned installer and a node that follows stable keep the highest stable version"
 description = "Publishing v1.0.0-alpha.1 does not change what curl -fsSL https://majordomus.dev/install.sh | sh installs. The alpha is a GitHub prerelease, its record says channel: prerelease, and releases/latest.json keeps naming the highest stable release. A person who wants the alpha names it with --version 1.0.0-alpha.1."
-weight = 138
+weight = 139
 [extra]
 claim_id = "release-prerelease-channel"
 status = "guaranteed"

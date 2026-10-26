@@ -2069,6 +2069,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:record-attribution",
+      "path": "/evidence/claims/record-attribution/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:record-resolution",
       "path": "/evidence/claims/record-resolution/"
     },
@@ -10861,6 +10866,29 @@
             "docs/REASONING.md",
             "apps/majordomus-cli/src/reasoning/policy.rs",
             "test/cases/730_reasoning_works_with_no_advisor.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:record-attribution": {
+      "kind": "claim",
+      "id": "record-attribution",
+      "status": "guaranteed",
+      "page": "/evidence/claims/record-attribution/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:3049_a_second_workers_record_lands_on_the_first_workers_task",
+          "path": "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/CLI.md",
+            "lib/common.sh",
+            "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
           ]
         }
       ],

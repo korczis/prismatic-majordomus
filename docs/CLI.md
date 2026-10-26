@@ -668,6 +668,25 @@ episode's envelope claimed the other's tasks, checkpoints and handovers. A line 
 session belongs to no episode — sessions are optional, and work done outside one is
 attributed to nobody rather than to whoever had a session open nearby.
 
+**What attribution guarantees, and what it does not (ADR 0164).** Every durable record
+(a decision, a question opened or resolved, a checkpoint, `check --checkpoint`, a handover,
+`knowledge observe`) carries the session that ran the command. That session is the
+caller's own episode, found by the identity the caller supplies: the provider session a
+hook names, `MAJORDOMUS_PROVIDER_SESSION`, or the session variable the provider's
+lifecycle adapter declares (`CLAUDE_CODE_SESSION_ID` for Claude Code). When the caller supplies no identity, the one open episode of the checkout is used.
+When several are open, the record names none rather than the last one opened. An identity
+that names no open episode also names none. A record relates the active task unless a
+different episode that is still open opened that task; then it is still written, with no
+task. `lib/common.sh` (`mj_record_attribution`) prepares this once per record, and
+`test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh` proves it.
+
+The identity is **supplied, never verified**. Majordomus records the session it was told
+about; it does not authenticate the worker behind it, and nothing here proves who a worker
+was. A process that sets another session's variable is attributed to that session. With no
+episode open at all, two workers cannot be told apart, and the active task is treated as
+the caller's. Read a record's `session` as "the session the tool was told wrote this", not
+as proof of authorship.
+
 `--outcome` takes `closed` or `interrupted`. Both are self-reported and neither is
 verified; `interrupted` exists because "this episode was cut short and its records may be
 incomplete" is the one thing about an ended session that changes what somebody does next.

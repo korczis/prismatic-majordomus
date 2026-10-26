@@ -1,7 +1,7 @@
 +++
 title = "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none"
 description = "Every time majordomus finish refuses, the ledger gains a task.refused line: the outcome that was claimed, how many contract lines were unmet, which doctrines refused, and every doctrine's verdict. A task accepted after four refusals leaves four task.refused lines and then one task.finished, in that order. finish --check asks whether the contract would pass and records nothing, because a check is a question and a finish is a claim."
-weight = 57
+weight = 58
 [extra]
 claim_id = "finish-refusal-is-recorded"
 status = "guaranteed"
