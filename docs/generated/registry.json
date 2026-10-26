@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "modules": [
     {
       "id": "artifacts",
@@ -281,7 +281,7 @@
       "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
       "stability": "experimental",
       "source": "builtin",
-      "capabilities": 29
+      "capabilities": 30
     },
     {
       "id": "models",
@@ -48593,6 +48593,142 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/mcp.rs"
     },
     {
+      "id": "mesh.beat",
+      "module": "mesh",
+      "kind": "command",
+      "title": "Say a session is making progress",
+      "description": "Record that a session of this runtime is making progress, with the phase it is in (`waiting on CI run 123`) and optionally the running process it speaks for. A session that has beaten lives by its beats: its exclusive claims are suspended — they refuse nobody — once no beat arrives within `cooperation.session_ttl_seconds`, and hold again at the next. A worker's MCP requests other than `ping` beat for it; this is the way for a long-running process that sends none. A beat within a quarter of the ttl with an unchanged phase writes nothing and answers the last one. Writes this runtime's journal only.",
+      "input": {
+        "name": "BeatInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "session": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The session making progress; the calling MCP session's own when omitted. It must be\na session this runtime opened (a claim opens one)."
+            },
+            "phase": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+            },
+            "pid": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0,
+              "description": "The process the beat speaks for; refused unless it is running on this machine."
+            }
+          },
+          "description": "The input of `mesh.beat`.",
+          "title": "BeatInput"
+        }
+      },
+      "output": {
+        "name": "Written",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string",
+              "description": "`<stream>/<local id>` of what was created or changed."
+            },
+            "event": {
+              "type": "string",
+              "description": "`<stream>/<seq>` of the event that says so."
+            },
+            "lamport": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0,
+              "description": "The event's Lamport stamp."
+            },
+            "durability": {
+              "$ref": "#/$defs/Durability",
+              "description": "Whether the event reached this machine's disk: `synced`, `memory` (a journal with no\nfile, by configuration), or `not_durable` — held and replicated to peers, not on disk\nhere, and not acknowledged as durable. `unknown` from an executable that predates it.",
+              "default": "unknown"
+            }
+          },
+          "required": [
+            "key",
+            "event",
+            "lamport"
+          ],
+          "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, Durability, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\nassert_eq!(written.durability, Durability::Memory, \"this journal has no file\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+          "title": "Written",
+          "$defs": {
+            "Durability": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "synced",
+                  "description": "Appended to the journal file and synced (`fsync` of its data) before the append\nreturned."
+                },
+                {
+                  "type": "string",
+                  "const": "memory",
+                  "description": "The journal has no file: it lives in memory and its peers, by configuration."
+                },
+                {
+                  "type": "string",
+                  "const": "not_durable",
+                  "description": "The write to the journal file failed. The event is held in memory and replicated to\npeers, and is lost to this machine when the runtime restarts unless a peer still holds\nit. It is not acknowledged as durable."
+                },
+                {
+                  "type": "string",
+                  "const": "unknown",
+                  "description": "Not reported: an answer from an executable that predates this field."
+                }
+              ],
+              "description": "Whether an event this runtime wrote reached this machine's disk: what an append\nacknowledges, and the only thing a caller may say about it.\n\n```\nuse majordomus_cli::mesh::journal::Durability;\nassert_eq!(serde_json::to_value(Durability::NotDurable).unwrap(), \"not_durable\");\nassert_eq!(Durability::default(), Durability::Unknown, \"an answer that did not say\");\nassert!(Durability::Synced.is_on_disk() && !Durability::NotDurable.is_on_disk());\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::mesh"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_mesh_beat"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/mesh/beats"
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "mesh",
+        "coordination",
+        "cooperation"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "process_state",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs"
+    },
+    {
       "id": "mesh.build_cache.ensure",
       "module": "mesh",
       "kind": "command",
@@ -49672,7 +49808,7 @@
                 },
                 "line": {
                   "type": "string",
-                  "description": "The command as it is run; a node's secret appears only as `<secret of NODE>`."
+                  "description": "The command as it is run. A node's secret is never on it: `<secret of NODE>` names\nwhat the command reads on its standard input."
                 },
                 "when": {
                   "type": "string",
@@ -49820,7 +49956,7 @@
       "module": "mesh",
       "kind": "command",
       "title": "Claim a scope across the mesh",
-      "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+      "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own; and an exclusive claim of a session that beats is suspended — refusing nobody — while its holder makes no progress within its ttl. Writes this runtime's journal only.",
       "input": {
         "name": "ClaimInput",
         "schema": {
@@ -51093,6 +51229,13 @@
                 "null"
               ],
               "description": "The newest `limit` events above `after` instead of the first ones: what a reader who\nwants the journal as it stands now asks for. Still in Lamport order, and `lamport` is\nthen the newest stamp the journal holds, so resuming after it reads only what comes\nnext. Without it the journal is read forward from `after`, a page at a time."
+            },
+            "beats": {
+              "type": [
+                "boolean",
+                "null"
+              ],
+              "description": "Include the `session_beat` events, which are left out by default: a working session's\nruntime writes one every few minutes to keep its claims alive (I3990), and a reader\nof the journal wants what sessions did rather than that they are still doing it.\nA walk by `after` cuts its page before the beats leave it, so its `lamport` resumes\nafter them; a walk by `cursor` passes them over without counting them toward `limit`.\nPaging misses nothing either way."
             }
           },
           "description": "The input of `mesh.events`.",
@@ -51118,7 +51261,7 @@
               "type": "integer",
               "format": "uint64",
               "minimum": 0,
-              "description": "The `after` of the next page of a walk by stamp: the stamp of the last event this\npage carries, or the `after` that was asked when it carries none. A page never ends\ninside a run of equal stamps (I2140)."
+              "description": "The `after` of the next page of a walk by stamp: the stamp of the last event this\npage read — carried, or a session beat it left out — or the `after` that was asked\nwhen it read none. A page never ends inside a run of equal stamps (I2140)."
             },
             "cursor": {
               "type": [
@@ -53815,7 +53958,7 @@
                 "mode",
                 "acquired_lamport"
               ],
-              "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
+              "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
             },
             "ClaimMode": {
               "oneOf": [
@@ -53866,6 +54009,22 @@
                     "type": "string"
                   },
                   "description": "The review requests it opened, by key."
+                },
+                "progress_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                },
+                "phase": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
                 }
               },
               "required": [
@@ -54141,9 +54300,26 @@
                     "detail"
                   ],
                   "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "suspended"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174)."
                 }
               ],
-              "description": "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
+              "description": "A claim's standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
             },
             "RefusedView": {
               "type": "object",
@@ -54970,7 +55146,7 @@
                 "mode",
                 "acquired_lamport"
               ],
-              "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
+              "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
             },
             "ClaimMode": {
               "oneOf": [
@@ -55021,6 +55197,22 @@
                     "type": "string"
                   },
                   "description": "The review requests it opened, by key."
+                },
+                "progress_ms": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                },
+                "phase": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
                 }
               },
               "required": [
@@ -55296,9 +55488,26 @@
                     "detail"
                   ],
                   "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "suspended"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174)."
                 }
               ],
-              "description": "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
+              "description": "A claim's standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
             },
             "RefusedView": {
               "type": "object",
@@ -56848,7 +57057,7 @@
                 "untaken_handovers",
                 "untaken_handovers_not_listed"
               ],
-              "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```"
+              "description": "The mesh in an answer a worker reads whole: counts, each runtime, the open reviews and\nthe untaken handovers, every list bounded by `SUMMARY_LIST` with the rest counted.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, Summary};\n\nlet summary: Summary = summarize(&state, &[]);\nassert_eq!((summary.claims.held, summary.claims.released), (1, 1));\nassert_eq!(summary.digest, state.digest);\n```"
             },
             "MeshSessionCounts": {
               "type": "object",
@@ -56905,6 +57114,13 @@
                   "format": "uint",
                   "minimum": 0,
                   "description": "Ended without a release."
+                },
+                "suspended": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Exclusive, its holder silent past its progress ttl: refusing nobody until it beats.",
+                  "default": 0
                 }
               },
               "required": [
@@ -56913,7 +57129,7 @@
                 "released",
                 "expired"
               ],
-              "description": "Claims by standing: held, conflicted, released and expired. Held and conflicted are\nlive; the other two are history, counted rather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```"
+              "description": "Claims by standing: held, conflicted, suspended, released and expired. Held and\nconflicted are live; a suspended claim is an exclusive one whose holder stopped making\nprogress (I3990), not ended and refusing nobody; the other two are history, counted\nrather than listed.\n\n```\nuse majordomus_cli::mesh::page::ClaimCounts;\n\nlet counts = ClaimCounts { held: 2, released: 5, ..ClaimCounts::default() };\nassert_eq!(serde_json::to_value(&counts).unwrap()[\"released\"], 5);\n```"
             },
             "MeshRuntimeSummary": {
               "type": "object",
@@ -56961,7 +57177,7 @@
                 "sessions",
                 "claims"
               ],
-              "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```"
+              "description": "One runtime, counted: its liveness and beat, its sessions and claims by standing, and its\nnewest live claim. The summary lists these, the living runtimes first.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, RuntimeSummary};\n\nlet summary = summarize(&state, &[]);\nlet runtime: &RuntimeSummary = &summary.runtimes[0];\nassert_eq!((runtime.sessions.active, runtime.claims.held, runtime.claims.released), (1, 1, 1));\n```"
             },
             "StreamLiveness": {
               "oneOf": [
@@ -57032,7 +57248,7 @@
                 "mode",
                 "acquired_lamport"
               ],
-              "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into() }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
+              "description": "One live claim, told briefly: whose it is, what it is for and how many paths it holds,\nwith its intent cut to `SUMMARY_TEXT` characters — enough to know whom to ask.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::fold;\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\nfor (claim, path) in [(\"c1\", \"apps/a\"), (\"c2\", \"apps/b\")] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: \"s1\".into(),\n        scope: vec![path.into()], intent: Some(\"work\".into()), mode: ClaimMode::Exclusive,\n        issue: Some(\"#1\".into()) }).unwrap();\n}\nj.append_own(EventBody::ClaimReleased { claim: \"c1\".into(), reason: None }).unwrap();\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nuse majordomus_cli::mesh::page::{summarize, ClaimBrief};\n\nlet summary = summarize(&state, &[]);\nlet newest: &ClaimBrief = summary.runtimes[0].newest_claim.as_ref().unwrap();\nassert_eq!((newest.issue.as_deref(), newest.paths), (Some(\"#1\"), 1));\n```"
             },
             "ClaimMode": {
               "oneOf": [
@@ -57488,9 +57704,26 @@
                     "detail"
                   ],
                   "description": "Live, exclusive, and beaten to its scope by the claim whose key this names."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "string",
+                      "const": "suspended"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "state",
+                    "detail"
+                  ],
+                  "description": "Exclusive, unreleased and of an open session on a beating runtime, but its holder\nstopped making progress: no session beat within its ttl (I3990). It refuses nobody\nwhile it reads so, and holds again the moment its session beats. Suspension only\nstops the refusal and says so — nobody takes the scope over and nothing is fenced;\nthat waits for an epoch a resumed holder can be told it lost (I3174)."
                 }
               ],
-              "description": "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
+              "description": "A claim's standing, and — where it ended, lost or was suspended — why. The variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, one told\nits claim is conflicted needs the key of the claim that beat it, which is the same key on\nevery runtime, and one told its claim is suspended needs the ttl its holder missed.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
             },
             "ClaimOverlap": {
               "type": "object",
@@ -61933,6 +62166,15 @@
               "minimum": 0,
               "description": "Seconds since its last message."
             },
+            "progress_seconds_ago": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint64",
+              "minimum": 0,
+              "description": "Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by."
+            },
             "attached": {
               "type": "boolean",
               "description": "Whether the session is still attached. A peer that announced something and then\nwent away is kept and listed with `attached: false`: what it said it was working on\noutlives the connection that said it, because the work does."
@@ -62415,6 +62657,15 @@
                   "format": "uint64",
                   "minimum": 0,
                   "description": "Seconds since its last message."
+                },
+                "progress_seconds_ago": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Seconds since it last did real work — a request other than `ping`, or an\nannouncement — or absent when it has done none (I3990). `last_seen_seconds_ago`\ncounts a keep-alive ping as a message, so a session stuck on a permission dialog\nbehind a bridge that pings every 20 s looks seen forever; this is the number its\nmesh claims live by."
                 },
                 "attached": {
                   "type": "boolean",
