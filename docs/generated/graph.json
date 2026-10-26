@@ -81054,6 +81054,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v1.0.0-alpha.8",
+        "kind": "release-record",
+        "label": "v1.0.0-alpha.8",
+        "summary": "v1.0.0-alpha.8",
+        "route": "/cockpit/objects/release-record/v1-0-0-alpha-8",
+        "source": ".ai/repo/releases/v1.0.0-alpha.8.yaml",
+        "facts": {
+          "channel": "prerelease",
+          "commit": "2efeacea03158615db2b497117a8da35b264909b",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.0-alpha.8",
+          "published_at": "2026-10-25T19:58:42Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v1.0.0-alpha.8"
+        }
+      },
+      {
         "id": "majordomus://rule/majordomus.adr-integrity@1",
         "kind": "rule",
         "label": "majordomus.adr-integrity@1",
@@ -134574,6 +134597,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v1.0.0-alpha.8",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -144705,8 +144733,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4013,
-      "edges": 9256,
+      "nodes": 4014,
+      "edges": 9257,
       "acyclic": false,
       "truncated": false
     }
