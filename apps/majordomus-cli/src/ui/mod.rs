@@ -38,6 +38,7 @@
 //! assert_ne!(PREFIX, majordomus_cli::cockpit::PREFIX, "the Cockpit is another surface");
 //! ```
 
+pub(crate) mod board;
 pub(crate) mod capabilities;
 pub(crate) mod claim;
 pub(crate) mod command;
@@ -199,6 +200,12 @@ pub(crate) const SCREENS: &[Screen] = &[
         answers: "Which machines and runtimes are on the mesh, and what they recorded.",
     },
     Screen {
+        route: board::ROUTE,
+        title: "Blackboard",
+        icon: "grid",
+        answers: "Every issue at its delivery stage, who carries it, and what just happened.",
+    },
+    Screen {
         route: peers::ROUTE,
         title: "Peers",
         icon: "users",
@@ -260,6 +267,7 @@ pub(crate) const PANELS: &[&str] = &[
     dashboard::PULL_REQUESTS_PANEL,
     deployments::DELIVERY_PANEL,
     prs::PANEL,
+    board::PANEL,
     idd::STANDING_PANEL,
     idd::SHARED_SCOPE_PANEL,
 ];
@@ -477,6 +485,7 @@ impl Ui {
             issues::ROUTE => issues::screen(ctx, query),
             prs::ROUTE => prs::screen(ctx, query),
             mesh::ROUTE => mesh::screen(ctx, query),
+            board::ROUTE => board::screen(ctx, &self.assets.url(board::LIB)),
             peers::ROUTE => peers::screen(ctx, &self.assets.url(peers::LIB)),
             delivery::ROUTE => delivery::screen(ctx),
             deployments::ROUTE => deployments::screen(ctx),
@@ -499,6 +508,7 @@ impl Ui {
             dashboard::PULL_REQUESTS_PANEL => dashboard::pull_requests_panel(ctx, query),
             deployments::DELIVERY_PANEL => deployments::delivery_panel(ctx),
             prs::PANEL => prs::panel_view(ctx, query),
+            board::PANEL => board::panel_view(ctx),
             idd::STANDING_PANEL => idd::standing_panel(ctx, query),
             idd::SHARED_SCOPE_PANEL => idd::shared_scope_panel(ctx, query),
             other => shell::not_found(other),
@@ -819,6 +829,7 @@ mod tests {
                 mesh::ROUTE,
                 mesh::screen(&ctx, &[("node".into(), "nowhere".into())]),
             ),
+            (board::ROUTE, board::screen(&ctx, "/ui/assets/live.js")),
             (peers::ROUTE, peers::screen(&ctx, "/ui/assets/live.js")),
             (delivery::ROUTE, delivery::screen(&ctx)),
             (

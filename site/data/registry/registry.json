@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.8"
   },
   "registry": {
-    "fingerprint": "24c246e4cf51e317e848c6a683af119c0077962321892f09b6e7d59bb1f9a762",
+    "fingerprint": "1f4eb3deb4d40368b8a8b987f6730253de2cdcc82780b8d08e992beb1d09b006",
     "summary": {
-      "total": 3539,
+      "total": 3540,
       "builtin": 219,
-      "declarative": 3320,
+      "declarative": 3321,
       "by_kind": {
         "command": 35,
         "query": 184,
-        "resource": 3320
+        "resource": 3321
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 62,
-        "implemented": 3330
+        "implemented": 3331
       },
       "mcp_tools": 205,
-      "mcp_resources": 3377,
+      "mcp_resources": 3378,
       "http_routes": 211,
       "cli_commands": 120,
       "modules": 94,
@@ -91121,7 +91121,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1027,
+        "capabilities": 1028,
         "capability_ids": []
       },
       {
@@ -91810,7 +91810,7 @@
     ]
   },
   "index": {
-    "fingerprint": "c41bf8b57895697a38b813201c6c8755e011a6823e03a68a536aa75f12587421",
+    "fingerprint": "4652b2d761c32a312002e28dc17f18ceec4af0181bbd703f76eb085889d3ba94",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -91850,7 +91850,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1027,
+      "issue": 1028,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -99205,7 +99205,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 43439
+        "bytes": 44321
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99295,7 +99295,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 970095
+        "bytes": 970291
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114521,6 +114521,17 @@
         "bytes": 3420
       },
       {
+        "uri": "majordomus://issue/I4236",
+        "kind": "issue",
+        "identity": "I4236",
+        "title": "The Blackboard is the board of the work: every issue at its delivery stage, with who carries it, live",
+        "description": "Add /ui/board, the Blackboard: one screen that draws the work as a board of its delivery stages (ready, in flight, in review, in a train, landed) from plan.delivery and plan.issues, puts on each card the workers and claims blackboard.snapshot names for it, the pull request and train that carry it from the integration queue, and links every card, avatar, chip and count to the object it was read from; beside it the mesh as a topology of machines, workers and what they hold, and the monitor's stream. It follows the live channel, says how old each reading is, and is published in the majordomus.dev UI snapshot.",
+        "path": ".ai/repo/project/issues/I4236.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5221
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -127973,7 +127984,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1027
+      "objects": 1028
     },
     {
       "name": "knowledge",
@@ -175117,6 +175128,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.ui.board",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/board"
+      },
+      {
         "key": "system.http.ui.peers",
         "kind": "page",
         "transport": "http",
@@ -175269,6 +175288,14 @@
         "route": "GET /ui/mesh"
       },
       {
+        "key": "system.http.live.ui.board",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/board"
+      },
+      {
         "key": "system.http.live.ui.peers",
         "kind": "page",
         "transport": "http",
@@ -175363,6 +175390,14 @@
         "module": "system",
         "cached": true,
         "route": "GET /ui/panels/drain"
+      },
+      {
+        "key": "system.http.ui.panels.board",
+        "kind": "page",
+        "transport": "http",
+        "module": "system",
+        "cached": true,
+        "route": "GET /ui/panels/board"
       },
       {
         "key": "system.http.ui.panels.standing",

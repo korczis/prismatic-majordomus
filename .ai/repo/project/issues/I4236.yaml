@@ -1,0 +1,59 @@
+id: I4236
+milestone: peer-blackboard
+title: "The Blackboard is the board of the work: every issue at its delivery stage, with who carries it, live"
+slug: the-blackboard-is-the-board-of-the-work
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - the-peer-blackboard-is-one-reality#published-safely
+  - the-peer-blackboard-is-one-reality#every-surface-reads-it
+objective: "Add /ui/board, the Blackboard: one screen that draws the work as a board of its delivery stages (ready, in flight, in review, in a train, landed) from plan.delivery and plan.issues, puts on each card the workers and claims blackboard.snapshot names for it, the pull request and train that carry it from the integration queue, and links every card, avatar, chip and count to the object it was read from; beside it the mesh as a topology of machines, workers and what they hold, and the monitor's stream. It follows the live channel, says how old each reading is, and is published in the majordomus.dev UI snapshot."
+why: "Who works on what and where each issue stands are already derived (plan.delivery, blackboard.snapshot, the integration queue, the monitor), but no surface shows them as one picture: /ui/peers is tables of workers, /ui/work lists issues by declared status, and /ui/idd has no notion of who carries an issue now. On 2026-10-25 the owner ran a convergence of 82 open pull requests from the board, git and the forge by hand, because no screen answered 'what is in flight, who has it, what waits to land'."
+current_state: "/ui/peers draws the blackboard as five tables; /ui/work lists READY and ACTIVE issues by their stamps; the delivery stage of an issue reaches no /ui screen as a column; no screen joins an issue to the worker claiming it or to the train carrying it."
+desired_state: "/ui/board answers, from capabilities alone, every issue's stage, the workers and claims on it, the pull request and train carrying it and what landed last; every element is a link to its object; a change of the blackboard or the integration queue reaches an open page without a reload; the screen names the age and source of each reading; the published site carries the same screen as a labelled snapshot."
+scope:
+  - "apps/majordomus-cli/src/ui/board.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
+  - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/ui/view.rs"
+  - "apps/majordomus-cli/src/ui/idd.rs"
+  - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "share/ui/ui.js"
+  - "docs/UI.md"
+  - "docs/BLACKBOARD.md"
+  - "scripts/lib/ui-routes.mjs"
+  - "scripts/lib/interaction-specs"
+  - "test/cases"
+non_scope:
+  - "A second derivation of stage, presence or claims: the screen draws what the capabilities answered and computes no stage, rank or join of its own"
+  - "Moving, assigning or closing work from the board; it reads"
+  - "A new third-party library in the UI bundle"
+depends_on: []
+acceptance_criteria:
+  - "Every column, card, avatar, chip and count on /ui/board is drawn from a capability answer, and a case fails if a stage, worker or pull request on the screen disagrees with plan.delivery, blackboard.snapshot or the integration queue at the same revision"
+  - "Every card links to its issue, every avatar to its worker, every pull-request chip to the pull request and every train to its train, and the interaction specs click each kind"
+  - "An open page follows the blackboard and the integration queue and redraws on a change without a reload; it says live, reconnecting or snapshot, and the age of each source"
+  - "The screen is reachable from the /ui navigation and from the IDD workspace, works at phone width, and passes scripts/ui check and audit"
+  - "The published site's UI snapshot includes /ui/board, labelled as a snapshot with its revision, carrying no private path, message body or claim scope"
+validation:
+  - "majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::board"
+  - "scripts/ui check"
+evidence_required:
+  - "case_board_is_derived"
+created_at: 2026-10-26
+updated_at: 2026-10-26T11:56:40Z
+started_at: 2026-10-26T11:48:42Z
+started_event: sha256:07583a65132f266feee4093c82ed8738cb3e1324c66b828a3d82cec3f3ed2f50
+verified_at: 2026-10-26T11:56:40Z
+verified_event: sha256:5307b14768116d9cf23b4f853094eeae70a4c4479461890a0b1b1fa5f02213e3
+evidence:
+  - covers: case_board_is_derived
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::board"
+    result: "ok: 6 passed (the_column_is_the_stage_the_delivery_derived; a_worker_carries_the_issues_its_record_names_and_nothing_else; every_card_links_to_its_objects_and_names_no_private_path; the_stream_quotes_no_intent_or_path_and_an_avatar_names_no_one; an_unread_forge_is_said_in_the_review_column_not_read_as_empty; the_screen_follows_the_blackboard_and_defers_the_board); lib ui:: 221 passed incl. the dispatch and every-screen renders tests; scripts/ui check 0 failures. Live on this repository at 6259dac: Ready 209, In flight 26, In review 17, Landed 203, 0 console errors in Chrome"
+    artifact: "apps/majordomus-cli/src/ui/board.rs"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T11:56:32Z
