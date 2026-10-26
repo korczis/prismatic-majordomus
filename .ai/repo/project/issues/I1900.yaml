@@ -32,4 +32,23 @@ evidence_required:
   - intent_stage_is_derived
   - intent_surfaces_agree
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-25T23:57:37Z
+started_at: 2026-10-25T23:56:27Z
+started_event: sha256:0e56fc0bf34b06b5a3bd0c0a12623fe8f298fee852b80f6c94989c2e31fc3613
+completed_at: 2026-10-25T23:57:37Z
+completed_event: sha256:97af1649c6d9b576f41c188d43d0db54f8ee91516b05acc89217c775f866fa99
+evidence:
+  - covers: intent_stage_is_derived
+    type: test
+    command: "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence; majordomus intent validate"
+    result: "case 367 passed 2026-10-26 on master 2efeacea031; intent validate: 43 intents, 0 failures (exit 0)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T23:57:02Z
+  - covers: intent_surfaces_agree
+    type: ci
+    command: "cargo test --test intent"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success; tests/intent.rs 15 passed, 0 failed"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T23:57:20Z

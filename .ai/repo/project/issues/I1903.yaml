@@ -29,4 +29,23 @@ evidence_required:
   - intent_lineage_joined
   - closed_work_contradicted_refused
 created_at: 2026-09-17
-updated_at: 2026-09-17
+updated_at: 2026-10-26T00:00:57Z
+started_at: 2026-10-25T23:59:40Z
+started_event: sha256:b4fa98dbe7b5331ed1ae41c7987e3838ddb6b5dcf9e14e4d64c16456f13ecc7f
+completed_at: 2026-10-26T00:00:57Z
+completed_event: sha256:0fc0dbbabdf8dc7c085f73f94ed7c86ccdcf20c67a23f625eaff2d259c52b95c
+evidence:
+  - covers: intent_lineage_joined
+    type: ci
+    command: "cargo test --test intent_realization"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success; tests/intent_realization.rs 7 passed incl. one_task_carried_by_two_providers_across_a_handover_realises_one_intent"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T00:00:16Z
+  - covers: closed_work_contradicted_refused
+    type: test
+    command: "bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality"
+    result: "case 388 passed 2026-10-26 on master 2efeacea031"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T00:00:35Z

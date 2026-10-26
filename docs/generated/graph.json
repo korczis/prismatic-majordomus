@@ -25176,6 +25176,8 @@
             "A refusal names the rule and the command that resolves it",
             "If the rule is enforced, it is declared in share/doctrines.yaml and doctor proves it reaches its command"
           ],
+          "completed_at": "2026-10-25T23:18:46Z",
+          "completed_event": "sha256:7c9b473dd2ac8c1de16e211dded90f53cf296db11c3f1e7bbfec9d35841fb33b",
           "created_at": "2026-09-04",
           "depends_on": [
             "I0702"
@@ -25199,7 +25201,9 @@
             "test/cases"
           ],
           "slug": "implement-attribution",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-25T23:18:14Z",
+          "started_event": "sha256:9becc959eae3a9241e110d11dd1cf539f04c818f06f912bc6000af8e0c6895c4",
+          "updated_at": "2026-10-25T23:18:46Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -28069,8 +28073,7 @@
           "created_at": "2026-09-06",
           "current_state": "The registry holds the capability routes and the router serves them. Nothing derives verification from either, and the served topology is being reshaped on other branches.",
           "depends_on": [
-            "I0905",
-            "I0914"
+            "I0905"
           ],
           "desired_state": "The smoke suite enumerates what the registry and the resolved surface topology say is served, verifies each according to its kind, and gains a new route automatically when one is registered.",
           "evidence_required": [
@@ -28094,7 +28097,7 @@
             "test/cases"
           ],
           "slug": "registry-derived-smoke-suite",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "cargo test --workspace --all-features"
@@ -33707,6 +33710,8 @@
             "The command line, HTTP and MCP answer the same derived intents",
             "intent validate exits 10 naming the finding on an invalid model, and the intent-check gate runs it"
           ],
+          "completed_at": "2026-10-25T23:57:37Z",
+          "completed_event": "sha256:97af1649c6d9b576f41c188d43d0db54f8ee91516b05acc89217c775f866fa99",
           "created_at": "2026-09-15",
           "current_state": "No intent kind, capability or gate exists on master.",
           "depends_on": [],
@@ -33732,7 +33737,9 @@
             "intent-lifecycle#model-is-gated"
           ],
           "slug": "an-intent-is-a-typed-record",
-          "updated_at": "2026-09-15",
+          "started_at": "2026-10-25T23:56:27Z",
+          "started_event": "sha256:0e56fc0bf34b06b5a3bd0c0a12623fe8f298fee852b80f6c94989c2e31fc3613",
+          "updated_at": "2026-10-25T23:57:37Z",
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
@@ -33849,6 +33856,8 @@
             "Each link is declared, observed, derived or inferred from one mapping, and the strongest per issue is kept",
             "An intent whose milestones are all DONE while a criterion's recorded run fails exits 10 naming the criterion, and a repair clears it"
           ],
+          "completed_at": "2026-10-26T00:00:57Z",
+          "completed_event": "sha256:0fc0dbbabdf8dc7c085f73f94ed7c86ccdcf20c67a23f625eaff2d259c52b95c",
           "created_at": "2026-09-17",
           "current_state": "No capability says which task, episode, provider or handover realises an intent; a closed episode forgets its provider; verifying intents are silent.",
           "depends_on": [
@@ -33873,7 +33882,9 @@
             "intent-lifecycle#lineage-survives-providers"
           ],
           "slug": "intent-realization",
-          "updated_at": "2026-09-17",
+          "started_at": "2026-10-25T23:59:40Z",
+          "started_event": "sha256:b4fa98dbe7b5331ed1ae41c7987e3838ddb6b5dcf9e14e4d64c16456f13ecc7f",
+          "updated_at": "2026-10-26T00:00:57Z",
           "validation": [
             "cargo test --test intent_realization",
             "bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality"
@@ -35019,6 +35030,8 @@
             "A skip is counted as not run, never as a failure",
             "The entry briefing and the Cockpit overview render the verdict evidence show gives"
           ],
+          "completed_at": "2026-10-26T00:41:02Z",
+          "completed_event": "sha256:ffe4edc070f75eb42fb1eafa7f76cca99f6019852f5e70fdf6464d6a67b741ce",
           "created_at": "2026-09-26",
           "depends_on": [
             "I1948"
@@ -35040,7 +35053,9 @@
             "test/cases"
           ],
           "slug": "the-preflight-reads-the-one-verdict",
-          "updated_at": "2026-09-26",
+          "started_at": "2026-10-26T00:40:12Z",
+          "started_event": "sha256:c00517c1f03019808f6017d04f26604049d591eed366dce27b606056d7a8c5b8",
+          "updated_at": "2026-10-26T00:41:02Z",
           "validation": [
             "bash test/run.sh 529_the_preflight_reads_the_one_verdict"
           ]
@@ -45192,6 +45207,8 @@
             "A milestone projecting to exactly 255 characters, one of them multi-byte, passes",
             "Case 3244 fails on master's lib/project.awk"
           ],
+          "completed_at": "2026-10-26T01:16:31Z",
+          "completed_event": "sha256:62bea739c5f68a0041e68f20bcb57a667f19cb7acfb39c81bc4178be62412736",
           "created_at": "2026-10-21",
           "current_state": "No check bounds a milestone title. The first sign of an over-long one is the GitHub API refusing it during the projection on master.",
           "depends_on": [],
@@ -45213,7 +45230,9 @@
             ".ai/repo/project/issues/I2844.yaml"
           ],
           "slug": "a-milestone-title-fits-on-github",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T01:15:54Z",
+          "started_event": "sha256:ee98e77eda91aac46352ad386158a3bca60f1f2908c3ff7957206d5fe4ebe63e",
+          "updated_at": "2026-10-26T01:16:31Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3244_a_milestone_title_fits_on_github",
@@ -45358,6 +45377,8 @@
             "run-plan's summary states lock wait and gate time separately for a gate that built",
             "Case 3248 fails on a run-plan that calls cargo for economics-claims while a matching binary is named"
           ],
+          "completed_at": "2026-10-26T01:17:47Z",
+          "completed_event": "sha256:a1234018c788909ef1c04bea339b6d04ef3f1c728a9461f52c0e0df779ec3311",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -45380,7 +45401,9 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "a-pre-push-gate-does-not-wait-on-another-build",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T01:17:12Z",
+          "started_event": "sha256:5e6c0cebd71f903190d99645825ba6f2af70f851910e649e06499affc06b642c",
+          "updated_at": "2026-10-26T01:17:47Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3248_a_pre_push_gate_does_not_wait_on_another_build"
@@ -47286,6 +47309,8 @@
             "An unread board or absent source makes complete false and names the reason",
             "A board peer joins the mesh session its own server projected only through the stream that server names, with the same board session id, checkout and client; two matches make candidates and no join"
           ],
+          "completed_at": "2026-10-26T01:18:40Z",
+          "completed_event": "sha256:77d36b099ad00e4aaf6b107495d6024754ccd31333ca55cedc5b24402cc3c04c",
           "created_at": "2026-10-18",
           "current_state": "peers.list, mesh.state and monitor.stream answer separately; /cockpit/peers renders peers.list alone.",
           "depends_on": [],
@@ -47311,7 +47336,9 @@
             "the-peer-blackboard-is-one-reality#one-projection"
           ],
           "slug": "the-blackboard-is-one-projection",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-26T01:18:07Z",
+          "started_event": "sha256:bc458975a93d43abdd9125b777639a2937313ce0fddc0249817d130efd3449b6",
+          "updated_at": "2026-10-26T01:18:40Z",
           "validation": [
             "majordomus plan validate",
             "bash test/run.sh 3380_the_blackboard_is_one_projection"
@@ -47880,6 +47907,8 @@
             "Each reproduce command has a copy control that copies exactly the command",
             "The control is reached by the keyboard, says what the copy did, and is offered only where a clipboard can be written"
           ],
+          "completed_at": "2026-10-26T01:55:51Z",
+          "completed_event": "sha256:3b1ce47c4df45135f47dc340fb41aeeff7e11660aa2588026a807112d67a65a1",
           "created_at": "2026-10-18",
           "current_state": "Inline commands.",
           "depends_on": [],
@@ -47907,7 +47936,9 @@
             "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
           ],
           "slug": "a-reproduce-command-can-be-copied",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-26T01:51:53Z",
+          "started_event": "sha256:c75c0799eb72d59dbe06d0ac7fd25b6dd521c899e64f73d8bb7e0c3014ebb13a",
+          "updated_at": "2026-10-26T01:55:51Z",
           "validation": [
             "majordomus plan validate",
             "cargo test --lib ui::idd::",
@@ -48283,6 +48314,8 @@
             "A second open of the same root reads no manifest and an edited one is read again, proved by a unit test that makes the manifest unreadable after the first open",
             "perf reports repository_discoveries, it is listed in startup_work, and tests/hot_path.rs asserts it is 1 after startup"
           ],
+          "completed_at": "2026-10-26T03:49:54Z",
+          "completed_event": "sha256:c5c6b4e0c89d673396f6a5e473771694a8ac24205f2a76edf88a9a5d764f7aca",
           "created_at": "2026-10-21",
           "current_state": "Repository { root, manifest } (apps/majordomus-cli/src/repository.rs) is built anew by every discover and open; perf counts repository_scans (the file walk) but not discoveries.",
           "depends_on": [],
@@ -48304,7 +48337,9 @@
             "apps/majordomus-cli/tests/hot_path.rs"
           ],
           "slug": "the-repository-is-found-once-per-process",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:49:26Z",
+          "started_event": "sha256:e943260d4f235fc6e5c6ed16810212faf8766800c52cf0a157c792a73247f5d1",
+          "updated_at": "2026-10-26T03:49:54Z",
           "validation": [
             "cargo test --workspace --all-features"
           ]
@@ -48322,6 +48357,8 @@
             "After serve's startup and after an MCP initialize, repository_discoveries is 1, asserted in tests/hot_path.rs",
             "The discovery phase is timed at every entry point that discovers"
           ],
+          "completed_at": "2026-10-26T03:50:41Z",
+          "completed_event": "sha256:ea67911dd5f1782e01b77140d9982ec1c2256bef660b285a6207288406795095",
           "created_at": "2026-10-21",
           "current_state": "serve.rs and mcp.rs call Repository::discover and then App::load, which discovers again.",
           "depends_on": [
@@ -48348,7 +48385,9 @@
             "apps/majordomus-cli/tests/hot_path.rs"
           ],
           "slug": "serve-and-mcp-discover-once",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:50:13Z",
+          "started_event": "sha256:3c97e86720048ef010525911680eb03be3d38c8de112134352f78b4198eccf4e",
+          "updated_at": "2026-10-26T03:50:41Z",
           "validation": [
             "cargo test --workspace --all-features"
           ],
@@ -48367,6 +48406,8 @@
             "No capability calls Repository::open; the context carries the repository",
             "A served capability call bumps repository_discoveries by nothing, asserted in tests/hot_path.rs"
           ],
+          "completed_at": "2026-10-26T03:51:32Z",
+          "completed_event": "sha256:c67e3667d93277ca062618d96575cd5d8405779465a7dac4367f4feaa5e67b2a",
           "created_at": "2026-10-21",
           "current_state": "Context holds the index, whose repository root is a String; capabilities re-open the repository from it.",
           "depends_on": [
@@ -48389,7 +48430,9 @@
             "apps/majordomus-cli/src/repository.rs"
           ],
           "slug": "a-capability-reads-the-repository-from-its-context",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:51:01Z",
+          "started_event": "sha256:edb4e14043dfab537b16f6e1964d15e3115178532392c24015ce8b963e1e122a",
+          "updated_at": "2026-10-26T03:51:32Z",
           "validation": [
             "cargo test --workspace --all-features"
           ],
@@ -48408,6 +48451,8 @@
             "A source scan test fails on a Repository::discover or Repository::open outside the allowed files, naming file and line",
             "An owner named in the list whose call went away fails the test, so the list cannot hold a stale entry"
           ],
+          "completed_at": "2026-10-26T03:52:20Z",
+          "completed_event": "sha256:dc6b04e5644f0c62604a1887615051c0dd83df570c2a9cf1d92b83d3e2d9ae84",
           "created_at": "2026-10-21",
           "current_state": "Nothing refuses a new discovery; App::load's budget is named in prose (plan.rs) but no number is declared.",
           "depends_on": [
@@ -48429,7 +48474,9 @@
             "apps/majordomus-cli/tests"
           ],
           "slug": "discovery-outside-the-model-is-refused",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:51:51Z",
+          "started_event": "sha256:9a85ed1eda453220793891141e0adec87cdd27a22b738a73d5b0167f8b440130",
+          "updated_at": "2026-10-26T03:52:20Z",
           "validation": [
             "cargo test --workspace --all-features"
           ]
@@ -48784,6 +48831,8 @@
         "route": "/cockpit/objects/issue/i3070",
         "source": ".ai/repo/project/issues/I3070.yaml",
         "facts": {
+          "completed_at": "2026-10-26T01:19:50Z",
+          "completed_event": "sha256:fd571926292ac149f76cabed90bcdf5b60801948b7769db38e6c78f8c60f4f0a",
           "created_at": "2026-10-19",
           "current_state": "release.version reports the last release and the commits since it as evidence, and says nothing about how long they have waited. Nothing in the brief, doctor or finish asks.",
           "depends_on": [],
@@ -48813,7 +48862,9 @@
             "a-version-follows-every-session#measured"
           ],
           "slug": "the-release-is-current",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-26T01:19:09Z",
+          "started_event": "sha256:49825d2ea1b6048c561a5e3dafb60279de92d6aa4adff9ee11e84aded32bd112",
+          "updated_at": "2026-10-26T01:19:50Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3470_the_release_follows_the_work"
@@ -66433,6 +66484,8 @@
             "Preflight in a checkout whose .mcp.json is present reports the missing Claude Code native messaging host as a finding naming /chrome, and reports nothing when the host is present",
             "docs/generated/providers.md and majordomus product providers show the browser column from the one declaration"
           ],
+          "completed_at": "2026-10-26T01:23:33Z",
+          "completed_event": "sha256:12bf955d76014011138927090a16a492e130538ee3c531ddc290dcd2ad3b087f",
           "created_at": "2026-10-21",
           "current_state": "share/providers.yaml declares episode and prompts per provider; nothing says which client drives a browser, and no check looks for the Claude in Chrome native host.",
           "depends_on": [],
@@ -66466,7 +66519,9 @@
             "a-provider-carries-the-contract-natively#the-browser-bridge-is-declared"
           ],
           "slug": "the-browser-bridge-is-declared",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T01:22:50Z",
+          "started_event": "sha256:6d60b57ac8f80877ac6f13fe3e8ac5d58e4c3b0935e750453bb2d6dabed03d8d",
+          "updated_at": "2026-10-26T01:23:33Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test provider_browser",
             "bash test/cases/3829_a_provider_declares_its_browser_bridge.sh"
@@ -66836,6 +66891,8 @@
             "A case fails when /plan/ in the built site passes its declared element ceiling, and passes at the tree it lands with",
             "scripts/ui audit visits /plan/ at every declared width within VISIT_DEADLINE_MS on a loaded machine"
           ],
+          "completed_at": "2026-10-26T01:53:41Z",
+          "completed_event": "sha256:d5ba4e3368799b328cd6e8dcd84d96d37ab3cc839b4d8afbc1bfe6c5bfbcd76c",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -66862,7 +66919,9 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "the-plan-page-fits-the-audit-budget",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T01:52:42Z",
+          "started_event": "sha256:98c69030ab892223a7f65ebb3198ada64205583e81ac61f78acd762726353dfe",
+          "updated_at": "2026-10-26T01:53:41Z",
           "validation": [
             "bash test/run.sh 3848_the_plan_page_fits_the_audit_budget",
             "scripts/ui audit --report"
@@ -66961,6 +67020,8 @@
         "route": "/cockpit/objects/issue/i3841",
         "source": ".ai/repo/project/issues/I3841.yaml",
         "facts": {
+          "completed_at": "2026-10-26T01:55:05Z",
+          "completed_event": "sha256:5674ce3c78df234ebe7947565ed9f5dbb1990aa5e8cf4e3c4697a300d9b2bc3b",
           "created_at": "2026-10-21",
           "current_state": "/plan/dag/ and /plan/ draw plan.mermaid, the graph of every issue; /plan/dag/ also prints every issue edge and every wave in full.",
           "depends_on": [],
@@ -66989,7 +67050,9 @@
             "a-change-is-judged-in-minutes#pr-verdict-within-five-minutes"
           ],
           "slug": "the-plan-graph-is-drawn-by-milestone",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T01:54:17Z",
+          "started_event": "sha256:73c5e67478f52d84953ba925b12a4b353d9a04f1ef5019cb177403519ea749a9",
+          "updated_at": "2026-10-26T01:55:05Z",
           "validation": [
             "bash test/run.sh 3860_the_plan_graph_is_drawn_by_milestone"
           ]
@@ -67190,6 +67253,8 @@
             "No shell unit carries an associative array, mapfile, readarray or a listed GNU-only flag without its BSD form",
             "Rule project.portable-shell names case 3480 as a test and says what case 08, case 3480 and the shell-lint gate each hold"
           ],
+          "completed_at": "2026-10-26T01:20:48Z",
+          "completed_event": "sha256:3d32be23700e47696a176e7d9ff8a1ea1dcc783a1f60decb4487f17c119332d8",
           "created_at": "2026-10-21",
           "current_state": "No case reads the shell units for associative arrays, mapfile or GNU-only flags; test/mesh-lab/run declares two associative arrays; the rule names case 08 alone.",
           "depends_on": [],
@@ -67212,7 +67277,9 @@
             "a-claim-stands-only-on-its-evidence#blocking-rule-shows-refusal"
           ],
           "slug": "the-shell-floor-is-enforced",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T01:20:16Z",
+          "started_event": "sha256:12ebc955f4d653b4b3f12ca99d8daa6bf649f588c973628e115c07dfe63e34f1",
+          "updated_at": "2026-10-26T01:20:48Z",
           "validation": [
             "bash test/run.sh 3480_the_shell_floor_is_bash_3_2_and_bsd_userland",
             "scripts/ci/shell-lint",
@@ -67597,6 +67664,8 @@
             "The figure names the revision its run was recorded at, and says when it is behind the built revision",
             "With no recorded run the figure reads not yet measured, never 0"
           ],
+          "completed_at": "2026-10-25T22:29:27Z",
+          "completed_event": "sha256:80728fa6d0351c4914e0e1dfb9dff793564a14649fbd206c74b163dcefe21e42",
           "created_at": "2026-10-22",
           "depends_on": [],
           "evidence_required": [
@@ -67623,7 +67692,9 @@
           ],
           "serves": [],
           "slug": "the-proof-figure-reads-the-recorded-run",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-25T22:28:17Z",
+          "started_event": "sha256:920bb5f05a1b41c3f14d53971900084d97a784aa3a93dbb4e5e4b00747b9b3cb",
+          "updated_at": "2026-10-25T22:29:27Z",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported",
@@ -68310,6 +68381,8 @@
             "On master, case 10 names the 126361-byte plan graph as NEAR and passes",
             "The shim refuses a 131073-byte argument with exit 126 and admits a 131072-byte one"
           ],
+          "completed_at": "2026-10-26T01:26:41Z",
+          "completed_event": "sha256:12495d243a625adc78b67a7de2fa78101ebc49f46a3c64daf88935cf3564d38e",
           "created_at": "2026-10-23",
           "current_state": "scripts/ci/argv-limit-check matches three spellings, plus mj_project_mermaid on train 4. A payload under a fourth spelling passes it and every macOS run, and fails only on Linux.",
           "depends_on": [],
@@ -68330,7 +68403,9 @@
             ".ai/repo/project/issues/I3942.yaml"
           ],
           "slug": "the-argument-cap-is-measured-on-every-host",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-26T01:25:56Z",
+          "started_event": "sha256:4f62588bd3b322035c230af77c0e09fd21dd0ffd6e6a6c095fcc69c6b154a670",
+          "updated_at": "2026-10-26T01:26:41Z",
           "validation": [
             "bash test/run.sh 10_site_data"
           ]
@@ -68576,6 +68651,8 @@
             "pipefail-check over the changed tree exits 0",
             "Case 300 writes the spelling, a comment about it, a here-string, an `||` and a script without pipefail, and only the spelling is refused"
           ],
+          "completed_at": "2026-10-26T01:15:30Z",
+          "completed_event": "sha256:ec83d080409782ff25e5ffdcaef33464e8971462b3c38016fb81bed797ea6b33",
           "created_at": "2026-10-23",
           "current_state": "pipefail-check measures only the scripts that pipe under set -e without pipefail; a script that sets pipefail is never read again, and five of them pipe a printf into grep -q.",
           "depends_on": [],
@@ -68602,7 +68679,9 @@
             ".ai/repo/project/issues/I3949.yaml"
           ],
           "slug": "an-early-exit-reader-reads-a-here-string",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-26T01:14:55Z",
+          "started_event": "sha256:bc66df6e39cbb2b7a001a77437e4c480dc596f1ffe5dcdad3ab6bf44ccb3e9cd",
+          "updated_at": "2026-10-26T01:15:30Z",
           "validation": [
             "bash test/run.sh 300_a_pipeline_cannot_hide_a_failure",
             "scripts/ci/pipefail-check"
@@ -68910,6 +68989,8 @@
         "route": "/cockpit/objects/issue/i3957",
         "source": ".ai/repo/project/issues/I3957.yaml",
         "facts": {
+          "completed_at": "2026-10-26T01:25:23Z",
+          "completed_event": "sha256:6ae9046c26483e5bdb164bb0a4690598c8c23c6fd74b2aec5a4a009452e82128",
           "created_at": "2026-10-22",
           "current_state": "Measured on master 2034d4a3f0b: see milestone ordinary-commands-never-build.",
           "depends_on": [],
@@ -68942,7 +69023,9 @@
             "every-capability-has-one-owner-and-the-cli-never-builds#every-caller-declares-its-outcome"
           ],
           "slug": "no-entry-path-or-gate-builds",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T01:24:18Z",
+          "started_event": "sha256:7079f4bd7112bb67d7b5fe2675b96a0bf225603650d4912525ea7850a55ecbbf",
+          "updated_at": "2026-10-26T01:25:23Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=2 bash test/run.sh 3958_no_entry_path_or_gate_builds"
@@ -69132,6 +69215,8 @@
         "route": "/cockpit/objects/issue/i3963",
         "source": ".ai/repo/project/issues/I3963.yaml",
         "facts": {
+          "completed_at": "2026-10-26T03:41:36Z",
+          "completed_event": "sha256:13dba0371f38b0cf0c0d1a3f5343938ca4c64285149611824c373d89730e5d0c",
           "created_at": "2026-10-22",
           "current_state": "scripts/derive exits 10 before anything runs while MERGE_HEAD, CHERRY_PICK_HEAD or REVERT_HEAD exists (case 3837).",
           "depends_on": [],
@@ -69152,7 +69237,9 @@
             "test/cases/3963_a_merge_of_master_derives_in_one_go.sh"
           ],
           "slug": "a-merge-of-master-derives-in-one-go",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T03:40:06Z",
+          "started_event": "sha256:661341a7037060e4f483fe247dc5f69c06691baededbe97d94052bf178a0dd0b",
+          "updated_at": "2026-10-26T03:41:36Z",
           "validation": [
             "bash test/run.sh 3837_a_derive_does_not_run_mid_merge 3963_a_merge_of_master_derives_in_one_go",
             "bin/majordomus plan validate"
@@ -119509,11 +119596,6 @@
       },
       {
         "source": "majordomus://issue/I0916",
-        "target": "majordomus://issue/I0914",
-        "kind": "depends_on"
-      },
-      {
-        "source": "majordomus://issue/I0916",
         "target": "majordomus://milestone/fly-deployment",
         "kind": "belongs_to"
       },
@@ -144230,7 +144312,7 @@
     ],
     "metadata": {
       "nodes": 4002,
-      "edges": 9232,
+      "edges": 9231,
       "acyclic": false,
       "truncated": false
     }
