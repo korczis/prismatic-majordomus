@@ -209,7 +209,7 @@ pub struct ProcessFact {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub socket: Option<String>,
     /// The owner variables of its environment (never a token).
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub env: BTreeMap<String, String>,
     /// The provider's session registry entry for this pid, when there is one.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -412,7 +412,7 @@ pub struct WhoReport {
     /// Every worker the evidence names.
     pub owners: Vec<WhoOwner>,
     /// The process and its parents, for a pid.
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub chain: Vec<ProcessFact>,
     /// The run record the subject belongs to.
     #[serde(skip_serializing_if = "Option::is_none")]

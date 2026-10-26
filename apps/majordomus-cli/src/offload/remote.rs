@@ -65,14 +65,8 @@ fn expand_home(path: &str) -> String {
 impl Remote {
     /// This machine, as a host: the script runs under `sh` here. What `mesh who` reads a
     /// local process through, and what the tests use as a host, with real processes
-    /// standing for the waiters.
-    ///
-    /// ```
-    /// use majordomus_cli::offload::remote::Remote;
-    /// let out = Remote::local().run("echo \"$1\"", &["here"], None).unwrap();
-    /// assert!(out.ok());
-    /// assert_eq!(out.stdout, "here\n");
-    /// ```
+    /// standing for the waiters. The module is the crate's own, so a doc example could not
+    /// name it; `tests::arguments_reach_the_script_as_they_are` runs a script through it.
     pub fn local() -> Remote {
         Remote {
             prefix: Vec::new(),
