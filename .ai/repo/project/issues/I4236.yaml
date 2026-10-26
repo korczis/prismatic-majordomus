@@ -10,7 +10,7 @@ serves:
   - the-peer-blackboard-is-one-reality#every-surface-reads-it
 objective: "Add /ui/board, the Blackboard: one screen that draws the work as a board of its delivery stages (ready, in flight, in review, in a train, landed) from plan.delivery and plan.issues, puts on each card the workers and claims blackboard.snapshot names for it, the pull request and train that carry it from the integration queue, and links every card, avatar, chip and count to the object it was read from; beside it the mesh as a topology of machines, workers and what they hold, and the monitor's stream. It follows the live channel, says how old each reading is, and is published in the majordomus.dev UI snapshot."
 why: "Who works on what and where each issue stands are already derived (plan.delivery, blackboard.snapshot, the integration queue, the monitor), but no surface shows them as one picture: /ui/peers is tables of workers, /ui/work lists issues by declared status, and /ui/idd has no notion of who carries an issue now. On 2026-10-25 the owner ran a convergence of 82 open pull requests from the board, git and the forge by hand, because no screen answered 'what is in flight, who has it, what waits to land'."
-current_state: "/ui/peers draws the blackboard as five tables; /ui/work lists READY and ACTIVE issues by their stamps; the delivery stage of an issue reaches no /ui screen as a column; no screen joins an issue to the worker claiming it or to the train carrying it."
+current_state: "/ui/board draws Ready, In flight, In review and Landed from plan.delivery, plan.issues and blackboard.snapshot, joins workers by id, follows the blackboard live (case 4236) and is in the published UI snapshot. Not yet: a train column and train chips, because integration.trains and integration.queue each take more than five minutes on this repository (measured 2026-10-26, 67 open pull requests), which no screen can wait for; that cost is the dependency."
 desired_state: "/ui/board answers, from capabilities alone, every issue's stage, the workers and claims on it, the pull request and train carrying it and what landed last; every element is a link to its object; a change of the blackboard or the integration queue reaches an open page without a reload; the screen names the age and source of each reading; the published site carries the same screen as a labelled snapshot."
 scope:
   - "apps/majordomus-cli/src/ui/board.rs"
@@ -43,6 +43,7 @@ validation:
   - "scripts/ui check"
 evidence_required:
   - "case_board_is_derived"
+  - "case_board_is_live"
 created_at: 2026-10-26
 updated_at: 2026-10-26T11:56:40Z
 started_at: 2026-10-26T11:48:42Z

@@ -70556,7 +70556,8 @@
           "created_at": "2026-10-26",
           "depends_on": [],
           "evidence_required": [
-            "case_board_is_derived"
+            "case_board_is_derived",
+            "case_board_is_live"
           ],
           "milestone": "peer-blackboard",
           "non_scope": [
@@ -94068,6 +94069,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "kind": "test",
+        "label": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "route": "/cockpit/objects/test/test-cases-4236-the-blackboard-is-live-in-a-browser-sh",
+        "source": "test/cases/4236_the_blackboard_is_live_in_a_browser.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -139230,6 +139238,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4236_the_blackboard_is_live_in_a_browser.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144321,8 +144334,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4004,
-      "edges": 9235,
+      "nodes": 4005,
+      "edges": 9236,
       "acyclic": false,
       "truncated": false
     }
