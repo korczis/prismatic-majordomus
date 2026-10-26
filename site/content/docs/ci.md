@@ -351,6 +351,16 @@ validate runs exhausted on 2026-10-26.
 </div>
 
 
+The plan's fork rule is routing, not the security control. A fork's `pull_request` run
+executes the workflow file of the pull request, so its author could name
+`[self-hosted, lundra]` directly. What keeps a stranger's code off the fleet is the
+repository's fork setting, `approval_policy: all_external_contributors` (read it with
+`gh api repos/{owner}/{repo}/actions/permissions/fork-pr-contributor-approval`): no outside
+contributor's run starts until the owner approves it, and a fork run that changes
+`.github/workflows/` is never approved. A user-owned repository has no runner groups; if
+that changes, restrict the pool's group to this repository's push and same-repository
+events.
+
 An offline pool queues jobs rather than failing them, so the remedy is
 `gh variable delete MJ_RUNNER`: the next run is hosted, with no other change. A pool is
 proved on a branch first with `gh workflow run validate.yml --ref <branch> -f runner=lundra`.

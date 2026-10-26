@@ -199,8 +199,10 @@ jobs:
       # I4242: the runner every other Linux job of this run takes, decided once, here. The
       # repository's own machines (MJ_RUNNER, e.g. lundra) are the first wave: they cost nothing
       # per minute and do not share the account's hosted concurrency. A pull request from a fork
-      # never reaches them, because this repository is public and they are machines of the fleet;
-      # an unset or unreadable variable means GitHub-hosted. This job stays hosted so that a
+      # is routed off them, because this repository is public and they are machines of the fleet;
+      # an unset or unreadable variable means GitHub-hosted. This is routing, not the control:
+      # a fork's run executes the pull request's own workflow file, so what keeps it off the
+      # fleet is the fork approval policy all_external_contributors (docs/CI.md). This job stays hosted so that a
       # verdict is planned even when the pool is offline; the remedy for an offline pool is to
       # unset MJ_RUNNER. Every job reads `needs.plan.outputs.runner || "ubuntu-latest"`, so a
       # plan that failed still lets `ci` report. Case 4242 drives this step.
