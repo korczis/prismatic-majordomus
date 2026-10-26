@@ -497,6 +497,24 @@ expect_grep 'gate shell-lint was selected and its job structure succeeded, but n
 expect_exit 2 "$VERDICT" --plan plan.json --needs n.json --summary summary.md
 expect_grep 'are required'
 cp all.tsv receipts/structure/receipts.tsv
+# --- attempts (I4203): every upload is named ci-receipts-<job>-a<attempt>, and a rerun of the
+#     failed jobs leaves the earlier attempts' artifacts in the run. Each artifact is judged by
+#     its newest attempt: a stale red beside a green rerun is green, and a red rerun is red even
+#     with an older green beside it. Train 6's ci was red on attempt 2's stale pages receipt.
+rm -rf receipts; mkdir -p receipts/ci-receipts-structure-a1 receipts/ci-receipts-site-a1 receipts/ci-receipts-site-a2
+grep -v '^site-build	' all.tsv > receipts/ci-receipts-structure-a1/receipts.tsv
+printf 'site-build\tfailure\tsite/build the site\n' > receipts/ci-receipts-site-a1/receipts.tsv
+printf 'site-build\tsuccess\tsite/build the site\n' > receipts/ci-receipts-site-a2/receipts.tsv
+expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+printf 'site-build\tsuccess\tsite/build the site\n' > receipts/ci-receipts-site-a1/receipts.tsv
+printf 'site-build\tfailure\tsite/build the site\n' > receipts/ci-receipts-site-a2/receipts.tsv
+expect_exit 1 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+expect_grep 'gate site-build was selected and its job site succeeded, but a step of it reported failure'
+# attempt 10 is newer than attempt 9, not older: attempts compare as numbers
+mv receipts/ci-receipts-site-a1 receipts/ci-receipts-site-a10; mv receipts/ci-receipts-site-a2 receipts/ci-receipts-site-a9
+expect_exit 0 "$VERDICT" --plan plan.json --needs n.json --receipts receipts --summary summary.md
+rm -rf receipts; mkdir -p receipts/structure
+cp all.tsv receipts/structure/receipts.tsv
 
 # --- the writers: timed and run-plan write a receipt per step and per gate when
 #     MJ_CI_RECEIPTS is set; the workflow's closing steps write the rest from step outcomes

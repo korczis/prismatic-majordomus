@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1049,6 +1049,15 @@
         "route": "/cockpit/capabilities/mcp.projection",
         "source": "apps/majordomus-cli/src/capability/builtin/mcp.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:mesh.beat",
+        "kind": "capability",
+        "label": "mesh.beat",
+        "summary": "Say a session is making progress",
+        "route": "/cockpit/capabilities/mesh.beat",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
       },
       {
         "id": "capability:mesh.build_cache.ensure",
@@ -52843,6 +52852,8 @@
             "A large-file request is answered by ranges",
             "The measured cost is lower than whole-file reading and the answer says by how much"
           ],
+          "completed_at": "2026-10-25T14:46:13Z",
+          "completed_event": "sha256:bfd96d0811c7a42b72f797620f9ddf1084ed3259e00b28d1069d1b1338a20bde",
           "created_at": "2026-10-18",
           "current_state": "Entries are layer objects only.",
           "desired_state": "Source-range entries with provenance, budgeted like the rest.",
@@ -52861,10 +52872,14 @@
             "docs/CONTEXT.md"
           ],
           "slug": "context-names-source-ranges",
-          "updated_at": "2026-10-18",
+          "started_at": "2026-10-25T14:44:43Z",
+          "started_event": "sha256:18f32a5efb6d01f76ac18d6513372b8f1cc00de529a57f2571db49ec3d59b3ec",
+          "updated_at": "2026-10-25T14:46:13Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib devcontext::"
-          ]
+          ],
+          "verified_at": "2026-10-25T14:45:12Z",
+          "verified_event": "sha256:f42996923da77876ea7318bf9fa72ceed600b805392060dee6edcaf2af954654"
         }
       },
       {
@@ -69653,6 +69668,71 @@
         }
       },
       {
+        "id": "majordomus://issue/I3990",
+        "kind": "issue",
+        "label": "I3990",
+        "summary": "An exclusive mesh claim lives by its holder's progress: a session stuck on a dialog, hung or crashed stops refusing others while its server beats on",
+        "route": "/cockpit/objects/issue/i3990",
+        "source": ".ai/repo/project/issues/I3990.yaml",
+        "facts": {
+          "created_at": "2026-10-23",
+          "depends_on": [],
+          "evidence_required": [
+            "a_claim_lapses_when_its_session_stops_progressing"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "Adding session_ttl_seconds to .ai/repo/mesh/majordomus.yaml: an older executable refuses a key it does not know",
+            "A new EVENT_VERSION: an older runtime stores and relays session_beat opaque and keeps the stream rule",
+            "Closing a silent session: an idle session holding nothing is healthy",
+            "Take-over or fencing of a suspended claim's resumed holder: waits for the epoch of I3174",
+            "The integration lease: I3991",
+            "A monitor signal for a suspension: it is a reading of time, not a journal event; mesh.state and the board show it"
+          ],
+          "parallel_safe": false,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/mesh/config.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/page.rs",
+            "apps/majordomus-cli/src/mesh/doctor.rs",
+            "apps/majordomus-cli/src/peers.rs",
+            "apps/majordomus-cli/src/mcp/protocol.rs",
+            "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/src/commands/mesh.rs",
+            "apps/majordomus-cli/src/monitor/mesh.rs",
+            "apps/majordomus-cli/src/ui/mesh.rs",
+            "apps/majordomus-cli/tests/mesh_sync_bound.rs",
+            "apps/majordomus-cli/tests/mesh_trust_reload.rs",
+            ".ai/repo/ci/mesh-event-fields.yaml",
+            "share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json",
+            "scripts/ci/mesh-check",
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            "test/cases/3051_an_unlisted_event_field_fails_the_mesh_check.sh",
+            "docs/MESH.md",
+            "docs/claims/mesh-liveness-expiry.md",
+            "site/content/guarantees/mesh-liveness-expiry.md",
+            ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+            ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
+          ],
+          "slug": "a-claim-lives-by-its-holders-progress",
+          "updated_at": "2026-10-23",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh:: peers:: mcp::protocol monitor::mesh",
+            "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing 3051_an_unlisted_event_field_fails_the_mesh_check",
+            "bash scripts/ci/mesh-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I3995",
         "kind": "issue",
         "label": "I3995",
@@ -69693,6 +69773,48 @@
           "updated_at": "2026-10-23",
           "validation": [
             "bash test/run.sh 3995_a_task_started_before_the_first_commit_finishes",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I3996",
+        "kind": "issue",
+        "label": "I3996",
+        "summary": "A node's provisioning secret is read on mc's standard input, never from a command line",
+        "route": "/cockpit/objects/issue/i3996",
+        "source": ".ai/repo/project/issues/I3996.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With a recording runner, no argv of any command the apply runs contains any node's secret, and each node's secret, followed by a newline, is the standard input of exactly its own admin user add",
+            "The real runner gives a stand-in mc the input on its standard input and nothing on its command line; a command given no input reads an empty, closed standard input"
+          ],
+          "created_at": "2026-10-23",
+          "depends_on": [
+            "I2674"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "builds-reuse-the-mesh-cache",
+          "non_scope": [
+            "A gate and rule that refuse a secret on any command line the repository runs (I4224, train 8)",
+            "Rotating identities: none was ever created through the argv form"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/cache_provision.rs",
+            ".ai/repo/project/issues/I3996.yaml"
+          ],
+          "serves": [
+            "a-build-reuses-what-the-mesh-already-built#nothing-secret-nothing-unbounded"
+          ],
+          "slug": "a-provisioning-secret-is-read-on-standard-input",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cache_provision",
             "bin/majordomus plan validate"
           ]
         }
@@ -70414,6 +70536,85 @@
         }
       },
       {
+        "id": "majordomus://issue/I4203",
+        "kind": "issue",
+        "label": "I4203",
+        "summary": "The ci verdict judges each gate by the receipt of the attempt that ran it, so a rerun that passes is not judged by the attempt that failed",
+        "route": "/cockpit/objects/issue/i4203",
+        "source": ".ai/repo/project/issues/I4203.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 94 fails against master's verdict on a fixture with a stale red and a fresh green receipt of one gate, and passes with the fix",
+            "A `gh run rerun --failed` whose rerun gate passes yields a green ci verdict"
+          ],
+          "created_at": "2026-10-24",
+          "depends_on": [],
+          "evidence_required": [
+            "a_rerun_is_judged_by_its_own_receipts_test"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "What any gate checks",
+            "Deleting artifacts of past runs"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4203.yaml",
+            ".github/workflows/validate.yml",
+            "scripts/ci/verdict",
+            "test/cases/94_ci_plan.sh"
+          ],
+          "serves": [],
+          "slug": "a-rerun-is-judged-by-its-own-receipts",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "bash test/run.sh 94_ci_plan"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4207",
+        "kind": "issue",
+        "label": "I4207",
+        "summary": "Only a trends series of the shape the publication writes decides a run link",
+        "route": "/cockpit/objects/issue/i4207",
+        "source": ".ai/repo/project/issues/I4207.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A run a trends/v1 series names is still decided",
+            "The same run named by a series of schema trends/v0 is refused as undecidable offline (exit 10)",
+            "The same run named by a top-level JSON list is refused (exit 10), not a crash"
+          ],
+          "current_state": "link-check reads `.get('runs')` of whatever site/data/trends.json parses to: any object's runs are decided, and a JSON list raises AttributeError.",
+          "depends_on": [],
+          "desired_state": "Only an object whose schema is trends/v1 contributes runs; a series of another schema or none leaves those run links refused as undecidable offline (exit 10), and case 335 holds both.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "measurements-are-tracked-over-time",
+          "non_scope": [
+            "What scripts/pages trends writes, which already carries schema trends/v1",
+            "Deciding any other forge path offline"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "None: the only series the publication writes is trends/v1 (scripts/pages, `schema: \\\"trends/v1\\\"`), so a published site decides exactly what it did.",
+          "scope": [
+            "scripts/ci/link-check",
+            "test/cases/335_every_link_resolves.sh",
+            ".ai/repo/project/issues/I4207.yaml"
+          ],
+          "serves": [],
+          "slug": "a-trends-series-is-trusted-by-its-schema",
+          "validation": [
+            "bash test/run.sh 335_every_link_resolves"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4220",
         "kind": "issue",
         "label": "I4220",
@@ -70453,6 +70654,45 @@
           "updated_at": "2026-10-24",
           "validation": [
             "bash test/run.sh 335_every_link_resolves"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4221",
+        "kind": "issue",
+        "label": "I4221",
+        "summary": "CI's Rust cache carries the shared build directory, where cargo actually compiles",
+        "route": "/cockpit/objects/issue/i4221",
+        "source": ".ai/repo/project/issues/I4221.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A job's Cache Paths list includes the runner's ~/.cargo/build-shared",
+            "A second run of a job at the same cache key compiles markedly fewer units than the first, measured by the count of Compiling lines in two runs' logs, quoted in this record",
+            "Every job that reported a cache hit still passes"
+          ],
+          "created_at": "2026-10-24",
+          "current_state": "Swatinem/rust-cache caches the registry, git checkouts and apps/majordomus-cli/target (about 50 MB). build-shared, where every dependency is compiled, is rebuilt from nothing in each job.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Sharing CARGO_TARGET_DIR between trees, which .cargo/config.toml forbids for a recorded reason",
+            "Changing build-dir locally or the cache keys"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/actions/setup-rust/action.yml",
+            ".ai/repo/project/issues/I4221.yaml"
+          ],
+          "serves": [],
+          "slug": "ci-caches-the-shared-build-dir",
+          "updated_at": "2026-10-24",
+          "validation": [
+            "Read the coverage job log of two consecutive runs at one key: Cache Paths, Cache Size and the Compiling count"
           ]
         }
       },
@@ -70542,6 +70782,86 @@
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
             "bash test/run.sh 4223_a_failed_cases_reason_reaches_the_artifact 56_derived_current_gate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4227",
+        "kind": "issue",
+        "label": "I4227",
+        "summary": "A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect",
+        "route": "/cockpit/objects/issue/i4227",
+        "source": ".ai/repo/project/issues/I4227.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "After RETAINED + 4 reconnects of one client announcing the same named claim, a session that departed before them is still listed with its announcement",
+            "The re-attached client is listed once attached, with no departed copy of itself",
+            "A departed slot of the same client that also held an unnamed claim is kept",
+            "A departed slot of the same client name at a different address is kept"
+          ],
+          "created_at": "2026-10-25",
+          "current_state": "PeerBoard::detach marks a slot with claims departed and drops the oldest departed slots past RETAINED; nothing recognises that a newer slot is the same worker saying the same thing.",
+          "depends_on": [],
+          "evidence_required": [
+            "a_departed_peer_that_a_later_announce_repeats_is_not_kept_test"
+          ],
+          "milestone": "mcp-transports-are-reliable",
+          "non_scope": [
+            "The RETAINED bound itself, and the order in which departed slots are dropped past it",
+            "The progress liveness of a peer (I3990, feature/a-claim-lives-by-its-holders-progress), which touches other hunks of the same file",
+            "The bridge's reconnect cadence, which is the client's",
+            "Mesh claims, which live in the mesh journal and not on the board"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/peers.rs",
+            ".ai/repo/project/issues/I4227.yaml"
+          ],
+          "serves": [],
+          "slug": "a-departed-peer-that-repeats-another-is-not-kept",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib peers::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4229",
+        "kind": "issue",
+        "label": "I4229",
+        "summary": "The image's build stage carries every file the crate embeds",
+        "route": "/cockpit/objects/issue/i4229",
+        "source": ".ai/repo/project/issues/I4229.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The test passes on master's sources",
+            "A source that embeds ../../../share/advisors.yaml fails the test, naming that source and that path"
+          ],
+          "created_at": "2026-10-25",
+          "current_state": "On 2efeacea031 nothing short of building the image checks that an embedded file reaches the build context.",
+          "depends_on": [],
+          "evidence_required": [
+            "embedded_files_reach_the_build_stage"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Changing what the image copies: master's layout already carries every embedded file",
+            "Embeds written through concat! or env!, which name no literal path"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4229.yaml",
+            "apps/majordomus-cli/src/deploy/render.rs"
+          ],
+          "serves": [],
+          "slug": "the-build-stage-carries-every-embedded-file",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::the_build_stage_carries_every_file_the_package_embeds"
           ]
         }
       },
@@ -82395,6 +82715,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "rule",
+        "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "summary": "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat",
+        "route": "/cockpit/objects/rule/project-an-exclusive-claim-lives-by-its-holders-progress-1",
+        "source": ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.mesh-cooperation-is-authenticated@1"
+          ],
+          "tags": [
+            "mesh",
+            "cooperation",
+            "liveness",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "kind": "rule",
         "label": "project.an-expedited-landing-is-the-owners-word@1",
@@ -84149,7 +84490,8 @@
             "project.integration-follows-the-current-master@3",
             "project.an-expedited-landing-is-the-owners-word@1",
             "project.work-is-claimed-before-it-is-built@1",
-            "project.mesh-cooperation-is-authenticated@1"
+            "project.mesh-cooperation-is-authenticated@1",
+            "project.an-exclusive-claim-lives-by-its-holders-progress@1"
           ],
           "tags": [
             "process",
@@ -92084,6 +92426,13 @@
         "source": "test/cases/241_merge_policy_claims_only_generator_output.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2484_majordomus_ui_opens_the_dashboard.sh",
+        "kind": "test",
+        "label": "test/cases/2484_majordomus_ui_opens_the_dashboard.sh",
+        "route": "/cockpit/objects/test/test-cases-2484-majordomus-ui-opens-the-dashboard-sh",
+        "source": "test/cases/2484_majordomus_ui_opens_the_dashboard.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/24_prompt_search.sh",
         "kind": "test",
         "label": "test/cases/24_prompt_search.sh",
@@ -93874,6 +94223,13 @@
         "label": "test/cases/3970_a_pull_request_carries_its_metadata.sh",
         "route": "/cockpit/objects/test/test-cases-3970-a-pull-request-carries-its-metadata-sh",
         "source": "test/cases/3970_a_pull_request_carries_its_metadata.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+        "kind": "test",
+        "label": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+        "route": "/cockpit/objects/test/test-cases-3990-a-claim-lapses-when-its-session-stops-progressing-sh",
+        "source": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh"
       },
       {
         "id": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
@@ -100007,6 +100363,21 @@
       },
       {
         "source": "capability:mcp.projection",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.beat",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -132406,6 +132777,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I3990",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3990",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I3995",
         "target": "kind:issue",
         "kind": "is_a"
@@ -132413,6 +132794,21 @@
       {
         "source": "majordomus://issue/I3995",
         "target": "majordomus://milestone/a-stranger-adopts-it-unaided",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I3996",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I3996",
+        "target": "majordomus://issue/I2674",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I3996",
+        "target": "majordomus://milestone/builds-reuse-the-mesh-cache",
         "kind": "belongs_to"
       },
       {
@@ -132631,6 +133027,26 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4203",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4203",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4207",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4207",
+        "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4220",
         "target": "kind:issue",
         "kind": "is_a"
@@ -132638,6 +133054,16 @@
       {
         "source": "majordomus://issue/I4220",
         "target": "majordomus://milestone/measurements-are-tracked-over-time",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4221",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4221",
+        "target": "majordomus://milestone/ci-critical-path",
         "kind": "belongs_to"
       },
       {
@@ -132658,6 +133084,26 @@
       {
         "source": "majordomus://issue/I4223",
         "target": "majordomus://milestone/M004",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4227",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4227",
+        "target": "majordomus://milestone/mcp-transports-are-reliable",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4229",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4229",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -135041,6 +135487,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -136034,6 +136490,11 @@
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
+        "target": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.the-cooperation-model-is-the-owners-word@2",
@@ -137786,6 +138247,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2484_majordomus_ui_opens_the_dashboard.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/24_prompt_search.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -139062,6 +139528,11 @@
       },
       {
         "source": "majordomus://test/test/cases/3970_a_pull_request_carries_its_metadata.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -143707,6 +144178,11 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.beat",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.build_cache.ensure",
         "kind": "composes"
       },
@@ -144257,8 +144733,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4003,
-      "edges": 9233,
+      "nodes": 4014,
+      "edges": 9257,
       "acyclic": false,
       "truncated": false
     }
