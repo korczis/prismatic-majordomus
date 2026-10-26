@@ -705,6 +705,66 @@ mod tests {
             .any(|l| *l == format!("ARG {COMMIT_ARG}=unknown")));
     }
 
+    /// Every file the crate embeds is one the image's compiling stages copy: `deps` and
+    /// `build` are given the package and its path crates, nothing else of the repository. A
+    /// test module may read the repository, since the image compiles no test. Train 6
+    /// embedded `share/mesh-cache-provider/` and master's image stopped compiling (run
+    /// 40189935629); a pull request builds the image only when the image's own definition
+    /// changes, so it is caught here (I4229, from #2523).
+    #[test]
+    fn the_build_stage_carries_every_file_the_package_embeds() {
+        let package = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .canonicalize()
+            .expect("the package directory resolves");
+        let root = package
+            .join("../..")
+            .canonicalize()
+            .expect("the repository resolves");
+        let file = dockerfile(&deployment(), "x.yaml", "1.98.1");
+        let copied: Vec<std::path::PathBuf> = ["deps", "build"]
+            .iter()
+            .flat_map(|name| stage(&file, name))
+            .filter_map(|l| l.strip_prefix("COPY "))
+            .filter(|l| !l.starts_with("--"))
+            .filter_map(|l| l.split(' ').next())
+            .map(|from| root.join(from))
+            .collect();
+        let mut missing = Vec::new();
+        let mut dirs = vec![package.join("src")];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).expect("the source tree reads") {
+                let path = entry.expect("a source entry reads").path();
+                if path.is_dir() {
+                    dirs.push(path);
+                    continue;
+                }
+                if path.extension().is_none_or(|e| e != "rs") {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).expect("a source file reads");
+                // From the first test module on, the file compiles only under test.
+                let compiled = text.split("#[cfg(test)]").next().unwrap_or_default();
+                for marker in ["include_str!(\"", "include_bytes!(\""] {
+                    for (at, _) in compiled.match_indices(marker) {
+                        let rest = &compiled[at + marker.len()..];
+                        let embedded = &rest[..rest.find('"').unwrap_or(rest.len())];
+                        let carried = dir
+                            .join(embedded)
+                            .canonicalize()
+                            .is_ok_and(|t| copied.iter().any(|c| t.starts_with(c)));
+                        if !carried {
+                            missing.push(format!("{}: {embedded}", path.display()));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(
+            missing.is_empty(),
+            "embedded, not copied by the build stage: {missing:?}"
+        );
+    }
+
     #[test]
     fn the_compiled_dependencies_are_layer_content_and_sccache_is_the_only_mount() {
         // a registry cache export carries layers and never a cache mount's contents, which

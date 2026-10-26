@@ -2,7 +2,7 @@
   "schema": 1,
   "source": "docs/generated/graph.json",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: docs/generated/graph.json and site/data/publication.toml; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "kinds": [
     {
       "kind": "adr",
@@ -26,7 +26,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 190,
+      "count": 191,
       "dir": "rules",
       "statuses": [
         "active"
@@ -176,7 +176,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 1028
+      "count": 1035
     },
     {
       "kind": "knowledge",
@@ -248,7 +248,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 190
+      "count": 191
     },
     {
       "kind": "scope",
@@ -288,7 +288,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 653
+      "count": 655
     },
     {
       "kind": "use-case",
@@ -18367,6 +18367,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.an-exclusive-claim-lives-by-its-holders-progress@1",
+      "identity": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+      "slug": "project-an-exclusive-claim-lives-by-its-holders-progress-1",
+      "cockpit": "/cockpit/objects/rule/project-an-exclusive-claim-lives-by-its-holders-progress-1",
+      "title": "An exclusive mesh claim lives by its holder session's progress, not only by its runtime's beat",
+      "status": "active",
+      "tags": [
+        "mesh",
+        "cooperation",
+        "liveness",
+        "doctrine"
+      ],
+      "source": ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.mesh-cooperation-is-authenticated@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.the-cooperation-model-is-the-owners-word@2",
+          "kind": "rule",
+          "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.an-expedited-landing-is-the-owners-word@1",
       "identity": "project.an-expedited-landing-is-the-owners-word@1",
       "slug": "project-an-expedited-landing-is-the-owners-word-1",
@@ -21247,6 +21281,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+          "kind": "rule",
+          "route": "/rules/project-an-exclusive-claim-lives-by-its-holders-progress-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.the-cooperation-model-is-the-owners-word@2",
           "kind": "rule",
           "route": "/rules/project-the-cooperation-model-is-the-owners-word-2/",
@@ -23369,6 +23410,13 @@
       ],
       "source": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
       "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.an-exclusive-claim-lives-by-its-holders-progress@1",
+          "kind": "rule",
+          "route": "/rules/project-an-exclusive-claim-lives-by-its-holders-progress-1/",
+          "external": false
+        },
         {
           "edge": "depends_on",
           "label": "project.an-expedited-landing-is-the-owners-word@1",
