@@ -4,7 +4,7 @@ description = "The edit guard: whether a provider's tool may write a file of thi
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 136
+weight = 137
 [extra]
 route = "/docs/cli/guard/"
 command = "majordomus guard"
