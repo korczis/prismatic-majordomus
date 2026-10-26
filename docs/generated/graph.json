@@ -68105,6 +68105,8 @@
             "Without the declaration the full plan plans both gates (the case is not vacuous), and a subsumed-by naming a missing gate, itself or a subsumed gate is refused by scripts/ci-plan --check",
             "No gate other than the on-demand ones and the two subsumed ones leaves the full plan"
           ],
+          "completed_at": "2026-10-26T10:00:08Z",
+          "completed_event": "sha256:57c135bd23f2ae8ec24b90107ccfa59e0e3d4a9c17ebd2812eebd38a563c5a01",
           "created_at": "2026-10-22",
           "current_state": "scripts/ci-plan plans release-record-cases and plan-record-cases in every full plan next to shell-suite, which runs the same ~80 cases; nothing in the model relates the gates.",
           "depends_on": [],
@@ -68127,7 +68129,9 @@
             ".ai/repo/project/issues/I3937.yaml"
           ],
           "slug": "a-gate-the-suite-runs-is-not-planned-twice",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T09:59:44Z",
+          "started_event": "sha256:f866f0ae63f92e39e83baf71dfbc8677c5b8717f459268a31e96a7a7c94ce208",
+          "updated_at": "2026-10-26T10:00:08Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE bash test/run.sh 94_ci_plan 26_ci_wiring 721_the_suite_shards_are_the_whole_suite",
             "scripts/ci-plan --check",
@@ -68396,6 +68400,8 @@
             "A unit test in model.rs pins each corrected reason: the escalation's three paths and on-demand note, the class list, implied by and required by, full, and the two left-out reasons",
             "A plan narrowed by a shape is not compared, and a shape note on a reason is the only text normalised away"
           ],
+          "completed_at": "2026-10-26T10:00:48Z",
+          "completed_event": "sha256:a8de394482261abb6b6b249e6f4f043dca9f509068c938edf79eb8f6073656d9",
           "created_at": "2026-10-23",
           "depends_on": [
             "I3937"
@@ -68419,7 +68425,9 @@
             ".ai/repo/project/issues/I3944.yaml"
           ],
           "slug": "the-two-gate-readers-give-one-reason",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-26T10:00:24Z",
+          "started_event": "sha256:1b5c7dec8a520cd106ceced8111d5dcddd59692ccacb9d28d90a85ec71a712bd",
+          "updated_at": "2026-10-26T10:00:48Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 131_completion_gates 94_ci_plan 26_ci_wiring",
@@ -68481,6 +68489,8 @@
             "The plan of the model without tiers and lanes equals the plan with them for every change set the cases ask; cases 94 and 131 pass with only new assertions added",
             "Unit tests in model.rs pin the parse and each of the three refusals"
           ],
+          "completed_at": "2026-10-26T10:01:30Z",
+          "completed_event": "sha256:e06990c08bc5474ab51ddad69049dd94efe905fea22ee1d8086c7339b5e334bb",
           "created_at": "2026-10-23",
           "depends_on": [
             "I3944"
@@ -68509,7 +68519,9 @@
             ".ai/repo/project/issues/I3946.yaml"
           ],
           "slug": "every-gate-declares-its-lane",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-26T10:01:05Z",
+          "started_event": "sha256:2699caaf9c21bfeaee9255bff7f4697378bb725674a17e8f9db2243f83ae17f3",
+          "updated_at": "2026-10-26T10:01:30Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found",
@@ -68525,6 +68537,8 @@
         "route": "/cockpit/objects/issue/i3947",
         "source": ".ai/repo/project/issues/I3947.yaml",
         "facts": {
+          "completed_at": "2026-10-26T10:02:11Z",
+          "completed_event": "sha256:9235452792468999a4c6596c969496bb97d49138f7ed4ada4855dfe0b708a824",
           "created_at": "2026-10-23",
           "depends_on": [
             "I3946"
@@ -68554,7 +68568,9 @@
             ".ai/repo/project/issues/I3947.yaml"
           ],
           "slug": "a-tier-selects-its-lanes",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-26T10:01:47Z",
+          "started_event": "sha256:751952c6cb13af9cce017147610e54a27627c3ab8f1165a84d29072acb3c1edb",
+          "updated_at": "2026-10-26T10:02:11Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib gates",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 3947_a_tier_selects_its_lanes 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found",

@@ -38,4 +38,16 @@ evidence_required:
 depends_on:
   - I3944
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-26T10:01:30Z
+started_at: 2026-10-26T10:01:05Z
+started_event: sha256:2699caaf9c21bfeaee9255bff7f4697378bb725674a17e8f9db2243f83ae17f3
+completed_at: 2026-10-26T10:01:30Z
+completed_event: sha256:e06990c08bc5474ab51ddad69049dd94efe905fea22ee1d8086c7339b5e334bb
+evidence:
+  - covers: every_gate_declares_its_lane_test
+    type: test
+    command: "bash test/run.sh 3946_every_gate_declares_its_lane 94_ci_plan 131_completion_gates; scripts/ci-plan --check"
+    result: "cases 3946, 94 and 131 passed 2026-10-26 on master 2efeacea031; ci-plan --check exit 0"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T10:01:22Z
