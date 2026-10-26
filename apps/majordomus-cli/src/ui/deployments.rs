@@ -522,6 +522,66 @@ pub(crate) mod tests {
         assert!(html.contains("unknown"), "{html}");
     }
 
+    /// The screen and its delivery panel are what a browser receives, so no credential the
+    /// deployment's process holds reaches them, and they carry no control that changes
+    /// anything (I0927). The values a hosted deployment keeps in its environment are planted
+    /// with a marker each, the screen is drawn from the canonical object and a stored
+    /// observation, and neither marker nor any form, button or POST target appears.
+    #[test]
+    fn the_deployments_screen_carries_no_credential_and_no_control() {
+        let secrets = [
+            "GIGALIXIR_API_KEY",
+            "GIGALIXIR_EMAIL",
+            crate::deploy::render::NODE_SEED_ENV,
+            "GITHUB_TOKEN",
+            "GH_TOKEN",
+        ];
+        for name in secrets {
+            std::env::set_var(name, format!("i0927-canary-{name}"));
+        }
+        let repo = furnished();
+        let observation = crate::deploy::observed::parse(
+            "o/r",
+            "2026-10-25T21:00:00Z",
+            &json!({"data": {"repository": {"url": "https://forge.example/o/r",
+            "deployments": {"nodes": [
+                {"databaseId": 9, "environment": "production", "createdAt": "2026-10-25T20:00:00Z",
+                 "commitOid": "2efeacea03158615", "ref": {"name": "master"},
+                 "latestStatus": {"state": "SUCCESS",
+                                  "environmentUrl": "https://app.example/",
+                                  "logUrl": "https://forge.example/o/r/actions/runs/9"}}
+            ]},
+            "releases": {"nodes": []}}}}),
+        );
+        crate::deploy::observed::store(repo.root(), &observation).expect("stored");
+        let ctx = repo.context().expect("a context");
+        let pages = [
+            screen(&ctx).main.render(),
+            delivery_panel(&ctx).main.render(),
+        ];
+        for name in secrets {
+            std::env::remove_var(name);
+        }
+        // the screen drew the observation, so a missing marker means absent, not undrawn
+        assert!(
+            pages[0].contains("https://app.example/"),
+            "the observation was not drawn: {}",
+            pages[0]
+        );
+        for html in &pages {
+            assert!(
+                !html.contains("i0927-canary"),
+                "a credential reached the page: {html}"
+            );
+            for control in ["<form", "<button", "method=\"post\"", "formaction"] {
+                assert!(
+                    !html.contains(control),
+                    "{control} on a read-only view: {html}"
+                );
+            }
+        }
+    }
+
     /// A source that did not answer is drawn as unanswered, not as "never asked".
     /// An environment's count of deployments is the number the observation states, and
     /// `none` when it states none: an absent count is never drawn as a zero nobody counted

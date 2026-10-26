@@ -32,4 +32,29 @@ evidence_required:
   - no_credentials_client
 risk: "The cockpit is being rebuilt on another branch. This view has to be written against its projection model rather than against its current markup, and landed after it."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26T01:16:09Z
+started_at: 2026-10-26T01:14:45Z
+started_event: sha256:ad3aa8efec70aa7d8ce595a04328f85b4c6f05678b3319ba300bf8bf63122b01
+verified_at: 2026-10-26T01:15:10Z
+verified_event: sha256:3b90339b3ffc3d6cb6e6a6138f7dedb4534e1b7f43fba6b8dd67864738c9f35e
+completed_at: 2026-10-26T01:16:09Z
+completed_event: sha256:d0a0a17e382563dde01c56e8f40f4896a10a00a75e3bc3edc9d4f316af26c42e
+evidence:
+  - covers: cockpit_view
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::deployments"
+    result: "on feature/the-deployments-screen-carries-no-credential at base 2efeacea031, 2026-10-26: 8 passed, 0 failed. /ui/deployments is a Screen of ui::SCREENS (ui/mod.rs:214), so the navigation derives it; every_declared_deployment_is_a_row_with_its_own_status renders it"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:15:36Z
+  - covers: data_from_model
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::deployments"
+    result: "on feature/the-deployments-screen-carries-no-credential at base 2efeacea031, 2026-10-26: 8 passed, 0 failed. The screen asks the deploy.list and deploy.observed capabilities the HTTP API serves (ui/deployments.rs:61-62, 209); what_the_forge_recorded_is_rows_of_links_and_never_asked_is_said and an_unanswered_observation_is_drawn_as_unanswered prove the rows and the absent case"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:15:48Z
+  - covers: no_credentials_client
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::deployments"
+    result: "on feature/the-deployments-screen-carries-no-credential at base 2efeacea031, 2026-10-26: 8 passed, 0 failed. the_deployments_screen_carries_no_credential_and_no_control sets canary values for GIGALIXIR_API_KEY, GIGALIXIR_EMAIL, the mesh node seed, GITHUB_TOKEN and GH_TOKEN, renders the screen and the delivery panel, and finds no canary and no form, button, method=post or formaction"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:15:58Z
