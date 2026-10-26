@@ -70866,6 +70866,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I4241",
+        "kind": "issue",
+        "label": "I4241",
+        "summary": "A follower's shared read is keyed by its own server, so a follower of another context is never handed it",
+        "route": "/cockpit/objects/issue/i4241",
+        "source": ".ai/repo/project/issues/I4241.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Two contexts in one process, read at the same generation, are each read their own board",
+            "Without the keyed slots the new test fails at the second context's board",
+            "The http::follow module passes repeatedly where master failed it"
+          ],
+          "completed_at": "2026-10-26T17:35:24Z",
+          "completed_event": "sha256:c7c9702c5e0b21194e0f24c93ea6b787b53d5288783e256e5cfb8f57acfe62bc",
+          "created_at": "2026-10-26",
+          "current_state": "Measured at origin/master 22a914d002a on 2026-10-26: Follower::snapshot calls `shared(&BOARD, checkouts, ...)`, and page_key formats sources, reader and cursor only.",
+          "depends_on": [],
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The shape of the shared slots (one board, one page) and the global BLACKBOARD generation",
+            "Any other flaky test of the coverage job"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/http/follow.rs",
+            ".ai/repo/project/issues/I4241.yaml"
+          ],
+          "serves": [],
+          "slug": "a-followers-read-is-its-own-servers",
+          "started_at": "2026-10-26T17:34:47Z",
+          "started_event": "sha256:9301150836643a0f359f64a70790903bf572521d6f1206b6c3bca3ad0a45b598",
+          "updated_at": "2026-10-26T17:35:24Z",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib http::follow::"
+          ],
+          "verified_at": "2026-10-26T17:35:02Z",
+          "verified_event": "sha256:45b4b57b8d7bcf04ae96b54a5e2113e86378ac784f87cf1e025d521dfc8fba9f"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -133107,6 +133152,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4241",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4241",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144733,8 +144788,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4015,
+      "edges": 9259,
       "acyclic": false,
       "truncated": false
     }
