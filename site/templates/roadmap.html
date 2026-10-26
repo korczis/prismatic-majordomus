@@ -111,7 +111,7 @@
             <a href="{{ get_url(path="/plan/" ~ (i.id | lower) ~ "/", trailing_slash=true) }}" class="shrink-0 font-mono text-xs text-heading underline">{{ i.id }}</a>
             <span class="min-w-0 flex-1 basis-48 break-words text-body">{{ i.title }}</span>
             {%- if dl | length > 0 %}{% set d = dl[0] %}
-            <span class="flex shrink-0 flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
+            <span class="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-2 font-mono text-xs text-heading" data-delivery="{{ d.stage }}">
               <span class="rounded border border-default px-1.5 py-0.5">{{ d.stage | replace(from="_", to=" ") }}</span>
               {%- if d.released %}<a href="{{ repo }}/releases/tag/{{ d.released.tag }}" class="underline">{{ d.released.tag }}</a>{% endif %}
               {%- if d.merged %}{% if d.merged.pull_request %}<span title="the pull request that merged it">#{{ d.merged.pull_request }}</span>{% endif %}<a href="{{ repo }}/commit/{{ d.merged.commit }}" class="underline">{{ d.merged.commit | truncate(length=7, end="") }}</a>{% endif %}
