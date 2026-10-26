@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.8"
+    "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "2e503f24ee8d42729a099db2531e67dc654854b5bccdca3c63d63f4d883acc70",
+  "fingerprint": "073ca2184a70704f52443f21f438ae90f4fa1211e76af4c873f10687287b7215",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 83,
+        "capabilities": 84,
         "moments": 17
       },
       "evidence": {
@@ -3229,7 +3229,7 @@
         "use_cases": 10,
         "rules": 15,
         "enforced_rules": 14,
-        "capabilities": 149,
+        "capabilities": 150,
         "moments": 38
       },
       "evidence": {
@@ -5574,6 +5574,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
               "id": "mesh.build_cache.ensure",
               "title": "Restore an install before its command, and save it after",
               "kind": "command",
@@ -5935,10 +5943,10 @@
         "reasoning"
       ],
       "counts": {
-        "capabilities": 30,
-        "mcp_tools": 25,
+        "capabilities": 31,
+        "mcp_tools": 26,
         "mcp_resources": 2,
-        "http_routes": 27,
+        "http_routes": 28,
         "cli_paths": 10,
         "commands": 0,
         "objects": 1,
@@ -8039,7 +8047,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 190
+          "objects": 191
         }
       ],
       "rule_refs": [
@@ -8415,11 +8423,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 5,
-        "mcp_resources": 192,
+        "mcp_resources": 193,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 5,
-        "objects": 190,
+        "objects": 191,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9656,6 +9664,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
             {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
+            {
               "id": "mesh.build_cache.ensure",
               "title": "Restore an install before its command, and save it after",
               "kind": "command",
@@ -10450,10 +10466,10 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 69,
-        "mcp_tools": 60,
+        "capabilities": 70,
+        "mcp_tools": 61,
         "mcp_resources": 9,
-        "http_routes": 64,
+        "http_routes": 65,
         "cli_paths": 26,
         "commands": 0,
         "objects": 1,
@@ -10914,6 +10930,14 @@
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.beat",
+              "title": "Say a session is making progress",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_beat",
+              "route": "POST /api/v1/mesh/beats"
+            },
             {
               "id": "mesh.build_cache.ensure",
               "title": "Restore an install before its command, and save it after",
@@ -11931,10 +11955,10 @@
         "observatory"
       ],
       "counts": {
-        "capabilities": 111,
-        "mcp_tools": 99,
+        "capabilities": 112,
+        "mcp_tools": 100,
         "mcp_resources": 18,
-        "http_routes": 105,
+        "http_routes": 106,
         "cli_paths": 50,
         "commands": 0,
         "objects": 0,
@@ -12921,7 +12945,7 @@
         },
         {
           "name": "release-record",
-          "objects": 36
+          "objects": 37
         }
       ],
       "rule_refs": [
@@ -13089,11 +13113,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 38,
+        "mcp_resources": 39,
         "http_routes": 10,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 37,
+        "objects": 38,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 3,
@@ -13488,7 +13512,7 @@
         },
         {
           "name": "issue",
-          "objects": 1027
+          "objects": 1034
         },
         {
           "name": "intent",
@@ -13698,11 +13722,11 @@
       "counts": {
         "capabilities": 26,
         "mcp_tools": 26,
-        "mcp_resources": 1226,
+        "mcp_resources": 1233,
         "http_routes": 26,
         "cli_paths": 13,
         "commands": 1,
-        "objects": 1223,
+        "objects": 1230,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -17635,7 +17659,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1027)",
+        "title": "issue (1034)",
         "features": [
           "planning"
         ]
@@ -17691,14 +17715,14 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (36)",
+        "title": "release-record (37)",
         "features": [
           "install"
         ]
       },
       {
         "id": "rule",
-        "title": "rule (190)",
+        "title": "rule (191)",
         "features": [
           "doctrine"
         ]
@@ -18695,17 +18719,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3539,
-    "builtin": 220,
-    "declarative": 3319,
+    "capabilities": 3551,
+    "builtin": 221,
+    "declarative": 3330,
     "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3376,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "mcp_tools": 207,
+    "mcp_resources": 3387,
+    "http_routes": 213,
+    "cli_commands": 222,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3319,
+    "objects": 3330,
     "by_kind": {
       "adr": 166,
       "application": 5,
@@ -18724,7 +18748,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1027,
+      "issue": 1034,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -18732,13 +18756,13 @@
       "policy": 1,
       "profile": 4,
       "prompt": 5,
-      "release-record": 36,
-      "rule": 190,
+      "release-record": 37,
+      "rule": 191,
       "scope": 1,
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 652,
+      "test": 654,
       "use-case": 49,
       "workspace": 1
     },

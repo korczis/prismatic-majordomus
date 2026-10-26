@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -20,6 +20,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus serve status`](#majordomus-serve-status) | `/docs/cli/serve/status/` | Where this checkout's server stands — absent, starting, ready, outdated or stale — and every server of the repository |
 | [`majordomus serve ensure`](#majordomus-serve-ensure) | `/docs/cli/serve/ensure/` | Make sure a ready server serves this checkout: start one when there is none or the lease is stale, wait for one that is starting, and report where it stands |
 | [`majordomus serve stop`](#majordomus-serve-stop) | `/docs/cli/serve/stop/` | Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo |
+| [`majordomus ui`](#majordomus-ui) | `/docs/cli/ui/` | The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser |
 | [`majordomus capabilities`](#majordomus-capabilities) | `/docs/cli/capabilities/` | Introspect the capability registry: what exists, where it came from, how it is exposed |
 | [`majordomus capabilities list`](#majordomus-capabilities-list) | `/docs/cli/capabilities/list/` | Every capability, one line each, with its projections |
 | [`majordomus capabilities describe`](#majordomus-capabilities-describe) | `/docs/cli/capabilities/describe/` | One capability by canonical id: schemas, provenance, every projection |
@@ -167,6 +168,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh verify`](#majordomus-mesh-verify) | `/docs/cli/mesh/verify/` | Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails |
 | [`majordomus mesh claim`](#majordomus-mesh-claim) | `/docs/cli/mesh/claim/` | Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them |
 | [`majordomus mesh release`](#majordomus-mesh-release) | `/docs/cli/mesh/release/` | Release a claim this server's current run holds |
+| [`majordomus mesh beat`](#majordomus-mesh-beat) | `/docs/cli/mesh/beat/` | Say a session is making progress, and what it is doing, so its exclusive claims keep excluding |
 | [`majordomus mesh session`](#majordomus-mesh-session) | `/docs/cli/mesh/session/` | Open, update or close a session on the mesh |
 | [`majordomus mesh session open`](#majordomus-mesh-session-open) | `/docs/cli/mesh/session/open/` | Open or update a session: what it is, what it does, where |
 | [`majordomus mesh session close`](#majordomus-mesh-session-close) | `/docs/cli/mesh/session/close/` | Close a session; its claims end with it on every linked runtime |
@@ -272,7 +274,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus deploy`](#majordomus-deploy), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus layout`](#majordomus-layout), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus blackboard`](#majordomus-blackboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus ui`](#majordomus-ui), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus guard`](#majordomus-guard), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus deploy`](#majordomus-deploy), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus plan`](#majordomus-plan), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus layout`](#majordomus-layout), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus blackboard`](#majordomus-blackboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -447,6 +449,38 @@ Examples:
   ```
 
   Verified: exits 0; prints nothing to stop.
+
+<a id="majordomus-ui"></a>
+## `majordomus ui`
+
+The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser
+
+```text
+majordomus ui [OPTIONS] [SCREEN]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `<SCREEN>` | `<SCREEN>` | — | The screen to open, by the last word of its route (`roadmap` is /ui/roadmap); without it, the dashboard |
+| `--no-open` | flag | — | Print the address and open no browser |
+| `--port` | `<PORT>` | — | The port a server this call starts asks for first, as for `serve ensure` |
+| `--idle` | `<SECONDS>` | — | The idle life of a server this call starts, in seconds, as for `serve ensure` |
+| `--wait` | `<SECONDS>` | `20` | How long to wait for a server to become ready |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A screen the UI does not have is refused before a server is started** — `majordomus ui` ensures this checkout's shared server as `serve ensure` does, prints the address of /ui (or of /ui/<screen>) and opens it in a browser; `--no-open` only prints it. A screen is named by the last word of its route, and one the navigation does not hold is refused with exit 2 and every screen listed, before the repository is read or anything is started.
+
+  ```console
+  $ majordomus ui nowhere --no-open
+  ```
+
+  Verified: exits 2.
 
 <a id="majordomus-capabilities"></a>
 ## `majordomus capabilities`
@@ -4425,7 +4459,7 @@ Examples:
 
 The mesh: the nodes this repository's running server has discovered on the network, this machine's node identity, and the self-check that proves the prerequisites on this machine alone
 
-Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review), [`majordomus mesh build-cache`](#majordomus-mesh-build-cache), [`majordomus mesh who`](#majordomus-mesh-who).
+Subcommands: [`majordomus mesh status`](#majordomus-mesh-status), [`majordomus mesh nodes`](#majordomus-mesh-nodes), [`majordomus mesh identity`](#majordomus-mesh-identity), [`majordomus mesh enrol`](#majordomus-mesh-enrol), [`majordomus mesh doctor`](#majordomus-mesh-doctor), [`majordomus mesh firewall`](#majordomus-mesh-firewall), [`majordomus mesh peers`](#majordomus-mesh-peers), [`majordomus mesh peer`](#majordomus-mesh-peer), [`majordomus mesh state`](#majordomus-mesh-state), [`majordomus mesh events`](#majordomus-mesh-events), [`majordomus mesh verify`](#majordomus-mesh-verify), [`majordomus mesh claim`](#majordomus-mesh-claim), [`majordomus mesh release`](#majordomus-mesh-release), [`majordomus mesh beat`](#majordomus-mesh-beat), [`majordomus mesh session`](#majordomus-mesh-session), [`majordomus mesh handover`](#majordomus-mesh-handover), [`majordomus mesh review`](#majordomus-mesh-review), [`majordomus mesh build-cache`](#majordomus-mesh-build-cache), [`majordomus mesh who`](#majordomus-mesh-who).
 
 ```text
 majordomus mesh <COMMAND>
@@ -4749,6 +4783,7 @@ majordomus mesh events [OPTIONS]
 | `--cursor` | `<CURSOR>` | — | Resume after the cursor the previous answer printed: every event exactly once |
 | `--limit` | `<LIMIT>` | — | At most this many (default 100, at most 1000) |
 | `--newest` | flag | — | The newest events instead of the first ones after `--after` |
+| `--beats` | flag | — | Include the session beats a working session's runtime writes, hidden by default |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4849,6 +4884,36 @@ Examples:
 
   ```console
   $ majordomus mesh release stream/c-000000000000
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-mesh-beat"></a>
+## `majordomus mesh beat`
+
+Say a session is making progress, and what it is doing, so its exclusive claims keep excluding
+
+```text
+majordomus mesh beat [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--session` | `<SESSION>` | required | The session making progress, as it was claimed under |
+| `--phase` | `<PHASE>` | — | What it is doing, one line: `waiting on CI run 123` |
+| `--pid` | `<PID>` | — | The running process of this machine the beat speaks for |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Keep a waiting session's exclusive claims excluding** — A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.
+
+  ```console
+  $ majordomus mesh beat --session lander --phase waiting-on-ci
   ```
 
   Verified: exits 10.

@@ -1,11 +1,11 @@
 ---
 name: mj-mesh
-description: "Majordomus mesh: The sccache client configuration for the store this node selected; What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The cooperation journal; The host…"
+description: "Majordomus mesh: Say a session is making progress; The sccache client configuration for the store this node selected; What every dependency install and build directory is cached under; Claim a scope across the mesh; Cooperation, at a glance; The mesh self-check; Enrol this machine in the mesh; The…"
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: module:mesh; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 
 # Majordomus `mesh`
 
@@ -15,6 +15,7 @@ $ARGUMENTS
 
 | Capability | What it is | MCP tool | Command line | Effect |
 |---|---|---|---|---|
+| `mesh.beat` | Say a session is making progress | `majordomus_mesh_beat` | — | changes |
 | `mesh.build_cache.env` | The sccache client configuration for the store this node selected | `majordomus_mesh_build_cache_env` | `majordomus mesh build-cache env` | reads |
 | `mesh.build_cache.key` | What every dependency install and build directory is cached under | `majordomus_mesh_build_cache_key` | `majordomus mesh build-cache key` | reads |
 | `mesh.claim` | Claim a scope across the mesh | `majordomus_mesh_claim` | — | changes |

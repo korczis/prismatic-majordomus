@@ -247,6 +247,9 @@ fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityEr
         report.checks.push(crate::mesh::doctor::journal_check(
             &cooperation.journal().tallies(),
         ));
+        report.checks.push(crate::mesh::doctor::session_beats_check(
+            &cooperation.session_beat_tally(),
+        ));
     }
     // one conjunction over every check, so neither added check's failure can be lost
     report.ok = report.checks.iter().all(|c| c.ok);
@@ -577,6 +580,16 @@ pub struct SessionNode {
     pub claims_held: usize,
     /// The review requests it opened, by key.
     pub reviews: Vec<String>,
+    /// Milliseconds since this runtime stored the session's newest session beat, on its own
+    /// clock: how long ago its worker last showed progress (I3990). Absent for a session
+    /// that never beat — it lives by its runtime's beat alone. Outside the digest, like
+    /// every age.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub progress_ms: Option<u64>,
+    /// What its newest session beat said it was doing — `waiting on CI run 123` — when it
+    /// said (I3990).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phase: Option<String>,
 }
 
 /// One runtime in the peer tree.
@@ -744,6 +757,7 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
             .filter(|r| r.session == session.key)
             .map(|r| r.key.clone())
             .collect();
+        let progress = c.journal().session_beat_age(&session.key);
         if let Some(runtime) = runtimes.get_mut(&session.runtime) {
             runtime.sessions.push(SessionNode {
                 key: session.key.clone(),
@@ -752,6 +766,12 @@ pub fn peer_tree(c: &Cooperation, query: &Query) -> PeerTree {
                 claims: if summary { Vec::new() } else { claims },
                 claims_held,
                 reviews,
+                progress_ms: progress.as_ref().map(|(age, _)| age.as_millis() as u64),
+                // this runtime's own sessions may have said something newer than their last
+                // beat carried: a phase inside the interval is held, not written (I3990)
+                phase: c
+                    .session_phase(&session.key)
+                    .or_else(|| progress.and_then(|(_, phase)| phase)),
             });
         }
     }
@@ -1016,6 +1036,14 @@ pub struct MeshEventsInput {
     /// next. Without it the journal is read forward from `after`, a page at a time.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub newest: Option<bool>,
+    /// Include the `session_beat` events, which are left out by default: a working session's
+    /// runtime writes one every few minutes to keep its claims alive (I3990), and a reader
+    /// of the journal wants what sessions did rather than that they are still doing it.
+    /// A walk by `after` cuts its page before the beats leave it, so its `lamport` resumes
+    /// after them; a walk by `cursor` passes them over without counting them toward `limit`.
+    /// Paging misses nothing either way.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub beats: Option<bool>,
 }
 
 impl BenchmarkCases for MeshEventsInput {
@@ -1027,6 +1055,7 @@ impl BenchmarkCases for MeshEventsInput {
                 cursor: None,
                 limit: Some(100),
                 newest: None,
+                beats: None,
             },
         )]
     }
@@ -1040,8 +1069,8 @@ pub struct EventList {
     /// How many events this answer carries.
     pub count: usize,
     /// The `after` of the next page of a walk by stamp: the stamp of the last event this
-    /// page carries, or the `after` that was asked when it carries none. A page never ends
-    /// inside a run of equal stamps (I2140).
+    /// page read — carried, or a session beat it left out — or the `after` that was asked
+    /// when it read none. A page never ends inside a run of equal stamps (I2140).
     pub lamport: u64,
     /// The `cursor` of the next page: pass it back as `cursor` and the walk resumes exactly
     /// after what this page returned (I2733). Absent from an answer to a walk by `after`.
@@ -1068,31 +1097,41 @@ fn mesh_events(ctx: &Context, input: MeshEventsInput) -> Result<EventList, Capab
         ));
     }
     let after = input.after.unwrap_or(0);
-    let (events, cursor) = if input.newest == Some(true) {
+    let shown = |e: &MeshEvent| input.beats == Some(true) || e.kind() != "session_beat";
+    let (events, lamport, cursor) = if input.newest == Some(true) {
         // the whole tail above `after`, in order, and then its end: the journal is in memory
         // and bounded by its own retention, so this is a walk and not a second index
         let head = c.journal().head_cursor();
         let mut all = c.journal().events_after(after, usize::MAX);
+        let lamport = all.last().map_or(after, |e| e.lamport);
+        all.retain(|e| shown(e));
         let from = all.len().saturating_sub(limit);
         all.drain(..from);
-        (all, Some(head))
+        (all, lamport, Some(head))
     } else if input.after.is_some() {
-        (c.journal().events_after(after, limit), None)
+        // the page is cut before the beats leave it, so its `lamport` resumes after them
+        let mut page = c.journal().events_after(after, limit);
+        let lamport = page.last().map_or(after, |e| e.lamport);
+        page.retain(|e| shown(e));
+        (page, lamport, None)
     } else {
         let from = match &input.cursor {
             Some(text) => Some(text.parse::<Cursor>().map_err(cursor_refusal)?),
             None => None,
         };
-        let (events, next) = c
+        // a beat left out moves the cursor past it without taking a place on the page, so a
+        // page is short only at the end of the journal and the walk still misses nothing
+        let (page, next) = c
             .journal()
-            .events_since(from.as_ref(), limit)
+            .events_since_shown(from.as_ref(), limit, shown)
             .map_err(cursor_refusal)?;
-        (events, Some(next))
+        let lamport = page.last().map_or(after, |e| e.lamport);
+        (page, lamport, Some(next))
     };
     Ok(EventList {
         active: true,
         count: events.len(),
-        lamport: events.last().map_or(after, |e| e.lamport),
+        lamport,
         cursor: cursor.map(|c| c.to_string()),
         events,
     })
@@ -1318,6 +1357,58 @@ impl BenchmarkCases for ReleaseInput {
 
 fn mesh_release(ctx: &Context, input: ReleaseInput) -> Result<Written, CapabilityError> {
     cooperation(ctx)?.release(&input.claim).map_err(map_error)
+}
+
+// ---------------------------------------------------------------- mesh.beat
+
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// The input of `mesh.beat`.
+pub struct BeatInput {
+    /// The session making progress; the calling MCP session's own when omitted. It must be
+    /// a session this runtime opened (a claim opens one).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub session: Option<String>,
+    /// What the session is doing, one line: `waiting on CI run 123`, `holding the build
+    /// lock`. Redacted before it is signed, and shown beside the session everywhere.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub phase: Option<String>,
+    /// The process the beat speaks for; refused unless it is running on this machine.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<u32>,
+}
+
+impl BenchmarkCases for BeatInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![NamedCase::new(
+            "unknown",
+            BeatInput {
+                session: Some("none".into()),
+                phase: Some("waiting on CI".into()),
+                pid: None,
+            },
+        )]
+    }
+}
+
+/// A session says it is making progress, and what it is doing (I3990): the typed way for a
+/// long-running process to keep its exclusive claims excluding while it sends no MCP request.
+fn mesh_beat(ctx: &Context, input: BeatInput) -> Result<Written, CapabilityError> {
+    let c = cooperation(ctx)?;
+    // Over MCP a beat speaks for the calling session alone: one client must not keep another
+    // client's claims excluding. The command line and plain HTTP name the session they beat
+    // for — a long-running script is not an MCP session — and a caller beyond loopback is
+    // refused every write before it gets here (ADR 0126).
+    if let (Some(peer), Some(named)) = (ctx.caller.as_ref(), input.session.as_deref()) {
+        let own = format!("board-{}", peer.as_str());
+        if !named.trim().is_empty() && named != own {
+            return Err(CapabilityError::Refused(format!(
+                "not_own: over MCP a session beats only for itself ({own}), not for '{named}'"
+            )));
+        }
+    }
+    let session = session_of(ctx, input.session)?;
+    c.beat(&session, input.phase, input.pid).map_err(map_error)
 }
 
 // ---------------------------------------------------------------- mesh.handover.*
@@ -1969,7 +2060,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "mesh.claim",
                 kind: CapabilityKind::Command,
                 title: "Claim a scope across the mesh",
-                description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+                description: "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own; and an exclusive claim of a session that beats is suspended — refusing nobody — while its holder makes no progress within its ttl. Writes this runtime's journal only.",
                 input: ClaimInput,
                 output: Written,
                 stability: Stability::Experimental,
@@ -1990,6 +2081,19 @@ pub fn module() -> ModuleDescriptor {
                 tags: ["mesh", "coordination", "cooperation"],
                 benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
                 handler: mesh_release,
+            },
+            capability! {
+                id: "mesh.beat",
+                kind: CapabilityKind::Command,
+                title: "Say a session is making progress",
+                description: "Record that a session of this runtime is making progress, with the phase it is in (`waiting on CI run 123`) and optionally the running process it speaks for. A session that has beaten lives by its beats: its exclusive claims are suspended — they refuse nobody — once no beat arrives within `cooperation.session_ttl_seconds`, and hold again at the next. A worker's MCP requests other than `ping` beat for it; this is the way for a long-running process that sends none. A beat within a quarter of the ttl with an unchanged phase writes nothing and answers the last one. Writes this runtime's journal only.",
+                input: BeatInput,
+                output: Written,
+                stability: Stability::Experimental,
+                exposure: Exposure { mcp: mcp("majordomus_mesh_beat"), http: post("/api/v1/mesh/beats"), cli: None },
+                tags: ["mesh", "coordination", "cooperation"],
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::TransientState },
+                handler: mesh_beat,
             },
             capability! {
                 id: "mesh.handover.publish",
@@ -2195,6 +2299,11 @@ mod tests {
                 "mesh.release",
                 Some("majordomus_mesh_release"),
                 "/api/v1/mesh/claims/release",
+            ),
+            (
+                "mesh.beat",
+                Some("majordomus_mesh_beat"),
+                "/api/v1/mesh/beats",
             ),
             (
                 "mesh.handover.publish",
@@ -2540,5 +2649,181 @@ mod tests {
             .unwrap();
         assert_eq!(s1.claims.len(), 2, "every claim listed");
         assert_eq!(s1.claims_held, 2);
+    }
+
+    /// A session that beat says in the peer tree how long ago it made progress and what it
+    /// said it was doing; one that never beat says neither (I3990).
+    #[test]
+    fn a_session_that_beat_shows_its_progress_and_phase_in_the_peer_tree() {
+        let c = cooperation();
+        for session in ["lander", "quiet"] {
+            c.claim(
+                &SessionInfo::named(session, "cli"),
+                vec![format!("{session}/x")],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        }
+        c.beat("lander", Some("waiting on CI run 42".into()), None)
+            .unwrap();
+        let tree = peer_tree(&c, &Query::default());
+        let session = |name: &str| -> SessionNode {
+            tree.machines
+                .iter()
+                .flat_map(|m| m.runtimes.iter())
+                .flat_map(|r| r.sessions.iter())
+                .find(|s| s.key.ends_with(&format!("/{name}")))
+                .cloned()
+                .expect("the session is in the tree")
+        };
+        let lander = session("lander");
+        assert!(
+            lander.progress_ms.is_some_and(|ms| ms < 60_000),
+            "{lander:?}"
+        );
+        assert_eq!(lander.phase.as_deref(), Some("waiting on CI run 42"));
+        let quiet = session("quiet");
+        assert_eq!((quiet.progress_ms, quiet.phase), (None, None));
+    }
+
+    /// Over MCP a beat speaks for the calling session alone, so one client cannot keep
+    /// another's claims excluding; the command line names the session it beats for, and a
+    /// beat is only for a session this runtime opened (I3990).
+    #[test]
+    fn a_beat_over_mcp_speaks_for_its_own_session_alone() {
+        let (_repo, ctx) = context(false);
+        let beat = |ctx: &Context, session: Option<&str>| {
+            mesh_beat(
+                ctx,
+                BeatInput {
+                    session: session.map(Into::into),
+                    phase: Some("waiting on CI run 42".into()),
+                    pid: None,
+                },
+            )
+        };
+        assert!(
+            matches!(beat(&ctx, Some("lander")), Err(CapabilityError::Refused(m))
+                if m.starts_with("not_active:")),
+            "no cooperation, nothing to beat"
+        );
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        c.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(
+            matches!(beat(&ctx, None), Err(CapabilityError::InvalidInput(_))),
+            "the command line names the session it beats for"
+        );
+        let written = beat(&ctx, Some("lander")).expect("the command line names its session");
+        assert!(written.key.ends_with("/lander"), "{}", written.key);
+
+        let board = crate::peers::PeerBoard::new();
+        let peer = board.attach(crate::peers::Transport::Http);
+        let mcp = ctx.for_caller(peer.clone());
+        let refused = beat(&mcp, Some("lander")).unwrap_err();
+        assert!(
+            matches!(&refused, CapabilityError::Refused(m)
+                if m.starts_with("not_own:") && m.contains("not for 'lander'")),
+            "{refused}"
+        );
+        // its own session, named or not, passes the guard: this runtime never opened it
+        let own = format!("board-{peer}");
+        for session in [None, Some(own.as_str()), Some(" ")] {
+            assert!(
+                matches!(beat(&mcp, session), Err(CapabilityError::NotFound(_))),
+                "{session:?}"
+            );
+        }
+    }
+
+    /// Every walk of `mesh.events` leaves the session beats out unless asked for them, and
+    /// misses nothing for it: a walk by cursor passes a beat over without giving it a place
+    /// on the page, a walk by `after` cuts its page first, and the newest page counts it in
+    /// its `lamport` (I3990, I2733).
+    #[test]
+    fn every_walk_of_the_events_leaves_the_beats_out_and_misses_nothing() {
+        let (_repo, ctx) = context(false);
+        let c = cooperation();
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&c));
+        let claim = |scope: &str| {
+            c.claim(
+                &SessionInfo::named("lander", "cli"),
+                vec![scope.into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        };
+        claim("integration");
+        c.beat("lander", Some("waiting on CI run 42".into()), None)
+            .unwrap();
+        claim("release");
+        let ask = |after: Option<u64>, cursor: Option<String>, newest, beats| {
+            mesh_events(
+                &ctx,
+                MeshEventsInput {
+                    after,
+                    cursor,
+                    limit: Some(1),
+                    newest,
+                    beats,
+                },
+            )
+            .unwrap()
+        };
+        let kinds = |beats: Option<bool>| {
+            let (mut kinds, mut cursor) = (Vec::new(), None);
+            loop {
+                let page = ask(None, cursor, None, beats);
+                cursor = page.cursor.clone();
+                if page.events.is_empty() {
+                    return kinds;
+                }
+                assert_eq!(page.count, 1, "a page is full until the journal ends");
+                kinds.extend(page.events.iter().map(|e| e.kind().to_string()));
+            }
+        };
+        let hidden = kinds(None);
+        let all = kinds(Some(true));
+        assert!(all.iter().any(|k| k == "session_beat"), "{all:?}");
+        assert!(!hidden.iter().any(|k| k == "session_beat"), "{hidden:?}");
+        let without: Vec<_> = all.iter().filter(|k| *k != "session_beat").collect();
+        assert_eq!(
+            hidden.iter().collect::<Vec<_>>(),
+            without,
+            "nothing else is missed"
+        );
+
+        // by stamp: a page holding only a beat is empty and still moves `lamport` past it
+        let beat_at = c
+            .journal()
+            .events_after(0, usize::MAX)
+            .iter()
+            .find(|e| e.kind() == "session_beat")
+            .map(|e| e.lamport)
+            .expect("the beat is in the journal");
+        let page = ask(Some(beat_at - 1), None, None, None);
+        assert_eq!((page.count, page.lamport, page.cursor), (0, beat_at, None));
+        let page = ask(Some(beat_at - 1), None, None, Some(true));
+        assert_eq!(page.events[0].kind(), "session_beat");
+
+        // the newest page: the beat is not on it, and its stamp is the journal's newest
+        let newest = ask(None, None, Some(true), None);
+        assert_eq!(newest.count, 1);
+        assert!(
+            newest.cursor.is_some(),
+            "the newest page names where to resume"
+        );
+        assert_eq!(newest.events[0].kind(), "claim_acquired");
     }
 }
