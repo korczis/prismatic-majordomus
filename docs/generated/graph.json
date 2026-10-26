@@ -30104,7 +30104,6 @@
             "The fixture is removed afterwards, or kept only where test fixtures belong"
           ],
           "created_at": "2026-09-06",
-          "current_state": "Nothing proves the loop end to end.",
           "depends_on": [
             "I1018",
             "I1019"
@@ -30127,7 +30126,7 @@
             "test/cases"
           ],
           "slug": "extensibility-proof",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh"
           ],
@@ -30148,6 +30147,7 @@
             "Nothing that was removed is reachable as a fallback path",
             "The built site and the running interface show the same content as before the removal, except where the derivation is more complete"
           ],
+          "cancelled": true,
           "created_at": "2026-09-06",
           "current_state": "Several surfaces assemble their own lists. Which ones exactly is a reconnaissance result, not an assumption.",
           "depends_on": [
@@ -30172,7 +30172,7 @@
             "apps/majordomus-cli/src/cockpit/mod.rs"
           ],
           "slug": "remove-duplicate-inventories",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "majordomus generate --check"
@@ -30251,7 +30251,7 @@
             "I1024",
             "I1026",
             "I1027",
-            "I1028",
+            "I1117",
             "I1029"
           ],
           "desired_state": "Accepted with evidence against every criterion, with the coverage baseline and the limitations written where they will be found.",
@@ -30274,7 +30274,7 @@
             ".ai/repo/project"
           ],
           "slug": "capability-graph-acceptance",
-          "updated_at": "2026-09-06",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor",
@@ -30423,7 +30423,7 @@
             "share/skeleton"
           ],
           "slug": "canonical-two-folder-layout",
-          "updated_at": "2026-10-21",
+          "updated_at": "2026-10-26",
           "validation": [
             "cargo test --workspace --all-features",
             "bin/majordomus doctor"
@@ -45826,6 +45826,8 @@
             "A layout declaration names, for .ai/repo, .ai/local and each of their directories, what it holds, what it excludes and its lifecycle, typed and versioned",
             "The context schema is generated from its proto and generate --check holds it; a test holds the manifest's Rust type and its hand-written schema in step for the new local fields"
           ],
+          "completed_at": "2026-10-26T03:29:19Z",
+          "completed_event": "sha256:f7d3e196063b62b10022f20c12f0f83efafb8d1cd53d2a7aa25820b780836136",
           "created_at": "2026-10-21",
           "depends_on": [
             "I1101"
@@ -45850,11 +45852,15 @@
             ".ai/repo/project/issues/I2870.yaml"
           ],
           "slug": "the-layout-is-declared",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:28:14Z",
+          "started_event": "sha256:30bcb75eccfbfd0712ae8d2ad8a1250b452bc453a2589385d944093af434d1a6",
+          "updated_at": "2026-10-26T03:29:19Z",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:28:38Z",
+          "verified_event": "sha256:f1b5836082d4ed825dfb040897c3b11d4ee381a5795df9743f8582df2b69ec7d"
         }
       },
       {
@@ -45869,6 +45875,8 @@
             "A file a contract excludes is refused, naming the path and the contract; a negative case places one in each half",
             "update writes no path outside the repository root (the mj_norm_path guard)"
           ],
+          "completed_at": "2026-10-26T03:31:05Z",
+          "completed_event": "sha256:7f75d3e5721d90522e2112c4c2a75802fb770e752be552141b1bebf3c08c27b4",
           "created_at": "2026-10-21",
           "current_state": "doctor checks .ai/local is git-ignored and nothing in it is tracked; scripts/ci/local-never-published keeps local out of the site; nothing reads a contract to judge a path.",
           "depends_on": [
@@ -45895,11 +45903,15 @@
             ".ai/repo/project/issues/I2871.yaml"
           ],
           "slug": "a-misplaced-artifact-is-refused",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:29:46Z",
+          "started_event": "sha256:a7a03c7cf97f62e8553d34d9aaaa6c6732bac600e86ff778a1001b130dc12dce",
+          "updated_at": "2026-10-26T03:31:05Z",
           "validation": [
             "cargo test --workspace --all-features",
             "bin/majordomus doctor"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:30:25Z",
+          "verified_event": "sha256:65e70e3c1c55bbdb9994f5340461cb8cf4dc9b2768543e6f5fe96ceeab760bfb"
         }
       },
       {
@@ -120439,12 +120451,12 @@
       },
       {
         "source": "majordomus://issue/I1030",
-        "target": "majordomus://issue/I1028",
+        "target": "majordomus://issue/I1029",
         "kind": "depends_on"
       },
       {
         "source": "majordomus://issue/I1030",
-        "target": "majordomus://issue/I1029",
+        "target": "majordomus://issue/I1117",
         "kind": "depends_on"
       },
       {

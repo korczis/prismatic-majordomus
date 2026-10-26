@@ -29,4 +29,17 @@ validation:
 evidence_required:
   - layout_declared
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:29:19Z
+started_at: 2026-10-26T03:28:14Z
+started_event: sha256:30bcb75eccfbfd0712ae8d2ad8a1250b452bc453a2589385d944093af434d1a6
+verified_at: 2026-10-26T03:28:38Z
+verified_event: sha256:f1b5836082d4ed825dfb040897c3b11d4ee381a5795df9743f8582df2b69ec7d
+completed_at: 2026-10-26T03:29:19Z
+completed_event: sha256:f7d3e196063b62b10022f20c12f0f83efafb8d1cd53d2a7aa25820b780836136
+evidence:
+  - covers: layout_declared
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test directories a_declared_layout_reaches_the_answer; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib the_local_half_and_its_schema_name_the_same_keys; majordomus generate --check (scripts/derive-check)"
+    result: "at master 6259dac47af on 2026-10-26: 1 passed each. context.v1 declares a typed Layout (holds, excludes, lifecycle) that a contract states and directories answers; the manifest's local half and its hand-written schema name the same keys, an unknown one is refused by both, an older layer still parses; the context schema is generated from its proto and derive-check held it"
+    commit: 465f99e9f0530d66b3cc68b6e2490314d33d8542
+    recorded_at: 2026-10-26T03:29:05Z

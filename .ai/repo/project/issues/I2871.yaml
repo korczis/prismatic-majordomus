@@ -30,4 +30,17 @@ validation:
 evidence_required:
   - boundary_checked
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:31:05Z
+started_at: 2026-10-26T03:29:46Z
+started_event: sha256:a7a03c7cf97f62e8553d34d9aaaa6c6732bac600e86ff778a1001b130dc12dce
+verified_at: 2026-10-26T03:30:25Z
+verified_event: sha256:65e70e3c1c55bbdb9994f5340461cb8cf4dc9b2768543e6f5fe96ceeab760bfb
+completed_at: 2026-10-26T03:31:05Z
+completed_event: sha256:7f75d3e5721d90522e2112c4c2a75802fb770e752be552141b1bebf3c08c27b4
+evidence:
+  - covers: boundary_checked
+    type: test
+    command: "bash test/run.sh 3405_a_misplaced_artifact_is_refused; cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib layout::"
+    result: "at master 6259dac47af on 2026-10-26: case 3405 ok (a copy of a tracked canonical file and a canonical-schema file in .ai/local refused naming the path, a runtime kind passes, a tracked file the ignore rules match under .ai/repo refused naming ai.repo, the MCP tool gives the same report, update refuses a projection target outside the repository and writes nothing); layout:: unit tests 23 passed, 0 failed"
+    commit: 465f99e9f0530d66b3cc68b6e2490314d33d8542
+    recorded_at: 2026-10-26T03:30:53Z
