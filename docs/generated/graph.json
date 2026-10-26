@@ -24567,7 +24567,7 @@
             "JSON and text agree on the set of outcomes and the figures reported"
           ],
           "created_at": "2026-09-04",
-          "current_state": "The join exists as a derivation. Nothing reports it.",
+          "current_state": "Nothing joins cost and acceptance yet: I0401 has not defined acceptance, and economics.tasks (I3376) reports spend and accepted on every task as not_observed, naming the issues that will supply them.",
           "depends_on": [
             "I0401"
           ],
@@ -24590,7 +24590,7 @@
             "bin"
           ],
           "slug": "report-measured-cost",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh"
           ],
@@ -24656,7 +24656,7 @@
             "The generated site data regenerates with no stale file"
           ],
           "created_at": "2026-09-04",
-          "current_state": "The claim is planned. The economics document argues for the unit and reports nothing.",
+          "current_state": "The claim cost-per-outcome is planned (docs/CLAIMS.yaml, sourced from docs/DESIGN.md); docs/ECONOMICS.md does not mention the unit yet, and economics check already refuses a claim without evidence.",
           "depends_on": [
             "I0403"
           ],
@@ -24678,7 +24678,7 @@
             "site/data/generated"
           ],
           "slug": "publish-cost-claim",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26",
           "validation": [
             "scripts/generate-site-data --check",
             "bash test/run.sh"
@@ -25002,7 +25002,6 @@
             "CI runs the case"
           ],
           "created_at": "2026-09-04",
-          "current_state": "Resolution, override and drift reporting all exist and are documented as filesystem-only. Nothing enforces that they stay so.",
           "depends_on": [
             "I0603"
           ],
@@ -25025,7 +25024,7 @@
             "test/cases"
           ],
           "slug": "offline-survives-sharing",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -25875,7 +25874,6 @@
             "Sessions are operational scope and never shared, proved by a case"
           ],
           "created_at": "2026-09-04",
-          "current_state": "The knowledge graph covers repository artifacts. Sessions exist as records that nothing traverses.",
           "depends_on": [
             "I0806",
             "I0812"
@@ -25897,7 +25895,7 @@
             "test/cases"
           ],
           "slug": "session-knowledge-integration",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh 71_session_knowledge"
           ]
@@ -25994,13 +25992,13 @@
           "scope": [
             "docs",
             "share/skeleton/providers",
-            ".majordomus/providers",
+            ".ai/repo/providers",
             "CLAUDE.md",
             "AGENTS.md",
             "test/cases"
           ],
           "slug": "claims-and-docs",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26",
           "validation": [
             "bin/majordomus doctor",
             "bin/majordomus update",
@@ -26041,10 +26039,10 @@
           "risk": "A dogfood run that is narrated rather than measured proves nothing. Every claim in the evidence has to name a command that produced it.",
           "scope": [
             "docs/DOGFOODING.md",
-            ".majordomus/project"
+            ".ai/repo/project"
           ],
           "slug": "dogfood-the-loop",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor",
@@ -26322,7 +26320,6 @@
             "Case 78 passes on this repository and fails on a mutation that re-flattens inside a loop"
           ],
           "created_at": "2026-09-05",
-          "current_state": "doctor flattens 181 times for a repository with fewer canonical files than that.",
           "depends_on": [
             "I0818",
             "I0819",
@@ -26344,7 +26341,7 @@
             "lib/common.sh"
           ],
           "slug": "flatten-once-invariant",
-          "updated_at": "2026-09-05",
+          "updated_at": "2026-10-26",
           "validation": [
             "bash test/run.sh 78_flatten_once"
           ],
@@ -60312,6 +60309,8 @@
             "Response types use a TaskEconomics prefix and no OpenAPI component collides",
             "CLI JSON, HTTP and MCP return the same reading"
           ],
+          "completed_at": "2026-10-26T00:31:39Z",
+          "completed_event": "sha256:79de9c309ade00b1f1c558ffcb0c23fa31135553a5b494c9f81c190d23b4005b",
           "created_at": "2026-10-19",
           "desired_state": "majordomus economics tasks (CLI, HTTP, MCP) answers every task in the ledgers it read; wall time and episodes are measured; other fields read not_observed with their supplier.",
           "evidence_required": [
@@ -60342,12 +60341,16 @@
             "the-product-proves-it-pays#every-task-states-its-delivery-economics"
           ],
           "slug": "each-task-states-its-delivery-economics",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-26T00:30:19Z",
+          "started_event": "sha256:63950a20b50fd251adcc63d227fd405aca57a0903b5c665e7dea82fcd1429dce",
+          "updated_at": "2026-10-26T00:31:39Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
             "majordomus generate --check",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-26T00:30:44Z",
+          "verified_event": "sha256:550071b0018b8215029d3151142fb24ac078285cd7214fbfcdc8ec9ed673d476"
         }
       },
       {
@@ -71825,11 +71828,11 @@
             "share/skeleton",
             "docs",
             "test/cases",
-            ".majordomus/policy.yaml",
-            ".majordomus/project"
+            ".ai/repo/policy.yaml",
+            ".ai/repo/project"
           ],
           "slug": "session-envelope-and-knowledge",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-26T01:45:00Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor",
@@ -71900,7 +71903,7 @@
             ".github/workflows/validate.yml"
           ],
           "slug": "performance-truth",
-          "updated_at": "2026-09-05",
+          "updated_at": "2026-10-26T01:45:00Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor",
@@ -73666,7 +73669,6 @@
             "cost-per-outcome"
           ],
           "created_at": "2026-09-04",
-          "current_state": "Not started, and not startable: it needs execution telemetry underneath it.",
           "depends_on": [
             "execution-telemetry"
           ],
@@ -73692,7 +73694,7 @@
             "site/data/generated"
           ],
           "slug": "cost-per-accepted-outcome",
-          "updated_at": "2026-09-04T14:05:00Z",
+          "updated_at": "2026-10-26T01:30:00Z",
           "validation": [
             "bash test/run.sh"
           ]
@@ -75834,7 +75836,6 @@
             "shared-policy"
           ],
           "created_at": "2026-09-04",
-          "current_state": "Not started. Everything the tool does today is scoped to a single checkout.",
           "depends_on": [
             "routing-recommendations"
           ],
@@ -75861,7 +75862,7 @@
             "site/data/generated"
           ],
           "slug": "shared-policy",
-          "updated_at": "2026-09-04T14:05:00Z",
+          "updated_at": "2026-10-26T01:30:00Z",
           "validation": [
             "bash test/run.sh"
           ]

@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: false
 objective: "Add a case that runs doctor, watch, context and plan validate under MJ_TIMING and asserts the yaml_flatten count never exceeds the number of distinct canonical files a command reads."
 why: "This is the shell tool's form of the no-rebuild-per-request invariant: repeated work is structural, and a counter catches it where a clock cannot."
-current_state: "doctor flattens 181 times for a repository with fewer canonical files than that."
+current_state: "doctor flattens 571 times on this repository (I0821's evidence: yaml_flatten 571 cold and warm, flatten_cache_hit 337 warm). The content cache (I0821, case 3090) makes a repeat cheap but still counts it; case 3053 proves flattening grows linearly, not at most once per file."
 desired_state: "The counter equals the distinct-file count per command and the case fails when a validator regresses to re-flattening."
 scope:
   - test/cases
@@ -25,4 +25,4 @@ evidence_required:
   - batch_reads
 risk: "Some validators legitimately flatten a file twice in different shapes; the case names the allowed exceptions explicitly rather than tolerating a margin."
 created_at: 2026-09-05
-updated_at: 2026-09-05
+updated_at: 2026-10-26

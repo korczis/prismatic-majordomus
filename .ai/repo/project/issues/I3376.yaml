@@ -42,4 +42,23 @@ evidence_required:
   - "test_task_economics_per_task"
   - "test_task_economics_reads_every_checkout"
 created_at: 2026-10-19
-updated_at: 2026-10-19
+updated_at: 2026-10-26T00:31:39Z
+started_at: 2026-10-26T00:30:19Z
+started_event: sha256:63950a20b50fd251adcc63d227fd405aca57a0903b5c665e7dea82fcd1429dce
+verified_at: 2026-10-26T00:30:44Z
+verified_event: sha256:550071b0018b8215029d3151142fb24ac078285cd7214fbfcdc8ec9ed673d476
+completed_at: 2026-10-26T00:31:39Z
+completed_event: sha256:79de9c309ade00b1f1c558ffcb0c23fa31135553a5b494c9f81c190d23b4005b
+evidence:
+  - covers: test_task_economics_per_task
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test economics test_task_economics"
+    result: "at master 6259dac47af on 2026-10-26: 4 passed, 0 failed (test_task_economics_per_task ok)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T00:31:13Z
+  - covers: test_task_economics_reads_every_checkout
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test economics test_task_economics"
+    result: "at master 6259dac47af on 2026-10-26: 4 passed, 0 failed (test_task_economics_reads_every_checkout ok)"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T00:31:27Z
