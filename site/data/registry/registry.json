@@ -6,28 +6,28 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "671a7bf212103ea7387485936e8cc905131503c8b43c9c778701d771cc24bfde",
+    "fingerprint": "6083dd32b061a8cb9a6778d5b59a9adb7b357991035076ed25f474b589632cb1",
     "summary": {
-      "total": 3550,
-      "builtin": 220,
-      "declarative": 3330,
+      "total": 3570,
+      "builtin": 223,
+      "declarative": 3347,
       "by_kind": {
-        "command": 36,
-        "query": 184,
-        "resource": 3330
+        "command": 38,
+        "query": 185,
+        "resource": 3347
       },
       "by_stability": {
         "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3340
+        "experimental": 66,
+        "implemented": 3357
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3387,
-      "http_routes": 212,
-      "cli_commands": 120,
-      "modules": 94,
-      "benchmark_required": 181,
-      "benchmark_waived": 39,
+      "mcp_tools": 209,
+      "mcp_resources": 3404,
+      "http_routes": 215,
+      "cli_commands": 123,
+      "modules": 95,
+      "benchmark_required": 182,
+      "benchmark_waived": 41,
       "cached": 55
     },
     "builtin": [
@@ -757,9 +757,44 @@
                     "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
               },
               "BlackboardWorker": {
                 "type": "object",
@@ -1545,6 +1580,17 @@
               "derive": {
                 "$ref": "#/$defs/BriefDeriveSection",
                 "description": "The derive queue."
+              },
+              "runtime": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RuntimeState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
               }
             },
             "required": [
@@ -1960,6 +2006,180 @@
                   "summary"
                 ],
                 "description": "The machine's derive queue: its lock and its priority marker (`lib/machine_lock.sh`)."
+              },
+              "RuntimeState": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when the state is not `operational`."
+                  },
+                  "transition": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RuntimeTransition"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+                  }
+                },
+                "required": [
+                  "state"
+                ],
+                "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+              },
+              "ServerStanding": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "absent",
+                    "description": "No lease: nothing serves this checkout."
+                  },
+                  {
+                    "type": "string",
+                    "const": "starting",
+                    "description": "A lease without an address, young enough that its owner is still binding."
+                  },
+                  {
+                    "type": "string",
+                    "const": "ready",
+                    "description": "The server the lease names answers for this checkout, from the code on disk, at\nthis executable's version."
+                  },
+                  {
+                    "type": "string",
+                    "const": "outdated",
+                    "description": "The server answers, but from older code than this executable, or from a file that\nhas been replaced since it started: everything it says is yesterday's."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+                  }
+                ],
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
+              },
+              "RuntimeTransition": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "`RUNTIME_SCHEMA`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "What the runtime became."
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ServerStanding"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What it was, by the previous record; absent for the first."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in the recorder's words."
+                  },
+                  "by": {
+                    "$ref": "#/$defs/RuntimeWriter",
+                    "description": "Who recorded it."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The server process the transition is about, when there is one."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "state",
+                  "at",
+                  "reason",
+                  "by"
+                ],
+                "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+              },
+              "RuntimeWriter": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "server",
+                    "description": "The serving process, about itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "serve_ensure",
+                    "description": "`serve ensure`, which found the lease stale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reap_orphans",
+                    "description": "`scripts/reap-orphans`, through `serve status` after its sweep."
+                  },
+                  {
+                    "type": "string",
+                    "const": "server_status",
+                    "description": "`server.status`, on any surface."
+                  }
+                ],
+                "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
               }
             }
           }
@@ -35088,6 +35308,17 @@
                   "type": "string"
                 },
                 "description": "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
+              },
+              "mesh": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/MeshReadiness"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179)."
               }
             },
             "required": [
@@ -35125,6 +35356,34 @@
                   }
                 ],
                 "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+              },
+              "MeshReadiness": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether the repository declares its mesh enabled."
+                  },
+                  "attaching": {
+                    "type": "boolean",
+                    "description": "Whether the declaration is enabled and this server has not decided the mesh yet."
+                  },
+                  "ok": {
+                    "type": "boolean",
+                    "description": "Whether the mesh stands as declared: off when it is not declared, running when it is."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "The verdict's words."
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "attaching",
+                  "ok",
+                  "detail"
+                ],
+                "description": "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```"
               }
             }
           }
@@ -35966,6 +36225,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -37467,6 +37731,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39331,6 +39600,11 @@
                     "type": "string",
                     "const": "observe_failed",
                     "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_lost",
+                    "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
                   }
                 ],
                 "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
@@ -39517,6 +39791,24 @@
                       "null"
                     ],
                     "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
+                  },
+                  "progressed_at": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote."
+                  },
+                  "progress_ttl_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`)."
                   }
                 },
                 "required": [
@@ -47666,6 +47958,833 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs"
       },
       {
+        "id": "machine.slot.acquire",
+        "module": "machine",
+        "kind": "command",
+        "title": "Take a machine slot for heavy work",
+        "description": "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two.",
+        "input": {
+          "name": "SlotAcquireInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pid": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops."
+              },
+              "purpose": {
+                "type": "string",
+                "description": "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names."
+              },
+              "wait_seconds": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too."
+              },
+              "volume": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent."
+              }
+            },
+            "required": [
+              "pid",
+              "purpose"
+            ],
+            "description": "What to ask of `machine.slot.acquire`.",
+            "title": "SlotAcquireInput"
+          }
+        },
+        "output": {
+          "name": "SlotAnswer",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "verdict": {
+                "$ref": "#/$defs/SlotVerdict",
+                "description": "Admitted, already held, or refused."
+              },
+              "refusal": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SlotRefusal"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Present when refused."
+              },
+              "waited_seconds": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "Seconds the caller waited in the queue."
+              },
+              "reclaimed": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/SlotHolder"
+                },
+                "description": "Holders reclaimed on the way, because their process was proven gone."
+              },
+              "status": {
+                "$ref": "#/$defs/SlotStatus",
+                "description": "The slot directory as it stood when the answer was given."
+              }
+            },
+            "required": [
+              "verdict",
+              "waited_seconds",
+              "reclaimed",
+              "status"
+            ],
+            "description": "The answer to an acquisition.",
+            "title": "SlotAnswer",
+            "$defs": {
+              "SlotVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "admitted",
+                    "description": "A slot was taken for the caller's process."
+                  },
+                  {
+                    "type": "string",
+                    "const": "already_held",
+                    "description": "The caller's process already held one; nothing was taken."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refused",
+                    "description": "Refused; the refusal says why and who holds the slots."
+                  }
+                ],
+                "description": "What an acquisition came to."
+              },
+              "SlotRefusal": {
+                "type": "object",
+                "properties": {
+                  "reason": {
+                    "$ref": "#/$defs/SlotRefusalReason",
+                    "description": "Which limit refused."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "The measured values and every holder, in a sentence."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What the caller can do instead."
+                  }
+                },
+                "required": [
+                  "reason",
+                  "detail",
+                  "remedy"
+                ],
+                "description": "A refusal, with what it measured and what to do."
+              },
+              "SlotRefusalReason": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "slots_full",
+                    "description": "Every slot stayed held for the whole wait."
+                  },
+                  {
+                    "type": "string",
+                    "const": "disk_floor",
+                    "description": "Less than the floor is free on the volume the work writes to."
+                  }
+                ],
+                "description": "Why an acquisition was refused."
+              },
+              "SlotHolder": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that holds the slot."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "What it said it is doing."
+                  },
+                  "since": {
+                    "type": "string",
+                    "description": "When it was admitted (RFC 3339, UTC)."
+                  },
+                  "age_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since then."
+                  },
+                  "liveness": {
+                    "$ref": "#/$defs/SlotLiveness",
+                    "description": "Whether that process still runs."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "purpose",
+                  "since",
+                  "age_seconds",
+                  "liveness"
+                ],
+                "description": "One holder of a slot, as a reader sees it."
+              },
+              "SlotLiveness": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "alive",
+                    "description": "The pid runs, with the start time the record names."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unverified",
+                    "description": "The pid runs, and its start time could not be read: kept, never reclaimed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dead",
+                    "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+                  }
+                ],
+                "description": "Whether a holder's process is still the one that took the slot."
+              },
+              "SlotStatus": {
+                "type": "object",
+                "properties": {
+                  "directory": {
+                    "type": "string",
+                    "description": "The directory the slots are kept in."
+                  },
+                  "limits": {
+                    "$ref": "#/$defs/SlotLimits",
+                    "description": "The limits, and where they were read."
+                  },
+                  "free_mib": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "MiB free on the volume measured; absent when it could not be measured."
+                  },
+                  "volume": {
+                    "type": "string",
+                    "description": "The volume measured: the work's own path, or the slot directory."
+                  },
+                  "held": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many holders whose process is not proven gone."
+                  },
+                  "holders": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/SlotHolder"
+                    },
+                    "description": "Every holder, oldest first."
+                  },
+                  "waiters": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/SlotWaiter"
+                    },
+                    "description": "Every waiter, in the order they will be admitted."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "One line: held of slots, free against the floor, the waiters."
+                  }
+                },
+                "required": [
+                  "directory",
+                  "limits",
+                  "volume",
+                  "held",
+                  "holders",
+                  "waiters",
+                  "summary"
+                ],
+                "description": "The slot directory as it stands."
+              },
+              "SlotLimits": {
+                "type": "object",
+                "properties": {
+                  "slots": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many holders the machine admits at once; absent admits every caller."
+                  },
+                  "min_free_gib": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "GiB that must be free; absent refuses nobody for disk."
+                  },
+                  "wait_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long a caller that names no bound waits, in seconds; absent waits not at all."
+                  },
+                  "rule": {
+                    "type": "string",
+                    "description": "The rule whose numbers these are."
+                  },
+                  "declared_in": {
+                    "type": "string",
+                    "description": "Where they are declared: the policy file and the key."
+                  }
+                },
+                "required": [
+                  "rule",
+                  "declared_in"
+                ],
+                "description": "The limits an admission is judged by, and where they were read."
+              },
+              "SlotWaiter": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that waits."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "What it will do once admitted."
+                  },
+                  "since": {
+                    "type": "string",
+                    "description": "When it started waiting (RFC 3339, UTC)."
+                  },
+                  "waiting_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds it has waited."
+                  },
+                  "waiting_on": {
+                    "type": "string",
+                    "description": "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "purpose",
+                  "since",
+                  "waiting_seconds",
+                  "waiting_on"
+                ],
+                "description": "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::machine_slot"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_machine_slot_acquire"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/machine/slot/acquire"
+          },
+          "cli": {
+            "path": [
+              "machine",
+              "slot",
+              "acquire"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "machine",
+          "build",
+          "coordination"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
+      },
+      {
+        "id": "machine.slot.release",
+        "module": "machine",
+        "kind": "command",
+        "title": "Give a machine slot back",
+        "description": "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing.",
+        "input": {
+          "name": "SlotReleaseInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "pid": {
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0,
+                "description": "The process whose slot is given back."
+              }
+            },
+            "required": [
+              "pid"
+            ],
+            "description": "What to ask of `machine.slot.release`.",
+            "title": "SlotReleaseInput"
+          }
+        },
+        "output": {
+          "name": "SlotRelease",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "released": {
+                "type": "boolean",
+                "description": "Whether the process held a slot that is now free."
+              },
+              "holder": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/SlotHolder"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The record that was removed."
+              },
+              "withdrew_waiter": {
+                "type": "boolean",
+                "description": "Whether a waiter record of the process was withdrawn as well."
+              }
+            },
+            "required": [
+              "released",
+              "withdrew_waiter"
+            ],
+            "description": "The answer to a release.",
+            "title": "SlotRelease",
+            "$defs": {
+              "SlotHolder": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that holds the slot."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "What it said it is doing."
+                  },
+                  "since": {
+                    "type": "string",
+                    "description": "When it was admitted (RFC 3339, UTC)."
+                  },
+                  "age_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since then."
+                  },
+                  "liveness": {
+                    "$ref": "#/$defs/SlotLiveness",
+                    "description": "Whether that process still runs."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "purpose",
+                  "since",
+                  "age_seconds",
+                  "liveness"
+                ],
+                "description": "One holder of a slot, as a reader sees it."
+              },
+              "SlotLiveness": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "alive",
+                    "description": "The pid runs, with the start time the record names."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unverified",
+                    "description": "The pid runs, and its start time could not be read: kept, never reclaimed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dead",
+                    "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+                  }
+                ],
+                "description": "Whether a holder's process is still the one that took the slot."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::machine_slot"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_machine_slot_release"
+          },
+          "http": {
+            "method": "POST",
+            "path": "/api/v1/machine/slot/release"
+          },
+          "cli": {
+            "path": [
+              "machine",
+              "slot",
+              "release"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "machine",
+          "build",
+          "coordination"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "destructive"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "process_state",
+          "cancellable": false,
+          "concurrency": "serial"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
+      },
+      {
+        "id": "machine.slot.status",
+        "module": "machine",
+        "kind": "query",
+        "title": "Who holds the machine's slots, and who waits",
+        "description": "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition.",
+        "input": {
+          "name": "SlotStatusInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "volume": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent."
+              }
+            },
+            "description": "What to ask of `machine.slot.status`.",
+            "title": "SlotStatusInput"
+          }
+        },
+        "output": {
+          "name": "SlotStatus",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "directory": {
+                "type": "string",
+                "description": "The directory the slots are kept in."
+              },
+              "limits": {
+                "$ref": "#/$defs/SlotLimits",
+                "description": "The limits, and where they were read."
+              },
+              "free_mib": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "format": "uint64",
+                "minimum": 0,
+                "description": "MiB free on the volume measured; absent when it could not be measured."
+              },
+              "volume": {
+                "type": "string",
+                "description": "The volume measured: the work's own path, or the slot directory."
+              },
+              "held": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many holders whose process is not proven gone."
+              },
+              "holders": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/SlotHolder"
+                },
+                "description": "Every holder, oldest first."
+              },
+              "waiters": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/SlotWaiter"
+                },
+                "description": "Every waiter, in the order they will be admitted."
+              },
+              "summary": {
+                "type": "string",
+                "description": "One line: held of slots, free against the floor, the waiters."
+              }
+            },
+            "required": [
+              "directory",
+              "limits",
+              "volume",
+              "held",
+              "holders",
+              "waiters",
+              "summary"
+            ],
+            "description": "The slot directory as it stands.",
+            "title": "SlotStatus",
+            "$defs": {
+              "SlotLimits": {
+                "type": "object",
+                "properties": {
+                  "slots": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "How many holders the machine admits at once; absent admits every caller."
+                  },
+                  "min_free_gib": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "GiB that must be free; absent refuses nobody for disk."
+                  },
+                  "wait_seconds": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "How long a caller that names no bound waits, in seconds; absent waits not at all."
+                  },
+                  "rule": {
+                    "type": "string",
+                    "description": "The rule whose numbers these are."
+                  },
+                  "declared_in": {
+                    "type": "string",
+                    "description": "Where they are declared: the policy file and the key."
+                  }
+                },
+                "required": [
+                  "rule",
+                  "declared_in"
+                ],
+                "description": "The limits an admission is judged by, and where they were read."
+              },
+              "SlotHolder": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that holds the slot."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "What it said it is doing."
+                  },
+                  "since": {
+                    "type": "string",
+                    "description": "When it was admitted (RFC 3339, UTC)."
+                  },
+                  "age_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds since then."
+                  },
+                  "liveness": {
+                    "$ref": "#/$defs/SlotLiveness",
+                    "description": "Whether that process still runs."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "purpose",
+                  "since",
+                  "age_seconds",
+                  "liveness"
+                ],
+                "description": "One holder of a slot, as a reader sees it."
+              },
+              "SlotLiveness": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "alive",
+                    "description": "The pid runs, with the start time the record names."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unverified",
+                    "description": "The pid runs, and its start time could not be read: kept, never reclaimed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "dead",
+                    "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+                  }
+                ],
+                "description": "Whether a holder's process is still the one that took the slot."
+              },
+              "SlotWaiter": {
+                "type": "object",
+                "properties": {
+                  "pid": {
+                    "type": "integer",
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The process that waits."
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "description": "What it will do once admitted."
+                  },
+                  "since": {
+                    "type": "string",
+                    "description": "When it started waiting (RFC 3339, UTC)."
+                  },
+                  "waiting_seconds": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Seconds it has waited."
+                  },
+                  "waiting_on": {
+                    "type": "string",
+                    "description": "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+                  }
+                },
+                "required": [
+                  "pid",
+                  "purpose",
+                  "since",
+                  "waiting_seconds",
+                  "waiting_on"
+                ],
+                "description": "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::machine_slot"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_machine_slot_status"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/machine/slot/status"
+          },
+          "cli": {
+            "path": [
+              "machine",
+              "slot",
+              "status"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "machine",
+          "build",
+          "coordination"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted",
+          "local_only": true
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
+      },
+      {
         "id": "mcp.projection",
         "module": "mcp",
         "kind": "query",
@@ -48162,7 +49281,7 @@
                   "string",
                   "null"
                 ],
-                "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+                "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it."
               },
               "pid": {
                 "type": [
@@ -53563,7 +54682,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                    "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
                   },
                   "phase": {
                     "type": [
@@ -53571,6 +54690,13 @@
                       "null"
                     ],
                     "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+                  },
+                  "blocked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
                   }
                 },
                 "required": [
@@ -54751,7 +55877,7 @@
                     ],
                     "format": "uint64",
                     "minimum": 0,
-                    "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+                    "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
                   },
                   "phase": {
                     "type": [
@@ -54759,6 +55885,13 @@
                       "null"
                     ],
                     "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+                  },
+                  "blocked": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
                   }
                 },
                 "required": [
@@ -62563,9 +63696,44 @@
                     "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
               }
             }
           }
@@ -81764,7 +82932,7 @@
         "module": "server",
         "kind": "query",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "input": {
           "name": "ServerStatusInput",
           "schema": {
@@ -81865,6 +83033,17 @@
                   }
                 ],
                 "description": "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
+              },
+              "runtime": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/RuntimeState"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field."
               }
             },
             "required": [
@@ -81873,7 +83052,7 @@
               "standing",
               "servers"
             ],
-            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+            "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
             "title": "ServerStatus",
             "$defs": {
               "GitIdentity": {
@@ -82034,9 +83213,44 @@
                     "type": "string",
                     "const": "stale",
                     "description": "The lease names a server that does not answer, or is not a lease at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "building",
+                    "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "mesh_attaching",
+                    "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+                  },
+                  {
+                    "type": "string",
+                    "const": "operational",
+                    "description": "The server is ready, says so itself, and its mesh runs or is not declared."
+                  },
+                  {
+                    "type": "string",
+                    "const": "degraded",
+                    "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopping",
+                    "description": "The process that holds the lease recorded that it is stopping, and it is still alive."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stopped",
+                    "description": "The server is gone after it recorded that it was stopping."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failed",
+                    "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
                   }
                 ],
-                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+                "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
               },
               "ServerView": {
                 "type": "object",
@@ -82094,6 +83308,17 @@
                     "format": "uint",
                     "minimum": 0,
                     "description": "How many peers the server reports attached, when it answers."
+                  },
+                  "runtime": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RuntimeState"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field."
                   }
                 },
                 "required": [
@@ -82103,7 +83328,116 @@
                   "this_checkout",
                   "standing"
                 ],
-                "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+                "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+              },
+              "RuntimeState": {
+                "type": "object",
+                "properties": {
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why, when the state is not `operational`."
+                  },
+                  "transition": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RuntimeTransition"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+                  }
+                },
+                "required": [
+                  "state"
+                ],
+                "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+              },
+              "RuntimeTransition": {
+                "type": "object",
+                "properties": {
+                  "schema": {
+                    "type": "string",
+                    "description": "`RUNTIME_SCHEMA`."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/ServerStanding",
+                    "description": "What the runtime became."
+                  },
+                  "from": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ServerStanding"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What it was, by the previous record; absent for the first."
+                  },
+                  "at": {
+                    "type": "string",
+                    "description": "When, RFC 3339."
+                  },
+                  "reason": {
+                    "type": "string",
+                    "description": "Why, in the recorder's words."
+                  },
+                  "by": {
+                    "$ref": "#/$defs/RuntimeWriter",
+                    "description": "Who recorded it."
+                  },
+                  "pid": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint32",
+                    "minimum": 0,
+                    "description": "The server process the transition is about, when there is one."
+                  }
+                },
+                "required": [
+                  "schema",
+                  "state",
+                  "at",
+                  "reason",
+                  "by"
+                ],
+                "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
+              },
+              "RuntimeWriter": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "server",
+                    "description": "The serving process, about itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "serve_ensure",
+                    "description": "`serve ensure`, which found the lease stale."
+                  },
+                  {
+                    "type": "string",
+                    "const": "reap_orphans",
+                    "description": "`scripts/reap-orphans`, through `serve status` after its sweep."
+                  },
+                  {
+                    "type": "string",
+                    "const": "server_status",
+                    "description": "`server.status`, on any surface."
+                  }
+                ],
+                "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
               },
               "ConnectionCounts": {
                 "type": "object",
@@ -91372,7 +92706,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1034,
+        "capabilities": 1046,
         "capability_ids": []
       },
       {
@@ -91439,6 +92773,20 @@
           "module": "majordomus_cli::capability::builtin::lifecycle",
           "path": "majordomus_cli/capability/builtin/lifecycle/index.html"
         }
+      },
+      {
+        "id": "machine",
+        "title": "Machine",
+        "description": "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 3,
+        "capability_ids": [
+          "machine.slot.acquire",
+          "machine.slot.release",
+          "machine.slot.status"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/machine_slot.rs"
       },
       {
         "id": "mcp",
@@ -91878,7 +93226,7 @@
       {
         "id": "server",
         "title": "Server",
-        "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+        "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 1,
@@ -91970,7 +93318,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 659,
         "capability_ids": []
       },
       {
@@ -92062,7 +93410,7 @@
     ]
   },
   "index": {
-    "fingerprint": "99644cfe07befbd33c350fc1b38ac1115863249838d6f45906e7eddf96715c97",
+    "fingerprint": "29faeede333ebcb6d3d21e1b3b700d46a6882fb1ada17860adce2558a677c0f5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92102,7 +93450,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1034,
+      "issue": 1046,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92116,7 +93464,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 659,
       "use-case": 49,
       "workspace": 1
     },
@@ -99142,7 +100490,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 52182
+        "bytes": 52523
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -99259,7 +100607,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 40647
+        "bytes": 40638
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -99421,7 +100769,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 75048
+        "bytes": 76598
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
@@ -99457,7 +100805,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44191
+        "bytes": 45736
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99466,7 +100814,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 81438
+        "bytes": 84095
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -99475,7 +100823,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 87518
+        "bytes": 98356
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -99502,7 +100850,7 @@
         "title": "The derive offload",
         "path": "docs/OFFLOAD.md",
         "source_class": "document",
-        "bytes": 11917
+        "bytes": 13529
       },
       {
         "uri": "majordomus://document/docs/PAGES_STATUS.md",
@@ -99547,7 +100895,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993877
+        "bytes": 848573
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -99610,7 +100958,7 @@
         "title": "The roadmap — milestones as a graph",
         "path": "docs/ROADMAP.md",
         "source_class": "document",
-        "bytes": 6753
+        "bytes": 6871
       },
       {
         "uri": "majordomus://document/docs/RUSTDOC.md",
@@ -99691,7 +101039,7 @@
         "title": "UI conformance — `scripts/ui`",
         "path": "docs/UI.md",
         "source_class": "document",
-        "bytes": 21460
+        "bytes": 22978
       },
       {
         "uri": "majordomus://document/docs/USE_CASES.md",
@@ -99727,7 +101075,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 52647
+        "bytes": 53219
       },
       {
         "uri": "majordomus://document/docs/claims/a-candidate-is-routed-by-what-it-is-about.md",
@@ -102864,7 +104212,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 29322
+        "bytes": 29595
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -102880,7 +104228,7 @@
         "identity": "lib/project.awk",
         "path": "lib/project.awk",
         "source_class": "engine",
-        "bytes": 23882
+        "bytes": 24402
       },
       {
         "uri": "majordomus://implementation/lib/project.sh",
@@ -102928,7 +104276,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 105288
+        "bytes": 113066
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -103979,7 +105327,7 @@
         "path": ".ai/repo/project/issues/I0703.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3263
+        "bytes": 4615
       },
       {
         "uri": "majordomus://issue/I0704",
@@ -104221,7 +105569,7 @@
         "path": ".ai/repo/project/issues/I0821.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3467
+        "bytes": 4285
       },
       {
         "uri": "majordomus://issue/I0822",
@@ -104639,7 +105987,7 @@
         "path": ".ai/repo/project/issues/I0916.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2674
+        "bytes": 2664
       },
       {
         "uri": "majordomus://issue/I0917",
@@ -105937,7 +107285,7 @@
         "path": ".ai/repo/project/issues/I1900.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1763
+        "bytes": 2858
       },
       {
         "uri": "majordomus://issue/I1901",
@@ -105970,7 +107318,7 @@
         "path": ".ai/repo/project/issues/I1903.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1955
+        "bytes": 3091
       },
       {
         "uri": "majordomus://issue/I1945",
@@ -106201,7 +107549,7 @@
         "path": ".ai/repo/project/issues/I1965.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2491
+        "bytes": 3457
       },
       {
         "uri": "majordomus://issue/I1966",
@@ -107070,7 +108418,7 @@
         "path": ".ai/repo/project/issues/I2410.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2123
+        "bytes": 3702
       },
       {
         "uri": "majordomus://issue/I2411",
@@ -107092,7 +108440,7 @@
         "path": ".ai/repo/project/issues/I2412.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1702
+        "bytes": 3283
       },
       {
         "uri": "majordomus://issue/I2413",
@@ -107576,7 +108924,7 @@
         "path": ".ai/repo/project/issues/I2588.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2626
+        "bytes": 3305
       },
       {
         "uri": "majordomus://issue/I2601",
@@ -108203,7 +109551,7 @@
         "path": ".ai/repo/project/issues/I2732.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2554
+        "bytes": 3743
       },
       {
         "uri": "majordomus://issue/I2733",
@@ -108214,7 +109562,7 @@
         "path": ".ai/repo/project/issues/I2733.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4463
+        "bytes": 5300
       },
       {
         "uri": "majordomus://issue/I2734",
@@ -108379,7 +109727,7 @@
         "path": ".ai/repo/project/issues/I2761.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2157
+        "bytes": 3157
       },
       {
         "uri": "majordomus://issue/I2770",
@@ -108434,7 +109782,7 @@
         "path": ".ai/repo/project/issues/I2784.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2502
+        "bytes": 3980
       },
       {
         "uri": "majordomus://issue/I2786",
@@ -108588,7 +109936,7 @@
         "path": ".ai/repo/project/issues/I2844.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2331
+        "bytes": 3036
       },
       {
         "uri": "majordomus://issue/I2845",
@@ -108632,7 +109980,7 @@
         "path": ".ai/repo/project/issues/I2848.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2737
+        "bytes": 3363
       },
       {
         "uri": "majordomus://issue/I2849",
@@ -109127,7 +110475,7 @@
         "path": ".ai/repo/project/issues/I2980.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2411
+        "bytes": 3011
       },
       {
         "uri": "majordomus://issue/I2981",
@@ -109270,7 +110618,7 @@
         "path": ".ai/repo/project/issues/I3002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1481
+        "bytes": 1735
       },
       {
         "uri": "majordomus://issue/I3003",
@@ -109369,7 +110717,7 @@
         "path": ".ai/repo/project/issues/I3014.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2110
+        "bytes": 2955
       },
       {
         "uri": "majordomus://issue/I3015",
@@ -109380,7 +110728,7 @@
         "path": ".ai/repo/project/issues/I3015.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1655
+        "bytes": 2527
       },
       {
         "uri": "majordomus://issue/I3016",
@@ -109391,7 +110739,7 @@
         "path": ".ai/repo/project/issues/I3016.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1663
+        "bytes": 2678
       },
       {
         "uri": "majordomus://issue/I3017",
@@ -109402,7 +110750,7 @@
         "path": ".ai/repo/project/issues/I3017.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1744
+        "bytes": 2613
       },
       {
         "uri": "majordomus://issue/I3018",
@@ -109512,7 +110860,7 @@
         "path": ".ai/repo/project/issues/I3070.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3478
+        "bytes": 4077
       },
       {
         "uri": "majordomus://issue/I3071",
@@ -110887,7 +112235,7 @@
         "path": ".ai/repo/project/issues/I3214.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2754
+        "bytes": 3152
       },
       {
         "uri": "majordomus://issue/I3215",
@@ -113109,7 +114457,7 @@
         "path": ".ai/repo/project/issues/I3602.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2885
+        "bytes": 3625
       },
       {
         "uri": "majordomus://issue/I3606",
@@ -113164,7 +114512,7 @@
         "path": ".ai/repo/project/issues/I3660.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3552
+        "bytes": 5052
       },
       {
         "uri": "majordomus://issue/I3661",
@@ -113758,7 +115106,7 @@
         "path": ".ai/repo/project/issues/I3829.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4225
+        "bytes": 4958
       },
       {
         "uri": "majordomus://issue/I3830",
@@ -113835,7 +115183,7 @@
         "path": ".ai/repo/project/issues/I3836.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2809
+        "bytes": 3525
       },
       {
         "uri": "majordomus://issue/I3837",
@@ -113857,7 +115205,7 @@
         "path": ".ai/repo/project/issues/I3838.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 5157
+        "bytes": 5944
       },
       {
         "uri": "majordomus://issue/I3839",
@@ -113890,7 +115238,7 @@
         "path": ".ai/repo/project/issues/I3841.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4045
+        "bytes": 4811
       },
       {
         "uri": "majordomus://issue/I3842",
@@ -113945,7 +115293,7 @@
         "path": ".ai/repo/project/issues/I3862.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2719
+        "bytes": 3446
       },
       {
         "uri": "majordomus://issue/I3902",
@@ -114044,7 +115392,7 @@
         "path": ".ai/repo/project/issues/I3916.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3277
+        "bytes": 4535
       },
       {
         "uri": "majordomus://issue/I3917",
@@ -114077,7 +115425,7 @@
         "path": ".ai/repo/project/issues/I3919.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1924
+        "bytes": 2695
       },
       {
         "uri": "majordomus://issue/I3920",
@@ -114176,7 +115524,7 @@
         "path": ".ai/repo/project/issues/I3937.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3261
+        "bytes": 4119
       },
       {
         "uri": "majordomus://issue/I3938",
@@ -114231,7 +115579,7 @@
         "path": ".ai/repo/project/issues/I3942.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2464
+        "bytes": 3100
       },
       {
         "uri": "majordomus://issue/I3943",
@@ -114253,7 +115601,7 @@
         "path": ".ai/repo/project/issues/I3944.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4366
+        "bytes": 5106
       },
       {
         "uri": "majordomus://issue/I3945",
@@ -114275,7 +115623,7 @@
         "path": ".ai/repo/project/issues/I3946.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4224
+        "bytes": 4921
       },
       {
         "uri": "majordomus://issue/I3947",
@@ -114286,7 +115634,7 @@
         "path": ".ai/repo/project/issues/I3947.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4670
+        "bytes": 5562
       },
       {
         "uri": "majordomus://issue/I3949",
@@ -114297,7 +115645,7 @@
         "path": ".ai/repo/project/issues/I3949.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2597
+        "bytes": 3238
       },
       {
         "uri": "majordomus://issue/I3950",
@@ -114374,7 +115722,7 @@
         "path": ".ai/repo/project/issues/I3957.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2862
+        "bytes": 3601
       },
       {
         "uri": "majordomus://issue/I3959",
@@ -114429,7 +115777,7 @@
         "path": ".ai/repo/project/issues/I3963.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2968
+        "bytes": 3625
       },
       {
         "uri": "majordomus://issue/I3970",
@@ -114553,6 +115901,50 @@
         "bytes": 7833
       },
       {
+        "uri": "majordomus://issue/I3991",
+        "kind": "issue",
+        "identity": "I3991",
+        "title": "The integration lease lives by its executor's progress through the queue, not by its process existing",
+        "description": "Make the integration executor's exclusive mesh claim on integration/<repository>/<base> beat only when the executor advances its queue (a pull request planned, repaired, merged or refused, a derive or a CI verdict observed), so an executor that holds the lease and does nothing is suspended by the rule of I3990 and another machine's executor is admitted; and make the clone's flock lease carry the same progress stamp, so prs brief and the Cockpit show how long the holder has made no progress.",
+        "path": ".ai/repo/project/issues/I3991.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3220
+      },
+      {
+        "uri": "majordomus://issue/I3992",
+        "kind": "issue",
+        "identity": "I3992",
+        "title": "A session that waits on a person says so: the Notification and Stop hooks mark it blocked on the mesh",
+        "description": "When a Claude Code session raises a permission dialog or an idle notification (the Notification hook) or ends its turn waiting for input (the Stop hook), record on the mesh that the session is blocked on a person, with the reason, so peers and the landing seat see it at once instead of after the progress ttl; and clear the mark at the session's next real work.",
+        "path": ".ai/repo/project/issues/I3992.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3882
+      },
+      {
+        "uri": "majordomus://issue/I3993",
+        "kind": "issue",
+        "identity": "I3993",
+        "title": "Every wait on a peer is bounded and says what it waited for when the bound is reached",
+        "description": "Find every place the executable waits on another session or runtime (a mesh review answer, a handover consumer, a derive or offload queue, a lease, a claim admission retry) and give each an explicit bound read from the declaration, after which it stops waiting, names what it waited for and who held it, and routes around (another host, another seat, or a report) instead of hanging.",
+        "path": ".ai/repo/project/issues/I3993.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2736
+      },
+      {
+        "uri": "majordomus://issue/I3994",
+        "kind": "issue",
+        "identity": "I3994",
+        "title": "Superseded session beats are compacted, so liveness never spends a node's event quota",
+        "description": "Compact a session's superseded session_beat events in the journal (only the newest beat of a session decides its liveness), so a long-lived runtime's beats do not accumulate toward the per-node event quota that I2825 showed can deadlock a node, while keeping the (stream, seq) order every consumer relies on.",
+        "path": ".ai/repo/project/issues/I3994.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1948
+      },
+      {
         "uri": "majordomus://issue/I3995",
         "kind": "issue",
         "identity": "I3995",
@@ -114583,7 +115975,7 @@
         "path": ".ai/repo/project/issues/I3999.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1659
+        "bytes": 3047
       },
       {
         "uri": "majordomus://issue/I4000",
@@ -114682,7 +116074,7 @@
         "path": ".ai/repo/project/issues/I4008.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1460
+        "bytes": 2634
       },
       {
         "uri": "majordomus://issue/I4009",
@@ -114748,7 +116140,7 @@
         "path": ".ai/repo/project/issues/I4199.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2983
+        "bytes": 4129
       },
       {
         "uri": "majordomus://issue/I4200",
@@ -114762,6 +116154,17 @@
         "bytes": 3285
       },
       {
+        "uri": "majordomus://issue/I4201",
+        "kind": "issue",
+        "identity": "I4201",
+        "title": "A blackboard follower whose heartbeat cannot be written ends at that write, and a test that no other write can pre-empt proves it",
+        "description": "Add one test to apps/majordomus-cli/src/http/follow.rs, a_follower_whose_heartbeat_cannot_be_written_ends. A Follower on its own repository with no writer, refresh an hour away and heartbeat 5 ms writes to a Sink that refuses only the stream.heartbeat frame, so the heartbeat is the write that fails and the follower returns through the break after `if !alive`.",
+        "path": ".ai/repo/project/issues/I4201.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2121
+      },
+      {
         "uri": "majordomus://issue/I4203",
         "kind": "issue",
         "identity": "I4203",
@@ -114771,6 +116174,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2582
+      },
+      {
+        "uri": "majordomus://issue/I4205",
+        "kind": "issue",
+        "identity": "I4205",
+        "title": "A milestone's order is its own, and the shell and the executable order the roadmap alike",
+        "description": "plan validate refuses a second milestone on a non-zero order already held (milestone_duplicate_order, FAIL, naming the first holder) in plan.rs and lib/project.awk alike; lib/plan.sh orders the JSON roadmap by rank, then order, then id, as plan.rs does; and the four orders shared on master move to free ones.",
+        "path": ".ai/repo/project/issues/I4205.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2910
       },
       {
         "uri": "majordomus://issue/I4207",
@@ -114784,6 +116198,17 @@
         "bytes": 2108
       },
       {
+        "uri": "majordomus://issue/I4208",
+        "kind": "issue",
+        "identity": "I4208",
+        "title": "Case 1024 meets the launcher's closed pipe on every run, so a gate that dies of the write fails it every time",
+        "description": "scripts/ci/install-check waits MJ_INSTALL_CHECK_SEND_AFTER seconds (unset in every real run) before its step-7 writes to the MCP launcher, and case 1024's broken-launcher run sets it to 1, so the planted launcher that exits at once has always closed the pipe before the gate writes.",
+        "path": ".ai/repo/project/issues/I4208.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2143
+      },
+      {
         "uri": "majordomus://issue/I4220",
         "kind": "issue",
         "identity": "I4220",
@@ -114792,7 +116217,7 @@
         "path": ".ai/repo/project/issues/I4220.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2333
+        "bytes": 3002
       },
       {
         "uri": "majordomus://issue/I4221",
@@ -114814,7 +116239,7 @@
         "path": ".ai/repo/project/issues/I4222.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2621
+        "bytes": 3894
       },
       {
         "uri": "majordomus://issue/I4223",
@@ -114825,7 +116250,29 @@
         "path": ".ai/repo/project/issues/I4223.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3420
+        "bytes": 5097
+      },
+      {
+        "uri": "majordomus://issue/I4225",
+        "kind": "issue",
+        "identity": "I4225",
+        "title": "A withdrawal whose probe could not say is refined to the verdict that follows it",
+        "description": "When a provider's store dies while a probe is in flight, the build-cache withdrawal it writes says the probe could not say. The next heartbeat's probe is refused, and the runtime writes the withdrawal once more with that verdict. The record a peer reads converges on what the probe says instead of keeping the first, uncertain reason.",
+        "path": ".ai/repo/project/issues/I4225.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3221
+      },
+      {
+        "uri": "majordomus://issue/I4226",
+        "kind": "issue",
+        "identity": "I4226",
+        "title": "Case 1096 matches a page from a here-string, so a match is never read as a miss",
+        "description": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+        "path": ".ai/repo/project/issues/I4226.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1911
       },
       {
         "uri": "majordomus://issue/I4227",
@@ -114848,6 +116295,39 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 2220
+      },
+      {
+        "uri": "majordomus://issue/I4230",
+        "kind": "issue",
+        "identity": "I4230",
+        "title": "Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+        "description": "When the volume has less free than the reclaim mark, mj_rust_bound_build_dir counts a unit idle for MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN minutes (default 10) as stale, so the bound can bring the shared build directory down while many worktrees build inside an hour.",
+        "path": ".ai/repo/project/issues/I4230.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2916
+      },
+      {
+        "uri": "majordomus://issue/I4231",
+        "kind": "issue",
+        "identity": "I4231",
+        "title": "The containment test's unwalkable mirror names a parent that was never written, so a commit-graph cannot walk it",
+        "description": "integration::memo::tests::containment_answers_as_containing_and_asks_each_pair_once builds its unwalkable mirror deterministically, so it fails only when CheckoutMemo::containing answers for a mirror git cannot walk, never because git found the history elsewhere.",
+        "path": ".ai/repo/project/issues/I4231.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2547
+      },
+      {
+        "uri": "majordomus://issue/I4232",
+        "kind": "issue",
+        "identity": "I4232",
+        "title": "A build of the portable core from the repository's root keeps the executable's rlib of it",
+        "description": "apps/majordomus-core declares an rlib only, so cargo names that rlib by its hash. `cargo test --manifest-path apps/majordomus-core/Cargo.toml`, run from the root where the shared build-dir applies, can then no longer replace the rlib every executable links. The wasm32 module is the cdylib that scripts/rust-check --portable-core asks for on its command line.",
+        "path": ".ai/repo/project/issues/I4232.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2806
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -117606,7 +119086,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 26296
+        "bytes": 27207
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -120745,7 +122225,7 @@
         "path": ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 13664,
+        "bytes": 14193,
         "tags": [
           "process",
           "integration",
@@ -122546,7 +124026,7 @@
         "identity": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
         "path": "test/cases/1024_an_installed_release_serves_a_foreign_repository.sh",
         "source_class": "case",
-        "bytes": 6184
+        "bytes": 6588
       },
       {
         "uri": "majordomus://test/test/cases/102_completion_shell.sh",
@@ -122930,7 +124410,7 @@
         "identity": "test/cases/1096_no_screen_waits_for_a_source.sh",
         "path": "test/cases/1096_no_screen_waits_for_a_source.sh",
         "source_class": "case",
-        "bytes": 4408
+        "bytes": 4506
       },
       {
         "uri": "majordomus://test/test/cases/1097_the_projection_is_applied_at_landing.sh",
@@ -124506,7 +125986,7 @@
         "identity": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "path": "test/cases/3220_the_idd_loop_is_walked_in_a_browser.sh",
         "source_class": "case",
-        "bytes": 20416
+        "bytes": 21015
       },
       {
         "uri": "majordomus://test/test/cases/3221_a_bare_session_start_joins_the_cluster.sh",
@@ -125586,7 +127066,7 @@
         "identity": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
         "path": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
         "source_class": "case",
-        "bytes": 17141
+        "bytes": 19332
       },
       {
         "uri": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
@@ -125613,6 +127093,30 @@
         "bytes": 10404
       },
       {
+        "uri": "majordomus://test/test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "kind": "test",
+        "identity": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "path": "test/cases/3991_the_integration_lease_lives_by_queue_progress.sh",
+        "source_class": "case",
+        "bytes": 10890
+      },
+      {
+        "uri": "majordomus://test/test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "kind": "test",
+        "identity": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "path": "test/cases/3992_a_session_waiting_on_a_person_says_so.sh",
+        "source_class": "case",
+        "bytes": 7753
+      },
+      {
+        "uri": "majordomus://test/test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "kind": "test",
+        "identity": "test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "path": "test/cases/3993_every_wait_on_a_peer_is_bounded.sh",
+        "source_class": "case",
+        "bytes": 4212
+      },
+      {
         "uri": "majordomus://test/test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
         "kind": "test",
         "identity": "test/cases/3995_a_task_started_before_the_first_commit_finishes.sh",
@@ -125627,6 +127131,14 @@
         "path": "test/cases/3999_a_fixture_holds_the_skills_the_generator_reads.sh",
         "source_class": "case",
         "bytes": 1093
+      },
+      {
+        "uri": "majordomus://test/test/cases/4006_heavy_work_shares_the_machine.sh",
+        "kind": "test",
+        "identity": "test/cases/4006_heavy_work_shares_the_machine.sh",
+        "path": "test/cases/4006_heavy_work_shares_the_machine.sh",
+        "source_class": "case",
+        "bytes": 9964
       },
       {
         "uri": "majordomus://test/test/cases/4007_an_idle_server_leaves_by_itself.sh",
@@ -125773,6 +127285,14 @@
         "bytes": 3613
       },
       {
+        "uri": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "kind": "test",
+        "identity": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "path": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "source_class": "case",
+        "bytes": 5122
+      },
+      {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
         "kind": "test",
         "identity": "test/cases/42_dag_waves.sh",
@@ -125882,7 +127402,7 @@
         "identity": "test/cases/48_roadmap_graph.sh",
         "path": "test/cases/48_roadmap_graph.sh",
         "source_class": "case",
-        "bytes": 7474
+        "bytes": 8085
       },
       {
         "uri": "majordomus://test/test/cases/490_rustdoc_new_module.sh",
@@ -128335,7 +129855,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1034
+      "objects": 1046
     },
     {
       "name": "knowledge",
@@ -128497,7 +130017,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 659
     },
     {
       "name": "use-case",
@@ -150279,7 +151799,7 @@
                 "help": "The session making progress, as it was claimed under",
                 "value_name": "SESSION",
                 "takes_value": true,
-                "required": true,
+                "required": false,
                 "global": false,
                 "possible_values": [],
                 "defaults": []
@@ -150288,7 +151808,7 @@
                 "name": "phase",
                 "long": "phase",
                 "positional": false,
-                "help": "What it is doing, one line: `waiting on CI run 123`",
+                "help": "What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person",
                 "value_name": "PHASE",
                 "takes_value": true,
                 "required": false,
@@ -150302,6 +151822,18 @@
                 "positional": false,
                 "help": "The running process of this machine the beat speaks for",
                 "value_name": "PID",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "hook",
+                "long": "hook",
+                "positional": false,
+                "help": "Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0",
+                "value_name": "PROVIDER",
                 "takes_value": true,
                 "required": false,
                 "global": false,
@@ -152357,7 +153889,7 @@
             "name": "timeout",
             "long": "timeout",
             "positional": false,
-            "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d",
+            "help": "Give up following after this long, exiting 10: seconds, or a number with s, m, h or d; with --until or --count and no --timeout, 4h (the monitor.until peer wait)",
             "value_name": "TIMEOUT",
             "takes_value": true,
             "required": false,
@@ -162957,6 +164489,634 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "machine"
+        ],
+        "route": "/docs/cli/machine/",
+        "executable": false,
+        "usage": "majordomus machine [OPTIONS] <COMMAND>",
+        "about": "What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "machine",
+              "slot"
+            ],
+            "route": "/docs/cli/machine/slot/",
+            "executable": false,
+            "usage": "majordomus machine slot [OPTIONS] <COMMAND>",
+            "about": "The machine's counting slot for heavy work: acquire, release, status",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [],
+            "subcommands": [
+              {
+                "path": [
+                  "majordomus",
+                  "machine",
+                  "slot",
+                  "status"
+                ],
+                "route": "/docs/cli/machine/slot/status/",
+                "executable": true,
+                "usage": "majordomus machine slot status [OPTIONS]",
+                "about": "Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk",
+                "args": [
+                  {
+                    "name": "volume",
+                    "long": "volume",
+                    "positional": false,
+                    "help": "A path the work writes to, whose volume's free space is measured (default: the slot directory's)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "machine-slot-status",
+                    "title": "Who holds the machine's slots, and who waits",
+                    "description": "The limits and where they are declared, the free disk, every holder with its pid, age, liveness and purpose, and every waiter with what it waits on. This repository's policy declares no `machine.heavy_work`, so the answer says that no limit and no floor are declared rather than inventing one.",
+                    "argv": [
+                      "machine",
+                      "slot",
+                      "status"
+                    ],
+                    "command": "majordomus machine slot status",
+                    "setup": [],
+                    "expectation": "exits 0; prints machine slots:, no limit declared, no floor declared"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "machine",
+                  "slot",
+                  "acquire"
+                ],
+                "route": "/docs/cli/machine/slot/acquire/",
+                "executable": true,
+                "usage": "majordomus machine slot acquire [OPTIONS]",
+                "about": "Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)",
+                "args": [
+                  {
+                    "name": "purpose",
+                    "long": "purpose",
+                    "positional": false,
+                    "help": "What the holder is about to do; every waiter and every refusal names it",
+                    "value_name": "PURPOSE",
+                    "takes_value": true,
+                    "required": true,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "pid",
+                    "long": "pid",
+                    "positional": false,
+                    "help": "The process that holds the slot (default: this command's parent, the shell that runs it)",
+                    "value_name": "PID",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "wait",
+                    "long": "wait",
+                    "positional": false,
+                    "help": "Seconds to wait for a slot (default: the policy's machine.heavy_work.wait_seconds, else none)",
+                    "value_name": "SECONDS",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "volume",
+                    "long": "volume",
+                    "positional": false,
+                    "help": "A path the work writes to, whose volume the disk floor is judged on (default: the slot directory's)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "machine-slot-acquire",
+                    "title": "Take a slot for the shell that runs the build",
+                    "description": "Without `--pid` the holder is this command's parent, the shell that is about to do the work, so the slot is freed when that shell ends even if nobody releases it. The first word is the verdict a shell caller reads: `admitted`, `already_held`, or `refused` with exit 75 and every holder named. With no limit declared the caller is admitted at once.",
+                    "argv": [
+                      "machine",
+                      "slot",
+                      "acquire",
+                      "--purpose",
+                      "cargo build",
+                      "--wait",
+                      "0"
+                    ],
+                    "command": "majordomus machine slot acquire --purpose 'cargo build' --wait 0",
+                    "setup": [],
+                    "expectation": "exits 0; prints admitted: pid"
+                  }
+                ],
+                "subcommands": []
+              },
+              {
+                "path": [
+                  "majordomus",
+                  "machine",
+                  "slot",
+                  "release"
+                ],
+                "route": "/docs/cli/machine/slot/release/",
+                "executable": true,
+                "usage": "majordomus machine slot release [OPTIONS]",
+                "about": "Give back the slot a process holds, and withdraw it from the queue",
+                "args": [
+                  {
+                    "name": "pid",
+                    "long": "pid",
+                    "positional": false,
+                    "help": "The process whose slot is given back (default: this command's parent)",
+                    "value_name": "PID",
+                    "takes_value": true,
+                    "required": false,
+                    "global": false,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "repo",
+                    "long": "repo",
+                    "positional": false,
+                    "help": "Start the search for the repository root here (default: the current directory)",
+                    "value_name": "PATH",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "discovery",
+                    "long": "discovery",
+                    "positional": false,
+                    "help": "How declarative files are enumerated",
+                    "value_name": "DISCOVERY",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "vcs",
+                        "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                      },
+                      {
+                        "name": "filesystem",
+                        "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                      }
+                    ],
+                    "defaults": [
+                      "vcs"
+                    ]
+                  },
+                  {
+                    "name": "strict",
+                    "long": "strict",
+                    "positional": false,
+                    "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                    "value_name": "STRICT",
+                    "takes_value": false,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": [
+                      "false"
+                    ]
+                  },
+                  {
+                    "name": "share",
+                    "long": "share",
+                    "positional": false,
+                    "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                    "value_name": "DIR",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [],
+                    "defaults": []
+                  },
+                  {
+                    "name": "format",
+                    "long": "format",
+                    "positional": false,
+                    "help": "Output shape",
+                    "value_name": "FORMAT",
+                    "takes_value": true,
+                    "required": false,
+                    "global": true,
+                    "possible_values": [
+                      {
+                        "name": "text",
+                        "help": "Lines for a person"
+                      },
+                      {
+                        "name": "json",
+                        "help": "One JSON document, deterministic"
+                      }
+                    ],
+                    "defaults": [
+                      "text"
+                    ]
+                  }
+                ],
+                "examples": [
+                  {
+                    "id": "machine-slot-release",
+                    "title": "Give the slot back when the work is done",
+                    "description": "The slot taken by the setup step for the same parent process is given back, and the next waiter is admitted on its next look. Releasing a slot nobody holds says `not held` and changes nothing.",
+                    "argv": [
+                      "machine",
+                      "slot",
+                      "release"
+                    ],
+                    "command": "majordomus machine slot release",
+                    "setup": [
+                      {
+                        "argv": [
+                          "machine",
+                          "slot",
+                          "acquire",
+                          "--purpose",
+                          "cargo build"
+                        ],
+                        "command": "majordomus machine slot acquire --purpose 'cargo build'"
+                      }
+                    ],
+                    "expectation": "exits 0; prints released: pid"
+                  }
+                ],
+                "subcommands": []
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -164686,6 +166846,57 @@
         "output": "RuntimeView"
       },
       {
+        "name": "majordomus_machine_slot_acquire",
+        "id": "machine.slot.acquire",
+        "title": "Take a machine slot for heavy work",
+        "description": "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "process_state",
+        "hints": {
+          "read_only": false,
+          "destructive": false,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "SlotAcquireInput",
+        "output": "SlotAnswer"
+      },
+      {
+        "name": "majordomus_machine_slot_release",
+        "id": "machine.slot.release",
+        "title": "Give a machine slot back",
+        "description": "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing.",
+        "kind": "command",
+        "read_only": false,
+        "effect": "process_state",
+        "hints": {
+          "read_only": false,
+          "destructive": false,
+          "idempotent": false,
+          "open_world": false
+        },
+        "input": "SlotReleaseInput",
+        "output": "SlotRelease"
+      },
+      {
+        "name": "majordomus_machine_slot_status",
+        "id": "machine.slot.status",
+        "title": "Who holds the machine's slots, and who waits",
+        "description": "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "SlotStatusInput",
+        "output": "SlotStatus"
+      },
+      {
         "name": "majordomus_mcp",
         "id": "mcp.projection",
         "title": "The MCP projection of this registry",
@@ -166083,7 +168294,7 @@
         "name": "majordomus_server",
         "id": "server.status",
         "title": "The shared server, and every server of the repository",
-        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+        "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
         "kind": "query",
         "read_only": true,
         "effect": "read",
@@ -167504,6 +169715,24 @@
         "method": "GET",
         "path": "/api/v1/lifecycle/runtime",
         "id": "lifecycle.runtime",
+        "kind": "query"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/machine/slot/acquire",
+        "id": "machine.slot.acquire",
+        "kind": "command"
+      },
+      {
+        "method": "POST",
+        "path": "/api/v1/machine/slot/release",
+        "id": "machine.slot.release",
+        "kind": "command"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/machine/slot/status",
+        "id": "machine.slot.status",
         "kind": "query"
       },
       {
@@ -171942,6 +174171,64 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/lifecycle/runtime"
+      },
+      {
+        "key": "machine.slot.status|direct|the-machine",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "machine.slot.status",
+        "module": "machine",
+        "case": "the-machine",
+        "cached": false
+      },
+      {
+        "key": "machine.slot.status|direct|a-build-directory",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "machine.slot.status",
+        "module": "machine",
+        "case": "a-build-directory",
+        "cached": false
+      },
+      {
+        "key": "machine.slot.status|mcp|the-machine",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "machine.slot.status",
+        "module": "machine",
+        "case": "the-machine",
+        "cached": false,
+        "tool": "majordomus_machine_slot_status"
+      },
+      {
+        "key": "machine.slot.status|mcp|a-build-directory",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "machine.slot.status",
+        "module": "machine",
+        "case": "a-build-directory",
+        "cached": false,
+        "tool": "majordomus_machine_slot_status"
+      },
+      {
+        "key": "machine.slot.status|http|the-machine",
+        "kind": "capability",
+        "transport": "http",
+        "id": "machine.slot.status",
+        "module": "machine",
+        "case": "the-machine",
+        "cached": false,
+        "route": "GET /api/v1/machine/slot/status"
+      },
+      {
+        "key": "machine.slot.status|http|a-build-directory",
+        "kind": "capability",
+        "transport": "http",
+        "id": "machine.slot.status",
+        "module": "machine",
+        "case": "a-build-directory",
+        "cached": false,
+        "route": "GET /api/v1/machine/slot/status"
       },
       {
         "key": "mcp.projection|direct|every-tool",
@@ -178347,6 +180634,75 @@
           "cases": 1
         },
         {
+          "subject": "machine.slot.acquire",
+          "module": "machine",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "machine.slot.acquire",
+          "module": "machine",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "machine.slot.acquire",
+          "module": "machine",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "machine.slot.release",
+          "module": "machine",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "machine.slot.release",
+          "module": "machine",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "machine.slot.release",
+          "module": "machine",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "destructive"
+        },
+        {
+          "subject": "machine.slot.status",
+          "module": "machine",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "machine.slot.status",
+          "module": "machine",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "machine.slot.status",
+          "module": "machine",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "mcp.projection",
           "module": "mcp",
           "transport": "direct",
@@ -180777,24 +183133,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 223,
+          "covered": 182,
           "missing": 0,
-          "waived": 39,
+          "waived": 41,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
-          "covered": 181,
+          "required": 215,
+          "covered": 182,
           "missing": 0,
-          "waived": 31,
+          "waived": 33,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 209,
+          "covered": 177,
           "missing": 0,
-          "waived": 30,
+          "waived": 32,
           "inapplicable": 0
         },
         "system": {
@@ -180805,10 +183161,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 661,
+          "covered": 555,
           "missing": 0,
-          "waived": 100,
+          "waived": 106,
           "inapplicable": 0
         }
       }

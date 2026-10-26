@@ -178,7 +178,11 @@ fn catalogue(commands: &Answer, registry: &[serde_json::Value]) -> El {
                 };
                 el("tr")
                     .child(el("td").child(command))
-                    .child(el("td").class("mj-ui-dim").text(value(c, "summary")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-dim")
+                            .nodes(super::prose::marks(&value(c, "summary"))),
+                    )
                     .child(el("td").child(state(c, "effect")))
             })
             .collect::<Vec<_>>();

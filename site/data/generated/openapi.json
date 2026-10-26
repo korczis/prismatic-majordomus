@@ -105,6 +105,9 @@
     "op-lifecycle-providers": "docs/api/lifecycle/",
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
+    "op-machine-slot-acquire": "docs/api/machine/",
+    "op-machine-slot-release": "docs/api/machine/",
+    "op-machine-slot-status": "docs/api/machine/",
     "op-mcp-projection": "docs/api/mcp/",
     "op-mesh-beat": "docs/api/mesh/",
     "op-mesh-build_cache-env": "docs/api/mesh/",
@@ -803,6 +806,7 @@
     "schema-MeshIdentityReport": "docs/api/mesh/",
     "schema-MeshKind": "docs/api/mesh/",
     "schema-MeshProviderState": "docs/api/mesh/",
+    "schema-MeshReadiness": "docs/api/health/",
     "schema-MeshRepositoryBasis": "docs/api/mesh/",
     "schema-MeshRepositoryIdentity": "docs/api/mesh/",
     "schema-MeshReviewBrief": "docs/api/mesh/",
@@ -1100,7 +1104,10 @@
     "schema-RulesReport": "docs/api/rules/",
     "schema-RulesVerdict": "docs/api/rules/",
     "schema-RuntimeNode": "docs/api/mesh/",
+    "schema-RuntimeState": "docs/api/shared/",
+    "schema-RuntimeTransition": "docs/api/shared/",
     "schema-RuntimeView": "docs/api/lifecycle/",
+    "schema-RuntimeWriter": "docs/api/shared/",
     "schema-RustdocAcceptedLinks": "docs/api/quality/",
     "schema-RustdocCounts": "docs/api/quality/",
     "schema-RustdocFinding": "docs/api/quality/",
@@ -1161,6 +1168,18 @@
     "schema-SkillTested": "docs/api/skills/",
     "schema-SkillUsed": "docs/api/skills/",
     "schema-SkillVerification": "docs/api/skills/",
+    "schema-SlotAcquireInput": "docs/api/machine/",
+    "schema-SlotAnswer": "docs/api/machine/",
+    "schema-SlotHolder": "docs/api/machine/",
+    "schema-SlotLimits": "docs/api/machine/",
+    "schema-SlotLiveness": "docs/api/machine/",
+    "schema-SlotRefusal": "docs/api/machine/",
+    "schema-SlotRefusalReason": "docs/api/machine/",
+    "schema-SlotRelease": "docs/api/machine/",
+    "schema-SlotReleaseInput": "docs/api/machine/",
+    "schema-SlotStatus": "docs/api/machine/",
+    "schema-SlotVerdict": "docs/api/machine/",
+    "schema-SlotWaiter": "docs/api/machine/",
     "schema-Snapshot": "docs/api/integration/",
     "schema-SnapshotSection": "docs/api/integration/",
     "schema-Source": "docs/api/design/",
@@ -1327,6 +1346,7 @@
     "tag-knowledge_base": "docs/api/knowledge-base/",
     "tag-layout": "docs/api/layout/",
     "tag-lifecycle": "docs/api/lifecycle/",
+    "tag-machine": "docs/api/machine/",
     "tag-mcp": "docs/api/mcp/",
     "tag-mesh": "docs/api/mesh/",
     "tag-models": "docs/api/models/",
@@ -1357,9 +1377,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
-    "tags": 60
+    "operations": 215,
+    "schemas": 1098,
+    "tags": 61
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1555,6 +1575,9 @@
     "lifecycle.providers": "lifecycle",
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
+    "machine.slot.acquire": "machine",
+    "machine.slot.release": "machine",
+    "machine.slot.status": "machine",
     "mcp.projection": "mcp",
     "mesh.beat": "mesh",
     "mesh.build_cache.env": "mesh",
@@ -2257,6 +2280,7 @@
     "MeshIdentityReport": "mesh",
     "MeshKind": "mesh",
     "MeshProviderState": "mesh",
+    "MeshReadiness": "health",
     "MeshRepositoryBasis": "mesh",
     "MeshRepositoryIdentity": "mesh",
     "MeshReviewBrief": "mesh",
@@ -2554,7 +2578,10 @@
     "RulesReport": "rules",
     "RulesVerdict": "rules",
     "RuntimeNode": "mesh",
+    "RuntimeState": "shared",
+    "RuntimeTransition": "shared",
     "RuntimeView": "lifecycle",
+    "RuntimeWriter": "shared",
     "RustdocAcceptedLinks": "quality",
     "RustdocCounts": "quality",
     "RustdocFinding": "quality",
@@ -2615,6 +2642,18 @@
     "SkillTested": "skills",
     "SkillUsed": "skills",
     "SkillVerification": "skills",
+    "SlotAcquireInput": "machine",
+    "SlotAnswer": "machine",
+    "SlotHolder": "machine",
+    "SlotLimits": "machine",
+    "SlotLiveness": "machine",
+    "SlotRefusal": "machine",
+    "SlotRefusalReason": "machine",
+    "SlotRelease": "machine",
+    "SlotReleaseInput": "machine",
+    "SlotStatus": "machine",
+    "SlotVerdict": "machine",
+    "SlotWaiter": "machine",
     "Snapshot": "integration",
     "SnapshotSection": "integration",
     "Source": "design",
@@ -4846,7 +4885,7 @@
           "type": "string | null"
         },
         {
-          "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere.",
+          "description": "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it.",
           "name": "phase",
           "refs": [],
           "required": false,
@@ -21852,6 +21891,9 @@
         "lifecycle.recovery",
         "lifecycle.runtime",
         "health.live",
+        "machine.slot.acquire",
+        "machine.slot.release",
+        "machine.slot.status",
         "mcp.projection",
         "mesh.status",
         "mesh.beat",
@@ -28655,7 +28697,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\" | \"lease_lost\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -28785,6 +28827,10 @@
         {
           "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`).",
           "value": "observe_failed"
+        },
+        {
+          "description": "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken.",
+          "value": "lease_lost"
         }
       ],
       "variants": []
@@ -33246,6 +33292,20 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote.",
+          "name": "progressed_at",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`).",
+          "name": "progress_ttl_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
         }
       ],
       "type": "object",
@@ -35412,6 +35472,49 @@
           "value": "stopped"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```",
+      "home": "health",
+      "is_enum": false,
+      "name": "MeshReadiness",
+      "properties": [
+        {
+          "description": "Whether the repository declares its mesh enabled.",
+          "name": "enabled",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the declaration is enabled and this server has not decided the mesh yet.",
+          "name": "attaching",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the mesh stands as declared: off when it is not declared, running when it is.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The verdict's words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Readiness"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -44835,6 +44938,15 @@
           "refs": [],
           "required": false,
           "type": "array of string"
+        },
+        {
+          "description": "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179).",
+          "name": "mesh",
+          "refs": [
+            "MeshReadiness"
+          ],
+          "required": false,
+          "type": "MeshReadiness | null"
         }
       ],
       "type": "object",
@@ -53113,6 +53225,118 @@
       "variants": []
     },
     {
+      "description": "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "RuntimeState",
+      "properties": [
+        {
+          "description": "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition.",
+          "name": "state",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "Why, when the state is not `operational`.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record.",
+          "name": "transition",
+          "refs": [
+            "RuntimeTransition"
+          ],
+          "required": false,
+          "type": "RuntimeTransition | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServerStatus",
+        "ServerView",
+        "SessionBrief"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "RuntimeTransition",
+      "properties": [
+        {
+          "description": "`RUNTIME_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the runtime became.",
+          "name": "state",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": true,
+          "type": "ServerStanding"
+        },
+        {
+          "description": "What it was, by the previous record; absent for the first.",
+          "name": "from",
+          "refs": [
+            "ServerStanding"
+          ],
+          "required": false,
+          "type": "ServerStanding | null"
+        },
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why, in the recorder's words.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who recorded it.",
+          "name": "by",
+          "refs": [
+            "RuntimeWriter"
+          ],
+          "required": true,
+          "type": "RuntimeWriter"
+        },
+        {
+          "description": "The server process the transition is about, when there is one.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \"the\nrepository is fine\" but \"the answers you are reading are about the tree you are looking\nat\". When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &str, repo: &str, agree: bool| -> RuntimeView {\n    serde_json::from_value(json!({\n        \"root\": \"example/repo\",\n        \"served_head\": served, \"served_branch\": \"master\", \"served_working_tree\": \"clean\",\n        \"repository_head\": repo, \"repository_branch\": \"master\",\n        \"repository_working_tree\": \"clean\",\n        \"agree\": agree, \"objects\": 1319, \"index_state\": \"ok\",\n        \"note\": \"as measured on this call\",\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\"a1b2c3d\", \"a1b2c3d\", true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \"ok\");\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\"a1b2c3d\", \"9f8e7d6\", false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```",
       "home": "lifecycle",
       "is_enum": false,
@@ -53202,6 +53426,37 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```",
+      "home": "shared",
+      "is_enum": true,
+      "name": "RuntimeWriter",
+      "properties": [],
+      "type": "\"server\" | \"serve_ensure\" | \"reap_orphans\" | \"server_status\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeTransition"
+      ],
+      "values": [
+        {
+          "description": "The serving process, about itself.",
+          "value": "server"
+        },
+        {
+          "description": "`serve ensure`, which found the lease stale.",
+          "value": "serve_ensure"
+        },
+        {
+          "description": "`scripts/reap-orphans`, through `serve status` after its sweep.",
+          "value": "reap_orphans"
+        },
+        {
+          "description": "`server.status`, on any surface.",
+          "value": "server_status"
+        }
+      ],
       "variants": []
     },
     {
@@ -54247,15 +54502,17 @@
       "variants": []
     },
     {
-      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```",
+      "description": "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```",
       "home": "shared",
       "is_enum": true,
       "name": "ServerStanding",
       "properties": [],
-      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\"",
+      "type": "\"absent\" | \"starting\" | \"ready\" | \"outdated\" | \"stale\" | \"building\" | \"mesh_attaching\" | \"operational\" | \"degraded\" | \"stopping\" | \"stopped\" | \"failed\"",
       "used_by": [],
       "used_by_schemas": [
         "BoardView",
+        "RuntimeState",
+        "RuntimeTransition",
         "ServerStatus",
         "ServerView"
       ],
@@ -54279,12 +54536,40 @@
         {
           "description": "The lease names a server that does not answer, or is not a lease at all.",
           "value": "stale"
+        },
+        {
+          "description": "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive.",
+          "value": "building"
+        },
+        {
+          "description": "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs.",
+          "value": "mesh_attaching"
+        },
+        {
+          "description": "The server is ready, says so itself, and its mesh runs or is not declared.",
+          "value": "operational"
+        },
+        {
+          "description": "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running.",
+          "value": "degraded"
+        },
+        {
+          "description": "The process that holds the lease recorded that it is stopping, and it is still alive.",
+          "value": "stopping"
+        },
+        {
+          "description": "The server is gone after it recorded that it was stopping.",
+          "value": "stopped"
+        },
+        {
+          "description": "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists.",
+          "value": "failed"
         }
       ],
       "variants": []
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
+      "description": "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```",
       "home": "server",
       "is_enum": false,
       "name": "ServerStatus",
@@ -54358,6 +54643,15 @@
           ],
           "required": false,
           "type": "TrunkDistance | null"
+        },
+        {
+          "description": "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": false,
+          "type": "RuntimeState | null"
         }
       ],
       "type": "object",
@@ -54369,7 +54663,7 @@
       "variants": []
     },
     {
-      "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```",
+      "description": "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```",
       "home": "server",
       "is_enum": false,
       "name": "ServerView",
@@ -54440,6 +54734,15 @@
           "refs": [],
           "required": false,
           "type": "integer | null"
+        },
+        {
+          "description": "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": false,
+          "type": "RuntimeState | null"
         }
       ],
       "type": "object",
@@ -54632,6 +54935,15 @@
           ],
           "required": true,
           "type": "BriefDeriveSection"
+        },
+        {
+          "description": "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeState"
+          ],
+          "required": false,
+          "type": "RuntimeState | null"
         }
       ],
       "type": "object",
@@ -54939,7 +55251,7 @@
           "type": "array of string"
         },
         {
-          "description": "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age.",
+          "description": "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage.",
           "name": "progress_ms",
           "refs": [],
           "required": false,
@@ -54948,6 +55260,13 @@
         {
           "description": "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990).",
           "name": "phase",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone.",
+          "name": "blocked",
           "refs": [],
           "required": false,
           "type": "string | null"
@@ -56185,6 +56504,515 @@
         "skills.verify"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What to ask of `machine.slot.acquire`.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotAcquireInput",
+      "properties": [
+        {
+          "description": "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names.",
+          "name": "purpose",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too.",
+          "name": "wait_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent.",
+          "name": "volume",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.acquire"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer to an acquisition.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotAnswer",
+      "properties": [
+        {
+          "description": "Admitted, already held, or refused.",
+          "name": "verdict",
+          "refs": [
+            "SlotVerdict"
+          ],
+          "required": true,
+          "type": "SlotVerdict"
+        },
+        {
+          "description": "Present when refused.",
+          "name": "refusal",
+          "refs": [
+            "SlotRefusal"
+          ],
+          "required": false,
+          "type": "SlotRefusal | null"
+        },
+        {
+          "description": "Seconds the caller waited in the queue.",
+          "name": "waited_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Holders reclaimed on the way, because their process was proven gone.",
+          "name": "reclaimed",
+          "refs": [
+            "SlotHolder"
+          ],
+          "required": true,
+          "type": "array of SlotHolder"
+        },
+        {
+          "description": "The slot directory as it stood when the answer was given.",
+          "name": "status",
+          "refs": [
+            "SlotStatus"
+          ],
+          "required": true,
+          "type": "SlotStatus"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.acquire"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One holder of a slot, as a reader sees it.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotHolder",
+      "properties": [
+        {
+          "description": "The process that holds the slot.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "What it said it is doing.",
+          "name": "purpose",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was admitted (RFC 3339, UTC).",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds since then.",
+          "name": "age_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether that process still runs.",
+          "name": "liveness",
+          "refs": [
+            "SlotLiveness"
+          ],
+          "required": true,
+          "type": "SlotLiveness"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotAnswer",
+        "SlotRelease",
+        "SlotStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The limits an admission is judged by, and where they were read.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotLimits",
+      "properties": [
+        {
+          "description": "How many holders the machine admits at once; absent admits every caller.",
+          "name": "slots",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "GiB that must be free; absent refuses nobody for disk.",
+          "name": "min_free_gib",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How long a caller that names no bound waits, in seconds; absent waits not at all.",
+          "name": "wait_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The rule whose numbers these are.",
+          "name": "rule",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where they are declared: the policy file and the key.",
+          "name": "declared_in",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a holder's process is still the one that took the slot.",
+      "home": "machine",
+      "is_enum": true,
+      "name": "SlotLiveness",
+      "properties": [],
+      "type": "\"alive\" | \"unverified\" | \"dead\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotHolder"
+      ],
+      "values": [
+        {
+          "description": "The pid runs, with the start time the record names.",
+          "value": "alive"
+        },
+        {
+          "description": "The pid runs, and its start time could not be read: kept, never reclaimed.",
+          "value": "unverified"
+        },
+        {
+          "description": "The pid no longer runs, or runs with another start time: the slot is reclaimable.",
+          "value": "dead"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A refusal, with what it measured and what to do.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotRefusal",
+      "properties": [
+        {
+          "description": "Which limit refused.",
+          "name": "reason",
+          "refs": [
+            "SlotRefusalReason"
+          ],
+          "required": true,
+          "type": "SlotRefusalReason"
+        },
+        {
+          "description": "The measured values and every holder, in a sentence.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the caller can do instead.",
+          "name": "remedy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Why an acquisition was refused.",
+      "home": "machine",
+      "is_enum": true,
+      "name": "SlotRefusalReason",
+      "properties": [],
+      "type": "\"slots_full\" | \"disk_floor\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotRefusal"
+      ],
+      "values": [
+        {
+          "description": "Every slot stayed held for the whole wait.",
+          "value": "slots_full"
+        },
+        {
+          "description": "Less than the floor is free on the volume the work writes to.",
+          "value": "disk_floor"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer to a release.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotRelease",
+      "properties": [
+        {
+          "description": "Whether the process held a slot that is now free.",
+          "name": "released",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The record that was removed.",
+          "name": "holder",
+          "refs": [
+            "SlotHolder"
+          ],
+          "required": false,
+          "type": "SlotHolder | null"
+        },
+        {
+          "description": "Whether a waiter record of the process was withdrawn as well.",
+          "name": "withdrew_waiter",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.release"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What to ask of `machine.slot.release`.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotReleaseInput",
+      "properties": [
+        {
+          "description": "The process whose slot is given back.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.release"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The slot directory as it stands.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotStatus",
+      "properties": [
+        {
+          "description": "The directory the slots are kept in.",
+          "name": "directory",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The limits, and where they were read.",
+          "name": "limits",
+          "refs": [
+            "SlotLimits"
+          ],
+          "required": true,
+          "type": "SlotLimits"
+        },
+        {
+          "description": "MiB free on the volume measured; absent when it could not be measured.",
+          "name": "free_mib",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The volume measured: the work's own path, or the slot directory.",
+          "name": "volume",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many holders whose process is not proven gone.",
+          "name": "held",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every holder, oldest first.",
+          "name": "holders",
+          "refs": [
+            "SlotHolder"
+          ],
+          "required": true,
+          "type": "array of SlotHolder"
+        },
+        {
+          "description": "Every waiter, in the order they will be admitted.",
+          "name": "waiters",
+          "refs": [
+            "SlotWaiter"
+          ],
+          "required": true,
+          "type": "array of SlotWaiter"
+        },
+        {
+          "description": "One line: held of slots, free against the floor, the waiters.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "machine.slot.status"
+      ],
+      "used_by_schemas": [
+        "SlotAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What an acquisition came to.",
+      "home": "machine",
+      "is_enum": true,
+      "name": "SlotVerdict",
+      "properties": [],
+      "type": "\"admitted\" | \"already_held\" | \"refused\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotAnswer"
+      ],
+      "values": [
+        {
+          "description": "A slot was taken for the caller's process.",
+          "value": "admitted"
+        },
+        {
+          "description": "The caller's process already held one; nothing was taken.",
+          "value": "already_held"
+        },
+        {
+          "description": "Refused; the refusal says why and who holds the slots.",
+          "value": "refused"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One waiter for a slot, as a reader sees it: the progress a waiting session reports.",
+      "home": "machine",
+      "is_enum": false,
+      "name": "SlotWaiter",
+      "properties": [
+        {
+          "description": "The process that waits.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "What it will do once admitted.",
+          "name": "purpose",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it started waiting (RFC 3339, UTC).",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Seconds it has waited.",
+          "name": "waiting_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`.",
+          "name": "waiting_on",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SlotStatus"
+      ],
       "values": [],
       "variants": []
     },
@@ -70435,6 +71263,208 @@
       "slug": "lifecycle"
     },
     {
+      "description": "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work.",
+      "name": "machine",
+      "operations": [
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "a-build",
+              "json": "{\"pid\":48213,\"purpose\":\"cargo build in this worktree\",\"wait_seconds\":600}"
+            }
+          ],
+          "body_schema": "SlotAcquireInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "machine slot acquire",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/machine/slot/acquire\" -H \"content-type: application/json\" -d '{\"pid\":48213,\"purpose\":\"cargo build in this worktree\",\"wait_seconds\":600}'",
+          "description": "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two.",
+          "home": "machine",
+          "id": "machine.slot.acquire",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_machine_slot_acquire",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/machine/slot/acquire",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::machine_slot",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Take a machine slot for heavy work: the result.",
+              "schema": "SlotAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SlotAnswer",
+          "stability": "experimental",
+          "summary": "Take a machine slot for heavy work"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "destructive",
+          "body_examples": [
+            {
+              "case": "a-build",
+              "json": "{\"pid\":48213}"
+            }
+          ],
+          "body_schema": "SlotReleaseInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "machine slot release",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/machine/slot/release\" -H \"content-type: application/json\" -d '{\"pid\":48213}'",
+          "description": "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing.",
+          "home": "machine",
+          "id": "machine.slot.release",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_machine_slot_release",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/machine/slot/release",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::machine_slot",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Give a machine slot back: the result.",
+              "schema": "SlotRelease",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SlotRelease",
+          "stability": "experimental",
+          "summary": "Give a machine slot back"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "machine slot status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/machine/slot/status?volume=apps%2Fmajordomus-cli%2Ftarget\"",
+          "description": "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition.",
+          "home": "machine",
+          "id": "machine.slot.status",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_machine_slot_status",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent.",
+              "examples": [
+                {
+                  "case": "a-build-directory",
+                  "value": "\"apps/majordomus-cli/target\""
+                }
+              ],
+              "name": "volume",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/machine/slot/status",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::machine_slot",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Who holds the machine's slots, and who waits: the result.",
+              "schema": "SlotStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SlotStatus",
+          "stability": "experimental",
+          "summary": "Who holds the machine's slots, and who waits"
+        }
+      ],
+      "slug": "machine"
+    },
+    {
       "description": "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers.",
       "name": "mcp",
       "operations": [
@@ -76487,7 +77517,7 @@
       "slug": "served"
     },
     {
-      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+      "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
       "name": "server",
       "operations": [
         {
@@ -76499,7 +77529,7 @@
           "cache_detail": "",
           "cli": "serve status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/server?checkouts=repository\"",
-          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+          "description": "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
           "home": "server",
           "id": "server.status",
           "kind": "query",

@@ -109,12 +109,50 @@ where this checkout's own server stands measured against what this executable wo
 </div>
 
 
+Those five words are the lease's, and `standing` carries them and nothing else: shells
+compare them, so they do not change. Beside it, `runtime` (on the answer and on every entry
+of `servers`) says where the checkout's runtime stands — one state per checkout, the lease's
+word refined by the server's readiness report (`GET /api/v1/ready`, which now carries the
+server's mesh verdict as `mesh`), the mesh doctor's runtime check and the last recorded
+transition (I3179):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| runtime state | refines | meaning |
+|---|---|---|
+| the five words above | themselves | what the lease says, when nothing refines it: `ready` means the readiness report was not asked |
+| `building` | `starting` | no lease yet, and a builder that is still alive recorded that it is building the executable (I3180 records it) |
+| `mesh_attaching` | `ready` | ready, the repository declares its mesh enabled, and the server has not decided the mesh yet |
+| `operational` | `ready` | ready by its own report, and its mesh runs or is not declared |
+| `degraded` | `ready` | it answers current, but its report says it lost the lease, serves replaced code or read a degraded layer, or its declared mesh does not run |
+| `stopping` | `ready` | the process holding the lease recorded that it is stopping, and is still alive |
+| `stopped` | `absent` | the server is gone after it recorded stopping |
+| `failed` | `stale` | the lease names a process that is gone and never recorded stopping |
+
+</div>
+
+
+`runtime.transition` is the last transition recorded — `state`, `from`, `at`, `reason`, `by`
+and the `pid` it is about — kept in `.ai/local/state/runtime/state.json` and written only
+when the state changes, never in `.ai/local/state/mcp/`, whose `server.json` `.envrc`
+watches: a transition reloads no shell. Each state has its writer. The serving process
+records its own `starting` (it took the lease), `ready` (it published its address) and
+`stopping` (it was asked to stop, or released its lease), because only it knows them. A
+reader that finds the server gone records `stopped` or `failed`, because a dead process
+records nothing: `serve ensure` before it starts a server over a stale lease, `server.status`
+on every reading (`by: server_status`), and `scripts/reap-orphans --kill`, which asks
+`serve status` as itself (`MAJORDOMUS_RUNTIME_WRITER=reap_orphans`, `by: reap_orphans`)
+once its sweep is done. The state is read, never commanded: nothing drives a server from it.
+The briefing (`brief.session`, the `runtime` line and field) and the Dashboard (`/ui`, the
+Runtime figure) show the same state, through the same reading.
+
 The list is what a caller gets by asking nothing, and it costs a lease read and a probe per
-checkout — on a machine with a hundred worktrees registered, a hundred of each. A caller
-that only wants to know about the checkout it is in says so — `checkouts=this` on the query
-string, in the tool's input, or `--checkouts this` on the command line — and that reading
-enumerates no other checkout, reads no other lease and probes no other server. The default
-is the whole list, because that is the answer this capability gave before the field existed.
+checkout, plus one readiness request per server that answers current — on a machine with a
+hundred worktrees registered, a hundred of each. A caller that only wants to know about the
+checkout it is in says so — `checkouts=this` on the query string, in the tool's input, or
+`--checkouts this` on the command line — and that reading enumerates no other checkout,
+reads no other lease and probes no other server. The default is the whole list, because
+that is the answer this capability gave before the field existed.
 
 The lease itself is one type, read once (`lease::LeaseDocument`, `lease::LeaseFile::read`):
 the election, the read-only `serving`, the environment snapshot and the status all parse it

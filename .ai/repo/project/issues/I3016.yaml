@@ -25,4 +25,16 @@ validation:
 evidence_required:
   - capabilities_read_the_context
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:51:32Z
+started_at: 2026-10-26T03:51:01Z
+started_event: sha256:edb4e14043dfab537b16f6e1964d15e3115178532392c24015ce8b963e1e122a
+completed_at: 2026-10-26T03:51:32Z
+completed_event: sha256:c67e3667d93277ca062618d96575cd5d8405779465a7dac4367f4feaa5e67b2a
+evidence:
+  - covers: capabilities_read_the_context
+    type: ci
+    command: "cargo test --workspace --all-features (CI rust jobs)"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success; Context::repository (capability/handler.rs) is the accessor a capability asks, and hot_path.rs holds that hundreds of served calls move no startup counter. The two remaining capability opens, brief.rs (brief interval) and server.rs (local_half), open a checkout given by path, not the context's repository, and are reasoned owners in tests/discovery_has_its_owners.rs"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T03:51:23Z

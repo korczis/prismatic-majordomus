@@ -31,4 +31,16 @@ evidence_required:
   - "a_gate_the_suite_runs_is_not_planned_twice_test"
 depends_on: []
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-26T10:00:08Z
+started_at: 2026-10-26T09:59:44Z
+started_event: sha256:f866f0ae63f92e39e83baf71dfbc8677c5b8717f459268a31e96a7a7c94ce208
+completed_at: 2026-10-26T10:00:08Z
+completed_event: sha256:57c135bd23f2ae8ec24b90107ccfa59e0e3d4a9c17ebd2812eebd38a563c5a01
+evidence:
+  - covers: a_gate_the_suite_runs_is_not_planned_twice_test
+    type: test
+    command: "bash test/run.sh 94_ci_plan 26_ci_wiring 721_the_suite_shards_are_the_whole_suite; scripts/ci-plan --check; scripts/ci-plan --full --format text"
+    result: "cases 94, 26 and 721 passed 2026-10-26 on master 2efeacea031; ci-plan --check exit 0; the full plan runs shell-suite and skips release-record-cases and plan-record-cases as subsumed by shell-suite"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T10:00:01Z

@@ -1,7 +1,7 @@
 id: derived-data-integrity
 title: A committed derivation describes something it can be a projection of
 slug: derived-data-integrity
-order: 95
+order: 98
 priority: p1
 problem: "A derived artifact is committed with a fingerprint of what produced it, and the gates compare that fingerprint with the tree. Two things make the recording unable to stay true. It hashes the whole input set, so an unrelated change landing on the trunk invalidates a derivation that is not wrong - the tree simply moved; and where it hashes HEAD, a file inside a commit cannot describe the commit it is in, which apps/majordomus-cli/src/release/changelog.rs:75 states in its own comment while the gate reaches past it. The costs are paid daily and separately: every branch re-derives after every merge, six to thirty-five minutes each time; a fixture without history cannot evaluate the artifact at all; and the refusal that catches a stale recording lives in a pre-commit hook, which cannot run for a merge the server creates. So the first thing in the pipeline that can say no is the publication."
 outcome: "A committed derived artifact is a projection of inputs the commit owns. Landing an unrelated change on the trunk does not invalidate it, a fixture whose object database has no history can still evaluate it, and the staleness refusal exists on the path merges actually take - so the first thing that says no is a check rather than the published site."

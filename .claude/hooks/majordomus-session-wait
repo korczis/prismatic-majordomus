@@ -1,0 +1,15 @@
+#!/bin/sh
+# The Notification, Stop, UserPromptSubmit and PreToolUse hook (I3992): it hands the payload
+# to `majordomus-cli mesh beat --hook claude-code`, which marks this provider session on the
+# mesh as waiting on a person while a permission dialog or an idle prompt is open, or its turn
+# has ended (`blocked: permission dialog`, `blocked: awaiting input`), and clears the mark at
+# its next prompt or tool call. The mark is information: claims are judged by progress alone.
+#
+# The executable is asked directly, never built here, and it builds no index: this runs before
+# every tool call. Nothing it says reaches the provider, and every path out of it is exit 0 —
+# a hook that failed or spoke would be felt by the person, and a mark is not worth that.
+root=$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd) || exit 0
+[ -x "$root/bin/majordomus-cli" ] || exit 0
+MAJORDOMUS_NO_BUILD=1 "$root/bin/majordomus-cli" mesh beat --hook claude-code --repo "$root" \
+  >/dev/null 2>&1
+exit 0

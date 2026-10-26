@@ -54,7 +54,11 @@ pub fn screen(ctx: &Context, query: &[(String, String)]) -> View {
                         ),
                     )
                     .child(el("td").child(state(f, "state")))
-                    .child(el("td").class("mj-ui-dim").text(text(f, "reason")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-dim")
+                            .nodes(super::prose::marks(&text(f, "reason"))),
+                    )
             })
             .collect::<Vec<_>>();
         table(

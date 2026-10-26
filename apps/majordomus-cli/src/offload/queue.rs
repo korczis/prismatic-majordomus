@@ -388,7 +388,12 @@ impl Queue<'_> {
             }
             last = Some(d.step);
             if started.elapsed() >= self.wait_max {
-                break Err(QueueError::TimedOut(started.elapsed()));
+                let waited = started.elapsed();
+                let holder = held_by(&self.remote.label, &obs, last.as_ref());
+                if let Some(wait) = crate::mesh::waits::find("offload.queue") {
+                    let _ = writeln!(log, "derive-offload: {}", wait.reached(waited, &holder));
+                }
+                break Err(QueueError::TimedOut(waited));
             }
             std::thread::sleep(self.poll);
         };
@@ -397,10 +402,65 @@ impl Queue<'_> {
     }
 }
 
+/// Who held what a waiter waited for, from its last look at the host: the lock's holders and
+/// the live waiters ahead of it, for the report at the queue's bound (I3993).
+fn held_by(host: &str, obs: &Observation, step: Option<&Step>) -> String {
+    let lock = if !obs.lock.present {
+        format!("nobody holding the lock on {host}")
+    } else if obs.lock.holders.is_empty() {
+        format!("a derive that left no pid file holding the lock on {host}")
+    } else {
+        let pids: Vec<String> = obs
+            .lock
+            .holders
+            .iter()
+            .map(|(pid, alive)| format!("pid {pid} ({})", if *alive { "alive" } else { "dead" }))
+            .collect();
+        format!("{} holding the lock on {host}", pids.join(", "))
+    };
+    match step {
+        Some(Step::Wait { ahead, .. }) => format!("{lock}, {ahead} waiter(s) ahead"),
+        _ => lock,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::offload::remote::Holder;
+
+    #[test]
+    fn the_report_at_the_bound_names_the_locks_holders_and_the_waiters_ahead() {
+        let mut obs = Observation::default();
+        assert_eq!(
+            held_by(
+                "lundra",
+                &obs,
+                Some(&Step::Wait {
+                    ahead: 2,
+                    locked: false
+                })
+            ),
+            "nobody holding the lock on lundra, 2 waiter(s) ahead"
+        );
+        obs.lock.present = true;
+        assert_eq!(
+            held_by("lundra", &obs, None),
+            "a derive that left no pid file holding the lock on lundra"
+        );
+        obs.lock.holders = vec![(4242, true), (4243, false)];
+        assert_eq!(
+            held_by(
+                "lundra",
+                &obs,
+                Some(&Step::Wait {
+                    ahead: 0,
+                    locked: true
+                })
+            ),
+            "pid 4242 (alive), pid 4243 (dead) holding the lock on lundra, 0 waiter(s) ahead"
+        );
+    }
     use std::path::Path;
     use std::sync::{Arc, Mutex};
 
@@ -541,8 +601,18 @@ mod tests {
         let mut q = on_disk(&r, &dir, &lock);
         q.wait_max = Duration::from_millis(400);
         let ticket = q.enqueue(me.pid, "wwwwwwwwww").unwrap();
-        let err = q.wait(&ticket, me.pid, &mut std::io::sink()).unwrap_err();
+        let mut log = Vec::new();
+        let err = q.wait(&ticket, me.pid, &mut log).unwrap_err();
         assert!(matches!(err, QueueError::TimedOut(_)), "{err}");
+        let log = String::from_utf8(log).unwrap();
+        assert!(
+            log.contains("derive-offload: peer wait offload.queue reached its bound after")
+                && log.contains(
+                    "held by a derive that left no pid file holding the lock on local, 0 waiter(s) ahead"
+                )
+                && log.contains("another host:"),
+            "{log}"
+        );
         assert!(
             lock.exists(),
             "a lock nobody can check was taken from its holder"

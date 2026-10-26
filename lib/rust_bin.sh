@@ -1092,6 +1092,21 @@ mj_rust_prune_build_dir() {
 # the newest generations of the trees building now. It says so, with what remains.
 MJ_SHARED_BUILD_CAP_MB_DEFAULT=6144
 MJ_EVICT_IDLE_MIN_DEFAULT=60
+
+#   MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN  the idle age while the volume is under
+#                                              pressure (default below); 0 keeps the age above
+#
+# Under pressure means below the reclaim mark (MAJORDOMUS_RECLAIM_BELOW_MB), the line where a
+# build already reclaims unattended output before it starts. The hour above was the judgement
+# of a machine with room. On 2026-10-25 between 15:16Z and 15:48Z the directory grew from
+# 66 GB to 94 GB, and the volume fell from 44 GiB to 16 GiB free. About ten worktrees each
+# built a generation of this crate with an incremental session, 2 to 6 GB each, inside an
+# hour. Every pass took cargo's lock, evicted what was older than the hour, and ended "stays
+# over its bound", because nothing else was. Under pressure, one recompile of an idle tree
+# costs less than a full volume, which stops every session. Ten minutes still keeps the
+# generation of a tree in its edit-compile loop, and every eviction is still asked again
+# under the lock: written since, held open, or named by a process keeps it.
+MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT=10
 # How often one build directory is measured from the build path, at most: the measure is a
 # du of the whole directory, about a second at 60 GB. A rate limit, never a predicate.
 MJ_BOUND_SWEEP_EVERY_S=120
@@ -1112,6 +1127,26 @@ MJ_EVICT_LOCK_WAIT_DEFAULT=900
 mj_rust_bound_state() {
   printf '%s/majordomus/bound-%s\n' "${XDG_CACHE_HOME:-$HOME/.cache}" \
     "$(printf '%s' "$1" | cksum | awk '{ print $1 }')"
+}
+
+# mj_rust_pressure_idle <build-dir> <idle-minutes> — the idle age the bound applies there.
+# Sets mj_rp_idle: the shorter pressure age while the volume has less free than the reclaim
+# mark, else the age given. A free space that cannot be read is no pressure: a deleting sweep
+# whose input is unmeasured keeps the longer age (project.destructive-sweeps-fail-closed).
+# Sets mj_rp_free and mj_rp_mark for the caller to say what it measured.
+mj_rust_pressure_idle() {
+  mj_rp_idle="$2"
+  mj_rp_short="${MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN:-$MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT}"
+  case "$mj_rp_short" in ''|*[!0-9]*) mj_rp_short="$MJ_EVICT_PRESSURE_IDLE_MIN_DEFAULT" ;; esac
+  mj_rp_mark="${MAJORDOMUS_RECLAIM_BELOW_MB:-$MJ_RECLAIM_BELOW_MB_DEFAULT}"
+  case "$mj_rp_mark" in ''|*[!0-9]*) mj_rp_mark="$MJ_RECLAIM_BELOW_MB_DEFAULT" ;; esac
+  [ "$mj_rp_short" -gt 0 ] && [ "$mj_rp_short" -lt "$mj_rp_idle" ] && [ "$mj_rp_mark" -gt 0 ] \
+    || return 0
+  mj_rp_free="$(mj_free_mb "$1" || true)"
+  case "$mj_rp_free" in ''|*[!0-9]*) return 0 ;; esac
+  [ "$mj_rp_free" -lt "$mj_rp_mark" ] || return 0
+  mj_rp_idle="$mj_rp_short"
+  return 0
 }
 
 # mj_rust_bound_due <build-dir> — is a pass of the bound due for it? True at most once every
@@ -1418,6 +1453,12 @@ mj_rust_bound_build_dir() {
         "$mj_bb_say" "$mj_bb_dir" "$(mj_rust_human_kb "$mj_bb_size")" "$(mj_rust_human_kb "$mj_bb_bound")" >&2
       return 0
     fi
+  fi
+  mj_rust_pressure_idle "$mj_bb_dir" "$mj_bb_idle"
+  if [ "$mj_rp_idle" != "$mj_bb_idle" ]; then
+    printf '%s %s: its volume has %sMB free, below %sMB: a unit idle for %s min is stale, not %s\n' \
+      "$mj_bb_say" "$mj_bb_dir" "$mj_rp_free" "$mj_rp_mark" "$mj_rp_idle" "$mj_bb_idle" >&2
+    mj_bb_idle="$mj_rp_idle"
   fi
   mj_bb_tab="$(printf '\t')"
   mj_bb_now="$(date +%s)"
@@ -1755,9 +1796,108 @@ mj_build_cache_start() {
 #     caller) and is still blocked at the bound has no second place to go: it stops with
 #     exit 75 and says what holds it, rather than wait for ever.
 #
+# Before any of that, the build takes one of the machine's slots (mj_rust_slot_acquire, I4006)
+# and gives it back when cargo is done, whatever cargo answered.
+#
 # Exit status: cargo's own; 12 when the disk floor refuses the private build; 75 when the
-# bound was reached with nowhere left to build, or below the high-water mark.
+# bound was reached with nowhere left to build, or below the high-water mark, or when the
+# machine slot was refused.
 mj_cargo_bounded() {
+  mj_cs_root="$1"
+  mj_rust_slot_acquire "$mj_cs_root" "cargo ${2:-build} in $mj_cs_root" || return $?
+  # a build never starts on top of its build directory's idle incremental sessions (I2713);
+  # a caller that asked the floor first has swept already, and this is then a no-op
+  mj_rust_prune_build_dir "$mj_cs_root"
+  mj_cs_rc=0
+  mj_cargo_bounded_run "$@" || mj_cs_rc=$?
+  # between this build and the next: the bound, under cargo's lock, now that it is free
+  # (I3959); rate-limited, and a no-op within the bound, whatever the build answered
+  mj_rust_bound_after_build "$mj_cs_root"
+  mj_rust_slot_release "$mj_cs_root"
+  return "$mj_cs_rc"
+}
+
+# ------------------------------------------------------------------------------ the machine slot
+#
+# A build takes one of the machine's slots before it runs cargo (I4006, `majordomus machine
+# slot`): at most the policy's machine.heavy_work.slots builders at once on one machine, none
+# admitted below its min_free_gib on the volume the build writes to, a wait in turn of at most
+# its wait_seconds that says on stderr what it waits on, and then a refusal naming every holder
+# (rule project.the-cooperation-model-is-the-owners-word clause 7). On 2026-10-22 eleven
+# cargo processes of eleven worktrees stood 47 min and more at 0% CPU on one build lock, in
+# silence, while five more went private and took the disk under the floor. The judgement is
+# the executable's; this only asks it, naming this shell ($$) as the holder, so that a build
+# that is killed frees its slot with the process.
+#
+#   MAJORDOMUS_MACHINE_SLOT=off  build without a slot, and say so
+#   CI=true                      a runner is one job's machine: no slot; its floor stays
+#                                MAJORDOMUS_MIN_FREE_MB
+#
+# Which executable answers: MAJORDOMUS_BIN, then this tree's, then an installed `majordomus`,
+# each asked with MAJORDOMUS_NO_BUILD=1 so that a launcher never builds in order to be asked.
+# When none of them knows the command — a cold tree, a release older than the slot — the
+# build runs without one and says so: refusing to build the program that would answer is a
+# deadlock, not a bound (ADR 0222: only an explicit build builds, and this is one).
+#
+# mj_rust_slot_acquire <tree-root> <purpose>: 0 when admitted or unslotted, MJ_SLOT_HELD=1
+# when this call took the slot; 75 when refused, with the refusal on stderr.
+mj_rust_slot_acquire() {
+  MJ_SLOT_HELD=0; MJ_SLOT_BIN=""
+  case "${MAJORDOMUS_MACHINE_SLOT:-}" in
+    off|0|false|no)
+      printf 'majordomus: building without a machine slot (MAJORDOMUS_MACHINE_SLOT=%s)\n' \
+        "$MAJORDOMUS_MACHINE_SLOT" >&2
+      return 0 ;;
+  esac
+  [ "${CI:-}" != true ] || return 0
+  # the limits are a repository's policy: a tree with no layer declares none to be held to
+  [ -f "$1/.ai/manifest.yaml" ] || return 0
+  mj_sa_volume="$(mj_cargo_target_dir "$1/apps/majordomus-cli")"
+  mj_sa_why=""; mj_sa_seen=""
+  for mj_sa_bin in "${MAJORDOMUS_BIN:-}" "$(mj_rust_bin "$1")" "$(command -v majordomus 2>/dev/null || true)"; do
+    [ -n "$mj_sa_bin" ] && [ -x "$mj_sa_bin" ] || continue
+    case " $mj_sa_seen " in *" $mj_sa_bin "*) continue ;; esac
+    mj_sa_seen="$mj_sa_seen $mj_sa_bin"
+    # the command line alone, no repository read: does this executable know the command?
+    if ! MAJORDOMUS_NO_BUILD=1 "$mj_sa_bin" machine slot acquire --help >/dev/null 2>&1; then
+      mj_sa_why="${mj_sa_why:+$mj_sa_why; }$mj_sa_bin does not know it"
+      continue
+    fi
+    # stdout is the verdict; stderr, where the wait says what it waits on, goes to the caller
+    mj_sa_rc=0
+    mj_sa_out="$(MAJORDOMUS_NO_BUILD=1 "$mj_sa_bin" machine slot acquire --repo "$1" --pid "$$" \
+      --purpose "$2" --volume "$mj_sa_volume")" || mj_sa_rc=$?
+    case "$mj_sa_rc:$mj_sa_out" in
+      0:admitted*) MJ_SLOT_HELD=1; MJ_SLOT_BIN="$mj_sa_bin"
+        printf '%s\n' "$mj_sa_out" | grep -v '^admitted' >&2 || true
+        return 0 ;;
+      0:already_held*) return 0 ;;
+      75:*)
+        printf 'majordomus: %s\n' "$mj_sa_out" >&2
+        printf 'majordomus: the build did not start. Override for this one build: MAJORDOMUS_MACHINE_SLOT=off\n' >&2
+        return 75 ;;
+    esac
+    # an executable that cannot read this tree, or a slot directory it cannot write: the next
+    mj_sa_why="${mj_sa_why:+$mj_sa_why; }$mj_sa_bin answered $mj_sa_rc"
+  done
+  printf 'majordomus: building without a machine slot: no executable here answers `machine slot acquire` (%s)\n' \
+    "${mj_sa_why:-none found}" >&2
+  return 0
+}
+
+# mj_rust_slot_release <tree-root>: give back the slot mj_rust_slot_acquire took, if it took
+# one. Never fails a build: a slot that could not be given back is said, and its holder's end
+# frees it anyway.
+mj_rust_slot_release() {
+  [ "${MJ_SLOT_HELD:-0}" = 1 ] || return 0
+  MJ_SLOT_HELD=0
+  MAJORDOMUS_NO_BUILD=1 "$MJ_SLOT_BIN" machine slot release --repo "$1" --pid "$$" >/dev/null 2>&1 \
+    || printf 'majordomus: the machine slot of pid %s could not be given back; it is freed when that process ends\n' "$$" >&2
+  return 0
+}
+
+# mj_cargo_bounded_run <tree-root> <cargo arguments...> — mj_cargo_bounded without the slot.
+mj_cargo_bounded_run() {
   mj_cb_root="$1"; shift
   mj_cb_wait="${MAJORDOMUS_BUILD_LOCK_WAIT:-$MJ_BUILD_LOCK_WAIT_DEFAULT}"
   case "$mj_cb_wait" in ''|*[!0-9]*) mj_cb_wait="$MJ_BUILD_LOCK_WAIT_DEFAULT" ;; esac
@@ -1767,9 +1907,7 @@ mj_cargo_bounded() {
     shift
     case "$mj_cb_arg" in --quiet|-q) mj_cb_quiet=1 ;; *) set -- "$@" "$mj_cb_arg" ;; esac
   done
-  # a build never starts on top of its build directory's idle incremental sessions (I2713);
-  # a caller that asked the floor first has swept already, and this is then a no-op
-  mj_rust_prune_build_dir "$mj_cb_root"
+  # (the sweep of the build directory's idle sessions ran in mj_cargo_bounded, in the slot)
   mj_build_cache_start "$mj_cb_root"
   mj_cb_log="$(mktemp "${TMPDIR:-/tmp}/mj-cargo.XXXXXX")" || return 12
   mj_cb_private=0
@@ -1810,8 +1948,7 @@ mj_cargo_bounded() {
         cat "$mj_cb_log" >&2
       fi
       rm -f "$mj_cb_log"
-      # between this build and the next: the bound, under cargo's lock, now that it is free
-      mj_rust_bound_after_build "$mj_cb_root"
+      # (the bound between this build and the next runs in mj_cargo_bounded, I3959)
       return "$mj_cb_rc"
     fi
     # the bound: say what was observed, stop waiting, and go where no other tree builds

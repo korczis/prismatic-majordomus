@@ -18,7 +18,6 @@ non_scope:
   - Requiring a paid external provider for a deployment smoke run
 depends_on:
   - I0905
-  - I0914
 acceptance_criteria:
   - Every checked route comes from the registry or from the resolved surface topology, and adding a route adds its check with no second edit
   - Route metadata gains only the fields smoke testing actually needs, and no field that exists to make one test convenient
@@ -37,4 +36,4 @@ evidence_required:
   - openapi_parsed
 risk: "The served topology is in flight on other branches. Pinning the suite to today's paths would make it stale on arrival; it has to ask the topology rather than name arms."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-26

@@ -317,7 +317,11 @@ pub fn browser(issues: &Answer, roadmap: &Answer, pick: &Pick) -> El {
                                 .class("mj-ui-row-link")
                                 .attr("href", issue_href(&id))
                                 .child(el("span").class("mj-ui-mono mj-ui-dim").text(id.clone()))
-                                .child(el("span").class("mj-ui-cell-title").text(text(i, "title"))),
+                                .child(
+                                    el("span")
+                                        .class("mj-ui-cell-title")
+                                        .nodes(super::prose::marks(&text(i, "title"))),
+                                ),
                         ),
                     )
                     .child(el("td").child(state(i, "status")))

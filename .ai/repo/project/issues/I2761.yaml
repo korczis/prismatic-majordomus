@@ -24,4 +24,16 @@ validation:
 evidence_required:
   - "renumbered_claim_case"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-25T20:40:43Z
+started_at: 2026-10-25T20:39:19Z
+started_event: sha256:bd62cb6479568f4171a07896cfbd2a2c81423ec513eba8505a997620c43f486e
+completed_at: 2026-10-25T20:40:43Z
+completed_event: sha256:ad06231459fa960dd7bd652d64c38c41ee70a0fc20886a3c219b3fdcba4a76e7
+evidence:
+  - covers: renumbered_claim_case
+    type: test
+    command: "MJ_TEST_JOBS=4 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 271_adr_allocation"
+    result: "at master 2efeacea031: case 271 ok in 98 s (C1, C2). C3: with ace03790372's lib/adr.sh hunk reversed (git apply -R), case 271 fails: adr check exits 10, identity 0003 is also claimed by the renumbered branch's document; restored, lib/adr.sh is identical to master. Master's validate run 40196303175: case 271 ok, suite-shard (2) job 121182964674. Landed through #1301"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T20:37:44Z

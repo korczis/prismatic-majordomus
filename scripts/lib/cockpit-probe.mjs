@@ -580,6 +580,96 @@ async function withoutJavaScript(browser, derived) {
   await context.close();
 }
 
+/**
+ * The narrow-screen drawer of /ui and /cockpit (I3214), at every declared width: exactly one
+ * menu toggle shows below lg (the bar's own below md, the drawer's button from md) and none at
+ * lg and above, where the sections are the sidebar in view. Opened, the panel shows and the
+ * page behind does not scroll; Escape, the backdrop and a choice of entry each close it, and
+ * the first two give the focus back to the toggle that opened it. With scripts off the
+ * drawer's button shows below lg and opens the panel, whose entries are in the served page.
+ */
+async function drawer(browser, context) {
+  const state = () => {
+    const vis = (e) => !!e && e.offsetParent !== null && getComputedStyle(e).visibility !== 'hidden';
+    const bar = document.querySelector('nav[aria-label="Main"] [data-collapse-toggle="navbar-main"]');
+    const own = document.querySelector('.mj-drawer-button');
+    const panel = document.querySelector('.mj-drawer');
+    const active = document.activeElement;
+    return {
+      toggles: [bar, own].filter(vis).map((e) => (e === bar ? 'bar' : 'drawer')),
+      open: !!panel && getComputedStyle(panel).display !== 'none' && panel.getBoundingClientRect().width > 0,
+      entries: panel ? panel.querySelectorAll('a[href]').length : 0,
+      locked: getComputedStyle(document.body).overflow === 'hidden',
+      focus: active === bar ? 'bar' : active && active.id === 'mj-drawer' ? 'drawer' : (active && active.tagName) || '',
+    };
+  };
+  const LG = 1024;
+  let walked = 0;
+  for (const path of ['/ui', '/cockpit']) {
+    const page = await context.newPage();
+    watch(page, `drawer ${path}`);
+    for (const width of WIDTHS) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+      await page.waitForFunction(() => document.readyState === 'complete');
+      const at = `${path} @${width}px`;
+      let s = await page.evaluate(state);
+      if (width >= LG) {
+        if (s.toggles.length) fail('drawer', `${at}: a menu toggle shows where the sections are in view (${s.toggles})`);
+        if (!s.open) fail('drawer', `${at}: the sections are not in view`);
+        continue;
+      }
+      if (s.toggles.length !== 1) { fail('drawer', `${at}: ${s.toggles.length} menu toggles show (${s.toggles}); one is wanted`); continue; }
+      const which = s.toggles[0];
+      const toggle = which === 'bar' ? 'nav[aria-label="Main"] [data-collapse-toggle="navbar-main"]' : '.mj-drawer-button';
+      const openIt = async (how) => {
+        await page.click(toggle);
+        s = await page.evaluate(state);
+        if (!s.open) fail('drawer', `${at}: the ${which} toggle did not open the drawer (${how})`);
+        else if (!s.locked) fail('drawer', `${at}: the page behind the open drawer still scrolls`);
+        else if (!s.entries) fail('drawer', `${at}: the open drawer holds no entry`);
+        return s.open;
+      };
+      const closed = async (how, focus) => {
+        s = await page.evaluate(state);
+        if (s.open) fail('drawer', `${at}: ${how} did not close the drawer`);
+        else if (focus && s.focus !== which) fail('drawer', `${at}: after ${how} the focus is on ${s.focus || 'nothing'}, not the ${which} toggle`);
+      };
+      if (await openIt('Escape')) { await page.keyboard.press('Escape'); await closed('Escape', true); }
+      if (await openIt('backdrop')) {
+        // the backdrop is everything right of the panel, beneath the bar
+        const box = await page.evaluate(() => {
+          const p = document.querySelector('.mj-drawer').getBoundingClientRect();
+          return { x: Math.min(window.innerWidth - 4, p.right + (window.innerWidth - p.right) / 2), y: p.top + p.height / 2 };
+        });
+        await page.mouse.click(box.x, box.y);
+        await closed('the backdrop', true);
+      }
+      if (await openIt('choice')) {
+        // the choice is observed, not followed: the page stays to be read
+        await page.evaluate(() => document.addEventListener('click', (e) => e.preventDefault(), { once: true }));
+        await page.click('.mj-drawer a[href]');
+        await closed('a choice of entry', false);
+      }
+      walked += 1;
+    }
+    await page.close();
+  }
+  const off = await browser.newContext({ javaScriptEnabled: false, viewport: { width: Math.min(...WIDTHS), height: 900 } });
+  for (const path of ['/ui', '/cockpit']) {
+    const page = await off.newPage();
+    await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+    const shown = await page.evaluate(() => document.querySelector('.mj-drawer-button')?.offsetParent !== null);
+    if (!shown) { fail('drawer', `${path}: with scripts off no drawer button shows at ${Math.min(...WIDTHS)}px`); continue; }
+    await page.click('.mj-drawer-button');
+    const s = await page.evaluate(state);
+    if (!s.open || !s.entries) fail('drawer', `${path}: with scripts off the drawer did not open onto its entries`);
+    await page.close();
+  }
+  await off.close();
+  ok('drawer', `the drawer of /ui and /cockpit opens from one toggle and closes on Escape, its backdrop and a choice at ${walked} narrow visit(s), and opens with scripts off`);
+}
+
 /** The page refuses to be framed, which is what its policy says. */
 async function framing(context) {
   const page = await context.newPage();
@@ -658,6 +748,7 @@ try {
     ['graph', () => graph(context)],
     ['graph-scale', async () => graphAtScale(context, await largestGraph())],
     ['framing', () => framing(context)],
+    ['drawer', () => drawer(browser, context)],
   ]) {
     try {
       await check();

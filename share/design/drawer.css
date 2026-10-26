@@ -1,0 +1,81 @@
+/* The drawer: the one narrow-screen menu of /ui and /cockpit (I3214). Each surface renders the
+   same shell (apps/majordomus-cli/src/ui/drawer.rs) and fills the panel with its own entries:
+   a checkbox that holds the state, a button that is its label, the panel (`.mj-drawer`, on the
+   surface's own sidebar) and a backdrop that is a second label of the same checkbox. Imported
+   by share/ui/src/ui.css and share/cockpit/src/cockpit.css; docs/MAJORDOMUS_UI.md, section
+   "On a phone", is the manual.
+
+   One menu toggle shows at any width. Below md the site's bar shows its own (`navbar-main`),
+   and the panel opens with it, so the surface's button is hidden there while scripts run. From
+   md to lg the bar's toggle is gone and the surface's button opens the panel. At lg and above
+   the panel is the surface's sidebar, always in view, and neither toggle shows. With scripts
+   off the bar's toggle cannot open anything, so the surface's button shows below md as well:
+   the checkbox needs no script, and every entry is in the served page.
+
+   Open, the panel sits beneath the bar (`--ui-bar`, which each surface's script measures), the
+   backdrop covers the page, and the page behind does not scroll. share/design/drawer.js closes
+   it on Escape, on the backdrop and on a choice, and gives the focus back to the toggle that
+   opened it. Every colour is a role. */
+
+@layer components {
+  .mj-drawer-toggle {
+    @apply sr-only;
+  }
+  .mj-drawer-button {
+    @apply inline-flex h-10 w-10 shrink-0 cursor-pointer items-center justify-center rounded-lg lg:hidden;
+    color: var(--mj-fg);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-drawer-icon {
+    @apply h-5 w-5;
+  }
+  /* the button's word, read and not shown: the drawn lines are what a sighted reader sees */
+  .mj-drawer-label {
+    @apply sr-only;
+  }
+  .mj-drawer-toggle:focus-visible ~ * .mj-drawer-button,
+  .mj-drawer-toggle:focus-visible + .mj-drawer-button {
+    outline: 2px solid var(--mj-accent);
+    outline-offset: 2px;
+  }
+  @media (scripting: enabled) {
+    .mj-drawer-button {
+      @apply max-md:hidden;
+    }
+  }
+  .mj-drawer-scrim {
+    @apply fixed inset-x-0 bottom-0 z-30 hidden lg:hidden;
+    top: var(--ui-bar, 0rem);
+    background: color-mix(in srgb, var(--mj-fg) 40%, transparent);
+  }
+
+  /* below lg the panel is a drawer from the left edge, beneath the bar; `body` in the
+     selector outranks a surface's own sidebar rule, whatever order the sheets put them in */
+  @variant max-lg {
+    body .mj-drawer {
+      @apply fixed bottom-0 left-0 z-40 hidden w-72 max-w-[85vw] flex-col overflow-y-auto;
+      top: var(--ui-bar, 0rem);
+      height: auto;
+      max-height: none;
+      background: var(--mj-raised);
+      border-right: 1px solid var(--mj-line);
+    }
+    body:has(.mj-drawer-toggle:checked) .mj-drawer,
+    body:has(.mj-drawer-toggle:checked) .mj-drawer-scrim {
+      @apply flex;
+    }
+    body:has(.mj-drawer-toggle:checked) {
+      overflow: hidden;
+    }
+  }
+  /* below md the bar's own menu is the toggle: while it is open, so is the panel */
+  @variant max-md {
+    body:has(#navbar-main:not(.hidden)) .mj-drawer,
+    body:has(#navbar-main:not(.hidden)) .mj-drawer-scrim {
+      @apply flex;
+    }
+    body:has(#navbar-main:not(.hidden)) {
+      overflow: hidden;
+    }
+  }
+}

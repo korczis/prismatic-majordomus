@@ -267,7 +267,12 @@ fn render(
             grid = grid
                 .child(wide(milestones(roadmap, intent)))
                 .child(wide(issue_table(issues, waves, next, &mine, id)))
-                .child(wide(wave_panel(waves, &mine, &known(issues, roadmap), id)))
+                .child(wide(wave_panel(
+                    waves,
+                    &mine,
+                    &super::prose::known(issues, roadmap),
+                    id,
+                )))
                 .child(wide(dependency_graph(issues, &mine)))
                 .child(wide(moves_panel(moves, &mine)));
         }
@@ -751,7 +756,10 @@ pub fn shared_scope_panel(ctx: &Context, query: &[(String, String)]) -> View {
         if conflicts.is_empty() {
             nothing("No two issues of this intent share a scope.")
         } else {
-            shared_scope_list(&conflicts, &known(&answers[&ISSUES], &answers[&ROADMAP]))
+            shared_scope_list(
+                &conflicts,
+                &super::prose::known(&answers[&ISSUES], &answers[&ROADMAP]),
+            )
         }
     });
     View::new(
@@ -763,21 +771,6 @@ pub fn shared_scope_panel(ctx: &Context, query: &[(String, String)]) -> View {
             &[waves],
         ),
     )
-}
-
-/// The records the workspace's prose may name: every issue and every milestone the plan holds, so
-/// an id in a sentence is a link exactly when there is a record behind it (I3000).
-fn known(issues: &Answer, roadmap: &Answer) -> super::prose::Known {
-    super::prose::Known {
-        issues: super::view::items(issues, "/issues")
-            .iter()
-            .map(|x| text(x, "id"))
-            .collect(),
-        milestones: super::view::items(roadmap, "/milestones")
-            .iter()
-            .map(|m| text(m, "id"))
-            .collect(),
-    }
 }
 
 /// The dependency graph of the intent's issues: each a node in the tone of its status, each
@@ -918,7 +911,11 @@ pub fn standing_panel(ctx: &Context, query: &[(String, String)]) -> View {
     );
     // the records its sentences may name, read from the plan's own answers (I3000)
     let plan = ask_all(ctx, &[ISSUES, ROADMAP]);
-    let body = standing_body(&id, &explain, &known(&plan[&ISSUES], &plan[&ROADMAP]));
+    let body = standing_body(
+        &id,
+        &explain,
+        &super::prose::known(&plan[&ISSUES], &plan[&ROADMAP]),
+    );
     View::new(
         STANDING_TITLE,
         panel(
@@ -981,11 +978,12 @@ fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El 
                     el("tr")
                         .child(
                             el("td")
-                                .child(el("span").class("mj-ui-mono mj-ui-dim").text(format!(
-                                    "{} {}",
-                                    text(unit, "kind"),
-                                    text(unit, "id")
-                                )))
+                                .child(el("span").class("mj-ui-mono mj-ui-dim").nodes(
+                                    super::prose::ids(
+                                        &format!("{} {}", text(unit, "kind"), text(unit, "id")),
+                                        known,
+                                    ),
+                                ))
                                 .child(
                                     el("span")
                                         .class("mj-ui-cell-title")
@@ -993,7 +991,10 @@ fn standing_body(id: &str, explain: &Answer, known: &super::prose::Known) -> El 
                                 ),
                         )
                         .child(el("td").child(state(unit, "outcome")))
-                        .child(el("td").text(link.map(|l| text(l, "issue")).unwrap_or_default()))
+                        .child(el("td").nodes(super::prose::ids(
+                            &link.map(|l| text(l, "issue")).unwrap_or_default(),
+                            known,
+                        )))
                         .child(
                             el("td").text(link.map(|l| text(l, "provenance")).unwrap_or_default()),
                         )
@@ -1565,7 +1566,9 @@ mod tests {
         assert!(html.contains(">Walk the loop</span>"), "its title: {html}");
         assert!(html.contains("completed"), "its outcome: {html}");
         assert!(
-            html.contains("<td>I7</td><td>declared</td>"),
+            html.contains(
+                "<td><a class=\"mj-ui-link mj-ui-mono\" href=\"/ui/prs?issue=I7#issue\">I7</a></td><td>declared</td>"
+            ),
             "the link naming i: {html}"
         );
         assert!(

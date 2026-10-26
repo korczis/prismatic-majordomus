@@ -34,4 +34,16 @@ validation:
 evidence_required:
   - "case_the_plan_page_fits_the_audit_budget"
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T01:53:41Z
+started_at: 2026-10-26T01:52:42Z
+started_event: sha256:98c69030ab892223a7f65ebb3198ada64205583e81ac61f78acd762726353dfe
+completed_at: 2026-10-26T01:53:41Z
+completed_event: sha256:d5ba4e3368799b328cd6e8dcd84d96d37ab3cc839b4d8afbc1bfe6c5bfbcd76c
+evidence:
+  - covers: case_the_plan_page_fits_the_audit_budget
+    type: ci
+    command: "bash test/run.sh 3848_the_plan_page_fits_the_audit_budget (site job); scripts/ui audit --report (ui jobs)"
+    result: "master validate run 40196303175 at 2efeacea031 concluded success: case 3848 ok in the site job 121182816832; ui and ui-shard (1-4) jobs green"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-26T01:53:22Z

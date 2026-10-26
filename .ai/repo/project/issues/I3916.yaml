@@ -36,4 +36,23 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-22
-updated_at: 2026-10-22
+updated_at: 2026-10-25T22:29:27Z
+started_at: 2026-10-25T22:28:17Z
+started_event: sha256:920bb5f05a1b41c3f14d53971900084d97a784aa3a93dbb4e5e4b00747b9b3cb
+completed_at: 2026-10-25T22:29:27Z
+completed_event: sha256:80728fa6d0351c4914e0e1dfb9dff793564a14649fbd206c74b163dcefe21e42
+evidence:
+  - covers: homepage_supported_equals_evidence_page
+    type: test
+    command: "bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported 502_evidence_is_judged_at_the_presented_revision"
+    result: "tests: 544 and 502 passed, 0 failed (run 2026-10-25 on master 2efeacea031): the band's supported figure equals the count of the run the evidence page reads, and an overstated figure is refused"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T22:28:44Z
+  - covers: no_bare_zero
+    type: test
+    command: "bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported"
+    result: "tests: 544 and 502 passed, 0 failed (run 2026-10-25 on master 2efeacea031): with no recorded run the figure reads 'not yet measured', never a number"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T22:29:16Z

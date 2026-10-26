@@ -582,6 +582,12 @@ pub fn elect(repo: &Repository) -> Result<Role> {
                 file.write_all(text.as_bytes())
                     .map_err(|e| Error::io(&path, e))?;
                 hold(&path, &lease.token);
+                record_runtime(
+                    &path,
+                    &lease.token,
+                    crate::capability::builtin::server::ServerStanding::Starting,
+                    "this process took the lease and is loading the layer",
+                );
                 return Ok(Role::Server(lease));
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
@@ -618,9 +624,14 @@ pub fn elect(repo: &Repository) -> Result<Role> {
             Err(e) => return Err(Error::io(&path, e)),
         }
         if waited_since.elapsed() > timings().join_timeout {
+            // who holds the lease now, for the report at the bound (I3993)
+            let holder = held_by(&LeaseFile::read(&path));
+            let report = crate::mesh::waits::find("server.election.join")
+                .map(|w| format!(" ({})", w.reached(waited_since.elapsed(), &holder)))
+                .unwrap_or_default();
             return Err(Error::Lease {
                 reason: format!(
-                    "could not acquire or join the lease at {} within {} seconds",
+                    "could not acquire or join the lease at {} within {} seconds{report}",
                     path.display(),
                     timings().join_timeout.as_secs()
                 ),
@@ -640,6 +651,21 @@ enum Found {
     Stale(String),
     /// A lease without a URL, young enough that its owner may still be binding.
     Binding,
+}
+
+/// Who a lease file says holds the lease, in the words of a report: the server's pid and
+/// address, or what state the file is in.
+fn held_by(seen: &LeaseFile) -> String {
+    match seen {
+        LeaseFile::Absent => "nobody: the lease file was gone".into(),
+        LeaseFile::Empty => "a process that created the lease file and never wrote it".into(),
+        LeaseFile::Corrupt(reason) => format!("an unreadable lease file ({reason})"),
+        LeaseFile::Document(d) => format!(
+            "pid {} at {}",
+            d.pid,
+            d.url.as_deref().unwrap_or("no address yet (still binding)")
+        ),
+    }
 }
 
 /// What the running executable is, for the lease to record: the path it was started from
@@ -991,7 +1017,7 @@ fn take_over_with(
 /// is a holder that has been stopped (`SIGSTOP`, a debugger), and the change is then not
 /// made: a lease left in place is recovered by the next election, a lease removed or
 /// overwritten in error is not.
-const LOCK_PATIENCE: Duration = Duration::from_secs(2);
+pub(crate) const LOCK_PATIENCE: Duration = Duration::from_secs(2);
 
 /// The advisory lock every change to a lease file is made under: an exclusive `flock(2)` on
 /// `server.lock` beside it, held for as long as the value lives. The kernel releases it when
@@ -1086,6 +1112,52 @@ fn remove_if_held(path: &Path, token: &str) -> bool {
     holds(path, token) && fs::remove_file(path).is_ok()
 }
 
+/// Record a transition of this process's own runtime beside the lease at `path`, while the
+/// lease is still the one `token` names: the serving process is the one writer of its own
+/// `starting`, `ready` and `stopping` (I3179), and a process whose lease was taken over
+/// speaks for nobody. Written only when the state changes. Whether it wrote.
+fn record_runtime(
+    path: &Path,
+    token: &str,
+    state: crate::capability::builtin::server::ServerStanding,
+    reason: &str,
+) -> bool {
+    use crate::capability::builtin::server::{
+        record_transition, runtime_file_beside, RuntimeWriter,
+    };
+    if !holds(path, token) {
+        return false;
+    }
+    let Some(file) = runtime_file_beside(path) else {
+        return false;
+    };
+    record_transition(
+        &file,
+        state,
+        reason,
+        RuntimeWriter::Server,
+        Some(std::process::id()),
+    )
+    .inspect_err(|e| {
+        tracing::warn!(path = %file.display(), "could not record the runtime's transition: {e}");
+    })
+    .unwrap_or(false)
+}
+
+/// Record a transition of this process's own runtime, when it holds a lease: what the
+/// serving loop records when it is asked to stop, before it stops. Whether it wrote — `false`
+/// in a process that holds no lease, or one whose lease was taken over.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::ServerStanding;
+/// // a process that holds no lease records nothing
+/// assert!(!majordomus_cli::lease::record_own(ServerStanding::Stopping, "asked to stop"));
+/// ```
+pub fn record_own(state: crate::capability::builtin::server::ServerStanding, reason: &str) -> bool {
+    let holding = HOLDING.lock().ok().and_then(|h| h.clone());
+    holding.is_some_and(|(path, token)| record_runtime(&path, &token, state, reason))
+}
+
 /// A temporary file of one writer's own beside the lease: named for the token, so that two
 /// writers never write into, or rename, each other's half-written file.
 fn tmp_path(path: &Path, token: &str) -> PathBuf {
@@ -1149,6 +1221,12 @@ pub(crate) fn release_held() {
 /// test can show it without touching what a concurrent test's election recorded.
 fn release_record(record: Option<(PathBuf, String)>) {
     if let Some((path, token)) = record {
+        record_runtime(
+            &path,
+            &token,
+            crate::capability::builtin::server::ServerStanding::Stopping,
+            "asked to stop by a signal; the lease is released",
+        );
         remove_if_held(&path, &token);
         if let Ok(mut slot) = published().lock() {
             if slot.as_ref().is_some_and(|d| d.token == token) {
@@ -1561,6 +1639,12 @@ impl Lease {
         if let Ok(mut slot) = published().lock() {
             *slot = Some(document);
         }
+        record_runtime(
+            &self.path,
+            &self.token,
+            crate::capability::builtin::server::ServerStanding::Ready,
+            &format!("published {url}"),
+        );
         Ok(())
     }
 
@@ -1605,6 +1689,12 @@ impl Lease {
             *binding = false;
         }
         if !self.released {
+            record_runtime(
+                &self.path,
+                &self.token,
+                crate::capability::builtin::server::ServerStanding::Stopping,
+                "the lease is released",
+            );
             remove_if_held(&self.path, &self.token);
         }
         self.released = true;
@@ -1797,6 +1887,37 @@ mod tests {
             executable: Some(exe.clone()),
             version: Some(version.into()),
         }
+    }
+
+    #[test]
+    fn the_holder_named_at_the_join_bound_is_what_the_lease_file_says() {
+        assert_eq!(
+            held_by(&LeaseFile::Absent),
+            "nobody: the lease file was gone"
+        );
+        assert_eq!(
+            held_by(&LeaseFile::Empty),
+            "a process that created the lease file and never wrote it"
+        );
+        assert_eq!(
+            held_by(&LeaseFile::Corrupt("not JSON".into())),
+            "an unreadable lease file (not JSON)"
+        );
+        let exe = ExecutableIdentity {
+            path: "/bin/majordomus".into(),
+            mtime: 0,
+            size: 0,
+        };
+        let mut doc = lease_from(&exe, "1.0.0");
+        assert_eq!(
+            held_by(&LeaseFile::Document(doc.clone())),
+            "pid 1 at http://127.0.0.1:1"
+        );
+        doc.url = None;
+        assert_eq!(
+            held_by(&LeaseFile::Document(doc)),
+            "pid 1 at no address yet (still binding)"
+        );
     }
 
     #[test]

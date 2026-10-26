@@ -149,6 +149,26 @@ The offload is a shared resource, and the peer board and the mesh are how sessio
 - Never run `scripts/derive` on a host by hand while offloads run there. It takes neither the
   queue nor the offload lock.
 
+## Heavy work that stays on this machine: the machine slot
+
+What is not offloaded shares the machine through a counting slot (I4006). Rule
+`project.the-cooperation-model-is-the-owners-word` clause 7 allows at most five builders at
+once on one machine and none below 35 GiB free; the numbers are declared once, in the policy's
+`machine.heavy_work` (`slots`, `min_free_gib`, `wait_seconds`). `majordomus machine slot
+acquire --purpose <what>` takes a slot for the calling shell (or `--pid`), in arrival order:
+holders whose process is gone, proven by pid and process start time and never by a name, are
+reclaimed first; below the disk floor it is refused at once; with every slot held it waits at
+most `--wait` seconds (else the policy's `wait_seconds`), says on stderr what it waits on and
+who holds the slots, and then exits 75 with a refusal naming every holder. `machine slot
+status` lists holders and waiters with pid, purpose and age; a waiter's `waiting_on`
+(`machine.slot: 5 of 5 held`) is the reason a session reports while it waits. The slots live
+in `.machine.slots` beside the derive lock, or where `MAJORDOMUS_MACHINE_SLOTS` says. The cargo
+build path of `lib/rust_bin.sh` (`mj_cargo_bounded`, the explicit build of ADR 0222) asks for
+a slot before it starts cargo and gives it back when cargo ends; a refused build starts no
+cargo and names `MAJORDOMUS_MACHINE_SLOT=off`, the override for one build. A CI runner
+(`CI=true`) is one job's machine and takes no slot. The offload itself is unchanged: a derive
+sent to a host waits in that host's queue, not in this machine's slots. Case 4006 proves it.
+
 ## Tests
 
 | file | proves |

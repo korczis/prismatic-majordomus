@@ -153,7 +153,14 @@ impl BenchmarkCases for ServerStatusInput {
 }
 
 /// Where a checkout's server stands, decided from its lease, whether the server the lease
-/// names answers for that checkout, and whether what answers is this executable's code.
+/// names answers for that checkout, and whether what answers is this executable's code —
+/// and, refined by the readiness report, the mesh runtime and the last recorded transition,
+/// where its runtime stands (I3179).
+///
+/// The first five words are the lease's standing, decided by [`standing_of`], and they are
+/// what `standing` carries on every surface: shells compare them, so they never change. The
+/// other seven are the runtime's refinements, decided by [`runtime_of`] and carried by
+/// `runtime.state` alone; [`ServerStanding::refines`] names the lease word each refines.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::server::ServerStanding;
@@ -162,6 +169,9 @@ impl BenchmarkCases for ServerStatusInput {
 /// let words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();
 /// assert_eq!(words, ["absent", "starting", "ready", "outdated", "stale"]);
 /// assert_eq!(serde_json::from_str::<ServerStanding>("\"stale\"").unwrap(), ServerStanding::Stale);
+/// // the runtime's words, in the same snake case the JSON carries
+/// assert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), "mesh_attaching");
+/// assert_eq!(ServerStanding::MeshAttaching.as_str(), "mesh_attaching");
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -178,6 +188,25 @@ pub enum ServerStanding {
     Outdated,
     /// The lease names a server that does not answer, or is not a lease at all.
     Stale,
+    /// No lease yet, and the executable a server would run is being built: recorded by the
+    /// builder (I3180), and believed only while the process that recorded it is alive.
+    Building,
+    /// The server is ready, the repository declares its mesh enabled, and the server has not
+    /// yet decided whether the mesh runs.
+    MeshAttaching,
+    /// The server is ready, says so itself, and its mesh runs or is not declared.
+    Operational,
+    /// The server answers, current, but its own readiness report or its mesh says it is not
+    /// whole: it lost the lease, serves replaced code, read a degraded layer, or its declared
+    /// mesh is not running.
+    Degraded,
+    /// The process that holds the lease recorded that it is stopping, and it is still alive.
+    Stopping,
+    /// The server is gone after it recorded that it was stopping.
+    Stopped,
+    /// The server is gone without having recorded that it was stopping: its lease names a
+    /// process that no longer exists.
+    Failed,
 }
 
 impl ServerStanding {
@@ -196,6 +225,39 @@ impl ServerStanding {
             ServerStanding::Ready => "ready",
             ServerStanding::Outdated => "outdated",
             ServerStanding::Stale => "stale",
+            ServerStanding::Building => "building",
+            ServerStanding::MeshAttaching => "mesh_attaching",
+            ServerStanding::Operational => "operational",
+            ServerStanding::Degraded => "degraded",
+            ServerStanding::Stopping => "stopping",
+            ServerStanding::Stopped => "stopped",
+            ServerStanding::Failed => "failed",
+        }
+    }
+
+    /// The lease's word this state refines: itself for the five the lease decides, and for
+    /// a runtime state the word a reader holding only the lease would have said. A surface
+    /// that knows only the five words judges a runtime state by this.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::server::ServerStanding as S;
+    /// assert_eq!(S::Ready.refines(), S::Ready);
+    /// assert_eq!(S::Operational.refines(), S::Ready);
+    /// assert_eq!(S::Building.refines(), S::Starting);
+    /// assert_eq!(S::Stopped.refines(), S::Absent);
+    /// assert_eq!(S::Failed.refines(), S::Stale);
+    /// ```
+    pub fn refines(self) -> ServerStanding {
+        match self {
+            ServerStanding::Absent | ServerStanding::Stopped => ServerStanding::Absent,
+            ServerStanding::Starting | ServerStanding::Building => ServerStanding::Starting,
+            ServerStanding::Ready
+            | ServerStanding::MeshAttaching
+            | ServerStanding::Operational
+            | ServerStanding::Degraded
+            | ServerStanding::Stopping => ServerStanding::Ready,
+            ServerStanding::Outdated => ServerStanding::Outdated,
+            ServerStanding::Stale | ServerStanding::Failed => ServerStanding::Stale,
         }
     }
 }
@@ -273,7 +335,8 @@ impl LeaseView {
 /// ```
 /// use majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};
 /// let view = ServerView { worktree: "/r".into(), branch: Some("master".into()), checkout_id: "c".into(),
-///     primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };
+///     primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,
+///     runtime: None };
 /// let v = serde_json::to_value(&view).unwrap();
 /// assert_eq!(v["standing"], "absent");
 /// assert!(v.get("lease").is_none() && v.get("peers").is_none(), "what there is not is not written");
@@ -302,6 +365,10 @@ pub struct ServerView {
     /// How many peers the server reports attached, when it answers.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub peers: Option<usize>,
+    /// Where its runtime stands, and the last transition recorded for it (I3179). Absent
+    /// only from an answer that predates the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime: Option<RuntimeState>,
 }
 
 /// The shared server of this checkout and of every other checkout of the repository.
@@ -311,7 +378,7 @@ pub struct ServerView {
 /// let status = ServerStatus { checkout_id: "c".into(), git: None,
 ///     desired: Desired { host: "127.0.0.1".into(), port: 8741, version: "1.0.0".into(), executable: None },
 ///     this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),
-///     connections: None, trunk: None };
+///     connections: None, trunk: None, runtime: None };
 /// let text = serde_json::to_string(&status).unwrap();
 /// assert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);
 /// ```
@@ -344,6 +411,13 @@ pub struct ServerStatus {
     /// Absent only from an answer that predates the field.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trunk: Option<crate::worktree::TrunkDistance>,
+    /// Where this checkout's runtime stands — the lease's word refined by the server's
+    /// readiness report and mesh verdict and by the last recorded transition — with that
+    /// transition: when, why and who recorded it (I3179). `standing` keeps the lease's five
+    /// words; this is where the other seven appear. Absent only from an answer that predates
+    /// the field.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime: Option<RuntimeState>,
 }
 
 /// Decide where a server stands from what its lease file holds, how old the file is,
@@ -511,6 +585,455 @@ pub fn standing_at(
     (standing, reason, read)
 }
 
+// ---------------------------------------------------------------- the runtime state (I3179)
+
+/// Where a checkout's runtime record lives, under its local half: beside the lease's
+/// directory and never in it, because `.envrc` watches the lease file and a record written
+/// there would reload every shell of the checkout on every transition.
+pub const RUNTIME_PATH: &str = "state/runtime/state.json";
+
+/// The schema every runtime record carries.
+pub const RUNTIME_SCHEMA: &str = "majordomus-runtime-state/v1";
+
+/// The environment variable a caller of `server.status` sets to name itself as the reader
+/// that recorded a transition: `reap_orphans` is the one word it takes (`scripts/reap-orphans`
+/// asks `serve status` after a sweep); anything else, or nothing, is `server_status`.
+pub const RUNTIME_WRITER_ENV: &str = "MAJORDOMUS_RUNTIME_WRITER";
+
+/// Who recorded a transition. Each state has its one kind of writer: the serving process
+/// records its own `starting`, `ready` and `stopping`, because only it knows them; a reader
+/// that finds the server gone records `stopped` or `failed`, because a dead process records
+/// nothing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::RuntimeWriter;
+/// assert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), "serve_ensure");
+/// assert_eq!(RuntimeWriter::reader_named(Some("reap_orphans")), RuntimeWriter::ReapOrphans);
+/// assert_eq!(RuntimeWriter::reader_named(Some("server")), RuntimeWriter::ServerStatus);
+/// assert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RuntimeWriter {
+    /// The serving process, about itself.
+    Server,
+    /// `serve ensure`, which found the lease stale.
+    ServeEnsure,
+    /// `scripts/reap-orphans`, through `serve status` after its sweep.
+    ReapOrphans,
+    /// `server.status`, on any surface.
+    ServerStatus,
+}
+
+impl RuntimeWriter {
+    /// The reader `server.status` records as, from the value of [`RUNTIME_WRITER_ENV`]: only
+    /// a reader may be named this way, never the serving process.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::server::RuntimeWriter;
+    /// assert_eq!(RuntimeWriter::reader_named(Some("reap_orphans")), RuntimeWriter::ReapOrphans);
+    /// // the serving process is never a name a reader can take
+    /// assert_eq!(RuntimeWriter::reader_named(Some("server")), RuntimeWriter::ServerStatus);
+    /// ```
+    pub fn reader_named(word: Option<&str>) -> RuntimeWriter {
+        match word {
+            Some("reap_orphans") => RuntimeWriter::ReapOrphans,
+            _ => RuntimeWriter::ServerStatus,
+        }
+    }
+}
+
+/// The last transition of a checkout's runtime: what it became, from what, when, why, who
+/// recorded it and which process it is about. The record under [`RUNTIME_PATH`].
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};
+/// let t = RuntimeTransition::new(ServerStanding::Ready, None, "published", RuntimeWriter::Server, Some(7));
+/// let v = serde_json::to_value(&t).unwrap();
+/// assert_eq!(v["state"], "ready");
+/// assert_eq!(v["by"], "server");
+/// assert!(v.get("from").is_none(), "a first record came from nothing it can name");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RuntimeTransition {
+    /// [`RUNTIME_SCHEMA`].
+    pub schema: String,
+    /// What the runtime became.
+    pub state: ServerStanding,
+    /// What it was, by the previous record; absent for the first.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub from: Option<ServerStanding>,
+    /// When, RFC 3339.
+    pub at: String,
+    /// Why, in the recorder's words.
+    pub reason: String,
+    /// Who recorded it.
+    pub by: RuntimeWriter,
+    /// The server process the transition is about, when there is one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub pid: Option<u32>,
+}
+
+impl RuntimeTransition {
+    /// A transition to `state`, recorded now.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};
+    /// let t = RuntimeTransition::new(ServerStanding::Failed, Some(ServerStanding::Ready),
+    ///     "pid 9 is gone", RuntimeWriter::ServeEnsure, Some(9));
+    /// assert_eq!((t.state, t.from, t.pid), (ServerStanding::Failed, Some(ServerStanding::Ready), Some(9)));
+    /// assert!(t.at.ends_with('Z'), "RFC 3339, in UTC: {}", t.at);
+    /// ```
+    pub fn new(
+        state: ServerStanding,
+        from: Option<ServerStanding>,
+        reason: &str,
+        by: RuntimeWriter,
+        pid: Option<u32>,
+    ) -> Self {
+        RuntimeTransition {
+            schema: RUNTIME_SCHEMA.into(),
+            state,
+            from,
+            at: crate::peers::rfc3339(std::time::SystemTime::now()),
+            reason: reason.into(),
+            by,
+            pid,
+        }
+    }
+}
+
+/// Where a checkout's runtime stands now, and the last transition recorded for it.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};
+/// let r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };
+/// assert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ "state": "operational" }));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RuntimeState {
+    /// The state, derived on this reading from the lease, the server's readiness report (its
+    /// mesh verdict included) and the last recorded transition.
+    pub state: ServerStanding,
+    /// Why, when the state is not `operational`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The last transition recorded under [`RUNTIME_PATH`], when one ever was. The derived
+    /// state may be newer than it: only the writers named on [`RuntimeWriter`] record.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transition: Option<RuntimeTransition>,
+}
+
+/// Where the runtime record of the checkout at `root` lives, given its local half.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::runtime_file;
+/// use std::path::Path;
+/// assert_eq!(runtime_file(Path::new("/r"), ".ai/local"), Path::new("/r/.ai/local/state/runtime/state.json"));
+/// ```
+pub fn runtime_file(root: &Path, local_half: &str) -> PathBuf {
+    root.join(local_half).join(RUNTIME_PATH)
+}
+
+/// The runtime record beside a lease file, when `lease` is where a lease lives
+/// (`<local half>/state/mcp/server.json`); `None` for any other path, so that a lease kept
+/// somewhere unusual never has a record written outside its local half.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::runtime_file_beside;
+/// use std::path::Path;
+/// assert_eq!(
+///     runtime_file_beside(Path::new("/r/.ai/local/state/mcp/server.json")).unwrap(),
+///     Path::new("/r/.ai/local/state/runtime/state.json")
+/// );
+/// assert!(runtime_file_beside(Path::new("/tmp/server.json")).is_none());
+/// ```
+pub fn runtime_file_beside(lease: &Path) -> Option<PathBuf> {
+    if !lease.ends_with(lease::LEASE_PATH) {
+        return None;
+    }
+    let local = lease
+        .ancestors()
+        .nth(Path::new(lease::LEASE_PATH).components().count())?;
+    Some(local.join(RUNTIME_PATH))
+}
+
+/// The last transition recorded at `path`; `None` when nothing was recorded, or the file is
+/// not a record of this schema (a record nobody can read is no history).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::read_transition;
+/// assert!(read_transition(std::path::Path::new("/nonexistent/state.json")).is_none());
+/// ```
+pub fn read_transition(path: &Path) -> Option<RuntimeTransition> {
+    let text = std::fs::read_to_string(path).ok()?;
+    serde_json::from_str::<RuntimeTransition>(&text)
+        .ok()
+        .filter(|t| t.schema == RUNTIME_SCHEMA)
+}
+
+/// Record a transition to `to` at `path`, only when the state changes: an unchanged state
+/// writes nothing, so that a reader asking every second leaves the file alone. Returns
+/// whether it wrote. The write is a whole file renamed into place, so a reader sees the
+/// previous record or this one and never half of either.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{record_transition, read_transition, RuntimeWriter, ServerStanding};
+/// let dir = tempfile::tempdir().unwrap();
+/// let file = dir.path().join("state/runtime/state.json");
+/// assert!(record_transition(&file, ServerStanding::Starting, "took the lease", RuntimeWriter::Server, Some(7)).unwrap());
+/// assert!(!record_transition(&file, ServerStanding::Starting, "again", RuntimeWriter::Server, Some(7)).unwrap());
+/// assert!(record_transition(&file, ServerStanding::Ready, "published", RuntimeWriter::Server, Some(7)).unwrap());
+/// let t = read_transition(&file).unwrap();
+/// assert_eq!((t.state, t.from), (ServerStanding::Ready, Some(ServerStanding::Starting)));
+/// ```
+pub fn record_transition(
+    path: &Path,
+    to: ServerStanding,
+    reason: &str,
+    by: RuntimeWriter,
+    pid: Option<u32>,
+) -> std::io::Result<bool> {
+    let previous = read_transition(path);
+    if previous.as_ref().is_some_and(|p| p.state == to) {
+        return Ok(false);
+    }
+    let record = RuntimeTransition::new(to, previous.map(|p| p.state), reason, by, pid);
+    let text = serde_json::to_string_pretty(&record).map_err(std::io::Error::other)?;
+    if let Some(dir) = path.parent() {
+        std::fs::create_dir_all(dir)?;
+    }
+    let tmp = path.with_extension(format!("json.{}.tmp", std::process::id()));
+    std::fs::write(&tmp, text + "\n")
+        .and_then(|()| std::fs::rename(&tmp, path))
+        .inspect_err(|_| {
+            let _ = std::fs::remove_file(&tmp);
+        })?;
+    Ok(true)
+}
+
+/// Decide where a checkout's runtime stands, from the lease's standing ([`standing_of`]),
+/// the lease itself, the last recorded transition, the server's readiness report (with its
+/// mesh verdict) when it was asked, and whether a process id names a live process.
+///
+/// Pure, so that every state is a test:
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{runtime_of, ServerStanding as S};
+/// use majordomus_cli::lease::LeaseFile;
+/// // no lease and no history: absent, as the lease says
+/// assert_eq!(runtime_of(S::Absent, &LeaseFile::Absent, None, None, |_| false).0, S::Absent);
+/// // a lease that answers, with nobody asked about its readiness: ready, as the lease says
+/// assert_eq!(runtime_of(S::Ready, &LeaseFile::Absent, None, None, |_| true).0, S::Ready);
+/// ```
+pub fn runtime_of(
+    standing: ServerStanding,
+    lease: &LeaseFile,
+    recorded: Option<&RuntimeTransition>,
+    readiness: Option<&super::health::Readiness>,
+    alive: impl Fn(u32) -> bool,
+) -> (ServerStanding, Option<String>) {
+    let doc = lease.document();
+    let recorded_as = |state: ServerStanding| recorded.filter(|r| r.state == state);
+    // a lease holder that said it is stopping, and is still here
+    if let (Some(doc), Some(r)) = (doc, recorded_as(ServerStanding::Stopping)) {
+        if r.pid == Some(doc.pid) && alive(doc.pid) {
+            return (
+                ServerStanding::Stopping,
+                Some(format!(
+                    "pid {} recorded at {}: {}",
+                    doc.pid, r.at, r.reason
+                )),
+            );
+        }
+    }
+    match standing {
+        ServerStanding::Absent => match recorded.map(|r| r.state) {
+            Some(ServerStanding::Building) if recorded.and_then(|r| r.pid).is_none_or(&alive) => {
+                let r = recorded.expect("matched");
+                (
+                    ServerStanding::Building,
+                    Some(format!("recorded at {}: {}", r.at, r.reason)),
+                )
+            }
+            Some(ServerStanding::Stopping | ServerStanding::Stopped) => {
+                let r = recorded.expect("matched");
+                (
+                    ServerStanding::Stopped,
+                    Some(format!(
+                        "no lease; the server recorded stopping and left (last record at {}: {})",
+                        r.at, r.reason
+                    )),
+                )
+            }
+            Some(ServerStanding::Failed) => {
+                let r = recorded.expect("matched");
+                (
+                    ServerStanding::Failed,
+                    Some(format!("no lease; recorded at {}: {}", r.at, r.reason)),
+                )
+            }
+            _ => (ServerStanding::Absent, None),
+        },
+        ServerStanding::Stale => match doc {
+            Some(doc) if doc.pid != 0 && !alive(doc.pid) => {
+                let stopped = recorded_as(ServerStanding::Stopping)
+                    .or(recorded_as(ServerStanding::Stopped))
+                    .is_some_and(|r| r.pid.is_none_or(|p| p == doc.pid));
+                if stopped {
+                    (
+                        ServerStanding::Stopped,
+                        Some(format!(
+                            "pid {} is gone after it recorded stopping; its lease was left behind",
+                            doc.pid
+                        )),
+                    )
+                } else {
+                    (
+                        ServerStanding::Failed,
+                        Some(format!(
+                            "pid {} is gone and never recorded stopping: it ended without stopping in order",
+                            doc.pid
+                        )),
+                    )
+                }
+            }
+            _ => (ServerStanding::Stale, None),
+        },
+        ServerStanding::Ready => match readiness {
+            None => (ServerStanding::Ready, None),
+            Some(r) if !r.ready || r.layer != super::health::HealthStatus::Ok => (
+                ServerStanding::Degraded,
+                Some(if r.reasons.is_empty() {
+                    "the server's readiness report says it is not ready".to_string()
+                } else {
+                    r.reasons.join("; ")
+                }),
+            ),
+            Some(r) => match &r.mesh {
+                Some(m) if m.attaching => (ServerStanding::MeshAttaching, Some(m.detail.clone())),
+                Some(m) if !m.ok => (ServerStanding::Degraded, Some(m.detail.clone())),
+                _ => (ServerStanding::Operational, None),
+            },
+        },
+        other => (other, None),
+    }
+}
+
+/// The runtime state of the checkout at `worktree`, as a reader finds it, recording
+/// `stopped` or `failed` as `by` when the server is found gone and the record does not say
+/// so yet. The one place a reader writes, so that `server.status`, `serve ensure` and
+/// `scripts/reap-orphans` record the same thing.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{runtime_at, RuntimeWriter, ServerStanding};
+/// use majordomus_cli::lease::LeaseFile;
+/// let dir = tempfile::tempdir().unwrap();
+/// let r = runtime_at(dir.path(), ".ai/local", ServerStanding::Absent, &LeaseFile::Absent, None, RuntimeWriter::ServerStatus);
+/// assert_eq!(r.state, ServerStanding::Absent);
+/// assert!(r.transition.is_none() && !dir.path().join(".ai").exists(), "nothing found, nothing written");
+/// ```
+pub fn runtime_at(
+    worktree: &Path,
+    local_half: &str,
+    standing: ServerStanding,
+    lease: &LeaseFile,
+    readiness: Option<&super::health::Readiness>,
+    by: RuntimeWriter,
+) -> RuntimeState {
+    let file = runtime_file(worktree, local_half);
+    let RuntimeState {
+        state,
+        reason,
+        transition: recorded,
+    } = runtime_read(worktree, local_half, standing, lease, readiness);
+    let gone = matches!(state, ServerStanding::Stopped | ServerStanding::Failed);
+    let transition = if gone && recorded.as_ref().is_none_or(|r| r.state != state) {
+        let pid = lease
+            .document()
+            .map(|d| d.pid)
+            .or(recorded.as_ref().and_then(|r| r.pid));
+        let written =
+            record_transition(&file, state, reason.as_deref().unwrap_or_default(), by, pid);
+        if let Err(e) = &written {
+            tracing::warn!(path = %file.display(), "could not record the runtime's transition: {e}");
+        }
+        read_transition(&file).or(recorded)
+    } else {
+        recorded
+    };
+    RuntimeState {
+        state,
+        reason,
+        transition,
+    }
+}
+
+/// The runtime state of the checkout at `worktree`, read and never written: what a surface
+/// that is not one of the named readers shows (the briefing, `/ui`).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::server::{runtime_read, ServerStanding};
+/// use majordomus_cli::lease::LeaseFile;
+/// let dir = tempfile::tempdir().unwrap();
+/// let r = runtime_read(dir.path(), ".ai/local", ServerStanding::Absent, &LeaseFile::Absent, None);
+/// assert_eq!((r.state, r.transition), (ServerStanding::Absent, None));
+/// ```
+pub fn runtime_read(
+    worktree: &Path,
+    local_half: &str,
+    standing: ServerStanding,
+    lease: &LeaseFile,
+    readiness: Option<&super::health::Readiness>,
+) -> RuntimeState {
+    let recorded = read_transition(&runtime_file(worktree, local_half));
+    let (state, reason) = runtime_of(standing, lease, recorded.as_ref(), readiness, lease::alive);
+    RuntimeState {
+        state,
+        reason,
+        transition: recorded,
+    }
+}
+
+/// The readiness report a runtime is refined with, mesh verdict included: from memory for
+/// this process's own server, asked once of any other server that answers current, and not
+/// asked at all of one that does not. Every surface that shows the runtime asks through here,
+/// so that `server.status` and the briefing cannot refine one lease two ways.
+pub(crate) fn readiness_for(
+    ctx: &Context,
+    standing: ServerStanding,
+    read: &LeaseFile,
+) -> Option<super::health::Readiness> {
+    let doc = read.document();
+    match (standing, doc.and_then(|d| d.url.as_deref())) {
+        (ServerStanding::Ready, _) if doc.is_some_and(lease::is_own) => {
+            Some(super::health::readiness_report(ctx))
+        }
+        (ServerStanding::Ready, Some(url)) => readiness_of(ctx, url),
+        _ => None,
+    }
+}
+
+/// The readiness report of the server at `url`, asked over the route the registry declares
+/// for `health.ready`, bounded by the declared probe timeout. `None` when it does not answer
+/// with one.
+fn readiness_of(ctx: &Context, url: &str) -> Option<super::health::Readiness> {
+    let path = ctx
+        .registry
+        .get("health.ready")?
+        .exposure
+        .http
+        .as_ref()?
+        .path
+        .clone();
+    let reply =
+        crate::mcp::bridge::request(url, "GET", &path, &[], None, lease::timings().probe_timeout)
+            .ok()?;
+    (reply.status == 200)
+        .then(|| serde_json::from_str(&reply.body).ok())
+        .flatten()
+}
+
 /// How many peers the server at `url` reports, through the route the registry declares
 /// for `peers.list`. `None` when it does not answer or the route is not declared.
 fn peers_of(ctx: &Context, url: &str) -> Option<usize> {
@@ -614,23 +1137,32 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
     let git = repository::git_identity(&root);
     let linked = git.as_ref().is_some_and(|g| g.linked);
     let checkouts = checkouts_of(&root, git.as_ref(), input.checkouts);
+    let writer = RuntimeWriter::reader_named(std::env::var(RUNTIME_WRITER_ENV).ok().as_deref());
     let servers = each_checkout(&checkouts, |(path, branch, primary)| {
         let worktree = path.canonicalize().unwrap_or(path.clone());
         let (standing, reason, read) = standing_at(&worktree, &local_half);
+        let own = read.document().is_some_and(lease::is_own);
+        let url = read.document().and_then(|d| d.url.as_deref());
         let peers = match standing {
             // this process's own board is in memory; asking it over the wire would queue
             // behind this very request (lease::is_own)
-            ServerStanding::Ready | ServerStanding::Outdated
-                if read.document().is_some_and(lease::is_own) =>
-            {
+            ServerStanding::Ready | ServerStanding::Outdated if own => {
                 Some(ctx.peers.list().iter().filter(|p| p.attached).count())
             }
-            ServerStanding::Ready | ServerStanding::Outdated => read
-                .document()
-                .and_then(|d| d.url.as_deref())
-                .and_then(|url| peers_of(ctx, url)),
+            ServerStanding::Ready | ServerStanding::Outdated => {
+                url.and_then(|url| peers_of(ctx, url))
+            }
             _ => None,
         };
+        let readiness = readiness_for(ctx, standing, &read);
+        let runtime = runtime_at(
+            &worktree,
+            &local_half,
+            standing,
+            &read,
+            readiness.as_ref(),
+            writer,
+        );
         ServerView {
             checkout_id: repository::identity(&worktree),
             primary: *primary,
@@ -640,14 +1172,13 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
             reason,
             lease: read.document().map(LeaseView::of),
             peers,
+            runtime: Some(runtime),
             worktree,
         }
     });
-    let standing = servers
-        .iter()
-        .find(|s| s.this_checkout)
-        .map(|s| s.standing)
-        .unwrap_or(ServerStanding::Absent);
+    let this = servers.iter().find(|s| s.this_checkout);
+    let standing = this.map(|s| s.standing).unwrap_or(ServerStanding::Absent);
+    let runtime = this.and_then(|s| s.runtime.clone());
     Ok(ServerStatus {
         checkout_id: repository::identity(&root),
         git,
@@ -663,6 +1194,7 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         servers,
         connections: crate::http::deadline::counts(),
         trunk: Some(crate::worktree::trunk::measure_checkout(&root)),
+        runtime,
     })
 }
 
@@ -685,13 +1217,13 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "server",
         title: "Server",
-        description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",
+        description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
                 id: "server.status",
                 title: "The shared server, and every server of the repository",
-                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
+                description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes.",
                 input: ServerStatusInput,
                 output: ServerStatus,
                 stability: Stability::BehaviorallyVerified,
@@ -781,5 +1313,806 @@ mod tests {
             "the server is serving version 1.0.0-rc.1, older than this executable (1.0.0); \
              the next client or `serve ensure` of this executable replaces it"
         );
+    }
+
+    // ------------------------------------------------------------ the runtime state (I3179)
+
+    use super::super::health::{HealthStatus, MeshReadiness, Readiness};
+    use std::io::{Read as _, Write as _};
+
+    /// A pid no process has: far above any pid this machine hands out.
+    const DEAD: u32 = 9_999_999;
+
+    /// A lease document of process `pid`, published at `url`.
+    fn lease_of(pid: u32, url: Option<&str>) -> LeaseFile {
+        LeaseFile::Document(LeaseDocument {
+            schema: lease::SCHEMA.into(),
+            pid,
+            token: "t".into(),
+            root: "/r".into(),
+            url: url.map(str::to_string),
+            started_at: "2026-10-23T00:00:00Z".into(),
+            executable: None,
+            version: Some(crate::VERSION.into()),
+        })
+    }
+
+    /// A recorded transition to `state`, about `pid`.
+    fn recorded(state: ServerStanding, pid: Option<u32>) -> RuntimeTransition {
+        RuntimeTransition::new(state, None, "recorded", RuntimeWriter::Server, pid)
+    }
+
+    /// A readiness report: ready or not, the layer's word, the mesh.
+    fn readiness(ready: bool, layer: HealthStatus, mesh: Option<MeshReadiness>) -> Readiness {
+        Readiness {
+            ready,
+            version: crate::VERSION.into(),
+            commit: "c".into(),
+            dirty: None,
+            capabilities: 1,
+            objects: 1,
+            layer,
+            stale: None,
+            reasons: Vec::new(),
+            mesh,
+        }
+    }
+
+    fn mesh(attaching: bool, ok: bool) -> MeshReadiness {
+        MeshReadiness {
+            enabled: true,
+            attaching,
+            ok,
+            detail: "the mesh".into(),
+        }
+    }
+
+    /// Every pid is alive, or none is.
+    fn alive(_: u32) -> bool {
+        true
+    }
+    fn dead(_: u32) -> bool {
+        false
+    }
+
+    /// The five words the lease decides are the words they always were, in the JSON and on
+    /// every surface, and the seven the runtime adds are new words: no old word was renamed
+    /// or reused (I3179's acceptance: the old words are pinned).
+    #[test]
+    fn the_lease_words_are_pinned_and_the_runtime_words_are_new() {
+        let old = [
+            (ServerStanding::Absent, "absent"),
+            (ServerStanding::Starting, "starting"),
+            (ServerStanding::Ready, "ready"),
+            (ServerStanding::Outdated, "outdated"),
+            (ServerStanding::Stale, "stale"),
+        ];
+        for (state, word) in old {
+            assert_eq!(state.as_str(), word);
+            assert_eq!(serde_json::to_value(state).unwrap(), word);
+            assert_eq!(
+                serde_json::from_value::<ServerStanding>(word.into()).unwrap(),
+                state
+            );
+            assert_eq!(state.refines(), state, "a lease word refines itself");
+        }
+        let new = [
+            (
+                ServerStanding::Building,
+                "building",
+                ServerStanding::Starting,
+            ),
+            (
+                ServerStanding::MeshAttaching,
+                "mesh_attaching",
+                ServerStanding::Ready,
+            ),
+            (
+                ServerStanding::Operational,
+                "operational",
+                ServerStanding::Ready,
+            ),
+            (ServerStanding::Degraded, "degraded", ServerStanding::Ready),
+            (ServerStanding::Stopping, "stopping", ServerStanding::Ready),
+            (ServerStanding::Stopped, "stopped", ServerStanding::Absent),
+            (ServerStanding::Failed, "failed", ServerStanding::Stale),
+        ];
+        for (state, word, base) in new {
+            assert_eq!(state.as_str(), word);
+            assert_eq!(serde_json::to_value(state).unwrap(), word);
+            assert_eq!(
+                serde_json::from_value::<ServerStanding>(word.into()).unwrap(),
+                state
+            );
+            assert_eq!(state.refines(), base, "{word}");
+            assert!(old.iter().all(|(_, w)| *w != word));
+        }
+        // the lease's decision still says only its own five words
+        for file in [
+            LeaseFile::Absent,
+            LeaseFile::Empty,
+            LeaseFile::Corrupt("x".into()),
+        ] {
+            let (s, _) = standing_of(&file, Duration::ZERO, |_| true, crate::VERSION);
+            assert_eq!(s.refines(), s, "{s:?}");
+        }
+    }
+
+    /// One reading of [`runtime_of`]: what it is, what it decided, and what it must decide.
+    type Case = (
+        &'static str,
+        (ServerStanding, Option<String>),
+        ServerStanding,
+    );
+
+    /// Each of the twelve states is produced by one reading, and every branch of the
+    /// decision is reached (I3179's acceptance: each state has a test that produces it).
+    #[test]
+    fn every_runtime_state_is_produced_by_a_reading() {
+        use ServerStanding as S;
+        let up = lease_of(7, Some("http://127.0.0.1:1"));
+        let gone = lease_of(DEAD, Some("http://127.0.0.1:1"));
+        let ok = readiness(true, HealthStatus::Ok, None);
+        let not_ready = Readiness {
+            reasons: vec!["lease_lost: another".into()],
+            ..readiness(false, HealthStatus::Ok, None)
+        };
+        let cases: Vec<Case> = vec![
+            (
+                "no lease, no history",
+                runtime_of(S::Absent, &LeaseFile::Absent, None, None, alive),
+                S::Absent,
+            ),
+            (
+                "no lease, a live process recorded a live state",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Ready, Some(7))),
+                    None,
+                    alive,
+                ),
+                S::Absent,
+            ),
+            (
+                "binding",
+                runtime_of(S::Starting, &LeaseFile::Empty, None, None, alive),
+                S::Starting,
+            ),
+            (
+                "answers, readiness not asked",
+                runtime_of(S::Ready, &up, None, None, alive),
+                S::Ready,
+            ),
+            (
+                "answers from other code",
+                runtime_of(S::Outdated, &up, None, None, alive),
+                S::Outdated,
+            ),
+            (
+                "corrupt lease",
+                runtime_of(S::Stale, &LeaseFile::Corrupt("x".into()), None, None, dead),
+                S::Stale,
+            ),
+            (
+                "silent but alive",
+                runtime_of(S::Stale, &up, None, None, alive),
+                S::Stale,
+            ),
+            (
+                "pid 0 names nobody to judge",
+                runtime_of(S::Stale, &lease_of(0, None), None, None, dead),
+                S::Stale,
+            ),
+            (
+                "a build recorded by a live builder",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Building, Some(7))),
+                    None,
+                    alive,
+                ),
+                S::Building,
+            ),
+            (
+                "a build recorded by nobody in particular",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Building, None)),
+                    None,
+                    dead,
+                ),
+                S::Building,
+            ),
+            (
+                "a build whose builder is gone",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Building, Some(7))),
+                    None,
+                    dead,
+                ),
+                S::Absent,
+            ),
+            (
+                "mesh deciding",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    None,
+                    Some(&readiness(true, HealthStatus::Ok, Some(mesh(true, true)))),
+                    alive,
+                ),
+                S::MeshAttaching,
+            ),
+            (
+                "ready, no mesh",
+                runtime_of(S::Ready, &up, None, Some(&ok), alive),
+                S::Operational,
+            ),
+            (
+                "ready, mesh running",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    None,
+                    Some(&readiness(true, HealthStatus::Ok, Some(mesh(false, true)))),
+                    alive,
+                ),
+                S::Operational,
+            ),
+            (
+                "not ready, with reasons",
+                runtime_of(S::Ready, &up, None, Some(&not_ready), alive),
+                S::Degraded,
+            ),
+            (
+                "not ready, without reasons",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    None,
+                    Some(&readiness(false, HealthStatus::Ok, None)),
+                    alive,
+                ),
+                S::Degraded,
+            ),
+            (
+                "a degraded layer",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    None,
+                    Some(&readiness(true, HealthStatus::Warn, None)),
+                    alive,
+                ),
+                S::Degraded,
+            ),
+            (
+                "a declared mesh not running",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    None,
+                    Some(&readiness(true, HealthStatus::Ok, Some(mesh(false, false)))),
+                    alive,
+                ),
+                S::Degraded,
+            ),
+            (
+                "stopping, still here",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    Some(&recorded(S::Stopping, Some(7))),
+                    None,
+                    alive,
+                ),
+                S::Stopping,
+            ),
+            (
+                "another generation's stopping",
+                runtime_of(
+                    S::Ready,
+                    &up,
+                    Some(&recorded(S::Stopping, Some(8))),
+                    None,
+                    alive,
+                ),
+                S::Ready,
+            ),
+            (
+                "gone after stopping, lease left",
+                runtime_of(
+                    S::Stale,
+                    &gone,
+                    Some(&recorded(S::Stopping, Some(DEAD))),
+                    None,
+                    dead,
+                ),
+                S::Stopped,
+            ),
+            (
+                "gone, recorded stopped already",
+                runtime_of(
+                    S::Stale,
+                    &gone,
+                    Some(&recorded(S::Stopped, None)),
+                    None,
+                    dead,
+                ),
+                S::Stopped,
+            ),
+            (
+                "no lease after stopping",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Stopping, Some(7))),
+                    None,
+                    dead,
+                ),
+                S::Stopped,
+            ),
+            (
+                "no lease, stopped",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Stopped, Some(7))),
+                    None,
+                    dead,
+                ),
+                S::Stopped,
+            ),
+            (
+                "gone without stopping",
+                runtime_of(
+                    S::Stale,
+                    &gone,
+                    Some(&recorded(S::Ready, Some(DEAD))),
+                    None,
+                    dead,
+                ),
+                S::Failed,
+            ),
+            (
+                "gone, another pid's stopping",
+                runtime_of(
+                    S::Stale,
+                    &gone,
+                    Some(&recorded(S::Stopping, Some(8))),
+                    None,
+                    dead,
+                ),
+                S::Failed,
+            ),
+            (
+                "no lease, failed",
+                runtime_of(
+                    S::Absent,
+                    &LeaseFile::Absent,
+                    Some(&recorded(S::Failed, Some(7))),
+                    None,
+                    dead,
+                ),
+                S::Failed,
+            ),
+        ];
+        let mut produced = std::collections::BTreeSet::new();
+        for (what, (state, reason), want) in &cases {
+            assert_eq!(state, want, "{what}: {reason:?}");
+            let explained = !matches!(
+                state,
+                S::Absent | S::Starting | S::Ready | S::Outdated | S::Stale | S::Operational
+            );
+            assert_eq!(reason.is_some(), explained, "{what}: {reason:?}");
+            produced.insert(state.as_str());
+        }
+        assert_eq!(produced.len(), 12, "{produced:?}");
+        // the reasons say what they rest on
+        assert_eq!(cases[14].1 .1.as_deref(), Some("lease_lost: another"));
+        assert_eq!(
+            cases[15].1 .1.as_deref(),
+            Some("the server's readiness report says it is not ready")
+        );
+        assert!(cases[24]
+            .1
+             .1
+            .as_deref()
+            .unwrap()
+            .contains("never recorded stopping"));
+    }
+
+    /// One whole life, recorded by the writers the issue names: the serving process records
+    /// its own `starting`, `ready` and `stopping` through its lease; the reader finds it
+    /// gone and records `stopped`; a server that dies without stopping is found by a reader
+    /// that records `failed`; and nothing is ever written into the lease's own directory.
+    #[test]
+    fn test_runtime_state_transitions() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
+        std::fs::write(
+            dir.path().join(".ai/manifest.yaml"),
+            "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n",
+        )
+        .unwrap();
+        let repo = Repository::discover(dir.path()).unwrap();
+        let root = repo.root().to_path_buf();
+        let local = repo.local_path();
+        let file = runtime_file(&root, &local);
+        let state = || read_transition(&file).map(|t| (t.state, t.by, t.pid));
+        let me = Some(std::process::id());
+
+        let lease::Role::Server(held) = lease::elect(&repo).unwrap() else {
+            panic!("nobody serves a fresh directory")
+        };
+        assert_eq!(
+            state(),
+            Some((ServerStanding::Starting, RuntimeWriter::Server, me))
+        );
+        held.publish("http://127.0.0.1:1").unwrap();
+        let t = read_transition(&file).unwrap();
+        assert_eq!(
+            (t.state, t.from),
+            (ServerStanding::Ready, Some(ServerStanding::Starting))
+        );
+        assert_eq!(t.reason, "published http://127.0.0.1:1");
+        held.release();
+        assert_eq!(
+            state(),
+            Some((ServerStanding::Stopping, RuntimeWriter::Server, me))
+        );
+
+        // the lease is gone: a reader finds the server stopped, and records it as itself
+        let r = runtime_at(
+            &root,
+            &local,
+            ServerStanding::Absent,
+            &LeaseFile::Absent,
+            None,
+            RuntimeWriter::ServerStatus,
+        );
+        assert_eq!(r.state, ServerStanding::Stopped);
+        assert_eq!(
+            state(),
+            Some((ServerStanding::Stopped, RuntimeWriter::ServerStatus, me))
+        );
+
+        // a server that left its lease and its pid behind, never having said it stops
+        let lease_path = lease::lease_file(&root, &local);
+        let gone = lease_of(DEAD, Some("http://127.0.0.1:1"));
+        std::fs::write(
+            &lease_path,
+            serde_json::to_string(gone.document().unwrap()).unwrap(),
+        )
+        .unwrap();
+        record_transition(
+            &file,
+            ServerStanding::Ready,
+            "published",
+            RuntimeWriter::Server,
+            Some(DEAD),
+        )
+        .unwrap();
+        let r = runtime_at(
+            &root,
+            &local,
+            ServerStanding::Stale,
+            &gone,
+            None,
+            RuntimeWriter::ServeEnsure,
+        );
+        assert_eq!(r.state, ServerStanding::Failed);
+        let t = r.transition.expect("the reader recorded it");
+        assert_eq!(
+            (t.state, t.from, t.by, t.pid),
+            (
+                ServerStanding::Failed,
+                Some(ServerStanding::Ready),
+                RuntimeWriter::ServeEnsure,
+                Some(DEAD)
+            )
+        );
+
+        // the record lives beside the lease's directory, never in it (.envrc watches that)
+        assert!(file.starts_with(root.join(&local).join("state/runtime")));
+        let in_lease_dir: Vec<_> = std::fs::read_dir(lease_path.parent().unwrap())
+            .unwrap()
+            .filter_map(|e| e.ok().map(|e| e.file_name().to_string_lossy().into_owned()))
+            .collect();
+        assert!(
+            in_lease_dir.iter().all(|n| !n.contains("state")),
+            "{in_lease_dir:?}"
+        );
+    }
+
+    /// An unchanged state writes nothing: neither a writer recording the state it already
+    /// recorded nor a reader finding the same failure twice touches the file.
+    #[test]
+    fn an_unchanged_state_writes_nothing() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = runtime_file(dir.path(), ".ai/local");
+        assert!(record_transition(
+            &file,
+            ServerStanding::Failed,
+            "gone",
+            RuntimeWriter::ServerStatus,
+            Some(DEAD)
+        )
+        .unwrap());
+        let before = std::fs::read(&file).unwrap();
+        let modified = std::fs::metadata(&file).unwrap().modified().unwrap();
+        std::thread::sleep(Duration::from_millis(20));
+        assert!(!record_transition(
+            &file,
+            ServerStanding::Failed,
+            "gone again",
+            RuntimeWriter::ReapOrphans,
+            None
+        )
+        .unwrap());
+        let gone = lease_of(DEAD, Some("http://127.0.0.1:1"));
+        let r = runtime_at(
+            dir.path(),
+            ".ai/local",
+            ServerStanding::Stale,
+            &gone,
+            None,
+            RuntimeWriter::ServeEnsure,
+        );
+        assert_eq!(r.state, ServerStanding::Failed);
+        assert_eq!(std::fs::read(&file).unwrap(), before);
+        assert_eq!(
+            std::fs::metadata(&file).unwrap().modified().unwrap(),
+            modified
+        );
+        // a reader that derives a live state records nothing at all
+        let other = tempfile::tempdir().unwrap();
+        let r = runtime_at(
+            other.path(),
+            ".ai/local",
+            ServerStanding::Ready,
+            &lease_of(7, Some("http://x")),
+            Some(&readiness(true, HealthStatus::Ok, None)),
+            RuntimeWriter::ServerStatus,
+        );
+        assert_eq!(r.state, ServerStanding::Operational);
+        assert!(!runtime_file(other.path(), ".ai/local").exists());
+    }
+
+    /// The writers are named: a reader records only `stopped` and `failed`, as the reader it
+    /// is; `server.status` takes its name from the environment only for the reaper, never for
+    /// the serving process; the serving process records only while its lease is its own.
+    #[test]
+    fn each_transition_names_its_writer() {
+        assert_eq!(
+            RuntimeWriter::reader_named(Some("reap_orphans")),
+            RuntimeWriter::ReapOrphans
+        );
+        for word in [None, Some("server"), Some("serve_ensure"), Some("")] {
+            assert_eq!(
+                RuntimeWriter::reader_named(word),
+                RuntimeWriter::ServerStatus,
+                "{word:?}"
+            );
+        }
+        for by in [
+            RuntimeWriter::ServeEnsure,
+            RuntimeWriter::ReapOrphans,
+            RuntimeWriter::ServerStatus,
+        ] {
+            let dir = tempfile::tempdir().unwrap();
+            let gone = lease_of(DEAD, None);
+            let r = runtime_at(
+                dir.path(),
+                ".ai/local",
+                ServerStanding::Stale,
+                &gone,
+                None,
+                by,
+            );
+            assert_eq!(r.transition.map(|t| t.by), Some(by));
+        }
+    }
+
+    /// A record that cannot be written leaves the reading intact: the state is still said,
+    /// and no transition is claimed that was never recorded.
+    #[test]
+    fn a_record_that_cannot_be_written_is_reported_not_claimed() {
+        let dir = tempfile::tempdir().unwrap();
+        // a file where the record's directory would be
+        std::fs::create_dir_all(dir.path().join(".ai/local/state")).unwrap();
+        std::fs::write(
+            dir.path().join(".ai/local/state/runtime"),
+            "not a directory",
+        )
+        .unwrap();
+        let file = runtime_file(dir.path(), ".ai/local");
+        assert!(record_transition(
+            &file,
+            ServerStanding::Failed,
+            "gone",
+            RuntimeWriter::ServerStatus,
+            None
+        )
+        .is_err());
+        let r = runtime_at(
+            dir.path(),
+            ".ai/local",
+            ServerStanding::Stale,
+            &lease_of(DEAD, None),
+            None,
+            RuntimeWriter::ServerStatus,
+        );
+        assert_eq!(r.state, ServerStanding::Failed);
+        assert!(r.transition.is_none());
+        // a file of another schema is no record
+        let other = tempfile::tempdir().unwrap();
+        let path = other.path().join("state.json");
+        let mut foreign = serde_json::to_value(recorded(ServerStanding::Ready, None)).unwrap();
+        foreign["schema"] = "something-else/v1".into();
+        std::fs::write(&path, foreign.to_string()).unwrap();
+        assert!(read_transition(&path).is_none());
+        std::fs::write(&path, "not JSON").unwrap();
+        assert!(read_transition(&path).is_none());
+    }
+
+    /// A loopback HTTP server answering each request by its path; its URL.
+    fn serve_http(answer: impl Fn(&str) -> (u16, String) + Send + 'static) -> String {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a loopback port");
+        let url = format!("http://{}", listener.local_addr().expect("its address"));
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { continue };
+                let mut head = Vec::new();
+                let mut chunk = [0u8; 4096];
+                while !head.windows(4).any(|w| w == b"\r\n\r\n") {
+                    match stream.read(&mut chunk) {
+                        Ok(0) | Err(_) => break,
+                        Ok(n) => head.extend_from_slice(&chunk[..n]),
+                    }
+                }
+                let text = String::from_utf8_lossy(&head);
+                let path = text.split_whitespace().nth(1).unwrap_or("/").to_string();
+                let (status, body) = answer(&path);
+                let _ = write!(
+                    stream,
+                    "HTTP/1.1 {status} X\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+            }
+        });
+        url
+    }
+
+    /// `server.status` carries the runtime of the checkout and of each server: asked of
+    /// another process's server over its readiness route, and recorded as `failed` by the
+    /// reader when the lease names a process that is gone.
+    #[test]
+    fn server_status_carries_the_runtime_and_records_a_server_it_finds_gone() {
+        use crate::synthetic::{Shape, SyntheticRepository};
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let root = repo.root().canonicalize().unwrap();
+        let local = local_half(&root);
+        let lease_path = lease::lease_file(&root, &local);
+        std::fs::create_dir_all(lease_path.parent().unwrap()).unwrap();
+        let this = serde_json::json!({ "checkouts": "this" });
+
+        // nobody: absent, and nothing recorded
+        let v = ctx.execute("server.status", this.clone()).unwrap();
+        assert_eq!(v["standing"], "absent");
+        assert_eq!(v["runtime"]["state"], "absent");
+        assert_eq!(v["servers"][0]["runtime"]["state"], "absent");
+
+        // another live process's server that answers current and ready: operational
+        let id = repository::identity(&root);
+        let ready = serde_json::to_string(&readiness(true, HealthStatus::Ok, None)).unwrap();
+        let url = serve_http(move |path| match path {
+            "/" => (
+                200,
+                serde_json::json!({ "name": "majordomus", "repository_id": id }).to_string(),
+            ),
+            "/api/v1/ready" => (200, ready.clone()),
+            _ => (404, "{}".into()),
+        });
+        let live = lease_of(std::process::id(), Some(&url));
+        std::fs::write(
+            &lease_path,
+            serde_json::to_string(live.document().unwrap()).unwrap(),
+        )
+        .unwrap();
+        let v = ctx.execute("server.status", this.clone()).unwrap();
+        assert_eq!(v["standing"], "ready", "{v}");
+        assert_eq!(v["runtime"]["state"], "operational", "{v}");
+        assert!(
+            !runtime_file(&root, &local).exists(),
+            "a live state is not the reader's to record"
+        );
+        assert!(readiness_of(&ctx, &url).is_some());
+
+        // one whose readiness route does not answer is still ready, as the lease says
+        let silent = serve_http(|_| (500, "{}".into()));
+        assert!(readiness_of(&ctx, &silent).is_none());
+        assert!(readiness_of(&ctx, "http://127.0.0.1:1").is_none());
+
+        // a lease naming a process that is gone: failed, recorded by server.status
+        let gone = lease_of(DEAD, Some("http://127.0.0.1:1"));
+        std::fs::write(
+            &lease_path,
+            serde_json::to_string(gone.document().unwrap()).unwrap(),
+        )
+        .unwrap();
+        let v = ctx.execute("server.status", this).unwrap();
+        assert_eq!(v["standing"], "stale", "the lease's word is unchanged");
+        assert_eq!(v["runtime"]["state"], "failed");
+        assert_eq!(v["runtime"]["transition"]["by"], "server_status");
+        assert_eq!(
+            read_transition(&runtime_file(&root, &local)).map(|t| t.state),
+            Some(ServerStanding::Failed)
+        );
+    }
+
+    /// The serving process answers its own runtime from memory: its readiness report and its
+    /// mesh, never a request to itself; and the briefing shows the same state (I3179). The
+    /// address it publishes answers too, so that the reading holds even when another test of
+    /// this binary has marked the process's lease lost and it is asked over the wire instead.
+    #[test]
+    fn the_serving_process_answers_its_own_runtime_and_the_brief_shows_it() {
+        use crate::synthetic::{Shape, SyntheticRepository};
+        let repo = SyntheticRepository::new(Shape::default()).expect("a synthetic repository");
+        let ctx = repo.context().expect("a context");
+        let root = repo.root().canonicalize().unwrap();
+        let id = repository::identity(&root);
+        let ready = serde_json::to_string(&readiness(true, HealthStatus::Ok, None)).unwrap();
+        let url = serve_http(move |path| match path {
+            "/" => (
+                200,
+                serde_json::json!({ "name": "majordomus", "repository_id": id }).to_string(),
+            ),
+            "/api/v1/ready" => (200, ready.clone()),
+            _ => (404, "{}".into()),
+        });
+        let discovered = Repository::discover(&root).unwrap();
+        let lease::Role::Server(held) = lease::elect(&discovered).unwrap() else {
+            panic!("nobody serves a fresh synthetic repository")
+        };
+        held.publish(&url).unwrap();
+        let v = ctx
+            .execute("server.status", serde_json::json!({ "checkouts": "this" }))
+            .unwrap();
+        let state: ServerStanding = serde_json::from_value(v["runtime"]["state"].clone()).unwrap();
+        assert_eq!(v["standing"], "ready", "{v}");
+        assert_eq!(state.refines(), ServerStanding::Ready, "{v}");
+        assert_ne!(
+            state,
+            ServerStanding::Ready,
+            "the readiness report was read: {v}"
+        );
+        assert_eq!(
+            v["runtime"]["transition"]["state"], "ready",
+            "recorded by the server: {v}"
+        );
+        assert_eq!(v["runtime"]["transition"]["by"], "server");
+        let b = ctx
+            .execute(
+                "brief.session",
+                serde_json::json!({ "checkouts": "this", "local": true }),
+            )
+            .unwrap();
+        assert_eq!(b["runtime"]["state"], v["runtime"]["state"], "{b}");
+        assert!(
+            b["lines"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|l| l.as_str().is_some_and(|l| l.starts_with("runtime      "))),
+            "{b}"
+        );
+        held.release();
     }
 }

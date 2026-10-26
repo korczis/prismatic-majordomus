@@ -1,0 +1,38 @@
+id: I4205
+milestone: ci-critical-path
+title: A milestone's order is its own, and the shell and the executable order the roadmap alike
+slug: a-milestone-order-is-unique
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "plan validate refuses a second milestone on a non-zero order already held (milestone_duplicate_order, FAIL, naming the first holder) in plan.rs and lib/project.awk alike; lib/plan.sh orders the JSON roadmap by rank, then order, then id, as plan.rs does; and the four orders shared on master move to free ones."
+why: "Train 7's case 99_plan_capabilities went red with 'the shell and the executable disagree on this repository: the roadmap' because two milestones held order 512: lib/plan.sh mj_plan_roadmap sorted by (rank, order) with an exchange sort, plan.rs by (rank, order, id), so the tie fell differently. Orders 95, 147, 181 and 182 were shared too and agreed only by luck (80a7's finding). This slice supersedes I4228, which the landing seat retired unused in its favour; its order moves are taken from 80a7's patch."
+current_state: "Nothing refuses two milestones on one order; derived-data-integrity and work-graph-github hold 95, browser-compute and idd-workspace 147, builds-reuse-the-mesh-cache and finished-work-reaches-a-verified-release 181, ordinary-commands-never-build and the-ui-works-on-a-phone 182; the shell JSON roadmap breaks ties by exchange order."
+desired_state: "No two milestones share a non-zero order (derived-data-integrity 98, browser-compute 148, builds-reuse-the-mesh-cache 197, ordinary-commands-never-build 198, each keeping the earlier-created record at the old value); plan validate refuses a new duplicate in both readers with one message; order 0, a record's default, is never compared; the shell JSON roadmap ties break by id."
+scope:
+  - .ai/repo/project/issues/I4205.yaml
+  - .ai/repo/project/milestones/browser-compute.yaml
+  - .ai/repo/project/milestones/builds-reuse-the-mesh-cache.yaml
+  - .ai/repo/project/milestones/derived-data-integrity.yaml
+  - .ai/repo/project/milestones/ordinary-commands-never-build.yaml
+  - apps/majordomus-cli/src/plan.rs
+  - lib/project.awk
+  - lib/plan.sh
+  - docs/ROADMAP.md
+  - test/cases/48_roadmap_graph.sh
+non_scope:
+  - "Renumbering milestones whose order is unique"
+  - "What rank, the dependency layering, decides"
+depends_on: []
+acceptance_criteria:
+  - "Case 48: two milestones on order 777 fail plan validate with milestone_duplicate_order naming the first; two on order 0 pass"
+  - "plan.rs unit test two_milestones_on_one_order_are_refused holds the same message"
+  - "Case 99: the shell and the executable agree on this repository's roadmap"
+validation:
+  - "bash test/run.sh 48_roadmap_graph 99_plan_capabilities"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- plan::"
+evidence_required:
+  - suite
+created_at: 2026-10-25
+updated_at: 2026-10-25

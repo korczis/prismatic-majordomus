@@ -67,6 +67,7 @@ pub mod root;
 pub mod state;
 pub mod tailscale;
 pub mod trust;
+pub mod waits;
 
 #[cfg(test)]
 pub(crate) mod testing;

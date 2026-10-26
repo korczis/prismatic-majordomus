@@ -293,6 +293,24 @@ Three layers, deliberately separate:
   (`learned_at`): a session silent before the restart reads as progressing for at most its
   ttl plus the expiry after it. The key is left out of the repository's declaration on
   purpose: an older executable refuses a key it does not know.
+- **A session waiting on a person says so** (I3992). A beat whose phase opens with `blocked:`
+  — `blocked: permission dialog (Claude needs your permission to use Bash)`, `blocked:
+  awaiting input` — marks the session as waiting on a person, so that peers and the landing
+  seat see it within seconds, and why, instead of reading a ttl's silence. A mark is
+  information and never progress: it moves no session's progress clock on any runtime that
+  knows marks, so a session that worked and then only waits is suspended by its ttl exactly
+  as before, however often it says so, and a session that only ever waited starts no clock
+  and keeps the stream rule; it re-arms and releases nothing. A mark is written at once —
+  inside the interval, and for a session holding no exclusive claim too — and saying the same
+  wait again writes nothing. The first beat after it that is not a wait is the session's next
+  real work: it clears the mark at once, is progress, and progress keeps its interval after
+  it. Marks and their clears are counted in a window of their own, of the same size as the
+  progress beats', so that a session whose turns end often cannot spend the beats that keep
+  other sessions' claims excluding; past it a mark is withheld, logged, and still shown by
+  the runtime that holds it. `mesh.peers` carries the reason as `blocked` beside the
+  `phase`, and `mesh peers`, the Cockpit and `/ui/mesh` show it with the session. A runtime
+  older than marks reads a mark as a phase like any other, so on it a mark keeps the claims
+  of a session that is already waiting for up to one more ttl.
 
 ## Events, ordering and deduplication
 
@@ -622,6 +640,31 @@ reads its hooks when it starts:
 The hook asks `bin/majordomus-cli` and never builds it: where that executable is absent, every
 edit is let through.
 
+A provider session that waits on a person says so on the mesh (I3992). The hook
+`.claude/hooks/majordomus-session-wait` hands each payload to `majordomus mesh beat --hook
+claude-code`, which reads the session (`claude-code-<session id>`, the one the start event
+opened) and the event out of it and beats for it on this checkout's ready server: a permission
+dialog, an MCP server's question or an idle prompt (`Notification`) and the end of a turn
+(`Stop`) mark it `blocked: …` with the reason, and its next prompt (`UserPromptSubmit`) or tool
+call (`PreToolUse`) is real work, which clears the mark. Since a provider session beats on its
+tool calls, an exclusive claim held under its own id lives by its progress like a board
+session's (I3990). The command builds no index — it runs before every tool call, in about
+twenty milliseconds — prints nothing and exits 0 whatever happens: no payload, an event that is
+no beat, no executable, no server, a refusal. Like the edit guard it is not written by
+`capture install` and not wired in this repository's `.claude/settings.json` yet; a person
+wires it by hand, as above, and starts a new session:
+
+```json
+"Notification": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"Stop": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ],
+"PreToolUse": [ { "matcher": "", "hooks": [ { "type": "command",
+  "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/majordomus-session-wait", "timeout": 15 } ] } ]
+```
+
+and the same handler beside `majordomus-capture` in the existing `UserPromptSubmit` group.
+
 What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
 a context revision identifier. Context bodies are not replicated; a handover is the
 referenced artifact a peer materialises.
@@ -630,7 +673,7 @@ referenced artifact a peer materialises.
 
 | event | what each runtime does | what converges |
 |---|---|---|
-| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no `session_beat` is written; once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
+| a session's worker waits on a permission dialog, hangs or crashes while its server runs | the server keeps beating, and the bridge keeps pinging; neither is progress, so no progress beat is written — where the provider's wait hook is wired, the dialog writes a `blocked: permission dialog` mark at once, which every peer sees and which is not progress either (I3992); once its last beat is older than `session_ttl_seconds` on the holder's runtime (and the ttl and the expiry on every other), its exclusive claims read `suspended` and refuse nobody; its session and its advisory claims are untouched | the scope is admitted to the next claimant everywhere; when the worker works again its next beat makes the claim hold again — or, when another session was admitted over it meanwhile, releases it so the holder claims again through admission; no take-over and no fencing in this slice (I3990; the epoch is I3174) |
 | a peer's process is killed | its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire | on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired |
 | the network partitions | each side expires the other's streams and may claim what the other held | on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree |
 | a peer restarts while linked | the answerer refuses the old link id as `unknown_link`; the dialer says hello again | the table row is kept, `restarts` counts |
@@ -646,6 +689,44 @@ appended to the journal file and its data synced before the answer, `memory` whe
 has no file by configuration, and `not_durable` when the write failed. "Synced" is the
 operating system's data sync of the journal file (`fdatasync` on Linux, `fsync` on macOS, which
 does not flush the drive's own cache), not a promise about the storage under it.
+
+### Every wait on a peer is bounded
+
+Nothing the executable does waits on a stuck peer for longer than a declared bound (I3993). The
+waits are listed once, in `apps/majordomus-cli/src/mesh/waits.rs` (`PEER_WAITS`): each with
+what it waits for, its bound — a declared key and its default, a constant of the executable, or
+no wait because the call answers at once — and where it goes when the bound is reached. When a
+wait reaches its bound it says `peer wait <id> reached its bound after <n> s waiting for <what>,
+held by <whom>; <routing>: <what happens>`. `mesh doctor`'s `peer_waits` check fails for a wait
+that nothing bounds, which a declaration can cause: `cooperation.session_ttl_seconds: 0` turns
+the progress rule off, and a claim held by a session that does nothing then shuts everybody
+out for as long as its runtime beats. Each entry names the source line it is recognised by,
+and the unit tests fail when that line is gone. The waits of the shell scripts are bounded by
+their callers and by `scripts/liveness-check`, not here.
+
+| wait | waits for | bound (default) | at the bound |
+|---|---|---|---|
+| `server.election.busy` | the server the lease names, alive but not answering | `server.busy_grace_seconds` (10 s) | take over the lease |
+| `server.election.join` | the lease to be joined or taken | `server.join_timeout_seconds` (20 s) | serve alone; the error names the lease and its holder |
+| `server.lease.change` | another process's change to the lease file | `lease::LOCK_PATIENCE` (2 s) | the change is not made; the next election recovers |
+| `server.bridge.request` | the shared server's answer to an MCP request | `mcp::bridge::REQUEST_TIMEOUT` (60 s) | fail over: elect again, serve or attach |
+| `server.ensure` | a starting server to become ready | `serve ensure --wait` (20 s) | report the standing found |
+| `server.stop` | a signalled server to release its lease and exit | `serve stop --wait` (10 s) | report the pid that would not stop |
+| `mesh.link.request` | another runtime's answer to a hello or a sync | `mesh::link::REQUEST_TIMEOUT` (5 s) | the round fails; a silent runtime expires |
+| `mesh.rendezvous.request` | a hub's answer to a registration | `mesh::rendezvous::REQUEST_TIMEOUT` (5 s) | back off; other endpoints go on |
+| `mesh.runtime.expiry` | a linked runtime that stopped beating | `cooperation.expiry_seconds` (30 s) | expired: its sessions end, its claims stop excluding |
+| `mesh.session.progress` | a claiming session that makes no progress | `cooperation.session_ttl_seconds` (600 s; 0 is unbounded) | its exclusive claims are suspended; the next claimant is admitted |
+| `mesh.claim.admission` | a scope another session holds | no wait | refused at once naming the claims met |
+| `mesh.review.answer` | a reviewer's answer | no wait | the request returns; open reads open, never agreed |
+| `mesh.handover.consume` | another session to take a handover | no wait | publishing returns; unconsumed reads published |
+| `mesh.cli.request` | the server's answer to a mesh command | `commands::mesh::REQUEST_TIMEOUT` (5 s) | report the server and route |
+| `mesh.verify.round` | a live round through the server | `commands::mesh::VERIFY_TIMEOUT` (60 s) | report the server |
+| `integration.lease` | the integration lease another executor holds | no wait | refused at once naming the holder (I3991) |
+| `integration.claim.request` | the server's answer to the integration claim | `integration::exclusive::TIMEOUT` (10 s) | the executor stops naming the server |
+| `offload.queue` | an offload host's derive lock | `queue.wait_max_seconds` (14400 s) | exit 75 naming the host, the lock's holders and the waiters ahead |
+| `offload.host.connect` | an offload host's ssh connection | ssh `ConnectTimeout` (8 s) | exit 12 naming the host |
+| `worktree.lock` | the worktree lock another session holds | `worktree::lock::WAIT` (20 s) | refused naming the lock and its holder |
+| `monitor.until` | a signal another session produces (`--until`, `--count`) | `monitor --timeout` (4 h) | exit 10 naming the signal waited for |
 
 ## Security model
 
@@ -792,6 +873,37 @@ The launchd agent of the same shape — `~/Library/LaunchAgents/dev.majordomus.h
 `RunAtLoad`, `KeepAlive` and those arguments — is the operator's to install, and an installer
 that writes either unit is still owed as a typed capability (ADR 0059).
 
+**The jetson hub.** jetson (`9d652b2c`: aarch64, Ubuntu 18.04, glibc 2.27) runs its hub as the
+systemd user unit `majordomus-hub.service`: `~/.local/bin/majordomus serve --repo
+~/dev/prismatic-majordomus-hub --host 0.0.0.0 --port 8791 --idle 0`, `Restart=always`. Two
+facts of that machine decide how it is upgraded. Its glibc is older than the
+`aarch64-unknown-linux-gnu` archive needs — the 1.0.0-alpha.5 executable asks for `GLIBC_2.32`
+and stops before it starts — while the installer picks the gnu archive on any glibc machine; so
+jetson runs the `aarch64-unknown-linux-musl` archive, verified against its digest, unpacked
+beside the older trees under `~/.local/share/majordomus/versions/`, with both launchers in
+`~/.local/bin` pointed at it. And an executable refuses a manifest newer than itself
+(1.0.0-alpha.5 against the trunk of 2026-10-25: `unknown key(s): lifecycle`), so a hub's
+checkout is never ahead of the executable that serves it: detached at the release's tag, which
+is the trunk when the release was cut from it. A hub left behind falls a protocol behind and
+links with nobody: on 2026-10-25 jetson served 0.26.0, mesh protocol 1, while every MacBook spoke
+protocol 2, and every other machine on its board read `expired`. That day every node and hub
+moved to 1.0.0-alpha.8, cut from the trunk at `2efeacea031`, and every hub checkout to that
+commit; the site published no `releases/v1.0.0-alpha.8.json` until later, so the archives were
+taken from the GitHub release and verified against its digests. jetson's `mesh doctor` held every
+check, and all four hubs listed all five machines live.
+
+jetson also serves a build-cache store (ADR 0157): MinIO on `100.92.246.32:9000`, the systemd
+unit `majordomus-build-cache.service`, bucket `majordomus-build-cache` with a 200 GiB hard quota,
+one client identity under the policy `mj-build-cache-rw` (object read, write and delete in that
+bucket, listing it), and the port admitted from loopback, the LAN and the tailnet only. Its node
+file declares the store under `provider`, and from 1.0.0-alpha.8 its runtime publishes the signed
+offer (`mesh state` reads it under `build_cache`, healthy, with its headroom); a client that
+also names it under `known` in its own node file, with the node id
+`9d652b2c7d06b12bfc5c3f8325e6618c`, still finds it when no runtime is reachable. Each client
+holds the identity in its credential file. On 2026-10-25 a MacBook so configured selected it,
+wrote a 15 KiB entry under `rust/aarch64-apple-darwin/`, and a second compile with an empty disk
+level hit it in 94 ms and backfilled the disk.
+
 **Hubs follow the release (ADR 0161).** A hub is a node like any other: with `follow: stable`
 it keeps its installed Majordomus at the version `releases/latest.json` names, restarts onto it
 under its service manager when no session is attached or after a bounded grace, checks its
@@ -873,9 +985,17 @@ answer names the one that did not when it is left out:
 
 The variables are `SCCACHE_MULTILEVEL_CHAIN=disk,s3`, `SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0`,
 `SCCACHE_BUCKET`, `SCCACHE_ENDPOINT`, `SCCACHE_REGION`, `SCCACHE_S3_USE_SSL`,
-`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>` and
-`AWS_PROFILE=mesh-build-cache`. A key is never exported: the environment of every compiler and
-build script would carry it, so only the credential file's path is named.
+`SCCACHE_S3_KEY_PREFIX=rust/<rustc host triple>/`, `AWS_SHARED_CREDENTIALS_FILE=<path>`,
+`AWS_PROFILE=mesh-build-cache` and `SCCACHE_DIR`. A key is never exported: the environment of
+every compiler and build script would carry it, so only the credential file's path is named.
+
+`SCCACHE_DIR` is the disk level: its value when the environment sets it, else the directory
+sccache takes by itself (`~/Library/Caches/Mozilla.sccache` on macOS,
+`${XDG_CACHE_HOME:-$HOME/.cache}/sccache` elsewhere), so the chain keeps what the local cache
+holds. It is named because sccache 0.17.0 and 0.18.0 refuse to start a chain whose `disk` level
+has none ("Disk cache specified in levels but not configured"). Until 2026-10-25 the variables
+left it out, and on every node without `SCCACHE_DIR` set, `sccache-mesh --start-only` answered
+`local-only: sccache did not start with the store`, so no build went through the store.
 
 `share/libexec/sccache-mesh` is the `RUSTC_WRAPPER` that uses it: when no sccache server listens
 on `SCCACHE_SERVER_PORT` (default 4226) it evaluates the script, and then runs sccache with its

@@ -133,6 +133,8 @@ pub enum Command {
     Knowledge(KnowledgeArgs),
     /// Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
     Continuity(ContinuityArgs),
+    /// What one machine admits at once: a counting slot for heavy work, held to the machine limits of rule project.the-cooperation-model-is-the-owners-word (the policy's machine.heavy_work) — take one for a process, give it back, and see who holds and who waits
+    Machine(MachineArgs),
 }
 
 #[derive(Debug, Args)]
@@ -1384,6 +1386,11 @@ pub struct MeshReleaseArgs {
 /// suspended, refusing nobody, once no beat arrives within the declared progress ttl — so a
 /// lander waiting on a CI run beats with `--phase "waiting on CI run 123"` while it waits.
 ///
+/// `--hook <provider>` is what a provider's hook runs instead (I3992): the session and the
+/// phase are read from the hook payload on stdin — a permission dialog or the end of a turn
+/// marks the session `blocked: …`, a prompt or a tool call clears it — and the command
+/// prints nothing and exits 0 whatever happens, because a hook must never stop the session.
+///
 /// ```
 /// use clap::Parser;
 /// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshBeatArgs};
@@ -1392,23 +1399,33 @@ pub struct MeshReleaseArgs {
 ///     "--phase", "waiting on CI", "--pid", "4242"]).unwrap();
 /// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
 /// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
-/// assert_eq!(beat.session, "lander");
+/// assert_eq!(beat.session.as_deref(), Some("lander"));
 /// assert_eq!(beat.phase.as_deref(), Some("waiting on CI"));
 /// assert_eq!(beat.pid, Some(4242));
+/// assert_eq!(beat.hook, None);
 ///
-/// // a beat speaks for a named session
+/// // a beat speaks for a named session, or for the one a hook payload names
 /// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat"]).is_err());
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "beat", "--hook", "claude-code"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
+/// assert_eq!((beat.hook.as_deref(), beat.session), (Some("claude-code"), None));
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat", "--hook", "claude-code",
+///     "--session", "lander"]).is_err(), "the payload names the session");
 /// ```
 pub struct MeshBeatArgs {
     /// The session making progress, as it was claimed under
-    #[arg(long)]
-    pub session: String,
-    /// What it is doing, one line: `waiting on CI run 123`
+    #[arg(long, required_unless_present = "hook")]
+    pub session: Option<String>,
+    /// What it is doing, one line: `waiting on CI run 123`; `blocked: <why>` says it waits on a person
     #[arg(long)]
     pub phase: Option<String>,
     /// The running process of this machine the beat speaks for
     #[arg(long)]
     pub pid: Option<u32>,
+    /// Read the session and the phase from this provider's hook payload on stdin (`claude-code`); prints nothing, exits 0
+    #[arg(long, value_name = "PROVIDER", conflicts_with_all = ["session", "phase", "pid"])]
+    pub hook: Option<String>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1920,7 +1937,7 @@ pub struct MonitorArgs {
     /// Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed)
     #[arg(long)]
     pub until: Option<String>,
-    /// Give up following after this long, exiting 10: seconds, or a number with s, m, h or d
+    /// Give up following after this long, exiting 10: seconds, or a number with s, m, h or d; with --until or --count and no --timeout, 4h (the monitor.until peer wait)
     #[arg(long, value_parser = parse_duration)]
     pub timeout: Option<u64>,
     /// Seconds between two asks while following
@@ -3536,6 +3553,117 @@ pub enum KnowledgeCommand {
     },
     /// Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness
     Status,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus machine`. The output shape is global, and the group runs nothing of its own.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineArgs, MachineCommand, OutputFormat, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "machine", "slot", "acquire", "--purpose", "cargo build", "--wait", "60",
+/// ])
+/// .unwrap();
+/// let Command::Machine(args) = cli.command else { panic!("not the machine command") };
+/// let args: MachineArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Text), "lines for a person unless asked");
+/// let MachineCommand::Slot(slot) = args.command;
+/// let SlotCommand::Acquire { pid, purpose, wait, .. } = slot.command else { panic!("acquire") };
+/// assert_eq!((pid, purpose.as_str(), wait), (None, "cargo build", Some(60)));
+/// assert!(Cli::try_parse_from(["majordomus", "machine"]).is_err(), "a subcommand is required");
+/// ```
+pub struct MachineArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `slot`.
+    pub command: MachineCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus machine`: what this one machine admits at once. Today that
+/// is the counting slot for heavy work; the group runs nothing of its own.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "machine", "slot", "status"]);
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let MachineCommand::Slot(slot) = args.command;
+/// assert!(matches!(slot.command, SlotCommand::Status { volume: None }));
+/// ```
+pub enum MachineCommand {
+    /// The machine's counting slot for heavy work: acquire, release, status
+    Slot(SlotArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus machine slot`: the counting slot itself, taken, given back and listed through
+/// the capabilities `machine.slot.acquire`, `machine.slot.release` and `machine.slot.status`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand, SlotArgs, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "machine", "slot", "release", "--pid", "42"]);
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let MachineCommand::Slot(slot) = args.command;
+/// let slot: SlotArgs = slot;
+/// assert!(matches!(slot.command, SlotCommand::Release { pid: Some(42) }));
+/// ```
+pub struct SlotArgs {
+    #[command(subcommand)]
+    /// `status`, `acquire` or `release`.
+    pub command: SlotCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The command line of `machine.slot.status`, `machine.slot.acquire` and
+/// `machine.slot.release`. A pid left out is this command's parent: the shell that runs it,
+/// which is the process that does the work.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, MachineCommand, SlotCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "machine", "slot", "acquire", "--purpose", "x", "--pid", "7"]);
+/// let Command::Machine(args) = cli.command else { panic!("machine") };
+/// let MachineCommand::Slot(slot) = args.command;
+/// assert!(matches!(slot.command, SlotCommand::Acquire { pid: Some(7), .. }));
+/// ```
+pub enum SlotCommand {
+    /// Who holds the machine's slots and who waits: pid, purpose, age, liveness, the limits and the free disk
+    Status {
+        /// A path the work writes to, whose volume's free space is measured (default: the slot directory's)
+        #[arg(long, value_name = "PATH")]
+        volume: Option<PathBuf>,
+    },
+    /// Take a slot for a running process, waiting in turn up to the bound; exit 75 with every holder named when refused (slots full past the wait, or below the disk floor)
+    Acquire {
+        /// What the holder is about to do; every waiter and every refusal names it
+        #[arg(long)]
+        purpose: String,
+        /// The process that holds the slot (default: this command's parent, the shell that runs it)
+        #[arg(long)]
+        pid: Option<u32>,
+        /// Seconds to wait for a slot (default: the policy's machine.heavy_work.wait_seconds, else none)
+        #[arg(long, value_name = "SECONDS")]
+        wait: Option<u64>,
+        /// A path the work writes to, whose volume the disk floor is judged on (default: the slot directory's)
+        #[arg(long, value_name = "PATH")]
+        volume: Option<PathBuf>,
+    },
+    /// Give back the slot a process holds, and withdraw it from the queue
+    Release {
+        /// The process whose slot is given back (default: this command's parent)
+        #[arg(long)]
+        pid: Option<u32>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -6016,6 +6144,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["layout", "check", "--format", "json"],
             setup: &[],
             expect: Expect::StdoutContains(&["\"checked\"", "\"findings\"", "\"passes\""]),
+        }],
+    },
+    CommandExamples {
+        command: "machine slot status",
+        examples: &[ExampleDoc {
+            id: "machine-slot-status",
+            title: "Who holds the machine's slots, and who waits",
+            description: "The limits and where they are declared, the free disk, every holder with its pid, age, liveness and purpose, and every waiter with what it waits on. This repository's policy declares no `machine.heavy_work`, so the answer says that no limit and no floor are declared rather than inventing one.",
+            argv: &["machine", "slot", "status"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["machine slots:", "no limit declared", "no floor declared"]),
+        }],
+    },
+    CommandExamples {
+        command: "machine slot acquire",
+        examples: &[ExampleDoc {
+            id: "machine-slot-acquire",
+            title: "Take a slot for the shell that runs the build",
+            description: "Without `--pid` the holder is this command's parent, the shell that is about to do the work, so the slot is freed when that shell ends even if nobody releases it. The first word is the verdict a shell caller reads: `admitted`, `already_held`, or `refused` with exit 75 and every holder named. With no limit declared the caller is admitted at once.",
+            argv: &["machine", "slot", "acquire", "--purpose", "cargo build", "--wait", "0"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["admitted: pid"]),
+        }],
+    },
+    CommandExamples {
+        command: "machine slot release",
+        examples: &[ExampleDoc {
+            id: "machine-slot-release",
+            title: "Give the slot back when the work is done",
+            description: "The slot taken by the setup step for the same parent process is given back, and the next waiter is admitted on its next look. Releasing a slot nobody holds says `not held` and changes nothing.",
+            argv: &["machine", "slot", "release"],
+            setup: &[&["machine", "slot", "acquire", "--purpose", "cargo build"]],
+            expect: Expect::StdoutContains(&["released: pid"]),
         }],
     },
     CommandExamples {

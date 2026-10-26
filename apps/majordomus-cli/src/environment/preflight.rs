@@ -1632,7 +1632,14 @@ fn server_check(o: &Observations) -> Check {
     );
     let reason = s.reason.clone().unwrap_or_default();
     match s.standing {
-        Some(ServerStanding::Ready) => {
+        // a runtime state is judged as the lease's word it refines (ServerStanding::refines)
+        Some(
+            ServerStanding::Ready
+            | ServerStanding::MeshAttaching
+            | ServerStanding::Operational
+            | ServerStanding::Degraded
+            | ServerStanding::Stopping,
+        ) => {
             let mut evidence = vec![lease];
             evidence.push(if s.this_process {
                 Evidence::new("this process", "holds the checkout's lease")
@@ -1662,7 +1669,7 @@ fn server_check(o: &Observations) -> Check {
             vec![lease, Evidence::new("GET /", "answers, from other code")],
         )
         .next("majordomus serve stop && majordomus serve ensure"),
-        Some(ServerStanding::Stale) => Check::new(
+        Some(ServerStanding::Stale | ServerStanding::Failed) => Check::new(
             "integration.server",
             "server",
             Verdict::Failed,
@@ -1670,7 +1677,7 @@ fn server_check(o: &Observations) -> Check {
             vec![lease],
         )
         .next("majordomus serve ensure"),
-        Some(ServerStanding::Starting) => Check::new(
+        Some(ServerStanding::Starting | ServerStanding::Building) => Check::new(
             "integration.server",
             "server",
             Verdict::Unknown,
@@ -1678,7 +1685,7 @@ fn server_check(o: &Observations) -> Check {
             vec![lease],
         )
         .next("majordomus serve status"),
-        Some(ServerStanding::Absent) => Check::new(
+        Some(ServerStanding::Absent | ServerStanding::Stopped) => Check::new(
             "integration.server",
             "server",
             Verdict::Unavailable,
@@ -1707,7 +1714,16 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
             .unwrap_or_else(|| path.to_string())
     };
     match (s.standing, listed) {
-        (Some(ServerStanding::Ready), Some((_, path, true))) => Check::new(
+        (
+            Some(
+                ServerStanding::Ready
+                | ServerStanding::MeshAttaching
+                | ServerStanding::Operational
+                | ServerStanding::Degraded
+                | ServerStanding::Stopping,
+            ),
+            Some((_, path, true)),
+        ) => Check::new(
             id,
             title,
             Verdict::Verified,
@@ -1732,27 +1748,45 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
             ),
             vec![Evidence::new("GET /", format!("surface {surface} ready"))],
         ),
-        (Some(ServerStanding::Ready | ServerStanding::Outdated), Some((_, _, false))) => {
-            Check::new(
-                id,
-                title,
-                Verdict::Failed,
-                format!("the server answers and lists {surface} as not ready"),
-                vec![Evidence::new(
-                    "GET /",
-                    format!("surface {surface} not ready"),
-                )],
-            )
-            .next("majordomus serve status")
-        }
-        (Some(ServerStanding::Ready | ServerStanding::Outdated), None) => Check::new(
+        (
+            Some(
+                ServerStanding::Ready
+                | ServerStanding::Outdated
+                | ServerStanding::MeshAttaching
+                | ServerStanding::Operational
+                | ServerStanding::Degraded
+                | ServerStanding::Stopping,
+            ),
+            Some((_, _, false)),
+        ) => Check::new(
+            id,
+            title,
+            Verdict::Failed,
+            format!("the server answers and lists {surface} as not ready"),
+            vec![Evidence::new(
+                "GET /",
+                format!("surface {surface} not ready"),
+            )],
+        )
+        .next("majordomus serve status"),
+        (
+            Some(
+                ServerStanding::Ready
+                | ServerStanding::Outdated
+                | ServerStanding::MeshAttaching
+                | ServerStanding::Operational
+                | ServerStanding::Degraded
+                | ServerStanding::Stopping,
+            ),
+            None,
+        ) => Check::new(
             id,
             title,
             Verdict::Failed,
             format!("the server answers and does not list {surface}"),
             vec![Evidence::new("GET /", format!("no surface {surface}"))],
         ),
-        (Some(ServerStanding::Absent), _) => Check::new(
+        (Some(ServerStanding::Absent | ServerStanding::Stopped), _) => Check::new(
             id,
             title,
             Verdict::Unavailable,
@@ -1760,7 +1794,7 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
             vec![],
         )
         .next("majordomus serve ensure"),
-        (Some(ServerStanding::Stale), _) => Check::new(
+        (Some(ServerStanding::Stale | ServerStanding::Failed), _) => Check::new(
             id,
             title,
             Verdict::Unavailable,
@@ -1768,7 +1802,7 @@ fn surface_check(o: &Observations, surface: &str, id: &str, title: &str) -> Chec
             vec![],
         )
         .next("majordomus serve ensure"),
-        (Some(ServerStanding::Starting) | None, _) => Check::new(
+        (Some(ServerStanding::Starting | ServerStanding::Building) | None, _) => Check::new(
             id,
             title,
             Verdict::Unknown,

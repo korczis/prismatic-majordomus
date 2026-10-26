@@ -414,13 +414,15 @@ fn release_panel(flight: &Answer) -> El {
                     .child(el("td").child(state(r, "state")))
                     .child(el("td").class("mj-ui-mono").text(value(r, "version")))
                     .child(el("td").child(if href.is_empty() {
-                        el("span").class("mj-ui-dim").text(detail)
+                        el("span")
+                            .class("mj-ui-dim")
+                            .nodes(super::prose::marks(&detail))
                     } else {
                         el("a")
                             .class("mj-ui-link mj-ui-mono")
                             .attr("href", href)
                             .attr("rel", "noopener noreferrer")
-                            .text(detail)
+                            .nodes(super::prose::marks(&detail))
                     }))
             })
             .collect::<Vec<_>>();
@@ -466,7 +468,8 @@ fn unread_sources(flight: &Answer) -> Option<El> {
                     .child(word_badge("unread"))
                     .text(" ")
                     .child(el("code").class("mj-mono").text(text(s, "name")))
-                    .text(format!(": {}", text(s, "detail"))),
+                    .text(": ")
+                    .nodes(super::prose::marks(&text(s, "detail"))),
             );
         }
         ul

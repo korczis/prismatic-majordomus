@@ -32,4 +32,16 @@ evidence_required:
 depends_on:
   - I3937
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-26T10:00:48Z
+started_at: 2026-10-26T10:00:24Z
+started_event: sha256:1b5c7dec8a520cd106ceced8111d5dcddd59692ccacb9d28d90a85ec71a712bd
+completed_at: 2026-10-26T10:00:48Z
+completed_event: sha256:a8de394482261abb6b6b249e6f4f043dca9f509068c938edf79eb8f6073656d9
+evidence:
+  - covers: the_two_gate_readers_give_one_reason_test
+    type: test
+    command: "bash test/run.sh 131_completion_gates 94_ci_plan 26_ci_wiring; cargo test --lib gates (CI)"
+    result: "cases 131, 94 and 26 passed 2026-10-26 on master 2efeacea031; master validate run 40196303175 lib tests (incl. gates model.rs) 4131 passed"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T10:00:40Z

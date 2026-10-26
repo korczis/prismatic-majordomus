@@ -26,4 +26,16 @@ validation:
 evidence_required:
   - "case_4008_a_push_that_only_deletes_runs_no_plan"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-25T20:40:09Z
+started_at: 2026-10-25T20:38:46Z
+started_event: sha256:59bceee0880b33ee39e6905469f05a17c13d976c496ceda99a1d66e40b097fe8
+completed_at: 2026-10-25T20:40:09Z
+completed_event: sha256:94839781287551d9c63743e9be9f39def0da3d8c4b1bd65d4bb13d3f79cf50b7
+evidence:
+  - covers: case_4008_a_push_that_only_deletes_runs_no_plan
+    type: test
+    command: "MJ_TEST_JOBS=4 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4008_a_push_that_only_deletes_plans_nothing"
+    result: "at master 2efeacea031: case 4008_a_push_that_only_deletes_plans_nothing ok in 1 s (the case's file name; the record's validation line names it 4008_a_push_that_only_deletes_runs_no_plan). C1 and C2: .githooks/pre-push:7-19 exits 0 when no pushed ref carries a commit and runs the plan otherwise; C3: the exemption sits beside the refs/majordomus/* one in the same loop (pre-push:18-19). Master's validate run 40196303175: case 4008 ok, suite-shard (1) job 121182964677. Landed through #2376"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T20:37:23Z

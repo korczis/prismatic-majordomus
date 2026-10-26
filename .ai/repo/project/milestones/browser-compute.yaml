@@ -1,7 +1,7 @@
 id: browser-compute
 title: A browser computes for the project with the server's own code, and the server verifies every result
 slug: browser-compute
-order: 147
+order: 148
 priority: p1
 problem: "On 2026-10-16 the owner asked for a project's page to let a visitor lend their browser's computing to the project, inside the existing mesh, with every result verified and visible. The repository has one crate and no wasm32 build; canonical JSON is written twice; the mesh executes nothing a peer sends; a caller beyond loopback writes nothing and the server authenticates no caller (ADR 0126)."
 outcome: "One portable core runs on the host and as wasm32 in a browser, held by one executed fixture; the server verifies a browser's result by recomputing it; recording browser results, enrollment and community compute follow only once the owner decides how a remote browser is authenticated and narrowly granted a task (ADR 0170)."

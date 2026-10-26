@@ -1,0 +1,29 @@
+id: I4201
+milestone: test-evidence
+title: "A blackboard follower whose heartbeat cannot be written ends at that write, and a test that no other write can pre-empt proves it"
+slug: a-follower-ends-where-its-heartbeat-fails
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Add one test to apps/majordomus-cli/src/http/follow.rs, a_follower_whose_heartbeat_cannot_be_written_ends. A Follower on its own repository with no writer, refresh an hour away and heartbeat 5 ms writes to a Sink that refuses only the stream.heartbeat frame, so the heartbeat is the write that fails and the follower returns through the break after `if !alive`."
+why: "Train 5 (#2403, d9207285b33) was red on coverage-differential: follow.rs:672, the follower's break when its heartbeat cannot be written (train 4, 35f852d9ed7), was a changed line no test reached. The test meant to reach it (Sink::failing_after with a 50 ms heartbeat) is timing-dependent. The follower reads the shared BLACKBOARD that other tests advance in parallel, so a change-triggered snapshot or signal write can be the failing write and end the connection before the heartbeat."
+current_state: "Measured on d1e5a31adba (train 6): no test refuses the heartbeat frame itself, so whether line 672 is covered depends on the order of the parallel tests."
+desired_state: "Line 672 is covered on every run. With the break removed, the new test never returns, so a regression there cannot pass."
+scope:
+  - ".ai/repo/project/issues/I4201.yaml"
+  - "apps/majordomus-cli/src/http/follow.rs"
+non_scope:
+  - "The follower's behaviour, which is unchanged"
+  - "The existing timing-dependent tests"
+acceptance_criteria:
+  - "cargo test --lib http::follow:: passes with the new test"
+  - "With line 672's break removed, the new test does not return (it is killed at its bound)"
+  - "coverage-differential reports follow.rs:672 covered"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- http::follow::"
+evidence_required:
+  - "heartbeat_failure_ends_the_follower"
+depends_on: []
+serves: []
+created_at: 2026-10-24
+updated_at: 2026-10-25

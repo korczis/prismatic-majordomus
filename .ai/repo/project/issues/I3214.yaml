@@ -10,10 +10,22 @@ current_state: "Verified on master 707a04c7ce8: only /ui has a narrow menu, the 
 desired_state: "One drawer shell rendered by ui/shell.rs and cockpit/view.rs, each passing its own entries, and scripts/lib/cockpit-probe.mjs driving it on /ui and /cockpit at every width /api/v1/design declares."
 scope:
   - "apps/majordomus-cli/src/ui/shell.rs"
+  - "apps/majordomus-cli/src/ui/drawer.rs"
+  - "apps/majordomus-cli/src/ui/mod.rs"
   - "apps/majordomus-cli/src/cockpit/view.rs"
-  - "share/ui/ui.js"
+  - "apps/majordomus-cli/src/cockpit/mod.rs"
+  - "share/design/drawer.css"
+  - "share/design/drawer.js"
+  - "share/ui/drawer.js"
   - "share/ui/src/ui.css"
+  - "share/ui/ui.css"
+  - "share/cockpit/drawer.js"
+  - "share/cockpit/src/cockpit.css"
+  - "share/cockpit/cockpit.css"
+  - "scripts/cockpit-assets"
+  - "scripts/lib/cockpit-probe.mjs"
   - "docs/MAJORDOMUS_UI.md"
+  - "docs/COCKPIT.md"
 non_scope:
   - "The behaviour of the site navbar's collapse"
   - "Any route or entry change"
@@ -29,4 +41,4 @@ validation:
 evidence_required:
   - "cockpit_probe_drawer_every_width"
 created_at: 2026-10-18
-updated_at: 2026-10-18
+updated_at: 2026-10-25

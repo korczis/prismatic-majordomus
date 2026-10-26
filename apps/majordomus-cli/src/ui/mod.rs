@@ -45,6 +45,7 @@ pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deployments;
 pub(crate) mod docs;
+pub(crate) mod drawer;
 pub(crate) mod evidence;
 pub(crate) mod governance;
 pub(crate) mod icons;
@@ -96,10 +97,11 @@ pub const STYLESHEET: &str = "ui.css";
 
 /// The script every screen loads.
 pub const SCRIPT: &str = "ui.js";
-/// The site's own scripts the bar every screen wears behaves by — its menus, then its theme
-/// toggle — served as byte copies of `site/nav.js` and `site/theme.js` that
+/// The scripts the bar every screen wears behaves by — the site's menus, then its theme toggle,
+/// then the drawer that opens with the bar's menu on a narrow screen ([`drawer`], I3214) —
+/// served as byte copies of `site/nav.js`, `site/theme.js` and `share/design/drawer.js` that
 /// `scripts/cockpit-assets` writes and checks ([`navbar`]).
-pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js"];
+pub(crate) const BAR_SCRIPTS: &[&str] = &["nav.js", "theme.js", "drawer.js"];
 
 /// The vendored graph library, loaded only by a screen that draws a graph.
 pub const GRAPH_LIB: &str = "vendor/cytoscape.min.js";

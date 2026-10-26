@@ -397,3 +397,49 @@ export function normaliseRendered(html, { scrollingTagNames = [] } = {}) {
   }
   return { text: cells.text, scrolling: scrolling.changed, named: boxes.changed, aligned: cells.changed };
 }
+
+/**
+ * The light markup a rendered text still carries, each mark as `{ mark, sample }`: a fence
+ * (```), a strong span (**word**) and a code span (`word`). A record's prose is written in
+ * that markup and a screen is meant to draw it (apps/majordomus-cli/src/ui/prose.rs); one
+ * that reaches the reader as characters is a renderer that skipped a string.
+ *
+ * The text is what a reader sees: the browser audit hands over the text of every node
+ * outside `code`, `pre`, `kbd` and `samp`, where a backtick is content. An empty span
+ * (`` or ****) and a lone mark are characters, not markup, as the renderer reads them.
+ */
+export function rawMarkdown(text) {
+  const marks = [
+    ['fence', /```/g],
+    ['strong', /\*\*[^\s*][^*]*?\*\*/g],
+    ['code', /`[^`\s][^`]*?`/g],
+  ];
+  const found = [];
+  for (const [mark, pattern] of marks) {
+    for (const match of text.matchAll(pattern)) {
+      const from = Math.max(0, match.index - 30);
+      found.push({ mark, sample: text.slice(from, match.index + match[0].length + 20).trim() });
+    }
+  }
+  return found;
+}
+
+/**
+ * The issue ids a rendered text shows that lead nowhere, each as `{ id, sample }`: an `I`
+ * and four digits standing as a word of its own (I2914). A screen draws an id the plan holds
+ * as a link to that issue and one it does not hold as an element marked
+ * `data-mj-unresolved` (apps/majordomus-cli/src/ui/prose.rs); text that is neither is a
+ * renderer that skipped an id.
+ *
+ * The text is what a reader sees outside links, `code`, `pre`, `kbd`, `samp` and unresolved
+ * ids. A path's segment (`src/I0001`) and a word an id is only part of (`XI2400`, `I24000`,
+ * `a-I2400`) are not ids.
+ */
+export function bareIssueIds(text) {
+  const found = [];
+  for (const match of text.matchAll(/(?<![/\w-])I\d{4}(?![\w])/g)) {
+    const from = Math.max(0, match.index - 30);
+    found.push({ id: match[0], sample: text.slice(from, match.index + match[0].length + 30).trim() });
+  }
+  return found;
+}

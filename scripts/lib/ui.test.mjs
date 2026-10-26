@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 
 import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, languageSample, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
-import { alignCells, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
+import { alignCells, bareIssueIds, escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, rawMarkdown, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
 import { sample, siblingFamilies } from './ui-routes.mjs';
 import { compare, cut, fragment, GENERATED, VERSION_SLOT } from './ui-navbar.mjs';
@@ -423,6 +423,34 @@ test('two bars are compared element by element: a class, a box past a pixel, a s
   assert.ok(d.some((x) => /font-size is 14px on the UI, 16px on the site/.test(x)), d.join('\n'));
   assert.ok(d.some((x) => /nav>a\[0\]: only the site has this element/.test(x)), d.join('\n'));
   assert.deepEqual(compare(null, [el()]), ['the site page has no <nav aria-label="Main">']);
+});
+
+// ------------------------------------------------------------------ raw markdown (I3004)
+test('a code span, a strong word and a fence that reach the reader are each a raw-markdown mark', () => {
+  const marks = rawMarkdown('run `majordomus ui` for **the** UI, then ``` closes').map((m) => m.mark);
+  assert.deepEqual(marks.sort(), ['code', 'fence', 'strong']);
+  const [code] = rawMarkdown('the forge was not observed; `majordomus served forge` records it');
+  assert.ok(code.sample.includes('`majordomus served forge`'), code.sample);
+});
+
+test('a lone mark, an empty span and prose without markup are not raw markdown', () => {
+  assert.deepEqual(rawMarkdown('a lone ` and an empty `` and ** and 2 * 3 * 4'), []);
+  assert.deepEqual(rawMarkdown('Everything that can be run, what it changes, and what is running.'), []);
+  // a mark that opens on a space is a character, as the renderer reads it
+  assert.deepEqual(rawMarkdown('a ` spaced ` pair and ** spaced ** stars'), []);
+});
+
+test('an issue id standing as a word of its own is a bare id, with where it stands', () => {
+  const found = bareIssueIds('I2914: train-8 candidates I3004, I3005 and (I3006) held');
+  assert.deepEqual(found.map((f) => f.id), ['I2914', 'I3004', 'I3005', 'I3006']);
+  assert.ok(found[1].sample.includes('candidates I3004'), found[1].sample);
+  // a range is two ids
+  assert.deepEqual(bareIssueIds('I3810..I3819').map((f) => f.id), ['I3810', 'I3819']);
+});
+
+test('a path segment and a word an id is only part of are not bare ids', () => {
+  assert.deepEqual(bareIssueIds('src/I0001/answer.txt and XI2400, I24000, I2400x, a-I2400, I240'), []);
+  assert.deepEqual(bareIssueIds('Nothing here names an issue.'), []);
 });
 
 let failed = 0;

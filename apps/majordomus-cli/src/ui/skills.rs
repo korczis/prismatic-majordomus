@@ -70,7 +70,11 @@ fn workflows(answer: &Answer) -> El {
                             .child(el("span").class("mj-ui-mono mj-ui-dim").text(text(s, "id")))
                             .child(el("span").class("mj-ui-cell-title").text(text(s, "title"))),
                     )
-                    .child(el("td").class("mj-ui-dim").text(text(s, "description")))
+                    .child(
+                        el("td")
+                            .class("mj-ui-dim")
+                            .nodes(super::prose::marks(&text(s, "description"))),
+                    )
                     .child(el("td").child(state(s, "status")))
             })
             .collect::<Vec<_>>();

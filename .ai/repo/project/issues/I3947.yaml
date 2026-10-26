@@ -40,4 +40,16 @@ evidence_required:
 depends_on:
   - I3946
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-26T10:02:11Z
+started_at: 2026-10-26T10:01:47Z
+started_event: sha256:751952c6cb13af9cce017147610e54a27627c3ab8f1165a84d29072acb3c1edb
+completed_at: 2026-10-26T10:02:11Z
+completed_event: sha256:9235452792468999a4c6596c969496bb97d49138f7ed4ada4855dfe0b708a824
+evidence:
+  - covers: a_tier_selects_its_lanes_test
+    type: test
+    command: "bash test/run.sh 3947_a_tier_selects_its_lanes 3946_every_gate_declares_its_lane 131_completion_gates 94_ci_plan 26_ci_wiring 3943_a_second_gate_list_is_found; scripts/ci-plan --check; cargo test --lib gates (CI)"
+    result: "cases 3947, 3946, 131, 94, 26 and 3943 passed 2026-10-26 on master 2efeacea031; ci-plan --check exit 0; master validate run 40196303175 lib tests (incl. gates model.rs) 4131 passed"
+    artifact: "2efeacea03158615db2b497117a8da35b264909b"
+    commit: 6259dac47afb5b01008725c6040f366feb458578
+    recorded_at: 2026-10-26T10:02:03Z

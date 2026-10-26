@@ -121,6 +121,20 @@ expect_grep 'milestone_unknown_dependency'
 rm -f .ai/repo/project/milestones/dangling.yaml
 expect_exit 0 "$MJ" plan validate
 
+# two milestones on one non-zero order are refused (I4205): their place within a rank would be
+# whichever reader sorted them, and the shell and the executable once disagreed exactly so. Two
+# on order 0, a record's default, are no conflict.
+rm_milestone twina 777
+rm_milestone twinb 777
+expect_exit 10 "$MJ" plan validate
+expect_grep 'milestone_duplicate_order'
+expect_grep 'has order 777, which twina already has'
+rm_milestone twina 0
+rm_milestone twinb 0
+expect_exit 0 "$MJ" plan validate
+rm -f .ai/repo/project/milestones/twina.yaml .ai/repo/project/milestones/twinb.yaml
+expect_exit 0 "$MJ" plan validate
+
 # --- the JSON projection carries the same graph the text does
 "$MJ" plan roadmap --json > rm.json
 jq -e . rm.json >/dev/null || { echo "    plan roadmap --json is not valid JSON"; exit 1; }

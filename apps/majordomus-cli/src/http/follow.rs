@@ -1419,6 +1419,31 @@ mod tests {
         });
     }
 
+    /// A client that is gone when a quiet heartbeat is written ends the connection at that write
+    /// (I4201). Only the heartbeat frame is refused, the board is this test's own and nothing
+    /// writes to it, and the refresh is an hour away, so no snapshot or signal can be the write
+    /// that fails first: the connection ends where its heartbeat could not be written, whatever
+    /// the other tests do to the shared board meanwhile.
+    #[test]
+    fn a_follower_whose_heartbeat_cannot_be_written_ends() {
+        let (_repo, ctx, _c) = meshed();
+        let follow = Follow::parse(&q(&[("follow", "blackboard"), ("frames", "snapshot")]))
+            .unwrap()
+            .unwrap();
+        let mut follower = Follower::new(Arc::clone(&ctx), follow);
+        follower.heartbeat = Duration::from_millis(5);
+        follower.refresh = Duration::from_secs(3600);
+        let sink = Sink::refusing("stream.heartbeat", false);
+        follower.run(Box::new(sink.clone()), &|| false);
+        assert!(
+            sink.refused.load(Ordering::SeqCst),
+            "the connection ended before any heartbeat was written"
+        );
+        let kinds = kinds(&sink.frames());
+        assert_eq!(kinds.first().map(String::as_str), Some("stream.ready"));
+        assert!(!kinds.iter().any(|k| k == "stream.heartbeat"), "{kinds:?}");
+    }
+
     /// A snapshot too large for one frame is written as a reference to where it is read, with
     /// the connection's cursor.
     #[test]

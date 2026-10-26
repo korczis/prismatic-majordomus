@@ -668,6 +668,14 @@ background, bounded by `MAJORDOMUS_SHARED_BUILD_EVICT_LOCK_WAIT` seconds (defaul
 for none). There is one waiter per build directory, and its log and pid are kept under
 `~/.cache/majordomus/bound-<cksum>.{log,pid}`. The build that finished does not wait.
 
+The hour is the age for a volume with room. When the volume has less free than the reclaim
+mark (`MAJORDOMUS_RECLAIM_BELOW_MB`, default 51200), a unit idle for
+`MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN` minutes (default 10; 0 keeps the hour) is stale,
+and the bound says so with the free space it measured. A free space it cannot read keeps the
+hour. On 2026-10-25 about ten worktrees built inside one hour. Every pass took the lock, evicted
+what was older than the hour and stayed over the bound, and the volume fell from 44 GiB to
+16 GiB free in half an hour (I4230).
+
 What it cannot evict it says: a bound smaller than one generation cannot hold the newest
 generations of the trees building now, and a dependency some `Cargo.lock` names is never a
 candidate. `scripts/reap-orphans --targets` while a build runs is the dry run: it lists every

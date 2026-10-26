@@ -33,4 +33,22 @@ evidence_required:
 depends_on: []
 serves: []
 created_at: 2026-10-24
-updated_at: 2026-10-24
+updated_at: 2026-10-25T20:39:52Z
+started_at: 2026-10-25T20:38:29Z
+started_event: sha256:43d9ca711b9cbcc5b276f103d48f826790e1817a44d29789bbc27c69ea275bea
+completed_at: 2026-10-25T20:39:52Z
+completed_event: sha256:6992923c7f75a1b5c55457ccaf43d9a1ae97a58a524a0d98692bd605e2a95202
+evidence:
+  - covers: scope_conflict_scan_allocates_nothing
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- integration::retry integration::forge::tests::the_forge_is_asked_exactly_this plan:: models::"
+    result: "at master 2efeacea031: plan::tests::overlap_is_asked_of_normal_entries_with_the_same_answers (C1), a_conflict_is_reported_once_per_pair_and_only_between_runnable_issues (C1), overlapping_scope_in_one_wave_is_a_warning and every other plan:: unit test pass (C2): lib 125 passed 0 failed. Landed a296782bc16 through #2503 in train 7 (#2501)"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T20:37:03Z
+  - covers: failed_case_reason_in_artifact
+    type: ci
+    command: "MJ_TEST_JOBS=4 env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4223_a_failed_cases_reason_reaches_the_artifact 56_derived_current_gate"
+    result: "at master 2efeacea031 locally: case 4223 ok in 4 s (C3), case 56 ok in 853 s on a loaded machine. On CI (C4): master's validate run 40196303175 at 2efeacea031, suite-shard (3) job 121182964650, case 56_derived_current_gate ok in 348 s and case 4223 ok in 4 s, with case 56's bound unchanged"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T20:37:13Z

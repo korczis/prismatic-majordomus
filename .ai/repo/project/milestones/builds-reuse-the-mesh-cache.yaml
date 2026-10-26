@@ -1,7 +1,7 @@
 id: builds-reuse-the-mesh-cache
 title: "Builds reuse the mesh cache: compiled Rust, the cargo build directory, mix deps and npm packages, keyed by platform, toolchain and inputs"
 slug: builds-reuse-the-mesh-cache
-order: 181
+order: 197
 priority: p0
 problem: "On 2026-10-22 lundra, the build and deploy host, reached zero free bytes: 185 GB of GitLab runner volumes duplicated a cache MinIO already held, and every machine compiled, fetched and installed the same dependencies from a cold cache of its own. ADR 0157 (proposed 2026-10-13) designed a shared compiler cache; only its model (I2670, #1118) was ever written, and dependency installs (mix deps.get, npm install, the shared cargo build directory) were never in it. Lundra's own disk is held by its host layer (a systemd disk guard, bounded runner volumes, MinIO bucket quotas), which I2674 turns into a provisioning capability; this milestone does not by itself free lundra's disk."
 outcome: "Majordomus derives a key for every dependency install and compilation from the repository and the machine, restores it from the local level and then a trusted node's store before the work, saves it after, and is invisible when the store is absent; every local build path of the repository goes through it, and a gate refuses a new bypass."

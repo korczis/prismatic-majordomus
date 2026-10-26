@@ -87,6 +87,8 @@ tags:
     description: "The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: what lives where, and what must never appear there (I1102)."
   - name: lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
+  - name: machine
+    description: "What one machine admits at once: a counting slot for heavy work (a build, a test run), kept beside the derive lock where every checkout of the machine agrees on it, and held to rule project.the-cooperation-model-is-the-owners-word clause 7 — at most the declared number of holders, and none admitted below the declared free disk — with the numbers read from the policy's machine.heavy_work."
   - name: mcp
     description: "The MCP projection of this registry, described as one typed value: who answers `initialize` and with which protocol versions, the transports and how many sessions each holds, what of the protocol is served and what is not, every tool with the effect and the hints its annotations are derived from, the tools that write the repository, the resources, and where each declared client's configuration stands in this repository. Nothing in it is a list of its own: the tools are the registry's, the effect is the capability's classification, the clients are the distribution's providers."
   - name: mesh
@@ -126,7 +128,7 @@ tags:
   - name: served
     description: "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface."
   - name: server
-    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
+    description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, where each runtime stands and how it got there, and how many peers each one holds."
   - name: session_domain
     description: "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so."
   - name: shell
@@ -6544,6 +6546,210 @@ paths:
       x-majordomus-cache:
         policy: disabled
       x-majordomus-effect: read
+  "/api/v1/machine/slot/acquire":
+    post:
+      operationId: machine.slot.acquire
+      summary: Take a machine slot for heavy work
+      description: "Take one of the machine's slots for a running process, named by its pid, with a purpose a person reads. Holders whose process is proven gone — the pid no longer runs, or runs with another start time — are reclaimed first and named. Below the declared free disk it refuses at once; with every slot held it waits in arrival order, listed as a waiter, up to the bound (the input's, else the policy's), and then refuses. A refusal is an answer, not an error: it names the limit, the measured value, every holder with its pid, purpose and age, and what to do instead. A process that already holds a slot is told so and holds one, not two."
+      tags:
+        - machine
+      requestBody:
+        required: true
+        description: "The input of `machine.slot.acquire`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SlotAcquireInput"
+            examples:
+              a-build:
+                value:
+                  pid: 48213
+                  purpose: cargo build in this worktree
+                  wait_seconds: 600
+      responses:
+        "200":
+          description: "Take a machine slot for heavy work: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SlotAnswer"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: machine.slot.acquire
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::machine_slot
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
+      x-majordomus-mcp:
+        tool: majordomus_machine_slot_acquire
+      x-majordomus-cli: machine slot acquire
+  "/api/v1/machine/slot/release":
+    post:
+      operationId: machine.slot.release
+      summary: Give a machine slot back
+      description: "Give back the slot a process holds, and withdraw it from the queue if it waits; the next waiter is admitted on its next look. Releasing a slot nobody holds answers `released: false` and changes nothing."
+      tags:
+        - machine
+      requestBody:
+        required: true
+        description: "The input of `machine.slot.release`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SlotReleaseInput"
+            examples:
+              a-build:
+                value:
+                  pid: 48213
+      responses:
+        "200":
+          description: "Give a machine slot back: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SlotRelease"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: machine.slot.release
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::machine_slot
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
+      x-majordomus-mcp:
+        tool: majordomus_machine_slot_release
+      x-majordomus-cli: machine slot release
+  "/api/v1/machine/slot/status":
+    get:
+      operationId: machine.slot.status
+      summary: "Who holds the machine's slots, and who waits"
+      description: "The slot directory as it stands: the limits and where they are declared, the free space on the volume measured, every holder with its pid, purpose, age and whether its process still runs (a pid that runs with another start time is a reused pid, and dead), and every waiter with how long it has waited and what it waits on (`machine.slot: 5 of 5 held`) — the progress a waiting session reports. Reads only: a dead holder is reported here and reclaimed by the next acquisition."
+      tags:
+        - machine
+      parameters:
+        - name: volume
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A path the work writes to, whose volume's free space is measured; the slot\ndirectory's own volume when absent."
+          examples:
+            a-build-directory:
+              value: apps/majordomus-cli/target
+      responses:
+        "200":
+          description: "Who holds the machine's slots, and who waits: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/SlotStatus"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: machine.slot.status
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::machine_slot
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_machine_slot_status
+      x-majordomus-cli: machine slot status
   "/api/v1/mcp":
     get:
       operationId: mcp.projection
@@ -12639,7 +12845,7 @@ paths:
     get:
       operationId: server.status
       summary: "The shared server, and every server of the repository"
-      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
+      description: "Where this checkout's server stands — absent, starting, ready, outdated or stale — measured against what this executable would serve; where its runtime stands (`runtime`: that word refined by the server's readiness report, its mesh verdict and the last recorded transition into building, mesh_attaching, operational, degraded, stopping, stopped or failed, with the time, reason and recorder of that transition, kept under `.ai/local/state/runtime/` and written only when the state changes — this reader records `stopped` or `failed` for a server it finds gone); how far the tree it serves is from the remote trunk (`trunk`: current, lagging, stale, unjudged or unmeasured against the policy's `checkout.trunk_distance`, as of the last fetch); the lease this process holds when it is the server; and, unless `checkouts` narrows it to this one, every checkout git registers for the repository, the primary first, each with its lease, its standing and the reason, its runtime, and the peers its server reports. `checkouts: this` reads one lease and probes one server and enumerates no other checkout, which is what a caller asking only about the checkout it is in should pay. Read from the lease files and the servers on every call; nothing is cached, because the leases are written by other processes."
       tags:
         - server
       parameters:
@@ -15203,7 +15409,7 @@ components:
           type:
             - string
             - "null"
-          description: "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere."
+          description: "What the session is doing, one line: `waiting on CI run 123`, `holding the build\nlock`. Redacted before it is signed, and shown beside the session everywhere. A phase\nopening with `blocked:` says the session waits on a person (`blocked: permission\ndialog`): it is written at once, is not progress, and the next beat that is clears it."
         pid:
           type:
             - integer
@@ -28320,6 +28526,9 @@ components:
         - type: string
           const: observe_failed
           description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+        - type: string
+          const: lease_lost
+          description: "The executor no longer holds the lease where it reaches — its mesh claim was suspended,\nreleased or overtaken while it advanced nothing (I3991) — so the act it was about to\ntake was not taken."
       description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
     IntegrationCleanup:
       type: object
@@ -30819,6 +31028,20 @@ components:
             - string
             - "null"
           description: "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
+        progressed_at:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "When its executor last advanced its queue, seconds since the epoch: when it was taken,\nthen at every plan, act, outcome or new check verdict (I3991). Absent from a record an\nolder executor wrote."
+        progress_ttl_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long its executor may advance nothing before its mesh claim is suspended: the\nrepository's `cooperation.session_ttl_seconds` (`progress_ttl`)."
       required:
         - pid
         - host
@@ -31961,6 +32184,27 @@ components:
           const: stopped
           description: Stopped by the manager.
       description: "The provider's health, as every surface reports it."
+    MeshReadiness:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: Whether the repository declares its mesh enabled.
+        attaching:
+          type: boolean
+          description: Whether the declaration is enabled and this server has not decided the mesh yet.
+        ok:
+          type: boolean
+          description: "Whether the mesh stands as declared: off when it is not declared, running when it is."
+        detail:
+          type: string
+          description: "The verdict's words."
+      required:
+        - enabled
+        - attaching
+        - ok
+        - detail
+      description: "The mesh in a readiness report: whether the repository declares it enabled, whether this\nserver has decided it yet, and the verdict `mesh doctor`'s runtime check gives.\n\n```\nuse majordomus_cli::capability::builtin::health::MeshReadiness;\nlet m = MeshReadiness { enabled: true, attaching: true, ok: true, detail: \"deciding\".into() };\nassert_eq!(serde_json::to_value(&m).unwrap()[\"attaching\"], true);\n```"
     MeshRepositoryBasis:
       oneOf:
         - type: string
@@ -37221,6 +37465,11 @@ components:
           items:
             type: string
           description: "Every reason this answer is not a plain yes, as `code: words`. `lease_lost` and\n`stale` make `ready` false: another process holds this checkout's lease, or this one\nserves code that is gone. `layer_degraded` does not: the layer is served with its\ndiagnostics, and a client decides whether that is enough."
+        mesh:
+          anyOf:
+            - "$ref": "#/components/schemas/MeshReadiness"
+            - type: "null"
+          description: "The mesh, as this process decided it: present only in a process that holds a lease,\nbecause only a shared server runs a mesh. It never makes `ready` false — a server\nwhose mesh is not running still answers every request — but it is what\n`server.status` refines `ready` into `mesh_attaching`, `operational` or `degraded`\nwith (I3179)."
       required:
         - ready
         - version
@@ -41855,6 +42104,62 @@ components:
         - liveness
         - sessions
       description: One runtime in the peer tree.
+    RuntimeState:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/ServerStanding"
+          description: "The state, derived on this reading from the lease, the server's readiness report (its\nmesh verdict included) and the last recorded transition."
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why, when the state is not `operational`."
+        transition:
+          anyOf:
+            - "$ref": "#/components/schemas/RuntimeTransition"
+            - type: "null"
+          description: "The last transition recorded under `RUNTIME_PATH`, when one ever was. The derived\nstate may be newer than it: only the writers named on `RuntimeWriter` record."
+      required:
+        - state
+      description: "Where a checkout's runtime stands now, and the last transition recorded for it.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeState, ServerStanding};\nlet r = RuntimeState { state: ServerStanding::Operational, reason: None, transition: None };\nassert_eq!(serde_json::to_value(&r).unwrap(), serde_json::json!({ \"state\": \"operational\" }));\n```"
+    RuntimeTransition:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`RUNTIME_SCHEMA`."
+        state:
+          "$ref": "#/components/schemas/ServerStanding"
+          description: What the runtime became.
+        from:
+          anyOf:
+            - "$ref": "#/components/schemas/ServerStanding"
+            - type: "null"
+          description: "What it was, by the previous record; absent for the first."
+        at:
+          type: string
+          description: "When, RFC 3339."
+        reason:
+          type: string
+          description: "Why, in the recorder's words."
+        by:
+          "$ref": "#/components/schemas/RuntimeWriter"
+          description: Who recorded it.
+        pid:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: "The server process the transition is about, when there is one."
+      required:
+        - schema
+        - state
+        - at
+        - reason
+        - by
+      description: "The last transition of a checkout's runtime: what it became, from what, when, why, who\nrecorded it and which process it is about. The record under `RUNTIME_PATH`.\n\n```\nuse majordomus_cli::capability::builtin::server::{RuntimeTransition, RuntimeWriter, ServerStanding};\nlet t = RuntimeTransition::new(ServerStanding::Ready, None, \"published\", RuntimeWriter::Server, Some(7));\nlet v = serde_json::to_value(&t).unwrap();\nassert_eq!(v[\"state\"], \"ready\");\nassert_eq!(v[\"by\"], \"server\");\nassert!(v.get(\"from\").is_none(), \"a first record came from nothing it can name\");\n```"
     RuntimeView:
       type: object
       properties:
@@ -41900,6 +42205,21 @@ components:
         - index_state
         - note
       description: "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \"the\nrepository is fine\" but \"the answers you are reading are about the tree you are looking\nat\". When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &str, repo: &str, agree: bool| -> RuntimeView {\n    serde_json::from_value(json!({\n        \"root\": \"example/repo\",\n        \"served_head\": served, \"served_branch\": \"master\", \"served_working_tree\": \"clean\",\n        \"repository_head\": repo, \"repository_branch\": \"master\",\n        \"repository_working_tree\": \"clean\",\n        \"agree\": agree, \"objects\": 1319, \"index_state\": \"ok\",\n        \"note\": \"as measured on this call\",\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\"a1b2c3d\", \"a1b2c3d\", true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \"ok\");\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\"a1b2c3d\", \"9f8e7d6\", false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```"
+    RuntimeWriter:
+      oneOf:
+        - type: string
+          const: server
+          description: "The serving process, about itself."
+        - type: string
+          const: serve_ensure
+          description: "`serve ensure`, which found the lease stale."
+        - type: string
+          const: reap_orphans
+          description: "`scripts/reap-orphans`, through `serve status` after its sweep."
+        - type: string
+          const: server_status
+          description: "`server.status`, on any surface."
+      description: "Who recorded a transition. Each state has its one kind of writer: the serving process\nrecords its own `starting`, `ready` and `stopping`, because only it knows them; a reader\nthat finds the server gone records `stopped` or `failed`, because a dead process records\nnothing.\n\n```\nuse majordomus_cli::capability::builtin::server::RuntimeWriter;\nassert_eq!(serde_json::to_value(RuntimeWriter::ServeEnsure).unwrap(), \"serve_ensure\");\nassert_eq!(RuntimeWriter::reader_named(Some(\"reap_orphans\")), RuntimeWriter::ReapOrphans);\nassert_eq!(RuntimeWriter::reader_named(Some(\"server\")), RuntimeWriter::ServerStatus);\nassert_eq!(RuntimeWriter::reader_named(None), RuntimeWriter::ServerStatus);\n```"
     RustdocAcceptedLinks:
       type: object
       properties:
@@ -42486,7 +42806,28 @@ components:
         - type: string
           const: stale
           description: "The lease names a server that does not answer, or is not a lease at all."
-      description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n```"
+        - type: string
+          const: building
+          description: "No lease yet, and the executable a server would run is being built: recorded by the\nbuilder (I3180), and believed only while the process that recorded it is alive."
+        - type: string
+          const: mesh_attaching
+          description: "The server is ready, the repository declares its mesh enabled, and the server has not\nyet decided whether the mesh runs."
+        - type: string
+          const: operational
+          description: "The server is ready, says so itself, and its mesh runs or is not declared."
+        - type: string
+          const: degraded
+          description: "The server answers, current, but its own readiness report or its mesh says it is not\nwhole: it lost the lease, serves replaced code, read a degraded layer, or its declared\nmesh is not running."
+        - type: string
+          const: stopping
+          description: "The process that holds the lease recorded that it is stopping, and it is still alive."
+        - type: string
+          const: stopped
+          description: The server is gone after it recorded that it was stopping.
+        - type: string
+          const: failed
+          description: "The server is gone without having recorded that it was stopping: its lease names a\nprocess that no longer exists."
+      description: "Where a checkout's server stands, decided from its lease, whether the server the lease\nnames answers for that checkout, and whether what answers is this executable's code —\nand, refined by the readiness report, the mesh runtime and the last recorded transition,\nwhere its runtime stands (I3179).\n\nThe first five words are the lease's standing, decided by `standing_of`, and they are\nwhat `standing` carries on every surface: shells compare them, so they never change. The\nother seven are the runtime's refinements, decided by `runtime_of` and carried by\n`runtime.state` alone; `ServerStanding::refines` names the lease word each refines.\n\n```\nuse majordomus_cli::capability::builtin::server::ServerStanding;\nlet all = [ServerStanding::Absent, ServerStanding::Starting, ServerStanding::Ready,\n           ServerStanding::Outdated, ServerStanding::Stale];\nlet words: Vec<&str> = all.iter().map(|s| s.as_str()).collect();\nassert_eq!(words, [\"absent\", \"starting\", \"ready\", \"outdated\", \"stale\"]);\nassert_eq!(serde_json::from_str::<ServerStanding>(\"\\\"stale\\\"\").unwrap(), ServerStanding::Stale);\n// the runtime's words, in the same snake case the JSON carries\nassert_eq!(serde_json::to_value(ServerStanding::MeshAttaching).unwrap(), \"mesh_attaching\");\nassert_eq!(ServerStanding::MeshAttaching.as_str(), \"mesh_attaching\");\n```"
     ServerStatus:
       type: object
       properties:
@@ -42524,12 +42865,17 @@ components:
             - "$ref": "#/components/schemas/TrunkDistance"
             - type: "null"
           description: "How far the tree this checkout serves is from the remote trunk, judged against the\npolicy's `checkout.trunk_distance`: a server of a checkout 779 commits behind answers\nevery session from a tree that no longer exists, and this is where that is said.\nAbsent only from an answer that predates the field."
+        runtime:
+          anyOf:
+            - "$ref": "#/components/schemas/RuntimeState"
+            - type: "null"
+          description: "Where this checkout's runtime stands — the lease's word refined by the server's\nreadiness report and mesh verdict and by the last recorded transition — with that\ntransition: when, why and who recorded it (I3179). `standing` keeps the lease's five\nwords; this is where the other seven appear. Absent only from an answer that predates\nthe field."
       required:
         - checkout_id
         - desired
         - standing
         - servers
-      description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
+      description: "The shared server of this checkout and of every other checkout of the repository.\n\n```\nuse majordomus_cli::capability::builtin::server::{Desired, ServerStanding, ServerStatus};\nlet status = ServerStatus { checkout_id: \"c\".into(), git: None,\n    desired: Desired { host: \"127.0.0.1\".into(), port: 8741, version: \"1.0.0\".into(), executable: None },\n    this_process: None, standing: ServerStanding::Absent, servers: Vec::new(),\n    connections: None, trunk: None, runtime: None };\nlet text = serde_json::to_string(&status).unwrap();\nassert_eq!(serde_json::from_str::<ServerStatus>(&text).unwrap(), status);\n```"
     ServerView:
       type: object
       properties:
@@ -42570,13 +42916,18 @@ components:
           format: uint
           minimum: 0
           description: "How many peers the server reports attached, when it answers."
+        runtime:
+          anyOf:
+            - "$ref": "#/components/schemas/RuntimeState"
+            - type: "null"
+          description: "Where its runtime stands, and the last transition recorded for it (I3179). Absent\nonly from an answer that predates the field."
       required:
         - worktree
         - checkout_id
         - primary
         - this_checkout
         - standing
-      description: "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
+      description: "One checkout of the repository, and the server its lease names.\n\n```\nuse majordomus_cli::capability::builtin::server::{ServerStanding, ServerView};\nlet view = ServerView { worktree: \"/r\".into(), branch: Some(\"master\".into()), checkout_id: \"c\".into(),\n    primary: true, this_checkout: true, standing: ServerStanding::Absent, reason: None, lease: None, peers: None,\n    runtime: None };\nlet v = serde_json::to_value(&view).unwrap();\nassert_eq!(v[\"standing\"], \"absent\");\nassert!(v.get(\"lease\").is_none() && v.get(\"peers\").is_none(), \"what there is not is not written\");\n```"
     ServiceAvailability:
       oneOf:
         - type: string
@@ -42662,6 +43013,11 @@ components:
         derive:
           "$ref": "#/components/schemas/BriefDeriveSection"
           description: The derive queue.
+        runtime:
+          anyOf:
+            - "$ref": "#/components/schemas/RuntimeState"
+            - type: "null"
+          description: "Where this checkout's runtime stands, and its last recorded transition, as\n`server.status` derives it (I3179). Absent from the answer of a server older than the\nfield."
       required:
         - at
         - line
@@ -42865,12 +43221,17 @@ components:
             - "null"
           format: uint64
           minimum: 0
-          description: "Milliseconds since this runtime stored the session's newest session beat, on its own\nclock: how long ago its worker last showed progress (I3990). Absent for a session\nthat never beat — it lives by its runtime's beat alone. Outside the digest, like\nevery age."
+          description: "Milliseconds since this runtime stored the session's newest session beat that was\nprogress, on its own clock: how long ago its worker last showed progress (I3990).\nAbsent for a session that never beat — it lives by its runtime's beat alone — and for\none that has only said it waits on a person (I3992). Outside the digest, like every\nage."
         phase:
           type:
             - string
             - "null"
           description: "What its newest session beat said it was doing — `waiting on CI run 123` — when it\nsaid (I3990)."
+        blocked:
+          type:
+            - string
+            - "null"
+          description: "Why the session waits on a person — `permission dialog`, `awaiting input` — while its\nphase says it does (`blocked: …`, see `blocked_reason`), until its next real work\nclears it (I3992). Information only: its claims are judged by its progress alone."
       required:
         - key
         - info
@@ -43520,6 +43881,282 @@ components:
         - warnings
         - findings
       description: "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```"
+    SlotAcquireInput:
+      type: object
+      additionalProperties: false
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "The process that will hold the slot: the build's own shell, not the caller of this\ncapability. It must be running; the slot is reclaimed when it stops."
+        purpose:
+          type: string
+          description: "What the holder is about to do, in a person's words: it is what every waiter and\nevery refusal names."
+        wait_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long to wait for a slot, in seconds; the policy's `machine.heavy_work.wait_seconds`\nwhen absent, and no wait when that is absent too."
+        volume:
+          type:
+            - string
+            - "null"
+          description: "A path the work writes to, whose volume the disk floor is judged on; the slot\ndirectory's own volume when absent."
+      required:
+        - pid
+        - purpose
+      description: "What to ask of `machine.slot.acquire`."
+    SlotAnswer:
+      type: object
+      properties:
+        verdict:
+          "$ref": "#/components/schemas/SlotVerdict"
+          description: "Admitted, already held, or refused."
+        refusal:
+          anyOf:
+            - "$ref": "#/components/schemas/SlotRefusal"
+            - type: "null"
+          description: Present when refused.
+        waited_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds the caller waited in the queue.
+        reclaimed:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SlotHolder"
+          description: "Holders reclaimed on the way, because their process was proven gone."
+        status:
+          "$ref": "#/components/schemas/SlotStatus"
+          description: The slot directory as it stood when the answer was given.
+      required:
+        - verdict
+        - waited_seconds
+        - reclaimed
+        - status
+      description: The answer to an acquisition.
+    SlotHolder:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process that holds the slot.
+        purpose:
+          type: string
+          description: What it said it is doing.
+        since:
+          type: string
+          description: "When it was admitted (RFC 3339, UTC)."
+        age_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds since then.
+        liveness:
+          "$ref": "#/components/schemas/SlotLiveness"
+          description: Whether that process still runs.
+      required:
+        - pid
+        - purpose
+        - since
+        - age_seconds
+        - liveness
+      description: "One holder of a slot, as a reader sees it."
+    SlotLimits:
+      type: object
+      properties:
+        slots:
+          type:
+            - integer
+            - "null"
+          format: uint32
+          minimum: 0
+          description: How many holders the machine admits at once; absent admits every caller.
+        min_free_gib:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: GiB that must be free; absent refuses nobody for disk.
+        wait_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How long a caller that names no bound waits, in seconds; absent waits not at all."
+        rule:
+          type: string
+          description: The rule whose numbers these are.
+        declared_in:
+          type: string
+          description: "Where they are declared: the policy file and the key."
+      required:
+        - rule
+        - declared_in
+      description: "The limits an admission is judged by, and where they were read."
+    SlotLiveness:
+      oneOf:
+        - type: string
+          const: alive
+          description: "The pid runs, with the start time the record names."
+        - type: string
+          const: unverified
+          description: "The pid runs, and its start time could not be read: kept, never reclaimed."
+        - type: string
+          const: dead
+          description: "The pid no longer runs, or runs with another start time: the slot is reclaimable."
+      description: "Whether a holder's process is still the one that took the slot."
+    SlotRefusal:
+      type: object
+      properties:
+        reason:
+          "$ref": "#/components/schemas/SlotRefusalReason"
+          description: Which limit refused.
+        detail:
+          type: string
+          description: "The measured values and every holder, in a sentence."
+        remedy:
+          type: string
+          description: What the caller can do instead.
+      required:
+        - reason
+        - detail
+        - remedy
+      description: "A refusal, with what it measured and what to do."
+    SlotRefusalReason:
+      oneOf:
+        - type: string
+          const: slots_full
+          description: Every slot stayed held for the whole wait.
+        - type: string
+          const: disk_floor
+          description: Less than the floor is free on the volume the work writes to.
+      description: Why an acquisition was refused.
+    SlotRelease:
+      type: object
+      properties:
+        released:
+          type: boolean
+          description: Whether the process held a slot that is now free.
+        holder:
+          anyOf:
+            - "$ref": "#/components/schemas/SlotHolder"
+            - type: "null"
+          description: The record that was removed.
+        withdrew_waiter:
+          type: boolean
+          description: Whether a waiter record of the process was withdrawn as well.
+      required:
+        - released
+        - withdrew_waiter
+      description: The answer to a release.
+    SlotReleaseInput:
+      type: object
+      additionalProperties: false
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process whose slot is given back.
+      required:
+        - pid
+      description: "What to ask of `machine.slot.release`."
+    SlotStatus:
+      type: object
+      properties:
+        directory:
+          type: string
+          description: The directory the slots are kept in.
+        limits:
+          "$ref": "#/components/schemas/SlotLimits"
+          description: "The limits, and where they were read."
+        free_mib:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: MiB free on the volume measured; absent when it could not be measured.
+        volume:
+          type: string
+          description: "The volume measured: the work's own path, or the slot directory."
+        held:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many holders whose process is not proven gone.
+        holders:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SlotHolder"
+          description: "Every holder, oldest first."
+        waiters:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SlotWaiter"
+          description: "Every waiter, in the order they will be admitted."
+        summary:
+          type: string
+          description: "One line: held of slots, free against the floor, the waiters."
+      required:
+        - directory
+        - limits
+        - volume
+        - held
+        - holders
+        - waiters
+        - summary
+      description: The slot directory as it stands.
+    SlotVerdict:
+      oneOf:
+        - type: string
+          const: admitted
+          description: "A slot was taken for the caller's process."
+        - type: string
+          const: already_held
+          description: "The caller's process already held one; nothing was taken."
+        - type: string
+          const: refused
+          description: Refused; the refusal says why and who holds the slots.
+      description: What an acquisition came to.
+    SlotWaiter:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process that waits.
+        purpose:
+          type: string
+          description: What it will do once admitted.
+        since:
+          type: string
+          description: "When it started waiting (RFC 3339, UTC)."
+        waiting_seconds:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Seconds it has waited.
+        waiting_on:
+          type: string
+          description: "What it waits on, in the words a progress report carries: `machine.slot: 5 of 5 held`."
+      required:
+        - pid
+        - purpose
+        - since
+        - waiting_seconds
+        - waiting_on
+      description: "One waiter for a slot, as a reader sees it: the progress a waiting session reports."
     Snapshot:
       type: object
       properties:
