@@ -133,6 +133,7 @@
     "op-mesh-state": "docs/api/mesh/",
     "op-mesh-status": "docs/api/mesh/",
     "op-mesh-verify": "docs/api/mesh/",
+    "op-mesh-who": "docs/api/mesh/",
     "op-models-list": "docs/api/models/",
     "op-models-route": "docs/api/models/",
     "op-monitor-stream": "docs/api/monitor/",
@@ -881,7 +882,7 @@
     "schema-PathChange": "docs/api/commit/",
     "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
-    "schema-PeerAddress": "docs/api/peers/",
+    "schema-PeerAddress": "docs/api/shared/",
     "schema-PeerCheckout": "docs/api/peers/",
     "schema-PeerDetail": "docs/api/mesh/",
     "schema-PeerId": "docs/api/shared/",
@@ -930,6 +931,7 @@
     "schema-PrepState": "docs/api/integration/",
     "schema-PreparedHead": "docs/api/integration/",
     "schema-Presence": "docs/api/mesh/",
+    "schema-ProcessFact": "docs/api/mesh/",
     "schema-ProductCounts": "docs/api/product/",
     "schema-ProductCoverage": "docs/api/product/",
     "schema-ProductFinding": "docs/api/product/",
@@ -954,6 +956,7 @@
     "schema-ProviderList": "docs/api/product/",
     "schema-ProviderName": "docs/api/deploy/",
     "schema-ProviderOffers": "docs/api/product/",
+    "schema-ProviderSession": "docs/api/mesh/",
     "schema-ProviderState": "docs/api/environment/",
     "schema-ProviderStatus": "docs/api/mesh/",
     "schema-PublicApiQuality": "docs/api/quality/",
@@ -1099,6 +1102,8 @@
     "schema-RuleValidator": "docs/api/rules/",
     "schema-RulesReport": "docs/api/rules/",
     "schema-RulesVerdict": "docs/api/rules/",
+    "schema-RunOwner": "docs/api/mesh/",
+    "schema-RunRecord": "docs/api/mesh/",
     "schema-RuntimeNode": "docs/api/mesh/",
     "schema-RuntimeView": "docs/api/lifecycle/",
     "schema-RustdocAcceptedLinks": "docs/api/quality/",
@@ -1283,6 +1288,9 @@
     "schema-ViolationCode": "docs/api/quality/",
     "schema-Vocabulary": "docs/api/obligations/",
     "schema-WaiverReason": "docs/api/capabilities/",
+    "schema-WhoEvidence": "docs/api/mesh/",
+    "schema-WhoOwner": "docs/api/mesh/",
+    "schema-WhoReport": "docs/api/mesh/",
     "schema-WorkStanding": "docs/api/worktree/",
     "schema-WorkflowCatalogue": "docs/api/environment/",
     "schema-WorkflowDescriptor": "docs/api/environment/",
@@ -1357,8 +1365,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 212,
-    "schemas": 1082,
+    "operations": 213,
+    "schemas": 1089,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1583,6 +1591,7 @@
     "mesh.state": "mesh",
     "mesh.status": "mesh",
     "mesh.verify": "mesh",
+    "mesh.who": "mesh",
     "models.list": "models",
     "models.route": "models",
     "monitor.stream": "monitor",
@@ -2335,7 +2344,7 @@
     "PathChange": "commit",
     "PathOverlap": "integration",
     "Peer": "peers",
-    "PeerAddress": "peers",
+    "PeerAddress": "shared",
     "PeerCheckout": "peers",
     "PeerDetail": "mesh",
     "PeerId": "shared",
@@ -2384,6 +2393,7 @@
     "PrepState": "integration",
     "PreparedHead": "integration",
     "Presence": "mesh",
+    "ProcessFact": "mesh",
     "ProductCounts": "product",
     "ProductCoverage": "product",
     "ProductFinding": "product",
@@ -2408,6 +2418,7 @@
     "ProviderList": "product",
     "ProviderName": "deploy",
     "ProviderOffers": "product",
+    "ProviderSession": "mesh",
     "ProviderState": "environment",
     "ProviderStatus": "mesh",
     "PublicApiQuality": "quality",
@@ -2553,6 +2564,8 @@
     "RuleValidator": "rules",
     "RulesReport": "rules",
     "RulesVerdict": "rules",
+    "RunOwner": "mesh",
+    "RunRecord": "mesh",
     "RuntimeNode": "mesh",
     "RuntimeView": "lifecycle",
     "RustdocAcceptedLinks": "quality",
@@ -2737,6 +2750,9 @@
     "ViolationCode": "quality",
     "Vocabulary": "obligations",
     "WaiverReason": "capabilities",
+    "WhoEvidence": "mesh",
+    "WhoOwner": "mesh",
+    "WhoReport": "mesh",
     "WorkStanding": "worktree",
     "WorkflowCatalogue": "environment",
     "WorkflowDescriptor": "environment",
@@ -21880,6 +21896,7 @@
         "mesh.session.close",
         "mesh.state",
         "mesh.verify",
+        "mesh.who",
         "models.list",
         "models.route",
         "monitor.stream",
@@ -40082,7 +40099,7 @@
     },
     {
       "description": "Where the worker behind a peer can be reached from outside its MCP connection.\n\nA board row named a client and a version, and nothing a person or another session could\nact on: on 2026-10-22 the session running a 33-minute remote `cargo test --doc` could be\nfound only by walking an ssh client's parent chain to a provider pid, its messaging\nsocket, and a start time matched by hand. Every one of those facts is in the environment\nthe provider hands the processes it starts — the MCP server among them — so the address\nis read from there when the peer attaches, and never asked of the model.\n\nThe provider's messaging *token* is a credential and is never read: the address is where\nto knock, not the key.\n\n```\nuse majordomus_cli::peers::PeerAddress;\n// a client that exposes nothing still has a machine and a parent process\nlet bare = PeerAddress::from_env(|_| None, Some(4242), \"lundra\").unwrap();\nassert_eq!((bare.host.as_str(), bare.pid), (\"lundra\", Some(4242)));\nassert!(bare.provider.is_none() && bare.mesh_session().is_none());\n```",
-      "home": "peers",
+      "home": "shared",
       "is_enum": false,
       "name": "PeerAddress",
       "properties": [
@@ -40126,7 +40143,8 @@
       "used_by": [],
       "used_by_schemas": [
         "Announced",
-        "Peer"
+        "Peer",
+        "WhoOwner"
       ],
       "values": [],
       "variants": []
@@ -42505,6 +42523,93 @@
       "variants": []
     },
     {
+      "description": "One process of a parent chain, as its host reports it.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ProcessFact",
+      "properties": [
+        {
+          "description": "The process.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its parent; 1 is init, which a process whose parent died is handed to.",
+          "name": "ppid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Its process group.",
+          "name": "pgid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "When it started, as the host's `ps` says it.",
+          "name": "started",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its command line: reported, never used to decide whose it is.",
+          "name": "command",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its working directory.",
+          "name": "cwd",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether that directory no longer exists (a removed worktree).",
+          "name": "cwd_gone",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The provider's messaging socket for this pid, when one exists.",
+          "name": "socket",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The owner variables of its environment (never a token).",
+          "name": "env",
+          "refs": [],
+          "required": true,
+          "type": "map of string"
+        },
+        {
+          "description": "The provider's session registry entry for this pid, when there is one.",
+          "name": "provider_session",
+          "refs": [
+            "ProviderSession"
+          ],
+          "required": false,
+          "type": "ProviderSession | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WhoReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How much the model holds. Every count anywhere is one of these.",
       "home": "product",
       "is_enum": false,
@@ -43721,6 +43826,56 @@
       "used_by": [],
       "used_by_schemas": [
         "ProductProvider"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a provider's session registry says about one of its processes.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ProviderSession",
+      "properties": [
+        {
+          "description": "The provider's id for the session.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The session's name, as the provider shows it in its session list.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The socket other sessions message it on.",
+          "name": "socket",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the registry says its process started.",
+          "name": "started",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether that start is this process's: a pid the host handed on since is not the\nsession's, and its entry is then not used.",
+          "name": "verified",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ProcessFact"
       ],
       "values": [],
       "variants": []
@@ -53037,6 +53192,122 @@
           "value": "failing"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Who a run belongs to: what a person needs to reach the worker that started it.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "RunOwner",
+      "properties": [
+        {
+          "description": "The session's id on the mesh (`claude-code-<id>`), or the one this process inherited.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The board peer whose address is this worker's, or the one this process inherited.",
+          "name": "peer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue the work is for: the active task's, or the one this process inherited.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The machine the run was started from.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worker's process on that machine.",
+          "name": "pid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RunRecord"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A run record as the host keeps it while the run lives.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "RunRecord",
+      "properties": [
+        {
+          "description": "The offload tag: the first ten characters of the commit that travelled.",
+          "name": "tag",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The run's shell on the host.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The run's process group; absent where the host could not start one.",
+          "name": "pgid",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "When it started, seconds since the epoch.",
+          "name": "started_at",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The host it runs on.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worktree it runs in.",
+          "name": "cwd",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who it belongs to.",
+          "name": "owner",
+          "refs": [
+            "RunOwner"
+          ],
+          "required": true,
+          "type": "RunOwner"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WhoReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -62495,6 +62766,201 @@
           "value": "published_history"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One source of evidence, and what it gave.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "WhoEvidence",
+      "properties": [
+        {
+          "description": "`process`, `run_records`, `board` or `mesh_claims`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the answer used it.",
+          "name": "used",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "What it said, or why it said nothing.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WhoReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One worker the answer names.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "WhoOwner",
+      "properties": [
+        {
+          "description": "The session's id on the mesh (`claude-code-<id>`).",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The board peer, when a board row is this worker's.",
+          "name": "peer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout that board row is attached to.",
+          "name": "checkout",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The session's name, as its provider shows it in its session list.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue the work is for.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Where the worker is reached: its machine, process, provider session and socket.",
+          "name": "address",
+          "refs": [
+            "PeerAddress"
+          ],
+          "required": false,
+          "type": "PeerAddress | null"
+        },
+        {
+          "description": "What named each of these, one line per fact used.",
+          "name": "basis",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "WhoReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.who`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "WhoReport",
+      "properties": [
+        {
+          "description": "The subject as asked.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`pid`, `tag`, `issue` or `path`.",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The machine the subject was read on.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether an owner was named; `false` is \"unknown\", with `missing` saying why.",
+          "name": "known",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the process is a leftover: init is its parent and its directory is gone.",
+          "name": "leftover",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every worker the evidence names.",
+          "name": "owners",
+          "refs": [
+            "WhoOwner"
+          ],
+          "required": true,
+          "type": "array of WhoOwner"
+        },
+        {
+          "description": "The process and its parents, for a pid.",
+          "name": "chain",
+          "refs": [
+            "ProcessFact"
+          ],
+          "required": true,
+          "type": "array of ProcessFact"
+        },
+        {
+          "description": "The run record the subject belongs to.",
+          "name": "run",
+          "refs": [
+            "RunRecord"
+          ],
+          "required": false,
+          "type": "RunRecord | null"
+        },
+        {
+          "description": "Every source consulted.",
+          "name": "evidence",
+          "refs": [
+            "WhoEvidence"
+          ],
+          "required": true,
+          "type": "array of WhoEvidence"
+        },
+        {
+          "description": "What could not be named, and the evidence that would have named it.",
+          "name": "missing",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.who"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -72365,6 +72831,73 @@
           "result_schema": "MeshVerifyReport",
           "stability": "experimental",
           "summary": "Prove cooperation now"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "mesh who",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/who?subject=I1\"",
+          "description": "The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.",
+          "home": "mesh",
+          "id": "mesh.who",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_who",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "A pid, `host:pid`, a run tag, `host:tag`, an issue (`I<digits>`) or a path.",
+              "examples": [
+                {
+                  "case": "issue",
+                  "value": "\"I1\""
+                }
+              ],
+              "name": "subject",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/mesh/who",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Who runs this: the result.",
+              "schema": "WhoReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "WhoReport",
+          "stability": "experimental",
+          "summary": "Who runs this"
         }
       ],
       "slug": "mesh"

@@ -1321,6 +1321,15 @@
         "status": "command"
       },
       {
+        "id": "capability:mesh.who",
+        "kind": "capability",
+        "label": "mesh.who",
+        "summary": "Who runs this",
+        "route": "/cockpit/capabilities/mesh.who",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:models.list",
         "kind": "capability",
         "label": "models.list",
@@ -68904,6 +68913,12 @@
             "apps/majordomus-cli/src/commands/mesh.rs",
             ".claude/hooks/",
             ".ai/repo/providers/",
+            "apps/majordomus-cli/src/guard.rs",
+            "apps/majordomus-cli/src/guard/",
+            "apps/majordomus-cli/src/commands/guard.rs",
+            "docs/OFFLOAD.md",
+            ".ai/repo/rules/project/a-derive-offload-waits-its-turn.v1.md",
+            ".ai/repo/automation/inventory.jsonl",
             "test/cases/3957_every_process_is_traced_to_its_session.sh"
           ],
           "serves": [
@@ -100818,6 +100833,26 @@
       },
       {
         "source": "capability:mesh.verify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.who",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -144327,6 +144362,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:mesh",
+        "target": "capability:mesh.who",
+        "kind": "composes"
+      },
+      {
         "source": "module:models",
         "target": "capability:models.list",
         "kind": "composes"
@@ -144733,8 +144773,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4015,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }

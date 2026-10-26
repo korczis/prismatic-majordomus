@@ -773,7 +773,7 @@ pub struct GuardArgs {
 /// assert!(Cli::try_parse_from(["majordomus", "guard", "docs/a.md"]).is_err());
 /// ```
 pub enum GuardCommand {
-    /// Judge the edit a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers it, 0 otherwise
+    /// Judge the tool call a provider's pre-tool payload (on stdin) is about to make; exit 2 with the reason and the remedy when no claim covers the file it edits, or when its shell command starts a build (cargo, rustc, scripts/derive, scripts/rust-*) over ssh on a declared offload host outside `majordomus offload`; 0 otherwise
     Hook(GuardHookArgs),
 }
 
@@ -846,6 +846,34 @@ pub enum MeshCommand {
     Review(MeshReviewArgs),
     /// The mesh build cache: what each dependency install and build directory is cached under
     BuildCache(MeshBuildCacheArgs),
+    /// Who runs this: the session, board peer, issue and address behind a pid, host:pid, run tag, issue or path; exits 10 when no evidence names one
+    Who(MeshWhoArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh who`: the session behind a subject. The subject is positional and required: a pid,
+/// `host:pid` on a declared offload host, a run tag, `host:tag`, an issue (`I<digits>`) or a
+/// path, because "who runs this" without a "this" is `mesh peers`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshWhoArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "who", "lundra:24025"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Who(who) = mesh.command else { panic!("expected `who`") };
+/// let who: MeshWhoArgs = who;
+/// assert_eq!(who.subject, "lundra:24025");
+///
+/// // the subject is the whole question
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "who"]).is_err());
+/// ```
+pub struct MeshWhoArgs {
+    /// A pid, host:pid, run tag, host:tag, issue (I3956) or path
+    pub subject: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -4267,6 +4295,12 @@ pub struct OffloadArgs {
 /// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
 /// let OffloadCommand::Derive { worktree, host, keep } = offload.command else { panic!() };
 /// assert_eq!((worktree.to_str(), host.as_deref(), keep), (Some("../wt"), Some("lundra"), true));
+///
+/// // a run is stopped by its tag, as a group, after a grace period
+/// let cli = Cli::try_parse_from(["majordomus", "offload", "stop", "0123456789", "--host", "lundra"]).unwrap();
+/// let Command::Offload(offload) = cli.command else { panic!("expected `offload`") };
+/// let OffloadCommand::Stop { tag, host, force, grace } = offload.command else { panic!() };
+/// assert_eq!((tag.as_str(), host.as_deref(), force, grace), ("0123456789", Some("lundra"), false, 10));
 /// ```
 pub enum OffloadCommand {
     /// The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0
@@ -4284,6 +4318,20 @@ pub enum OffloadCommand {
         /// Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept)
         #[arg(long)]
         keep: bool,
+    },
+    /// Stop an offloaded run as a process group on its host: read its run record, refuse unless the record names this session (or --force), then TERM the group and KILL what is left after the grace period. Exit 2 on a tag that is not one or an ambiguous host, 12 when the host holds no record or the group is not the run's, 13 when the run belongs to another session
+    Stop {
+        /// The run's tag, as `offload derive` printed it
+        tag: String,
+        /// A declared host, by id or address; the declaration's only host when absent
+        #[arg(long, value_name = "HOST")]
+        host: Option<String>,
+        /// Stop it although its record names another session, or none
+        #[arg(long)]
+        force: bool,
+        /// Seconds between TERM and KILL
+        #[arg(long, value_name = "SECONDS", default_value_t = 10)]
+        grace: u64,
     },
 }
 
@@ -7809,11 +7857,22 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "offload stop",
+        examples: &[ExampleDoc {
+            id: "offload-stop-undeclared",
+            title: "A stop with no declared host signals nothing",
+            description: "Reads the run record `offload derive` left beside the host's queue, refuses unless it names this session (or --force), and stops the run's whole process group — TERM, then KILL after the grace period — so no compiler under it outlives the run. With no host declared there is no run to stop, and it refuses with 12 before it contacts anything.",
+            argv: &["offload", "stop", "0123456789"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "guard hook",
         examples: &[ExampleDoc {
             id: "guard-hook",
             title: "Judge the edit a provider's pre-tool payload names",
-            description: "What a provider's pre-tool hook runs before an edit: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
+            description: "What a provider's pre-tool hook runs before an edit or a shell command: the payload arrives on stdin, and the command exits 2 with the reason and the remedy when no claim covers the path it names, or when its command starts a build over ssh on a host the offload declaration names (the way is `majordomus offload derive`), 0 otherwise. Here stdin is empty, so it names no path, and the command lets the tool run.",
             argv: &["guard", "hook", "--provider", "claude-code"],
             setup: &[],
             expect: Expect::Success,
@@ -7872,6 +7931,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "build-cache", "key", "--kind", "mix-deps"],
             setup: &[],
             expect: Expect::StdoutContains(&["platform"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh who",
+        examples: &[ExampleDoc {
+            id: "mesh-who-issue",
+            title: "Who works on an issue, and what says so",
+            description: "Every live mesh claim, board announcement and run record that names the issue, each owner with its board peer, issue and address and the facts that named it. A pid is read where it runs — its parent chain up to the provider's process and socket, its directory and the owner variables of its environment — and `host:pid` reads a declared offload host through its ssh path. Here nobody names the issue, so the answer is unknown, lists the evidence it lacked, and exits 10.",
+            argv: &["mesh", "who", "I1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

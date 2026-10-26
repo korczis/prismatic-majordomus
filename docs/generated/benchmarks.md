@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 220 | 181 | 0 | 39 |
-| http | 212 | 181 | 0 | 31 |
-| mcp | 206 | 176 | 0 | 30 |
+| direct | 221 | 181 | 0 | 40 |
+| http | 213 | 181 | 0 | 32 |
+| mcp | 207 | 176 | 0 | 31 |
 | system | 14 | 14 | 0 | 0 |
-| total | 652 | 552 | 0 | 100 |
+| total | 655 | 552 | 0 | 103 |
 
 ## Capabilities
 
@@ -158,6 +158,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `mesh.state` | mesh | query | — | covered | covered | covered | `summary`, `full` |
 | `mesh.status` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.verify` | mesh | command | — | waived | waived | waived | — |
+| `mesh.who` | mesh | query | — | waived | waived | waived | — |
 | `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |
 | `models.route` | models | query | — | covered | covered | covered | `default` |
 | `monitor.stream` | monitor | query | — | covered | covered | covered | `local-first-page`, `local-resumed` |

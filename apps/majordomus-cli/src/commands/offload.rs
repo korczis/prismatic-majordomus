@@ -12,11 +12,14 @@ use crate::cli::{OffloadArgs, OffloadCommand, OutputFormat};
 use crate::error::{Error, Result};
 use crate::offload::declaration::OffloadDeclaration;
 use crate::offload::host::{probe, HostReport, Standing};
+use crate::offload::owner::RunOwner;
 use crate::offload::run::{offload, OffloadReport, OffloadRequest, EXIT_UNAVAILABLE};
+use crate::offload::stop::{stop, StopReport, StopRequest};
 
 /// Run `majordomus offload`.
 pub fn run(args: OffloadArgs) -> Result<u8> {
     let declaration = load(&args)?;
+    let here = checkout(&args);
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     let w = |e: std::io::Error| Error::io("<stdout>", e);
@@ -50,7 +53,79 @@ pub fn run(args: OffloadArgs) -> Result<u8> {
             derive_report(&report, args.format, &mut out).map_err(w)?;
             Ok(0)
         }
+        OffloadCommand::Stop {
+            tag,
+            host,
+            force,
+            grace,
+        } => {
+            let d = required(declaration)?;
+            let request = StopRequest {
+                tag,
+                host,
+                force,
+                grace_seconds: grace,
+            };
+            let caller = RunOwner::of_this_process(&here);
+            let stderr = std::io::stderr();
+            let report =
+                stop(&d, &request, &caller, &mut stderr.lock()).map_err(|r| Error::Refused {
+                    code: r.code,
+                    reason: format!("offload stop: {}", r.reason),
+                })?;
+            stop_report(&report, args.format, &mut out).map_err(w)?;
+            Ok(0)
+        }
     }
+}
+
+/// Print what a stop did.
+fn stop_report(
+    report: &StopReport,
+    format: OutputFormat,
+    out: &mut dyn Write,
+) -> std::io::Result<()> {
+    if format == OutputFormat::Json {
+        return writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(report).unwrap_or_default()
+        );
+    }
+    let r = &report.record;
+    if report.signals.is_empty() {
+        writeln!(
+            out,
+            "run {} on {} was already gone (process group {} empty); its record is removed",
+            r.tag,
+            report.host,
+            r.pgid.map_or("?".into(), |p| p.to_string())
+        )?;
+    } else {
+        writeln!(
+            out,
+            "stopped run {} on {}: process group {} ({} process(es), verified by {}), signalled {}",
+            r.tag,
+            report.host,
+            r.pgid.map_or("?".into(), |p| p.to_string()),
+            report.members,
+            report.verified,
+            report.signals.join(", ")
+        )?;
+    }
+    writeln!(
+        out,
+        "  owner: session {}, peer {}, issue {}, from {} pid {}",
+        r.owner.session.as_deref().unwrap_or("(unnamed)"),
+        r.owner.peer.as_deref().unwrap_or("(none)"),
+        r.owner.issue.as_deref().unwrap_or("(none)"),
+        if r.owner.host.is_empty() {
+            "?"
+        } else {
+            &r.owner.host
+        },
+        r.owner.pid.map_or("?".into(), |p| p.to_string())
+    )
 }
 
 /// Print every host's measurement; answers whether one was chosen.
@@ -146,6 +221,28 @@ fn load(args: &OffloadArgs) -> Result<Option<OffloadDeclaration>> {
     }
     let app = crate::app::App::load(&args.repo)?;
     crate::offload::from_objects(&app.index().objects).map_err(refused)
+}
+
+/// The checkout this call stands in, as git knows it (the worktree `offload derive` sends is
+/// found the same way): its active task and its server name the caller's issue and board
+/// peer. Outside a git checkout, the directory itself.
+fn checkout(args: &OffloadArgs) -> std::path::PathBuf {
+    let start = args
+        .repo
+        .repo
+        .clone()
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| ".".into()));
+    std::process::Command::new("git")
+        .arg("-C")
+        .arg(&start)
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+        .filter(|top| !top.is_empty())
+        .map(std::path::PathBuf::from)
+        .unwrap_or(start)
 }
 
 fn required(d: Option<OffloadDeclaration>) -> Result<OffloadDeclaration> {
@@ -396,6 +493,7 @@ mod tests {
             waited_seconds: 3,
             seconds: 42,
             probe: Vec::new(),
+            owner: RunOwner::default(),
         }
     }
 
@@ -423,5 +521,105 @@ mod tests {
             let e = derive_report(&derived(), format, &mut out).unwrap_err();
             assert_eq!(e.kind(), std::io::ErrorKind::BrokenPipe, "{marker}");
         }
+    }
+
+    fn stopped(signals: &[&str]) -> StopReport {
+        let record = crate::offload::owner::RunRecord::parse(
+            "majordomus-offload-run/v1\ntag 0123456789\npid 7\npgid 8\nhost lundra\n\
+             owner_session claude-code-a\nowner_issue I3956\nowner_host mac\nowner_pid 9\n",
+        )
+        .unwrap();
+        StopReport {
+            host: "lundra".into(),
+            record,
+            members: if signals.is_empty() { 0 } else { 2 },
+            verified: if signals.is_empty() {
+                "gone"
+            } else {
+                "environ"
+            }
+            .into(),
+            signals: signals.iter().map(|s| s.to_string()).collect(),
+            record_removed: true,
+        }
+    }
+
+    /// A stop says what it signalled and whose run it was, or that the run was already gone;
+    /// an unknown owner field is said to be unknown rather than left blank.
+    #[test]
+    fn a_stop_report_says_what_was_signalled_and_whose_run_it_was() {
+        let mut out = FailOn::new("\0");
+        stop_report(&stopped(&["TERM", "KILL"]), OutputFormat::Text, &mut out).unwrap();
+        assert_eq!(
+            out.text(),
+            "stopped run 0123456789 on lundra: process group 8 (2 process(es), verified by \
+             environ), signalled TERM, KILL\n  owner: session claude-code-a, peer (none), \
+             issue I3956, from mac pid 9\n"
+        );
+        let mut gone = stopped(&[]);
+        gone.record.pgid = None;
+        gone.record.owner = Default::default();
+        let mut out = FailOn::new("\0");
+        stop_report(&gone, OutputFormat::Text, &mut out).unwrap();
+        assert_eq!(
+            out.text(),
+            "run 0123456789 on lundra was already gone (process group ? empty); its record is \
+             removed\n  owner: session (unnamed), peer (none), issue (none), from ? pid ?\n"
+        );
+        let mut out = FailOn::new("\0");
+        stop_report(&stopped(&["TERM"]), OutputFormat::Json, &mut out).unwrap();
+        let v: serde_json::Value = serde_json::from_str(&out.text()).unwrap();
+        assert_eq!(v["record"]["owner"]["session"], "claude-code-a");
+        assert_eq!(v["signals"][0], "TERM");
+        for (report, format, marker) in [
+            (stopped(&["TERM"]), OutputFormat::Text, "stopped run"),
+            (stopped(&[]), OutputFormat::Text, "already gone"),
+            (stopped(&["TERM"]), OutputFormat::Text, "owner:"),
+            (stopped(&["TERM"]), OutputFormat::Json, "\"signals\""),
+        ] {
+            let mut out = FailOn::new(marker);
+            let e = stop_report(&report, format, &mut out).unwrap_err();
+            assert_eq!(e.kind(), std::io::ErrorKind::BrokenPipe, "{marker}");
+        }
+    }
+
+    /// The caller's checkout is the repository the call stands in, found from `--repo` or
+    /// the current directory; outside a repository, the directory itself.
+    #[test]
+    fn the_callers_checkout_is_the_repository_it_stands_in() {
+        use clap::Parser;
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().canonicalize().unwrap();
+        let parse = |repo: &std::path::Path| {
+            let cli = crate::cli::Cli::try_parse_from([
+                "majordomus".as_ref(),
+                "offload".as_ref(),
+                "--repo".as_ref(),
+                repo.as_os_str(),
+                "hosts".as_ref(),
+            ])
+            .unwrap();
+            match cli.command {
+                crate::cli::Command::Offload(a) => a,
+                _ => panic!("expected offload"),
+            }
+        };
+        let plain = root.join("plain");
+        std::fs::create_dir_all(&plain).unwrap();
+        assert_eq!(
+            checkout(&parse(&plain)),
+            plain,
+            "no repository: the directory"
+        );
+        let repo = root.join("repo");
+        std::fs::create_dir_all(repo.join("sub")).unwrap();
+        let ok = std::process::Command::new("git")
+            .args(["init", "-q"])
+            .arg(&repo)
+            .status()
+            .unwrap();
+        assert!(ok.success());
+        let found = checkout(&parse(&repo.join("sub")));
+        assert_eq!(found.canonicalize().unwrap(), repo, "the repository's root");
     }
 }

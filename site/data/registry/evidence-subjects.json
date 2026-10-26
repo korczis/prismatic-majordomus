@@ -739,6 +739,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:mesh.who",
+      "path": "/evidence/capabilities/mesh-who/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:models.list",
       "path": "/evidence/capabilities/models-list/"
     },
@@ -3079,6 +3084,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh who",
+      "path": "/evidence/commands/mesh-who/"
+    },
+    {
+      "kind": "command",
       "subject": "command:migrate",
       "path": "/evidence/commands/migrate/"
     },
@@ -3111,6 +3121,11 @@
       "kind": "command",
       "subject": "command:offload probe",
       "path": "/evidence/commands/offload-probe/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:offload stop",
+      "path": "/evidence/commands/offload-stop/"
     },
     {
       "kind": "command",
@@ -5676,6 +5691,25 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.who": {
+      "kind": "capability",
+      "id": "mesh.who",
+      "page": "/evidence/capabilities/mesh-who/",
+      "programs": [],
+      "members": [
+        "command:mesh who"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:3957_every_process_is_traced_to_its_session",
+          "path": "test/cases/3957_every_process_is_traced_to_its_session.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -16523,6 +16557,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh who": {
+      "kind": "command",
+      "id": "mesh who",
+      "page": "/evidence/commands/mesh-who/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:migrate": {
       "kind": "command",
       "id": "migrate",
@@ -16647,6 +16700,25 @@
       "kind": "command",
       "id": "offload probe",
       "page": "/evidence/commands/offload-probe/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:offload stop": {
+      "kind": "command",
+      "id": "offload stop",
+      "page": "/evidence/commands/offload-stop/",
       "programs": [
         "native"
       ],
@@ -21725,6 +21797,18 @@
       "programs": [],
       "members": [
         "capability:mesh.verify"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_who": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_who",
+      "alias_of": "capability:mesh.who",
+      "programs": [],
+      "members": [
+        "capability:mesh.who"
       ],
       "routes": [],
       "mechanisms": [],
