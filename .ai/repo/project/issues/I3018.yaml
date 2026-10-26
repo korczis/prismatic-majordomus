@@ -28,4 +28,18 @@ validation:
 evidence_required:
   - ui_idd_within_budget
 created_at: 2026-10-21
-updated_at: 2026-10-21
+updated_at: 2026-10-26T03:38:47Z
+started_at: 2026-10-26T03:37:52Z
+started_event: sha256:cb42168d467963d39ea5147ae8699d14cc5b83ff490ad545562fe38f25c8ffd7
+verified_at: 2026-10-26T03:38:14Z
+verified_event: sha256:fc3828a809bc2b4ac2dd613b2002adff326ecb96e84efc9fbf79656c77b67b36
+completed_at: 2026-10-26T03:38:47Z
+completed_event: sha256:8da6d8384eafc6f164c5bfeeb4bf2da47d252bbb92df4f297ca3287798c1d0e9
+evidence:
+  - covers: ui_idd_within_budget
+    type: ci
+    command: "majordomus bench system.http. --transport system --profile ci --no-write --check (validate's ui-checks job); cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::"
+    result: "system.http.ui.idd warm p95 28062.3 us against 100000.0 PASS; system.http.live.ui.idd warm p95 8510.1 us against 100000.0 PASS; 'bench --check: within budget' in master validate run 40196303175 (ui-checks job) at 2efeacea031, whose crate is master 6259dac47af's; cargo test --lib ui:: at master 6259dac47af on imac: test result: ok. 215 passed; 0 failed; 0 ignored. idd.rs and intent.rs borrow plan.issues and plan.roadmap through view::items. Landed through #1760 (905159df7cc)"
+    artifact: "https://github.com/korczis/prismatic-majordomus/actions/runs/40196303175"
+    commit: 9b14a029ae0329569d782ff5bd74064d9d8c6c82
+    recorded_at: 2026-10-26T03:38:37Z

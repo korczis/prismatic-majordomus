@@ -26,11 +26,13 @@ evidence_required:
 serves:
   - "the-owner-directs-work-from-the-ui#the-workspace-reads-at-a-glance"
 created_at: 2026-10-21
-updated_at: 2026-10-21T02:51:16Z
+updated_at: 2026-10-26T03:39:33Z
 started_at: 2026-10-21T02:39:44Z
 started_event: sha256:c67e196625e0d794f73188cba8e30e31848c7fdb816a56a535591dc55740a270
 verified_at: 2026-10-21T02:51:16Z
 verified_event: sha256:c5b9fd9de749f2f8b4036aae9d870388be2dffc6acde167d24c76a221b98eb7a
+completed_at: 2026-10-26T03:39:33Z
+completed_event: sha256:0f706f2e299d0e8bdba7cb9fe44cc41d2244b52f8ec20d40425fb9845704fbbc
 evidence:
   - covers: shared_scope_fold_test
     type: test
@@ -39,3 +41,10 @@ evidence:
     artifact: "apps/majordomus-cli/src/ui/idd.rs"
     commit: d621aee642b6ef77b304b411f6795ce6180fb6f6
     recorded_at: 2026-10-21T02:50:55Z
+  - covers: shared_scope_fold_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::; majordomus bench system.http. --transport system --profile ci --no-write --check (validate's ui-checks job)"
+    result: "test result: ok. 215 passed; 0 failed; 0 ignored at master 6259dac47af on imac, the filter ui:: taking ui::idd::tests::the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest; the budget criterion on the runner: system.http.ui.idd warm p95 28062.3 us and system.http.live.ui.idd warm p95 8510.1 us against 100000.0, both PASS, 'bench --check: within budget', master validate run 40196303175 (ui-checks job) at 2efeacea031, whose crate is master's; the budget is unchanged. Landed through #1841 in train 7 (7cfc66626ff)"
+    artifact: "apps/majordomus-cli/src/ui/idd.rs"
+    commit: 9b14a029ae0329569d782ff5bd74064d9d8c6c82
+    recorded_at: 2026-10-26T03:39:22Z

@@ -40,4 +40,18 @@ validation:
 evidence_required:
   - "the_shared_build_dir_stays_under_its_bound_test"
 created_at: 2026-10-23
-updated_at: 2026-10-23
+updated_at: 2026-10-26T03:35:24Z
+started_at: 2026-10-26T03:34:23Z
+started_event: sha256:8ead2466f448d4a57425e220746c8bc6e2570d3886ad56ba6c3093e8ed55797e
+verified_at: 2026-10-26T03:34:49Z
+verified_event: sha256:694e4da23e749af53818dd04674f0530cd9300e52bcbfcba992a2dd3845758dd
+completed_at: 2026-10-26T03:35:24Z
+completed_event: sha256:7fcf486fa6e649c4bf8ee13068f8eb99ec9525df5381aa2064fb3b907941d0a2
+evidence:
+  - covers: the_shared_build_dir_stays_under_its_bound_test
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT MJ_TEST_JOBS=4 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 3196_stale_crate_artifacts_are_pruned_under_cargos_lock 1022_worktrees_share_build_intermediates"
+    result: "ok   1022_worktrees_share_build_intermediates; ok   3196_stale_crate_artifacts_are_pruned_under_cargos_lock; ok   3959_the_shared_build_dir_stays_under_its_bound; tests: 3 passed, 0 failed, 0 skipped at master 6259dac47af (merged into this branch): a fixture build dir over its bound with its profile lock free is evicted oldest first to under the bound with every unit named, a held lock evicts nothing and says so, held, recent and locked-generation units are kept, --dry-run evicts nothing, and reap-orphans evicts under the lock. Landed through #2419 in train 7 (652a8de713c)"
+    artifact: "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+    commit: 9b14a029ae0329569d782ff5bd74064d9d8c6c82
+    recorded_at: 2026-10-26T03:35:12Z

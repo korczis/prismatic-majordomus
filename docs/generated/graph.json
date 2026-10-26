@@ -36452,6 +36452,8 @@
             "The case's cost on three GitHub runs, named, is under half of the slowest-case budget",
             "The slowest-case budget is lowered or unchanged, never raised"
           ],
+          "completed_at": "2026-10-26T03:37:19Z",
+          "completed_event": "sha256:bb32eb54843b94020f094a1f21f426822361598a9cd508ccc4bc0d9a9fcc4c53",
           "created_at": "2026-10-09",
           "depends_on": [],
           "evidence_required": [
@@ -36474,11 +36476,15 @@
             ".ai/repo/ci/gates.yaml"
           ],
           "slug": "the-slowest-case-is-cut-not-budgeted",
-          "updated_at": "2026-10-20",
+          "started_at": "2026-10-26T03:36:05Z",
+          "started_event": "sha256:de046b6f58c3b18d3f34e8423fa33047a6595103d6c3d3874c2a22d29ae812e5",
+          "updated_at": "2026-10-26T03:37:19Z",
           "validation": [
             "bash test/run.sh 95_executable_reference",
             "scripts/ci/suite-budget"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:36:35Z",
+          "verified_event": "sha256:1e02f740405f2f9eedd708913b709e2543dfe75dcdaeb24ec25a4770a58b8085"
         }
       },
       {
@@ -37713,6 +37719,8 @@
             "partial is not refused for the mesh",
             "finish claims the scope once a server answers, and the rule passes"
           ],
+          "completed_at": "2026-10-26T03:33:35Z",
+          "completed_event": "sha256:436f16600bd78c9a40b40401764e98435920bd7db46380b6077d7e0489628191",
           "created_at": "2026-10-10",
           "current_state": "No validator reads mesh_claim; finish completes a task whose scope was never on the mesh.",
           "depends_on": [
@@ -37735,11 +37743,15 @@
             "docs/MESH.md"
           ],
           "slug": "built-off-the-mesh-is-refused",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-26T03:32:28Z",
+          "started_event": "sha256:14581cc28efdb7c86c7405d3dc1231bc8283e389ff6204a9f70ac338d0812c4a",
+          "updated_at": "2026-10-26T03:33:35Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3068_a_task_off_the_mesh_is_refused 3067_a_task_is_claimed_on_the_mesh 18_doctrine_wiring 3022_the_rule_package_is_stamped_and_adopter_neutral"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:32:50Z",
+          "verified_event": "sha256:6ed9767a0489e87109865c95e8a4b586859ecaba178232b3d0fb8b436e3a1878"
         }
       },
       {
@@ -48447,6 +48459,8 @@
             "idd.rs and intent.rs read plan.issues and plan.roadmap through view::items wherever they only read them",
             "system.http.ui.idd and system.http.live.ui.idd warm p95 are within their 100 ms budget in the ui job"
           ],
+          "completed_at": "2026-10-26T03:38:47Z",
+          "completed_event": "sha256:8da6d8384eafc6f164c5bfeeb4bf2da47d252bbb92df4f297ca3287798c1d0e9",
           "created_at": "2026-10-21",
           "current_state": "idd.rs and intent.rs call view::list on plan.issues and plan.roadmap, a to_vec of the whole answer, on every request.",
           "depends_on": [],
@@ -48470,11 +48484,15 @@
             "docs"
           ],
           "slug": "the-intent-workspace-borrows-the-plan",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-26T03:37:52Z",
+          "started_event": "sha256:cb42168d467963d39ea5147ae8699d14cc5b83ff490ad545562fe38f25c8ffd7",
+          "updated_at": "2026-10-26T03:38:47Z",
           "validation": [
             "cargo test --lib ui::",
             "majordomus bench system.http.ui.idd --transport system --profile ci --no-write --check"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:38:14Z",
+          "verified_event": "sha256:fc3828a809bc2b4ac2dd613b2002adff326ecb96e84efc9fbf79656c77b67b36"
         }
       },
       {
@@ -66923,6 +66941,8 @@
             "/ui/panels/shared-scope lists every pair of the named intent's issues and is a panel the UI dispatcher answers",
             "bench --check passes system.http.ui.idd and system.http.live.ui.idd within the 100 ms warm p95 budget, which is unchanged"
           ],
+          "completed_at": "2026-10-26T03:39:33Z",
+          "completed_event": "sha256:0f706f2e299d0e8bdba7cb9fe44cc41d2244b52f8ec20d40425fb9845704fbbc",
           "created_at": "2026-10-21",
           "current_state": "The fold renders every entry of plan.waves serialised_by_scope whose subject serves the intent; render clones plan.waves (1.6 MB) and plan.issues (1 MB) as Vec<Value> on each request.",
           "depends_on": [],
@@ -66944,7 +66964,7 @@
           "slug": "the-intent-workspace-answers-within-its-budget",
           "started_at": "2026-10-21T02:39:44Z",
           "started_event": "sha256:c67e196625e0d794f73188cba8e30e31848c7fdb816a56a535591dc55740a270",
-          "updated_at": "2026-10-21T02:51:16Z",
+          "updated_at": "2026-10-26T03:39:33Z",
           "validation": [
             "cargo test --lib -- ui::",
             "majordomus bench system.http.ui.idd --transport system --profile ci --no-write"
@@ -68966,6 +68986,8 @@
             "scripts/reap-orphans, over the bound while a build runs, evicts stale units under the lock rather than keeping the whole directory",
             "After a build, a held lock is waited for in the background, bounded, and the build that finished does not wait"
           ],
+          "completed_at": "2026-10-26T03:35:24Z",
+          "completed_event": "sha256:7fcf486fa6e649c4bf8ee13068f8eb99ec9525df5381aa2064fb3b907941d0a2",
           "created_at": "2026-10-23",
           "depends_on": [
             "I2787"
@@ -68993,13 +69015,17 @@
             ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md"
           ],
           "slug": "the-shared-build-dir-stays-bounded",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-26T03:34:23Z",
+          "started_event": "sha256:8ead2466f448d4a57425e220746c8bc6e2570d3886ad56ba6c3093e8ed55797e",
+          "updated_at": "2026-10-26T03:35:24Z",
           "validation": [
             "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
             "bash test/run.sh 3196_stale_crate_artifacts_are_pruned_under_cargos_lock",
             "bash test/run.sh 1022_worktrees_share_build_intermediates",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:34:49Z",
+          "verified_event": "sha256:694e4da23e749af53818dd04674f0530cd9300e52bcbfcba992a2dd3845758dd"
         }
       },
       {
@@ -80743,6 +80769,29 @@
             "linux-aarch64-musl"
           ],
           "tag": "v1.0.0-alpha.5"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v1.0.0-alpha.8",
+        "kind": "release-record",
+        "label": "v1.0.0-alpha.8",
+        "summary": "v1.0.0-alpha.8",
+        "route": "/cockpit/objects/release-record/v1-0-0-alpha-8",
+        "source": ".ai/repo/releases/v1.0.0-alpha.8.yaml",
+        "facts": {
+          "channel": "prerelease",
+          "commit": "2efeacea03158615db2b497117a8da35b264909b",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v1.0.0-alpha.8",
+          "published_at": "2026-10-25T19:58:42Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v1.0.0-alpha.8"
         }
       },
       {
@@ -134140,6 +134189,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v1.0.0-alpha.8",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://rule/majordomus.adr-integrity@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -144241,8 +144295,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4002,
-      "edges": 9232,
+      "nodes": 4003,
+      "edges": 9233,
       "acyclic": false,
       "truncated": false
     }

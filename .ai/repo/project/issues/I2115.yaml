@@ -30,4 +30,18 @@ validation:
 evidence_required:
   - the_slowest_case_is_cut
 created_at: 2026-10-09
-updated_at: 2026-10-20
+updated_at: 2026-10-26T03:37:19Z
+started_at: 2026-10-26T03:36:05Z
+started_event: sha256:de046b6f58c3b18d3f34e8423fa33047a6595103d6c3d3874c2a22d29ae812e5
+verified_at: 2026-10-26T03:36:35Z
+verified_event: sha256:1e02f740405f2f9eedd708913b709e2543dfe75dcdaeb24ec25a4770a58b8085
+completed_at: 2026-10-26T03:37:19Z
+completed_event: sha256:bb32eb54843b94020f094a1f21f426822361598a9cd508ccc4bc0d9a9fcc4c53
+evidence:
+  - covers: the_slowest_case_is_cut
+    type: test
+    command: "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 95_executable_reference; scripts/ci/suite-budget --report suite.tsv (validate's suite job)"
+    result: "ok   95_executable_reference; tests: 1 passed, 0 failed, 0 skipped at master 6259dac47af (merged into this branch). On GitHub the case cost 465 s in master validate run 40196303175 (2efeacea031), 456 s in 40183269289 (71857dbb609) and 778 s in 40119228948 (6af2d09cb73), each under half of slowest_case_seconds 5130 (2565 s); run 40196303175's suite job: 'suite-budget: 652 case(s), 42086 s of case time against a budget of 61700 s; slowest 77_rust_evidence at 2191 s against 5130 s' and 'suite-budget: within budget'. slowest_case_seconds is unchanged since 9a5a9b77520 (2026-10-20), never raised. Landed through #1754 (7ca56514648): the generator refuses a broken manifest before deriving and case 95 runs three generations instead of seven, its mutations killed"
+    artifact: "test/cases/95_executable_reference.sh"
+    commit: 9b14a029ae0329569d782ff5bd74064d9d8c6c82
+    recorded_at: 2026-10-26T03:37:05Z
