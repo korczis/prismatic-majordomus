@@ -5,7 +5,7 @@
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 30.
+Stability: experimental. Capabilities: 31.
 
 ## `mesh.beat` — Say a session is making progress
 
@@ -725,4 +725,26 @@ Run a live verification: cooperation is active, the repository identity resolves
 Input: none.
 
 Output: `MeshVerifyReport`.
+
+## `mesh.who` — Who runs this
+
+The session behind a process, a path, an issue or an offloaded run (I3956): a pid (or `host:pid` on a declared offload host, read through its ssh path only) is read where it runs — its parent chain up to the provider's process and its messaging socket, its group, start, command and working directory, and the owner variables of its environment — and joined with that host's run records, the repository's board (whose rows carry each worker's address) and the mesh claims; a run tag is the record its host keeps; an issue or a path is every live mesh claim, announcement and run record naming or covering it. Each owner comes with its board peer, issue, address and the facts that named it. A process whose parent is init and whose directory is gone is marked a leftover and named with its owner when its environment or a run record knows it. Nothing is guessed from a name: an answer that cannot name an owner says unknown and lists the evidence it lacked. Reads processes and records; signals nothing.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_who` |
+| HTTP | `GET /api/v1/mesh/who` |
+| CLI | `majordomus mesh who` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, diagnostics |
+
+| input | type | required | description |
+|---|---|---|---|
+| `subject` | string | yes | A pid, `host:pid`, a run tag, `host:tag`, an issue (`I<digits>`) or a path. |
+
+Output: `WhoReport`.
 
