@@ -25185,6 +25185,8 @@
             "A refusal names the rule and the command that resolves it",
             "If the rule is enforced, it is declared in share/doctrines.yaml and doctor proves it reaches its command"
           ],
+          "completed_at": "2026-10-26T03:03:26Z",
+          "completed_event": "sha256:d5712bb877b9ce5151309c35b495fd635f9bb1b90da614da632df72d7498823e",
           "created_at": "2026-09-04",
           "depends_on": [
             "I0702"
@@ -25208,11 +25210,15 @@
             "test/cases"
           ],
           "slug": "implement-attribution",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-25T20:39:51Z",
+          "started_event": "sha256:b1981b4fe87da0141dea895c73c3b01134092403660c1cb3e28bc97cae321ec5",
+          "updated_at": "2026-10-26T03:03:26Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
           ],
+          "verified_at": "2026-10-26T03:03:01Z",
+          "verified_event": "sha256:2591b93f407e84cc6badb438ed68670a47fcf5f6f590a2680b4c7dc8b032342e",
           "why": "A defect is fixed when the case that reproduced it goes from describing the gap to describing the guarantee. Anything less leaves the next worker unable to tell which of the two the code is in."
         }
       },
@@ -43585,6 +43591,8 @@
         "route": "/cockpit/objects/issue/i2733",
         "source": ".ai/repo/project/issues/I2733.yaml",
         "facts": {
+          "completed_at": "2026-10-25T18:53:43Z",
+          "completed_event": "sha256:3393645c376270ce1995425bb8d928dd5a6b00c05d956c7e48e789670a7c1ca2",
           "created_at": "2026-10-15",
           "depends_on": [
             "I2140"
@@ -43609,7 +43617,9 @@
             "docs/MESH.md"
           ],
           "slug": "a-resumed-walk-misses-a-partitioned-event",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-25T18:52:58Z",
+          "started_event": "sha256:0f8f05c2c3e232527245b3586180a46cb1f41251adf863ae9183a493fa684ace",
+          "updated_at": "2026-10-25T18:53:43Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh",
@@ -63877,6 +63887,8 @@
             "A malformed MJ_PROBE_SHARD is refused before a browser is opened",
             "A probe finding still fails the shard that found it, naming the page and the spec"
           ],
+          "completed_at": "2026-10-25T18:51:58Z",
+          "completed_event": "sha256:dc3edbf1703850a60cd025827dd6562a23510e2bff3e6baf5b25f4f0bd44f6f7",
           "created_at": "2026-10-20",
           "current_state": "One interactions job rebuilds the site (rustdoc included) and drives every page in one step under a bound that has had to grow with every route the site adds.",
           "depends_on": [
@@ -63902,7 +63914,9 @@
             "docs/CI.md"
           ],
           "slug": "the-interaction-probe-is-split",
-          "updated_at": "2026-10-20",
+          "started_at": "2026-10-25T18:51:14Z",
+          "started_event": "sha256:00f9afcf6f14c3e94f7457cff198bea1d056734500b60f56452037dfe6b921f5",
+          "updated_at": "2026-10-25T18:51:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 3603_every_page_is_exercised_by_exactly_one_shard 337_every_control_does_what_it_says 3602_every_route_is_probed_by_exactly_one_shard"
@@ -67700,6 +67714,8 @@
             "The homepage names builtin capabilities and generated resources apart, each from the dataset",
             "site-check fails when either figure disagrees with the dataset"
           ],
+          "completed_at": "2026-10-26T10:53:04Z",
+          "completed_event": "sha256:b896b909f670637130cb97f545682f69a7ce4f07d8ec89c5cb8d66b64d9ed033",
           "created_at": "2026-10-22",
           "current_state": "README.md:129 and CONTRIBUTING.md:3,36 as quoted; product.json telemetry counts 3300 capabilities as 208 builtin and 3092 declarative, one per object (site.rs:1247-1260).",
           "depends_on": [],
@@ -67721,11 +67737,15 @@
           ],
           "serves": [],
           "slug": "the-size-of-the-tool-is-said-truthfully",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T10:50:52Z",
+          "started_event": "sha256:286eb3c602130c85ce9e13c0ea362e8d05df5265a6dc23c3d218c9e6330c10ed",
+          "updated_at": "2026-10-26T10:53:04Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/site-check"
-          ]
+          ],
+          "verified_at": "2026-10-26T10:51:11Z",
+          "verified_event": "sha256:3251955ee0d96ec379665a5a798c1a38d6251087687c89518620b75214a71ddd"
         }
       },
       {
@@ -67741,6 +67761,8 @@
             "A raw string with hashes and braces is skipped whole",
             "Case 132 fails if the scanner closes the module early"
           ],
+          "completed_at": "2026-10-25T18:45:51Z",
+          "completed_event": "sha256:d0f6d76eb9db71f93530138d640df8ef1e2723b967b931817d7129b430ef2cce",
           "created_at": "2026-10-22",
           "current_state": "test_lines (scripts/rust-coverage:268-318) skips a string only within one line and does not know raw strings.",
           "depends_on": [],
@@ -67759,7 +67781,9 @@
           ],
           "serves": [],
           "slug": "the-coverage-scanner-reads-raw-strings",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-25T18:45:02Z",
+          "started_event": "sha256:efa216f027295d3f0a75e2a6df6ac5d6ce56a7bdb90ce85202afb5d174b1c087",
+          "updated_at": "2026-10-25T18:45:51Z",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 132_coverage_differential"
@@ -70459,6 +70483,8 @@
             "76 and 493 run their cargo test with CARGO_BUILD_JOBS=2 and RUST_TEST_THREADS=2",
             "Case 4199 passes on the tree and, on a fixture, flags exactly an uncapped compile while a capped one, an exclusive one and cargo written only as text pass"
           ],
+          "completed_at": "2026-10-25T18:47:57Z",
+          "completed_event": "sha256:80bab1d2e8a3a5ba6518a59efefc60be45fed8ed21a0df1281372637c53e9c1c",
           "created_at": "2026-10-24",
           "depends_on": [],
           "evidence_required": [
@@ -70482,7 +70508,9 @@
           ],
           "serves": [],
           "slug": "a-case-that-compiles-never-starves-its-neighbours",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T18:47:20Z",
+          "started_event": "sha256:dd8db5979724b7a2f7ca98f6f6ae0f93bdeb6415306b8182dbf4203e32b828ad",
+          "updated_at": "2026-10-25T18:47:57Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours 431_economics_claims_gated",
             "majordomus plan validate"
@@ -70627,6 +70655,8 @@
             "A link to the run site/data/evidence.json names is still decided",
             "A link to a run neither file names is still refused as undecidable offline (exit 10)"
           ],
+          "completed_at": "2026-10-25T18:49:56Z",
+          "completed_event": "sha256:7c22819f39b4e32fc31467dc5991719771f32438ad6898fdb26a17bdd405190d",
           "created_at": "2026-10-24",
           "current_state": "link-check builds its set of decided runs from site/data/evidence.json alone; every other Actions run link is refused.",
           "depends_on": [],
@@ -70651,7 +70681,9 @@
           ],
           "serves": [],
           "slug": "a-trends-run-is-decided-by-provenance",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T18:49:05Z",
+          "started_event": "sha256:7fe0141012ab0ced7e96cf991feeeabe269a5e02dd7cfeaaaf4ef4d3e7bec709",
+          "updated_at": "2026-10-25T18:49:56Z",
           "validation": [
             "bash test/run.sh 335_every_link_resolves"
           ]
@@ -70786,6 +70818,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4226",
+        "kind": "issue",
+        "label": "I4226",
+        "summary": "Case 1096 matches a page from a here-string, so a match is never read as a miss",
+        "route": "/cockpit/objects/issue/i4226",
+        "source": ".ai/repo/project/issues/I4226.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh has no printf piped into grep",
+            "Case 1096 passes, with the same checks and messages as before"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I2486"
+          ],
+          "desired_state": "Each of those checks is grep -q or grep -qE with the page as a here-string. What the case asserts, its patterns and its messages are unchanged.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "what case 1096 asserts, or the UI behaviour it covers (I2486)",
+            "other cases with the same pipe form"
+          ],
+          "objective": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh",
+            ".ai/repo/project/issues/I4226.yaml"
+          ],
+          "serves": [],
+          "slug": "case-1096-matches-without-a-pipe",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4227",
         "kind": "issue",
         "label": "I4227",
@@ -70862,6 +70936,88 @@
           "updated_at": "2026-10-25",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::the_build_stage_carries_every_file_the_package_embeds"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4230",
+        "kind": "issue",
+        "label": "I4230",
+        "summary": "Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+        "route": "/cockpit/objects/issue/i4230",
+        "source": ".ai/repo/project/issues/I4230.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With more free than the reclaim mark, a generation idle for 30 minutes is kept and the bound says every other unit was written within 60 min",
+            "Below the reclaim mark, the same generation is evicted, one idle for 2 minutes is kept, and the bound names the free space, the mark and the age it applied",
+            "A pressure age of 0 keeps the hour, and an idle age of 0 evicts nothing, under the mark too",
+            "Without the change, case 3959's pressure section fails"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I3959"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "the bound's size (MAJORDOMUS_SHARED_BUILD_CAP_MB) and its lock wait",
+            "the age sweeps of I2713 and I2787 and the private build directories"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+            "docs/WORKTREES.md",
+            ".ai/repo/project/issues/I4230.yaml"
+          ],
+          "serves": [],
+          "slug": "the-bound-evicts-under-pressure",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4232",
+        "kind": "issue",
+        "label": "I4232",
+        "summary": "A build of the portable core from the repository's root keeps the executable's rlib of it",
+        "route": "/cockpit/objects/issue/i4232",
+        "source": ".ai/repo/project/issues/I4232.yaml",
+        "facts": {
+          "created_at": "2026-10-25",
+          "current_state": "Measured at origin/master 2efeacea031 on 2026-10-25: apps/majordomus-core/Cargo.toml declares crate-type = [\\\"rlib\\\", \\\"cdylib\\\"].",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "the shared build-dir itself (.cargo/config.toml, ADR 0139)",
+            "the core's code, its own Cargo.lock and its tests"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-core/Cargo.toml",
+            "scripts/rust-check",
+            "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+            ".ai/repo/project/issues/I4232.yaml"
+          ],
+          "serves": [],
+          "slug": "a-core-build-keeps-its-own-rlib",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 4232_a_core_build_keeps_its_own_rlib",
+            "scripts/rust-check --portable-core",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -94370,6 +94526,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "kind": "test",
+        "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "route": "/cockpit/objects/test/test-cases-4232-a-core-build-keeps-its-own-rlib-sh",
+        "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133087,6 +133250,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4226",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4226",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4226",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4227",
         "target": "kind:issue",
         "kind": "is_a"
@@ -133103,6 +133281,31 @@
       },
       {
         "source": "majordomus://issue/I4229",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "majordomus://issue/I3959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4232",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4232",
         "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
@@ -139637,6 +139840,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144733,8 +144941,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4018,
+      "edges": 9266,
       "acyclic": false,
       "truncated": false
     }
