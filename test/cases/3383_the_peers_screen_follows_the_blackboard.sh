@@ -206,9 +206,25 @@ cmp -s "$T/socket.js" "$ROOT/share/cockpit/socket.js" \
 echo "    live.js and the one socket client are served beside ui.js"
 
 # ---------------------------------------------------------------- 3. read again, at once
+# A page waits 50 ms for a reading the change moved (Patience::PAGE). What it serves at once is
+# the change, or the reading before it marked as catching up — never the old reading as if it
+# were current; and the next reads show the change. Under load the snapshot takes longer than
+# a page waits, which is how master 7ddc32da8d4 went red on a screen keeping its word (I4244).
 announce "the second reading of 3383" "test"
-curl -fsS --max-time 120 "$url/ui/peers?fragment" > "$T/fragment.html" || { echo "    the screen's fragment did not answer"; exit 1; }
-grep -qF 'the second reading of 3383' "$T/fragment.html" \
-  || { echo "    the screen read after a change does not show it:"; grep -o 'reading of 3383' "$T/fragment.html" | head; exit 1; }
-echo "    the screen read again after a change shows it at once"
+fragment() {
+  curl -fsS --max-time 120 "$url/ui/peers?fragment" > "$T/fragment.html" || { echo "    the screen's fragment did not answer"; exit 1; }
+}
+fragment
+if ! grep -qF 'the second reading of 3383' "$T/fragment.html"; then
+  grep -qF 'data-catching-up' "$T/fragment.html" \
+    || { echo "    the screen read after a change shows the old reading as current:"; grep -o '[a-z]* reading of 3383' "$T/fragment.html" | head; exit 1; }
+  i=0
+  until grep -qF 'the second reading of 3383' "$T/fragment.html"; do
+    i=$((i + 1))
+    [ "$i" -lt 100 ] || { echo "    the screen never caught up with the change:"; grep -o '[a-z]* reading of 3383' "$T/fragment.html" | head; exit 1; }
+    sleep 0.1
+    fragment
+  done
+fi
+echo "    the screen read again after a change shows it, or says it is catching up and then shows it"
 echo "    /ui/peers shows the blackboard and is read again when it changes"

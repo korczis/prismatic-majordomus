@@ -70874,6 +70874,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I4244",
+        "kind": "issue",
+        "label": "I4244",
+        "summary": "Case 3383 holds the peers screen to its contract: the change, or the reading before it marked as catching up",
+        "route": "/cockpit/objects/issue/i4244",
+        "source": ".ai/repo/project/issues/I4244.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Case 3383 passes under load where it failed every time",
+            "An old reading without the catching-up mark still fails the case"
+          ],
+          "completed_at": "2026-10-27T13:04:08Z",
+          "completed_event": "sha256:425624a0f785c8f2c091577d386c0cf123d1a85059ac85541dd98c5d2a954de2",
+          "created_at": "2026-10-27",
+          "current_state": "Measured at origin/master 7ddc32da8d4 on 2026-10-27: section 3 of the case greps the fragment once for the second reading and fails otherwise.",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The page patience itself (Patience::PAGE) and how long blackboard.snapshot takes"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+            ".ai/repo/project/issues/I4244.yaml"
+          ],
+          "serves": [],
+          "slug": "the-peers-screen-may-say-it-is-catching-up",
+          "started_at": "2026-10-27T13:03:00Z",
+          "started_event": "sha256:a1970f46d3e9ed2e275c4868257482fa3c479b8df82011d361eb4f65fa916b75",
+          "updated_at": "2026-10-27T13:04:08Z",
+          "validation": [
+            "bash test/run.sh 3383_the_peers_screen_follows_the_blackboard"
+          ],
+          "verified_at": "2026-10-27T13:03:36Z",
+          "verified_event": "sha256:cb9d04365a589f11615e85557b228a37f5eb07f7058372c50086fc6165242779"
+        }
+      },
+      {
         "id": "majordomus://issue/I4250",
         "kind": "issue",
         "label": "I4250",
@@ -133237,6 +133280,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4244",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4244",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4250",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144893,8 +144946,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4017,
-      "edges": 9267,
+      "nodes": 4018,
+      "edges": 9269,
       "acyclic": false,
       "truncated": false
     }
