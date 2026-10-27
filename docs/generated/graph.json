@@ -70870,6 +70870,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4264",
+        "kind": "issue",
+        "label": "I4264",
+        "summary": "adr check names decisions it did not examine, and adr propose records who authored one",
+        "route": "/cockpit/objects/issue/i4264",
+        "source": ".ai/repo/project/issues/I4264.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An untracked ADR is named by adr check",
+            "propose without --from writes authored"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Untracked decisions pass silently; provenance is always extracted.",
+          "depends_on": [],
+          "desired_state": "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source.",
+          "evidence_required": [
+            "case_adr_check_sees_untracked_decisions"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4264.yaml",
+            "lib/adr.sh",
+            "test/cases/4264_adr_check_names_what_it_skipped.sh"
+          ],
+          "slug": "adr-check-sees-untracked-decisions",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4264_adr_check_names_what_it_skipped"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94374,6 +94410,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4264_adr_check_names_what_it_skipped.sh",
+        "kind": "test",
+        "label": "test/cases/4264_adr_check_names_what_it_skipped.sh",
+        "route": "/cockpit/objects/test/test-cases-4264-adr-check-names-what-it-skipped-sh",
+        "source": "test/cases/4264_adr_check_names_what_it_skipped.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133111,6 +133154,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4264",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4264",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139641,6 +139694,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4264_adr_check_names_what_it_skipped.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144737,8 +144795,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4016,
+      "edges": 9260,
       "acyclic": false,
       "truncated": false
     }
