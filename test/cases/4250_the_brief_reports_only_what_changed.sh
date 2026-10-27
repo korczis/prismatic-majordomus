@@ -3,7 +3,7 @@
 # A session is told the brief only when a fact in it changed (I4250, ADR 0136 amended
 # 2026-10-27).
 #
-# On the night of 2026-10-26/27 the majordomus-brief mod woke an idle progresus-isir session
+# On the night of 2026-10-26/27 the majordomus-brief mod woke an idle session in an adopter repository
 # about 40 times with self-reports that differed only by their `at` and by relative ages
 # ("observed 4 d ago"). The rule that ends it lives in the mod
 # (share/mods/claude-code/majordomus-brief/hooks/register.ts), and the mod's own test holds it
