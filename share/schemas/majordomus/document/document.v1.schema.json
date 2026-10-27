@@ -6,6 +6,11 @@
   "x-majordomus-allow": "document",
   "type": "object",
   "additionalProperties": false,
+  "patternProperties": {
+    "^x-[a-z0-9][a-z0-9_-]*$": {
+      "description": "A key the adopting project owns: where a snapshot was fetched from, when, its digest. Majordomus reads none of them and dispatches on none, so a project can carry its own provenance without declaring a kind; any other key outside this contract is still refused, because a misspelt `titel` must not pass as an extension."
+    }
+  },
   "properties": {
     "title": {
       "type": "string",

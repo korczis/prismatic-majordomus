@@ -66622,8 +66622,10 @@
       "scope": [
         ".ai/repo/project/issues/I4259.yaml",
         "share/schemas/majordomus/document/document.v1.schema.json",
-        "apps/majordomus-cli/src/index",
-        "test/cases/4259_adopter_front_matter_is_diagnosed.sh"
+        "apps/majordomus-cli/src/index.rs",
+        "apps/majordomus-cli/src/metadata/yaml.rs",
+        "lib/common.sh",
+        "test/cases/4259_a_wrapped_value_is_named.sh"
       ],
       "non_scope": [],
       "objective": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
@@ -66632,10 +66634,11 @@
       "desired_state": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
       "acceptance_criteria": [
         "A document with x-source front matter is indexed",
-        "A folded scalar is refused naming 'folded scalar'"
+        "Any other unknown key is refused naming the x- namespace as the remedy",
+        "A value wrapped onto the next line is refused naming the key it continues, by both parsers"
       ],
       "validation": [
-        "bash test/run.sh 4259_adopter_front_matter_is_diagnosed"
+        "bash test/run.sh 4259_a_wrapped_value_is_named"
       ],
       "evidence_required": [
         "case_adopter_front_matter_is_read_not_refused"
@@ -76841,7 +76844,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1999",
-      "message": "shares apps/majordomus-cli/src with I4259; they may not run concurrently"
+      "message": "shares lib with I4259; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -107440,6 +107443,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3310",
+      "message": "shares lib/common.sh with I4259; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3312",
       "message": "shares docs/CONTEXT.md with I3820; they may not run concurrently"
     },
@@ -107448,6 +107457,12 @@
       "code": "scope_conflict",
       "subject": "I3312",
       "message": "shares lib/adr.sh with I3974; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3312",
+      "message": "shares apps/majordomus-cli/src/metadata with I4259; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -107712,6 +107727,12 @@
       "code": "scope_conflict",
       "subject": "I3320",
       "message": "shares lib/rust_bin.sh with I3957; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3320",
+      "message": "shares lib/common.sh with I4259; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -110946,7 +110967,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 6552,
+      "count": 6555,
       "examples": [
         {
           "level": "WARN",

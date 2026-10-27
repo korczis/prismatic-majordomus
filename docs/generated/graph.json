@@ -70922,7 +70922,8 @@
         "facts": {
           "acceptance_criteria": [
             "A document with x-source front matter is indexed",
-            "A folded scalar is refused naming 'folded scalar'"
+            "Any other unknown key is refused naming the x- namespace as the remedy",
+            "A value wrapped onto the next line is refused naming the key it continues, by both parsers"
           ],
           "created_at": "2026-10-27",
           "current_state": "Unknown keys and folded scalars are refused with no hint of either.",
@@ -70939,13 +70940,15 @@
           "scope": [
             ".ai/repo/project/issues/I4259.yaml",
             "share/schemas/majordomus/document/document.v1.schema.json",
-            "apps/majordomus-cli/src/index",
-            "test/cases/4259_adopter_front_matter_is_diagnosed.sh"
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/src/metadata/yaml.rs",
+            "lib/common.sh",
+            "test/cases/4259_a_wrapped_value_is_named.sh"
           ],
           "slug": "adopter-front-matter-is-read-not-refused",
           "updated_at": "2026-10-27",
           "validation": [
-            "bash test/run.sh 4259_adopter_front_matter_is_diagnosed"
+            "bash test/run.sh 4259_a_wrapped_value_is_named"
           ]
         }
       },
