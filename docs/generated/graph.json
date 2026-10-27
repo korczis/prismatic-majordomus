@@ -70913,6 +70913,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4265",
+        "kind": "issue",
+        "label": "I4265",
+        "summary": "The hook line init prints runs doctor in its commit context",
+        "route": "/cockpit/objects/issue/i4265",
+        "source": ".ai/repo/project/issues/I4265.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The printed hook line sets the commit context",
+            "doctor reports it wired"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "init prints `majordomus doctor || exit $?`.",
+          "depends_on": [],
+          "desired_state": "init prints the commit-context form, and doctor's wiring check accepts it.",
+          "evidence_required": [
+            "case_the_commit_hook_runs_doctor_in_commit_co"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "init prints the commit-context form, and doctor's wiring check accepts it.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4265.yaml",
+            "lib/init.sh",
+            "lib/doctor.sh",
+            "docs/ADOPTION.md",
+            "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
+          ],
+          "slug": "the-commit-hook-runs-doctor-in-commit-context",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4265_the_adopter_hook_runs_doctor_in_commit_context"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94417,6 +94455,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+        "kind": "test",
+        "label": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+        "route": "/cockpit/objects/test/test-cases-4265-the-adopter-hook-runs-doctor-in-commit-context-sh",
+        "source": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133164,6 +133209,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4265",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4265",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139749,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144850,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }
