@@ -1,7 +1,7 @@
 +++
 title = "majordomus intent show"
 description = "One intent in full: each milestone's derived status and each criterion's evidence state"
-weight = 197
+weight = 199
 [extra]
 route = "/docs/cli/intent/show/"
 command = "majordomus intent show"
