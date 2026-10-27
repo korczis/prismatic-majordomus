@@ -397,6 +397,9 @@ mj_plan_body_issue() {
   mj_plan_sec Why "$id" why
   mj_plan_sec 'Current State' "$id" current_state
   mj_plan_sec 'Desired State' "$id" desired_state
+  # what the issue answers to outside the layer, as written: a body without traces is
+  # byte-identical to one rendered before the field existed, so no projection drifts
+  mj_plan_seclist Traces "$id" traces
   mj_plan_seclist Scope "$id" scope '- `' '`'
   mj_plan_seclist 'Out of Scope' "$id" non_scope
   printf '## Dependencies\n\n'
@@ -418,7 +421,7 @@ mj_plan_body_issue() {
 }
 
 mj_plan_body_milestone() {
-  local id="$1" row i
+  local id="$1" row i due
   row="$(mj_pj_row M "$id")"
   printf '# %s — %s\n\n' "$id" "$(mj_pj_m_title "$id")"
   printf '| field | value |\n|---|---|\n'
@@ -427,6 +430,9 @@ mj_plan_body_milestone() {
   printf '| ready / blocked / active / verify | %s / %s / %s / %s |\n' \
     "$(printf '%s' "$row" | cut -f10)" "$(printf '%s' "$row" | cut -f11)" \
     "$(printf '%s' "$row" | cut -f12)" "$(printf '%s' "$row" | cut -f13)"
+  # a declared date is shown, never read: the status above is derived from evidence alone
+  due="$(mj_pj_get "$id" due_on 2>/dev/null || true)"
+  [ -z "$due" ] || printf '| due | %s (declared) |\n' "$due"
   printf '| canonical | `%s/milestones/%s.yaml` |\n\n' "$(mj_rel "$MJ_PROJECT_DIR")" "$id"
   mj_plan_sec Problem "$id" problem
   mj_plan_sec Outcome "$id" outcome

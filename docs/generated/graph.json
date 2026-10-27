@@ -70913,6 +70913,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I4261",
+        "kind": "issue",
+        "label": "I4261",
+        "summary": "An issue names the external requirement it serves, and a milestone its due date",
+        "route": "/cockpit/objects/issue/i4261",
+        "source": ".ai/repo/project/issues/I4261.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A trace reference reaches the projected body",
+            "due_on reaches the GitHub milestone and changes no status"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Trace references and dates have no field.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_issues_trace_outward_and_milestones_carr"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4261.yaml",
+            "share/allow/issue.txt",
+            "share/allow/milestone.txt",
+            "share/schemas/majordomus/issue/issue.v1.schema.json",
+            "share/schemas/majordomus/milestone/milestone.v1.schema.json",
+            "lib/plan.sh",
+            "scripts/github-sync",
+            "docs/SCHEMAS.md",
+            "test/cases/4261_issues_trace_outward.sh"
+          ],
+          "slug": "issues-trace-outward-and-milestones-carry-dates",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4261_issues_trace_outward"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94417,6 +94457,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4261_issues_trace_outward.sh",
+        "kind": "test",
+        "label": "test/cases/4261_issues_trace_outward.sh",
+        "route": "/cockpit/objects/test/test-cases-4261-issues-trace-outward-sh",
+        "source": "test/cases/4261_issues_trace_outward.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133164,6 +133211,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4261",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4261",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139751,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4261_issues_trace_outward.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144852,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }
