@@ -7550,7 +7550,11 @@
             "file:share/mods/claude-code/majordomus-brief/hooks/register.ts",
             "file:lib/capture.sh",
             "file:docs/BRIEF.md",
-            "test:test/cases/1065_a_session_briefs_itself.sh"
+            "file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md",
+            "file:.ai/repo/project/issues/I4250.yaml",
+            "file:.ai/repo/project/issues/I4251.yaml",
+            "test:test/cases/1065_a_session_briefs_itself.sh",
+            "test:test/cases/4250_the_brief_reports_only_what_changed.sh"
           ],
           "tags": [
             "session",
@@ -70913,6 +70917,101 @@
         }
       },
       {
+        "id": "majordomus://issue/I4250",
+        "kind": "issue",
+        "label": "I4250",
+        "summary": "A session is briefed only when a fact around it changed, in words its person reads",
+        "route": "/cockpit/objects/issue/i4250",
+        "source": ".ai/repo/project/issues/I4250.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "claude plugin test share/mods/claude-code/majordomus-brief passes",
+            "Replacing the fingerprint comparison with `true` fails four of its tests",
+            "test/cases/1065_a_session_briefs_itself.sh passes, and asserts the installed module and the keep-awake text carry the rule",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh runs the mod's test and two mutations of it where `claude` is installed",
+            "cargo test --lib capability::builtin::brief passes with the new keep-awake assertions"
+          ],
+          "created_at": "2026-10-27",
+          "depends_on": [],
+          "evidence_required": [
+            "the_brief_reports_only_what_changed"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "A policy key forcing a report after a long unchanged stretch: rejected in the amendment of ADR 0136, since the status line already shows the session alive every minute (ADR 0207)",
+            "Claude Code's own framing sentence after a plugin's prompt, which the mod cannot change",
+            "The handover mod (ADR 0123)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4250.yaml",
+            "share/mods/claude-code/majordomus-brief/",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            "docs/BRIEF.md",
+            "test/cases/1065_a_session_briefs_itself.sh",
+            "test/cases/4250_the_brief_reports_only_what_changed.sh"
+          ],
+          "serves": [],
+          "slug": "the-brief-reports-only-what-changed",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE claude plugin test share/mods/claude-code/majordomus-brief",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1065_a_session_briefs_itself 4250_the_brief_reports_only_what_changed",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::brief"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4251",
+        "kind": "issue",
+        "label": "I4251",
+        "summary": "The brief tells the truth: no finished task, no stale PR count, no self-overlap, and no client left off the board by a restart",
+        "route": "/cockpit/objects/issue/i4251",
+        "source": ".ai/repo/project/issues/I4251.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each named test passes, and fails when its fix is reverted",
+            "cargo test --lib capability::builtin::brief commands::prs::tests mcp::bridge::tests passes"
+          ],
+          "created_at": "2026-10-27",
+          "depends_on": [
+            "I4250"
+          ],
+          "evidence_required": [
+            "the_brief_tells_the_truth"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Removing any worktree: the adopter's worktree boards are reported, not pruned",
+            "Bridges of the release installed before this change: they re-attach only after their client restarts",
+            "Refreshing the forge observation from the brief: the brief reads no forge (ADR 0136)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4251.yaml",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            ".ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "docs/BRIEF.md",
+            "docs/MCP.md"
+          ],
+          "serves": [],
+          "slug": "the-brief-tells-the-truth",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::brief commands::prs::tests mcp::bridge::tests"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94419,6 +94518,13 @@
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
       },
       {
+        "id": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "kind": "test",
+        "label": "test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "route": "/cockpit/objects/test/test-cases-4250-the-brief-reports-only-what-changed-sh",
+        "source": "test/cases/4250_the_brief_reports_only_what_changed.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
         "kind": "test",
         "label": "test/cases/42_dag_waves.sh",
@@ -106075,6 +106181,11 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://adr/adr-0207",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://document/docs/BRIEF.md",
         "kind": "put_in_force"
       },
@@ -106085,7 +106196,22 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://issue/I4250",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://issue/I4251",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
         "kind": "put_in_force"
       },
       {
@@ -133164,6 +133290,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4250",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4250",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "majordomus://issue/I4250",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139845,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144946,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4018,
+      "edges": 9269,
       "acyclic": false,
       "truncated": false
     }

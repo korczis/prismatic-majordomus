@@ -443,6 +443,12 @@ fn session_section(ctx: &Context, provider_session: Option<&str>) -> BriefSessio
         }
         Err(_) => (None, None),
     };
+    // Only a running task is this session's task. `current.yaml` keeps the last task after it
+    // finished (outcome `partial`, `completed`, ...) or was handed over, and the brief once
+    // showed such a task for weeks as the work in hand (I4251).
+    fn running(c: &Continuity) -> Option<&super::continuity::ActiveTask> {
+        c.task.as_ref().filter(|t| task_is_running(&t.outcome))
+    }
     let (state, branch, head, task_id, task) = match &continuity {
         Ok(c) => (
             if episodes.is_ok() {
@@ -452,8 +458,8 @@ fn session_section(ctx: &Context, provider_session: Option<&str>) -> BriefSessio
             },
             c.branch.clone(),
             c.head.chars().take(10).collect(),
-            c.task.as_ref().map(|t| t.id.clone()),
-            c.task.as_ref().map(|t| t.task.clone()),
+            running(c).map(|t| t.id.clone()),
+            running(c).map(|t| t.task.clone()),
         ),
         Err(_) => (
             BriefSectionState::Unread,
@@ -597,6 +603,20 @@ fn peers_section(
     }
 }
 
+/// Whether an overlap between two claims is something this runtime is told: one of the two
+/// is its own and the other is not. An overlap among this runtime's own claims (one
+/// session's subagents in several worktrees) is not news to it, and one between two other
+/// runtimes is theirs (I4251).
+fn overlap_is_news(own: &[&str], first: &str, second: &str) -> bool {
+    own.contains(&first) != own.contains(&second)
+}
+
+/// Whether a task with this outcome is the work in hand: `active` alone. A finished task
+/// (`completed`, `partial`, `blocked`, `failed`, `no_match`) and one handed over are not.
+fn task_is_running(outcome: &str) -> bool {
+    outcome == "active"
+}
+
 /// `p3 claude-code @feature/x: what it announced`.
 fn peer_line(p: &Peer) -> String {
     let branch = p
@@ -694,7 +714,7 @@ fn mesh_section(ctx: &Context) -> BriefMeshSection {
     section.overlaps_for_you = state
         .overlaps
         .iter()
-        .filter(|o| own_keys.contains(&o.first.as_str()) || own_keys.contains(&o.second.as_str()))
+        .filter(|o| overlap_is_news(&own_keys, &o.first, &o.second))
         .count();
     let mut s = format!(
         "{} of {} link(s) connected",
@@ -867,16 +887,20 @@ fn interval_minutes(root: &Path) -> u64 {
         .unwrap_or(DEFAULT_INTERVAL_MINUTES)
 }
 
-/// What a session is told at its start about keeping itself awake.
+/// What a session is told at its start about keeping itself awake: read the brief on the
+/// interval, report only when a fact in it changed (ADR 0136, amended 2026-10-27), and leave
+/// the scheduling to the majordomus-brief mod where it is loaded.
 pub(crate) fn keep_awake(interval: u64) -> String {
     format!(
         "Keep yourself awake and reporting (ADR 0136): every {interval} minutes, without being asked, \
-         give a brief report of two to four lines (this session's task and state, the peers of \
-         every board, the mesh, the integration queue, the derive queue) read from `majordomus \
-         brief`, never from memory. If your client can schedule its own prompts (Claude Code: \
-         `/loop {interval}m majordomus brief`, or a session cron), schedule that now. Where the \
-         majordomus-brief mod is loaded it shows the one-line brief as the status line and puts \
-         the full brief in front of you on the same interval."
+         read `majordomus brief`, never from memory, and only when a fact in it changed since your \
+         last report give a brief report of two to four lines (this session's task and state, the \
+         peers of every board, the mesh, the integration queue, the derive queue); a brief in which \
+         only times and ages moved needs no report. If your client can schedule its own prompts \
+         (Claude Code: `/loop {interval}m majordomus brief`, or a session cron), schedule that now, \
+         unless the majordomus-brief mod is loaded (`.claude/skills/majordomus-brief`): it shows the \
+         one-line brief as the status line and puts the brief in front of you when it changed, at \
+         most once per interval, so a loop of your own would only repeat it."
     )
 }
 
@@ -1009,8 +1033,37 @@ fn task_label(id: &str, words: &str) -> String {
 }
 
 /// The integration queue in a few words, from the sentence `prs brief` writes: its open count
-/// and its next merge.
+/// and its next merge, marked stale with the observation's age when that sentence says the
+/// trunk has moved past what the forge reported (I4251).
 fn prs_words(summary: &str) -> String {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    prs_words_at(summary, now)
+}
+
+/// [`prs_words`] at a given instant, in seconds since the epoch.
+fn prs_words_at(summary: &str, now: i64) -> String {
+    let words = prs_count_words(summary);
+    if !summary.contains("STALE: ") {
+        return words;
+    }
+    // the observation's instant is the first parenthesis: `observed 101 min ago (<at>): ...`
+    let age = summary
+        .split_once(" (")
+        .and_then(|(_, rest)| rest.split_once(')'))
+        .and_then(|(at, _)| crate::peers::epoch_seconds(at))
+        .map(|then| match (now - then).max(0) / 60 {
+            m @ 0..=119 => format!(" {m}m"),
+            m @ 120..=2879 => format!(" {}h", m / 60),
+            m => format!(" {}d", m / 1440),
+        })
+        .unwrap_or_default();
+    format!("{words} (stale{age})")
+}
+
+fn prs_count_words(summary: &str) -> String {
     let open = summary
         .split(": ")
         .nth(1)
@@ -1278,6 +1331,22 @@ mod tests {
         );
     }
 
+    /// The count of an observation this clone's trunk has moved past is never shown as if it
+    /// were current: `prs 23 open` from a 101-minute-old observation was the owner's reading
+    /// on 2026-10-27, while GitHub held 4 (I4251).
+    #[test]
+    fn the_prs_words_of_a_stale_observation_say_so_with_its_age() {
+        let at = crate::peers::epoch_seconds("2026-10-27T10:10:51Z").expect("an instant");
+        let stale = "main at 9f8e7d6c5b observed 101 min ago (2026-10-27T10:10:51Z): 23 open — \
+                     held 6, waiting 11; nothing ready; STALE: the forge reported main at \
+                     9f8e7d6c5b, this clone's is 7a7b7c7d7e: majordomus prs refresh; lease free";
+        assert_eq!(prs_words_at(stale, at + 101 * 60), "23 open (stale 101m)");
+        assert_eq!(prs_words_at(stale, at + 5 * 3600), "23 open (stale 5h)");
+        assert_eq!(prs_words_at(stale, at + 3 * 86_400), "23 open (stale 3d)");
+        let current = stale.replace("STALE: ", "");
+        assert_eq!(prs_words_at(&current, at + 101 * 60), "23 open");
+    }
+
     #[test]
     fn the_line_names_a_task_by_its_issue_when_its_words_open_with_one() {
         assert_eq!(task_label("t-1", "I2399: do it"), "I2399");
@@ -1293,6 +1362,9 @@ mod tests {
         assert_eq!(percent_encode("a b/c-d_e.f~"), "a%20b%2Fc-d_e.f~");
         assert_eq!(state_word(BriefSectionState::Partial), "partial");
         assert!(keep_awake(7).contains("every 7 minutes"));
+        // a report only on a changed fact, and no loop of its own beside the mod (I4250)
+        assert!(keep_awake(7).contains("only when a fact in it changed since your last report"));
+        assert!(keep_awake(7).contains("unless the majordomus-brief mod is loaded"));
     }
 
     #[test]
@@ -1550,6 +1622,38 @@ mod tests {
         assert_eq!(pointed.provider_session, None, "an empty owner is no owner");
         assert!(pointed.caller.is_none());
         assert!(pointed.summary.starts_with("episode s-0001 on feature/x"));
+    }
+
+    /// `current.yaml` keeps the last task after it finished. On 2026-10-27 the brief of
+    /// an adopter repository showed a task that had finished `partial` fourteen days
+    /// earlier as the session's task (I4251).
+    #[test]
+    fn a_task_that_is_not_running_is_not_the_sessions_task() {
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = canned_context(&repo);
+        can("lifecycle.episodes", two_episodes());
+        for outcome in [
+            "partial",
+            "completed",
+            "blocked",
+            "failed",
+            "no_match",
+            "handed_over",
+        ] {
+            let mut continuity = continuity_with_task();
+            continuity["task"]["outcome"] = json!(outcome);
+            can("continuity.state", continuity);
+            let s = session_section(&ctx, None);
+            assert_eq!(s.task_id, None, "{outcome}");
+            assert_eq!(s.task, None, "{outcome}");
+            assert!(
+                s.summary.ends_with("; no task active"),
+                "{outcome}: {}",
+                s.summary
+            );
+        }
+        can("continuity.state", continuity_with_task());
+        assert_eq!(session_section(&ctx, None).task_id.as_deref(), Some("t-1"));
     }
 
     #[test]
@@ -2000,8 +2104,9 @@ mod tests {
             mesh_world::runtime(&net, "b:1"),
         );
         a.dial(&["b:1".into()]).expect("B welcomes A");
-        // two of this runtime's workers claim scopes that meet, and one asks this runtime
-        // itself for a review; its own handover waits on nobody here
+        // two of this runtime's workers claim scopes that meet, which is not news to it
+        // (I4251), and one asks this runtime itself for a review; its own handover waits on
+        // nobody here
         a.claim(
             &SessionInfo::named("s1", "cli"),
             vec!["apps".into()],
@@ -2049,12 +2154,12 @@ mod tests {
                 fresh.handovers_waiting,
                 fresh.overlaps_for_you
             ),
-            (1, 0, 1)
+            (1, 0, 0)
         );
         assert_eq!(
             fresh.summary,
             "1 of 1 link(s) connected; 2 claim(s) held, 2 of them this runtime's; \
-             for this runtime: 1 review(s), 0 handover(s) waiting, 1 overlap(s)"
+             for this runtime: 1 review(s), 0 handover(s) waiting, 0 overlap(s)"
         );
 
         // the link outlives its expiry with no exchange: it is failing
@@ -2143,6 +2248,68 @@ mod tests {
                 section.overlaps_for_you
             ),
             (0, 1, 0)
+        );
+        for r in [a, b] {
+            r.stop();
+        }
+    }
+
+    /// One session's subagents claim in several worktrees, so this runtime's own claims meet
+    /// each other. On 2026-10-27 an adopter repository's line said `mesh 0/0 +4 for you` for such
+    /// overlaps, while `check --overlap` found none (I4251). They are not news to this
+    /// runtime; a claim of another runtime that meets one of them is.
+    #[test]
+    fn an_overlap_among_this_runtimes_own_claims_is_not_for_it() {
+        use crate::mesh::journal::{ClaimMode, SessionInfo};
+        let net = std::sync::Arc::new(mesh_world::Net::default());
+        let (a, b) = (
+            mesh_world::runtime(&net, "a:1"),
+            mesh_world::runtime(&net, "b:1"),
+        );
+        let key = a.dial(&["b:1".into()]).expect("B welcomes A");
+        let claim = |r: &crate::mesh::cooperation::Cooperation, session: &str, scope: &str| {
+            r.claim(
+                &SessionInfo::named(session, "cli"),
+                vec![scope.into()],
+                None,
+                ClaimMode::Advisory,
+                None,
+            )
+            .unwrap();
+        };
+        let sync = || {
+            for _ in 0..2 {
+                b.journal().beat_own();
+                a.journal().beat_own();
+                a.sync_with(&key).unwrap();
+            }
+        };
+        for (session, scope) in [("s1", "apps"), ("s2", "apps/majordomus-cli")] {
+            claim(&a, session, scope);
+        }
+        sync();
+        let repo = SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        ctx.mesh.attach_cooperation(std::sync::Arc::clone(&a));
+        assert!(
+            !a.state().overlaps.is_empty(),
+            "the journal itself records the two own claims as overlapping"
+        );
+        let own = mesh_section(&ctx);
+        assert_eq!((own.claims_held, own.own_claims), (2, 2));
+        assert_eq!(own.overlaps_for_you, 0, "{}", own.summary);
+        assert!(
+            own.summary.ends_with("nothing addressed to this runtime"),
+            "{}",
+            own.summary
+        );
+
+        claim(&b, "s9", "apps/majordomus-cli/src");
+        sync();
+        let met = mesh_section(&ctx);
+        assert_eq!(
+            met.overlaps_for_you, 2,
+            "another runtime's claim meets both of ours"
         );
         for r in [a, b] {
             r.stop();

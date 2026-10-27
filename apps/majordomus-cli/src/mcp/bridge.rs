@@ -1142,15 +1142,56 @@ impl Bridge {
         Ok(())
     }
 
-    /// Keep the session alive.
+    /// Keep the session alive, and keep this client on the board.
+    ///
+    /// A server that restarted at the same address answers the ping with 404: it forgot the
+    /// session. The heartbeat re-opens it at once with the client's own initialize and
+    /// replays every announcement ([`Bridge::reinitialize`]). Before I4251 the 404 was taken
+    /// for a pong, so an idle client stayed off the new server's board until it next sent a
+    /// message. On 2026-10-27 two sessions of an adopter repository were missing from the board for
+    /// hours after a restart, and they worked on the same pull requests without seeing each
+    /// other. A session that a failed re-attach left without an id is opened again on the
+    /// next beat. A client that never initialized has nothing to keep.
     pub fn heartbeat(&mut self) -> Result<(), BridgeError> {
-        if self.session.is_none() {
+        if self.initialize.is_none() {
             return Ok(());
         }
-        self.send(
-            &json!({ "jsonrpc": "2.0", "id": "majordomus-bridge-heartbeat", "method": "ping" }),
-        )
-        .map(|_| ())
+        if self.session.is_none() {
+            return self.reinitialize();
+        }
+        let ping =
+            json!({ "jsonrpc": "2.0", "id": "majordomus-bridge-heartbeat", "method": "ping" });
+        match self.send(&ping)? {
+            Sent::Answer(_) => Ok(()),
+            Sent::SessionLost => self.reinitialize(),
+        }
+    }
+
+    /// Follow the repository's server to where it serves now: when `serving` (the lease's
+    /// answering server, read without electing) names another address than this bridge's,
+    /// move there and re-open the session. `Ok(true)` when it moved. What a heartbeat does
+    /// when its server is gone from its address; nobody serving is left to the next
+    /// message's election, which may make this process the server.
+    ///
+    /// ```
+    /// use majordomus_cli::mcp::bridge::Bridge;
+    /// let mut bridge = Bridge::new("http://127.0.0.1:9".into());
+    /// // nobody serves, or the server is still where the bridge sends: nothing to follow
+    /// assert!(!bridge.follow(None).unwrap());
+    /// assert!(!bridge.follow(Some("http://127.0.0.1:9".into())).unwrap());
+    /// // a client that never initialized has no session to carry anywhere
+    /// assert!(!bridge.follow(Some("http://127.0.0.1:10".into())).unwrap());
+    /// assert_eq!(bridge.url(), "http://127.0.0.1:9");
+    /// ```
+    pub fn follow(&mut self, serving: Option<String>) -> Result<bool, BridgeError> {
+        match serving {
+            Some(url) if url != self.url && self.initialize.is_some() => {
+                self.move_to(url);
+                self.reinitialize()?;
+                Ok(true)
+            }
+            _ => Ok(false),
+        }
     }
 
     /// End the session on the server; the client has gone.
@@ -1525,6 +1566,114 @@ mod tests {
         );
         assert_eq!(seen[2]["session"], "s-1", "the reopened session is used");
         assert_eq!(seen[3]["session"], "s-1");
+    }
+
+    /// A server that restarted at the same address forgets the session and answers the next
+    /// ping 404. The heartbeat re-attaches on that beat, with the client's own initialize and
+    /// its announcement, so that an idle client is back on the board without sending a
+    /// message. Before I4251 the 404 counted as a pong; two sessions of an adopter repository
+    /// stayed off the board for hours after a restart on 2026-10-27.
+    #[test]
+    fn a_heartbeat_the_server_forgot_reattaches_and_replays_the_announcement() {
+        let answer = r#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#;
+        let announced = r#"{"jsonrpc":"2.0","id":3,"result":{"isError":false}}"#;
+        let (url, server) = scripted(vec![
+            (200, answer, Some("s-1")),
+            (200, announced, None),
+            // the server restarted: the old session is unknown
+            (404, "", None),
+            (200, answer, Some("s-2")),
+            (202, "", None),
+            (200, announced, None),
+        ]);
+        let mut bridge = Bridge::with_timeout(url, Duration::from_secs(30));
+        bridge.handle(&initialize()).expect("initialized");
+        let announce = json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {
+            "name": crate::capability::builtin::peers::ANNOUNCE_TOOL,
+            "arguments": { "intent": "I4251: the brief", "scope": ["docs"] } } });
+        bridge.handle(&announce).expect("announced");
+        bridge.heartbeat().expect("the beat re-attached");
+        // asked before the server is joined: a bridge that took the 404 for a pong would
+        // leave the scripted server waiting for an initialize that never comes
+        assert_eq!(
+            bridge.session.as_deref(),
+            Some("s-2"),
+            "a new session was opened"
+        );
+        let seen = server.join().unwrap();
+        let methods: Vec<&str> = seen
+            .iter()
+            .map(|s| s["message"]["method"].as_str().unwrap_or_default())
+            .collect();
+        assert_eq!(
+            methods,
+            vec![
+                "initialize",
+                "tools/call",
+                "ping",
+                "initialize",
+                "notifications/initialized",
+                "tools/call"
+            ]
+        );
+        assert_eq!(
+            seen[2]["session"], "s-1",
+            "the ping carried the forgotten session"
+        );
+        assert_eq!(
+            seen[3]["message"]["params"]["clientInfo"]["name"],
+            "bridge-test"
+        );
+        assert_eq!(
+            seen[5]["session"], "s-2",
+            "the announcement is replayed on the new one"
+        );
+        assert_eq!(
+            seen[5]["message"]["params"]["arguments"]["intent"],
+            "I4251: the brief"
+        );
+    }
+
+    /// A beat with no session after a re-attach that failed opens one; a client that never
+    /// initialized sends nothing at all.
+    #[test]
+    fn a_heartbeat_without_a_session_opens_one_and_without_an_initialize_sends_nothing() {
+        let mut idle = Bridge::with_timeout("http://127.0.0.1:9".into(), Duration::from_secs(1));
+        idle.heartbeat().expect("nothing to keep, nothing sent");
+
+        let answer = r#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#;
+        let (url, server) = scripted(vec![
+            (200, answer, Some("s-1")),
+            (200, answer, Some("s-2")),
+            (202, "", None),
+        ]);
+        let mut bridge = Bridge::with_timeout(url, Duration::from_secs(30));
+        bridge.handle(&initialize()).expect("initialized");
+        bridge.session = None;
+        bridge.heartbeat().expect("opened again");
+        let seen = server.join().unwrap();
+        assert_eq!(seen[1]["message"]["method"], "initialize");
+        assert_eq!(bridge.session.as_deref(), Some("s-2"));
+    }
+
+    /// A server that came back on another address is followed there by the heartbeat.
+    #[test]
+    fn a_bridge_follows_the_server_to_its_new_address() {
+        let answer = r#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#;
+        let (old, first) = scripted(vec![(200, answer, Some("s-1"))]);
+        let (new, second) = scripted(vec![(200, answer, Some("s-7")), (202, "", None)]);
+        let mut bridge = Bridge::with_timeout(old.clone(), Duration::from_secs(30));
+        bridge.handle(&initialize()).expect("initialized");
+        first.join().unwrap();
+        assert!(
+            !bridge.follow(Some(old.clone())).unwrap(),
+            "still where it was"
+        );
+        assert!(bridge.follow(Some(new.clone())).expect("moved"));
+        assert_eq!(bridge.url(), new);
+        assert_eq!(bridge.session.as_deref(), Some("s-7"));
+        let seen = second.join().unwrap();
+        assert_eq!(seen[0]["message"]["method"], "initialize");
     }
 
     #[test]
