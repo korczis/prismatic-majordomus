@@ -695,10 +695,9 @@ fn planning_only(root: &Path, commits: &[(&str, &str)]) -> Result<BTreeSet<Strin
             String::from_utf8_lossy(&out.stderr).trim()
         ));
     }
-    let printed: BTreeSet<&str> = std::str::from_utf8(&out.stdout)
-        .map_err(|e| format!("git diff-tree printed no text: {e}"))?
-        .lines()
-        .collect();
+    // diff-tree prints commit ids, which are hex: a lossy reading loses nothing
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let printed: BTreeSet<&str> = stdout.lines().collect();
     Ok(commits
         .iter()
         .map(|(c, _)| *c)
@@ -1235,6 +1234,31 @@ pub(crate) fn infer(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A git that could not be asked is an error, never an empty answer: an empty set would
+    /// read every commit as a delivery. A directory outside any repository makes git refuse,
+    /// and a root git cannot even be started with (an interior NUL) makes the spawn fail.
+    #[test]
+    fn a_git_that_cannot_answer_is_an_error_not_an_empty_answer() {
+        let dir = tempfile::tempdir().unwrap();
+        let pairs = [(
+            "0123456789abcdef0123456789abcdef01234567",
+            "fedcba9876543210fedcba9876543210fedcba98",
+        )];
+        let refused = planning_only(dir.path(), &pairs).unwrap_err();
+        assert!(refused.starts_with("git diff-tree:"), "{refused}");
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            let unstartable = Path::new(std::ffi::OsStr::from_bytes(b"no\0root"));
+            let failed = planning_only(unstartable, &pairs).unwrap_err();
+            assert!(failed.starts_with("cannot run git diff-tree:"), "{failed}");
+        }
+        assert!(
+            planning_only(dir.path(), &[]).unwrap().is_empty(),
+            "no commits asks nothing"
+        );
+    }
 
     fn issue(id: &str, slug: &str) -> PlanIssue {
         PlanIssue {
