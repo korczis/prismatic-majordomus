@@ -38,6 +38,17 @@
 //! only as far as its last merged change, so a follow-up merged after the last release reads
 //! `merged`, not `released`.
 //!
+//! # Planning is not delivery
+//!
+//! A commit or merge that names an issue while changing only the plan's own records
+//! (`.ai/repo/project/`) and what is derived from them (every path `.gitattributes` marks
+//! `merge=derived`) planned the issue, recorded it or moved it; it delivered nothing, and it
+//! is never a merge proof (I2749). Each naming commit is read against its first parent, in
+//! one `git diff-tree --stdin` for all of them; the newest one passed over is reported as
+//! `planned`, so a reader sees why a commit naming the issue did not make it `merged`. A
+//! commit whose parent is unknown, or a read that fails, is never called planning: the
+//! answer can only be less wrong than it was, never newly wrong.
+//!
 //! # Two ways to observe
 //!
 //! - **Live** (no `at`): the trunk as this clone knows it, every branch, the forge
@@ -270,6 +281,10 @@ pub(crate) struct IssueDelivery {
     /// The newest merge that names it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merged: Option<DeliveryMerge>,
+    /// The newest commit that names it while changing only plan records and their
+    /// projections: passed over as a merge proof, and said so.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub planned: Option<DeliveryMerge>,
     /// The first release containing that merge.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub released: Option<DeliveryRelease>,
@@ -325,6 +340,9 @@ pub(crate) struct MergeCommit {
     pub branch: Option<String>,
     /// The pull request's title, for a pull-request merge.
     pub title: Option<String>,
+    /// The first parent: what the commit's own change is read against. `None` for a root
+    /// commit, or when the history read did not say.
+    pub parent: Option<String>,
 }
 
 /// A history as one `git log --format=%H%x00%ct%x00%P%x00%s%x00%b%x1e` states it: the commit
@@ -356,11 +374,12 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
         let (Some(time), false) = (time, commit.is_empty()) else {
             continue;
         };
-        let parents = f.next().unwrap_or_default().split_whitespace().count();
+        let parents: Vec<&str> = f.next().unwrap_or_default().split_whitespace().collect();
+        let parent = parents.first().map(|p| (*p).to_string());
         let subject = f.next().unwrap_or_default();
         let body = f.next().unwrap_or_default();
         head.get_or_insert((commit.clone(), time));
-        if parents > 1 {
+        if parents.len() > 1 {
             let (pull_request, branch, is_pull) = merge_subject(subject);
             let title = is_pull
                 .then(|| body.lines().map(str::trim).find(|l| !l.is_empty()))
@@ -372,6 +391,7 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
                 pull_request,
                 branch,
                 title,
+                parent,
             });
         } else {
             subjects.push(MergeCommit {
@@ -380,6 +400,7 @@ pub(crate) fn parse_history(text: &str) -> Option<History> {
                 pull_request: None,
                 branch: None,
                 title: Some(subject.trim().to_string()),
+                parent,
             });
         }
     }
@@ -475,6 +496,8 @@ pub(crate) struct Evidence {
     pub branches_read: bool,
     /// The merges naming each issue, newest first.
     pub merges: BTreeMap<String, Vec<(MergeCommit, &'static str)>>,
+    /// The commits among those that change only plan records and their projections.
+    pub planning: BTreeSet<String>,
     /// The first release containing a commit, by commit.
     pub first_release: BTreeMap<String, (String, String)>,
     /// The published version and where it was read; `None` when the publication was not read.
@@ -485,19 +508,27 @@ pub(crate) struct Evidence {
 pub(crate) fn assess(issue: &PlanIssue, e: &Evidence) -> IssueDelivery {
     let branch = e.branches.get(&issue.id).cloned();
     let pr_open = e.open.as_ref().and_then(|o| o.get(&issue.id).cloned());
-    let merges = e.merges.get(&issue.id);
-    let merged = merges
-        .and_then(|m| m.first())
-        .map(|(m, via)| DeliveryMerge {
+    let (delivered, planning): (Vec<_>, Vec<_>) = e
+        .merges
+        .get(&issue.id)
+        .map(Vec::as_slice)
+        .unwrap_or_default()
+        .iter()
+        .partition(|(m, _)| !e.planning.contains(&m.commit));
+    let proof = |named: &[&(MergeCommit, &'static str)]| {
+        named.first().map(|(m, via)| DeliveryMerge {
             commit: m.commit.clone(),
             pull_request: m.pull_request,
             branch: m.branch.clone(),
             title: m.title.clone(),
             via: (*via).to_string(),
             merged_at: crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(m.time)),
-            merges: merges.map_or(0, Vec::len),
+            merges: named.len(),
             observed_at: e.observed_at.clone(),
-        });
+        })
+    };
+    let merged = proof(&delivered);
+    let planned = proof(&planning);
     let released = merged.as_ref().and_then(|m| {
         e.first_release
             .get(&m.commit)
@@ -553,6 +584,7 @@ pub(crate) fn assess(issue: &PlanIssue, e: &Evidence) -> IssueDelivery {
         branch,
         pr_open,
         merged,
+        planned,
         released,
         deployed,
     }
@@ -619,6 +651,59 @@ fn history_of(root: &Path, rev: &str) -> Option<History> {
         ],
     )
     .and_then(|text| parse_history(&text))
+}
+
+/// What a commit may change and still only plan: the plan's records, and every projection
+/// `.gitattributes` marks `merge=derived` — the repository's one list of derived paths.
+const PLANNING_PATHS: [&str; 2] = [
+    ":(exclude).ai/repo/project",
+    ":(exclude,attr:merge=derived)",
+];
+
+/// Which of `commits` (each with its first parent) change nothing outside
+/// [`PLANNING_PATHS`]. One `git diff-tree --stdin` reads every pair, and prints a commit's id
+/// only when its change reaches some other path; a commit with no known parent is never
+/// planning.
+fn planning_only(root: &Path, commits: &[(&str, &str)]) -> Result<BTreeSet<String>, String> {
+    use std::io::Write;
+    use std::process::Stdio;
+    if commits.is_empty() {
+        return Ok(BTreeSet::new());
+    }
+    let input: String = commits.iter().map(|(c, p)| format!("{c} {p}\n")).collect();
+    let mut args = vec!["diff-tree", "--stdin", "-r", "--name-only", "--", "."];
+    args.extend(PLANNING_PATHS);
+    let out = crate::git::read_only(root)
+        .args(&args)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            let writer = child
+                .stdin
+                .take()
+                .map(|mut stdin| std::thread::spawn(move || stdin.write_all(input.as_bytes())));
+            let out = child.wait_with_output();
+            let _ = writer.map(std::thread::JoinHandle::join);
+            out
+        })
+        .map_err(|e| format!("cannot run git diff-tree: {e}"))?;
+    if !out.status.success() {
+        return Err(format!(
+            "git diff-tree: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ));
+    }
+    // diff-tree prints commit ids, which are hex: a lossy reading loses nothing
+    let stdout = String::from_utf8_lossy(&out.stdout);
+    let printed: BTreeSet<&str> = stdout.lines().collect();
+    Ok(commits
+        .iter()
+        .map(|(c, _)| *c)
+        .filter(|c| !printed.contains(c))
+        .map(str::to_string)
+        .collect())
 }
 
 /// For each commit reachable from the releases, the first release (in version order) that
@@ -929,18 +1014,23 @@ pub(crate) fn infer(
         )
     };
     if let Ok((list, _)) = &titles {
-        let times: BTreeMap<&str, u64> = all_merges
+        let times: BTreeMap<&str, (u64, Option<&String>)> = all_merges
             .iter()
             .chain(&all_subjects)
-            .map(|c| (c.commit.as_str(), c.time))
+            .map(|c| (c.commit.as_str(), (c.time, c.parent.as_ref())))
             .collect();
         for pr in list {
             let landed = [pr.merge_commit.as_str(), pr.head_sha.as_str()]
                 .into_iter()
                 .find_map(|c| times.get(c).map(|t| (c, *t)));
-            let Some((commit, time)) = landed else {
+            let Some((commit, (time, parent))) = landed else {
                 continue;
             };
+            // the merge's first parent reads the whole pull request; a head that landed is
+            // one commit of it, and what that one commit changed says nothing about the rest
+            let parent = (commit == pr.merge_commit)
+                .then(|| parent.cloned())
+                .flatten();
             for (id, _) in named_by(Some(&pr.title), Some(&pr.head_ref), &declared, &slugs) {
                 let named = merges.entry(id).or_default();
                 if named.iter().any(|(m, _)| m.commit == commit) {
@@ -953,6 +1043,7 @@ pub(crate) fn infer(
                         pull_request: Some(pr.number),
                         branch: Some(pr.head_ref.clone()),
                         title: Some(pr.title.clone()),
+                        parent: parent.clone(),
                     },
                     "forge_title",
                 ));
@@ -962,6 +1053,13 @@ pub(crate) fn infer(
     for named in merges.values_mut() {
         canonical(named);
     }
+    // which of the naming commits only planned: a read that fails calls none of them that
+    let naming: BTreeSet<(&str, &str)> = merges
+        .values()
+        .flatten()
+        .filter_map(|(m, _)| m.parent.as_deref().map(|p| (m.commit.as_str(), p)))
+        .collect();
+    let planning = planning_only(root, &naming.into_iter().collect::<Vec<_>>());
 
     let mut sources = vec![
         source(
@@ -981,7 +1079,22 @@ pub(crate) fn infer(
                 .map_err(Clone::clone),
             titles.as_ref().ok().map(|(_, o)| o.as_str()),
         ),
+        source(
+            "planning",
+            planning
+                .as_ref()
+                .map(|p| {
+                    format!(
+                        "{} commit(s) naming an issue change only plan records and their \
+                         projections, and prove no merge",
+                        p.len()
+                    )
+                })
+                .map_err(Clone::clone),
+            Some(&observed_at),
+        ),
     ];
+    let planning = planning.unwrap_or_default();
 
     // releases: the tree's release records, in both modes. A record names the commit it
     // released, and it is a file of the tree, so the answer at a commit is a function of the
@@ -1085,6 +1198,7 @@ pub(crate) fn infer(
         open,
         branches_read,
         merges,
+        planning,
         first_release,
         published: published.ok(),
     };
@@ -1120,6 +1234,31 @@ pub(crate) fn infer(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A git that could not be asked is an error, never an empty answer: an empty set would
+    /// read every commit as a delivery. A directory outside any repository makes git refuse,
+    /// and a root git cannot even be started with (an interior NUL) makes the spawn fail.
+    #[test]
+    fn a_git_that_cannot_answer_is_an_error_not_an_empty_answer() {
+        let dir = tempfile::tempdir().unwrap();
+        let pairs = [(
+            "0123456789abcdef0123456789abcdef01234567",
+            "fedcba9876543210fedcba9876543210fedcba98",
+        )];
+        let refused = planning_only(dir.path(), &pairs).unwrap_err();
+        assert!(refused.starts_with("git diff-tree:"), "{refused}");
+        #[cfg(unix)]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            let unstartable = Path::new(std::ffi::OsStr::from_bytes(b"no\0root"));
+            let failed = planning_only(unstartable, &pairs).unwrap_err();
+            assert!(failed.starts_with("cannot run git diff-tree:"), "{failed}");
+        }
+        assert!(
+            planning_only(dir.path(), &[]).unwrap().is_empty(),
+            "no commits asks nothing"
+        );
+    }
 
     fn issue(id: &str, slug: &str) -> PlanIssue {
         PlanIssue {
@@ -1198,6 +1337,7 @@ mod tests {
                     pull_request: None,
                     branch: None,
                     title: None,
+                    parent: None,
                 },
                 via,
             )
@@ -1429,9 +1569,51 @@ mod tests {
             open: None,
             branches_read: false,
             merges: BTreeMap::new(),
+            planning: BTreeSet::new(),
             first_release: BTreeMap::new(),
             published: None,
         }
+    }
+
+    #[test]
+    fn a_commit_that_only_plans_the_issue_is_passed_over_and_said_so() {
+        let commit = |commit: &str, time: u64| MergeCommit {
+            commit: commit.into(),
+            time,
+            pull_request: None,
+            branch: None,
+            title: Some(format!("{commit} (I0001)")),
+            parent: Some("p".into()),
+        };
+        let mut e = evidence();
+        e.merges.insert(
+            "I0001".into(),
+            vec![
+                (commit("plans", 3), "subject"),
+                (commit("delivers", 2), "subject"),
+                (commit("planned-first", 1), "subject"),
+            ],
+        );
+        e.planning = ["plans".to_string(), "planned-first".to_string()].into();
+        let d = assess(&issue("I0001", ""), &e);
+        assert_eq!(d.stage, DeliveryStage::Merged);
+        let merged = d.merged.unwrap();
+        assert_eq!(
+            (merged.commit.as_str(), merged.merges),
+            ("delivers", 1),
+            "the newest commit that changed anything else is the proof"
+        );
+        let planned = d.planned.unwrap();
+        assert_eq!((planned.commit.as_str(), planned.merges), ("plans", 2));
+
+        e.planning.insert("delivers".into());
+        let d = assess(&issue("I0001", ""), &e);
+        assert_eq!(
+            (d.stage, d.merged),
+            (DeliveryStage::None, None),
+            "an issue only ever planned is not merged"
+        );
+        assert_eq!(d.planned.unwrap().merges, 3);
     }
 
     #[test]
@@ -1453,6 +1635,7 @@ mod tests {
             pull_request: Some(7),
             branch: Some("feature/x".into()),
             title: Some("x (I0001)".into()),
+            parent: None,
         };
         e.merges
             .insert("I0001".into(), vec![(merge, "title_or_branch")]);
