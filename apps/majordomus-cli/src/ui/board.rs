@@ -933,6 +933,11 @@ mod tests {
               "status": "DONE", "stage": "deployed",
               "merged": { "commit": "fedcba9876543210", "pull_request": 8, "merged_at": "2026-10-24T10:00:00Z" },
               "released": { "tag": "v2.0.0" } }),
+            // no status, a pull request the forge named without a number, and a branch beside
+            // it: the card draws no status, no pull-request chip and no branch chip
+            serde_json::json!({ "issue": "I15", "title": "half known", "milestone": "m",
+              "status": "", "stage": "pr_open", "pr_open": { "draft": false },
+              "branch": { "name": "feature/half-known" } }),
         ];
         for n in 0..(SHOWN + 3) {
             issues_in.push(
@@ -994,6 +999,16 @@ mod tests {
             lane("pr_open", "ACTIVE", false, false),
             Some(Lane::InReview)
         );
+        // the half-known card is drawn, in review, with none of what it does not know
+        let half = &html[html.find("card-I15").expect("I15 is drawn")..];
+        let half = &half[..half.find("</article>").unwrap_or(half.len())];
+        for never in [
+            "mj-ui-board-status",
+            "mj-ui-board-chip--pr",
+            "feature/half-known",
+        ] {
+            assert!(!half.contains(never), "{never:?} is drawn for I15: {half}");
+        }
 
         let graph = carrying(&board, &carriers(&board)).render();
         for said in ["R05", "I10", "?b7", "Cd9"] {
