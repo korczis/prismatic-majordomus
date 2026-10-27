@@ -109,7 +109,12 @@ struct Heartbeat {
 }
 
 impl Heartbeat {
-    fn start(bridge: Arc<Mutex<Bridge>>) -> Self {
+    /// Ping the server on [`HEARTBEAT`], and keep the client attached through a restart: a
+    /// server that forgot the session is re-attached to by the beat itself, and a server
+    /// gone from its address is followed to where the repository's lease says it serves now
+    /// (I4251). Before, both waited for the client's next message, and an idle client
+    /// stayed off the board.
+    fn start(bridge: Arc<Mutex<Bridge>>, repo: Repository) -> Self {
         let stop = Arc::new(AtomicBool::new(false));
         let flag = Arc::clone(&stop);
         let thread = std::thread::Builder::new()
@@ -122,8 +127,21 @@ impl Heartbeat {
                     waited += tick;
                     if waited >= HEARTBEAT {
                         waited = Duration::ZERO;
-                        if let Err(e) = lock(&bridge).heartbeat() {
-                            tracing::debug!("heartbeat: {e}");
+                        let beat = lock(&bridge).heartbeat();
+                        match beat {
+                            Ok(()) => {}
+                            Err(e) if e.calls_for_an_election() => {
+                                // read without electing, outside the lock: a probe may wait
+                                let serving = lease::serving(&repo);
+                                match lock(&bridge).follow(serving) {
+                                    Ok(true) => tracing::info!(
+                                        "the shared server moved; this session re-attached to it"
+                                    ),
+                                    Ok(false) => tracing::debug!("heartbeat: {e}"),
+                                    Err(again) => tracing::debug!("heartbeat: {e}; {again}"),
+                                }
+                            }
+                            Err(e) => tracing::debug!("heartbeat: {e}"),
                         }
                     }
                 }
@@ -151,7 +169,7 @@ impl Session {
                 Ok(backend) => backend,
                 Err(e) => Self::alone(&args, &repo, None, &format!("starting it failed: {e}"))?,
             },
-            Ok(Role::Peer { url }) => Self::attach(url),
+            Ok(Role::Peer { url }) => Self::attach(url, &repo),
             Err(e) => Self::alone(&args, &repo, None, &e.to_string())?,
         };
         Ok(Session {
@@ -227,14 +245,14 @@ impl Session {
     }
 
     /// Attach to the shared server another process runs.
-    fn attach(url: String) -> Backend {
+    fn attach(url: String, repo: &Repository) -> Backend {
         tracing::info!(
             url = %url,
             "a shared server for this repository is already running at {url} (swagger ui {url}{swagger}); bridging this stdio session to it",
             swagger = crate::http::swagger::SWAGGER_PATH
         );
         let bridge = Arc::new(Mutex::new(Bridge::new(url)));
-        let heartbeat = Heartbeat::start(Arc::clone(&bridge));
+        let heartbeat = Heartbeat::start(Arc::clone(&bridge), repo.clone());
         Backend::Remote { bridge, heartbeat }
     }
 

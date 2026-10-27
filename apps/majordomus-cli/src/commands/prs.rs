@@ -761,6 +761,20 @@ fn ago(at: &str) -> String {
     }
 }
 
+/// What the briefing line says when the observation it reads is stale: the forge reported
+/// `reported` as the base's head and this clone's `origin/<base>` is `local`. `None` when the
+/// two agree, or when either is unknown, since an unknown is not evidence of staleness.
+fn stale_note(base: &str, reported: &str, local: Option<&str>) -> Option<String> {
+    let local = local.filter(|l| !l.is_empty())?;
+    (!reported.is_empty() && reported != local).then(|| {
+        format!(
+            "STALE: the forge reported {base} at {}, this clone's is {}: majordomus prs refresh",
+            short(reported),
+            short(local)
+        )
+    })
+}
+
 /// The briefing line: what the last queue built here said, who holds the lease, and the last
 /// merge — from files alone. `None` when this checkout never observed the forge, so that a
 /// briefing does not grow a section about nothing.
@@ -784,6 +798,12 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
                 s.tallies.open,
                 lanes.join(", ")
             ));
+            // the counts above are the forge's at that observation; once this clone's trunk
+            // has moved past what the forge reported, they are not today's (I4251)
+            let local = integration::local_master(root, &obs.base);
+            if let Some(note) = stale_note(&obs.base, &obs.base_sha, local.as_deref()) {
+                parts.push(note);
+            }
             parts.push(match s.next_merge {
                 Some(n) => format!("next merge #{n}"),
                 None => "nothing ready".into(),
@@ -1223,6 +1243,34 @@ mod tests {
     //! it: a recorded observation and git's answer about each head, in a scratch clone.
 
     use super::*;
+
+    /// On 2026-10-27 progresus-isir's line said `prs 23 open` from an observation 101 minutes
+    /// old, the forge having reported main at d62c13a while this clone's main was 0f43708 and
+    /// GitHub held 4 open (I4251). The line says so now.
+    #[test]
+    fn a_line_from_an_observation_the_trunk_has_moved_past_says_it_is_stale() {
+        let d62 = "d62c13af84aa";
+        let f43 = "0f43708aa1bb";
+        assert_eq!(
+            stale_note("main", d62, Some(f43)).as_deref(),
+            Some("STALE: the forge reported main at d62c13af84, this clone's is 0f43708aa1: majordomus prs refresh")
+        );
+        assert_eq!(
+            stale_note("main", d62, Some(d62)),
+            None,
+            "the same head is current"
+        );
+        assert_eq!(
+            stale_note("main", d62, None),
+            None,
+            "no origin/main is not evidence"
+        );
+        assert_eq!(
+            stale_note("main", "", Some(f43)),
+            None,
+            "nor is no reported head"
+        );
+    }
     use crate::integration::{
         drain::{IntegrationAction, IntegrationEvent},
         store_observation, wait, CheckObservation, CheckRunState, ForgeObservation,

@@ -7552,6 +7552,7 @@
             "file:docs/BRIEF.md",
             "file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md",
             "file:.ai/repo/project/issues/I4250.yaml",
+            "file:.ai/repo/project/issues/I4251.yaml",
             "test:test/cases/1065_a_session_briefs_itself.sh",
             "test:test/cases/4250_the_brief_reports_only_what_changed.sh"
           ],
@@ -70921,6 +70922,53 @@
         }
       },
       {
+        "id": "majordomus://issue/I4251",
+        "kind": "issue",
+        "label": "I4251",
+        "summary": "The brief tells the truth: no finished task, no stale PR count, no self-overlap, and no client left off the board by a restart",
+        "route": "/cockpit/objects/issue/i4251",
+        "source": ".ai/repo/project/issues/I4251.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each named test passes, and fails when its fix is reverted",
+            "cargo test --lib capability::builtin::brief commands::prs::tests mcp::bridge::tests passes"
+          ],
+          "created_at": "2026-10-27",
+          "depends_on": [
+            "I4250"
+          ],
+          "evidence_required": [
+            "the_brief_tells_the_truth"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Removing any worktree: the 28 boards of progresus-isir are reported, not pruned",
+            "Bridges of the release installed before this change: they re-attach only after their client restarts",
+            "Refreshing the forge observation from the brief: the brief reads no forge (ADR 0136)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4251.yaml",
+            "apps/majordomus-cli/src/capability/builtin/brief.rs",
+            "apps/majordomus-cli/src/commands/prs.rs",
+            "apps/majordomus-cli/src/mcp/bridge.rs",
+            "apps/majordomus-cli/src/commands/mcp.rs",
+            ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
+            ".ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "docs/BRIEF.md",
+            "docs/MCP.md"
+          ],
+          "serves": [],
+          "slug": "the-brief-tells-the-truth",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- capability::builtin::brief commands::prs::tests mcp::bridge::tests"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -106110,6 +106158,11 @@
       },
       {
         "source": "majordomus://adr/adr-0136",
+        "target": "majordomus://issue/I4251",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0136",
         "target": "majordomus://test/test/cases/1065_a_session_briefs_itself.sh",
         "kind": "put_in_force"
       },
@@ -133194,6 +133247,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4251",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "majordomus://issue/I4250",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144825,8 +144893,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9263,
+      "nodes": 4017,
+      "edges": 9267,
       "acyclic": false,
       "truncated": false
     }

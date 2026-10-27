@@ -53,10 +53,10 @@ is what a forwarded request says, and a person never needs it.
 
 | Section | Owner | Says |
 |---|---|---|
-| `session` | `lifecycle.episodes`, `continuity.state` | the episode, the branch and head, the active task, and the calling MCP session's place on the board |
+| `session` | `lifecycle.episodes`, `continuity.state` | the episode, the branch and head, the task while its outcome is `active` (a finished or handed-over task is `no task active`), and the calling MCP session's place on the board |
 | `peers` | `peers.list` | attached workers across the boards read, every board that could not be read with its reason, overlapping claims, and up to eight workers by name with what they announced |
-| `mesh` | the mesh runtime | links connected and failing, claims held and this runtime's share, and what the journal addresses to this runtime: open reviews naming it, handovers nobody consumed, overlaps with its claims |
-| `integration` | `majordomus prs brief` | the queue as the last observation of the forge left it, or that this checkout never observed it |
+| `mesh` | the mesh runtime | links connected and failing, claims held and this runtime's share, and what the journal addresses to this runtime: open reviews naming it, handovers nobody consumed, overlaps of another runtime's claim with one of its own (an overlap among its own claims is not counted) |
+| `integration` | `majordomus prs brief` | the queue as the last observation of the forge left it, marked `STALE` (and `prs N open (stale 101m)` on the line) when the forge's reported head of the base is not this clone's `origin/<base>`, or that this checkout never observed it |
 | `release` | `release.currency` | whether the trunk's landed work is released: current, owed with the count and the age of the oldest landing, overdue past six hours, or unread with why (I3070) |
 | `derive` | the derive lock | its holder, whether that process runs, how long it has held the lock, and the priority marker; `undeclared` in a repository that ships no lock |
 
