@@ -15115,6 +15115,7 @@
             "2",
             "10",
             "12",
+            "13",
             "15"
           ],
           "json": false,
@@ -15130,7 +15131,7 @@
           "requires_task": "none",
           "stage": "begin",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
-          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+          "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] | majordomus start --widen <path>[,<path>...] --because \"<why>\"",
           "visibility": "public",
           "writes": [
             ".ai/local/state/current.yaml",
@@ -70870,6 +70871,44 @@
         }
       },
       {
+        "id": "majordomus://issue/I4260",
+        "kind": "issue",
+        "label": "I4260",
+        "summary": "A task's scope can be widened, with the widening recorded",
+        "route": "/cockpit/objects/issue/i4260",
+        "source": ".ai/repo/project/issues/I4260.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A path added to the scope stops failing check",
+            "The ledger names the widening"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "start fixes the scope for the task's life.",
+          "depends_on": [],
+          "desired_state": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
+          "evidence_required": [
+            "case_a_task_scope_grows_on_the_record"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4260.yaml",
+            "lib/start.sh",
+            "lib/check.sh",
+            "bin/majordomus",
+            "test/cases/4260_a_scope_widens_on_the_record.sh"
+          ],
+          "slug": "a-task-scope-grows-on-the-record",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4260_a_scope_widens_on_the_record"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94374,6 +94413,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4260_a_scope_widens_on_the_record.sh",
+        "kind": "test",
+        "label": "test/cases/4260_a_scope_widens_on_the_record.sh",
+        "route": "/cockpit/objects/test/test-cases-4260-a-scope-widens-on-the-record-sh",
+        "source": "test/cases/4260_a_scope_widens_on_the_record.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133111,6 +133157,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4260",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4260",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139641,6 +139697,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4260_a_scope_widens_on_the_record.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144737,8 +144798,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4016,
+      "edges": 9260,
       "acyclic": false,
       "truncated": false
     }

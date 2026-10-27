@@ -29,6 +29,14 @@ events:
     requires: [task_id, profile, owner, scope]
     public: true
 
+  - id: task.scope_widened
+    title: Task scope widened
+    summary: The active task's scope grew by the named paths, for the stated reason.
+    emitted_by: start
+    requires: [task_id, added, because]
+    public: true
+    note: "Written by start --widen (I4260). Work that legitimately grows into a lock file or a new directory was otherwise accepted only by finishing the task partial and starting another; the widening is recorded instead, with who, what and why, so check and finish judge the scope the task now has and the ledger shows how it came to have it."
+
   - id: task.checkpoint
     title: Checkpoint recorded
     summary: Progress was recorded in this episode, against the task it carries when it carries one.

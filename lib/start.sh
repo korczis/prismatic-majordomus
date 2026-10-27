@@ -13,8 +13,9 @@
 . "$MJ_LIB_DIR/context_docs.sh"
 mj_cmd_start() {
   local task="" scope="" requires="" profile="" owner="${USER:-unknown}"
-  local issue="" intent="" exempt="" because=""
+  local issue="" intent="" exempt="" because="" widen=""
   while [ $# -gt 0 ]; do case "$1" in
+    --widen) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--widen needs paths"; widen="$widen,$2"; shift 2 ;;
     --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs paths"; scope="$scope,$2"; shift 2 ;;
     --scope=*) scope="$scope,${1#--scope=}"; shift ;;
     --requires) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--requires needs obligation tokens"; requires="$requires,$2"; shift 2 ;;
@@ -41,6 +42,8 @@ usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[
               A scope says where a worker may write; requires says what the worker owes.
               \`check\` reports each one, \`evidence --covers\` discharges the ones a worker
               records, and \`finish --outcome completed\` refuses while any is outstanding.
+  --widen     with --because "<why>", and no task or --scope: add paths to the active task's
+              scope, judged as start judges them, and record the widening in the ledger.
   --issue     the issue this task executes; --intent the intent it serves, named directly;
               --exempt a class the policy declares under intent.exemptions, with --because.
               What the task is bound to is asked of \`majordomus-cli intent binding\` once, here:
@@ -53,6 +56,16 @@ H
     -*) mj_die "$MJ_EX_USAGE" "start: unknown option $1" ;;
     *) [ -z "$task" ] || mj_die "$MJ_EX_USAGE" "start: task must be one argument (quote it)"; task="$1"; shift ;;
   esac; done
+  # Widening the active task's scope, on the record (I4260): work that legitimately grows
+  # into a lock file or a new directory was otherwise accepted only by finishing it partial
+  # and starting again. The paths are judged exactly as start judges them, and the ledger
+  # says who widened the scope, by what and why, so a widening is never silent.
+  if [ -n "$widen" ]; then
+    [ -z "$task" ] && [ -z "$scope" ] || mj_die "$MJ_EX_USAGE" "start --widen: widens the active task; it takes no task and no --scope"
+    [ -n "$because" ] || mj_die "$MJ_EX_USAGE" "start --widen: --because \"<why the work grew>\" is required"
+    mj_start_widen "${widen#,}" "$because"
+    return $?
+  fi
   [ -n "$task" ]  || mj_die "$MJ_EX_USAGE" "start: a task description is required"
   scope="${scope#,}"; requires="${requires#,}"
   [ -n "$(printf '%s' "$scope" | tr -d ', ')" ] || mj_die "$MJ_EX_USAGE" "start: --scope is required (comma-separated repository paths)"
@@ -192,4 +205,37 @@ mj_report_overlap() {
     done; done
     rm -f "$oflat"
   done
+}
+
+# start --widen <paths> --because "<why>": add paths to the active task's scope (I4260).
+mj_start_widen() {
+  local paths="$1" because="$2" raw p add="" have IFS_save="$IFS" cur tmp
+  mj_require_installed
+  mj_load_current && [ "$(mj_cur outcome)" = active ] && ! mj_task_is_foreign \
+    || mj_die "$MJ_EX_MISSING" "start --widen: no active task in this checkout (majordomus start first)"
+  cur="$MJ_STATE_DIR/current.yaml"
+  have=" $(awk '/^scope:/{s=1; next} s && /^  - /{print substr($0,5); next} s{exit}' "$cur" | tr '\n' ' ')"
+  IFS=','
+  for raw in $paths; do
+    IFS="$IFS_save"
+    raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+    [ -n "$raw" ] || { IFS=','; continue; }
+    case "$raw" in *[[:space:]]*) mj_die "$MJ_EX_USAGE" "start --widen: '$raw' holds whitespace" ;; esac
+    p="$(mj_norm_path "$raw")" || mj_die "$MJ_EX_USAGE" "start --widen: '$raw' is empty, absolute, or escapes the repository"
+    mj_ctxd_judge "$p" || mj_die "$MJ_EX_USAGE" "start --widen: '$raw' is refused by context: $MJ_CTXD_REFUSAL"
+    case "$have$add " in *" $p "*) ;; *) add="$add $p" ;; esac
+    IFS=','
+  done; IFS="$IFS_save"
+  if [ -z "$add" ]; then printf 'widened %s: nothing new (every path is already in scope)\n' "$(mj_cur id)"; return 0; fi
+  tmp="$cur.mj-tmp"
+  awk -v add="$add" '
+    BEGIN { n = split(add, a, " ") }
+    /^scope:/ { s = 1; print; next }
+    s && /^  - / { print; next }
+    s { for (i = 1; i <= n; i++) if (a[i] != "") print "  - " a[i]; s = 0 }
+    { print }
+    END { if (s) for (i = 1; i <= n; i++) if (a[i] != "") print "  - " a[i] }
+  ' "$cur" > "$tmp" && mv "$tmp" "$cur" || mj_die "$MJ_EX_INTERNAL" "start --widen: cannot write $(mj_rel "$cur")"
+  mj_ledger_append task.scope_widened "\"task_id\":\"$(mj_cur id)\",\"added\":\"$(mj_json_esc "${add# }")\",\"because\":\"$(mj_json_esc "$because")\""
+  printf 'widened %s: +%s (because: %s)\n' "$(mj_cur id)" "$add" "$because"
 }

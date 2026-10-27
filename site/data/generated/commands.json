@@ -498,7 +498,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": false,
-      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] | majordomus start --widen <path>[,<path>...] --because \"<why>\"",
       "demo": "start-scope",
       "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused. --requires records what the task owes, from the vocabulary in share/obligations.yaml; a token it does not declare is refused here rather than at the moment a worker tries to discharge it.",
       "reads": [
@@ -518,6 +518,7 @@
         2,
         10,
         12,
+        13,
         15
       ],
       "tests": {
@@ -534,6 +535,7 @@
           "32_refusal_lifecycle",
           "33_event_registry",
           "3995_a_task_started_before_the_first_commit_finishes",
+          "4260_a_scope_widens_on_the_record",
           "821_a_session_moves_between_machines",
           "824_separate_work_on_two_machines_is_not_a_conflict"
         ],
@@ -963,6 +965,7 @@
           "3190_a_scope_of_dot_is_the_repository",
           "32_refusal_lifecycle",
           "3995_a_task_started_before_the_first_commit_finishes",
+          "4260_a_scope_widens_on_the_record",
           "578_an_unknown_gate_refuses_completed",
           "707_knowledge_check_refuses_malformed_records"
         ],
