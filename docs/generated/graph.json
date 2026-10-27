@@ -71791,6 +71791,86 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261027131618-6269-34e62094e6da",
+        "kind": "knowledge",
+        "label": "s-20261027131618-6269-34e62094e6da",
+        "summary": "the case demanded the peers screen show a change at once, while a page waits 50 ms (Patience::PAGE) for a moved reading and otherwise serves the earlier one marked data-catching-up: master 7ddc32da8d4 went red on run and retry, 6 of 6 locally under load; a case reads a screen's contract (the change, or catching up, then the change), never the timing of a fast machine (I4244)",
+        "route": "/cockpit/objects/knowledge/s-20261027131618-6269-34e62094e6da",
+        "source": ".ai/repo/knowledge/curated/s-20261027131618-6269-34e62094e6da.md",
+        "status": "verified",
+        "facts": {
+          "about": "test/cases/3383_the_peers_screen_follows_the_blackboard.sh",
+          "class": "lesson",
+          "date": "2026-10-27",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261027131618-6269-77d9a54bdc7a",
+        "kind": "knowledge",
+        "label": "s-20261027131618-6269-77d9a54bdc7a",
+        "summary": "resolve() judged every same-branch record (one git merge-base each, 352 on master) before keeping one: 46.8 s a call at load 27-43, the brief 57.7 s and the Cockpit overview 113 s; choosing from the front matter and judging only the chosen record took it to 1.2 s with the same answer (I4243, #2600)",
+        "route": "/cockpit/objects/knowledge/s-20261027131618-6269-77d9a54bdc7a",
+        "source": ".ai/repo/knowledge/curated/s-20261027131618-6269-77d9a54bdc7a.md",
+        "status": "verified",
+        "facts": {
+          "about": "capability:continuity.state",
+          "class": "lesson",
+          "date": "2026-10-27",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261027131618-6269-de02bce2f833",
+        "kind": "knowledge",
+        "label": "s-20261027131618-6269-de02bce2f833",
+        "summary": "inside Claude Code, majordomus session start filed the episode under the key 'hand' while knowledge observe looked for it under CLAUDE_CODE_SESSION_ID and refused 'no episode is open for this caller'; observing needed MJ_SESSION_KEY=hand",
+        "route": "/cockpit/objects/knowledge/s-20261027131618-6269-de02bce2f833",
+        "source": ".ai/repo/knowledge/candidates/s-20261027131618-6269-de02bce2f833.md",
+        "status": "candidate",
+        "facts": {
+          "about": "lib/knowledge.sh",
+          "class": "lesson",
+          "date": "2026-10-27",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261027131618-6269-eccc8af1c907",
+        "kind": "knowledge",
+        "label": "s-20261027131618-6269-eccc8af1c907",
+        "summary": "at load 30-45 on 18 cores one git process costs 0.2-0.6 s where it costs 0.07 s idle, so a served read that spawns git per record or per commit costs tens of seconds: environment.preflight spawns about 60 (7.4 s to 39 s by load); a served read asks git once per answer, not once per candidate",
+        "route": "/cockpit/objects/knowledge/s-20261027131618-6269-eccc8af1c907",
+        "source": ".ai/repo/knowledge/curated/s-20261027131618-6269-eccc8af1c907.md",
+        "status": "verified",
+        "facts": {
+          "about": "capability:environment.preflight",
+          "class": "lesson",
+          "date": "2026-10-27",
+          "epistemics": "observed",
+          "route": "platform",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -133361,6 +133441,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261027131618-6269-34e62094e6da",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261027131618-6269-77d9a54bdc7a",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261027131618-6269-de02bce2f833",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261027131618-6269-eccc8af1c907",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144737,8 +144837,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4018,
+      "edges": 9261,
       "acyclic": false,
       "truncated": false
     }
