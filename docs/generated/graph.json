@@ -70913,6 +70913,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4259",
+        "kind": "issue",
+        "label": "I4259",
+        "summary": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "route": "/cockpit/objects/issue/i4259",
+        "source": ".ai/repo/project/issues/I4259.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A document with x-source front matter is indexed",
+            "A folded scalar is refused naming 'folded scalar'"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Unknown keys and folded scalars are refused with no hint of either.",
+          "depends_on": [],
+          "desired_state": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "evidence_required": [
+            "case_adopter_front_matter_is_read_not_refused"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4259.yaml",
+            "share/schemas/majordomus/document/document.v1.schema.json",
+            "apps/majordomus-cli/src/index",
+            "test/cases/4259_adopter_front_matter_is_diagnosed.sh"
+          ],
+          "slug": "adopter-front-matter-is-read-not-refused",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4259_adopter_front_matter_is_diagnosed"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94417,6 +94454,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/4259_a_wrapped_value_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-4259-a-wrapped-value-is-named-sh",
+        "source": "test/cases/4259_a_wrapped_value_is_named.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133164,6 +133208,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4259",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4259",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139748,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4259_a_wrapped_value_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144849,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }

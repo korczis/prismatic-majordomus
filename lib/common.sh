@@ -826,7 +826,7 @@ MJ_FLATTEN_AWK='
     if (numbered) name = ++nfile
     else { name = FILENAME; sub(/.*\//, "", name); sub(/\.[A-Za-z0-9]+$/, "", name) }
     out = outdir "/" name; printf "" > out
-    delete ctx; delete pend; delete cnt; ctx[0] = ""; failed = 0; infront = 0; front_done = 0
+    delete ctx; delete pend; delete cnt; ctx[0] = ""; failed = 0; infront = 0; front_done = 0; lastv = ""
     if (front) { if ($0 != "---") { fail("no front matter"); nextfile } infront = 1; next }
   }
   outdir != "" && failed { nextfile }
@@ -839,6 +839,7 @@ MJ_FLATTEN_AWK='
     match(line,/^ */); ind=RLENGTH; s=substr(line,ind+1)
     if (ind % 2 != 0) { fail("odd indentation on line " FNR); if (outdir != "") nextfile; }
     if (s ~ /^- /) {
+      lastv = ""
       if (!(ind in pend)) { fail("list item without a parent key on line " FNR); if (outdir != "") nextfile; }
       parent=pend[ind]; idx=cnt[parent]+0; cnt[parent]=idx+1
       item=trim(substr(s,3)); ip=parent "." idx
@@ -851,13 +852,19 @@ MJ_FLATTEN_AWK='
       } else emit_val(ip,item)
       next
     }
-    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) { fail("cannot parse line " FNR ": " s); if (outdir != "") nextfile; }
+    if (s !~ /^[A-Za-z_][A-Za-z0-9_-]*:([ \t]|$)/) {
+      # a deeper line that is no key continues the value above it: the subset reads a value on
+      # one line, so a folded or wrapped scalar is named as such (I4259)
+      if (lastv != "" && ind > lastvind) fail("line " FNR " continues the value of \047" lastv "\047 from the line above: a value is one line in this subset (a folded or wrapped scalar is not read); join it onto that line, quoted if it holds \047: \047")
+      else fail("cannot parse line " FNR ": " s)
+      if (outdir != "") nextfile;
+    }
     if (!(ind in ctx)) { fail("unexpected indentation on line " FNR); if (outdir != "") nextfile; }
     k=s; sub(/:.*$/,"",k); v=s; sub(/^[^:]*:[ \t]*/,"",v)
     clear_from(ind)
     p=join(ctx[ind],k)
-    if (v=="") { pend[ind]=p; pend[ind+2]=p; ctx[ind+2]=p }
-    else emit_val(p,v)
+    if (v=="") { lastv = ""; pend[ind]=p; pend[ind+2]=p; ctx[ind+2]=p }
+    else { lastv = p; lastvind = ind; emit_val(p,v) }
   }'
 mj_yaml_flatten() {
   mj_count yaml_flatten
