@@ -171,7 +171,7 @@ const describe = (name: string, before: Brief, after: Brief): string[] => {
   }
 };
 
-/** What changed between two briefs, as one plain clause: "main moved b1be080 → d62c13a". */
+/** What changed between two briefs, as one plain clause: "main moved 1a2b3c4 → 9f8e7d6". */
 export const whatChanged = (before: Brief, after: Brief): string => {
   const said = [
     ...new Set(changedSections(before, after).flatMap(name => describe(name, before, after))),

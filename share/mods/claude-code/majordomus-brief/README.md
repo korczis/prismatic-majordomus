@@ -28,7 +28,7 @@ The submitted prompt opens with what changed in one plain sentence, then the bri
 line for the agent:
 
 ```text
-Majordomus brief: since the last report, main moved b1be080 → d62c13a and a peer attached.
+Majordomus brief: since the last report, main moved 1a2b3c4 → 9f8e7d6 and a peer attached.
 
 <the brief, in a code block>
 

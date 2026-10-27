@@ -105,9 +105,9 @@ The mod compares the brief's lines section by section, after taking the clock ou
 | | the integration queue's open count, lanes, next merge, lease and last merge |
 | | the release stance and count, the derive lock's holder and priority |
 
-So `integration  main at b1be080d1c observed 4 d ago (2026-10-21T16:55:57Z): 14 open — held 3,
+So `integration  main at 1a2b3c4d5e observed 4 d ago (2026-10-21T16:55:57Z): 14 open — held 3,
 waiting 11` and the same line an hour later, `observed 5 d ago (2026-10-21T16:55:57Z)`, are one
-fact. `main at d62c13af84 ...: 23 open` is a new one. A threshold the clock crosses still
+fact. `main at 9f8e7d6c5b ...: 23 open` is a new one. A threshold the clock crosses still
 counts when it changes a word, as when a release that has waited too long becomes `overdue`.
 
 ### What the person reads
@@ -116,10 +116,10 @@ Claude Code shows a prompt a plugin submits in the transcript as it was submitte
 prompt opens with what changed, in one sentence, then the brief, then one line for the agent:
 
 ````text
-Majordomus brief: since the last report, main moved b1be080 → d62c13a and a peer attached.
+Majordomus brief: since the last report, main moved 1a2b3c4 → 9f8e7d6 and a peer attached.
 
 ```
-session      episode s-1 on main at d62c13af84; task t-1: ...
+session      episode s-1 on main at 9f8e7d6c5b; task t-1: ...
 ...
 ```
 

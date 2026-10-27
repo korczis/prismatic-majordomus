@@ -30,7 +30,7 @@ type Facts = {
   line?: string;
 };
 const make = (f: Facts = {}): Brief => {
-  const head = f.head ?? 'b1be080d1c';
+  const head = f.head ?? '1a2b3c4d5e';
   const attached = f.attached ?? 2;
   const peers = Array.from(
     { length: attached },
@@ -40,7 +40,7 @@ const make = (f: Facts = {}): Brief => {
     at: f.at ?? '2026-10-26T15:33:26Z',
     line: f.line ?? `t-1 @main | peers ${attached}/3b | mesh 0/0 | prs ${f.open ?? 14} open`,
     lines: [
-      `session      episode s-1 on main at ${head}; task t-1: Adopt majordomus`,
+      `session      episode s-1 on main at ${head}; task t-1: cover the brief`,
       `peers        ${attached} attached on 3 board(s)`,
       ...peers,
       'mesh         0 of 0 link(s) connected; 2 claim(s) held, 2 of them this runtime\'s',
@@ -136,11 +136,11 @@ test('every relative age and instant the brief emits is the clock, not a fact', 
 
 test('what is a fact survives normalisation', () => {
   const facts = [
-    'main at b1be080d1c observed',
+    'main at 1a2b3c4d5e observed',
     'main at 123456789d observed',
     '14 open — held 3, waiting 11; 2 diagnostic(s)',
     '3 attached on 15 board(s)',
-    'p1 claude-code @main [claude-code pid 23496 on Pro-2.local, /tmp/cc-socks/23496.sock]',
+    'p1 claude-code @main [claude-code pid 4242 on host.local, /tmp/peer/4242.sock]',
     'next merge #2565; 27 landed commit(s) in 2 landing(s) past v1.0.0-alpha.8',
   ];
   for (const f of facts) expect(normalise(f)).toBe(f);
@@ -156,7 +156,7 @@ test('two briefs that differ only by the clock have one fingerprint', () => {
 test('every fact moves the fingerprint, and the change is named', () => {
   const base = make();
   const cases: [Facts, string[], string][] = [
-    [{ head: 'd62c13af84' }, ['session', 'integration'], 'main moved b1be080 → d62c13a'],
+    [{ head: '9f8e7d6c5b' }, ['session', 'integration'], 'main moved 1a2b3c4 → 9f8e7d6'],
     [{ attached: 3 }, ['peers'], 'a peer attached'],
     [{ attached: 0 }, ['peers'], '2 peers left'],
     [{ open: 23 }, ['integration'], 'open pull requests went from 14 to 23'],
@@ -169,8 +169,8 @@ test('every fact moves the fingerprint, and the change is named', () => {
     expect(whatChanged(base, after)).toBe(words);
   }
   // one move is said once, though two sections carry it
-  expect(whatChanged(base, make({ head: 'd62c13af84', attached: 3 }))).toBe(
-    'main moved b1be080 → d62c13a and a peer attached',
+  expect(whatChanged(base, make({ head: '9f8e7d6c5b', attached: 3 }))).toBe(
+    'main moved 1a2b3c4 → 9f8e7d6 and a peer attached',
   );
   // the mesh as a runtime with links says it (2026-10-27, two reads a minute apart)
   const mesh = (claims: number, overlaps: number): Brief => ({
@@ -196,10 +196,10 @@ test('every fact moves the fingerprint, and the change is named', () => {
 // ---------------------------------------------------------------- the submitted text
 
 test('the self-report says what changed, then the brief, then one line to the agent', () => {
-  const text = selfReport(make(), make({ head: 'd62c13af84' }));
+  const text = selfReport(make(), make({ head: '9f8e7d6c5b' }));
   expect(text.startsWith(SELF_REPORT)).toBe(true);
   const [opening, ...rest] = text.split('\n');
-  expect(opening).toBe('Majordomus brief: since the last report, main moved b1be080 → d62c13a.');
+  expect(opening).toBe('Majordomus brief: since the last report, main moved 1a2b3c4 → 9f8e7d6.');
   const after = rest.slice(rest.lastIndexOf('```') + 1).filter(l => l !== '');
   expect(after).toHaveLength(1);
   expect(after[0]).toMatch(/^To the agent: /);
@@ -242,24 +242,24 @@ test('a changed fact wakes an idle session once, at most once per interval', asy
   await $.session.start(start);
   // the change lands a minute in, before the interval (5) since the start has passed
   await clock.advance(MINUTE);
-  facts = { head: 'd62c13af84' };
+  facts = { head: '9f8e7d6c5b' };
   await clock.advance(3 * MINUTE);
   expect(w.submitted).toHaveLength(0);
   await clock.advance(MINUTE);
   expect(w.submitted).toHaveLength(1);
   expect(w.submitted[0]?.text.startsWith(SELF_REPORT)).toBe(true);
-  expect(w.submitted[0]?.text).toContain('since the last report, main moved b1be080 → d62c13a.');
+  expect(w.submitted[0]?.text).toContain('since the last report, main moved 1a2b3c4 → 9f8e7d6.');
   expect(w.submitted[0]?.text).toMatch(/peers {8}2 attached on 3 board\(s\)/);
   // nothing new for an hour: nothing more
   await clock.advance(60 * MINUTE);
   expect(w.submitted).toHaveLength(1);
   // a second change is told as itself, not with the first again
-  facts = { head: 'd62c13af84', attached: 3 };
+  facts = { head: '9f8e7d6c5b', attached: 3 };
   await clock.advance(MINUTE);
   expect(w.submitted).toHaveLength(2);
   expect(w.submitted[1]?.text).toContain('since the last report, a peer attached.');
   // a third, a minute after the second, waits out the interval
-  facts = { head: 'd62c13af84', attached: 3, open: 20 };
+  facts = { head: '9f8e7d6c5b', attached: 3, open: 20 };
   await clock.advance(MINUTE);
   expect(w.submitted).toHaveLength(2);
   await clock.advance(4 * MINUTE);
