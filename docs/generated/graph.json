@@ -70870,6 +70870,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4266",
+        "kind": "issue",
+        "label": "I4266",
+        "summary": "plan says why an issue with no dependency is BLOCKED by its milestone",
+        "route": "/cockpit/objects/issue/i4266",
+        "source": ".ai/repo/project/issues/I4266.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan blocked names the blocking milestone for a dependency-free issue"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "The milestone edge blocks silently.",
+          "depends_on": [],
+          "desired_state": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+          "evidence_required": [
+            "case_a_milestone_dependency_is_explained"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4266.yaml",
+            "lib/plan.sh",
+            "lib/project.awk",
+            "test/cases/4266_a_milestone_block_is_named.sh"
+          ],
+          "slug": "a-milestone-dependency-is-explained",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4266_a_milestone_block_is_named"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94374,6 +94410,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4266_a_milestone_block_is_named.sh",
+        "kind": "test",
+        "label": "test/cases/4266_a_milestone_block_is_named.sh",
+        "route": "/cockpit/objects/test/test-cases-4266-a-milestone-block-is-named-sh",
+        "source": "test/cases/4266_a_milestone_block_is_named.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133111,6 +133154,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4266",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4266",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139641,6 +139694,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4266_a_milestone_block_is_named.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144737,8 +144795,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4016,
+      "edges": 9260,
       "acyclic": false,
       "truncated": false
     }
