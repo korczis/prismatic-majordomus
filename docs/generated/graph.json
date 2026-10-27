@@ -70913,6 +70913,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4258",
+        "kind": "issue",
+        "label": "I4258",
+        "summary": "Documents below docs/ are knowledge without a hand-declared class each",
+        "route": "/cockpit/objects/issue/i4258",
+        "source": ".ai/repo/project/issues/I4258.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fresh init discovers docs/a/b.md as a document",
+            "No file is claimed by two classes"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "One level of docs/ is discovered.",
+          "depends_on": [],
+          "desired_state": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+          "evidence_required": [
+            "case_knowledge_discovers_documents_below_docs"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4258.yaml",
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            "test/cases/4258_documents_below_docs_are_discovered.sh"
+          ],
+          "slug": "knowledge-discovers-documents-below-docs",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4258_documents_below_docs_are_discovered"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94417,6 +94453,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
+        "kind": "test",
+        "label": "test/cases/4258_documents_below_docs_are_discovered.sh",
+        "route": "/cockpit/objects/test/test-cases-4258-documents-below-docs-are-discovered-sh",
+        "source": "test/cases/4258_documents_below_docs_are_discovered.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133164,6 +133207,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4258",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4258",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139747,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144848,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }
