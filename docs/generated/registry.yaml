@@ -45016,6 +45016,11 @@ capabilities:
                   - "$ref": "#/$defs/DeliveryMerge"
                   - type: "null"
                 description: The newest merge that names it.
+              planned:
+                anyOf:
+                  - "$ref": "#/$defs/DeliveryMerge"
+                  - type: "null"
+                description: "The newest commit that names it while changing only plan records and their\nprojections: passed over as a merge proof, and said so."
               released:
                 anyOf:
                   - "$ref": "#/$defs/DeliveryRelease"
