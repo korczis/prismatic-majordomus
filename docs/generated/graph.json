@@ -17332,14 +17332,6 @@
         "source": "docs/PLANNING.md"
       },
       {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
-      },
-      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -70870,6 +70862,566 @@
         }
       },
       {
+        "id": "majordomus://issue/I4254",
+        "kind": "issue",
+        "label": "I4254",
+        "summary": "An adopter projects its plan to GitHub with the installed tool, not a clone of its source",
+        "route": "/cockpit/objects/issue/i4254",
+        "source": ".ai/repo/project/issues/I4254.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An installed release projects a fixture remote with no source checkout",
+            "apply in a checkout without refs/remotes/origin/HEAD derives the default branch or names the one command that sets it"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "The projection lives in scripts/ of the source tree only.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_the_github_projection_ships_with_the_rel"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4254.yaml",
+            "scripts/github-sync",
+            "scripts/release-package",
+            "bin/majordomus",
+            "docs/PLANNING.md",
+            "test/cases/4254_an_installed_release_projects_the_plan.sh"
+          ],
+          "slug": "the-github-projection-ships-with-the-release",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4254_an_installed_release_projects_the_plan"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4255",
+        "kind": "issue",
+        "label": "I4255",
+        "summary": "A project rule can be enforced by a command the repository names",
+        "route": "/cockpit/objects/issue/i4255",
+        "source": ".ai/repo/project/issues/I4255.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A project rule with a command validator is reported enforced and fails doctor when the command fails",
+            "A command that does not exist is a wiring failure naming the rule"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Only the tool's own validators can back a rule; a project rule is documentation.",
+          "depends_on": [],
+          "desired_state": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+          "evidence_required": [
+            "case_a_project_rule_names_a_command_validator"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4255.yaml",
+            "lib/rules.sh",
+            "lib/doctor.sh",
+            "share/allow/rule.txt",
+            "docs/DOCTRINE.md",
+            "test/cases/4255_a_project_rule_runs_its_command.sh"
+          ],
+          "slug": "a-project-rule-names-a-command-validator",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4255_a_project_rule_runs_its_command"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4256",
+        "kind": "issue",
+        "label": "I4256",
+        "summary": "A skill is proved by the adopter's own tests, and its findings name nothing of the tool's tree",
+        "route": "/cockpit/objects/issue/i4256",
+        "source": ".ai/repo/project/issues/I4256.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A marker in tests/test_x.py proves a skill in a repository with no test/cases",
+            "A repository with no site/ gets no undocumented warning",
+            "skills check and doctor report the same orphans"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "TEST_DIRS and SKILL_PAGES_DIR are the tool's own layout; skills check and doctor disagree.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_skill_proof_reads_the_adopters_layout"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4256.yaml",
+            "apps/majordomus-cli/src/skill/mod.rs",
+            "lib/skills.sh",
+            "share/skeleton/ai/repo/scope.yaml",
+            "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh"
+          ],
+          "slug": "skill-proof-reads-the-adopters-layout",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4256_a_skill_is_proved_where_the_adopter_tests"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4257",
+        "kind": "issue",
+        "label": "I4257",
+        "summary": "init projects into an existing CLAUDE.md or AGENTS.md as a region",
+        "route": "/cockpit/objects/issue/i4257",
+        "source": ".ai/repo/project/issues/I4257.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init in a repository with a CLAUDE.md writes mode region for it",
+            "update then appends the region and leaves the rest byte for byte"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "init writes the same projection modes whatever the repository holds.",
+          "depends_on": [],
+          "desired_state": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
+          "evidence_required": [
+            "case_init_keeps_a_hand_written_provider_file"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "For each projection target that already exists and carries no stamp, init writes mode region and says so.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4257.yaml",
+            "lib/init.sh",
+            "share/skeleton/ai/repo/policy.yaml",
+            "test/cases/4257_init_keeps_a_hand_written_provider_file.sh"
+          ],
+          "slug": "init-keeps-a-hand-written-provider-file",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4257_init_keeps_a_hand_written_provider_file"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4258",
+        "kind": "issue",
+        "label": "I4258",
+        "summary": "Documents below docs/ are knowledge without a hand-declared class each",
+        "route": "/cockpit/objects/issue/i4258",
+        "source": ".ai/repo/project/issues/I4258.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fresh init discovers docs/a/b.md as a document",
+            "No file is claimed by two classes"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "One level of docs/ is discovered.",
+          "depends_on": [],
+          "desired_state": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+          "evidence_required": [
+            "case_knowledge_discovers_documents_below_docs"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4258.yaml",
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            "test/cases/4258_documents_below_docs_are_discovered.sh"
+          ],
+          "slug": "knowledge-discovers-documents-below-docs",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4258_documents_below_docs_are_discovered"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4259",
+        "kind": "issue",
+        "label": "I4259",
+        "summary": "A document's own metadata and a folded YAML scalar are diagnosed, not just refused",
+        "route": "/cockpit/objects/issue/i4259",
+        "source": ".ai/repo/project/issues/I4259.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A document with x-source front matter is indexed",
+            "A folded scalar is refused naming 'folded scalar'"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Unknown keys and folded scalars are refused with no hint of either.",
+          "depends_on": [],
+          "desired_state": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "evidence_required": [
+            "case_adopter_front_matter_is_read_not_refused"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4259.yaml",
+            "share/schemas/majordomus/document/document.v1.schema.json",
+            "apps/majordomus-cli/src/index",
+            "test/cases/4259_adopter_front_matter_is_diagnosed.sh"
+          ],
+          "slug": "adopter-front-matter-is-read-not-refused",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4259_adopter_front_matter_is_diagnosed"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4260",
+        "kind": "issue",
+        "label": "I4260",
+        "summary": "A task's scope can be widened, with the widening recorded",
+        "route": "/cockpit/objects/issue/i4260",
+        "source": ".ai/repo/project/issues/I4260.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A path added to the scope stops failing check",
+            "The ledger names the widening"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "start fixes the scope for the task's life.",
+          "depends_on": [],
+          "desired_state": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
+          "evidence_required": [
+            "case_a_task_scope_grows_on_the_record"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "`majordomus scope add <path>...` widens the active task's scope and appends a ledger line naming who widened it and why.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4260.yaml",
+            "lib/start.sh",
+            "lib/check.sh",
+            "bin/majordomus",
+            "test/cases/4260_a_scope_widens_on_the_record.sh"
+          ],
+          "slug": "a-task-scope-grows-on-the-record",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4260_a_scope_widens_on_the_record"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4261",
+        "kind": "issue",
+        "label": "I4261",
+        "summary": "An issue names the external requirement it serves, and a milestone its due date",
+        "route": "/cockpit/objects/issue/i4261",
+        "source": ".ai/repo/project/issues/I4261.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A trace reference reaches the projected body",
+            "due_on reaches the GitHub milestone and changes no status"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Trace references and dates have no field.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_issues_trace_outward_and_milestones_carr"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4261.yaml",
+            "share/allow/issue.txt",
+            "share/allow/milestone.txt",
+            "scripts/github-sync",
+            "docs/SCHEMAS.md",
+            "test/cases/4261_issues_trace_outward.sh"
+          ],
+          "slug": "issues-trace-outward-and-milestones-carry-dates",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4261_issues_trace_outward"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4262",
+        "kind": "issue",
+        "label": "I4262",
+        "summary": "An adopter gets the commit-message guard the projection's rules assume",
+        "route": "/cockpit/objects/issue/i4262",
+        "source": ".ai/repo/project/issues/I4262.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A subject without an issue id is refused when the policy requires one",
+            "A closing keyword is refused"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "commit.validate judges this repository's own policy.",
+          "depends_on": [],
+          "desired_state": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+          "evidence_required": [
+            "case_a_commit_message_guard_ships_for_adopter"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4262.yaml",
+            "lib/init.sh",
+            "share/skeleton/ai/repo/policy.yaml",
+            "docs/COMMIT.md",
+            "test/cases/4262_an_adopter_commit_is_judged.sh"
+          ],
+          "slug": "a-commit-message-guard-ships-for-adopters",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4262_an_adopter_commit_is_judged"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4263",
+        "kind": "issue",
+        "label": "I4263",
+        "summary": "An adopter's README and wiki show the plan, rules and knowledge from the layer, regenerated",
+        "route": "/cockpit/objects/issue/i4263",
+        "source": ".ai/repo/project/issues/I4263.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A README region of plan status is regenerated by update",
+            "An edited region is drift"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Only provider instruction files are projections.",
+          "depends_on": [],
+          "desired_state": "A projection may target any Markdown file in mode region with a named generator (plan-status, rules, knowledge, adrs, skills), checked by doctor like the provider projections.",
+          "evidence_required": [
+            "case_adopter_documents_carry_generated_region"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "A projection may target any Markdown file in mode region with a named generator (plan-status, rules, knowledge, adrs, skills), checked by doctor like the provider projections.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4263.yaml",
+            "lib/update.sh",
+            "docs/SCHEMAS.md",
+            "test/cases/4263_a_document_region_is_a_projection.sh"
+          ],
+          "slug": "adopter-documents-carry-generated-regions",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4263_a_document_region_is_a_projection"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4264",
+        "kind": "issue",
+        "label": "I4264",
+        "summary": "adr check names decisions it did not examine, and adr propose records who authored one",
+        "route": "/cockpit/objects/issue/i4264",
+        "source": ".ai/repo/project/issues/I4264.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "An untracked ADR is named by adr check",
+            "propose without --from writes authored"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Untracked decisions pass silently; provenance is always extracted.",
+          "depends_on": [],
+          "desired_state": "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source.",
+          "evidence_required": [
+            "case_adr_check_sees_untracked_decisions"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "adr check names untracked files under the section; adr propose writes `authored` unless --from names a source.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4264.yaml",
+            "lib/adr.sh",
+            "test/cases/4264_adr_check_names_what_it_skipped.sh"
+          ],
+          "slug": "adr-check-sees-untracked-decisions",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4264_adr_check_names_what_it_skipped"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4265",
+        "kind": "issue",
+        "label": "I4265",
+        "summary": "The hook line init prints runs doctor in its commit context",
+        "route": "/cockpit/objects/issue/i4265",
+        "source": ".ai/repo/project/issues/I4265.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The printed hook line sets the commit context",
+            "doctor reports it wired"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "init prints `majordomus doctor || exit $?`.",
+          "depends_on": [],
+          "desired_state": "init prints the commit-context form, and doctor's wiring check accepts it.",
+          "evidence_required": [
+            "case_the_commit_hook_runs_doctor_in_commit_co"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "init prints the commit-context form, and doctor's wiring check accepts it.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4265.yaml",
+            "lib/init.sh",
+            "lib/doctor.sh",
+            "docs/ADOPTION.md",
+            "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
+          ],
+          "slug": "the-commit-hook-runs-doctor-in-commit-context",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4265_the_adopter_hook_runs_doctor_in_commit_context"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4266",
+        "kind": "issue",
+        "label": "I4266",
+        "summary": "plan says why an issue with no dependency is BLOCKED by its milestone",
+        "route": "/cockpit/objects/issue/i4266",
+        "source": ".ai/repo/project/issues/I4266.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "plan blocked names the blocking milestone for a dependency-free issue"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "The milestone edge blocks silently.",
+          "depends_on": [],
+          "desired_state": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+          "evidence_required": [
+            "case_a_milestone_dependency_is_explained"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "plan show and plan blocked name the milestone dependency that blocks an issue.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4266.yaml",
+            "lib/plan.sh",
+            "lib/project.awk",
+            "test/cases/4266_a_milestone_block_is_named.sh"
+          ],
+          "slug": "a-milestone-dependency-is-explained",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4266_a_milestone_block_is_named"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4267",
+        "kind": "issue",
+        "label": "I4267",
+        "summary": "A repository's static site is a deployment the layer can state",
+        "route": "/cockpit/objects/issue/i4267",
+        "source": ".ai/repo/project/issues/I4267.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A static deployment record validates and names its output directory",
+            "A public target for a repository marked private is refused"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "deployment/v1 has build.package, listen and health for a server; nothing describes a static site and where it is published.",
+          "depends_on": [],
+          "desired_state": "deployment/v1 accepts a static kind (build command, output directory, publish target, visibility) that doctor validates and the site pipeline reads.",
+          "evidence_required": [
+            "case_a_static_site_is_a_deployment"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "deployment/v1 accepts a static kind (build command, output directory, publish target, visibility) that doctor validates and the site pipeline reads.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4267.yaml",
+            "share/schemas/majordomus/deployment/deployment.v1.schema.json",
+            "share/allow/deployment.txt",
+            "docs/SCHEMAS.md",
+            "test/cases/4267_a_static_site_is_a_deployment.sh"
+          ],
+          "slug": "a-static-site-is-a-deployment",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4267_a_static_site_is_a_deployment"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4268",
+        "kind": "issue",
+        "label": "I4268",
+        "summary": "An adopter runs every gate of its CI model and records it with one command",
+        "route": "/cockpit/objects/issue/i4268",
+        "source": ".ai/repo/project/issues/I4268.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "gates run records every selected gate and check reports them passing",
+            "A failing gate refuses completed"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Gate evidence is recorded one gate at a time by hand.",
+          "depends_on": [],
+          "desired_state": "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it.",
+          "evidence_required": [
+            "case_an_adopter_runs_and_records_its_gates"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4268.yaml",
+            "bin/majordomus",
+            "lib/evidence.sh",
+            "scripts/ci-plan",
+            "docs/CI.md",
+            "test/cases/4268_an_adopter_runs_and_records_its_gates.sh"
+          ],
+          "slug": "an-adopter-runs-and-records-its-gates",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4268_an_adopter_runs_and_records_its_gates"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116196,11 +116748,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -133111,6 +133658,156 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4254",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4254",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4255",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4255",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4256",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4256",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4257",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4257",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4258",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4258",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4259",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4259",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4260",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4260",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4261",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4261",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4262",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4262",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4263",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4263",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4264",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4264",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4265",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4265",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4266",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4266",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4267",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4267",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4268",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4268",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144737,8 +145434,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4028,
+      "edges": 9286,
       "acyclic": false,
       "truncated": false
     }

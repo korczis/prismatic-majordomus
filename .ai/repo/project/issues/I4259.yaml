@@ -1,0 +1,26 @@
+id: I4259
+milestone: a-second-adopter-is-served
+title: "A document's own metadata and a folded YAML scalar are diagnosed, not just refused"
+slug: adopter-front-matter-is-read-not-refused
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: document/v1 refused front matter keys an adopter needs (source, fetched, sha256 of a snapshot) with no extension namespace, and the YAML subset refused the folded scalars PyYAML writes by default with 'cannot parse line 2: <fragment>'."
+current_state: "Unknown keys and folded scalars are refused with no hint of either."
+desired_state: "document/v1 accepts an `x-` namespace for adopter keys; a folded or multi-line scalar is refused with a message that says so and shows the one-line form."
+scope:
+  - ".ai/repo/project/issues/I4259.yaml"
+  - "share/schemas/majordomus/document/document.v1.schema.json"
+  - "apps/majordomus-cli/src/index"
+  - "test/cases/4259_adopter_front_matter_is_diagnosed.sh"
+depends_on: []
+acceptance_criteria:
+  - "A document with x-source front matter is indexed"
+  - "A folded scalar is refused naming 'folded scalar'"
+validation:
+  - "bash test/run.sh 4259_adopter_front_matter_is_diagnosed"
+evidence_required:
+  - "case_adopter_front_matter_is_read_not_refused"
+created_at: 2026-10-27
+updated_at: 2026-10-27

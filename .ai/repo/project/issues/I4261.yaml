@@ -1,0 +1,28 @@
+id: I4261
+milestone: a-second-adopter-is-served
+title: "An issue names the external requirement it serves, and a milestone its due date"
+slug: issues-trace-outward-and-milestones-carry-dates
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Issues accept a `traces` list (tracker keys, requirement ids, URLs) projected into the GitHub body; milestones accept an optional `due_on` projected to GitHub's due date and never used to derive status."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the adopter's requirements live in an external tracker (one Jira issue with requirement ids); the issue schema has no field for an external reference, so it was written into `why`, and the client's dated phases could not be projected to GitHub milestones' due dates."
+current_state: "Trace references and dates have no field."
+desired_state: "Issues accept a `traces` list (tracker keys, requirement ids, URLs) projected into the GitHub body; milestones accept an optional `due_on` projected to GitHub's due date and never used to derive status."
+scope:
+  - ".ai/repo/project/issues/I4261.yaml"
+  - "share/allow/issue.txt"
+  - "share/allow/milestone.txt"
+  - "scripts/github-sync"
+  - "docs/SCHEMAS.md"
+  - "test/cases/4261_issues_trace_outward.sh"
+depends_on: []
+acceptance_criteria:
+  - "A trace reference reaches the projected body"
+  - "due_on reaches the GitHub milestone and changes no status"
+validation:
+  - "bash test/run.sh 4261_issues_trace_outward"
+evidence_required:
+  - "case_issues_trace_outward_and_milestones_carr"
+created_at: 2026-10-27
+updated_at: 2026-10-27

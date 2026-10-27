@@ -1,0 +1,27 @@
+id: I4262
+milestone: a-second-adopter-is-served
+title: "An adopter gets the commit-message guard the projection's rules assume"
+slug: a-commit-message-guard-ships-for-adopters
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy."
+why: "An adopter's field report (a private Python client repository adopted from the v1.0.0-alpha.8 release on 2026-10-27, with the plan model, project rules, knowledge, skills, Claude Code capture and a GitHub projection all in use) found: the projection refuses closing keywords and derives served issues from commit subjects, but nothing shipped checks an adopter's commit messages; the adopter wrote its own commit-msg hook for issue ids, tracker keys and closing keywords."
+current_state: "commit.validate judges this repository's own policy."
+desired_state: "init offers a commit-msg line whose policy (issue id required, tracker key pattern, closing keywords refused, branch naming) is declared in the adopter's policy."
+scope:
+  - ".ai/repo/project/issues/I4262.yaml"
+  - "lib/init.sh"
+  - "share/skeleton/ai/repo/policy.yaml"
+  - "docs/COMMIT.md"
+  - "test/cases/4262_an_adopter_commit_is_judged.sh"
+depends_on: []
+acceptance_criteria:
+  - "A subject without an issue id is refused when the policy requires one"
+  - "A closing keyword is refused"
+validation:
+  - "bash test/run.sh 4262_an_adopter_commit_is_judged"
+evidence_required:
+  - "case_a_commit_message_guard_ships_for_adopter"
+created_at: 2026-10-27
+updated_at: 2026-10-27
