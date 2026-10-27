@@ -70913,6 +70913,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I4268",
+        "kind": "issue",
+        "label": "I4268",
+        "summary": "An adopter runs every gate of its CI model and records it with one command",
+        "route": "/cockpit/objects/issue/i4268",
+        "source": ".ai/repo/project/issues/I4268.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "gates run records every selected gate and check reports them passing",
+            "A failing gate refuses completed"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Gate evidence is recorded one gate at a time by hand.",
+          "depends_on": [],
+          "desired_state": "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it.",
+          "evidence_required": [
+            "case_an_adopter_runs_and_records_its_gates"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "`majordomus gates run [--tier <t>]` runs each gate the change selects (or all), records `evidence --gate` with its exit, and exits non-zero when one fails; the pre-push line init prints can use it.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4268.yaml",
+            "bin/majordomus",
+            "lib/evidence.sh",
+            "scripts/ci-plan",
+            "docs/CI.md",
+            "test/cases/4268_an_adopter_runs_and_records_its_gates.sh"
+          ],
+          "slug": "an-adopter-runs-and-records-its-gates",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4268_an_adopter_runs_and_records_its_gates"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94417,6 +94456,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
+        "kind": "test",
+        "label": "test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
+        "route": "/cockpit/objects/test/test-cases-4268-an-adopter-runs-and-records-its-gates-sh",
+        "source": "test/cases/4268_an_adopter_runs_and_records_its_gates.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133164,6 +133210,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4268",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4268",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139750,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4268_an_adopter_runs_and_records_its_gates.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144851,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }

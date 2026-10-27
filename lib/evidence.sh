@@ -122,7 +122,7 @@ mj_obligation_evidence() {
 # state of one checkout and the ledger is what already survives it.
 mj_evidence() {
   local covers="" etype="manual" ecmd="" eart="" eres="" json=0 task ih
-  local gate="" gexit=""
+  local gate="" gexit="" rungates=0 gall=0
   # a bare `evidence` is a question, not a mistake: it prints what it needs, as every
   # other command here does, and exits 2
   [ $# -gt 0 ] || { mj_evidence_usage >&2; return "$MJ_EX_USAGE"; }
@@ -143,6 +143,8 @@ mj_evidence() {
       --result) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--result needs a value"; eres="$2"; shift 2 ;;
       --result=*) eres="${1#--result=}"; shift ;;
       --json) json=1; shift ;;
+      --run-gates) rungates=1; shift ;;
+      --all) gall=1; shift ;;
       -h|--help) mj_evidence_usage; return 0 ;;
       *) mj_die "$MJ_EX_USAGE" "evidence: unknown option $1" ;;
     esac
@@ -152,6 +154,17 @@ mj_evidence() {
   # differs is what the record is about. The two are never one invocation: a gate is a fact
   # about the validation pipeline and an obligation is a promise a task made, and a line
   # claiming to be both would be readable as neither.
+  # Run the gates and record each (I4268): an adopter that declared a CI model had every
+  # gate "never reported" until it wrote its own loop over `evidence --gate`; the runner that
+  # does it, scripts/ci-plan, ships only in this tool's source.
+  if [ "$rungates" = 1 ]; then
+    [ -z "$gate$covers$gexit" ] || mj_die "$MJ_EX_USAGE" "evidence --run-gates runs the gates itself; it takes no --gate, --exit or --covers"
+    # shellcheck source=gates.sh
+    . "$MJ_LIB_DIR/gates.sh"
+    mj_gate_run "$gall"
+    return $?
+  fi
+  [ "$gall" = 0 ] || mj_die "$MJ_EX_USAGE" "--all belongs to --run-gates"
   if [ -n "$gate" ]; then
     [ -z "$covers" ] || mj_die "$MJ_EX_USAGE" "evidence records a gate or an obligation, not both; drop --covers or --gate"
     [ -n "$gexit" ] || mj_die "$MJ_EX_USAGE" "evidence --gate needs --exit <status>; a gate that reported nothing is not evidence"
@@ -198,6 +211,11 @@ mj_evidence_usage() {
   cat <<USAGE
 usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]
        majordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]
+       majordomus evidence --run-gates [--all]
+
+  --run-gates runs the gates of .ai/repo/ci/gates.yaml that the active task's change set
+  requires (every gate with --all), each by its `runs` command from the repository root, and
+  records each as --gate would; it exits 10 when any gate fails.
 
   Record that one obligation the active task declared has been discharged. The evidence is
   a ledger line carrying the hash of the files the obligation names, so that changing any
