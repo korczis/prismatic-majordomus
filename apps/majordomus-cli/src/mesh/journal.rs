@@ -1849,6 +1849,9 @@ struct Inner {
     streams: BTreeMap<StreamId, StreamLog>,
     lamport: u64,
     tallies: JournalTallies,
+    /// Events a live ingest refused for capacity since start: what makes a node's quota
+    /// worth compacting for at once rather than at the next scheduled pass (I2825).
+    capacity_refused: u64,
     /// Every held event by the order this run applied it, `(stream, seq)` under its arrival
     /// number: what a [`Cursor`] walks. An event gets its number when it is applied to its
     /// stream, not when it is received, so one waiting for its gap is numbered after it.
@@ -2035,6 +2038,7 @@ impl Journal {
                 streams,
                 lamport: 0,
                 tallies: JournalTallies::default(),
+                capacity_refused: 0,
                 arrivals: BTreeMap::new(),
                 arrived: 0,
             }),
@@ -2621,6 +2625,9 @@ impl Journal {
             report.reject(why);
             if count {
                 inner.tallies.rejected += 1;
+                if why == Rejection::Capacity {
+                    inner.capacity_refused += 1;
+                }
             }
             None
         };
@@ -3259,13 +3266,32 @@ impl Journal {
         if !over && crowded.is_empty() {
             return 0;
         }
+        // A server that restarted left its old run silent under a newer one of the same
+        // runtime: that run was replaced, not lost, and nothing is waiting for it to come
+        // back. It needs the expiry to have passed and no more, because the retention exists
+        // for a runtime that may still return as it was — and a restart is how a machine fills
+        // its quota (I2825). A stream whose newer sibling is itself silent is not replaced.
+        let mut freshest: BTreeMap<String, Duration> = BTreeMap::new();
+        for (id, log) in &inner.streams {
+            let silent = log.silent_for(now);
+            let slot = freshest.entry(id.runtime_key()).or_insert(silent);
+            *slot = (*slot).min(silent);
+        }
+        let retention_of = |id: &StreamId, log: &StreamLog| {
+            let sibling = freshest[&id.runtime_key()];
+            if sibling <= expiry && sibling < log.silent_for(now) {
+                Duration::ZERO
+            } else {
+                retention
+            }
+        };
         let due: BTreeSet<StreamId> = inner
             .streams
             .iter()
             .filter(|(id, log)| {
                 **id != self.own
                     && (over || crowded.iter().any(|node| node == id.node()))
-                    && log.silent_for(now) > expiry + retention
+                    && log.silent_for(now) > expiry + retention_of(id, log)
             })
             .map(|(id, _)| id.clone())
             .collect();
@@ -3333,6 +3359,13 @@ impl Journal {
             }
         }
         dropped
+    }
+
+    /// How many events a live ingest refused for capacity since this run started: the
+    /// signal that a node's quota is full of the dead, which compaction answers at once
+    /// instead of waiting for its schedule (I2825).
+    pub fn capacity_refusals(&self) -> u64 {
+        self.inner.lock().expect("journal lock").capacity_refused
     }
 
     /// The tallies now: a snapshot of the counters, taken under the lock so that the
@@ -4804,6 +4837,129 @@ mod tests {
         let dropped = b.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true);
         assert_eq!(dropped, 1, "A's session event goes; the handover stays");
         assert_eq!(b.events().len(), 1);
+    }
+
+    /// A stream silent for `silent` on this journal's clock, held without an event: enough for
+    /// compaction, which reads a stream's age and its place in the journal and nothing else.
+    fn held_silent(j: &Journal, id: &StreamId, silent: Duration) {
+        let mut log = StreamLog::new();
+        log.fresh_at = Instant::now().checked_sub(silent);
+        j.inner.lock().unwrap().streams.insert(id.clone(), log);
+    }
+
+    fn stream_of(node: &str, runtime: char, instance: char) -> StreamId {
+        StreamId::new(
+            node,
+            &runtime.to_string().repeat(16),
+            &instance.to_string().repeat(16),
+        )
+        .unwrap()
+    }
+
+    /// A restart leaves the old run silent beside a newer one of the same runtime. That run was
+    /// replaced, so it goes once the expiry has passed instead of waiting out the retention
+    /// as well; a runtime that is only silent, with no newer run, keeps the whole retention
+    /// (I2825).
+    #[test]
+    fn a_run_a_restart_replaced_is_compacted_at_the_expiry_not_the_retention() {
+        let j = journal("0000000000000002");
+        let node = "a".repeat(32);
+        let (expiry, retention) = (Duration::from_secs(30), Duration::from_secs(900));
+        let replaced = stream_of(&node, 'b', 'c');
+        let running = stream_of(&node, 'b', 'd');
+        let silent_only = stream_of(&node, 'e', 'f');
+        held_silent(&j, &replaced, Duration::from_secs(120));
+        held_silent(&j, &running, Duration::ZERO);
+        held_silent(&j, &silent_only, Duration::from_secs(120));
+
+        j.compact(expiry, retention, HANDOVER_RETENTION, true);
+
+        let held: Vec<StreamId> = j.inner.lock().unwrap().streams.keys().cloned().collect();
+        assert!(!held.contains(&replaced), "replaced by a run that beats");
+        assert!(held.contains(&running), "the run that beats stays");
+        assert!(
+            held.contains(&silent_only),
+            "silent with no newer run: retention applies"
+        );
+        assert!(j.own_stream() != &replaced && held.contains(j.own_stream()));
+    }
+
+    /// The newer run must itself be alive: two silent runs of one runtime are a runtime that
+    /// stopped, and the retention is what protects one that may come back as it was.
+    #[test]
+    fn a_run_is_not_replaced_by_a_newer_one_that_is_silent_too() {
+        let j = journal("0000000000000002");
+        let node = "a".repeat(32);
+        let older = stream_of(&node, 'b', 'c');
+        let newer = stream_of(&node, 'b', 'd');
+        held_silent(&j, &older, Duration::from_secs(300));
+        held_silent(&j, &newer, Duration::from_secs(120));
+
+        let (expiry, retention) = (Duration::from_secs(30), Duration::from_secs(900));
+        j.compact(expiry, retention, HANDOVER_RETENTION, true);
+
+        let held: Vec<StreamId> = j.inner.lock().unwrap().streams.keys().cloned().collect();
+        assert!(
+            held.contains(&older) && held.contains(&newer),
+            "both within retention"
+        );
+    }
+
+    /// A replaced run still keeps its stream for an untaken handover: the quicker retention
+    /// changes when a stream is due, and what nothing still needs is `unneeded`'s to say.
+    #[test]
+    fn a_replaced_run_that_offers_a_handover_is_kept() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        let offering = Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+        published(&offering, "left for the next run");
+        observer.ingest(
+            &offering.missing_for(&observer.marks(), usize::MAX),
+            &accept_all,
+        );
+        let id = offering.own_stream().clone();
+        {
+            let mut inner = observer.inner.lock().unwrap();
+            inner.streams.get_mut(&id).unwrap().fresh_at =
+                Instant::now().checked_sub(Duration::from_secs(120));
+        }
+        let successor = StreamId::new(id.node(), id.runtime(), &"9".repeat(16)).unwrap();
+        held_silent(&observer, &successor, Duration::ZERO);
+
+        let (expiry, retention) = (Duration::from_secs(30), Duration::from_secs(900));
+        observer.compact(expiry, retention, HANDOVER_RETENTION, true);
+
+        assert!(observer.inner.lock().unwrap().streams.contains_key(&id));
+    }
+
+    /// Capacity refusals of a live ingest are counted, so the supervisor can compact the moment
+    /// a node's quota is full rather than at its next scheduled pass (I2825).
+    #[test]
+    fn a_live_ingest_refused_for_capacity_is_counted() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        assert_eq!(observer.capacity_refusals(), 0);
+        let mut refused = 0;
+        for runtime in 2..=(MAX_STREAMS_PER_NODE as u64 + 2) {
+            let sibling =
+                Journal::open(machine(), &format!("{runtime:016x}"), "repo".into(), None).unwrap();
+            opened(&sibling, "s1");
+            refused += observer
+                .ingest(
+                    &sibling.missing_for(&observer.marks(), usize::MAX),
+                    &accept_all,
+                )
+                .rejected
+                .get(&Rejection::Capacity)
+                .copied()
+                .unwrap_or(0);
+        }
+        assert!(refused > 0, "the node's quota of streams filled");
+        assert_eq!(observer.capacity_refusals(), refused);
     }
 
     fn published(j: &Journal, text: &str) -> MeshEvent {
