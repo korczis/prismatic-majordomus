@@ -482,6 +482,7 @@ impl crate::order::Ordered for Card {
                     .filter(char::is_ascii_digit)
                     .collect::<String>()
                     .parse()
+                    // ui-integrity: a sort key, never drawn: a merge with no time sorts after every timed one
                     .unwrap_or(0),
             ),
             _ => key.ranked(
