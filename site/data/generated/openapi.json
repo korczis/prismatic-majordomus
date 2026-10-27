@@ -917,6 +917,7 @@
     "schema-PlanWave": "docs/api/plan/",
     "schema-PlanWaveReport": "docs/api/plan/",
     "schema-PlanWaveView": "docs/api/plan/",
+    "schema-Platform": "docs/api/distribution/",
     "schema-Pointer": "docs/api/lifecycle/",
     "schema-PointerLayout": "docs/api/lifecycle/",
     "schema-Port": "docs/api/deploy/",
@@ -1358,7 +1359,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 212,
-    "schemas": 1082,
+    "schemas": 1083,
     "tags": 60
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -2371,6 +2372,7 @@
     "PlanWave": "plan",
     "PlanWaveReport": "plan",
     "PlanWaveView": "plan",
+    "Platform": "distribution",
     "Pointer": "lifecycle",
     "PointerLayout": "lifecycle",
     "Port": "deploy",
@@ -7656,6 +7658,15 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "The facts of the platform hosting this process, each read by name from the\nallowlist in `platform.rs` and `null` when it is not set; nothing else in the\nenvironment is read, so no other variable can appear here.",
+          "name": "platform",
+          "refs": [
+            "Platform"
+          ],
+          "required": true,
+          "type": "Platform"
         }
       ],
       "type": "object",
@@ -42020,6 +42031,77 @@
       "variants": []
     },
     {
+      "description": "The facts of the hosting platform, each read from the one variable its field\nnames and `null` when that variable is unset or empty. Nothing outside these\nfields is read from the environment.",
+      "home": "distribution",
+      "is_enum": false,
+      "name": "Platform",
+      "properties": [
+        {
+          "description": "`FLY_APP_NAME`: the application the Machine belongs to.",
+          "name": "fly_app_name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`FLY_REGION`: the region the Machine runs in.",
+          "name": "fly_region",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`PRIMARY_REGION`: the region the application declares as its primary.",
+          "name": "primary_region",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`FLY_MACHINE_ID`: the Machine's own id.",
+          "name": "fly_machine_id",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`FLY_MACHINE_VERSION`: the version of the Machine's configuration.",
+          "name": "fly_machine_version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`FLY_IMAGE_REF`: the image the Machine was started from, which is what says that\nthe deployed image is the one that was built.",
+          "name": "fly_image_ref",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`FLY_PROCESS_GROUP`: the process group the Machine runs.",
+          "name": "fly_process_group",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`FLY_VM_MEMORY_MB`: the memory the Machine was given, in megabytes.",
+          "name": "fly_vm_memory_mb",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "BuildReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the pointer is and whether it leads anywhere.\n\n`layout` and `resolves` are independent, and the interesting case is the pair\n`Pointer` + `resolves: false`: a symlink that survived the episode it named, which is\nwhat a killed close or a hand-removed record leaves behind. The layout is right, the\ndestination is gone, and `continuity.state` has nothing to report while the store may\nstill hold open episodes — so this is a dangling pointer, not an empty store.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::{Pointer, PointerLayout};\nuse serde_json::json;\n\n// the healthy case: the current layout, and it leads to an episode\nlet live: Pointer = serde_json::from_value(json!({\n    \"layout\": \"pointer\",\n    \"target\": \"sessions-open/claude-abc.yaml\",\n    \"resolves\": true,\n    \"session_id\": \"s-0002\",\n    \"note\": \"the pointer resolves to an open episode\",\n})).unwrap();\nassert_eq!(live.layout, PointerLayout::Pointer);\nassert!(live.resolves && !live.session_id.is_empty());\n\n// and the dangling one: the right layout, aimed at a record that is no longer there\nlet dangling: Pointer = serde_json::from_value(json!({\n    \"layout\": \"pointer\",\n    \"target\": \"sessions-open/claude-gone.yaml\",\n    \"resolves\": false,\n    \"note\": \"the symlink outlived the episode it named\",\n})).unwrap();\nassert_eq!(dangling.layout, PointerLayout::Pointer, \"the layout is not the fault\");\nassert!(!dangling.resolves);\nassert!(dangling.session_id.is_empty(), \"there is no episode to name\");\n```",
       "home": "lifecycle",
       "is_enum": false,
@@ -66225,7 +66307,7 @@
           "cache_detail": "",
           "cli": "distribution build",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/distribution/build\"",
-          "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+          "description": "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git — and the facts of the platform hosting it (application, region, Machine, image), each read from the environment by name from a fixed allowlist and null when absent. No other environment variable is read, so a token or secret the platform injects cannot reach the answer.",
           "home": "distribution",
           "id": "distribution.build",
           "kind": "query",

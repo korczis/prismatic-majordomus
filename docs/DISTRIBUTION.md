@@ -88,6 +88,27 @@ the tag, which must be `v` followed by that version. A mistyped tag costs thirty
 rather than a published release. ADR 0085 is the decision, and
 `project.release-is-a-projection` the rule.
 
+## What a running build says it is
+
+`distribution.build` (`majordomus distribution build`, `GET /api/v1/distribution/build`, the
+MCP tool `majordomus_build`) answers what this executable is: the version, target triple,
+profile and commit `build.rs` compiled in, so an installed binary needs no repository to
+say which revision it is. Beside them it reports `platform`, the facts of the platform
+hosting the process — on a Fly Machine its application, region, primary region, Machine id
+and version, image reference, process group and memory.
+
+Those facts come from the environment, and the environment of a hosted process also holds
+its tokens and secrets, so nothing reflects it. `apps/majordomus-cli/src/platform.rs`
+declares the allowlist and the answer's fields in one table; the read asks for exactly those
+names and the answer has no room for another. A variable that is unset or blank is `null`,
+not an error — outside a platform every field is `null`. The network addresses a platform
+injects are left off on purpose. The unit tests there and
+`the_build_reports_allowlisted_platform_facts_and_no_other_variable` in
+`apps/majordomus-cli/tests/cli.rs` start the read and the executable beside secret-shaped
+variables (`FLY_API_TOKEN`, `*_SECRET`, `DATABASE_URL`) and prove that none of their values
+reaches either output format. A build timestamp is not reported: it would make two builds
+of one commit differ.
+
 ## The trust path
 
 ```text
