@@ -70870,6 +70870,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4253",
+        "kind": "issue",
+        "label": "I4253",
+        "summary": "The remedy doctor names for an orphan skill is a command the shell runs",
+        "route": "/cockpit/objects/issue/i4253",
+        "source": ".ai/repo/project/issues/I4253.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus skills explain <id> answers the executable's report",
+            "No doctor remedy for skills names a subcommand the shell refuses"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "lib/skills.sh dispatches list, show and check; explain is the executable's.",
+          "depends_on": [],
+          "desired_state": "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts.",
+          "evidence_required": [
+            "case_skills_explain_reaches_the_executable"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4253.yaml",
+            "lib/skills.sh",
+            "bin/majordomus",
+            "test/cases/4253_every_skill_remedy_runs.sh"
+          ],
+          "slug": "skills-explain-reaches-the-executable",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4253_every_skill_remedy_runs"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94374,6 +94411,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4253_every_skill_remedy_runs.sh",
+        "kind": "test",
+        "label": "test/cases/4253_every_skill_remedy_runs.sh",
+        "route": "/cockpit/objects/test/test-cases-4253-every-skill-remedy-runs-sh",
+        "source": "test/cases/4253_every_skill_remedy_runs.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133111,6 +133155,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4253",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4253",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139641,6 +139695,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4253_every_skill_remedy_runs.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144737,8 +144796,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4016,
+      "edges": 9260,
       "acyclic": false,
       "truncated": false
     }
