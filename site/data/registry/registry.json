@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "9456e811e2ac31f843b2a5627dde624728386b0fa351ea4fa12ee0c5ead92879",
+    "fingerprint": "ecea19f2be1d6547cf6374fcf06944a09f3a4c38e04f3712da8c381752ae1623",
     "summary": {
       "total": 3551,
       "builtin": 220,
@@ -63064,6 +63064,17 @@
                     ],
                     "description": "The newest merge that names it."
                   },
+                  "planned": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/DeliveryMerge"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The newest commit that names it while changing only plan records and their\nprojections: passed over as a merge proof, and said so."
+                  },
                   "released": {
                     "anyOf": [
                       {
@@ -92062,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "337613da9f4e5d49911e9550d9fe69c5c55a2c19a4d26d1bec26a2ed67f1faaf",
+    "fingerprint": "ad76a9267f481161a1826508388cba16f8f480e0dbe8da4597d971980e69a481",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99538,7 +99549,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 44291
+        "bytes": 44972
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -99547,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 994078
+        "bytes": 993351
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102928,7 +102939,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 105288
+        "bytes": 106460
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -108346,7 +108357,7 @@
         "path": ".ai/repo/project/issues/I2749.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3032
+        "bytes": 4611
       },
       {
         "uri": "majordomus://issue/I2750",
@@ -122813,7 +122824,7 @@
         "identity": "test/cases/107_runtime_staleness_is_loud.sh",
         "path": "test/cases/107_runtime_staleness_is_loud.sh",
         "source_class": "case",
-        "bytes": 4948
+        "bytes": 6523
       },
       {
         "uri": "majordomus://test/test/cases/1080_the_issues_are_browsed.sh",
@@ -124261,7 +124272,7 @@
         "identity": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
         "path": "test/cases/3075_knowledge_validate_judges_the_graph.sh",
         "source_class": "case",
-        "bytes": 8738
+        "bytes": 8999
       },
       {
         "uri": "majordomus://test/test/cases/3080_idle_incremental_sessions_are_pruned.sh",
@@ -126029,7 +126040,7 @@
         "identity": "test/cases/51_derived_artifacts_committed.sh",
         "path": "test/cases/51_derived_artifacts_committed.sh",
         "source_class": "case",
-        "bytes": 4381
+        "bytes": 4631
       },
       {
         "uri": "majordomus://test/test/cases/529_the_preflight_reads_the_one_verdict.sh",
