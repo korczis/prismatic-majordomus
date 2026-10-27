@@ -97,6 +97,17 @@ platform_facts! {
 
 impl Platform {
     /// The facts of the platform this process runs on, read from its environment.
+    ///
+    /// ```
+    /// use majordomus_cli::platform::{Platform, ALLOWLIST};
+    ///
+    /// // whatever this process was started with, the answer is the allowlist's fields
+    /// let platform = Platform::from_env();
+    /// let fields = serde_json::to_value(&platform).unwrap();
+    /// assert_eq!(fields.as_object().unwrap().len(), ALLOWLIST.len());
+    /// // and every fact it reports was read from an allowlisted name
+    /// assert!(platform.present().iter().all(|(name, _)| ALLOWLIST.contains(name)));
+    /// ```
     pub fn from_env() -> Self {
         Self::read(|name| std::env::var(name).ok())
     }
