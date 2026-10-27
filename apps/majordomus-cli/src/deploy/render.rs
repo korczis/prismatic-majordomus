@@ -228,6 +228,14 @@ pub fn dockerfile(d: &Deployment, source: &str, rust: &str) -> String {
     // and none of them is part of `cargo build --bin`). Cargo.lock: the version recorded
     // for the package itself becomes 0.0.0, so `--locked` agrees with the masked manifest.
     let manifest_awk = r#"/^\[/ { t = $0; skip = (t ~ /^\[\[(bench|test|example)\]\]$/) } t == "[package]" && /^version *=/ { $0 = "version = \"0.0.0\"" } !skip"#;
+    // The path dependencies the package compiles against, in the dependency stage: cargo
+    // reads their manifests to resolve the graph, so they are there before the first build.
+    let crates: String = d
+        .build
+        .crates
+        .iter()
+        .map(|c| format!("COPY {c} ./{c}\n"))
+        .collect();
     let lock_awk = format!(
         r#"p && /^version = / {{ $0 = "version = \"0.0.0\""; p = 0 }} $0 == "name = \"{package}\"" {{ p = 1 }} 1"#,
         package = d.build.package
@@ -246,6 +254,7 @@ pub fn dockerfile(d: &Deployment, source: &str, rust: &str) -> String {
          # Every dependency compiled, as layer content a registry cache can carry.\n\
          FROM toolchain AS deps\n\
          COPY --from=recipe /recipe/out/ ./{pkg}/\n\
+         {crates}\
          RUN --mount=type=cache,id={SCCACHE_MOUNT_ID},target={SCCACHE_DIR} mkdir -p {pkg}/src \\\n\
          \x20 && echo 'fn main() {{}}' > {pkg}/src/main.rs && echo 'fn main() {{}}' > {pkg}/build.rs \\\n\
          \x20 && touch {pkg}/src/lib.rs \\\n\
@@ -327,7 +336,7 @@ pub fn dockerignore(d: &Deployment, source: &str) -> String {
         "What the deployment's build context carries: only the declared inputs.",
     );
     out.push_str("*\n");
-    for input in &d.build.inputs {
+    for input in d.build.inputs.iter().chain(&d.build.crates) {
         out.push_str(&format!("!{input}\n"));
     }
     // The image definition is not an input of the deployment; it is a view of it. It is
@@ -696,6 +705,66 @@ mod tests {
             .any(|l| *l == format!("ARG {COMMIT_ARG}=unknown")));
     }
 
+    /// Every file the crate embeds is one the image's compiling stages copy: `deps` and
+    /// `build` are given the package and its path crates, nothing else of the repository. A
+    /// test module may read the repository, since the image compiles no test. Train 6
+    /// embedded `share/mesh-cache-provider/` and master's image stopped compiling (run
+    /// 40189935629); a pull request builds the image only when the image's own definition
+    /// changes, so it is caught here (I4229, from #2523).
+    #[test]
+    fn the_build_stage_carries_every_file_the_package_embeds() {
+        let package = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .canonicalize()
+            .expect("the package directory resolves");
+        let root = package
+            .join("../..")
+            .canonicalize()
+            .expect("the repository resolves");
+        let file = dockerfile(&deployment(), "x.yaml", "1.98.1");
+        let copied: Vec<std::path::PathBuf> = ["deps", "build"]
+            .iter()
+            .flat_map(|name| stage(&file, name))
+            .filter_map(|l| l.strip_prefix("COPY "))
+            .filter(|l| !l.starts_with("--"))
+            .filter_map(|l| l.split(' ').next())
+            .map(|from| root.join(from))
+            .collect();
+        let mut missing = Vec::new();
+        let mut dirs = vec![package.join("src")];
+        while let Some(dir) = dirs.pop() {
+            for entry in std::fs::read_dir(&dir).expect("the source tree reads") {
+                let path = entry.expect("a source entry reads").path();
+                if path.is_dir() {
+                    dirs.push(path);
+                    continue;
+                }
+                if path.extension().is_none_or(|e| e != "rs") {
+                    continue;
+                }
+                let text = std::fs::read_to_string(&path).expect("a source file reads");
+                // From the first test module on, the file compiles only under test.
+                let compiled = text.split("#[cfg(test)]").next().unwrap_or_default();
+                for marker in ["include_str!(\"", "include_bytes!(\""] {
+                    for (at, _) in compiled.match_indices(marker) {
+                        let rest = &compiled[at + marker.len()..];
+                        let embedded = &rest[..rest.find('"').unwrap_or(rest.len())];
+                        let carried = dir
+                            .join(embedded)
+                            .canonicalize()
+                            .is_ok_and(|t| copied.iter().any(|c| t.starts_with(c)));
+                        if !carried {
+                            missing.push(format!("{}: {embedded}", path.display()));
+                        }
+                    }
+                }
+            }
+        }
+        assert!(
+            missing.is_empty(),
+            "embedded, not copied by the build stage: {missing:?}"
+        );
+    }
+
     #[test]
     fn the_compiled_dependencies_are_layer_content_and_sccache_is_the_only_mount() {
         // a registry cache export carries layers and never a cache mount's contents, which
@@ -723,6 +792,42 @@ mod tests {
         assert!(stage(&file, "build")
             .join("\n")
             .contains("cargo build --locked --offline --release"));
+    }
+
+    /// A path dependency is a dependency: the dependency stage compiles it, so it is in the
+    /// build context and in that stage before the first `cargo build`, and the running
+    /// process never reads it, so the runtime image does not carry it.
+    #[test]
+    fn a_path_crate_is_in_the_context_and_the_dependency_stage_and_not_the_runtime() {
+        let mut d = deployment();
+        d.build.crates = vec!["apps/majordomus-core".to_string()];
+        let file = dockerfile(&d, "x.yaml", "1.98.1");
+        let deps = stage(&file, "deps");
+        let copy = deps
+            .iter()
+            .position(|l| *l == "COPY apps/majordomus-core ./apps/majordomus-core")
+            .expect("the dependency stage carries the path crate");
+        let build = deps
+            .iter()
+            .position(|l| l.contains("cargo build --locked"))
+            .expect("the dependency stage compiles");
+        assert!(
+            copy < build,
+            "the crate is there before cargo resolves the graph"
+        );
+        let runtime: Vec<&str> = file
+            .lines()
+            .skip_while(|l| *l != "FROM alpine:3.21")
+            .collect();
+        assert!(
+            !runtime.iter().any(|l| l.contains("majordomus-core")),
+            "{file}"
+        );
+        assert!(dockerignore(&d, "x.yaml")
+            .lines()
+            .any(|l| l == "!apps/majordomus-core"));
+        // without a path crate the dependency stage copies the graph alone, as before
+        assert!(!dockerfile(&deployment(), "x.yaml", "1.98.1").contains("majordomus-core"));
     }
 
     #[test]

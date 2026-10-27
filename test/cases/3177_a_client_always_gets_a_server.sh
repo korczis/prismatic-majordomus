@@ -6,7 +6,7 @@
 # On 2026-10-16 a session opened in a checkout whose executable had never been built, on a
 # volume with 4.5GB free against a floor of 5120MB. bin/majordomus-cli refused the build, as
 # it must, and exited 12; the client saw `CONNECTION_CLOSED`, went on without the server,
-# and the session worked as the only worker of a repository that has many (ADR 0156). A
+# and the session worked as the only worker of a repository that has many (ADR 0226). A
 # release that answers the same protocol was installed beside it the whole time.
 #
 # Amended for ADR 0224 (I3957), which supersedes ADR 0172: no command builds, `mcp` included,

@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "coverage": [
     {
       "scope": "direct",
-      "required": 217,
-      "covered": 179,
+      "required": 220,
+      "covered": 181,
       "missing": 0,
-      "waived": 38,
+      "waived": 39,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 209,
-      "covered": 179,
+      "required": 212,
+      "covered": 181,
       "missing": 0,
-      "waived": 30,
+      "waived": 31,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 203,
-      "covered": 174,
+      "required": 206,
+      "covered": 176,
       "missing": 0,
-      "waived": 29,
+      "waived": 30,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 643,
-      "covered": 546,
+      "required": 652,
+      "covered": 552,
       "missing": 0,
-      "waived": 97,
+      "waived": 100,
       "inapplicable": 0
     }
   ],
@@ -474,7 +474,8 @@
         "no-seed",
         "issue",
         "milestone",
-        "intent"
+        "intent",
+        "source-ranges"
       ]
     },
     {
@@ -947,6 +948,30 @@
       ]
     },
     {
+      "id": "gates.policy",
+      "module": "gates",
+      "kind": "query",
+      "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "gates.state",
+      "module": "gates",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "graph.get",
       "module": "graph",
       "kind": "query",
@@ -1335,6 +1360,16 @@
         "every-tool",
         "writers"
       ]
+    },
+    {
+      "id": "mesh.beat",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "mesh.build_cache.ensure",
@@ -2973,6 +3008,12 @@
     {
       "key": "system.http.ui.panels.standing",
       "route": "/ui/panels/standing",
+      "view": "pinned",
+      "deferred": true
+    },
+    {
+      "key": "system.http.ui.panels.shared_scope",
+      "route": "/ui/panels/shared-scope",
       "view": "pinned",
       "deferred": true
     }

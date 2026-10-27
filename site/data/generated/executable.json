@@ -1326,6 +1326,40 @@
       "tool": "majordomus_gates"
     },
     {
+      "api_anchor": "/docs/api/gates/#op-gates-policy",
+      "claims": [],
+      "cli": null,
+      "id": "gates.policy",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/policy",
+      "route": "/registry/capabilities/gates-policy/",
+      "slug": "gates-policy",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "The completion policy",
+      "tool": "majordomus_completion_policy"
+    },
+    {
+      "api_anchor": "/docs/api/gates/#op-gates-state",
+      "claims": [],
+      "cli": null,
+      "id": "gates.state",
+      "kind": "query",
+      "module": "gates",
+      "module_route": "/registry/modules/gates/",
+      "resource": "majordomus://gates/state",
+      "route": "/registry/capabilities/gates-state/",
+      "slug": "gates-state",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/gates.rs",
+      "tests": [],
+      "title": "How each gate last went",
+      "tool": "majordomus_gate_state"
+    },
+    {
       "api_anchor": "/docs/api/graph/#op-graph-get",
       "claims": [],
       "cli": null,
@@ -1948,6 +1982,23 @@
       "tests": [],
       "title": "The MCP projection of this registry",
       "tool": "majordomus_mcp"
+    },
+    {
+      "api_anchor": "/docs/api/mesh/#op-mesh-beat",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.beat",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-beat/",
+      "slug": "mesh-beat",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Say a session is making progress",
+      "tool": "majordomus_mesh_beat"
     },
     {
       "api_anchor": null,
@@ -4496,11 +4547,11 @@
     ]
   },
   "counts": {
-    "capabilities": 217,
+    "capabilities": 220,
     "claims": 93,
     "modules": 60
   },
-  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "modules": [
     {
       "capabilities": [
@@ -5139,6 +5190,16 @@
           "id": "gates.model",
           "route": "/registry/capabilities/gates-model/",
           "slug": "gates-model"
+        },
+        {
+          "id": "gates.policy",
+          "route": "/registry/capabilities/gates-policy/",
+          "slug": "gates-policy"
+        },
+        {
+          "id": "gates.state",
+          "route": "/registry/capabilities/gates-state/",
+          "slug": "gates-state"
         }
       ],
       "claims": [],
@@ -5437,6 +5498,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "mesh.beat",
+          "route": "/registry/capabilities/mesh-beat/",
+          "slug": "mesh-beat"
+        },
         {
           "id": "mesh.build_cache.ensure",
           "route": "/registry/capabilities/mesh-build-cache-ensure/",

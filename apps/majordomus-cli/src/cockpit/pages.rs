@@ -3297,6 +3297,17 @@ pub fn models(ctx: &Context) -> Page {
     )
 }
 
+/// How the mesh page names a node's trust: by whom it is trusted, why it was rejected, or
+/// the key that succeeded it.
+fn trust_label(trust: &crate::mesh::TrustState) -> String {
+    match trust {
+        crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
+        crate::mesh::TrustState::Observed => "observed".to_string(),
+        crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
+        crate::mesh::TrustState::Retired(by) => format!("retired: succeeded by {by}"),
+    }
+}
+
 /// The mesh: the discovered nodes of this process's runtime, the providers that heard
 /// them, and why the mesh is or is not running. Everything on this page is the same
 /// `mesh.status` and `mesh.nodes` every other surface renders; the Cockpit holds no
@@ -3406,11 +3417,7 @@ pub fn mesh(ctx: &Context) -> Page {
         .nodes
         .iter()
         .map(|n| {
-            let trust = match &n.trust {
-                crate::mesh::TrustState::Trusted(by) => format!("trusted ({by})"),
-                crate::mesh::TrustState::Observed => "observed".to_string(),
-                crate::mesh::TrustState::Rejected(why) => format!("rejected: {why}"),
-            };
+            let trust = trust_label(&n.trust);
             let presence = match n.presence {
                 crate::mesh::Presence::Present => "present",
                 crate::mesh::Presence::Absent => "absent",
@@ -3627,6 +3634,7 @@ pub fn mesh(ctx: &Context) -> Page {
                                         crate::mesh::state::ClaimState::Released => "released".to_string(),
                                         crate::mesh::state::ClaimState::Expired(why) => format!("expired: {why}"),
                                         crate::mesh::state::ClaimState::Conflicted(w) => format!("conflicted with {w}"),
+                                        crate::mesh::state::ClaimState::Suspended(why) => format!("suspended: {why}"),
                                     };
                                     format!("{} [{:?}, {st}]", c.scope.join(", "), c.mode).to_lowercase()
                                 })
@@ -8544,6 +8552,80 @@ mod tests {
         let html = page.main.render();
         assert!(html.contains("mesh.peers"), "{html}");
         assert!(html.contains("did not answer"), "{html}");
+    }
+
+    /// A claim whose holder stopped making progress is drawn suspended, with the ttl it
+    /// missed, beside the scope it no longer excludes anybody from (I3990).
+    #[test]
+    fn a_mesh_page_draws_a_silent_holders_claim_suspended_and_says_why() {
+        use crate::mesh::journal::{ClaimMode, EventBody, SessionInfo};
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = context_without(&repo, &[]);
+        let c = crate::mesh::testing::cooperation();
+        crate::mesh::testing::attach(&ctx, std::sync::Arc::clone(&c));
+        c.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        // the shortest ttl a beat may carry, and a moment past it
+        c.journal()
+            .append_own(EventBody::SessionBeat {
+                session: "lander".into(),
+                ttl_seconds: 1,
+                phase: None,
+            })
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(1_100));
+        let page = mesh(&ctx);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(
+            html.contains("integration [exclusive, suspended: its holder stopped making progress"),
+            "{html}"
+        );
+    }
+
+    /// Each trust a node can hold is named on the mesh page: by whom it is trusted, why it was
+    /// rejected, and for a retired node the key that succeeded it.
+    #[test]
+    fn every_trust_a_node_holds_is_named_and_a_retired_one_by_its_successor() {
+        use crate::mesh::TrustState;
+        assert_eq!(
+            trust_label(&TrustState::Trusted("tofu".into())),
+            "trusted (tofu)"
+        );
+        assert_eq!(trust_label(&TrustState::Observed), "observed");
+        assert_eq!(
+            trust_label(&TrustState::Rejected("key changed".into())),
+            "rejected: key changed"
+        );
+        assert_eq!(
+            trust_label(&TrustState::Retired("successorkey".into())),
+            "retired: succeeded by successorkey"
+        );
+    }
+
+    /// A node the mesh holds is listed on the page with its trust named, read through
+    /// mesh.nodes: a retired one by the key that succeeded it.
+    #[test]
+    fn a_listed_node_says_its_trust_on_the_mesh_page() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        crate::mesh::observe_one_node(
+            &ctx,
+            crate::mesh::TrustState::Retired("successorkey".into()),
+        );
+        let page = mesh(&ctx);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(
+            html.contains("retired: succeeded by successorkey"),
+            "{html}"
+        );
     }
 
     /// Where an entity changed: the page says why there is nothing to list where git cannot

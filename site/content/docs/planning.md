@@ -407,6 +407,13 @@ verdict is `satisfied` while the stage is `planned` or `executing`) and
 `closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
 the criteria holding it back).
 
+A unit of work no intent links is classified by the facts it records (ADR 0075, amendment of
+2026-10-15), and only the last class is work serving no intent: `empty` (a session record that
+lists no issue, no commit and no changed path), `before_intents` (finished work that started
+before the first intent record), `orphan` (anything else). The text summary reads
+`N serving no intent (E empty records, B before the first intent)`, each unlinked line names its
+class, and the JSON answer carries `orphans`, `empty` and `before_intents`.
+
 In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
 and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
 object it names and to the issues serving it, and each unit of work with the provenance of its
@@ -520,6 +527,15 @@ furthest stage proved, each with the object that proved it and when it was obser
 
 </div>
 
+
+Planning is not delivery (I2749). A commit or merge that names an issue while changing only
+the plan's records (`.ai/repo/project/`) and the projections `.gitattributes` marks
+`merge=derived` planned, rescoped or recorded the issue; it is never its `merged` proof. Each
+naming commit is read against its first parent (for a merge, the whole pull request), the
+newest one passed over is reported as `planned` with how many there were, and the `planning`
+source says how many commits were set aside. A pull request found only by its head commit,
+and any commit whose parent is unknown, is never called planning, so a failed read can only
+leave the answer as it was before the rule.
 
 The live answer reads the trunk this clone knows (the remote-tracking trunk unless the local
 one is ahead), every branch, the forge observation `majordomus prs refresh` recorded, the

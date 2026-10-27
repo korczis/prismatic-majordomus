@@ -111,11 +111,49 @@ use super::link::{
 };
 use super::registry::{MeshRegistry, NodeRecord, Presence};
 use super::repository::MeshRepositoryIdentity;
-use super::state::{admission_conflicts, fold, ClaimView, CooperationState, HandoverView};
+use super::state::{
+    admission_conflicts, fold, fold_with, scopes_meet, ClaimState, ClaimView, CooperationState,
+    HandoverView,
+};
 use super::trust::{self, TrustState};
 
 /// The most peers one runtime links to.
 pub const MAX_PEERS: usize = 256;
+
+/// The window session beats are counted over (I3990): an hour.
+pub const SESSION_BEAT_WINDOW: Duration = Duration::from_secs(60 * 60);
+
+/// How many sessions holding exclusive claims one runtime is sized to beat for at full rate
+/// (I3990). A session beats at most once a quarter of its ttl, so one window holds at most
+/// `ceil(window / (ttl / 4))` beats of it, and the runtime's limit per window is this many
+/// times that — see [`session_beat_limit`]. A runtime whose exclusive holders outnumber it
+/// stops writing beats until the window moves: their claims suspend, which frees scopes
+/// rather than holding them, and it says so in the log and in `mesh doctor`. A total per run
+/// that then wrote ttl 0 — the first version of this layer — turned the rule off in silence
+/// after half an hour of a beater whose phase changed every second: the 5d incident again,
+/// found by the review of 2026-10-23.
+pub const SESSION_BEAT_SESSIONS: usize = 8;
+
+/// The most session beats one runtime writes in one [`SESSION_BEAT_WINDOW`] for a progress
+/// ttl of `ttl`: [`SESSION_BEAT_SESSIONS`] sessions, each at most once a quarter of the ttl.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::cooperation::session_beat_limit;
+/// // the default ten minutes: a beat every 150 s, 24 an hour, for eight sessions
+/// assert_eq!(session_beat_limit(Duration::from_secs(600)), 8 * 24);
+/// assert_eq!(session_beat_limit(Duration::from_secs(3600)), 8 * 4);
+/// ```
+pub fn session_beat_limit(ttl: Duration) -> usize {
+    let interval = (ttl / 4).as_secs().max(1);
+    let per_session = SESSION_BEAT_WINDOW.as_secs().div_ceil(interval);
+    SESSION_BEAT_SESSIONS * per_session as usize
+}
+
+/// The reason a runtime gives when it releases a suspended exclusive claim at its holder's
+/// next beat, because another session was admitted to its scope meanwhile (I3990).
+pub const OVERTAKEN: &str =
+    "suspended while its holder made no progress, and another session was admitted to its scope";
 
 /// How long an expired peer stays listed before it leaves the table.
 pub const PEER_RETENTION: Duration = Duration::from_secs(15 * 60);
@@ -1074,18 +1112,27 @@ impl crate::order::Ordered for DialCandidate<'_> {
 /// [`MAX_TARGETS_PER_NODE`] of one node, taken in [`DialCandidate`] order, so a node's present
 /// runtimes are dialed before its stopped ones. The same records in any order choose the
 /// same targets.
+///
+/// A record of another node that advertises loopback alone is left out: `127.0.0.1` on that
+/// machine is not `127.0.0.1` on this one, so the dial can only fail, and a machine runs
+/// many loopback worktree servers beside the one hub that listens beyond it. Counted against
+/// the cap, they filled it, and the hub — the only runtime of that machine another one can
+/// reach — was never dialed.
 fn dial_targets(
     records: &[NodeRecord],
     repository: &str,
     own_key: &str,
     trusted: impl Fn(&str) -> bool,
 ) -> Vec<Target> {
+    let own_node = own_key.split_once('-').map_or(own_key, |(node, _)| node);
     let mut candidates: Vec<DialCandidate<'_>> = records
         .iter()
         .filter(|record| {
             !record.runtime.is_empty()
                 && !record.endpoints.is_empty()
                 && record.repositories.iter().any(|r| r == repository)
+                && (record.node_id.as_str() == own_node
+                    || !super::address::loopback_only(&record.endpoints))
         })
         .map(|record| DialCandidate {
             key: format!("{}-{}", record.node_id, record.runtime),
@@ -1174,7 +1221,55 @@ pub struct Cooperation {
     projected: Mutex<BTreeMap<String, Projected>>,
     admission: Mutex<()>,
     rounds: Mutex<BTreeMap<String, Arc<Mutex<()>>>>,
+    /// The newest session beat this run wrote for each session (I3990). Locked after
+    /// `projected` and `admission` whenever either is held, never before them.
+    beats: Mutex<BTreeMap<String, LastBeat>>,
+    /// The session beats of the last [`SESSION_BEAT_WINDOW`], the counters of every beat
+    /// written and withheld, and when one was last withheld.
+    beat_window: Mutex<BeatWindow>,
     build_cache: Mutex<BuildCachePublisher>,
+}
+
+/// The newest session beat a run wrote for one session (I3990).
+struct LastBeat {
+    /// When it was written, on this process's clock.
+    at: Instant,
+    /// The phase it named, or the newer one a beat inside the interval said since: what
+    /// the session is doing now, shown before the next beat carries it.
+    phase: Option<String>,
+    /// What writing it answered, given again to a beat that writes nothing new.
+    written: Written,
+}
+
+/// The rolling count of one runtime's session beats (I3990).
+#[derive(Default)]
+struct BeatWindow {
+    times: std::collections::VecDeque<Instant>,
+    written: u64,
+    withheld: u64,
+    withheld_at: Option<Instant>,
+    warned: bool,
+}
+
+/// What `mesh doctor` reads of a runtime's session beats (I3990).
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::SessionBeatTally;
+/// let tally = SessionBeatTally { written: 3, limit: 192, window_seconds: 3600, ..Default::default() };
+/// assert!(tally.written < tally.limit && !tally.withheld_recently);
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct SessionBeatTally {
+    /// Session beats written since the runtime started.
+    pub written: u64,
+    /// Session beats withheld since it started because the window's limit was reached.
+    pub withheld: u64,
+    /// Whether one was withheld within the last window.
+    pub withheld_recently: bool,
+    /// The limit per window, for the ttl in force; 0 when the rule is off.
+    pub limit: u64,
+    /// The window, in seconds.
+    pub window_seconds: u64,
 }
 
 /// What this runtime publishes of the build cache its node serves (I2671): the node file it
@@ -1349,6 +1444,8 @@ impl Cooperation {
             projected: Mutex::new(BTreeMap::new()),
             admission: Mutex::new(()),
             rounds: Mutex::new(BTreeMap::new()),
+            beats: Mutex::new(BTreeMap::new()),
+            beat_window: Mutex::new(BeatWindow::default()),
             build_cache: Mutex::new(BuildCachePublisher::default()),
         }))
     }
@@ -1501,6 +1598,350 @@ impl Cooperation {
         }
     }
 
+    /// The progress ttl this runtime writes into its session beats; `None` when the
+    /// declaration turned the rule off.
+    fn session_ttl(&self) -> Option<Duration> {
+        (self.config.session_ttl_seconds > 0)
+            .then(|| Duration::from_secs(self.config.session_ttl_seconds))
+    }
+
+    /// The board peer behind a session of this runtime, when it is one (`board-<peer>`)
+    /// and still attached: the only sessions whose progress this runtime can see. A session
+    /// opened by name from the command line has no peer, never beats, and keeps the stream
+    /// rule it always had.
+    fn board_peer(&self, session: &str) -> Option<crate::peers::PeerId> {
+        let id = session.strip_prefix("board-")?;
+        self.board
+            .as_ref()?
+            .list()
+            .into_iter()
+            .find(|p| p.attached && p.id.as_str() == id)
+            .map(|p| p.id)
+    }
+
+    /// Write one session beat for `session` as of `now`, when it still holds an exclusive
+    /// claim to keep and the window's limit allows; `None` when nothing was written.
+    ///
+    /// Before it beats it lets go of what it must not re-arm (N1 of the review of
+    /// 2026-10-23): an exclusive claim of the session that reads suspended, whose scope
+    /// another session holds a live exclusive claim over — admitted while this one was
+    /// silent — is released with [`OVERTAKEN`] rather than made to hold again, so two
+    /// sessions never both hold one scope; the holder claims again through admission.
+    fn beat_session(
+        &self,
+        session: &str,
+        ttl: Duration,
+        phase: Option<String>,
+        now: Instant,
+    ) -> Option<Written> {
+        let state = self.state_at(now);
+        let mine = self.own(session);
+        let mut armed = 0usize;
+        for claim in state
+            .claims
+            .iter()
+            .filter(|c| c.session == mine && c.mode == ClaimMode::Exclusive)
+        {
+            match &claim.state {
+                ClaimState::Held | ClaimState::Conflicted(_) => armed += 1,
+                ClaimState::Suspended(_) => {
+                    let overtaken = state.claims.iter().any(|other| {
+                        other.session != mine
+                            && other.mode == ClaimMode::Exclusive
+                            && other.state.is_live()
+                            && scopes_meet(&other.scope, &claim.scope)
+                    });
+                    // The release cannot be refused: the claim is this run's own and in the
+                    // fold, and the reason a constant line the journal's bounds admit.
+                    if !overtaken {
+                        armed += 1;
+                    } else {
+                        let released = self.release_because(&claim.key, OVERTAKEN).is_ok();
+                        tracing::info!(runtime_id = %self.own_key, session_id = %session, claim = %claim.key, released, "a suspended claim another session was admitted over is released, not re-armed");
+                    }
+                }
+                ClaimState::Released | ClaimState::Expired(_) => {}
+            }
+        }
+        if armed == 0 {
+            return None;
+        }
+        {
+            let limit = session_beat_limit(ttl);
+            let mut window = self.beat_window.lock().expect("cooperation beat window");
+            while window
+                .times
+                .front()
+                .is_some_and(|t| now.saturating_duration_since(*t) >= SESSION_BEAT_WINDOW)
+            {
+                window.times.pop_front();
+            }
+            if window.times.len() >= limit {
+                window.withheld += 1;
+                window.withheld_at = Some(now);
+                if !window.warned {
+                    window.warned = true;
+                    tracing::warn!(runtime_id = %self.own_key, session_id = %session, limit, window_seconds = SESSION_BEAT_WINDOW.as_secs(), "session beats withheld: this runtime reached its limit per window; the exclusive claims of sessions it cannot beat for will suspend until the window moves (mesh doctor reports it)");
+                }
+                return None;
+            }
+        }
+        let body = EventBody::SessionBeat {
+            session: session.to_string(),
+            ttl_seconds: u32::try_from(ttl.as_secs()).unwrap_or(u32::MAX),
+            phase: phase.clone(),
+        };
+        // The journal cannot refuse this beat: the session is one this runtime opened, so its
+        // name passed the same bound; the ttl passed the declaration's check; and the phase
+        // was clipped to one line of its bound. Only a refused write would answer `None` here.
+        self.write(body, mine).ok().inspect(|written| {
+            {
+                let mut window = self.beat_window.lock().expect("cooperation beat window");
+                window.times.push_back(now);
+                window.written += 1;
+                window.warned = false;
+            }
+            self.beats.lock().expect("cooperation beats").insert(
+                session.to_string(),
+                LastBeat {
+                    at: now,
+                    phase,
+                    written: written.clone(),
+                },
+            );
+        })
+    }
+
+    /// The session beats this runtime wrote and withheld, for `mesh doctor` (I3990).
+    pub(crate) fn session_beat_tally(&self) -> SessionBeatTally {
+        let window = self.beat_window.lock().expect("cooperation beat window");
+        SessionBeatTally {
+            written: window.written,
+            withheld: window.withheld,
+            withheld_recently: window
+                .withheld_at
+                .is_some_and(|t| t.elapsed() < SESSION_BEAT_WINDOW),
+            limit: self
+                .session_ttl()
+                .map_or(0, |ttl| session_beat_limit(ttl) as u64),
+            window_seconds: SESSION_BEAT_WINDOW.as_secs(),
+        }
+    }
+
+    /// What a session of this runtime last said it was doing, as this runtime holds it —
+    /// newer than its last beat when a beat inside the interval changed it (I3990).
+    pub(crate) fn session_phase(&self, key: &str) -> Option<String> {
+        let local = key.strip_prefix(&format!("{}/", self.journal.own_stream()))?;
+        self.beats
+            .lock()
+            .expect("cooperation beats")
+            .get(local)
+            .and_then(|last| last.phase.clone())
+    }
+
+    /// Say that a session of this runtime is making progress, and what it is doing (I3990):
+    /// the typed way for a long-running process — a lander waiting on a CI run, a derive
+    /// waiting on the build lock — to keep its exclusive claims excluding while it sends no
+    /// MCP request. A phase that names a wait (`waiting on CI run 123`) is progress: a
+    /// process waiting on something outside itself is working, and only one that waits on
+    /// nobody is stalled.
+    ///
+    /// Once a session has beaten it lives by its beats: its exclusive claims are suspended
+    /// when no beat comes within the ttl, so a process that beats once must keep beating.
+    /// `pid`, when given, must be a running process of this machine — a beat speaks for a
+    /// live process, and the pid is shown with the phase. The phase is redacted before it
+    /// is signed and cut to one line of [`super::journal::MAX_PHASE_BYTES`]. A beat inside a
+    /// quarter of the ttl of the last one writes nothing, whatever its phase — the newer
+    /// phase is held and shown, and the next beat carries it — and answers the last one: a
+    /// process may beat as often as it likes without filling the journal. A session holding
+    /// no exclusive claim has nothing a beat would keep, and is refused.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// cooperation.claim(&SessionInfo::named("lander", "cli"), vec!["integration".into()], None,
+    ///     ClaimMode::Exclusive, None).unwrap();
+    /// let beat = cooperation.beat("lander", Some("waiting on CI run 42".into()), None).unwrap();
+    /// assert!(beat.key.ends_with("/lander"));
+    /// // again at once, with a newer phase: nothing new is written inside the interval
+    /// let again = cooperation.beat("lander", Some("waiting on CI run 43".into()), None).unwrap();
+    /// assert_eq!(again.event, beat.event);
+    /// // a session this runtime never opened is not one it can speak for
+    /// cooperation.beat("nobody", None, None).expect_err("no such session");
+    /// ```
+    pub fn beat(
+        &self,
+        session: &str,
+        phase: Option<String>,
+        pid: Option<u32>,
+    ) -> Result<Written, CooperationError> {
+        self.beat_at(session, phase, pid, Instant::now())
+    }
+
+    /// [`Cooperation::beat`] as if it were `now`: what the tests use to let the interval
+    /// and the window pass without waiting for them.
+    pub(crate) fn beat_at(
+        &self,
+        session: &str,
+        phase: Option<String>,
+        pid: Option<u32>,
+        now: Instant,
+    ) -> Result<Written, CooperationError> {
+        let Some(ttl) = self.session_ttl() else {
+            return Err(CooperationError::Invalid(
+                "the progress rule is off on this runtime (cooperation.session_ttl_seconds is 0): a session beat would mean nothing".into(),
+            ));
+        };
+        if !self.session_exists(&self.state(), session) {
+            return Err(CooperationError::NotFound(format!(
+                "no session '{session}' on this runtime"
+            )));
+        }
+        if let Some(pid) = pid {
+            if !crate::lease::alive(pid) {
+                return Err(CooperationError::Invalid(format!(
+                    "process {pid} is not running on this machine: a beat speaks for a live process"
+                )));
+            }
+        }
+        let phase = phase
+            .map(|p| redacted(p.trim().to_string()))
+            .filter(|p| !p.is_empty())
+            .map(|p| match pid {
+                Some(pid) => format!("{p} (pid {pid})"),
+                None => p,
+            })
+            .or_else(|| pid.map(|pid| format!("pid {pid}")))
+            .map(|p| clip(&p, super::journal::MAX_PHASE_BYTES));
+        // At most one beat a quarter of the ttl, whatever the phase says: a new phase inside
+        // the interval is held here and shown, and the next beat carries it to the journal.
+        if let Some(last) = self
+            .beats
+            .lock()
+            .expect("cooperation beats")
+            .get_mut(session)
+        {
+            if now.saturating_duration_since(last.at) < ttl / 4 {
+                last.phase = phase;
+                return Ok(last.written.clone());
+            }
+        }
+        self.beat_session(session, ttl, phase, now).ok_or_else(|| {
+            CooperationError::Invalid(format!(
+                "no beat was written for '{session}': it holds no exclusive claim a beat would keep, this runtime reached its limit of session beats per window (mesh doctor says which), or the journal refused it"
+            ))
+        })
+    }
+
+    /// Keep the exclusive claims of every working board session excluding (I3990). Runs
+    /// once a heartbeat, after the board projection.
+    ///
+    /// For each attached board session of this runtime that holds a live exclusive claim
+    /// by the stream rule: when its peer did real work since its last beat and that beat is
+    /// a quarter of the ttl old, one [`EventBody::SessionBeat`] is written. Nothing else
+    /// happens to a session that stops: no close — its exclusive claims read suspended on
+    /// every runtime once the ttl passes, and hold again at its next beat, or are released
+    /// then when another session was admitted over them meanwhile. A peer that only pings is
+    /// not working: that is the whole rule.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    ///
+    /// let board = Arc::new(PeerBoard::new());
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: Some(Arc::clone(&board)),
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// let worker = board.attach(Transport::Http);
+    /// board.announce(&worker, "documenting the mesh", vec!["docs".into()]);
+    /// cooperation.project_board();
+    /// let beats = |c: &Cooperation| c.journal().events().iter()
+    ///     .filter(|e| e.kind() == "session_beat").count();
+    /// assert_eq!(beats(&cooperation), 0, "an advisory claim refuses nobody and costs no beat");
+    ///
+    /// // an exclusive claim beats at once, and within a quarter of its ttl nothing more
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    /// let session = SessionInfo::named(&format!("board-{worker}"), "claude-code");
+    /// cooperation.claim(&session, vec!["apps".into()], None, ClaimMode::Exclusive, None).unwrap();
+    /// assert_eq!(beats(&cooperation), 1);
+    /// cooperation.beat_sessions();
+    /// assert_eq!(beats(&cooperation), 1, "a quarter of the ttl has not passed");
+    /// assert!(cooperation.state().claims.iter().all(|c| c.state.is_live()));
+    /// ```
+    pub fn beat_sessions(&self) {
+        self.beat_sessions_at(Instant::now());
+    }
+
+    /// [`Cooperation::beat_sessions`] as if it were `now`: what the tests use to let a
+    /// quarter of the ttl pass without waiting for it.
+    pub(crate) fn beat_sessions_at(&self, now: Instant) {
+        let Some(ttl) = self.session_ttl() else {
+            return;
+        };
+        let Some(board) = &self.board else { return };
+        // Which sessions hold a claim is read by the stream rule alone: a claim this
+        // runtime's own fold already calls suspended is exactly the one a resumed worker's
+        // beat must bring back, and it must not drop out of the reckoning.
+        let live = self.journal.stream_liveness(self.expiry());
+        let base = fold(&self.journal.events(), &|s| {
+            live.get(s)
+                .map(|(l, _)| *l)
+                .unwrap_or(StreamLiveness::Expired)
+        });
+        for peer in board.list().into_iter().filter(|p| p.attached) {
+            let session = format!("board-{}", peer.id);
+            let key = self.own(&session);
+            // only an exclusive claim refuses anybody, so only its holder has anything to keep
+            let holds = base
+                .claims
+                .iter()
+                .any(|c| c.session == key && c.mode == ClaimMode::Exclusive && c.state.is_live());
+            if !holds {
+                continue;
+            }
+            let Some(progressed) = board.progressed_at(&peer.id) else {
+                continue;
+            };
+            let last = self
+                .beats
+                .lock()
+                .expect("cooperation beats")
+                .get(&session)
+                .map(|last| last.at);
+            let due = match last {
+                None => true,
+                Some(at) => progressed > at && now.saturating_duration_since(at) >= ttl / 4,
+            };
+            if due {
+                self.beat_session(&session, ttl, None, now);
+            }
+        }
+    }
+
     /// This runtime's key, `<node>-<runtime>`: who it is to every other runtime, for as
     /// long as this checkout exists on this machine. It survives a restart — which is what
     /// lets a peer recognise a returning runtime as the same one rather than a second —
@@ -1570,6 +2011,7 @@ impl Cooperation {
                     me.refresh_build_cache_offer();
                     me.journal.beat_own();
                     me.project_board();
+                    me.beat_sessions();
                     me.reconcile_workers();
                     me.expire_links();
                     if tick % 12 == 11 {
@@ -3129,12 +3571,25 @@ impl Cooperation {
     /// assert!(!cooperation.state().claims[0].state.is_live(), "released, not forgotten");
     /// ```
     pub fn state(&self) -> CooperationState {
+        self.state_at(Instant::now())
+    }
+
+    /// [`Cooperation::state`] with sessions' progress judged as if it were `now`: what the
+    /// tests use to let a progress ttl pass without waiting for it.
+    pub(crate) fn state_at(&self, now: Instant) -> CooperationState {
         let live = self.journal.stream_liveness(self.expiry());
-        fold(&self.journal.events(), &|s| {
-            live.get(s)
-                .map(|(l, _)| *l)
-                .unwrap_or(StreamLiveness::Expired)
-        })
+        // A session's progress is judged by the ttl its own beat carries, plus the stream
+        // expiry for another runtime's: the beat reached this one up to a round late (I3990).
+        let grace = self.expiry();
+        fold_with(
+            &self.journal.events(),
+            &|s| {
+                live.get(s)
+                    .map(|(l, _)| *l)
+                    .unwrap_or(StreamLiveness::Expired)
+            },
+            &|session| self.journal.session_progress_at(session, grace, now),
+        )
     }
 
     /// Every stream's liveness and the milliseconds since its beat rose — the layer claims
@@ -3749,7 +4204,7 @@ impl Cooperation {
             self.open_session(session.clone())?;
         }
         let claim = format!("c-{}", &fresh_token()[..12]);
-        self.write(
+        let written = self.write(
             EventBody::ClaimAcquired {
                 claim: claim.clone(),
                 session: session.session.clone(),
@@ -3759,7 +4214,27 @@ impl Cooperation {
                 issue,
             },
             self.own(&claim),
-        )
+        )?;
+        // A board session's exclusive claim lives by its worker's progress from the moment it
+        // is taken: one beat now — unless one inside the interval already covers it — and
+        // more only while the worker keeps working. An advisory claim refuses nobody and
+        // costs no beat (I3990).
+        if let Some(ttl) = self.session_ttl() {
+            let now = Instant::now();
+            let covered = self
+                .beats
+                .lock()
+                .expect("cooperation beats")
+                .get(&session.session)
+                .is_some_and(|last| now.saturating_duration_since(last.at) < ttl / 4);
+            if mode == ClaimMode::Exclusive
+                && !covered
+                && self.board_peer(&session.session).is_some()
+            {
+                self.beat_session(&session.session, ttl, None, now);
+            }
+        }
+        Ok(written)
     }
 
     /// Release a claim this runtime took in its current run.
@@ -3800,6 +4275,20 @@ impl Cooperation {
     /// cooperation.release("somebody-0000000000000002/c-abc").expect_err("not its author");
     /// ```
     pub fn release(&self, claim_key: &str) -> Result<Written, CooperationError> {
+        self.release_with(claim_key, None)
+    }
+
+    /// Release a claim of this runtime's current run, saying why the runtime and not its
+    /// session decided it (I3990).
+    fn release_because(&self, claim_key: &str, reason: &str) -> Result<Written, CooperationError> {
+        self.release_with(claim_key, Some(reason.to_string()))
+    }
+
+    fn release_with(
+        &self,
+        claim_key: &str,
+        reason: Option<String>,
+    ) -> Result<Written, CooperationError> {
         let own_prefix = format!("{}/", self.journal.own_stream());
         let Some(local) = claim_key.strip_prefix(&own_prefix) else {
             return Err(CooperationError::NotOwn(format!(
@@ -3813,6 +4302,7 @@ impl Cooperation {
         self.write(
             EventBody::ClaimReleased {
                 claim: local.into(),
+                reason,
             },
             claim_key.into(),
         )
@@ -5651,6 +6141,595 @@ mod tests {
         );
     }
 
+    /// The 5d incident (2026-10-22), in one runtime: a worker took the lease exclusively
+    /// and then sat on a dialog while its server beat on. Once the ttl passes without real
+    /// work its exclusive claim reads suspended and refuses nobody, its advisory claim and
+    /// its session are untouched, and nothing was written to make it so; when the worker
+    /// works again, one beat makes the claim hold again (I3990).
+    #[test]
+    fn a_stalled_board_session_s_exclusive_claim_is_suspended_and_holds_again_on_progress() {
+        use crate::mesh::state::{admission_conflicts, ClaimState, SessionState};
+        let net = Arc::new(InProcess::default());
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "00000000000000a1".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig {
+                heartbeat_seconds: 1,
+                expiry_seconds: 3,
+                session_ttl_seconds: 8,
+                ..CooperationConfig::default()
+            },
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+            board: Some(Arc::clone(&board)),
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap();
+        let beats = |c: &Cooperation| {
+            c.journal()
+                .events()
+                .iter()
+                .filter(|e| e.kind() == "session_beat")
+                .count()
+        };
+        let p = board.attach(crate::peers::Transport::Http);
+        board.announce(&p, "land the train", vec!["docs".into()]);
+        a.project_board();
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        a.claim(
+            &worker,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            beats(&a),
+            1,
+            "an exclusive claim of a board session beats at once; its advisory one does not"
+        );
+        let start = Instant::now();
+        let mine = format!("{}/board-{p}", a.journal().own_stream());
+        let exclusive = |s: &CooperationState| {
+            s.claims
+                .iter()
+                .find(|c| c.mode == ClaimMode::Exclusive)
+                .unwrap()
+                .state
+                .clone()
+        };
+        let advisory = |s: &CooperationState| {
+            s.claims
+                .iter()
+                .find(|c| c.mode == ClaimMode::Advisory)
+                .unwrap()
+                .state
+                .clone()
+        };
+
+        // within the ttl nothing happens, and nothing is written while nothing is worked
+        a.beat_sessions_at(start + Duration::from_secs(3));
+        assert_eq!(beats(&a), 1);
+        assert_eq!(
+            exclusive(&a.state_at(start + Duration::from_secs(3))),
+            ClaimState::Held
+        );
+
+        // past it: the exclusive claim is suspended and admits another; nothing else moved
+        let events = a.journal().events().len();
+        a.beat_sessions_at(start + Duration::from_secs(9));
+        assert_eq!(a.journal().events().len(), events, "a stall writes nothing");
+        let stalled = a.state_at(start + Duration::from_secs(9));
+        assert!(matches!(
+            exclusive(&stalled),
+            ClaimState::Suspended(why) if why.contains("stopped making progress")
+        ));
+        assert_eq!(
+            advisory(&stalled),
+            ClaimState::Held,
+            "advisory claims are untouched"
+        );
+        let view = stalled.sessions.iter().find(|s| s.key == mine).unwrap();
+        assert_eq!(
+            view.state,
+            SessionState::Active,
+            "an idle session is not closed"
+        );
+        let other = format!("{}/s2", a.journal().own_stream());
+        assert!(
+            admission_conflicts(
+                &stalled,
+                &other,
+                &["integration".into()],
+                ClaimMode::Exclusive
+            )
+            .is_empty(),
+            "the lease is free for the next claimant"
+        );
+
+        // a peer that only pings writes nothing
+        board.touch(&p);
+        a.project_board();
+        a.beat_sessions_at(start + Duration::from_secs(20));
+        assert_eq!(a.journal().events().len(), events, "a ping is not progress");
+
+        // real work: one beat, and the claim holds again
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(20));
+        assert_eq!(beats(&a), 2);
+        assert_eq!(exclusive(&a.state()), ClaimState::Held);
+
+        // and a long-running process may speak for a session with a phase
+        let phase = "waiting on CI run 42";
+        let written = a
+            .beat_at(
+                &format!("board-{p}"),
+                Some(phase.into()),
+                None,
+                start + Duration::from_secs(40),
+            )
+            .unwrap();
+        assert!(written.key.ends_with(&format!("/board-{p}")));
+        let (_, said) = a.journal().session_beat_age(&mine).unwrap();
+        assert_eq!(said.as_deref(), Some(phase));
+        let dead = u32::MAX - 1;
+        assert!(
+            a.beat(&format!("board-{p}"), None, Some(dead)).is_err(),
+            "a dead pid beats nothing"
+        );
+    }
+
+    /// A runtime with a progress ttl of `ttl` seconds, a heartbeat of one, and `board`.
+    fn progress_runtime(ttl: u64, board: Option<Arc<crate::peers::PeerBoard>>) -> Arc<Cooperation> {
+        Cooperation::new(CooperationSetup {
+            identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+            runtime: "00000000000000a1".into(),
+            repository: of_root_commits(&["root".into()]),
+            endpoints: vec!["a:1".into()],
+            version: "test".into(),
+            config: CooperationConfig {
+                heartbeat_seconds: 1,
+                expiry_seconds: 3,
+                session_ttl_seconds: ttl,
+                ..CooperationConfig::default()
+            },
+            trust: TrustConfig::default(),
+            journal_path: None,
+            registry: Arc::new(MeshRegistry::new()),
+            transport: Arc::new(InProcess::default()) as Arc<dyn LinkTransport>,
+            board,
+            checkout: CheckoutFacts::default(),
+        })
+        .unwrap()
+    }
+
+    fn session_beats(c: &Cooperation) -> Vec<MeshEvent> {
+        c.journal()
+            .events()
+            .into_iter()
+            .filter(|e| e.kind() == "session_beat")
+            .collect()
+    }
+
+    /// B1 of the review of 2026-10-23: a script that beats every second with a phase that
+    /// changes every second ("waiting on CI (13s)") writes at most one beat a quarter of the
+    /// ttl — the newer phase is held and shown, not written — so it cannot spend the
+    /// runtime's beats.
+    #[test]
+    fn a_phase_changing_beater_writes_at_most_one_beat_a_quarter_of_the_ttl() {
+        let a = progress_runtime(8, None);
+        let lander = SessionInfo::named("lander", "cli");
+        a.claim(
+            &lander,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(
+            session_beats(&a).is_empty(),
+            "a command-line claim beats nothing by itself"
+        );
+        let start = Instant::now();
+        let span = 120u64;
+        for second in 0..span {
+            a.beat_at(
+                "lander",
+                Some(format!("waiting on CI ({second}s)")),
+                None,
+                start + Duration::from_secs(second),
+            )
+            .unwrap();
+        }
+        let interval = 8 / 4;
+        let written = session_beats(&a).len() as u64;
+        assert!(
+            written <= span.div_ceil(interval),
+            "{written} beats in {span} s with a {interval} s interval"
+        );
+        assert!(written >= span / interval - 1, "and it did beat: {written}");
+        let key = format!("{}/lander", a.journal().own_stream());
+        assert_eq!(
+            a.session_phase(&key).as_deref(),
+            Some("waiting on CI (119s)"),
+            "the newest phase is shown though it was not written"
+        );
+    }
+
+    /// B1: only a session holding a live exclusive claim is beaten for. A worker that only
+    /// announces holds advisory claims, which refuse nobody, and costs no beat however hard
+    /// it works; a mesh beat for it writes nothing and says why.
+    #[test]
+    fn an_advisory_only_session_writes_no_beats() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.announce(&p, "document the mesh", vec!["docs".into()]);
+        a.project_board();
+        let start = Instant::now();
+        for second in [3, 6, 9, 12] {
+            board.progress(&p);
+            a.beat_sessions_at(start + Duration::from_secs(second));
+        }
+        assert!(session_beats(&a).is_empty(), "{:?}", session_beats(&a));
+        let refused = a
+            .beat_at(&format!("board-{p}"), Some("working".into()), None, start)
+            .expect_err("nothing a beat would keep");
+        assert!(
+            refused.to_string().contains("no exclusive claim"),
+            "{refused}"
+        );
+    }
+
+    /// B1: past its limit per window a runtime withholds beats — never a ttl-0 beat that
+    /// turns the rule off — warns once, and fails `mesh doctor`'s session_beats check; the
+    /// window moving lets it beat again.
+    #[test]
+    fn a_runtime_past_its_beat_limit_withholds_beats_and_says_so() {
+        let ttl = 3600;
+        let a = progress_runtime(ttl, None);
+        let limit = session_beat_limit(Duration::from_secs(ttl));
+        assert_eq!(limit, SESSION_BEAT_SESSIONS * 4);
+        for n in 0..=limit {
+            a.claim(
+                &SessionInfo::named(&format!("s{n}"), "cli"),
+                vec![format!("d{n}")],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        }
+        let start = Instant::now();
+        for n in 0..limit {
+            a.beat_at(&format!("s{n}"), None, None, start).unwrap();
+        }
+        let over = format!("s{limit}");
+        assert!(
+            a.beat_at(&over, None, None, start).is_err(),
+            "the limit holds"
+        );
+        assert_eq!(session_beats(&a).len(), limit);
+        assert!(
+            session_beats(&a).iter().all(|e| matches!(
+                e.body(),
+                Some(EventBody::SessionBeat { ttl_seconds, .. }) if ttl_seconds == 3600
+            )),
+            "nothing turns the rule off"
+        );
+        let tally = a.session_beat_tally();
+        assert_eq!((tally.written, tally.withheld), (limit as u64, 1));
+        assert!(tally.withheld_recently);
+        let check = crate::mesh::doctor::session_beats_check(&tally);
+        assert!(
+            !check.ok && check.detail.contains("1 session beat(s) withheld"),
+            "{}",
+            check.detail
+        );
+        // asked again inside the window it is withheld again, and counted, though the
+        // warning was said once
+        assert!(a.beat_at(&over, None, None, start).is_err());
+        assert_eq!(a.session_beat_tally().withheld, 2);
+        assert_eq!(session_beats(&a).len(), limit);
+        // an hour on, the window has moved
+        a.beat_at(&over, None, None, start + SESSION_BEAT_WINDOW)
+            .expect("the window moved");
+    }
+
+    /// N1 of the review of 2026-10-23: a holder that resumes after another session was
+    /// admitted over its suspended exclusive claim does not get the scope back. Its next beat
+    /// is preceded by the release of that claim, saying why, and it must claim again through
+    /// admission — which the newcomer now refuses. Two sessions never both hold one scope.
+    #[test]
+    fn a_resumed_holder_releases_a_claim_another_session_was_admitted_over() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.progress(&p);
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        a.claim(
+            &worker,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert_eq!(session_beats(&a).len(), 1);
+        let start = Instant::now();
+        // while it is silent another session is admitted over it (admission read it
+        // suspended at that moment; the journal holds what it then wrote)
+        a.journal()
+            .append_own(EventBody::ClaimAcquired {
+                claim: "c-newcomer".into(),
+                session: "s2".into(),
+                scope: vec!["integration".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+            })
+            .unwrap();
+        let silent = a.state_at(start + Duration::from_secs(9));
+        let mine = format!("{}/board-{p}", a.journal().own_stream());
+        let held_by = |s: &CooperationState, session: &str| {
+            s.claims
+                .iter()
+                .find(|c| c.session == session)
+                .map(|c| c.state.clone())
+                .unwrap()
+        };
+        assert!(matches!(held_by(&silent, &mine), ClaimState::Suspended(_)));
+        let newcomer = format!("{}/s2", a.journal().own_stream());
+        assert_eq!(held_by(&silent, &newcomer), ClaimState::Held);
+
+        // the worker comes back
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(20));
+        let now = a.state();
+        assert_eq!(held_by(&now, &mine), ClaimState::Released, "not re-armed");
+        assert_eq!(
+            held_by(&now, &newcomer),
+            ClaimState::Held,
+            "one holder, the newcomer"
+        );
+        assert_eq!(session_beats(&a).len(), 1, "nothing was left to beat for");
+        let reason = a.journal().events().iter().find_map(|e| match e.body() {
+            Some(EventBody::ClaimReleased { reason, .. }) => reason,
+            _ => None,
+        });
+        assert_eq!(reason.as_deref(), Some(OVERTAKEN));
+        assert!(
+            matches!(
+                a.claim(
+                    &worker,
+                    vec!["integration".into()],
+                    None,
+                    ClaimMode::Exclusive,
+                    None
+                ),
+                Err(CooperationError::Conflict(_))
+            ),
+            "it claims again through admission, which the newcomer's claim refuses"
+        );
+    }
+
+    /// With the progress rule turned off (`session_ttl_seconds: 0`) nothing beats: a board
+    /// session's exclusive claim costs no beat, the heartbeat beats for nobody, and a beat
+    /// asked for is refused, saying the rule is off — its claims live by the stream rule
+    /// alone (I3990).
+    #[test]
+    fn a_runtime_with_the_progress_rule_off_beats_for_nobody() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(0, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        board.progress(&p);
+        let session = format!("board-{p}");
+        a.claim(
+            &SessionInfo::named(&session, "test"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        board.progress(&p);
+        a.beat_sessions_at(Instant::now() + Duration::from_secs(3600));
+        assert!(session_beats(&a).is_empty(), "{:?}", session_beats(&a));
+        let refused = a
+            .beat(&session, Some("working".into()), None)
+            .expect_err("the rule is off");
+        assert!(
+            refused.to_string().contains("the progress rule is off"),
+            "{refused}"
+        );
+        assert_eq!(a.session_beat_tally().limit, 0);
+        assert!(a.state().claims.iter().all(|c| c.state.is_live()));
+    }
+
+    /// A beat speaks for a session this runtime opened, and for a live process when it names
+    /// one: the pid is shown with the phase, or alone when the phase is blank (I3990).
+    #[test]
+    fn a_beat_names_its_live_process_beside_its_phase() {
+        let a = progress_runtime(8, None);
+        assert!(matches!(
+            a.beat("nobody", None, None),
+            Err(CooperationError::NotFound(_))
+        ));
+        a.claim(
+            &SessionInfo::named("lander", "cli"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        let pid = std::process::id();
+        let key = format!("{}/lander", a.journal().own_stream());
+        let start = Instant::now();
+        a.beat_at(
+            "lander",
+            Some("waiting on CI run 42".into()),
+            Some(pid),
+            start,
+        )
+        .unwrap();
+        assert_eq!(
+            a.session_phase(&key),
+            Some(format!("waiting on CI run 42 (pid {pid})"))
+        );
+        // a quarter of the ttl on, a blank phase names the process alone, and is written
+        a.beat_at(
+            "lander",
+            Some("  ".into()),
+            Some(pid),
+            start + Duration::from_secs(2),
+        )
+        .unwrap();
+        assert_eq!(a.session_phase(&key), Some(format!("pid {pid}")));
+        assert_eq!(
+            a.session_phase("another-stream/lander"),
+            None,
+            "this runtime holds the phases of its own sessions alone"
+        );
+        let (_, written) = a.journal().session_beat_age(&key).unwrap();
+        assert_eq!(written, Some(format!("pid {pid}")));
+        assert_eq!(session_beats(&a).len(), 2);
+    }
+
+    /// A runtime without a board has no board peer to speak for: a session named like one is
+    /// beaten for when it asks, never at its claim or by the heartbeat (I3990).
+    #[test]
+    fn a_board_named_session_without_a_board_beats_only_when_it_asks() {
+        let a = progress_runtime(8, None);
+        a.claim(
+            &SessionInfo::named("board-p1", "test"),
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        assert!(session_beats(&a).is_empty(), "no peer behind it");
+        a.beat_sessions_at(Instant::now() + Duration::from_secs(4));
+        assert!(
+            session_beats(&a).is_empty(),
+            "no board to read progress from"
+        );
+        a.beat("board-p1", None, None).expect("it asks");
+        assert_eq!(session_beats(&a).len(), 1);
+    }
+
+    /// A released exclusive claim keeps nothing: a session left with released claims alone
+    /// is refused a beat, and one that claims again beats for the claim it holds (I3990).
+    #[test]
+    fn a_released_claim_arms_no_beat() {
+        let a = progress_runtime(8, None);
+        let lander = SessionInfo::named("lander", "cli");
+        let first = a
+            .claim(
+                &lander,
+                vec!["docs".into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        a.release(&first.key).unwrap();
+        assert!(
+            a.beat("lander", None, None).is_err(),
+            "a released claim is nothing to keep"
+        );
+        a.claim(
+            &lander,
+            vec!["integration".into()],
+            None,
+            ClaimMode::Exclusive,
+            None,
+        )
+        .unwrap();
+        a.beat("lander", None, None)
+            .expect("the held claim is kept");
+        assert_eq!(session_beats(&a).len(), 1);
+    }
+
+    /// The heartbeat beats for a board session only on its worker's real work: one holding an
+    /// exclusive claim that never worked is left to suspend, and one whose claim reached the
+    /// journal without a beat is beaten for at its first work (I3990).
+    #[test]
+    fn the_heartbeat_beats_for_a_board_session_only_on_its_workers_progress() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        let session = format!("board-{p}");
+        a.open_session(SessionInfo::named(&session, "test"))
+            .unwrap();
+        a.journal()
+            .append_own(EventBody::ClaimAcquired {
+                claim: "c-1".into(),
+                session: session.clone(),
+                scope: vec!["integration".into()],
+                intent: None,
+                mode: ClaimMode::Exclusive,
+                issue: None,
+            })
+            .unwrap();
+        let start = Instant::now();
+        a.beat_sessions_at(start);
+        assert!(session_beats(&a).is_empty(), "no work, no beat");
+        board.progress(&p);
+        a.beat_sessions_at(start + Duration::from_secs(1));
+        assert_eq!(
+            session_beats(&a).len(),
+            1,
+            "its first work is beaten for at once"
+        );
+    }
+
+    /// A board session that takes a second exclusive claim inside a quarter of the ttl of
+    /// its last beat writes no second beat: the beat it has keeps both claims (I3990).
+    #[test]
+    fn a_second_exclusive_claim_inside_the_interval_is_kept_by_the_last_beat() {
+        let board = Arc::new(crate::peers::PeerBoard::new());
+        let a = progress_runtime(8, Some(Arc::clone(&board)));
+        let p = board.attach(crate::peers::Transport::Http);
+        let worker = SessionInfo::named(&format!("board-{p}"), "test");
+        for path in ["integration", "docs"] {
+            a.claim(&worker, vec![path.into()], None, ClaimMode::Exclusive, None)
+                .unwrap();
+        }
+        assert_eq!(session_beats(&a).len(), 1);
+        let state = a.state();
+        assert_eq!(state.claims.len(), 2);
+        assert!(state.claims.iter().all(|c| c.state.is_live()));
+    }
+
+    /// A claim the journal refuses — a scope that leaves the repository — is refused to its
+    /// caller, and no claim is left behind to beat for.
+    #[test]
+    fn a_claim_over_a_path_outside_the_repository_is_refused_and_leaves_no_claim() {
+        let a = progress_runtime(8, None);
+        let refused = a
+            .claim(
+                &SessionInfo::named("s1", "cli"),
+                vec!["../etc".into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap_err();
+        assert!(matches!(refused, CooperationError::Invalid(_)), "{refused}");
+        assert!(a.state().claims.is_empty());
+        assert!(session_beats(&a).is_empty());
+    }
+
     #[test]
     fn a_release_is_the_holders_and_a_session_close_ends_its_claims() {
         let net = Arc::new(InProcess::default());
@@ -5740,6 +6819,38 @@ mod tests {
             siblings.len(),
             live.len() - 1,
             "every live sibling is dialed; chosen: {chosen:?}"
+        );
+    }
+
+    /// On 2026-10-23 two MacBooks shared no claim for hours: each ran a dozen loopback
+    /// worktree servers and one hub bound beyond loopback, the loopback records sorted first
+    /// and filled the per-node cap, and neither machine ever dialed the other's hub.
+    #[test]
+    fn another_node_s_loopback_runtimes_are_not_dialed_and_its_hub_is() {
+        let mut records: Vec<NodeRecord> = (0..12)
+            .map(|i| {
+                let mut r = record(1, &format!("{i:016}"), Presence::Present, "trusted");
+                r.endpoints = vec![format!("127.0.0.1:{}", 9000 + i)];
+                r
+            })
+            .collect();
+        let mut hub = record(1, "ffffffffffffffff", Presence::Present, "trusted");
+        hub.endpoints = vec!["192.168.100.100:8791".into(), "127.0.0.1:8791".into()];
+        records.push(hub);
+        let mut sibling = record(0, "0000000000000002", Presence::Present, "trusted");
+        sibling.endpoints = vec!["127.0.0.1:9454".into()];
+        records.push(sibling);
+        let own = format!("{:032x}-{:016x}", 0, 1);
+
+        let chosen = ids(&dial_targets(&records, "root", &own, |k| k == "trusted"));
+
+        assert_eq!(
+            chosen,
+            vec![
+                format!("{:032x}-0000000000000002", 0),
+                format!("{:032x}-ffffffffffffffff", 1),
+            ],
+            "this node's loopback sibling and the other node's hub, nothing it cannot reach"
         );
     }
 
