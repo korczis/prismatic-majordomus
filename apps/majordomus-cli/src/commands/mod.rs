@@ -72,6 +72,7 @@ pub(crate) mod serve;
 pub(crate) mod served;
 pub(crate) mod shell;
 pub(crate) mod skills;
+pub(crate) mod ui;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -84,6 +85,7 @@ pub fn run(cli: Cli) -> Result<u8> {
     match cli.command {
         Command::Mcp(args) => mcp::run(args),
         Command::Serve(args) => serve::run(args),
+        Command::Ui(args) => ui::run(args),
         Command::Capabilities(args) => capabilities::run(args),
         Command::Generate(args) => generate::run(args),
         Command::Bench(args) => bench::run(args),

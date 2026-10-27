@@ -1,7 +1,7 @@
 +++
 title = "majordomus capabilities describe"
 description = "One capability by canonical id: schemas, provenance, every projection"
-weight = 9
+weight = 10
 [extra]
 route = "/docs/cli/capabilities/describe/"
 command = "majordomus capabilities describe"
