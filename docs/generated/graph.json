@@ -70913,6 +70913,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4256",
+        "kind": "issue",
+        "label": "I4256",
+        "summary": "A skill is proved by the adopter's own tests, and its findings name nothing of the tool's tree",
+        "route": "/cockpit/objects/issue/i4256",
+        "source": ".ai/repo/project/issues/I4256.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A marker in tests/test_x.py proves a skill in a repository with no test/cases",
+            "A repository with no site/ gets no undocumented warning",
+            "skills check and doctor report the same orphans"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "TEST_DIRS and SKILL_PAGES_DIR are the tool's own layout; skills check and doctor disagree.",
+          "depends_on": [],
+          "evidence_required": [
+            "case_skill_proof_reads_the_adopters_layout"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4256.yaml",
+            "apps/majordomus-cli/src/skill/mod.rs",
+            "lib/skills.sh",
+            "share/skeleton/ai/repo/scope.yaml",
+            "test/cases/4256_a_skill_is_proved_where_the_adopter_tests.sh"
+          ],
+          "slug": "skill-proof-reads-the-adopters-layout",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4256_a_skill_is_proved_where_the_adopter_tests"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -133164,6 +133201,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4256",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4256",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144790,8 +144837,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4016,
+      "edges": 9261,
       "acyclic": false,
       "truncated": false
     }
