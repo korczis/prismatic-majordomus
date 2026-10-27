@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "e173425209f85a86ba205eb5e4d5f573a6fa76186f3345e32b9f9a771b6ccccd",
+  "fingerprint": "f2542cb344c1922ce8249dffc3f04dc683b8cd58d5aa8b782d8591a3c782929e",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -16,7 +16,7 @@
     "modules": 60,
     "modules_covered": 58,
     "commands": 31,
-    "commands_covered": 30,
+    "commands_covered": 31,
     "kinds": 31,
     "kinds_covered": 31
   },
@@ -2206,7 +2206,7 @@
           },
           "claims": 9,
           "tested": 9,
-          "use_cases": 7
+          "use_cases": 8
         },
         {
           "id": "ci",
@@ -2560,13 +2560,18 @@
           "id": "say-what-reached-the-remote-and-what-did-not",
           "title": "Say what reached the remote and what did not",
           "category": "completion"
+        },
+        {
+          "id": "widen-a-scope-the-work-outgrew",
+          "title": "Widen a scope the work outgrew, and say why",
+          "category": "completion"
         }
       ],
       "counts": {
         "features": 3,
         "claims": 16,
         "tested": 16,
-        "use_cases": 8,
+        "use_cases": 9,
         "rules": 12,
         "enforced_rules": 10,
         "capabilities": 6,
@@ -8619,6 +8624,7 @@
       ],
       "commands": [
         "start",
+        "scope",
         "check",
         "finish",
         "question"
@@ -8656,7 +8662,8 @@
         "catch-an-agent-that-says-it-is-done",
         "know-whether-this-work-is-finished",
         "prove-what-a-task-owed-before-calling-it-done",
-        "say-what-reached-the-remote-and-what-did-not"
+        "say-what-reached-the-remote-and-what-did-not",
+        "widen-a-scope-the-work-outgrew"
       ],
       "cockpit": [],
       "web": [],
@@ -8756,6 +8763,12 @@
           "id": "start",
           "summary": "Begin one scoped task under a profile, and refuse while another is active.",
           "stage": "begin",
+          "read_only": false
+        },
+        {
+          "id": "scope",
+          "summary": "Add paths to the active task's scope, keeping its id, and say who widened it and why.",
+          "stage": "work",
           "read_only": false
         },
         {
@@ -8938,6 +8951,11 @@
           "id": "say-what-reached-the-remote-and-what-did-not",
           "title": "Say what reached the remote and what did not",
           "category": "completion"
+        },
+        {
+          "id": "widen-a-scope-the-work-outgrew",
+          "title": "Widen a scope the work outgrew, and say why",
+          "category": "completion"
         }
       ],
       "cockpit_refs": [],
@@ -9074,14 +9092,14 @@
         "mcp_resources": 6,
         "http_routes": 6,
         "cli_paths": 0,
-        "commands": 4,
+        "commands": 5,
         "objects": 0,
         "rules": 7,
         "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
         "claims": 9,
-        "use_cases": 7,
+        "use_cases": 8,
         "moments": 20
       },
       "evidence": {
@@ -17465,7 +17483,9 @@
       {
         "id": "scope",
         "title": "scope widen",
-        "features": []
+        "features": [
+          "finish-contract"
+        ]
       },
       {
         "id": "search",

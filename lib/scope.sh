@@ -21,6 +21,13 @@ mj_cmd_scope() {
   local sub="${1:-}"
   case "$sub" in
     widen) shift; mj_scope_widen "$@" ;;
+    --help|-h) cat <<H
+usage: majordomus scope widen <path>[,<path>...] --because "<reason>" [--by <who>]
+  widen  add paths to the active task's scope, keeping its id (scope widen --help)
+Every other use of \`majordomus scope\` is the executable's: the repository scope, what a
+worker reads and what it never reads, read only (majordomus-cli scope --help).
+H
+      return 0 ;;
     *) mj_die "$MJ_EX_USAGE" "scope: the shell tool answers only 'scope widen'; '$sub' is not it" ;;
   esac
 }

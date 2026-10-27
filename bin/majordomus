@@ -241,7 +241,9 @@ mj_words_are_the_executables() {
 # (I2114). Listed, because the executable's words are read from it and the shell's are not;
 # keep it to words that write the task record.
 mj_words_are_the_shells() {
-  case "$1 $2" in "scope widen") return 0 ;; esac
+  # `scope --help` too: every public command answers --help with its usage line, before init
+  # and without building anything (case 15), and this tool's usage names both halves
+  case "$1 $2" in "scope widen"|"scope --help"|"scope -h") return 0 ;; esac
   return 1
 }
 
