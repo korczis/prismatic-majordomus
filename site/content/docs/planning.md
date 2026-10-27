@@ -528,6 +528,15 @@ furthest stage proved, each with the object that proved it and when it was obser
 </div>
 
 
+Planning is not delivery (I2749). A commit or merge that names an issue while changing only
+the plan's records (`.ai/repo/project/`) and the projections `.gitattributes` marks
+`merge=derived` planned, rescoped or recorded the issue; it is never its `merged` proof. Each
+naming commit is read against its first parent (for a merge, the whole pull request), the
+newest one passed over is reported as `planned` with how many there were, and the `planning`
+source says how many commits were set aside. A pull request found only by its head commit,
+and any commit whose parent is unknown, is never called planning, so a failed read can only
+leave the answer as it was before the rule.
+
 The live answer reads the trunk this clone knows (the remote-tracking trunk unless the local
 one is ahead), every branch, the forge observation `majordomus prs refresh` recorded, the
 release records, and the `latest.json` of the commit the last successful Pages deployment

@@ -1,7 +1,7 @@
 +++
 title = "majordomus bench coverage"
 description = "Every required target and whether it is covered; the denominator is generated from the registry"
-weight = 15
+weight = 16
 [extra]
 route = "/docs/cli/bench/coverage/"
 command = "majordomus bench coverage"
