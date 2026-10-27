@@ -70870,6 +70870,42 @@
         }
       },
       {
+        "id": "majordomus://issue/I4251",
+        "kind": "issue",
+        "label": "I4251",
+        "summary": "capture install writes no Markdown link that leaves the adopting repository",
+        "route": "/cockpit/objects/issue/i4251",
+        "source": ".ai/repo/project/issues/I4251.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every relative link in every Markdown file capture install writes resolves inside the repository",
+            "Every relative link of every mod under share/mods stays inside the mod's directory",
+            "The case fails on master's brief README and on a mod copy with an escaping link"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "share/mods/claude-code/majordomus-brief/README.md links `../../../../docs/BRIEF.md`.",
+          "depends_on": [],
+          "desired_state": "The README links https://majordomus.dev/docs/brief/; case 4251 refuses any packaged or installed mod link that leaves its root.",
+          "evidence_required": [
+            "case_mod_links_stay_inside"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4251.yaml",
+            "share/mods/claude-code/majordomus-brief/README.md",
+            "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh"
+          ],
+          "slug": "a-mod-links-nothing-outside-the-repository",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4251_a_mod_links_nothing_outside_the_repository"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94374,6 +94410,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+        "kind": "test",
+        "label": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+        "route": "/cockpit/objects/test/test-cases-4251-a-mod-links-nothing-outside-the-repository-sh",
+        "source": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133111,6 +133154,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4251",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139641,6 +139694,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144737,8 +144795,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4016,
+      "edges": 9260,
       "acyclic": false,
       "truncated": false
     }
