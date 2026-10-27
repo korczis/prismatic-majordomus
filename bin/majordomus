@@ -44,6 +44,7 @@ usage: majordomus <command> [options]
 TASK
   start <task>         begin a scoped task under a profile
   check                is the current task consistent with policy, scope, state? (read-only)
+  scope widen <paths>  add paths to the active task's scope, keeping its id (--because)
   finish               evaluate the finish contract; refuse if unmet
 
 CONTEXT
@@ -232,6 +233,18 @@ mj_words_are_the_executables() {
   return 1
 }
 
+# mj_words_are_the_shells <command> <first word>
+#
+# The other direction: a word the shell tool answers under a command that is otherwise
+# wholly the executable's. `scope` is the executable's — the repository scope, read only —
+# and `scope widen` changes the active task's record, which only the shell tool writes
+# (I2114). Listed, because the executable's words are read from it and the shell's are not;
+# keep it to words that write the task record.
+mj_words_are_the_shells() {
+  case "$1 $2" in "scope widen") return 0 ;; esac
+  return 1
+}
+
 # mj_first_word <arguments after the command>
 #
 # The first argument that is not one of this tool's global options, into MJ_FIRST_WORD:
@@ -286,6 +299,18 @@ case "$cmd" in
     # shellcheck disable=SC1090
     . "$MJ_LIB_DIR/$cmd.sh"
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
+    ;;
+  scope)
+    # the executable's command (the repository scope, read only) but for the one word that
+    # writes the task record, which only this tool writes (mj_words_are_the_shells)
+    if ! mj_words_are_the_shells "$cmd" "$MJ_FIRST_WORD"; then
+      exec "$MJ_BIN_DIR/majordomus-cli" "$cmd" "$@"
+    fi
+    mj_parse_global_opts "$@"
+    mj_tmp_root_init
+    # shellcheck source=../lib/scope.sh
+    . "$MJ_LIB_DIR/scope.sh"
+    mj_cmd_scope "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
     ;;
   *)
     # the other program's command: run it through the launcher, which finds the shipped

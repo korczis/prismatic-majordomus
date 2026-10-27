@@ -29,6 +29,14 @@ events:
     requires: [task_id, profile, owner, scope]
     public: true
 
+  - id: task.scope_widened
+    title: Task scope widened
+    summary: Paths were added to the active task's scope, which kept its id.
+    emitted_by: scope
+    requires: [task_id, scope, widened_by, because]
+    public: true
+    note: "Written by `scope widen` (I2114). scope holds only the paths this widening added, space-separated; the task's whole scope is task.started's scope plus every widening after it. widened_by is not by, because by is an envelope key."
+
   - id: task.checkpoint
     title: Checkpoint recorded
     summary: Progress was recorded in this episode, against the task it carries when it carries one.

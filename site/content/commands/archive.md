@@ -1,7 +1,7 @@
 +++
 title = "majordomus archive"
 description = "Take a snapshot of the tracked tree that can be read, or checked, somewhere else."
-weight = 30
+weight = 31
 [extra]
 name = "archive"
 source = "docs/CLI.md"

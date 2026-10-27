@@ -1,7 +1,7 @@
 +++
 title = "majordomus prompt"
 description = "List, show and render the repository's own prompt assets, substituting known tokens only."
-weight = 14
+weight = 15
 [extra]
 name = "prompt"
 source = "docs/CLI.md"

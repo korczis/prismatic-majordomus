@@ -199,6 +199,24 @@ commands:
     demo: handover-transfer
     note: Resolution is scoped to this worktree and branch and reports absence rather than returning a stale match from elsewhere. The body carries the sections the policy requires and no transcript. --derive composes those sections from the task record, the ledger, git and the open questions, so the record exists whether or not a worker writes one.
 
+  - id: scope
+    title: scope widen
+    summary: Add paths to the active task's scope, keeping its id, and say who widened it and why.
+    category: task
+    stage: work
+    visibility: public
+    class: state-mutating
+    requires_repository: true
+    requires_installed: true
+    requires_task: required
+    json: false
+    syntax: majordomus scope widen <path>[,<path>...] --because "<reason>" [--by <who>]
+    reads: [.ai/repo/policy.yaml, .ai/local/state/current.yaml, git worktree list]
+    writes: [.ai/local/state/current.yaml, .ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12]
+    demo: scope-widen
+    note: "I2114. The paths are admitted by the rule start uses; a path the scope already contains is left out and a call that adds nothing writes nothing. The record keeps who widened the scope, when and why; the ledger keeps every widening as task.scope_widened. Nothing is ever narrowed. On a running mesh the task's claim is renewed over the whole scope. Every other word under `majordomus scope` is the executable's repository scope, read only; the launcher hands `widen` alone to this tool."
+
   - id: check
     title: check
     summary: Is the current task still consistent with its policy, its scope and this checkout?

@@ -2204,6 +2204,13 @@
         "external": true
       },
       {
+        "id": "command:scope",
+        "kind": "command",
+        "label": "scope",
+        "summary": "named by the layer; not an object of this index",
+        "external": true
+      },
+      {
         "id": "command:search",
         "kind": "command",
         "label": "search",
@@ -14988,6 +14995,42 @@
         }
       },
       {
+        "id": "majordomus://command/scope",
+        "kind": "command",
+        "label": "scope",
+        "summary": "scope widen",
+        "route": "/cockpit/objects/command/scope",
+        "source": "share/commands.yaml",
+        "facts": {
+          "category": "task",
+          "class": "state-mutating",
+          "demo": "scope-widen",
+          "exit_codes": [
+            "0",
+            "2",
+            "10",
+            "12"
+          ],
+          "json": false,
+          "reads": [
+            ".ai/repo/policy.yaml",
+            ".ai/local/state/current.yaml",
+            "git worktree list"
+          ],
+          "requires_installed": true,
+          "requires_repository": true,
+          "requires_task": "required",
+          "stage": "work",
+          "summary": "Add paths to the active task's scope, keeping its id, and say who widened it and why.",
+          "syntax": "majordomus scope widen <path>[,<path>...] --because \"<reason>\" [--by <who>]",
+          "visibility": "public",
+          "writes": [
+            ".ai/local/state/current.yaml",
+            ".ai/local/state/ledger.jsonl"
+          ]
+        }
+      },
+      {
         "id": "majordomus://command/search",
         "kind": "command",
         "label": "search",
@@ -21859,6 +21902,13 @@
         "label": "lib/rust_bin.sh",
         "route": "/cockpit/objects/implementation/lib-rust-bin-sh",
         "source": "lib/rust_bin.sh"
+      },
+      {
+        "id": "majordomus://implementation/lib/scope.sh",
+        "kind": "implementation",
+        "label": "lib/scope.sh",
+        "route": "/cockpit/objects/implementation/lib-scope-sh",
+        "source": "lib/scope.sh"
       },
       {
         "id": "majordomus://implementation/lib/search.sh",
@@ -92353,6 +92403,13 @@
         "source": "test/cases/210_session_context_is_derived.sh"
       },
       {
+        "id": "majordomus://test/test/cases/2114_a_task_scope_is_widened_in_place.sh",
+        "kind": "test",
+        "label": "test/cases/2114_a_task_scope_is_widened_in_place.sh",
+        "route": "/cockpit/objects/test/test-cases-2114-a-task-scope-is-widened-in-place-sh",
+        "source": "test/cases/2114_a_task_scope_is_widened_in_place.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/21_decision_question.sh",
         "kind": "test",
         "label": "test/cases/21_decision_question.sh",
@@ -97992,6 +98049,42 @@
           ],
           "target": "guaranteed",
           "weight": 3
+        }
+      },
+      {
+        "id": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "kind": "use-case",
+        "label": "widen-a-scope-the-work-outgrew",
+        "summary": "Widen a scope the work outgrew, and say why",
+        "route": "/cockpit/objects/use-case/widen-a-scope-the-work-outgrew",
+        "source": ".ai/repo/use-cases/widen-a-scope-the-work-outgrew.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "agent",
+            "operator"
+          ],
+          "category": "completion",
+          "claims": [
+            "scoped-task",
+            "scope-enforcement"
+          ],
+          "commands": [
+            "scope",
+            "check"
+          ],
+          "difficulty": "basic",
+          "doctrines": [
+            "majordomus.scope-integrity",
+            "majordomus.state-consistency"
+          ],
+          "responsibilities": [
+            "scope",
+            "state"
+          ],
+          "summary": "A change lands outside the scope the task claimed; widen the scope with a reason instead of closing the task, and see check accept the change under the same task id.",
+          "target": "guaranteed",
+          "weight": 83
         }
       },
       {
@@ -115066,6 +115159,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://command/scope",
+        "target": "kind:command",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://command/search",
         "target": "kind:command",
         "kind": "is_a"
@@ -117962,6 +118060,11 @@
       },
       {
         "source": "majordomus://implementation/lib/rust_bin.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/scope.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -138196,6 +138299,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/2114_a_task_scope_is_widened_in_place.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/21_decision_question.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -143561,6 +143669,41 @@
         "kind": "exercises"
       },
       {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "command:check",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "command:scope",
+        "kind": "runs"
+      },
+      {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "majordomus://claim/scope-enforcement",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "majordomus://claim/scoped-task",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "majordomus://rule/majordomus.scope-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/widen-a-scope-the-work-outgrew",
+        "target": "majordomus://rule/majordomus.state-consistency@1",
+        "kind": "exercises"
+      },
+      {
         "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
         "target": "capability:worktree.inspect",
         "kind": "exercises"
@@ -144737,8 +144880,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4014,
-      "edges": 9257,
+      "nodes": 4019,
+      "edges": 9267,
       "acyclic": false,
       "truncated": false
     }

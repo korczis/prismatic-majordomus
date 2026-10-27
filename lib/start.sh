@@ -78,21 +78,8 @@ H
   fi
 
   # normalise scope
-  local raw p norm="" IFS_save="$IFS"; IFS=','
-  for raw in $scope; do
-    IFS="$IFS_save"
-    raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
-    [ -n "$raw" ] || { IFS=','; continue; }
-    # The record holds the scope as words, so an entry holding whitespace would be recorded
-    # as each of its words: on 2026-10-15 a pasted prompt became some 270 "paths", a lone
-    # `/` among them, and `context` refused the worktree from then on (I2760).
-    case "$raw" in *[[:space:]]*)
-      mj_die "$MJ_EX_USAGE" "start: scope entry '$raw' holds whitespace; a scope is repository paths separated by commas, and a path holding a space is scoped by its directory" ;;
-    esac
-    p="$(mj_norm_path "$raw")" || mj_die "$MJ_EX_USAGE" "start: scope path '$raw' is empty, absolute, or escapes the repository"
-    mj_ctxd_judge "$p" || mj_die "$MJ_EX_USAGE" "start: scope entry '$raw' is refused by context: $MJ_CTXD_REFUSAL"
-    norm="$norm $p"; IFS=','
-  done; IFS="$IFS_save"
+  local p norm IFS_save="$IFS"
+  mj_scope_normalise start "$scope"; norm="$MJ_SCOPE_NORM"
 
   # The obligations this task owes. Validated here against the shipped vocabulary rather
   # than at `evidence` time, because a token misspelt at `start` would otherwise sit in the
@@ -176,6 +163,33 @@ H
       "majordomus handover --resolve"
   fi
   printf 'next: majordomus context; checkpoint every %s; majordomus check before claiming anything\n' "$(mj_pro checkpoint_interval)"
+}
+
+# mj_scope_normalise <command> <comma-separated entries>
+#
+# The scope entries as the record holds them, into MJ_SCOPE_NORM (space-led, one path per
+# word). Every entry is trimmed, normalised and judged by context; one that cannot be is a
+# usage error named after <command>. `start` and `scope widen` admit a path by the same rule,
+# so a widened scope can hold nothing a started one could not.
+mj_scope_normalise() {
+  local cmd="$1" entries="$2" raw p IFS_save="$IFS"
+  MJ_SCOPE_NORM=""
+  IFS=','
+  for raw in $entries; do
+    IFS="$IFS_save"
+    raw="$(printf '%s' "$raw" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+    [ -n "$raw" ] || { IFS=','; continue; }
+    # The record holds the scope as words, so an entry holding whitespace would be recorded
+    # as each of its words: on 2026-10-15 a pasted prompt became some 270 "paths", a lone
+    # `/` among them, and `context` refused the worktree from then on (I2760).
+    case "$raw" in *[[:space:]]*)
+      mj_die "$MJ_EX_USAGE" "$cmd: scope entry '$raw' holds whitespace; a scope is repository paths separated by commas, and a path holding a space is scoped by its directory" ;;
+    esac
+    p="$(mj_norm_path "$raw")" || mj_die "$MJ_EX_USAGE" "$cmd: scope path '$raw' is empty, absolute, or escapes the repository"
+    mj_ctxd_judge "$p" || mj_die "$MJ_EX_USAGE" "$cmd: scope entry '$raw' is refused by context: $MJ_CTXD_REFUSAL"
+    MJ_SCOPE_NORM="$MJ_SCOPE_NORM $p"; IFS=','
+  done; IFS="$IFS_save"
+  return 0
 }
 
 # report claims in other worktrees that contain or are contained by our scope
