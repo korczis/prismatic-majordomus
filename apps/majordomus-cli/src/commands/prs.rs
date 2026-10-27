@@ -1244,29 +1244,29 @@ mod tests {
 
     use super::*;
 
-    /// On 2026-10-27 progresus-isir's line said `prs 23 open` from an observation 101 minutes
-    /// old, the forge having reported main at d62c13a while this clone's main was 0f43708 and
-    /// GitHub held 4 open (I4251). The line says so now.
+    /// On 2026-10-27 an adopter repository's line said `prs 23 open` from an observation 101
+    /// minutes old, the forge having reported main at one head while this clone's main was at
+    /// another and GitHub held 4 open (I4251). The line says so now.
     #[test]
     fn a_line_from_an_observation_the_trunk_has_moved_past_says_it_is_stale() {
-        let d62 = "d62c13af84aa";
-        let f43 = "0f43708aa1bb";
+        let reported = "9f8e7d6c5b4a";
+        let local = "7a7b7c7d7e7f";
         assert_eq!(
-            stale_note("main", d62, Some(f43)).as_deref(),
-            Some("STALE: the forge reported main at d62c13af84, this clone's is 0f43708aa1: majordomus prs refresh")
+            stale_note("main", reported, Some(local)).as_deref(),
+            Some("STALE: the forge reported main at 9f8e7d6c5b, this clone's is 7a7b7c7d7e: majordomus prs refresh")
         );
         assert_eq!(
-            stale_note("main", d62, Some(d62)),
+            stale_note("main", reported, Some(reported)),
             None,
             "the same head is current"
         );
         assert_eq!(
-            stale_note("main", d62, None),
+            stale_note("main", reported, None),
             None,
             "no origin/main is not evidence"
         );
         assert_eq!(
-            stale_note("main", "", Some(f43)),
+            stale_note("main", "", Some(local)),
             None,
             "nor is no reported head"
         );

@@ -1148,7 +1148,7 @@ impl Bridge {
     /// session. The heartbeat re-opens it at once with the client's own initialize and
     /// replays every announcement ([`Bridge::reinitialize`]). Before I4251 the 404 was taken
     /// for a pong, so an idle client stayed off the new server's board until it next sent a
-    /// message. On 2026-10-27 two progresus-isir sessions were missing from the board for
+    /// message. On 2026-10-27 two sessions of an adopter repository were missing from the board for
     /// hours after a restart, and they worked on the same pull requests without seeing each
     /// other. A session that a failed re-attach left without an id is opened again on the
     /// next beat. A client that never initialized has nothing to keep.
@@ -1571,8 +1571,8 @@ mod tests {
     /// A server that restarted at the same address forgets the session and answers the next
     /// ping 404. The heartbeat re-attaches on that beat, with the client's own initialize and
     /// its announcement, so that an idle client is back on the board without sending a
-    /// message. Before I4251 the 404 counted as a pong; two progresus-isir sessions stayed off
-    /// the board for hours after a restart on 2026-10-27.
+    /// message. Before I4251 the 404 counted as a pong; two sessions of an adopter repository
+    /// stayed off the board for hours after a restart on 2026-10-27.
     #[test]
     fn a_heartbeat_the_server_forgot_reattaches_and_replays_the_announcement() {
         let answer = r#"{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18"}}"#;

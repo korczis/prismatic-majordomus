@@ -174,7 +174,7 @@ a message. Its heartbeat pinged every 20 s, but `Bridge::heartbeat` took the res
 server's 404 (session unknown) for a pong, and `commands/mcp.rs` logged every other heartbeat
 failure at debug and went on. A client that was idle, which is what a session working
 outside Majordomus's tools is, stayed off the new server's board until its next tool call. On
-2026-10-27 two progresus-isir sessions were missing from the board for hours after a restart
+2026-10-27 two sessions of an adopter repository were missing from the board for hours after a restart
 at about 09:30Z, and they worked on the same pull requests without seeing each other
 (I4251).
 

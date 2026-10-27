@@ -157,8 +157,8 @@ checks that what `capture install` writes is the change-aware module.
 
 ## Amended on 2026-10-27: every word of the line is current
 
-The same day the owner read progresus-isir's line as
-`t-20261013093834-17f1 @main | peers 1/28b | mesh 0/0 +4 for you | prs 23 open | release ?`
+The same day the owner read an adopter repository's line as
+`<a finished task> @main | peers 1/<n>b | mesh 0/0 +4 for you | prs <n> open | release ?`
 and found four of its words false. Issue I4251 carries the correction.
 
 1. **Only a running task is the session's task.** `current.yaml` keeps the last task after it

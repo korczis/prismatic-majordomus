@@ -1337,9 +1337,9 @@ mod tests {
     #[test]
     fn the_prs_words_of_a_stale_observation_say_so_with_its_age() {
         let at = crate::peers::epoch_seconds("2026-10-27T10:10:51Z").expect("an instant");
-        let stale = "main at d62c13af84 observed 101 min ago (2026-10-27T10:10:51Z): 23 open — \
+        let stale = "main at 9f8e7d6c5b observed 101 min ago (2026-10-27T10:10:51Z): 23 open — \
                      held 6, waiting 11; nothing ready; STALE: the forge reported main at \
-                     d62c13af84, this clone's is 0f43708aa1: majordomus prs refresh; lease free";
+                     9f8e7d6c5b, this clone's is 7a7b7c7d7e: majordomus prs refresh; lease free";
         assert_eq!(prs_words_at(stale, at + 101 * 60), "23 open (stale 101m)");
         assert_eq!(prs_words_at(stale, at + 5 * 3600), "23 open (stale 5h)");
         assert_eq!(prs_words_at(stale, at + 3 * 86_400), "23 open (stale 3d)");
@@ -1625,8 +1625,8 @@ mod tests {
     }
 
     /// `current.yaml` keeps the last task after it finished. On 2026-10-27 the brief of
-    /// progresus-isir showed `t-20261013093834-17f1`, finished `partial` fourteen days
-    /// earlier, as the session's task (I4251).
+    /// an adopter repository showed a task that had finished `partial` fourteen days
+    /// earlier as the session's task (I4251).
     #[test]
     fn a_task_that_is_not_running_is_not_the_sessions_task() {
         let repo = SyntheticRepository::small().expect("a repository");
@@ -2255,7 +2255,7 @@ mod tests {
     }
 
     /// One session's subagents claim in several worktrees, so this runtime's own claims meet
-    /// each other. On 2026-10-27 progresus-isir's line said `mesh 0/0 +4 for you` for such
+    /// each other. On 2026-10-27 an adopter repository's line said `mesh 0/0 +4 for you` for such
     /// overlaps, while `check --overlap` found none (I4251). They are not news to this
     /// runtime; a claim of another runtime that meets one of them is.
     #[test]

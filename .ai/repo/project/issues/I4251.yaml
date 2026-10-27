@@ -6,7 +6,7 @@ priority: p1
 profile: implementation
 parallel_safe: true
 objective: "Make every word of the brief's one line current: show a task only while it runs, mark the integration count stale when the clone's trunk has moved past what the forge reported, count an overlap for this runtime only when another runtime's claim is on the other side, and keep a bridged MCP client attached through a server restart without waiting for its next message."
-why: "On 2026-10-27 progresus-isir's status line read `t-20261013093834-17f1 @main | peers 1/28b | mesh 0/0 +4 for you | prs 23 open | release ?`. The task had finished `partial` fourteen days earlier. `prs 23 open` came from an observation 101 minutes old, while `prs status` said the forge's main was d62c13a, this clone's was 0f43708, and GitHub held 4 open. `+4 for you` counted overlaps among this runtime's own claims, and `check --overlap` found none. Two live Claude sessions were missing from the board after the shared server restarted at about 09:30Z; they worked on the same pull requests and had to coordinate by hand."
+why: "On 2026-10-27 an adopter repository's status line read `<a finished task> @main | peers 1/<n>b | mesh 0/0 +4 for you | prs <n> open | release ?`. The task had finished `partial` fourteen days earlier. `prs 23 open` came from an observation 101 minutes old, while `prs status` said the forge's main was 9f8e7d6, this clone's was 7a7b7c7, and GitHub held 4 open. `+4 for you` counted overlaps among this runtime's own claims, and `check --overlap` found none. Two live Claude sessions were missing from the board after the shared server restarted at about 09:30Z; they worked on the same pull requests and had to coordinate by hand."
 current_state: "On 23be6be6303 (stacked on #2599): brief.rs session_section takes continuity's task whatever its outcome. commands/prs.rs brief() prints the queue's tallies without comparing the forge's reported base head with origin/<base>. brief.rs mesh_section counts an overlap when either side is this runtime's. mcp/bridge.rs heartbeat() maps a 404 (session forgotten) to Ok, and commands/mcp.rs re-attaches only inside handle(), on a client message."
 desired_state: "Unit tests fail without each fix: a_task_that_is_not_running_is_not_the_sessions_task, a_line_from_an_observation_the_trunk_has_moved_past_says_it_is_stale, the_prs_words_of_a_stale_observation_say_so_with_its_age, an_overlap_among_this_runtimes_own_claims_is_not_for_it, a_heartbeat_the_server_forgot_reattaches_and_replays_the_announcement, a_heartbeat_without_a_session_opens_one_and_without_an_initialize_sends_nothing, a_bridge_follows_the_server_to_its_new_address."
 scope:
@@ -20,7 +20,7 @@ scope:
   - "docs/BRIEF.md"
   - "docs/MCP.md"
 non_scope:
-  - "Removing any worktree: the 28 boards of progresus-isir are reported, not pruned"
+  - "Removing any worktree: the adopter's worktree boards are reported, not pruned"
   - "Bridges of the release installed before this change: they re-attach only after their client restarts"
   - "Refreshing the forge observation from the brief: the brief reads no forge (ADR 0136)"
 acceptance_criteria:
