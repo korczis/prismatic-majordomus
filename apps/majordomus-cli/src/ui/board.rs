@@ -458,6 +458,7 @@ pub fn panel_view(ctx: &Context) -> View {
 /// One card's facts, read from the three answers and joined by the issue id.
 #[derive(Debug, Clone)]
 struct Card {
+    lane: Lane,
     id: String,
     title: String,
     milestone: String,
@@ -466,6 +467,30 @@ struct Card {
     status: String,
     delivery: Value,
     carriers: Vec<Avatar>,
+}
+
+/// A column's order, stated once: an open column puts the carried cards first, then the plan's
+/// priority, wave and id; the landed one puts the newest merge first.
+impl crate::order::Ordered for Card {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let key = crate::order::OrderKey::plain(&self.id, &self.id);
+        match self.lane {
+            // an ISO 8601 time read as its digits grows with the time it names
+            Lane::Landed => key.descending(
+                merged_at(&self.delivery)
+                    .chars()
+                    .filter(char::is_ascii_digit)
+                    .collect::<String>()
+                    .parse()
+                    .unwrap_or(0),
+            ),
+            _ => key.ranked(
+                i64::from(u8::from(self.carriers.is_empty())) * 10_000_000_000
+                    + i64::from(priority_rank(&self.priority)) * 1_000_000_000
+                    + i64::try_from(self.wave.min(999_999_999)).unwrap_or(999_999_999),
+            ),
+        }
+    }
 }
 
 fn priority_rank(p: &str) -> u8 {
@@ -502,6 +527,7 @@ fn columns(delivery: &Answer, issues: &Answer, board: &Answer) -> El {
                 continue;
             };
             lanes.entry(lane).or_default().push(Card {
+                lane,
                 title: text(&d, "title"),
                 milestone: text(&d, "milestone"),
                 priority: field("priority"),
@@ -515,21 +541,8 @@ fn columns(delivery: &Answer, issues: &Answer, board: &Answer) -> El {
                 id,
             });
         }
-        for (lane, cards) in lanes.iter_mut() {
-            match lane {
-                Lane::Landed => cards.sort_by(|a, b| {
-                    merged_at(&b.delivery)
-                        .cmp(&merged_at(&a.delivery))
-                        .then_with(|| a.id.cmp(&b.id))
-                }),
-                _ => cards.sort_by(|a, b| {
-                    (b.carriers.len().min(1))
-                        .cmp(&a.carriers.len().min(1))
-                        .then_with(|| priority_rank(&a.priority).cmp(&priority_rank(&b.priority)))
-                        .then_with(|| a.wave.cmp(&b.wave))
-                        .then_with(|| a.id.cmp(&b.id))
-                }),
-            }
+        for cards in lanes.values_mut() {
+            crate::order::canonical(cards);
         }
         // a column a source could have filled, when that source was not read, says so rather
         // than reading as empty: an unobserved forge is not "nothing in review"
