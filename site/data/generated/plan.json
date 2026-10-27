@@ -66629,7 +66629,12 @@
         "lib/rules.sh",
         "lib/doctor.sh",
         "share/allow/rule.txt",
+        "share/schemas/majordomus/rule/rule.v1.proto",
+        "apps/majordomus-cli/src/rules",
+        "apps/majordomus-cli/src/capability/builtin/rules.rs",
+        "test/cases/125_rule_proof.sh",
         "docs/DOCTRINE.md",
+        "docs/SURFACES.md",
         "test/cases/4255_a_project_rule_runs_its_command.sh"
       ],
       "non_scope": [],
@@ -66638,8 +66643,9 @@
       "current_state": "Only the tool's own validators can back a rule; a project rule is documentation.",
       "desired_state": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
       "acceptance_criteria": [
-        "A project rule with a command validator is reported enforced and fails doctor when the command fails",
-        "A command that does not exist is a wiring failure naming the rule"
+        "A project rule naming a declared policy enforcement entry is listed as enforced by it",
+        "A rule naming an entry the policy does not declare fails doctor naming the rule",
+        "A rule naming both a validator and an entry is refused"
       ],
       "validation": [
         "bash test/run.sh 4255_a_project_rule_runs_its_command"
@@ -72904,7 +72910,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1201",
-      "message": "shares share/allow with I4255; they may not run concurrently"
+      "message": "shares share/schemas with I4255; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -75058,7 +75064,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares lib/doctor.sh with I4255; they may not run concurrently"
+      "message": "shares share/schemas with I4255; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -85203,6 +85209,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I2690",
+      "message": "shares apps/majordomus-cli/src/capability/builtin/ with I4255; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I2694",
       "message": "shares apps/majordomus-cli/src/capability/builtin/knowledge_base.rs with I2720; they may not run concurrently"
     },
@@ -87736,7 +87748,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I2720",
-      "message": "shares test/cases with I4255; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -108447,6 +108459,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3087",
+      "message": "shares docs/SURFACES.md with I4255; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3089",
       "message": "shares .ai/repo/automation/README.md with I3155; they may not run concurrently"
     },
@@ -108609,6 +108627,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3110",
+      "message": "shares apps/majordomus-cli/src/rules with I4255; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3113",
       "message": "shares docs/CLAIMS.yaml with I3118; they may not run concurrently"
     },
@@ -108748,7 +108772,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3115",
-      "message": "shares docs/DOCTRINE.md with I4255; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/rules with I4255; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -113152,7 +113176,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I3607",
-      "message": "shares test/cases with I4255; they may not run concurrently"
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -115131,6 +115155,18 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I4002",
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I4006",
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I4255; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I4203",
       "message": "shares .github/workflows/validate.yml with I4223; they may not run concurrently"
     },
@@ -115217,7 +115253,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 7169,
+      "count": 7174,
       "examples": [
         {
           "level": "WARN",

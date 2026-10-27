@@ -14,12 +14,18 @@ scope:
   - "lib/rules.sh"
   - "lib/doctor.sh"
   - "share/allow/rule.txt"
+  - "share/schemas/majordomus/rule/rule.v1.proto"
+  - "apps/majordomus-cli/src/rules"
+  - "apps/majordomus-cli/src/capability/builtin/rules.rs"
+  - "test/cases/125_rule_proof.sh"
   - "docs/DOCTRINE.md"
+  - "docs/SURFACES.md"
   - "test/cases/4255_a_project_rule_runs_its_command.sh"
 depends_on: []
 acceptance_criteria:
-  - "A project rule with a command validator is reported enforced and fails doctor when the command fails"
-  - "A command that does not exist is a wiring failure naming the rule"
+  - "A project rule naming a declared policy enforcement entry is listed as enforced by it"
+  - "A rule naming an entry the policy does not declare fails doctor naming the rule"
+  - "A rule naming both a validator and an entry is refused"
 validation:
   - "bash test/run.sh 4255_a_project_rule_runs_its_command"
 evidence_required:
