@@ -13761,7 +13761,7 @@ capabilities:
     module: distribution
     kind: query
     title: This build
-    description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git."
+    description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git — and the facts of the platform hosting it (application, region, Machine, image), each read from the environment by name from a fixed allowlist and null when absent. No other environment variable is read, so a token or secret the platform injects cannot reach the answer."
     input:
       name: Empty
       schema:
@@ -13791,13 +13791,62 @@ capabilities:
               - string
               - "null"
             description: "The target of the model this build matches, when the model declares one for the triple."
+          platform:
+            "$ref": "#/$defs/Platform"
+            description: "The facts of the platform hosting this process, each read by name from the\nallowlist in `platform.rs` and `null` when it is not set; nothing else in the\nenvironment is read, so no other variable can appear here."
         required:
           - version
           - target
           - profile
           - commit
+          - platform
         description: "What this executable is: enough to tell two builds apart without asking a repository."
         title: BuildReport
+        "$defs":
+          Platform:
+            type: object
+            properties:
+              fly_app_name:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_APP_NAME`: the application the Machine belongs to."
+              fly_region:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_REGION`: the region the Machine runs in."
+              primary_region:
+                type:
+                  - string
+                  - "null"
+                description: "`PRIMARY_REGION`: the region the application declares as its primary."
+              fly_machine_id:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_MACHINE_ID`: the Machine's own id."
+              fly_machine_version:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_MACHINE_VERSION`: the version of the Machine's configuration."
+              fly_image_ref:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_IMAGE_REF`: the image the Machine was started from, which is what says that\nthe deployed image is the one that was built."
+              fly_process_group:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_PROCESS_GROUP`: the process group the Machine runs."
+              fly_vm_memory_mb:
+                type:
+                  - string
+                  - "null"
+                description: "`FLY_VM_MEMORY_MB`: the memory the Machine was given, in megabytes."
+            description: "The facts of the hosting platform, each read from the one variable its field\nnames and `null` when that variable is unset or empty. Nothing outside these\nfields is read from the environment."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::distribution

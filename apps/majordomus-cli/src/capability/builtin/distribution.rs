@@ -118,6 +118,10 @@ pub struct BuildReport {
     pub commit: String,
     /// The target of the model this build matches, when the model declares one for the triple.
     pub distribution_target: Option<String>,
+    /// The facts of the platform hosting this process, each read by name from the
+    /// allowlist in `platform.rs` and `null` when it is not set; nothing else in the
+    /// environment is read, so no other variable can appear here.
+    pub platform: crate::platform::Platform,
 }
 
 /// Which artifact a target and a tag name.
@@ -312,6 +316,7 @@ fn build(ctx: &Context, _: Empty) -> Result<BuildReport, CapabilityError> {
         profile: crate::PROFILE.to_string(),
         commit: crate::COMMIT.to_string(),
         distribution_target,
+        platform: crate::platform::Platform::from_env(),
     })
 }
 
@@ -585,7 +590,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "distribution.build",
                 title: "This build",
-                description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git.",
+                description: "What this executable is: the version of the crate it was built from, the Rust target triple, the profile, and the commit — all compiled in at build time, so an installed binary answers without a repository, a toolchain or git — and the facts of the platform hosting it (application, region, Machine, image), each read from the environment by name from a fixed allowlist and null when absent. No other environment variable is read, so a token or secret the platform injects cannot reach the answer.",
                 input: Empty,
                 output: BuildReport,
                 stability: Stability::BehaviorallyVerified,

@@ -7,7 +7,7 @@ profile: implementation
 parallel_safe: true
 objective: "Expose the version, revision, build profile, target and the safe platform facts of a hosted process through the existing metadata surface, with every field explicitly allowlisted."
 why: "Verifying that the deployed image is the one that was built requires the running process to say which revision it is. Doing that by reflecting the environment would publish whatever the platform happens to inject, including things that must never leave the Machine."
-current_state: "about.rs carries the executable's own description. Nothing reports the build revision or any platform fact, because nothing is deployed."
+current_state: "distribution.build reports the version, target triple, profile and commit that build.rs compiles in (apps/majordomus-cli/src/lib.rs VERSION, TARGET, PROFILE, COMMIT); health.live and health.ready report version, commit and dirty. Beside them distribution.build now reports platform: the Fly Machine facts read by name from the allowlist in apps/majordomus-cli/src/platform.rs, null when absent, and no other environment variable. Measured 2026-10-27."
 desired_state: "One metadata read reports an allowlisted set of build and platform fields, and a test proves that a value outside the allowlist cannot reach it."
 scope:
   - apps/majordomus-cli/src/about.rs
@@ -31,4 +31,32 @@ evidence_required:
   - redaction_test
 risk: "A build timestamp defeats reproducibility. It is included only if the reproducibility decision in I0910 permits it."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-27T15:52:16Z
+started_at: 2026-10-27T15:20:43Z
+started_event: sha256:675c2f3786e497fe2889fd684730d324850e004fce103776a94cb95e825e9451
+verified_at: 2026-10-27T15:51:38Z
+verified_event: sha256:177249a98d148fe651a09f394c31a3cfb9e7575edeea9c88cf801df78ff970c3
+completed_at: 2026-10-27T15:52:16Z
+completed_event: sha256:b465e17da69ebe2bae0553e63250c2e9a8d035d2e020b7274194b28354890efe
+evidence:
+  - covers: metadata_allowlisted
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- platform:: capability::builtin::distribution"
+    result: "test result: ok. 6 passed; 0 failed -- incl. only_the_allowlisted_names_are_asked_for_once_each_in_order and the_answer_has_one_field_per_allowlisted_name_and_no_other (src/platform.rs); run 2026-10-27 at d561748e79c9"
+    artifact: "apps/majordomus-cli/src/platform.rs"
+    commit: d561748e79c982f77b4cc34cda5943abd0e4e287
+    recorded_at: 2026-10-27T15:51:53Z
+  - covers: fly_platform_fields
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test cli -- the_build_reports_allowlisted_platform_facts_and_no_other_variable"
+    result: "test result: ok. 1 passed; 0 failed -- the executable started with FLY_APP_NAME, FLY_REGION, FLY_IMAGE_REF answers them under distribution build's platform field, an unset FLY_MACHINE_ID as null; run 2026-10-27 at d561748e79c9"
+    artifact: "apps/majordomus-cli/tests/cli.rs"
+    commit: d561748e79c982f77b4cc34cda5943abd0e4e287
+    recorded_at: 2026-10-27T15:52:00Z
+  - covers: redaction_test
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib -- platform::tests::a_variable_outside_the_allowlist_never_reaches_the_answer"
+    result: "ok -- with every name set, no value of FLY_API_TOKEN, FLY_ACCESS_TOKEN, SECRET_KEY_BASE, SESSION_SECRET, AWS_SECRET_ACCESS_KEY, DATABASE_URL and others reaches the answer; the cli test proves the same for both output formats of the running executable; run 2026-10-27 at d561748e79c9"
+    artifact: "apps/majordomus-cli/src/platform.rs"
+    commit: d561748e79c982f77b4cc34cda5943abd0e4e287
+    recorded_at: 2026-10-27T15:52:08Z
