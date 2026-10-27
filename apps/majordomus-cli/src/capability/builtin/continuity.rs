@@ -633,6 +633,13 @@ fn section(path: &Path, want: &str) -> String {
     out.join("\n")
 }
 
+#[cfg(test)]
+thread_local! {
+    /// Tests only: how many times this thread asked `git` for a record's ancestry. A
+    /// resolution asks once, for the record it chose, however many the store holds.
+    static ANCESTRY_ASKED: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
 /// Compare a record's commit with this checkout's, the same way the shell tool does: by
 /// ancestry, not by equality of timestamps. `git` being unavailable yields `Unknown`, which
 /// is the honest answer and not `Exact`.
@@ -646,6 +653,8 @@ pub(crate) fn divergence(root: &Path, theirs: &str, ours: Option<&str>) -> Diver
     if theirs.is_empty() {
         return Divergence::Unknown;
     }
+    #[cfg(test)]
+    ANCESTRY_ASKED.with(|n| n.set(n.get() + 1));
     match git::is_ancestor(root, theirs, ours) {
         Some(true) => Divergence::Advanced,
         Some(false) => Divergence::Diverged,
@@ -689,7 +698,11 @@ fn resolve(
         return (None, 0);
     };
     let worktree = root.to_string_lossy().to_string();
-    let mut best: Option<(u8, String, Record)> = None;
+    // The walk chooses by tier and asserted time alone, which every candidate's front matter
+    // carries; what costs — the ancestry `git` answers, the body's section — is asked of the
+    // one record chosen. Asked of every candidate it was a `git` process per record of the
+    // branch: 352 on master, 59 s a call under load (I4243).
+    let mut best: Option<(u8, String, PathBuf, BTreeMap<String, String>)> = None;
     let mut skipped = 0usize;
 
     let mut paths: Vec<PathBuf> = entries
@@ -705,7 +718,7 @@ fn resolve(
             skipped += 1;
             continue;
         };
-        let (Some(created), Some(rhead)) = (f.get("created_at"), f.get("head")) else {
+        let (Some(created), Some(_)) = (f.get("created_at"), f.get("head")) else {
             skipped += 1;
             continue;
         };
@@ -713,8 +726,8 @@ fn resolve(
             skipped += 1;
             continue;
         }
-        let rbranch = f.get("branch").cloned().unwrap_or_default();
-        let rworktree = f.get("worktree").cloned().unwrap_or_default();
+        let rbranch = f.get("branch").map(String::as_str).unwrap_or_default();
+        let rworktree = f.get("worktree").map(String::as_str).unwrap_or_default();
         let tier = if rworktree == worktree && rbranch == branch {
             0u8
         } else if branch != "DETACHED" && rbranch == branch {
@@ -722,57 +735,74 @@ fn resolve(
         } else {
             continue;
         };
-        let rel = path
-            .strip_prefix(root)
-            .unwrap_or(&path)
-            .to_string_lossy()
-            .to_string();
-        let record = Record {
-            path: rel,
-            created_at: created.clone(),
-            task_id: f.get("task_id").cloned().unwrap_or_else(|| "none".into()),
-            branch: rbranch,
-            head: rhead.clone(),
-            working_tree: f.get("working_tree").cloned().unwrap_or_default(),
-            matched: if tier == 0 {
-                Match::SameWorktreeSameBranch
-            } else {
-                Match::SameBranch
-            },
-            divergence: divergence(root, rhead, head),
-            freshness: Freshness::Unknown,
-            age_minutes: None,
-            freshness_reason: String::new(),
-            next_action: section(&path, "Next Action"),
-            next_action_withheld: String::new(),
-        };
-        // Judged here rather than by each surface: MCP, the HTTP API and the Cockpit all
-        // read this one value, which is the point. A record past the stale threshold keeps
-        // its path — knowing what the last worker was doing is worth having — and loses the
-        // section a reader would otherwise act on, with the reason in its place.
-        let mut record = record;
-        let (f, age, why) = thresholds.judge(&record.created_at, now);
-        record.freshness = f;
-        record.age_minutes = age;
-        record.freshness_reason = why;
-        if f.history() && !record.next_action.is_empty() {
-            record.next_action_withheld = format!(
-                "the record is {}: {}. It is history, not an instruction; read it at the path above.",
-                f.as_str(),
-                record.freshness_reason
-            );
-            record.next_action.clear();
-        }
         let key = created.clone();
         let better = match &best {
             None => true,
-            Some((btier, bkey, _)) => tier < *btier || (tier == *btier && key > *bkey),
+            Some((btier, bkey, _, _)) => tier < *btier || (tier == *btier && key > *bkey),
         };
         if better {
-            best = Some((tier, key, record));
+            best = Some((tier, key, path, f));
         }
     }
-    (best.map(|(_, _, r)| r), skipped)
+    let record =
+        best.map(|(tier, _, path, f)| judged(root, &path, tier, &f, head, thresholds, now));
+    (record, skipped)
+}
+
+/// The chosen record, read whole and judged: its ancestry against this checkout's head, its
+/// freshness, and the section a reader acts on.
+fn judged(
+    root: &Path,
+    path: &Path,
+    tier: u8,
+    f: &BTreeMap<String, String>,
+    head: Option<&str>,
+    thresholds: Thresholds,
+    now: i64,
+) -> Record {
+    let field = |k: &str| f.get(k).cloned().unwrap_or_default();
+    let rhead = field("head");
+    let rel = path
+        .strip_prefix(root)
+        .unwrap_or(path)
+        .to_string_lossy()
+        .to_string();
+    let mut record = Record {
+        path: rel,
+        created_at: field("created_at"),
+        task_id: f.get("task_id").cloned().unwrap_or_else(|| "none".into()),
+        branch: field("branch"),
+        divergence: divergence(root, &rhead, head),
+        head: rhead,
+        working_tree: field("working_tree"),
+        matched: if tier == 0 {
+            Match::SameWorktreeSameBranch
+        } else {
+            Match::SameBranch
+        },
+        freshness: Freshness::Unknown,
+        age_minutes: None,
+        freshness_reason: String::new(),
+        next_action: section(path, "Next Action"),
+        next_action_withheld: String::new(),
+    };
+    // Judged here rather than by each surface: MCP, the HTTP API and the Cockpit all
+    // read this one value, which is the point. A record past the stale threshold keeps
+    // its path — knowing what the last worker was doing is worth having — and loses the
+    // section a reader would otherwise act on, with the reason in its place.
+    let (f, age, why) = thresholds.judge(&record.created_at, now);
+    record.freshness = f;
+    record.age_minutes = age;
+    record.freshness_reason = why;
+    if f.history() && !record.next_action.is_empty() {
+        record.next_action_withheld = format!(
+            "the record is {}: {}. It is history, not an instruction; read it at the path above.",
+            f.as_str(),
+            record.freshness_reason
+        );
+        record.next_action.clear();
+    }
+    record
 }
 
 /// How many `.md` records a directory holds.
@@ -1471,6 +1501,46 @@ mod tests {
         );
         let (r, _) = resolve(repo.root(), &dir, "main", Some(&head), t, now);
         assert_eq!(r.expect("a record").next_action, "Newer");
+    }
+
+    /// Git is asked the ancestry of the one record chosen, never of every candidate: master
+    /// held 352 records of its branch, and asking each took `continuity.state` to 59 s and
+    /// the Cockpit's overview, which waits on it through the brief, to 113 s (I4243).
+    #[test]
+    fn only_the_chosen_record_is_asked_its_ancestry() {
+        let (t, now) = unjudged();
+        let repo = Repo::new();
+        let head = repo.head();
+        let root = repo.root().to_string_lossy().to_string();
+        // a commit that is not the head, so that each record would be a question for git
+        let older = "0000000000000000000000000000000000000001";
+        for day in 1..=9 {
+            repo.write(
+                &format!("h/{day}.md"),
+                &record(
+                    &format!("2026-01-0{day}T00:00:00Z"),
+                    older,
+                    "main",
+                    &root,
+                    "Go",
+                ),
+            );
+        }
+        ANCESTRY_ASKED.with(|n| n.set(0));
+        let (r, _) = resolve(
+            repo.root(),
+            &repo.root().join("h"),
+            "main",
+            Some(&head),
+            t,
+            now,
+        );
+        assert_eq!(r.expect("a record").created_at, "2026-01-09T00:00:00Z");
+        assert_eq!(
+            ANCESTRY_ASKED.with(|n| n.get()),
+            1,
+            "git was asked of every candidate"
+        );
     }
 
     /// A detached HEAD has no branch to match on, so tier 1 is unreachable: "the same
