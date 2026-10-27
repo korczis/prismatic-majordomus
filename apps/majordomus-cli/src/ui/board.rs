@@ -896,4 +896,98 @@ mod tests {
         );
         assert!(html.contains("Who carries what"), "{html}");
     }
+
+    /// Every way a card, a column and an avatar can be drawn: a column longer than it shows
+    /// says how many more; the open columns order by carried, priority, wave and id and the
+    /// landed one by when it merged; a pull request that is not a draft, a branch without one,
+    /// a merge without a pull request and a release each have their chip; a departed worker
+    /// is drawn away, a worker with no board position and no client is `?` and its key's tail;
+    /// and the graph of who carries what draws each carrier and each issue it names.
+    #[test]
+    fn every_card_column_and_avatar_is_drawn() {
+        let mut issues_in = vec![
+            serde_json::json!({ "issue": "I10", "title": "branch only", "milestone": "m",
+              "status": "READY", "stage": "branch", "branch": { "name": "feature/x" } }),
+            serde_json::json!({ "issue": "I11", "title": "open review", "milestone": "m",
+              "status": "ACTIVE", "stage": "pr_open" }),
+            serde_json::json!({ "issue": "I12", "title": "reviewed", "milestone": "m",
+              "status": "ACTIVE", "stage": "pr_open", "pr_open": { "number": 99, "draft": false } }),
+            serde_json::json!({ "issue": "I13", "title": "merged by commit", "milestone": "m",
+              "status": "DONE", "stage": "merged",
+              "merged": { "commit": "0123456789abcdef", "merged_at": "2026-10-20T10:00:00Z" } }),
+            serde_json::json!({ "issue": "I14", "title": "merged later", "milestone": "m",
+              "status": "DONE", "stage": "deployed",
+              "merged": { "commit": "fedcba9876543210", "pull_request": 8, "merged_at": "2026-10-24T10:00:00Z" },
+              "released": { "tag": "v2.0.0" } }),
+        ];
+        for n in 0..(SHOWN + 3) {
+            issues_in.push(
+                serde_json::json!({ "issue": format!("R{n:02}"), "title": format!("ready {n}"),
+              "milestone": "m", "status": "READY", "stage": "none" }),
+            );
+        }
+        let delivery = answer(DELIVERY, serde_json::json!({ "issues": issues_in }));
+        let issues = answer(
+            ISSUES,
+            serde_json::json!({ "issues": [
+                { "id": "R00", "priority": "p3", "wave": 1 },
+                { "id": "R01", "priority": "p2", "wave": 1 },
+                { "id": "R02", "priority": "p1", "wave": 3 },
+                { "id": "R03", "priority": "p1", "wave": 2 },
+                { "id": "R04", "priority": "p0", "wave": 1 },
+                { "id": "R05", "priority": "later", "wave": 1 }
+            ]}),
+        );
+        let board = answer(
+            BLACKBOARD,
+            serde_json::json!({ "workers": [
+                { "key": "mesh:aa-b7", "presence": "departed", "issue": "R05" },
+                { "key": "mesh:cc-d9", "client": "codex", "presence": "attached",
+                  "claims": [{ "issue": "I10" }, { "issue": "" }] }
+            ]}),
+        );
+        let html = columns(&delivery, &issues, &board).render();
+        for said in [
+            "2 more at this stage",
+            "/ui/prs?pr=99#pr",
+            ">#99<",
+            "feature/x",
+            ">0123456789a<",
+            "v2.0.0",
+            "mj-ui-board-avatar--away",
+            ">?b7<",
+            ">Cd9<",
+        ] {
+            assert!(html.contains(said), "{said:?} is not in {html}");
+        }
+        // the ready column: p0, p1 by wave, p2, p3, then one the plan ranks nothing for
+        let order: Vec<usize> = [
+            "card-R04", "card-R03", "card-R02", "card-R01", "card-R00", "card-R06",
+        ]
+        .iter()
+        .map(|id| {
+            html.find(id)
+                .unwrap_or_else(|| panic!("{id} is not drawn in {html}"))
+        })
+        .collect();
+        assert!(order.windows(2).all(|w| w[0] < w[1]), "{order:?} in {html}");
+        // the landed column: the later merge first
+        assert!(
+            html.find("card-I14").unwrap() < html.find("card-I13").unwrap(),
+            "{html}"
+        );
+        assert_eq!(
+            lane("pr_open", "ACTIVE", false, false),
+            Some(Lane::InReview)
+        );
+
+        let graph = carrying(&board, &carriers(&board)).render();
+        for said in ["R05", "I10", "?b7", "Cd9"] {
+            assert!(graph.contains(said), "{said:?} is not in the graph {graph}");
+        }
+        assert!(
+            !graph.contains("mesh:"),
+            "a worker's key leaked into {graph}"
+        );
+    }
 }
