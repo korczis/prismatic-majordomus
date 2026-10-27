@@ -66923,7 +66923,10 @@
       "scope": [
         ".ai/repo/project/issues/I4262.yaml",
         "lib/init.sh",
-        "share/skeleton/ai/repo/policy.yaml",
+        "share/skeleton/policy.yaml",
+        "share/schemas/majordomus/policy/policy.v1.schema.json",
+        "share/allow/policy.txt",
+        "apps/majordomus-cli/src/commit",
         "docs/COMMIT.md",
         "test/cases/4262_an_adopter_commit_is_judged.sh"
       ],
@@ -72934,7 +72937,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1201",
-      "message": "shares share/skeleton with I4262; they may not run concurrently"
+      "message": "shares share/schemas with I4262; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -75094,7 +75097,7 @@
       "level": "WARN",
       "code": "scope_conflict",
       "subject": "I1980",
-      "message": "shares share/skeleton with I4262; they may not run concurrently"
+      "message": "shares share/schemas with I4262; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -109563,6 +109566,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3162",
+      "message": "shares share/schemas/majordomus/policy/policy.v1.schema.json with I4262; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3163",
       "message": "shares lib/knowledge.sh with I3166; they may not run concurrently"
     },
@@ -109719,6 +109728,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3163",
+      "message": "shares share/schemas/majordomus/policy/policy.v1.schema.json with I4262; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3166",
       "message": "shares apps/majordomus-cli/src/devcontext with I3172; they may not run concurrently"
     },
@@ -109823,6 +109838,12 @@
       "code": "scope_conflict",
       "subject": "I3167",
       "message": "shares share/allow with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3167",
+      "message": "shares share/allow with I4262; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -115041,6 +115062,12 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I3973",
+      "message": "shares apps/majordomus-cli/src/commit/verdict.rs with I4262; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I3974",
       "message": "shares lib/adr.sh with I4264; they may not run concurrently"
     },
@@ -115055,6 +115082,12 @@
       "code": "scope_conflict",
       "subject": "I3979",
       "message": "shares scripts/github-sync with I4261; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I3979",
+      "message": "shares apps/majordomus-cli/src/commit/scopes.rs with I4262; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -115175,7 +115208,7 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
-      "count": 7163,
+      "count": 7168,
       "examples": [
         {
           "level": "WARN",
