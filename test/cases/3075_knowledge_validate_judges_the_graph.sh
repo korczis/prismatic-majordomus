@@ -15,6 +15,10 @@
 mkdir -p "$T/tool"
 fixture_repo "$T/tool" docs
 MJ="$T/tool/bin/majordomus"
+# The tool copy has no executable of its own, and no ordinary command builds one (ADR 0224):
+# without this tree's, the index cannot be asked and every file goes schema_unchecked.
+RB="$(rust_bin)" || rust_bin_exit $?
+MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
 AWK="$T/tool/lib/knowledge.awk"
 "$MJ" init >/dev/null
 

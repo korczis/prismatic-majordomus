@@ -30,4 +30,16 @@ validation:
 evidence_required:
   - "planning_commit_is_not_delivery"
 created_at: 2026-10-16
-updated_at: 2026-10-16
+updated_at: 2026-10-25T21:09:39Z
+started_at: 2026-10-25T20:03:20Z
+started_event: sha256:67a989a3496cf18eed747bc7539e6a1d3c3a32b6b766aec363b163eccc800ac1
+verified_at: 2026-10-25T21:09:39Z
+verified_event: sha256:daa7f3ba23aa4e7fc20c2ab6bf9e9fcc5299fc74ccc0dc561960dbb92d456069
+evidence:
+  - covers: planning_commit_is_not_delivery
+    type: test
+    command: "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery a_commit_that_only_plans_an_issue_is_not_its_delivery && cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery && bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift"
+    result: "ok: plan_delivery 6 passed (incl. a_commit_that_only_plans_an_issue_is_not_its_delivery: a record-only commit, a merge=derived-only commit and a record-only PR merge leave I0004 at none with planned naming the newest; a code commit makes it merged), plan_drift 5 passed, lib plan:: 99 passed (incl. a_commit_that_only_plans_the_issue_is_passed_over_and_said_so), cases 3100 and 3101 ok. On the trunk (origin/master 2efeacea031) plan drift merged_not_recorded fell 53 -> 38: I1302 I1900 I1962 I1980 I2484 no longer reported; I1305 still is, through d52f433348b, a single-parent commit that changes code (the I1405 trace module) and whose subject names I1305 only to say it was restored, which no path rule can tell apart without reading prose (non_scope)"
+    artifact: "apps/majordomus-cli/tests/plan_delivery.rs"
+    commit: 2efeacea03158615db2b497117a8da35b264909b
+    recorded_at: 2026-10-25T21:09:30Z
