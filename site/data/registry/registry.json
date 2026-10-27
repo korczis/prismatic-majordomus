@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "e87b950261af9d75492c9058f0651e49dc0124b5b8d64576e12920262f848c38",
+    "fingerprint": "233bce2ec4bb3733ed0e3a6b466a5fe144008e717584b013395a10001f7170ff",
     "summary": {
-      "total": 3550,
+      "total": 3552,
       "builtin": 220,
-      "declarative": 3330,
+      "declarative": 3332,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3330
+        "resource": 3332
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3340
+        "implemented": 3342
       },
       "mcp_tools": 206,
-      "mcp_resources": 3387,
+      "mcp_resources": 3389,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1034,
+        "capabilities": 1035,
         "capability_ids": []
       },
       {
@@ -91981,7 +91981,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 655,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "8308032ab3971a76d51505c31aa2118c590ffdd1d9ca89756e590515bed5a443",
+    "fingerprint": "32187c1f3e6f306da8c34e7b488a4f94dae96cc61a1e69dc1eac4508a82cc2bf",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1034,
+      "issue": 1035,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92127,7 +92127,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },
@@ -93695,7 +93695,7 @@
         "path": ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 6104,
+        "bytes": 9927,
         "tags": [
           "session",
           "peers",
@@ -99099,7 +99099,7 @@
         "title": "The session brief — `majordomus brief`",
         "path": "docs/BRIEF.md",
         "source_class": "document",
-        "bytes": 6797
+        "bytes": 9493
       },
       {
         "uri": "majordomus://document/docs/BUILD_CACHE.md",
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993150
+        "bytes": 998671
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114861,6 +114861,17 @@
         "bytes": 2220
       },
       {
+        "uri": "majordomus://issue/I4250",
+        "kind": "issue",
+        "identity": "I4250",
+        "title": "A session is briefed only when a fact around it changed, in words its person reads",
+        "description": "Make the majordomus-brief mod submit its self-report, and append its prompt-time reminder, at most once per interval and only when a fact in the brief changed since the session was last told: the brief is fingerprinted with every instant and every span of time taken out, the submitted text opens with what changed in one plain sentence, and the agent's instruction is one line addressed to the agent.",
+        "path": ".ai/repo/project/issues/I4250.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3866
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -122709,7 +122720,7 @@
         "identity": "test/cases/1065_a_session_briefs_itself.sh",
         "path": "test/cases/1065_a_session_briefs_itself.sh",
         "source_class": "case",
-        "bytes": 4355
+        "bytes": 4776
       },
       {
         "uri": "majordomus://test/test/cases/106_context_peers.sh",
@@ -125784,6 +125795,14 @@
         "bytes": 3613
       },
       {
+        "uri": "majordomus://test/test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "kind": "test",
+        "identity": "test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "path": "test/cases/4250_the_brief_reports_only_what_changed.sh",
+        "source_class": "case",
+        "bytes": 2841
+      },
+      {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
         "kind": "test",
         "identity": "test/cases/42_dag_waves.sh",
@@ -128346,7 +128365,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1034
+      "objects": 1035
     },
     {
       "name": "knowledge",
@@ -128508,7 +128527,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 655
     },
     {
       "name": "use-case",

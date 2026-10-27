@@ -1,0 +1,39 @@
+id: I4250
+milestone: development-runtime
+title: "A session is briefed only when a fact around it changed, in words its person reads"
+slug: the-brief-reports-only-what-changed
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make the majordomus-brief mod submit its self-report, and append its prompt-time reminder, at most once per interval and only when a fact in the brief changed since the session was last told: the brief is fingerprinted with every instant and every span of time taken out, the submitted text opens with what changed in one plain sentence, and the agent's instruction is one line addressed to the agent."
+why: "On 2026-10-26/27 a progresus-isir session received about 40 self-reports overnight that differed only by their `at` and by relative ages such as \"observed 4 d ago\"; each woke the model for a \"nothing changed\" answer. The person read the submitted text verbatim and took the model-directed instruction paragraph (and Claude Code's own framing sentence after it) for unreplaced placeholders. The start event's keep-awake text also told a Claude Code session to schedule `/loop 20m majordomus brief` even where the mod does the same job."
+current_state: "On 7ddc32da8d4 share/mods/claude-code/majordomus-brief/hooks/register.ts submits `Periodic self-report (majordomus-brief, ADR 0136). The brief as ... composed it at <at>:` plus the brief and a five-line instruction once per interval whether or not anything changed, and the prompt-time reminder is appended on the same clock."
+desired_state: "The mod's test proves: no self-report and no reminder when only the clock moved, over twelve hours; a report naming the change (\"main moved b1be080 → d62c13a\", \"a peer attached\", \"open pull requests went from 14 to 23\") when a fact changed, at most once per interval; normalisation of every relative-age form `majordomus brief` emits (prs ago: s, min, h, d; release age_words: min, h min, d h; the derive hold) and of RFC 3339 instants; a mutation of the dedupe fails the test. ADR 0136 is amended, docs/BRIEF.md and the mod's README say the same, and the keep-awake text says to report only on a changed fact and not to schedule a loop beside the mod."
+scope:
+  - ".ai/repo/project/issues/I4250.yaml"
+  - "share/mods/claude-code/majordomus-brief/"
+  - "apps/majordomus-cli/src/capability/builtin/brief.rs"
+  - ".ai/repo/adrs/0136-every-session-briefs-itself-on-an-interval.md"
+  - "docs/BRIEF.md"
+  - "test/cases/1065_a_session_briefs_itself.sh"
+  - "test/cases/4250_the_brief_reports_only_what_changed.sh"
+non_scope:
+  - "A policy key forcing a report after a long unchanged stretch: rejected in the amendment of ADR 0136, since the status line already shows the session alive every minute (ADR 0207)"
+  - "Claude Code's own framing sentence after a plugin's prompt, which the mod cannot change"
+  - "The handover mod (ADR 0123)"
+acceptance_criteria:
+  - "claude plugin test share/mods/claude-code/majordomus-brief passes"
+  - "Replacing the fingerprint comparison with `true` fails four of its tests"
+  - "test/cases/1065_a_session_briefs_itself.sh passes, and asserts the installed module and the keep-awake text carry the rule"
+  - "test/cases/4250_the_brief_reports_only_what_changed.sh runs the mod's test and two mutations of it where `claude` is installed"
+  - "cargo test --lib capability::builtin::brief passes with the new keep-awake assertions"
+validation:
+  - "env -u MAJORDOMUS_SHARE claude plugin test share/mods/claude-code/majordomus-brief"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 1065_a_session_briefs_itself 4250_the_brief_reports_only_what_changed"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::brief"
+evidence_required:
+  - "the_brief_reports_only_what_changed"
+depends_on: []
+serves: []
+created_at: 2026-10-27
+updated_at: 2026-10-27
