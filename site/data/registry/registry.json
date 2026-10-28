@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "2f4a36b347bf79af0500f17b2606e5490e75cab3e40994afdc67f27cab765d0c",
     "summary": {
-      "total": 3552,
+      "total": 3555,
       "builtin": 220,
-      "declarative": 3332,
+      "declarative": 3335,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3332
+        "resource": 3335
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3342
+        "implemented": 3345
       },
       "mcp_tools": 206,
-      "mcp_resources": 3389,
+      "mcp_resources": 3392,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -63272,7 +63272,7 @@
                   },
                   "latest_json": {
                     "type": "string",
-                    "description": "Where that `latest.json` was read: `<commit>:site/static/releases/latest.json`, the\ncommit the observed Pages deployment published."
+                    "description": "Where that `latest.json` was read: `<commit>:releases/latest.json` when the observed\nPages deployment published a gh-pages commit (the built site),\n`<commit>:site/static/releases/latest.json` when it published a source commit."
                   },
                   "observed_at": {
                     "type": "string",
@@ -90743,7 +90743,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 166,
+        "capabilities": 167,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1036,
+        "capabilities": 1037,
         "capability_ids": []
       },
       {
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 58,
+        "capabilities": 59,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "1110a4a813aa6f2d7542c387fb503fae88084311c37bb69542dcb496a737fa1f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92096,7 +92096,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 166,
+      "adr": 167,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -92113,8 +92113,8 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
-      "knowledge": 58,
+      "issue": 1037,
+      "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -94824,6 +94824,22 @@
           "mesh",
           "governance",
           "enforcement"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0227",
+        "kind": "adr",
+        "identity": "adr-0227",
+        "title": "The deployed stage reads the pointer where Pages published it",
+        "description": "The deployed stage reads the pointer where Pages published it",
+        "path": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5150,
+        "tags": [
+          "delivery",
+          "pages",
+          "plan"
         ]
       },
       {
@@ -99468,7 +99484,7 @@
         "title": "`majordomus ui` — the product",
         "path": "docs/MAJORDOMUS_UI.md",
         "source_class": "document",
-        "bytes": 44191
+        "bytes": 44548
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -99549,7 +99565,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 44972
+        "bytes": 46371
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -99558,7 +99574,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993556
+        "bytes": 999854
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114883,6 +114899,17 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4315",
+        "kind": "issue",
+        "identity": "I4315",
+        "title": "The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red",
+        "description": "plan delivery reads releases/latest.json from the gh-pages commit the newest successful Pages deployment published, so an issue whose release that pointer names reads deployed; the Pages workflow refuses a snapshot whose publication source is unread.",
+        "path": ".ai/repo/project/issues/I4315.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3787
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -115681,6 +115708,23 @@
         "tags": [
           "fabric",
           "chatgpt-project"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/the-deployed-stage-read-a-path-nobody-published",
+        "kind": "knowledge",
+        "identity": "the-deployed-stage-read-a-path-nobody-published",
+        "title": "The deployed stage read a path no deployment had ever published, and every check was green",
+        "description": "The measurement of 2026-10-28 - why plan delivery proved deployed for no issue while majordomus.dev served the trunk, the two causes, and what now refuses it.",
+        "path": ".ai/repo/knowledge/curated/the-deployed-stage-read-a-path-nobody-published.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 3826,
+        "tags": [
+          "post-mortem",
+          "delivery",
+          "pages",
+          "plan"
         ]
       },
       {
@@ -128205,7 +128249,7 @@
       "identity": [
         "id"
       ],
-      "objects": 166
+      "objects": 167
     },
     {
       "name": "application",
@@ -128368,7 +128412,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1036
+      "objects": 1037
     },
     {
       "name": "knowledge",
@@ -128378,7 +128422,7 @@
       "identity": [
         "id"
       ],
-      "objects": 58
+      "objects": 59
     },
     {
       "name": "mesh-declaration",

@@ -9596,6 +9596,23 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0227",
+        "kind": "adr",
+        "label": "adr-0227",
+        "summary": "The deployed stage reads the pointer where Pages published it",
+        "route": "/cockpit/objects/adr/adr-0227",
+        "source": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-28",
+          "tags": [
+            "delivery",
+            "pages",
+            "plan"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -70958,6 +70975,54 @@
         }
       },
       {
+        "id": "majordomus://issue/I4315",
+        "kind": "issue",
+        "label": "I4315",
+        "summary": "The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red",
+        "route": "/cockpit/objects/issue/i4315",
+        "source": ".ai/repo/project/issues/I4315.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Against a Pages deployment of a gh-pages commit carrying releases/latest.json, plan delivery reads publication and an issue released at or below that version reads deployed",
+            "A deployment of a source commit carrying site/static/releases/latest.json still reads",
+            "A deployed commit carrying neither names both paths in the unread reason",
+            "The ui-snapshot job fails when the publication source is unread after the forge was observed"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "truthful-plan-surfaces",
+          "non_scope": [
+            "Observing deployments inside `prs refresh` again (3e8225a4329 separated them on purpose)",
+            "served observe's own record (.ai/local/state/served), which answers whether a deployment serves a commit, not which release it publishes"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan/delivery.rs",
+            "apps/majordomus-cli/tests/plan_delivery.rs",
+            "apps/majordomus-cli/tests/integration_executor.rs",
+            "apps/majordomus-cli/tests/integration_merged_branches.rs",
+            ".github/workflows/pages.yml",
+            "docs/PLANNING.md",
+            "docs/MAJORDOMUS_UI.md",
+            ".ai/repo/adrs",
+            ".ai/repo/knowledge/curated/the-deployed-stage-read-a-path-nobody-published.md",
+            ".ai/repo/project/issues/I4315.yaml"
+          ],
+          "serves": [],
+          "slug": "the-deployed-stage-reads-what-pages-published",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::delivery",
+            "majordomus served forge && majordomus plan delivery (deployed > 0 at origin/master)"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -71930,6 +71995,26 @@
           "tags": [
             "fabric",
             "chatgpt-project"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/the-deployed-stage-read-a-path-nobody-published",
+        "kind": "knowledge",
+        "label": "the-deployed-stage-read-a-path-nobody-published",
+        "summary": "The deployed stage read a path no deployment had ever published, and every check was green",
+        "route": "/cockpit/objects/knowledge/the-deployed-stage-read-a-path-nobody-published",
+        "source": ".ai/repo/knowledge/curated/the-deployed-stage-read-a-path-nobody-published.md",
+        "status": "verified",
+        "facts": {
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "tags": [
+            "post-mortem",
+            "delivery",
+            "pages",
+            "plan"
           ]
         }
       },
@@ -109974,6 +110059,11 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0227",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -133219,6 +133309,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4315",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4315",
+        "target": "majordomus://milestone/truthful-plan-surfaces",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -133480,6 +133580,11 @@
       },
       {
         "source": "majordomus://knowledge/the-cognitive-fabric-reuse-map",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/the-deployed-stage-read-a-path-nobody-published",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -144845,8 +144950,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4019,
+      "edges": 9265,
       "acyclic": false,
       "truncated": false
     }
