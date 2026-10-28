@@ -17,7 +17,8 @@
     evidence page reads supports (data/evidence.json `claims`, I3916), named by the commit it
     was recorded at; without that run it is unmeasured, never a 0.
 
-    Expects from the caller: model, caps, cat, blocking, base, m, ci, ci_measured. -#}
+    Expects from the caller: model, caps, cat, blocking (the rule package's blocking doctrines,
+    a number), base, m, ci, ci_measured. -#}
 {%- set guaranteed = [c for c in caps.claims if c.status == "guaranteed"] | length -%}
 {%- set supported = "unmeasured" -%}{%- set held = false -%}{%- set supported_at = "" -%}
 {%- if ci_measured %}{% set supported = ci.claims.supported %}{% set held = ci.claims.supported >= guaranteed and guaranteed > 0 %}{% set ci_short = ci.commit | truncate(length=7, end="") %}{% set supported_at = " · recorded at " ~ ci_short %}{% endif -%}
@@ -25,7 +26,7 @@
   {"id": "declared", "lane": "made", "label": m.surfaces.source, "v": model.telemetry.objects, "unit": "objects of the layer", "text": m.hero.lead, "href": "/docs/product/"},
   {"id": "registry", "lane": "made", "label": m.surfaces.registry, "v": model.telemetry.capabilities, "unit": "capabilities in the registry", "text": m.surfaces.lead, "href": "/registry/capabilities/"},
   {"id": "surfaces", "lane": "made", "label": "interfaces from one registry", "v": model.surfaces | length, "unit": [s.title for s in model.surfaces] | join(sep=" · "), "text": m.surfaces.title ~ ". " ~ m.providers.boundary, "href": "/features/matrix/"},
-  {"id": "rules", "lane": "held", "label": "rules that stop the command", "v": blocking | length, "unit": "blocking, decided by a machine", "text": m.contract.caption, "href": "/doctrines/"},
+  {"id": "rules", "lane": "held", "label": "rules that stop the command", "v": blocking, "unit": "blocking, decided by a machine", "text": m.contract.caption, "href": "/doctrines/"},
   {"id": "claims", "lane": "held", "label": "guaranteed claims, declared", "v": guaranteed, "unit": "of " ~ (caps.claims | length) ~ " claims", "text": caps.statuses.guaranteed, "href": "/guarantees/"},
   {"id": "use-cases", "lane": "held", "label": "executable use cases, run to build this page", "v": cat.use_cases | length, "unit": (cat.categories | length) ~ " areas", "text": m.hero.console_caption, "href": "/use-cases/"},
   {"id": "evidence", "lane": "held", "label": "supported by the recorded run", "v": supported, "unit": "of " ~ guaranteed ~ " guaranteed" ~ supported_at, "text": m.chain.legend, "href": "/evidence/"}

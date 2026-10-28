@@ -15,6 +15,12 @@
 #   substance   every declared section carries at least one link or one derived figure (<dd>);
 #               a heading with nothing under it is a section in name only
 #   honesty     no feature the product model does not call stable is linked from the homepage
+#   figures     every figure of the hero strip (<dl data-hero-figures>) that names a figure
+#               (data-figure="<key>") reads exactly what the page it links shows under the same
+#               key, and a figure linking a page that declares figures names one of them: the
+#               homepage said 68 machine-enforced rules and its link, /doctrines/, said 43
+#               blocking (I4318); a key its target does not carry, or a target the build did not
+#               write, fails
 #   map         the product map draws exactly the domains the product model shows, in its order,
 #               each member linked, and every problem homepage.toml names is a shown domain the
 #               page renders (ADR 0104)
@@ -204,6 +210,76 @@ if empty:
     bad("substance", f"declared section(s) carry no link and no derived figure: {', '.join(empty)}")
 elif order:
     ok("substance", "every declared section carries at least one link or one derived figure")
+
+# ---------------------------------------------------------------- figures
+# A figure on the homepage and the page it links are two renderings of one count, so they say
+# the same number (I4318). The pair is named on both pages by data-figure="<key>"; nothing here
+# names a key, a page or a count. A figure that names no key is held only when its target
+# declares figures, which is when a reader following the link meets a number to compare.
+def page_text(fragment):
+    return " ".join(html.unescape(re.sub(r"<[^>]+>", " ", fragment)).split())
+
+def target_page(href):
+    """The built file a homepage link reaches, or None for a link off this site."""
+    href = html.unescape(href).split("#", 1)[0].split("?", 1)[0]
+    m = re.match(r"^https?://[^/]+(/.*)?$", href)
+    if m:
+        cfg = os.path.join(root, "site", "config.toml")
+        site_host = ""
+        if os.path.exists(cfg):
+            with open(cfg, "rb") as f:
+                site_host = re.sub(r"^https?://", "", str(tomllib.load(f).get("base_url", ""))).rstrip("/")
+        host = re.sub(r"^https?://", "", href).split("/", 1)[0]
+        if site_host and host != site_host.split("/", 1)[0]:
+            return None, href
+        href = m.group(1) or "/"
+    if not href.startswith("/"):
+        return None, href
+    rel = href.strip("/")
+    return os.path.join(pub, rel, "index.html") if rel else os.path.join(pub, "index.html"), href
+
+def declared_figures(text):
+    figs = {}
+    for m in re.finditer(r'<(\w+)\b([^>]*)\bdata-figure="([^"]+)"[^>]*>(.*?)</\1>', text, re.S):
+        figs.setdefault(m.group(3), page_text(m.group(4)))
+    return figs
+
+strip = re.search(r"<dl\b[^>]*\bdata-hero-figures\b[^>]*>(.*?)</dl>", home, re.S)
+wrong, compared = [], []
+if not strip:
+    wrong.append("the homepage has no hero figure strip (<dl data-hero-figures>)")
+else:
+    items = re.findall(r'<dt\b[^>]*>\s*<a\b[^>]*\bhref="([^"]*)"[^>]*>(.*?)</a>\s*</dt>\s*<dd\b([^>]*)>(.*?)</dd>', strip.group(1), re.S)
+    if not items:
+        wrong.append("the hero figure strip carries no linked figure (<dt><a href>label</a></dt><dd>figure</dd>)")
+    for href, label, attrs, value in items:
+        label, value = page_text(label), page_text(value)
+        km = re.search(r'\bdata-figure="([^"]*)"', attrs)
+        key = km.group(1) if km else ""
+        path, shown = target_page(href)
+        if path is None:
+            if key:
+                wrong.append(f"the figure {label!r} names {key!r} and links {shown}, off this site, where no page can show it")
+            continue
+        if not os.path.exists(path):
+            wrong.append(f"the figure {label!r} links {shown}, a page the build did not write")
+            continue
+        figs = declared_figures(open(path, errors="replace").read())
+        if not key:
+            if figs:
+                wrong.append(f"the figure {label!r} ({value}) names no data-figure, and {shown} shows {', '.join(f'{k} {v}' for k, v in sorted(figs.items()))}")
+            continue
+        if key not in figs:
+            wrong.append(f"the figure {label!r} names {key!r}, and {shown} shows no such figure")
+        elif figs[key] != value:
+            wrong.append(f"the figure {label!r} reads {value!r}, and {shown} shows {key} {figs[key]!r}")
+        else:
+            compared.append(f"{key} {value} = {shown}")
+if wrong:
+    for w in wrong:
+        bad("figures", w)
+else:
+    ok("figures", f"{len(compared)} hero figure(s) read what the page they link shows: {'; '.join(compared) or 'none name a figure'}")
 
 # ---------------------------------------------------------------- honesty
 not_stable = {f["route"]: f.get("status") for f in product.get("features", []) if f.get("status") != "stable"}

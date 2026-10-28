@@ -70958,6 +70958,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I4318",
+        "kind": "issue",
+        "label": "I4318",
+        "summary": "The homepage's count of machine-enforced rules agrees with /doctrines/",
+        "route": "/cockpit/objects/issue/i4318",
+        "source": ".ai/repo/project/issues/I4318.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4318.yaml",
+            "site/templates/index.html",
+            "site/templates/partials/evidence-chain.html",
+            "site/templates/doctrines-section.html",
+            "scripts/ci/homepage-check",
+            "test/cases/4318_the_homepage_rule_figure_agrees_with_its_link.sh",
+            "test/cases/333_homepage_narrative.sh"
+          ],
+          "slug": "the-homepage-rule-count-agrees-with-doctrines",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bash test/run.sh 4318_the_homepage_rule_figure_agrees_with_its_link 333_homepage_narrative",
+            "scripts/site-build --no-css && scripts/ci/homepage-check --only figures",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94476,6 +94510,13 @@
         "label": "test/cases/430_economics.sh",
         "route": "/cockpit/objects/test/test-cases-430-economics-sh",
         "source": "test/cases/430_economics.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4318_the_homepage_rule_figure_agrees_with_its_link.sh",
+        "kind": "test",
+        "label": "test/cases/4318_the_homepage_rule_figure_agrees_with_its_link.sh",
+        "route": "/cockpit/objects/test/test-cases-4318-the-homepage-rule-figure-agrees-with-its-link-sh",
+        "source": "test/cases/4318_the_homepage_rule_figure_agrees_with_its_link.sh"
       },
       {
         "id": "majordomus://test/test/cases/431_economics_claims_gated.sh",
@@ -133219,6 +133260,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4318",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4318",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139759,6 +139810,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4318_the_homepage_rule_figure_agrees_with_its_link.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/431_economics_claims_gated.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144845,8 +144901,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4018,
+      "edges": 9264,
       "acyclic": false,
       "truncated": false
     }
