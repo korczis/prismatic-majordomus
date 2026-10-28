@@ -16,7 +16,11 @@
 #      twenty at once on GitHub-hosted runners;
 #   3  the plan's runner step sends a fork's pull request to ubuntu-latest whatever the
 #      variable says, a same-repository one and a push to the chosen pool, and an unset or
-#      unreadable choice to ubuntu-latest.
+#      unreadable choice to ubuntu-latest;
+#   4  every first-wave job is given Node on a self-hosted runner (setup-site, or a
+#      setup-node step guarded by runner.environment): a GitHub-hosted image carries node and
+#      the pool need not, so a job that assumed it failed on lundra (`scripts/ui: node:
+#      command not found`, structure, run 40416931397).
 #
 # Read from the tracked workflow with awk and the step's own script run under bash;
 # nothing is built, nothing reaches the network.
@@ -53,6 +57,27 @@ EOF
 [ "$(runs_on "$W" | wc -l)" -gt 10 ] || { echo "    fewer than ten jobs were read from the workflow"; fail=1; }
 [ "$fail" = 0 ] || exit 1
 echo "    the first wave takes the planned runner; every other job stays hosted or names its platform"
+
+# 4: "<job>" for every job given Node on a self-hosted runner
+with_node() {
+  awk '
+    /^jobs:/ { injobs = 1; next }
+    !injobs { next }
+    /^  [a-z0-9_-]+:[ \t]*$/ { job = $0; gsub(/[ :\t]/, "", job); guard = 0; next }
+    /^      - if: runner\.environment == .self-hosted.[ \t]*$/ { guard = 1; next }
+    guard && /^        uses: actions\/setup-node@/ { print job; guard = 0; next }
+    /^        uses: \.\/\.github\/actions\/setup-site[ \t]*$/ { print job; next }
+    /^      - / { guard = 0 }' "$1" | sort -u
+}
+NODE=" $(with_node "$W" | tr '\n' ' ') "
+for job in $FIRST; do
+  case "$NODE" in
+    *" $job "*) ;;
+    *) echo "    first-wave job $job is not given Node on a self-hosted runner"; fail=1 ;;
+  esac
+done
+[ "$fail" = 0 ] || exit 1
+echo "    every first-wave job is given Node on a self-hosted runner"
 
 # 3: the step's own script, out of the workflow
 STEP="$(mktemp)"; OUT="$(mktemp)"

@@ -354,8 +354,12 @@ events.
 An offline pool queues jobs rather than failing them, so the remedy is
 `gh variable delete MJ_RUNNER`: the next run is hosted, with no other change. A pool is
 proved on a branch first with `gh workflow run validate.yml --ref <branch> -f runner=lundra`.
-`pages.yml` and `release.yml` hold deploy and release credentials and stay hosted. Case 4242
-holds every job to the planned runner and drives the plan's runner step with a fork's event.
+`pages.yml` and `release.yml` hold deploy and release credentials and stay hosted. A
+GitHub-hosted image carries Node and the pool need not, so every first-wave job sets Node up
+on a self-hosted runner: `setup-site`, or `actions/setup-node` guarded by
+`runner.environment == 'self-hosted'` (structure failed on lundra without it, run
+40416931397). Case 4242 holds every job to the planned runner and to that Node, and drives
+the plan's runner step with a fork's event.
 
 ## Caches and artifacts
 

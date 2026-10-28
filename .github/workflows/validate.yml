@@ -342,6 +342,12 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # the whole history and its tags: `version-matches-surface` asks what the public
       # surface has lost since the last release, and it finds that release with
       # `git tag --list 'v[0-9]*'` and reads the registry out of it with `git show`. A
@@ -570,6 +576,12 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -885,6 +897,12 @@ jobs:
       run:
         working-directory: apps/majordomus-cli
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # One commit deep. Until 2026-10-20 this was the whole history, every head and every tag,
       # for the differential's base alone, and on run 39438896504 that fetch did not return: it
       # waited out the job's 55 minutes and read as cancelled, with nothing measured. The
@@ -1010,6 +1028,12 @@ jobs:
       # the head a pull request was built from, carried beside the merge commit that ran
       MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
         timeout-minutes: 10
@@ -1322,6 +1346,12 @@ jobs:
     env:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -1424,6 +1454,12 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -1624,6 +1660,12 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -1760,6 +1802,12 @@ jobs:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - id: rust
         name: the executable the nodes run
@@ -1956,6 +2004,12 @@ jobs:
       # its last step cancels a branch's run that this job turned red, as every gate job's does
       actions: write
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
         timeout-minutes: 10
         with:
@@ -2006,6 +2060,12 @@ jobs:
     timeout-minutes: 15
     runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
