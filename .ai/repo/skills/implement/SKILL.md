@@ -1,7 +1,7 @@
 ---
 schema: skill/v1
 id: implement
-version: 1
+version: 2
 title: Implement a change
 description: Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope.
 status: active
@@ -60,6 +60,20 @@ compatibility matter. Declare the paths the work may touch (`majordomus start --
 and do not widen them silently; if the request can be met without a new subsystem, meet
 it without one. If the requested behaviour already exists, verify it instead of building
 it again.
+
+Four refusals came back more than once in one session on 2026-10-28. Each costs a round
+trip at its gate and nothing here, so meet them before the first edit:
+
+- A command-line change edits `apps/majordomus-cli/src/cli.rs`, the definitions and their
+  `EXAMPLES` table alike, so name that file in the scope; a scope without it is refused at
+  `check` and at `finish`.
+- A new command owes its `EXAMPLES` entry in the same change; the derive refuses a command
+  without one.
+- In a linked worktree, run the tool as `env -u MAJORDOMUS_SHARE majordomus ...`: a
+  `MAJORDOMUS_SHARE` inherited from the primary checkout's environment reads that
+  checkout's `share/`, and the commit hook then refuses the artifacts as stale.
+- A commit subject is at most 100 characters (phase 17); `commit.validate` refuses a longer
+  one in the commit-msg hook.
 
 ## 2. Load the applicable context
 
@@ -211,7 +225,8 @@ abstraction, and scope that crept. Fix what is substantive before continuing.
 ## 17. Commit coherent work
 
 One commit per independently understandable, verified change, in the repository's
-message convention; neither one commit for everything nor a commit per keystroke. Before
+message convention, with a subject of at most 100 characters; neither one commit for
+everything nor a commit per keystroke. Before
 each commit the relevant tests pass, the formatter and linter pass, generated
 projections are reconciled and no unexplained file is present.
 

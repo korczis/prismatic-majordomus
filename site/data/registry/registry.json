@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "7b9129da8c0b0bc85674b7760462b467617337050bdc24d740b7dfc033e7bab5",
     "summary": {
-      "total": 3552,
+      "total": 3566,
       "builtin": 220,
-      "declarative": 3332,
+      "declarative": 3346,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3332
+        "resource": 3346
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3342
+        "implemented": 3356
       },
       "mcp_tools": 206,
-      "mcp_resources": 3389,
+      "mcp_resources": 3403,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1036,
+        "capabilities": 1039,
         "capability_ids": []
       },
       {
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 58,
+        "capabilities": 69,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "69d2770e666bb66b7873d861e9062485d934d81669f8fed5fc77a13e64287cbc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,8 +92113,8 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
-      "knowledge": 58,
+      "issue": 1039,
+      "knowledge": 69,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -99405,7 +99405,7 @@
         "title": "The handbook",
         "path": "docs/HANDBOOK.md",
         "source_class": "document",
-        "bytes": 6529
+        "bytes": 7486
       },
       {
         "uri": "majordomus://document/docs/HOW_IT_WORKS.md",
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993556
+        "bytes": 1001979
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114883,6 +114883,39 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4337",
+        "kind": "issue",
+        "identity": "I4337",
+        "title": "The evolve skill harvests what sessions only remembered, links what is in flight, and takes a number on the board first",
+        "description": "The ten lessons of 2026-10-28 and one met while reviewing them are each recorded with `majordomus knowledge observe`, derived, and decided; each promoted one is put where its kind lives or linked to the issue or pull request already fixing it. The evolve skill (version 2) gathers in step 1 what providers' memories and the peers' announcements and handovers hold since the last evolve, read as data; checks in step 2 for a lesson already in flight and links rather than duplicates; says in step 3 that a number is taken on the board first; and in step 7 evolves its own procedure when a run of it met friction. The implement skill (version 2) names the four refusals one session met more than once.",
+        "path": ".ai/repo/project/issues/I4337.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3576
+      },
+      {
+        "uri": "majordomus://issue/I4339",
+        "kind": "issue",
+        "identity": "I4339",
+        "title": "monitor reports a GitHub run queued past its bound, not only the runs that completed",
+        "description": "`workflow_run` in apps/majordomus-cli/src/monitor/github.rs turns a run whose status is queued, waiting or in_progress and whose age is past the bound I3903 declares for it into one warning moment naming the run, its workflow, its head branch and the age, raised once per run; a completed run is read as before.",
+        "path": ".ai/repo/project/issues/I4339.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1798
+      },
+      {
+        "uri": "majordomus://issue/I4340",
+        "kind": "issue",
+        "identity": "I4340",
+        "title": "An observation finds the episode that session start just opened in the same provider session",
+        "description": "`majordomus session start` run by hand inside a provider session and `majordomus knowledge observe` run after it resolve the same episode: either session start keys the episode by the provider session the environment names (as mj_open_session_id reads it), or mj_open_session_id falls back to the hand-opened episode of this worktree when no file carries the provider key. The refusal 'no episode is open in this checkout for this caller' is printed only when no episode of this worktree is open.",
+        "path": ".ai/repo/project/issues/I4340.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2232
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -115556,7 +115589,7 @@
         "path": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
         "section": "knowledge",
         "source_class": "candidates",
-        "bytes": 1310,
+        "bytes": 1561,
         "tags": [
           "derived",
           "observation"
@@ -115632,6 +115665,171 @@
         "section": "knowledge",
         "source_class": "curated",
         "bytes": 1914,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-1050b82e9b61",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-1050b82e9b61",
+        "title": "a full-history checkout fetched 533 heads and 190 tags in 216-488 s and hit its 10-minute bound in 6 of 11 structure runs on 2026-10-28; in flight as I4296, pull request 2633",
+        "description": "Observed as defect about .github/workflows/validate.yml in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-1050b82e9b61.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1412,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-3206646bca1a",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-3206646bca1a",
+        "title": "numbers collided on 2026-10-28: I4251 on pull requests 2601 and 2605, I4296 with dev-53, I4334 with oscilla-b0, and ADR 0228, which adr next handed out although the board had claimed it, because the allocators read refs and a free-text intent rather than a typed claim or the mesh; adr next also ran over 5 minutes in a worktree; owed by I3974",
+        "description": "Observed as defect about command:adr in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-3206646bca1a.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2130,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-363bd98ba774",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-363bd98ba774",
+        "title": "majordomus.dev stated one fact two ways on 2026-10-28: the homepage's 232 supported against 0 on /guarantees/, and 68 rules against 50 declared; in flight as I4317 and I4318",
+        "description": "Observed as drift about site/templates/index.html in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-363bd98ba774.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1429,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-4db0cc6c1d08",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-4db0cc6c1d08",
+        "title": "validate's concurrency group is one per pull request with cancel-in-progress false, so a superseded head's run held trains 10a and 10b pending for hours (runs 40708407548, 40713047404, 40713048283); in flight as I3903 on fix/a-stuck-run-is-stopped-by-its-bound (prs supervise)",
+        "description": "Observed as defect about .github/workflows/validate.yml in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-4db0cc6c1d08.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1783,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-50190e0ffc82",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-50190e0ffc82",
+        "title": "641b's free disk fell to 0.4-3 GiB twice on 2026-10-28 while several sessions built into the shared build dir: the sweep is skipped while a build holds cargo's lock and lib/rust_bin.sh refuses only below 5 GiB, so clause 7's 35 GiB floor is not held at build start; owed by I3825 and I3959",
+        "description": "Observed as defect about rule:project.the-cooperation-model-is-the-owners-word in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-50190e0ffc82.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2134,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-5f1cf25a1ccf",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-5f1cf25a1ccf",
+        "title": "claude -p has no ArtifactData tool (measured 2026-10-28: ToolSearch finds none in print mode), so no unattended process such as a launchd service can write a published artifact's database; only an interactive session or the page itself can",
+        "description": "Observed as friction about docs/HANDBOOK.md in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-5f1cf25a1ccf.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1530,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-7b1673ebf094",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-7b1673ebf094",
+        "title": "lessons written only to an agent's private memory (about 560 files in the provider's memory directory for this repository) never reach the ledger, candidates or rules unless a session copies them, and most of 2026-10-28's lessons were written there first; the evolve skill's step 1 gathers only candidates and what the current session remembers",
+        "description": "Observed as friction about .ai/repo/skills/evolve/SKILL.md in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-7b1673ebf094.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1978,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-937198359654",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-937198359654",
+        "title": "an artifact published under one claude.ai account answers 404 to every session after the session switches account, and a publish to it is refused; only the owner sharing it, or a new address under the current account, restores it",
+        "description": "Observed as friction about docs/HANDBOOK.md in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-937198359654.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1510,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-a1658685aedc",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-a1658685aedc",
+        "title": "following step 1 in a Claude Code session, knowledge observe refused all ten observations with no episode open although session start had just opened one: the episode was keyed hand while observe looked up the provider session id, and only MJ_SESSION_KEY=hand let them through",
+        "description": "Observed as friction about .ai/repo/skills/evolve/SKILL.md in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-a1658685aedc.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 1912,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-bb378d3e4f15",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-bb378d3e4f15",
+        "title": "a run stays queued while any job waits even with others in progress, so gh run list --status in_progress = 0 does not mean nothing runs, and monitor's workflow_run drops every run whose status is not completed, so a queue stuck for hours raised no signal; I3903 cancels a run queued past its bound, nothing reports one",
+        "description": "Observed as defect about apps/majordomus-cli/src/monitor/github.rs in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-bb378d3e4f15.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2011,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-fefd412fb59b",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-fefd412fb59b",
+        "title": "one session met four refusals more than once on 2026-10-28: a task scope without apps/majordomus-cli/src/cli.rs (twice), a commit subject over 100 characters, a new CLI command without an EXAMPLES entry (refused by the derive), and MAJORDOMUS_SHARE naming the primary checkout's share in a worktree (commit hook: stale artifacts); the implement skill names none of them",
+        "description": "Observed as repetition about .ai/repo/skills/implement/SKILL.md in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-fefd412fb59b.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2051,
         "tags": [
           "derived",
           "observation"
@@ -122212,7 +122410,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 6871,
+        "bytes": 10667,
         "tags": [
           "knowledge",
           "review",
@@ -122229,7 +122427,7 @@
         "path": ".ai/repo/skills/implement/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 13676,
+        "bytes": 14561,
         "tags": [
           "implementation",
           "evidence",
@@ -123867,7 +124065,7 @@
         "identity": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "path": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "source_class": "case",
-        "bytes": 5849
+        "bytes": 6729
       },
       {
         "uri": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
@@ -128368,7 +128566,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1036
+      "objects": 1039
     },
     {
       "name": "knowledge",
@@ -128378,7 +128576,7 @@
       "identity": [
         "id"
       ],
-      "objects": 58
+      "objects": 69
     },
     {
       "name": "mesh-declaration",

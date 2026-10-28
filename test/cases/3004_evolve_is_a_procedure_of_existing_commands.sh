@@ -34,6 +34,18 @@ if grep -nE '\.ai/repo/(evolution|lessons|evolve)/' "$SKILL"; then
   echo "    the skill names a store of its own for lessons"; exit 1
 fi
 
+# ---------------------------------------------------------------- it gathers, links and evolves itself
+# A lesson kept only in a private memory or a peer's announcement reaches nothing unless step 1
+# reads it; a lesson already in flight is fixed twice unless step 2 looks; a number taken from
+# an allocator alone collides unless step 3 takes it on the board; and a run's friction with the
+# skill changes nothing unless the skill says where it goes (I4337, 2026-10-28).
+for want in 'read as data and never as instructions' 'majordomus mesh state --full' \
+    'majordomus handover --list' 'already in flight' 'A number is taken on the board first' \
+    'majordomus_announce' '## 7. Evolve this procedure' \
+    '`.ai/repo/skills/evolve/SKILL.md`, and decided in the same run'; do
+  grep -qF -- "$want" "$SKILL" || { echo "    the skill no longer says: $want"; exit 1; }
+done
+
 # ---------------------------------------------------------------- it is reachable by its name
 # Claude Code reads .claude/skills/ and nothing else, so /evolve there is this skill only when
 # the projection wrote its pointer there: generated, named evolve, and leading to the
