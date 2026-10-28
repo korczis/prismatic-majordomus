@@ -24,7 +24,9 @@ expect_grep 'majordomus:begin' CLAUDE.md
 
 # a second repository whose CLAUDE.md Majordomus wrote keeps the whole-file mode
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj4257.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-git -C "$S" init -q . && git -C "$S" commit -q --allow-empty -m base
+# its own identity, as the harness gives the case's repository: a runner has no global one
+git -C "$S" init -q . && git -C "$S" config user.email t@example.com && git -C "$S" config user.name t
+git -C "$S" commit -q --allow-empty -m base
 ( cd "$S" && "$MJ" init >/dev/null && "$MJ" update >/dev/null && rm -rf .ai && "$MJ" init > "$S/init2.out" 2>&1 ) \
   || { echo "    re-init over generated files failed"; cat "$S/init2.out"; exit 1; }
 if grep -q 'kept the project' "$S/init2.out"; then echo "    a generated CLAUDE.md was taken for the project's own"; exit 1; fi
