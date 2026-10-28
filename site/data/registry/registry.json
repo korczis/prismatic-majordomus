@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "0803b1cc2010ae311c2379098db1bca3ee94005d971d8dfc85c3ddb8a527091e",
     "summary": {
-      "total": 3552,
+      "total": 3574,
       "builtin": 220,
-      "declarative": 3332,
+      "declarative": 3354,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3332
+        "resource": 3354
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3342
+        "implemented": 3364
       },
       "mcp_tools": 206,
-      "mcp_resources": 3389,
+      "mcp_resources": 3411,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -90929,7 +90929,7 @@
         "title": "critique",
         "description": "Declarative objects of kind 'critique' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 37,
+        "capabilities": 38,
         "capability_ids": []
       },
       {
@@ -91334,7 +91334,7 @@
         "title": "intent",
         "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 43,
+        "capabilities": 44,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1036,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -91522,7 +91522,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 111,
+        "capabilities": 113,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "1baeb004bf33b793dbed3d2b02f67b42d7cbd2a7267ddcb4ff86c6af608d596d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92103,7 +92103,7 @@
       "claim": 250,
       "command": 31,
       "context": 39,
-      "critique": 37,
+      "critique": 38,
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
@@ -92112,11 +92112,11 @@
       "feature": 29,
       "gap": 5,
       "implementation": 52,
-      "intent": 43,
-      "issue": 1036,
+      "intent": 44,
+      "issue": 1054,
       "knowledge": 58,
       "mesh-declaration": 1,
-      "milestone": 111,
+      "milestone": 113,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -98447,6 +98447,17 @@
         "bytes": 20170
       },
       {
+        "uri": "majordomus://critique/a-review-is-seen-at-its-commit",
+        "kind": "critique",
+        "identity": "a-review-is-seen-at-its-commit",
+        "title": "a-review-is-seen-at-its-commit",
+        "description": "81ef931a3e1",
+        "path": ".ai/repo/project/critiques/a-review-is-seen-at-its-commit.yaml",
+        "section": "project",
+        "source_class": "critique",
+        "bytes": 23834
+      },
+      {
         "uri": "majordomus://critique/a-session-leaves-what-it-observed",
         "kind": "critique",
         "identity": "a-session-leaves-what-it-observed",
@@ -99558,7 +99569,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993556
+        "bytes": 1033315
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -103100,6 +103111,17 @@
         "section": "project",
         "source_class": "intent",
         "bytes": 6522
+      },
+      {
+        "uri": "majordomus://intent/a-review-is-seen-at-its-commit",
+        "kind": "intent",
+        "identity": "a-review-is-seen-at-its-commit",
+        "title": "A reader sees what a review of the code found, at the commit it measured, and follows each finding to its line, its commit, its rule, its plan issue and that issue's GitHub projection",
+        "description": "Every review of the code that Majordomus runs or records reaches a reader as findings anchored to the commit and tree they were measured at. majordomus.dev publishes the quality report of the deployed commit as public API conformance, baselined findings included, with the analyser, the baseline identity, the exclusions and the denominators beside it and the report downloadable as JSON. Dependency, security and licence evidence from cargo-deny stands beside it. Each finding carries a stable id, a verification state (confirmed, or plausible with the refuter's note) and the plan issue that resolves it, and every link from it (the line at blob/<commit>/<path>#L<n>, the commit that introduced that line, the rule, the issue and its GitHub projection) is pinned to a commit and proven to resolve before it is emitted. A due-diligence review is a record with a scorecard and a remediation roadmap, and it shows where two surfaces of the repository disagree about one fact.",
+        "path": ".ai/repo/project/intents/a-review-is-seen-at-its-commit.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 9780
       },
       {
         "uri": "majordomus://intent/a-session-leaves-what-it-observed",
@@ -114883,6 +114905,204 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4297",
+        "kind": "issue",
+        "identity": "I4297",
+        "title": "The quality report records the commit and the tree it measured",
+        "description": "Add to QualityReport the commit, the tree digest and whether the measured checkout was dirty, read once when the measurement starts from the same git provenance the evidence ledger uses, and carry them on every transport quality.report already has. Showing the commit on the Cockpit quality page is I4311's, so that the first published page does not wait on the exclusive claim #2520 holds on apps/majordomus-cli/src/cockpit/pages.rs.",
+        "path": ".ai/repo/project/issues/I4297.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3713
+      },
+      {
+        "uri": "majordomus://issue/I4298",
+        "kind": "issue",
+        "identity": "I4298",
+        "title": "One forge-link component pins every commit, pull request, file and line reference on the site, and a reference it cannot prove is reported as text",
+        "description": "Extend the site's one forge-link component with commit, pull request and line forms, apply it wherever the site prints a commit, a pull request, a file or a test as text, refuse a branch-pinned fallback, teach scripts/ci/source-pin-check to ratchet inline repository_url/commit/ copies against its baseline, teach link-check to decide the pull request and line forms offline, render any reference it cannot prove as text listed in the build report, and make every page that cites a release pointer name the commit and path it read it at.",
+        "path": ".ai/repo/project/issues/I4298.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6205
+      },
+      {
+        "uri": "majordomus://issue/I4299",
+        "kind": "issue",
+        "identity": "I4299",
+        "title": "The site publishes the public API conformance report of the build commit, baselined findings included, with its provenance and a JSON download",
+        "description": "Write the quality report of the build commit into the site's data, refuse it when its recorded commit is not the build commit or its tree was dirty, and publish a /quality/ page labelled public API conformance: every finding including the baselined ones (marked baselined), each with its stable id (its baseline key: code, path and symbol, without the line), its verification state (confirmed, because each code is measured by the analyser rather than suspected), its code, rule, line link at the build commit, reproduce command and baseline state; a provenance block naming the commit, tree, analyser and version, the baseline file's identity at that commit, the exclusions and the denominators; the report itself as a JSON download; and two ECharts bar figures (findings by code, findings by top-level module) drawn over their tables.",
+        "path": ".ai/repo/project/issues/I4299.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4916
+      },
+      {
+        "uri": "majordomus://issue/I4300",
+        "kind": "issue",
+        "identity": "I4300",
+        "title": "A cargo-deny gate judges the crate's advisories, licences, bans and sources, every npm devDependency is pinned exactly, and the verdict is published",
+        "description": "Add a cargo-deny configuration at the repository root that judges advisories, licences (an allow list that admits the crate's present licences and refuses copyleft ones such as EUPL-1.2 and GPL), bans and sources for apps/majordomus-cli; declare a gate in .ai/repo/ci/gates.yaml that runs cargo deny check, with cargo-deny installed at a pinned version by .github/workflows/validate.yml beside the job's other tools (shellcheck at .github/workflows/validate.yml:320); add to scripts/site-check, beside its no-CDN rule (scripts/site-check:1020), a rule that refuses any non-exact version in package.json and fix cytoscape's caret pin; and publish the gate's last verdict at the build commit beside the conformance report on the /quality/ page I4299 adds, through scripts/generate-site-data and site/templates/quality.html, or not observed.",
+        "path": ".ai/repo/project/issues/I4300.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4262
+      },
+      {
+        "uri": "majordomus://issue/I4301",
+        "kind": "issue",
+        "identity": "I4301",
+        "title": "Each finding's cited line is blamed to the commit that introduced it, and the commit is linked",
+        "description": "For every finding the site publishes with a path and line, find the commit that introduced that line at the measured commit with git blame, offline during the site's data step, and publish it beside the finding as a link through the forge-link component; a line git cannot blame (a file outside the history, a shallow clone) is reported as not observed and rendered as text.",
+        "path": ".ai/repo/project/issues/I4301.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3165
+      },
+      {
+        "uri": "majordomus://issue/I4302",
+        "kind": "issue",
+        "identity": "I4302",
+        "title": "The crate declares a clippy lint table with a named subset of pedantic, nursery and restriction lints, and new debt is ratcheted",
+        "description": "Add a [lints.clippy] table to apps/majordomus-cli/Cargo.toml and a clippy configuration at the repository root that turn on a named subset of lints, each with its group: too_many_lines (pedantic), cognitive_complexity (nursery), unwrap_used and expect_used outside tests (restriction) and todo (restriction, which catches the todo!() macro and not a TODO comment), so the three allow(clippy::too_many_lines) attributes already in the code start to mean something; accept today's findings in .ai/repo/clippy-baseline.txt, which scripts/rust-check reads, so the gate refuses only new debt. This issue is the one gate for function length; I4303 does not measure it.",
+        "path": ".ai/repo/project/issues/I4302.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3131
+      },
+      {
+        "uri": "majordomus://issue/I4303",
+        "kind": "issue",
+        "identity": "I4303",
+        "title": "quality.report reports long modules, module-wide dead-code allowances and TODO comments in product code",
+        "description": "Add violation codes to quality.report for a module longer than a declared limit (measured from syn spans), a module-wide #![allow(dead_code)], and a TODO, FIXME or HACK comment in non-test product code; give each a why and a remediation like the existing codes, and accept today's findings in .ai/repo/rust-quality-baseline.txt so the gate refuses only new ones.",
+        "path": ".ai/repo/project/issues/I4303.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2930
+      },
+      {
+        "uri": "majordomus://issue/I4304",
+        "kind": "issue",
+        "identity": "I4304",
+        "title": "A treemap shows where the findings concentrate, sized by lines and coloured from a sequential token ramp",
+        "description": "Add a sequential and a diverging colour ramp to the design tokens, projected by majordomus generate; replace the vendored ECharts common build with a custom build that adds the treemap series, still fetched lazily; teach site/charts.js a data-chart=treemap figure drawn from a table of modules (lines, findings, findings per thousand lines); and put that figure over its table on the /quality/ page I4299 adds; amend ADR 0152's list of chart forms.",
+        "path": ".ai/repo/project/issues/I4304.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3410
+      },
+      {
+        "uri": "majordomus://issue/I4305",
+        "kind": "issue",
+        "identity": "I4305",
+        "title": "The first due-diligence review is a record at the commit it measured, with a scorecard, a remediation roadmap and the facts two surfaces disagree about",
+        "description": "Decide, with majordomus decision and within project.optional-complexity, where a review record lives (the critique of an intent proposed for the review, or a section of the quality data), then record the first due-diligence review of the repository at the commit it measured in the critique finding shape that I4309 extends: a scorecard of dimensions (public API conformance, dependencies and licences, code smells, plan truthfulness, delivery and operations, secrets in history, coverage, test stability), each with its source, its verdict and the commit it was read at; a section of surface disagreements, each naming both readings, their sources and commits; the smells the plan observed, each a finding with severity, verification state and resolution issue; and a remediation roadmap ordered from the resolution issues' derived waves. Render it on the /quality/ page that I4299 adds, with every finding linked, and add to scripts/site-check the rule that fails a build whose review omits the scorecard, the roadmap or the disagreement section. No security-class finding is published before I4314's redaction has landed.",
+        "path": ".ai/repo/project/issues/I4305.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5856
+      },
+      {
+        "uri": "majordomus://issue/I4306",
+        "kind": "issue",
+        "identity": "I4306",
+        "title": "Every fence in an authored document carries a language, and a gate refuses one that does not",
+        "description": "Add a rule to scripts/ci/design-check that refuses an opening code fence with no language in an authored Markdown document (a plain block says text), and label the fences on master that have none, so the gate passes on master as a ban rather than a ratchet.",
+        "path": ".ai/repo/project/issues/I4306.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3200
+      },
+      {
+        "uri": "majordomus://issue/I4307",
+        "kind": "issue",
+        "identity": "I4307",
+        "title": "A proposed ADR 0228 writes the highlighter's licence boundary down: syntect in the executable, giallo only inside Zola's build",
+        "description": "Propose ADR 0228 with majordomus adr propose (number reserved on the board for this issue), as .ai/repo/adrs/0228-<slug>.md: the executable highlights with syntect (MIT), as ADR 0166 decision 7 says; giallo stays a build-time tool of Zola that never enters the executable; both emit one class vocabulary and one palette generated from the design tokens; ADR 0166 decision 7 is superseded only in naming the site's engine. Then extend I2747 rather than duplicate it: correct its objective, which calls syntect 'the engine Zola already uses for the site' while Zola 0.23 highlights the site with giallo, and its current_state, which blames share/ui/ui.js for the CDN highlighter that handbook/cs/extras10.js loads, and set its scope and acceptance to the ADR's boundary; and point the code section that open I3790 plans for docs/DESIGN_SYSTEM.md at the ADR, so the design book names the site's build-time highlighter, its palette and the boundary.",
+        "path": ".ai/repo/project/issues/I4307.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4282
+      },
+      {
+        "uri": "majordomus://issue/I4308",
+        "kind": "issue",
+        "identity": "I4308",
+        "title": "One capability proposes a canonical issue from a finding and writes it only through the plan's one checked write",
+        "description": "Declare one capability, on the command line and MCP, that takes a finding (a quality finding by the stable id I4299 publishes, its baseline key; a critique finding by intent and id) and builds a draft issue whose why cites the finding's id and verification state, whose validation is the finding's reproduce command and whose scope is the finding's path, then hands the draft to intents.draft_write (I3252), so the record is written only through the one checked write and its validators, never by a writer of its own; it refuses an issue id that is already a record and one that carries no id:issue claim on the board as I3974's survey reads it.",
+        "path": ".ai/repo/project/issues/I4308.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4189
+      },
+      {
+        "uri": "majordomus://issue/I4309",
+        "kind": "issue",
+        "identity": "I4309",
+        "title": "A finding carries severity, a verification state and its measured commit, and a critical or high finding without a plan issue is refused by a rule and its gate",
+        "description": "Extend the critique finding shape with optional severity (critical, high, medium, low), verification (state confirmed or plausible, and the refuter's note when plausible) and the commit the finding was measured at, in share/schemas/majordomus/critique/critique.v1.schema.json and CritiqueRecord, with share/allow/critique.txt regenerated by majordomus generate; then add the rule project.review-findings-are-tracked, version 1, blocking: a finding of severity critical or high names the plan issue that resolves it, or is rejected with the owner's recorded reason; enforce it in intent validate as a FAIL naming the record and the finding id; and give the rule its proving test.",
+        "path": ".ai/repo/project/issues/I4309.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4209
+      },
+      {
+        "uri": "majordomus://issue/I4310",
+        "kind": "issue",
+        "identity": "I4310",
+        "title": "A site issue page links its GitHub projection, and the GitHub issue body links back to the record, the site and the evidence commit",
+        "description": "On each site issue and milestone page, link the GitHub projection through a search for the record marker github-sync writes (issues?q=\\\"majordomus:record I####\\\"), which needs no number and no network; teach link-check that form; and extend the issue body renderer so the GitHub body links the canonical record as a blob pinned to the landing commit, links the record's page on majordomus.dev, links each dependency row to its site page, and keeps the evidence table's commit column as a commit link. No closing keyword is written anywhere.",
+        "path": ".ai/repo/project/issues/I4310.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3423
+      },
+      {
+        "uri": "majordomus://issue/I4311",
+        "kind": "issue",
+        "identity": "I4311",
+        "title": "One Rust forge-URL helper builds every commit, pull request, file and line link on /ui and the Cockpit",
+        "description": "Make the forge-URL builder in apps/majordomus-cli/src/plan/flight.rs the one helper for commit, pull request, blob and line URLs pinned to a commit, replace the copies that format GitHub URLs by hand, and use it where /ui and the Cockpit print a commit or a path as text, so each becomes a link; make the Cockpit quality page name the commit its findings were measured at (the commit I4297 adds to the report), linked through the helper; extend case 1091 to decide the outbound forge links /ui emits.",
+        "path": ".ai/repo/project/issues/I4311.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3989
+      },
+      {
+        "uri": "majordomus://issue/I4312",
+        "kind": "issue",
+        "identity": "I4312",
+        "title": "The trace from issue to commit, pull request and finding is published and drawn with Cytoscape over its table",
+        "description": "Write the answer of trace.report into the site's data at the build commit and publish a /trace/ page whose tables list, per issue, its commits, its pull requests and the findings that name it, each linked through the forge-link component, with the same relation drawn by the existing site/graph.js (Cytoscape, loaded lazily) over those tables.",
+        "path": ".ai/repo/project/issues/I4312.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2658
+      },
+      {
+        "uri": "majordomus://issue/I4313",
+        "kind": "issue",
+        "identity": "I4313",
+        "title": "A /ui donut colours each slice by the status token its label means, never by its position",
+        "description": "Make the /ui donut and its legend take each slice's colour from the status role its label is filed under in the one declaration, status.states in share/design/tokens.yaml (:312), read through the compiled-in projection with role_of_state (apps/majordomus-cli/src/design/mod.rs:769), instead of from its position in TONES; a label with no filed role gets the neutral tone; replace status_tone's private mapping with the same lookup, filing any plan status word the declaration lacks in tokens.yaml.",
+        "path": ".ai/repo/project/issues/I4313.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3546
+      },
+      {
+        "uri": "majordomus://issue/I4314",
+        "kind": "issue",
+        "identity": "I4314",
+        "title": "A security finding shows only its title, severity and status on the site and in every published file",
+        "description": "Add a security class to the critique finding classes (CritiqueClass, apps/majordomus-cli/src/intent_review.rs:226-257, and the critique schema), write one redaction function in the crate that reduces a finding of that class to its title, severity and status, and apply the same reduction wherever a finding leaves the checkout through the site: the site's data, its pages (the /quality/ page included) and every published JSON (the /quality/ download included); keep the full finding in the checkout-local report; fail the site build when a published file carries a security finding's path, line, cited text or reproduce command.",
+        "path": ".ai/repo/project/issues/I4314.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3996
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -115877,6 +116097,17 @@
         "bytes": 6789
       },
       {
+        "uri": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "milestone",
+        "identity": "a-finding-is-tracked-to-its-issue",
+        "title": "A finding becomes a tracked plan issue whose GitHub projection links both ways, and every surface draws and highlights with the one library for the job",
+        "description": "A finding with a stable id and a verification state becomes a canonical issue through one capability that writes only through the plan's checked write; the issue's site page and its GitHub projection link to each other; every forge link on /ui and the Cockpit comes from one helper; the trace is drawn as a graph over its table; status colours follow status tokens; and the highlighter boundary is written down in a proposed ADR.",
+        "path": ".ai/repo/project/milestones/a-finding-is-tracked-to-its-issue.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 4759
+      },
+      {
         "uri": "majordomus://milestone/a-finish-reads-the-criteria-its-work-serves",
         "kind": "milestone",
         "identity": "a-finish-reads-the-criteria-its-work-serves",
@@ -115974,6 +116205,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2306
+      },
+      {
+        "uri": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "milestone",
+        "identity": "a-review-is-published-at-its-commit",
+        "title": "The quality report, its dependency evidence and the first due-diligence review are published at the commit they measured, every link pinned and proven",
+        "description": "A reader opens majordomus.dev, finds the public API conformance report and the dependency evidence of the deployed commit, and clicks from any finding to its line at that commit, to the commit that introduced the line and to its rule; the first due-diligence review sits beside them with a scorecard, a remediation roadmap and the facts on which two surfaces disagree.",
+        "path": ".ai/repo/project/milestones/a-review-is-published-at-its-commit.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 7327
       },
       {
         "uri": "majordomus://milestone/a-second-adopter-is-served",
@@ -128275,7 +128517,7 @@
       "identity": [
         "intent"
       ],
-      "objects": 37
+      "objects": 38
     },
     {
       "name": "deployment",
@@ -128358,7 +128600,7 @@
       "identity": [
         "id"
       ],
-      "objects": 43
+      "objects": 44
     },
     {
       "name": "issue",
@@ -128368,7 +128610,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1036
+      "objects": 1054
     },
     {
       "name": "knowledge",
@@ -128398,7 +128640,7 @@
       "identity": [
         "id"
       ],
-      "objects": 111
+      "objects": 113
     },
     {
       "name": "moment",

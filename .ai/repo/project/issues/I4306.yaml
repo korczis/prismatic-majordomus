@@ -1,0 +1,41 @@
+id: I4306
+milestone: a-review-is-published-at-its-commit
+title: "Every fence in an authored document carries a language, and a gate refuses one that does not"
+slug: every-fence-carries-a-language
+priority: p3
+profile: routine
+parallel_safe: false
+objective: "Add a rule to scripts/ci/design-check that refuses an opening code fence with no language in an authored Markdown document (a plain block says text), and label the fences on master that have none, so the gate passes on master as a ban rather than a ratchet."
+why: "A count over the tracked Markdown at 81ef931a3e1, outside .ai/repo/sessions, .ai/repo/adrs, .ai/repo/project, docs/generated and site/content, finds 133 opening fences with no language in 66 files: docs (66, plus 32 under docs/claims), examples/minimal (15), README.md (6), campaigns (7), .ai/repo/rules (2), .ai/repo/workflows (2), site/content-src (2) and share/skeleton (1). Nothing gates them (plan section 2, gap 7), so the highlighter cannot colour them and a reader cannot tell a shell command from its output. scripts/ci/design-check today judges design tokens (colour literals, palette utilities, custom properties); a Markdown fence rule is a new kind of check for it, chosen because it is the gate that holds what the design book promises a reader sees. Writing the site's highlighter, palette and the ADR 0228 boundary into docs/DESIGN_SYSTEM.md is not this issue's: it belongs to the code section open I3790 plans, which I4307 points at the ADR."
+current_state: "On 81ef931a3e1 scripts/ci/design-check has no fence rule, and 133 fences in 66 authored documents carry no language."
+desired_state: "design-check fails on a planted unlabelled fence, naming the file and line; every fence in the authored documents carries a language, the plain ones text; master passes."
+scope:
+  - ".ai/repo/project/issues/I4306.yaml"
+  - "scripts/ci/design-check"
+  - "docs"
+  - "README.md"
+  - "examples"
+  - "campaigns"
+  - ".ai/repo/rules"
+  - ".ai/repo/workflows"
+  - "site/content-src"
+  - "share/skeleton"
+non_scope:
+  - "Records that say what was true when written (.ai/repo/sessions, .ai/repo/adrs, .ai/repo/project) and generated documents (docs/generated, docs/*STATUS.md, site/content): the rule exempts them and this issue edits none"
+  - "The design book's code section and the highlighter's palette (I3790, pointed at ADR 0228 by I4307)"
+  - "Highlighting on /ui or the Cockpit (I3791 under ADR 0228)"
+depends_on: []
+serves:
+  - "a-review-is-seen-at-its-commit#code-is-highlighted-inside-its-licence-boundary"
+acceptance_criteria:
+  - "design-check fails on a planted Markdown document with an unlabelled fence, naming the file and line"
+  - "design-check passes on master's authored documents after the fences are labelled, with no baseline"
+  - "A fence inside a record tree or a generated document is not judged"
+validation:
+  - "scripts/ci/design-check"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - "unlabelled_fence_is_refused"
+risk: "Low. Labelling 133 fences touches 66 documents, some of which feed derived pages; the pull request lands alone, derives once and names the projections it regenerates."
+created_at: 2026-10-28
+updated_at: 2026-10-28

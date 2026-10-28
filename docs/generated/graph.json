@@ -16294,6 +16294,18 @@
         }
       },
       {
+        "id": "majordomus://critique/a-review-is-seen-at-its-commit",
+        "kind": "critique",
+        "label": "a-review-is-seen-at-its-commit",
+        "summary": "a-review-is-seen-at-its-commit",
+        "route": "/cockpit/objects/critique/a-review-is-seen-at-its-commit",
+        "source": ".ai/repo/project/critiques/a-review-is-seen-at-its-commit.yaml",
+        "facts": {
+          "intent": "a-review-is-seen-at-its-commit",
+          "reviewed_at": "81ef931a3e1"
+        }
+      },
+      {
         "id": "majordomus://critique/a-session-leaves-what-it-observed",
         "kind": "critique",
         "label": "a-session-leaves-what-it-observed",
@@ -22142,6 +22154,32 @@
             "Loading code from outside the repository: external scripted capabilities belong to repository-automation-is-typed"
           ],
           "updated_at": "2026-10-21"
+        }
+      },
+      {
+        "id": "majordomus://intent/a-review-is-seen-at-its-commit",
+        "kind": "intent",
+        "label": "a-review-is-seen-at-its-commit",
+        "summary": "A reader sees what a review of the code found, at the commit it measured, and follows each finding to its line, its commit, its rule, its plan issue and that issue's GitHub projection",
+        "route": "/cockpit/objects/intent/a-review-is-seen-at-its-commit",
+        "source": ".ai/repo/project/intents/a-review-is-seen-at-its-commit.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "milestones": [
+            "a-review-is-published-at-its-commit",
+            "a-finding-is-tracked-to-its-issue"
+          ],
+          "non_goals": [
+            "Chart.js, or any second chart library beside ECharts (ADR 0135, I2654's non_scope)",
+            "p5 as status or review evidence (ADR 0135)",
+            "giallo, an EUPL-1.2 crate, linked into the MIT executable",
+            "A Markdown renderer for majordomus ui, which the unlanded ADR 0148 and I3004 own (branch feature/markdown-is-rendered-once)",
+            "A network call from the executable, bin/, lib/ or share/, or from the site build",
+            "Fixing inside this intent every smell the first review finds: each becomes its own issue",
+            "A flaky-test instrument: the scorecard reports test stability as not observed until one exists",
+            "A change to the navbar, which #2349 holds under an exclusive claim"
+          ],
+          "updated_at": "2026-10-28"
         }
       },
       {
@@ -70958,6 +70996,927 @@
         }
       },
       {
+        "id": "majordomus://issue/I4297",
+        "kind": "issue",
+        "label": "I4297",
+        "summary": "The quality report records the commit and the tree it measured",
+        "route": "/cockpit/objects/issue/i4297",
+        "source": ".ai/repo/project/issues/I4297.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A report of a crate in a clean checkout carries the HEAD commit and the tree digest of that checkout",
+            "A report taken with an uncommitted edit under the crate carries dirty: true",
+            "A report of a crate outside any git checkout carries commit and tree as not observed, never an empty string read as a value",
+            "The capability is changed only in its canonical declaration and every projection comes from majordomus generate"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "quality_report_records_its_commit"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Publishing the report on the site (I4299)",
+            "Line links and blame (I4298, I4301)",
+            "New violation codes (I4303)",
+            "The Cockpit quality page naming the commit, which I4311 delivers with the forge-URL helper after #2520 releases apps/majordomus-cli/src/cockpit/pages.rs",
+            "Changing the baseline key, which deliberately excludes the line number (.ai/repo/rust-quality-baseline.txt:3-5)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. Every transport is regenerated from the one declaration; the git read happens once per measurement and must not slow quality.report noticeably on a large checkout.",
+          "scope": [
+            ".ai/repo/project/issues/I4297.yaml",
+            "apps/majordomus-cli/src/quality/model.rs",
+            "apps/majordomus-cli/src/quality/report.rs",
+            "apps/majordomus-cli/src/capability/builtin/quality.rs"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
+          ],
+          "slug": "the-quality-report-records-its-commit",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib quality::",
+            "bin/majordomus-cli quality report --format json",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4298",
+        "kind": "issue",
+        "label": "I4298",
+        "summary": "One forge-link component pins every commit, pull request, file and line reference on the site, and a reference it cannot prove is reported as text",
+        "route": "/cockpit/objects/issue/i4298",
+        "source": ".ai/repo/project/issues/I4298.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every template listed in scope links commits, pull requests, files and tests through the component, and none of them keeps an inline repository_url/commit/ copy",
+            "scripts/ci/source-pin-check fails a planted new inline commit/ copy in any template, naming the file, and passes on master with the remaining copies baselined",
+            "A dirty or unknown build emits no forge link at all and reports why, instead of a /blob/master link",
+            "link-check fails a planted /pull/<n> link whose number the build's delivery data does not name, and a planted #L<n> past the end of its file",
+            "A reference that cannot be proved is rendered as text and appears in the build's unresolved-link report",
+            "Every page that cites a release pointer prints the commit and path it read"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "forge_links_are_pinned_and_proven",
+            "release_pointer_is_named_where_cited"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4298.yaml",
+            "site/templates/source-links.html",
+            "site/templates/roadmap.html",
+            "site/templates/issue.html",
+            "site/templates/session.html",
+            "site/templates/changelog.html",
+            "site/templates/entity.html",
+            "scripts/ci/link-check",
+            "scripts/ci/source-pin-check",
+            ".ai/repo/source-pin-baseline.txt"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#every-forge-link-is-pinned-and-proven"
+          ],
+          "slug": "one-forge-link-component-pins-every-reference",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/ci/link-check --sources",
+            "scripts/ci/source-pin-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4299",
+        "kind": "issue",
+        "label": "I4299",
+        "summary": "The site publishes the public API conformance report of the build commit, baselined findings included, with its provenance and a JSON download",
+        "route": "/cockpit/objects/issue/i4299",
+        "source": ".ai/repo/project/issues/I4299.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The built site has /quality/ labelled public API conformance, with the commit, tree, analyser, baseline identity, exclusions and denominators visible without JavaScript",
+            "A finding planted into the baseline appears on /quality/ marked baselined, with its stable id, verification state confirmed, reproduce command and line link pinned to the build commit",
+            "generate-site-data refuses a report whose recorded commit is not the build commit, naming both",
+            "The JSON download is byte-identical to the report the page was rendered from",
+            "Each figure is drawn over its table and the page reads the same with JavaScript off",
+            "site-check fails a build of the page without the label or without the baselined findings"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 scripts/generate-site-data writes no quality data, site/data/nav.toml has no quality entry, and no site template renders a finding.",
+          "depends_on": [
+            "I4297",
+            "I4298"
+          ],
+          "evidence_required": [
+            "quality_page_is_published_at_its_commit"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "The navbar and its partial: the entry has bar = false and appears in the footer's site map only (#2349)",
+            "A treemap or any chart form beyond bar (I4304)",
+            "Blame of each cited line (I4301)",
+            "Dependency evidence (I4300), the due-diligence review (I4305) and redaction (I4314)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. The site's data step runs the executable, so the quality report adds to site build time; the report must be measured once per build.",
+          "scope": [
+            ".ai/repo/project/issues/I4299.yaml",
+            "scripts/generate-site-data",
+            "site/data/nav.toml",
+            "scripts/site-check",
+            "site/templates/quality.html",
+            "site/content-src/quality.md"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
+          ],
+          "slug": "the-site-publishes-public-api-conformance",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/site-build",
+            "scripts/site-check",
+            "scripts/ci/link-check --sources",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4300",
+        "kind": "issue",
+        "label": "I4300",
+        "summary": "A cargo-deny gate judges the crate's advisories, licences, bans and sources, every npm devDependency is pinned exactly, and the verdict is published",
+        "route": "/cockpit/objects/issue/i4300",
+        "source": ".ai/repo/project/issues/I4300.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "cargo deny check passes on master's crate with the configuration as written, or every exception it needs is listed with its reason",
+            "A planted dependency with a disallowed licence fails the gate, naming the crate and the licence",
+            "A planted caret version in package.json fails the exact-pin rule, naming the package",
+            "The quality page shows the gate's verdict and the commit it judged, or not observed when no verdict for the build commit exists"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 apps/majordomus-cli/Cargo.toml has no [lints] table and the repository has no deny configuration; package.json pins cytoscape as ^3.33.1; .ai/repo/ci/gates.yaml has no dependency gate.",
+          "depends_on": [
+            "I4299"
+          ],
+          "evidence_required": [
+            "dependency_gate_refuses_a_planted_licence"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4300.yaml",
+            "deny.toml",
+            ".ai/repo/ci/gates.yaml",
+            "package.json",
+            "package-lock.json",
+            "scripts/site-check",
+            ".github/workflows/validate.yml",
+            "scripts/generate-site-data",
+            "site/templates/quality.html"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#dependencies-are-judged"
+          ],
+          "slug": "dependencies-are-judged-by-a-gate",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo deny --manifest-path apps/majordomus-cli/Cargo.toml check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4301",
+        "kind": "issue",
+        "label": "I4301",
+        "summary": "Each finding's cited line is blamed to the commit that introduced it, and the commit is linked",
+        "route": "/cockpit/objects/issue/i4301",
+        "source": ".ai/repo/project/issues/I4301.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A finding planted on a line added by a known commit shows that commit, linked to commit/<sha>",
+            "Every blame commit the page links is one link-check decides in the history",
+            "Blaming the full report in the site build takes less than a stated budget, measured and recorded in the pull request",
+            "A line in a shallow clone that cannot be blamed reads not observed, with the reason, never an empty link"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [
+            "I4297",
+            "I4298",
+            "I4299"
+          ],
+          "evidence_required": [
+            "cited_lines_are_blamed"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Blame on /ui or the Cockpit",
+            "Storing blame in any tracked record: it is derived at build time",
+            "Changing a Violation's fields in the crate: the blame is a fact of the history, not of the measurement"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. git blame across about 1850 baselined findings costs build time; the conclusion lists this risk. The Pages workflow may need a deeper fetch, which costs checkout time.",
+          "scope": [
+            ".ai/repo/project/issues/I4301.yaml",
+            "scripts/generate-site-data",
+            "site/templates/quality.html",
+            ".github/workflows/pages.yml"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#each-cited-line-is-blamed-to-its-commit"
+          ],
+          "slug": "each-cited-line-is-blamed-to-its-commit",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/site-build",
+            "scripts/ci/link-check --sources",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4302",
+        "kind": "issue",
+        "label": "I4302",
+        "summary": "The crate declares a clippy lint table with a named subset of pedantic, nursery and restriction lints, and new debt is ratcheted",
+        "route": "/cockpit/objects/issue/i4302",
+        "source": ".ai/repo/project/issues/I4302.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "scripts/rust-check passes on master with the table and its baseline",
+            "A planted function over the configured line limit fails, naming too_many_lines",
+            "A planted unwrap in non-test product code fails, naming unwrap_used",
+            "Removing one baselined finding without updating the baseline is reported as baseline drift, so the baseline cannot keep accepting fixed debt"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 apps/majordomus-cli/Cargo.toml has no [lints] section; scripts/rust-check runs clippy at line 384 with -D warnings and no lint list.",
+          "depends_on": [],
+          "evidence_required": [
+            "clippy_lint_table_refuses_new_debt"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Fixing the existing findings the baseline accepts",
+            "Module length, module-wide dead-code allowances and TODO comments, which are quality.report codes (I4303)",
+            "Lints outside the named subset"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. clippy has no native baseline; the ratchet must be built from clippy's JSON output in scripts/rust-check, and that script is already long.",
+          "scope": [
+            ".ai/repo/project/issues/I4302.yaml",
+            "apps/majordomus-cli/Cargo.toml",
+            "clippy.toml",
+            "scripts/rust-check",
+            ".ai/repo/clippy-baseline.txt"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#a-planted-smell-fails-a-named-gate"
+          ],
+          "slug": "the-crate-declares-its-clippy-lints",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/rust-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4303",
+        "kind": "issue",
+        "label": "I4303",
+        "summary": "quality.report reports long modules, module-wide dead-code allowances and TODO comments in product code",
+        "route": "/cockpit/objects/issue/i4303",
+        "source": ".ai/repo/project/issues/I4303.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Each new code is raised by a fixture crate that carries exactly that smell and by nothing else in the fixture",
+            "bin/majordomus-cli quality report passes on master with the baseline written by --write-baseline",
+            "A TODO inside a test module or a doc example raises nothing",
+            "Each code has a why and a remediation that the report prints"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [
+            "I4297"
+          ],
+          "evidence_required": [
+            "quality_report_reports_smells"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Splitting apps/majordomus-cli/src/cockpit/pages.rs or fixing any other finding",
+            "Complexity or duplication measures beyond length",
+            "Function length, which clippy's too_many_lines judges alone (I4302), and every other clippy lint"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. The baseline grows by every existing smell at once; the pull request states how many entries each code adds.",
+          "scope": [
+            ".ai/repo/project/issues/I4303.yaml",
+            "apps/majordomus-cli/src/quality/model.rs",
+            "apps/majordomus-cli/src/quality/report.rs",
+            "apps/majordomus-cli/src/quality/source.rs",
+            ".ai/repo/rust-quality-baseline.txt"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#a-planted-smell-fails-a-named-gate"
+          ],
+          "slug": "quality-report-reports-code-smells",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib quality::",
+            "bin/majordomus-cli quality report",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4304",
+        "kind": "issue",
+        "label": "I4304",
+        "summary": "A treemap shows where the findings concentrate, sized by lines and coloured from a sequential token ramp",
+        "route": "/cockpit/objects/issue/i4304",
+        "source": ".ai/repo/project/issues/I4304.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 the site vendors the ECharts 6.0.0 common build, charts.js reads data-chart=bar|line, and tokens.yaml has no ramp.",
+          "depends_on": [
+            "I4299"
+          ],
+          "evidence_required": [
+            "treemap_is_drawn_over_its_table"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Any chart library other than ECharts",
+            "Heatmaps, calendars or sankeys: each waits for a page that needs it",
+            "Colouring /ui charts (I4313)"
+          ],
+          "parallel_safe": false,
+          "priority": "p3",
+          "profile": "implementation",
+          "risk": "Medium. A custom ECharts build adds a build step; #1294 and #933 also edit share/design/tokens.yaml and must be re-read before starting.",
+          "scope": [
+            ".ai/repo/project/issues/I4304.yaml",
+            "share/design/tokens.yaml",
+            "site/charts.js",
+            "scripts/site-build",
+            "package.json",
+            "scripts/generate-site-data",
+            "site/templates/quality.html",
+            ".ai/repo/adrs/0152-a-diagram-and-a-chart-on-the-site-are-one-viewer-each-over-w.md"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#hotspots-are-drawn-over-their-table"
+          ],
+          "slug": "a-treemap-shows-finding-hotspots",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/ci/design-check",
+            "scripts/site-build",
+            "scripts/ci/homepage-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4305",
+        "kind": "issue",
+        "label": "I4305",
+        "summary": "The first due-diligence review is a record at the commit it measured, with a scorecard, a remediation roadmap and the facts two surfaces disagree about",
+        "route": "/cockpit/objects/issue/i4305",
+        "source": ".ai/repo/project/issues/I4305.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A majordomus decision record names the review record's home and why the other option was not taken",
+            "Every scorecard row names its source, its verdict and the commit it was read at, and a row without a source reads not observed",
+            "The disagreement section lists the delivery disagreement with both readings and their commits, verified as confirmed or left plausible with the refuter's note",
+            "Every finding carries severity, verification state and, when critical or high, a resolution issue",
+            "The rendered page links every finding's line, commit and issue, and link-check decides each link",
+            "site-check fails a planted build whose review omits the scorecard, the roadmap or the disagreement section",
+            "Every security-class finding of the review reaches the built site with only its title, severity and status"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [
+            "I4298",
+            "I4299",
+            "I4300",
+            "I4309",
+            "I4314"
+          ],
+          "evidence_required": [
+            "due_diligence_review_is_recorded"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Fixing any finding the review records: each becomes or names its own issue",
+            "A recurring scan of the history for secrets",
+            "A flaky-test instrument",
+            "A new record kind, unless the decision shows no existing shape holds the review, in which case this issue stops and asks"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            ".ai/repo/project/issues/I4305.yaml",
+            "scripts/generate-site-data",
+            "scripts/site-check",
+            "site/templates/quality.html",
+            ".ai/repo/project/critiques",
+            ".ai/repo/project/intents"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#a-review-is-a-record-with-a-scorecard"
+          ],
+          "slug": "the-first-due-diligence-review-is-recorded",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus intent validate",
+            "scripts/site-build",
+            "scripts/ci/link-check --sources",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4306",
+        "kind": "issue",
+        "label": "I4306",
+        "summary": "Every fence in an authored document carries a language, and a gate refuses one that does not",
+        "route": "/cockpit/objects/issue/i4306",
+        "source": ".ai/repo/project/issues/I4306.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "design-check fails on a planted Markdown document with an unlabelled fence, naming the file and line",
+            "design-check passes on master's authored documents after the fences are labelled, with no baseline",
+            "A fence inside a record tree or a generated document is not judged"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 scripts/ci/design-check has no fence rule, and 133 fences in 66 authored documents carry no language.",
+          "depends_on": [],
+          "desired_state": "design-check fails on a planted unlabelled fence, naming the file and line; every fence in the authored documents carries a language, the plain ones text; master passes.",
+          "evidence_required": [
+            "unlabelled_fence_is_refused"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "parallel_safe": false,
+          "priority": "p3",
+          "profile": "routine",
+          "risk": "Low. Labelling 133 fences touches 66 documents, some of which feed derived pages; the pull request lands alone, derives once and names the projections it regenerates.",
+          "scope": [
+            ".ai/repo/project/issues/I4306.yaml",
+            "scripts/ci/design-check",
+            "docs",
+            "README.md",
+            "examples",
+            "campaigns",
+            ".ai/repo/rules",
+            ".ai/repo/workflows",
+            "site/content-src",
+            "share/skeleton"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#code-is-highlighted-inside-its-licence-boundary"
+          ],
+          "slug": "every-fence-carries-a-language",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/ci/design-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4307",
+        "kind": "issue",
+        "label": "I4307",
+        "summary": "A proposed ADR 0228 writes the highlighter's licence boundary down: syntect in the executable, giallo only inside Zola's build",
+        "route": "/cockpit/objects/issue/i4307",
+        "source": ".ai/repo/project/issues/I4307.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0228 exists with status proposed and names the boundary, the class vocabulary, the palette source and the gate",
+            "ADR 0166 records that decision 7 is superseded only in naming the site's engine",
+            "I2747 no longer says Zola uses syntect, its current_state names handbook/cs/extras10.js as the CDN loader, and its acceptance names syntect in the executable",
+            "I3790's code section names ADR 0228's boundary",
+            "bin/majordomus adr check and bin/majordomus plan validate pass"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "adr_0228_records_the_highlighter_boundary"
+          ],
+          "milestone": "a-finding-is-tracked-to-its-issue",
+          "non_scope": [
+            "Implementing the highlighter (I2747) or applying it to /ui and the Cockpit (I3791)",
+            "Reviving PR #1294 beyond deciding which of it survives the boundary",
+            "Changing the site's Zola highlighter"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "deep-work",
+          "risk": "Medium. The owner chose giallo on 2026-10-20; the ADR stays proposed until the owner accepts the boundary, and nothing that depends on it may assume acceptance.",
+          "scope": [
+            ".ai/repo/project/issues/I4307.yaml",
+            ".ai/repo/project/issues/I2747.yaml",
+            ".ai/repo/project/issues/I3790.yaml",
+            ".ai/repo/project/milestones/one-kit-on-every-surface.yaml",
+            ".ai/repo/adrs"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#code-is-highlighted-inside-its-licence-boundary"
+          ],
+          "slug": "the-highlighter-licence-boundary-is-decided",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus adr check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4308",
+        "kind": "issue",
+        "label": "I4308",
+        "summary": "One capability proposes a canonical issue from a finding and writes it only through the plan's one checked write",
+        "route": "/cockpit/objects/issue/i4308",
+        "source": ".ai/repo/project/issues/I4308.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Proposing an issue from a fixture quality finding writes, through intents.draft_write, an issue record that plan validate accepts, whose why cites the finding's stable id and verification state",
+            "No code path of the capability writes a record except the call to intents.draft_write",
+            "An id that is already a record is refused, naming the record",
+            "An id with no id:issue claim on the board is refused, naming how to claim one",
+            "The capability is declared once and appears on every transport from majordomus generate alone"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 no capability writes an issue record, intents.draft_write is planned by open I3252 and has not landed, and the board carries no structured issue-id claim until I3974 lands.",
+          "depends_on": [
+            "I4299",
+            "I4309",
+            "I3252",
+            "I3974"
+          ],
+          "evidence_required": [
+            "finding_proposes_its_issue"
+          ],
+          "milestone": "a-finding-is-tracked-to-its-issue",
+          "non_scope": [
+            "A gh call or any GitHub write (I3975)",
+            "A writer of issue records of its own, or a validation path beside intents.draft_write (ADR 0191, I3252)",
+            "Allocating ids, or the board's id:issue claim (I3974): the capability reads the claim and checks it",
+            "The finding shape and the rule that refuses an untracked serious finding (I4309)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4308.yaml",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#a-finding-becomes-a-tracked-issue"
+          ],
+          "slug": "a-finding-proposes-its-issue",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib capability::builtin::plan",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4309",
+        "kind": "issue",
+        "label": "I4309",
+        "summary": "A finding carries severity, a verification state and its measured commit, and a critical or high finding without a plan issue is refused by a rule and its gate",
+        "route": "/cockpit/objects/issue/i4309",
+        "source": ".ai/repo/project/issues/I4309.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A critique finding with severity high, verification plausible and a refuter's note validates; one with verification plausible and no note is refused",
+            "intent validate fails on a fixture critique whose high finding has no resolution issue, naming the record and the finding id",
+            "A high finding rejected with a reason passes",
+            "A medium finding without an issue passes",
+            "majordomus-cli rules proves <the new test> names project.review-findings-are-tracked"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 CritiqueRecord (apps/majordomus-cli/src/intent_review.rs:340) reads the six finding fields, no finding has a severity or a verification state, and no rule names review findings.",
+          "depends_on": [],
+          "evidence_required": [
+            "untracked_serious_finding_is_refused"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Findings outside critique-shaped records",
+            "Mapping quality.report's error/warning severity onto critical, high, medium and low",
+            "Proposing an issue from a finding (I4308)",
+            "A security class and its redaction (I4314)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Low. Existing critiques carry no severity, so the rule reads them as unrated and refuses nothing until a finding is rated.",
+          "scope": [
+            ".ai/repo/project/issues/I4309.yaml",
+            "share/schemas/majordomus/critique/critique.v1.schema.json",
+            "apps/majordomus-cli/src/intent_review.rs",
+            ".ai/repo/rules/project/review-findings-are-tracked.v1.md"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#an-untracked-serious-finding-is-refused"
+          ],
+          "slug": "an-untracked-serious-finding-is-refused",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_review::",
+            "bin/majordomus generate --check",
+            "bin/majordomus intent validate",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4310",
+        "kind": "issue",
+        "label": "I4310",
+        "summary": "A site issue page links its GitHub projection, and the GitHub issue body links back to the record, the site and the evidence commit",
+        "route": "/cockpit/objects/issue/i4310",
+        "source": ".ai/repo/project/issues/I4310.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The built page of a fixture issue links the marker search for its id",
+            "The rendered GitHub body of a fixture issue links the pinned record, its site page, each dependency's site page and each evidence commit",
+            "No rendered body or page contains Close, Closes, Fix, Fixes, Resolve or Resolves followed by an issue reference",
+            "scripts/ci/github-check passes"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 site/templates/issue.html and site/templates/milestone.html carry no GitHub link; lib/plan.sh renders the body with no link; scripts/ci/link-check has no forge-issues form.",
+          "depends_on": [
+            "I4298"
+          ],
+          "evidence_required": [
+            "issue_and_projection_link_both_ways"
+          ],
+          "milestone": "a-finding-is-tracked-to-its-issue",
+          "non_scope": [
+            "Storing or reading a GitHub issue number (scripts/github-sync:28-33)",
+            "Creating a GitHub issue outside github-sync --apply at landing (I3975)",
+            "The milestone loop of scripts/github-sync, which #2622 edits",
+            "A second phase that reads github-sync --plan into an uncommitted observation for a direct link; it waits for this phase to land"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. #2622 edits lib/plan.sh and scripts/github-sync:969-997; this issue rebases after #2622 lands and stays out of the milestone loop.",
+          "scope": [
+            ".ai/repo/project/issues/I4310.yaml",
+            "site/templates/issue.html",
+            "site/templates/milestone.html",
+            "lib/plan.sh",
+            "scripts/ci/link-check"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#a-finding-becomes-a-tracked-issue"
+          ],
+          "slug": "an-issue-and-its-github-projection-link-both-ways",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/ci/github-check",
+            "scripts/ci/link-check --sources",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4311",
+        "kind": "issue",
+        "label": "I4311",
+        "summary": "One Rust forge-URL helper builds every commit, pull request, file and line link on /ui and the Cockpit",
+        "route": "/cockpit/objects/issue/i4311",
+        "source": ".ai/repo/project/issues/I4311.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No module but the helper formats a github.com commit, pull or blob URL, checked by a grep in the helper's test",
+            "The helper refuses a branch name where a commit is required",
+            "Each listed Cockpit and /ui site renders a commit as a link to commit/<sha>",
+            "The Cockpit quality page names the commit the findings were measured at, as a link to commit/<sha>",
+            "Case 1091 fails on a planted outbound commit link the history does not hold"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 six modules format forge URLs independently and at least seven Cockpit and /ui sites print a commit as text.",
+          "depends_on": [
+            "I4297",
+            "I4298"
+          ],
+          "evidence_required": [
+            "one_forge_url_helper"
+          ],
+          "milestone": "a-finding-is-tracked-to-its-issue",
+          "non_scope": [
+            "Site templates (I4298)",
+            "The release download base in apps/majordomus-cli/src/distribution/mod.rs, which names a release asset rather than a commit",
+            "Highlighting on /ui (I3791)"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. #2520 holds an exclusive claim on apps/majordomus-cli/src/cockpit/pages.rs, and stale #2405 and #2522 also edit it; the Cockpit half lands after #2520.",
+          "scope": [
+            ".ai/repo/project/issues/I4311.yaml",
+            "apps/majordomus-cli/src/plan/flight.rs",
+            "apps/majordomus-cli/src/release/changelog.rs",
+            "apps/majordomus-cli/src/integration/train.rs",
+            "apps/majordomus-cli/src/ui/prs.rs",
+            "apps/majordomus-cli/src/ui/deployments.rs",
+            "apps/majordomus-cli/src/ui/claim.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "test/cases/1091_no_link_on_the_ui_is_dead.sh"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#every-forge-link-is-pinned-and-proven"
+          ],
+          "slug": "one-forge-url-helper-for-ui-and-cockpit",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::flight::",
+            "bash test/run.sh 1091_no_link_on_the_ui_is_dead",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4312",
+        "kind": "issue",
+        "label": "I4312",
+        "summary": "The trace from issue to commit, pull request and finding is published and drawn with Cytoscape over its table",
+        "route": "/cockpit/objects/issue/i4312",
+        "source": ".ai/repo/project/issues/I4312.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "/trace/ lists, for a fixture issue, its commits and the findings that name it, every link pinned and decided by link-check",
+            "The graph is drawn from the tables on the page and the page reads the same with JavaScript off",
+            "A pull request the build's data does not hold reads not observed"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 scripts/generate-site-data writes no trace data and no site template renders a trace.",
+          "depends_on": [
+            "I4298"
+          ],
+          "evidence_required": [
+            "trace_is_drawn_over_its_table"
+          ],
+          "milestone": "a-finding-is-tracked-to-its-issue",
+          "non_scope": [
+            "A network read during the site build",
+            "A /ui trace screen",
+            "Changing trace.* answers"
+          ],
+          "parallel_safe": false,
+          "priority": "p3",
+          "profile": "implementation",
+          "risk": "Low. The trace of every issue may be large; the page groups by milestone and the graph draws one issue at a time.",
+          "scope": [
+            ".ai/repo/project/issues/I4312.yaml",
+            "scripts/generate-site-data",
+            "site/graph.js",
+            "site/templates/trace.html",
+            "site/content-src/trace.md"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#relations-and-status-are-drawn-from-tables"
+          ],
+          "slug": "the-trace-is-drawn-over-its-table",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "scripts/site-build",
+            "scripts/site-check",
+            "scripts/ci/link-check --sources",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4313",
+        "kind": "issue",
+        "label": "I4313",
+        "summary": "A /ui donut colours each slice by the status token its label means, never by its position",
+        "route": "/cockpit/objects/issue/i4313",
+        "source": ".ai/repo/project/issues/I4313.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A donut of failed and passed counts draws failed in the failure tone and passed in the success tone, whatever their order",
+            "A label with no declared status meaning is drawn in the neutral tone",
+            "status_tone and the donut agree for every plan status word, each filed in share/design/tokens.yaml"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "donut_colours_by_status_token"
+          ],
+          "milestone": "a-finding-is-tracked-to-its-issue",
+          "non_scope": [
+            "The site's charts (I4304)",
+            "Any new chart form on /ui",
+            "The /ui files that the I3004 and I2914 branches rewrite beyond view.rs",
+            "A table of the donut's counts, which open I3792 delivers",
+            "Editing share/design/status.css or any other generated projection by hand"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Medium. #2583 and the unlanded I3004 and I2914 branches edit apps/majordomus-cli/src/ui; open I3792 also edits view.rs; this issue re-reads them before starting.",
+          "scope": [
+            ".ai/repo/project/issues/I4313.yaml",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "share/design/tokens.yaml"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#relations-and-status-are-drawn-from-tables"
+          ],
+          "slug": "ui-donuts-colour-by-status-token",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ui::view::",
+            "bin/majordomus generate --check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4314",
+        "kind": "issue",
+        "label": "I4314",
+        "summary": "A security finding shows only its title, severity and status on the site and in every published file",
+        "route": "/cockpit/objects/issue/i4314",
+        "source": ".ai/repo/project/issues/I4314.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A planted security finding appears on the built site and in its JSON with title, severity and status and no path, line, text or command",
+            "site-check fails when a planted security finding's path reaches any built file, naming the file",
+            "The checkout-local report still carries the full finding",
+            "The redaction function has a unit test over a fixture security finding, and an unknown class fails closed"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 CritiqueClass has seven classes and none is security; no surface redacts a finding; the site publishes no finding yet.",
+          "depends_on": [
+            "I4299",
+            "I4309"
+          ],
+          "evidence_required": [
+            "security_findings_are_redacted"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Deciding what is a vulnerability: the finding's author sets the class",
+            "Private publication of the full detail to anyone",
+            "A /ui or Cockpit screen of review findings: none exists, and the screen that first renders one calls the redaction function"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Medium. A redaction that fails open publishes the detail; the site-check rule is the guard and must fail closed when it cannot read a finding's class.",
+          "scope": [
+            ".ai/repo/project/issues/I4314.yaml",
+            "share/schemas/majordomus/critique/critique.v1.schema.json",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "scripts/generate-site-data",
+            "scripts/site-check",
+            "site/templates/quality.html"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#security-findings-are-redacted"
+          ],
+          "slug": "security-findings-are-redacted",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_review::",
+            "scripts/site-build",
+            "scripts/site-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -72565,6 +73524,56 @@
         }
       },
       {
+        "id": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "milestone",
+        "label": "a-finding-is-tracked-to-its-issue",
+        "summary": "A finding becomes a tracked plan issue whose GitHub projection links both ways, and every surface draws and highlights with the one library for the job",
+        "route": "/cockpit/objects/milestone/a-finding-is-tracked-to-its-issue",
+        "source": ".ai/repo/project/milestones/a-finding-is-tracked-to-its-issue.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Criteria a-finding-becomes-a-tracked-issue, code-is-highlighted-inside-its-licence-boundary and relations-and-status-are-drawn-from-tables of intent a-review-is-seen-at-its-commit carry their evidence",
+            "An issue proposed from a fixture finding is written only through intents.draft_write and passes plan validate",
+            "No record stores a GitHub issue number as a field or key, no record is matched to GitHub by number, and no closing keyword is written"
+          ],
+          "claims": [],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "non_scope": [
+            "Storing a GitHub issue number in any record as a field or key, or matching a record to GitHub by number (scripts/github-sync:28-33)",
+            "A gh issue create from any session; issues appear only through github-sync at landing (I3975)",
+            "A Markdown renderer for /ui, which the unlanded ADR 0148 and I3004 own (branch feature/markdown-is-rendered-once)",
+            "Reviving or rewriting PR #1294's engine beyond what ADR 0228 decides"
+          ],
+          "order": 522,
+          "priority": "p2",
+          "risks": [
+            "#2622 edits lib/plan.sh and scripts/github-sync; I4310 rebases after it lands and stays out of the milestone loop",
+            "PR #1294 already edits share/design, share/ui and several Cockpit modules; I4307 decides what of it survives before I3791 applies a highlighter to /ui",
+            "The I3004 and I2914 branches and #2583 touch apps/majordomus-cli/src/ui, and open I3792 also edits apps/majordomus-cli/src/ui/view.rs; I4313 must re-read them before it starts"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "lib/plan.sh",
+            "site/templates/issue.html",
+            "apps/majordomus-cli/src/plan/flight.rs",
+            "apps/majordomus-cli/src/ui/view.rs",
+            "site/graph.js",
+            ".ai/repo/adrs"
+          ],
+          "slug": "a-finding-is-tracked-to-its-issue",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate",
+            "scripts/ci/github-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://milestone/a-finish-reads-the-criteria-its-work-serves",
         "kind": "milestone",
         "label": "a-finish-reads-the-criteria-its-work-serves",
@@ -73001,6 +74010,60 @@
           "updated_at": "2026-10-18",
           "validation": [
             "majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "milestone",
+        "label": "a-review-is-published-at-its-commit",
+        "summary": "The quality report, its dependency evidence and the first due-diligence review are published at the commit they measured, every link pinned and proven",
+        "route": "/cockpit/objects/milestone/a-review-is-published-at-its-commit",
+        "source": ".ai/repo/project/milestones/a-review-is-published-at-its-commit.yaml",
+        "facts": {
+          "claims": [],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "non_scope": [
+            "Chart.js or any second chart library (ADR 0135)",
+            "The navbar and its partial (#2349 holds them); the new page enters site/data/nav.toml with bar = false",
+            "The Cockpit, including its quality page's commit, and /ui links, which a-finding-is-tracked-to-its-issue owns through I4311",
+            "Fixing the smells the first review records; each is its own issue",
+            "Any network read by the site build"
+          ],
+          "order": 521,
+          "priority": "p1",
+          "risks": [
+            "A reader may still read conformance as assurance; the label and the denominators must stay prominent on the page and in the JSON",
+            "Blaming every cited line of a large baseline costs build time; I4301 measures it and bounds it before it lands",
+            "The ECharts custom build for the treemap must stay inside the homepage byte budget, which loads charts lazily (I4304)",
+            "#2520 holds an exclusive claim on apps/majordomus-cli/src/cockpit/pages.rs; nothing in this milestone edits it, and the Cockpit quality page's commit is I4311's in the second milestone"
+          ],
+          "scope": [
+            "apps/majordomus-cli/src/quality/model.rs",
+            "apps/majordomus-cli/src/quality/report.rs",
+            "apps/majordomus-cli/src/capability/builtin/quality.rs",
+            "apps/majordomus-cli/Cargo.toml",
+            "site/templates/source-links.html",
+            "site/charts.js",
+            "scripts/ci/link-check",
+            "scripts/generate-site-data",
+            "scripts/site-check",
+            "share/design/tokens.yaml",
+            ".ai/repo/rust-quality-baseline.txt",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "share/schemas/majordomus/critique/critique.v1.schema.json",
+            ".ai/repo/rules/project/review-findings-are-tracked.v1.md"
+          ],
+          "slug": "a-review-is-published-at-its-commit",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus intent validate",
+            "scripts/ci/link-check --sources"
           ]
         }
       },
@@ -115714,6 +116777,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://critique/a-review-is-seen-at-its-commit",
+        "target": "kind:critique",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://critique/a-session-leaves-what-it-observed",
         "target": "kind:critique",
         "kind": "is_a"
@@ -118135,6 +119203,11 @@
       },
       {
         "source": "majordomus://intent/a-provider-carries-the-contract-natively",
+        "target": "kind:intent",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/a-review-is-seen-at-its-commit",
         "target": "kind:intent",
         "kind": "is_a"
       },
@@ -133219,6 +134292,301 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4297",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4297",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4298",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4298",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4299",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4299",
+        "target": "majordomus://issue/I4297",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4299",
+        "target": "majordomus://issue/I4298",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4299",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4300",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4300",
+        "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4300",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4301",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4301",
+        "target": "majordomus://issue/I4297",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4301",
+        "target": "majordomus://issue/I4298",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4301",
+        "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4301",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4302",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4302",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4303",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4303",
+        "target": "majordomus://issue/I4297",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4303",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4304",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4304",
+        "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4304",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "majordomus://issue/I4298",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "majordomus://issue/I4300",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "majordomus://issue/I4309",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "majordomus://issue/I4314",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4305",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4306",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4306",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4307",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4307",
+        "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4308",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4308",
+        "target": "majordomus://issue/I3252",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4308",
+        "target": "majordomus://issue/I3974",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4308",
+        "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4308",
+        "target": "majordomus://issue/I4309",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4308",
+        "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4309",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4309",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4310",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4310",
+        "target": "majordomus://issue/I4298",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4310",
+        "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4311",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4311",
+        "target": "majordomus://issue/I4297",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4311",
+        "target": "majordomus://issue/I4298",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4311",
+        "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4312",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4312",
+        "target": "majordomus://issue/I4298",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4312",
+        "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4313",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4313",
+        "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4314",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4314",
+        "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4314",
+        "target": "majordomus://issue/I4309",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4314",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -133569,6 +134937,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://milestone/a-finish-reads-the-criteria-its-work-serves",
         "target": "kind:milestone",
         "kind": "is_a"
@@ -133642,6 +135015,11 @@
         "source": "majordomus://milestone/a-release-is-proven-end-to-end",
         "target": "majordomus://milestone/test-evidence",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/a-second-adopter-is-served",
@@ -144845,8 +146223,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4038,
+      "edges": 9324,
       "acyclic": false,
       "truncated": false
     }
