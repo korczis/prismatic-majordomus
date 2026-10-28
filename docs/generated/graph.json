@@ -71587,6 +71587,40 @@
         }
       },
       {
+        "id": "majordomus://issue/I4296",
+        "kind": "issue",
+        "label": "I4296",
+        "summary": "A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes",
+        "route": "/cockpit/objects/issue/i4296",
+        "source": ".ai/repo/project/issues/I4296.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The structure job's checkout carries filter: blob:none and fetch-depth: 0",
+            "Every fetch-depth: 0 checkout of validate.yml is bounded at 20 minutes and scripts/ci/step-bound-check passes",
+            "A validate run of a train head that carries this change completes its checkouts inside their bounds (ci evidence from the train's run)"
+          ],
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            ".ai/repo/project/issues/I4296.yaml"
+          ],
+          "slug": "a-full-history-checkout-fits-its-bound",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "actionlint .github/workflows/validate.yml",
+            "scripts/ci/step-bound-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -134027,6 +134061,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4296",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4296",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -145683,8 +145727,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4033,
-      "edges": 9291,
+      "nodes": 4034,
+      "edges": 9293,
       "acyclic": false,
       "truncated": false
     }
