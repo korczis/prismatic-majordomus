@@ -59992,7 +59992,7 @@
           "path",
           "enforcement"
         ],
-        "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
+        "description": "One rule, as the repository canonically declares it.\n# Example\n\nBuilt by `definitions` from the index rather than by hand. Its ordering is the one\nthe crate has, so a report over the same tree reads the same twice.\n\n```\nuse majordomus_cli::rules::{Class, RuleDefinition};\n# use majordomus_cli::rules::{Enforcement, Mode};\nlet d = RuleDefinition {\n    id: \"project.scope-is-declared\".into(),\n    identity: \"project.scope-is-declared@1\".into(),\n    uri: \"majordomus://rule/project.scope-is-declared@1\".into(),\n    version: 1,\n    title: \"Scope is declared\".into(),\n    description: None,\n    statement: None,\n    status: \"active\".into(),\n    class: Class::Blocking,\n    namespace: \"project\".into(),\n    depends_on: vec![],\n    tags: vec![],\n    path: \".ai/repo/rules/project/scope-is-declared.v1.md\".into(),\n    enforcement: Enforcement {\n        mode: Mode::Declarative, validator: None, category: None, exit_code: None,\n        enforced_by: None, tests: vec![], reviewed_because: None, entry: None,\n    },\n};\nassert_eq!(d.class, Class::Blocking);\n```"
       },
       "RuleDetail": {
         "type": "object",
@@ -60079,12 +60079,19 @@
               "null"
             ],
             "description": "Why nothing executable can express this rule, when the mode is reviewed. Required\nthere: a declared exemption with no reason is the debt it exists to replace."
+          },
+          "entry": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The name of the policy's enforcement entry that checks this rule, when the mode is\nentry. doctor resolves the name against the policy and verifies the entry's wiring."
           }
         },
         "required": [
           "mode"
         ],
-        "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
+        "description": "The enforcement block of a rule, read from `x-majordomus`.\n# Example\n\nRead from front matter rather than built by hand; this is the shape a gated rule\nproduces, and the mode is decided by what the block actually names.\n\n```\nuse majordomus_cli::rules::{Enforcement, Mode};\nlet e = Enforcement {\n    mode: Mode::Gated,\n    validator: None,\n    category: None,\n    exit_code: None,\n    enforced_by: None,\n    tests: vec![\"test/cases/07_scope.sh\".into()],\n    reviewed_because: None,\n    entry: None,\n};\nassert_eq!(e.mode, Mode::Gated);\n```"
       },
       "RuleFinding": {
         "type": "object",
@@ -60135,6 +60142,11 @@
             "type": "string",
             "const": "reviewed",
             "description": "Carries a reason why nothing executable can express it, and so declares that a\nreader enforces it. An honest declaration, not an absence: the reason *is* the\ndeclaration — there is no flag beside it, because a flag can be set and a reason\ncannot be set without writing one — it is counted apart from every executable mode,\nand it separates a rule nobody could automate from a rule nobody got round to."
+          },
+          {
+            "type": "string",
+            "const": "entry",
+            "description": "Names the policy's enforcement entry that checks it: the repository's own command,\nwired into a hook or a CI job that doctor verifies. How a project's rule is enforced,\nsince it can name no validator of this tool's source."
           },
           {
             "type": "string",

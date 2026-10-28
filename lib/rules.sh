@@ -97,8 +97,13 @@ mj_rule_scan() {
           # flag beside it, because a flag can be set and a reason cannot be set without
           # writing one. A block that names neither a test nor a reason is enforcement
           # nobody can reproduce, which is what this refuses.
-          if (first["x-majordomus.tests.0"] == "" && first["x-majordomus.reviewed_because"] == "")
-            fail("x-majordomus names no test and gives no reviewed_because")
+          # A fourth: the rule names the enforcement entry of the policy that checks it, which is
+          # how a command of the project backs a rule of the project (doctor resolves the name).
+          if (first["x-majordomus.tests.0"] == "" && first["x-majordomus.reviewed_because"] == "" \
+              && first["x-majordomus.enforcement"] == "")
+            fail("x-majordomus names no test, no enforcement entry and gives no reviewed_because")
+          if (first["x-majordomus.enforcement"] != "" && first["x-majordomus.validator"] != "")
+            fail("x-majordomus names a validator and an enforcement entry; a rule is checked by one of them")
           if (first["x-majordomus.reviewed_because"] != "" && first["x-majordomus.validator"] != "")
             fail("x-majordomus gives a reviewed_because and a validator; a dispatched rule is not review-enforced")
         }
@@ -326,6 +331,7 @@ mj_rules_render() {
       else if (f == "enforced") enf[i] = v
       else if (f == "validator") val[i] = v
       else if (f == "reviewed_because") rev[i] = v
+      else if (f == "enforcement") ent[i] = v
       else if (f ~ /^tests\.[0-9]+$/) ts[i] = (i in ts ? ts[i] "," v : v)
       else if (f ~ /^enforced_by\.[0-9]+$/) eb[i] = (i in eb ? eb[i] "," v : v)
       else if (f ~ /^depends_on\.[0-9]+$/) dep[i] = (i in dep ? dep[i] ",\"" v "\"" : "\"" v "\"")
@@ -333,10 +339,10 @@ mj_rules_render() {
     END {
       if (json) {
         printf "{\"schema\":1,\"rules\":["
-        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"mode\":\"%s\",\"tests\":[%s],\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), (enf[i] != 1 ? "none" : val[i] != "" ? "dispatched" : ts[i] != "" ? "gated" : "reviewed"), jlist(ts[i]), dep[i]
+        for (i = 0; i < n; i++) printf "%s{\"id\":\"%s\",\"version\":%s,\"class\":\"%s\",\"status\":\"%s\",\"provenance\":\"%s\",\"file\":\"%s\",\"enforced\":%s,\"mode\":\"%s\",\"tests\":[%s],\"depends_on\":[%s]}", (i ? "," : ""), id[i], ver[i], cls[i], st[i], prov[i], jesc(file[i]), (enf[i] == 1 ? "true" : "false"), (enf[i] != 1 ? "none" : val[i] != "" ? "dispatched" : ent[i] != "" ? "entry" : ts[i] != "" ? "gated" : "reviewed"), jlist(ts[i]), dep[i]
         printf "]}\n"
       } else
-        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] != 1 ? "no validator; see the rule" : val[i] != "" ? "enforced by " eb[i] : ts[i] != "" ? "proven by " ts[i] : "review-enforced: " rev[i])
+        for (i = 0; i < n; i++) printf "%-42s v%-2s %-9s %-16s %s\n", id[i], ver[i], cls[i], prov[i], (enf[i] != 1 ? "no validator; see the rule" : val[i] != "" ? "enforced by " eb[i] : ent[i] != "" ? "enforced by policy entry " ent[i] : ts[i] != "" ? "proven by " ts[i] : "review-enforced: " rev[i])
     }' "$MJ_RULES_FLAT"
 }
 

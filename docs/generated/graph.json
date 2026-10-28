@@ -70913,6 +70913,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I4255",
+        "kind": "issue",
+        "label": "I4255",
+        "summary": "A project rule can be enforced by a command the repository names",
+        "route": "/cockpit/objects/issue/i4255",
+        "source": ".ai/repo/project/issues/I4255.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A project rule naming a declared policy enforcement entry is listed as enforced by it",
+            "A rule naming an entry the policy does not declare fails doctor naming the rule",
+            "A rule naming both a validator and an entry is refused"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "Only the tool's own validators can back a rule; a project rule is documentation.",
+          "depends_on": [],
+          "desired_state": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+          "evidence_required": [
+            "case_a_project_rule_names_a_command_validator"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "A project rule may declare a command (repository-relative, with arguments) as its validator; doctor runs or reconciles it like a dispatched doctrine, and `rules list` reports it enforced.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4255.yaml",
+            "lib/rules.sh",
+            "lib/doctor.sh",
+            "share/allow/rule.txt",
+            "share/schemas/majordomus/rule/rule.v1.proto",
+            "apps/majordomus-cli/src/rules",
+            "apps/majordomus-cli/src/capability/builtin/rules.rs",
+            "test/cases/125_rule_proof.sh",
+            "docs/DOCTRINE.md",
+            "docs/SURFACES.md",
+            "test/cases/4255_a_project_rule_runs_its_command.sh"
+          ],
+          "slug": "a-project-rule-names-a-command-validator",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4255_a_project_rule_runs_its_command"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -94417,6 +94462,13 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4255_a_project_rule_runs_its_command.sh",
+        "kind": "test",
+        "label": "test/cases/4255_a_project_rule_runs_its_command.sh",
+        "route": "/cockpit/objects/test/test-cases-4255-a-project-rule-runs-its-command-sh",
+        "source": "test/cases/4255_a_project_rule_runs_its_command.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133164,6 +133216,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4255",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4255",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -139694,6 +139756,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4255_a_project_rule_runs_its_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144790,8 +144857,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4015,
-      "edges": 9259,
+      "nodes": 4017,
+      "edges": 9262,
       "acyclic": false,
       "truncated": false
     }
