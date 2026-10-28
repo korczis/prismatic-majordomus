@@ -50,9 +50,19 @@ allocator and the gate that would decide this; until it lands, these steps are a
 
 ```bash
 git fetch --quiet origin
-git log --all --oneline -i --grep 'I<id>'                        # any commit naming the id
-git log --all --oneline -- .ai/repo/project/issues/I<id>.yaml   # any ref holding its file
+# a branch whose tip holds the file: every tip in one pass, about 2 s over 2100 refs
+git for-each-ref --format='%(refname):.ai/repo/project/issues/I<id>.yaml %(refname)' \
+    refs/heads refs/remotes/origin refs/rescue \
+  | git cat-file --batch-check='%(objectname) %(rest)' | grep -v ' missing$'
+# a recent commit naming the id, its message only: under 1 s
+git log --oneline --since=30.days -i --grep 'I<id>' --branches --remotes=origin
 ```
+
+Ask with these two and nothing wider. A search of every ref's content (`git log --all -S`,
+`git grep` over every remote branch) has no bound: on 2026-10-28 three of them, run by one
+session's workflow agents for an id and a path, held the shared machine at load 92 until the
+shared server stopped answering, and stopping those three processes was what let it answer.
+Whether a branch carries a path is `scripts/collision-check --new <path>`.
 
 A collision found later is resolved by renumbering the issue that was announced second.
 
