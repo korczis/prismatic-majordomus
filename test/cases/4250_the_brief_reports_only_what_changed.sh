@@ -18,9 +18,9 @@
 #      on every interval again, whatever changed, cannot pass unseen
 #   3  it fails when the clock is no longer taken out of the brief
 #
-# 1-3 need Claude Code's engine. Where there is no `claude` on PATH (CI) the case holds 0 and
-# ends there, as case 2980 does, rather than declining under --no-skips; MJ_CLAUDE_E2E=1 makes a
-# missing `claude` a failure.
+# 1-3 need Claude Code's engine. Where there is no `claude` on PATH (CI) the case holds 0 only,
+# as case 2980 does, rather than declining under --no-skips; MJ_CLAUDE_E2E=1 makes a missing
+# `claude` a failure.
 . "$ROOT/test/lib.sh"
 
 SRC="$ROOT/share/mods/claude-code/majordomus-brief"
@@ -33,10 +33,7 @@ grep -qF ".replace(DURATION, '<age>')" "$SRC/hooks/register.ts" \
   || fail "the clock is no longer taken out in the module: mutation 3 tests nothing"
 grep -qF "test('an idle session whose surroundings only aged is never woken'" \
   "$SRC/hooks/register.test.ts" || fail "the mod's test no longer holds the quiet session"
-if ! command -v claude >/dev/null 2>&1; then
-  [ "${MJ_CLAUDE_E2E:-}" != 1 ] || fail "MJ_CLAUDE_E2E=1, and there is no claude on PATH"
-  exit 0
-fi
+
 # A copy of the mod, so that the engine's laid type declarations never land in the checkout.
 copy() {
   rm -rf "$T/mod" && mkdir -p "$T/mod" && cp -R "$SRC/." "$T/mod/" && rm -rf "$T/mod/.claude-plugin/types"
@@ -53,19 +50,28 @@ mutate() {
 }
 plugin_test() { env -u MAJORDOMUS_SHARE claude plugin test "$T/mod" > "$T/out" 2>&1; }
 
-# ---------------------------------------------------------------- 1  the mod's test passes
-copy
-plugin_test || { cat "$T/out"; fail "the mod's own test fails"; }
+# 1-3, in Claude Code's engine.
+engine() {
+  # -------------------------------------------------------------- 1  the mod's test passes
+  copy
+  plugin_test || { cat "$T/out"; fail "the mod's own test fails"; }
 
-# ---------------------------------------------------------------- 2  the dedupe is held
-copy
-mutate 'fingerprint(b) !== fingerprint(told)' 'true'
-if plugin_test; then fail 'a self-report on every interval, changed or not, passes the mod'"'"'s test'; fi
-grep -q 'an idle session whose surroundings only aged is never woken' "$T/out" \
-  || fail "the mutation failed the test, but not where the quiet session is held: $(tail -5 "$T/out")"
+  # -------------------------------------------------------------- 2  the dedupe is held
+  copy
+  mutate 'fingerprint(b) !== fingerprint(told)' 'true'
+  if plugin_test; then fail 'a self-report on every interval, changed or not, passes the mod'"'"'s test'; fi
+  grep -q 'an idle session whose surroundings only aged is never woken' "$T/out" \
+    || fail "the mutation failed the test, but not where the quiet session is held: $(tail -5 "$T/out")"
 
-# ---------------------------------------------------------------- 3  the clock is taken out
-copy
-mutate ".replace(DURATION, '<age>')" ''
-if plugin_test; then fail 'a brief whose ages count as facts passes the mod'"'"'s test'; fi
+  # -------------------------------------------------------------- 3  the clock is taken out
+  copy
+  mutate ".replace(DURATION, '<age>')" ''
+  if plugin_test; then fail 'a brief whose ages count as facts passes the mod'"'"'s test'; fi
+}
+
+if command -v claude >/dev/null 2>&1; then
+  engine
+else
+  [ "${MJ_CLAUDE_E2E:-}" != 1 ] || fail "MJ_CLAUDE_E2E=1, and there is no claude on PATH"
+fi
 exit 0
