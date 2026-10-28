@@ -51,7 +51,9 @@ licence finding and is removed before the branch is pushed.
 
 `scripts/ci/design-check` refuses raw palette utilities, literal colours and second
 declarations of the tokens, so a surface on Pro markup cannot bring Pro's or Tailwind's own
-values with it. Refusing a byte-identical Pro source file, and recording Pro fidelity as a
-check rather than a review, is I4316 (the ADR 0036 amendment). The owner-level checker
-`node ~/.claude/skills/flowbite-pro/verify.mjs <repo>` additionally reports a repository whose
-UI lacks Flowbite or Tailwind, depends on another UI kit, or lacks this rule.
+values with it. Two checks are in flight and not yet on the trunk. Pro fidelity as a check
+rather than a review is `majordomus design kit --check` (I4334): the Pro shell on each root
+layout, Flowbite JavaScript where its attributes are used, and no other kit. Refusing a Pro
+source file in this public tree is the never-publish gate (I4336). Until they land, the
+owner-level checker `node ~/.claude/skills/flowbite-pro/verify.mjs <repo>` reports the same
+signals, and review enforces the rest.
