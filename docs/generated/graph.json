@@ -71002,6 +71002,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4290",
+        "kind": "issue",
+        "label": "I4290",
+        "summary": "The reconciliation names a record never created on GitHub apart from one deleted there",
+        "route": "/cockpit/objects/issue/i4290",
+        "source": ".ai/repo/project/issues/I4290.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A canonical record never projected reads never-created, and --check names that --apply would create it",
+            "A record whose marker GitHub served and no longer serves reads deleted-remotely, and --apply refuses it, names it and writes nothing",
+            "A fixture case drives both states offline, and fails if the two read as one"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "absences_told_apart_case"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "Restoring deleted GitHub issues, or deciding for a person whether a deleted record is re-created",
+            "The other states of the vocabulary, which cases 45 and 602 already hold"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases",
+            "docs",
+            ".ai/repo/project/issues/I4290.yaml"
+          ],
+          "serves": [],
+          "slug": "never-created-is-not-deleted-remotely",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 45_github_projection"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -133263,6 +133304,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4290",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4290",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144889,8 +144940,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4017,
+      "edges": 9263,
       "acyclic": false,
       "truncated": false
     }
