@@ -17,10 +17,14 @@
     evidence page reads supports (data/evidence.json `claims`, I3916), named by the commit it
     was recorded at; without that run it is unmeasured, never a 0.
 
-    Expects from the caller: model, caps, cat, blocking, base, m, ci, ci_measured. -#}
+    A run whose own state withholds its count (ci_figure "unconfirmed", partials/run-figure.html)
+    is shown as that word, never as the count it does not confirm, and a run of an older commit
+    says it is stale (I4317).
+
+    Expects from the caller: model, caps, cat, blocking, base, m, ci, ci_measured, ci_figure. -#}
 {%- set guaranteed = [c for c in caps.claims if c.status == "guaranteed"] | length -%}
 {%- set supported = "unmeasured" -%}{%- set held = false -%}{%- set supported_at = "" -%}
-{%- if ci_measured %}{% set supported = ci.claims.supported %}{% set held = ci.claims.supported >= guaranteed and guaranteed > 0 %}{% set ci_short = ci.commit | truncate(length=7, end="") %}{% set supported_at = " · recorded at " ~ ci_short %}{% endif -%}
+{%- if ci_measured %}{% set supported = ci.claims.supported %}{% set held = ci_figure == "current" and ci.claims.supported >= guaranteed and guaranteed > 0 %}{% set ci_short = ci.commit | truncate(length=7, end="") %}{% set supported_at = " · recorded at " ~ ci_short ~ (", stale" if ci_figure == "behind" else "") %}{% elif ci_figure == "unconfirmed" %}{% set supported = "not confirmed" %}{% set supported_at = " · the run of " ~ (ci.commit | truncate(length=7, end="")) ~ " is " ~ (ci.state | default(value="unknown")) %}{% endif -%}
 {%- set nodes = [
   {"id": "declared", "lane": "made", "label": m.surfaces.source, "v": model.telemetry.objects, "unit": "objects of the layer", "text": m.hero.lead, "href": "/docs/product/"},
   {"id": "registry", "lane": "made", "label": m.surfaces.registry, "v": model.telemetry.capabilities, "unit": "capabilities in the registry", "text": m.surfaces.lead, "href": "/registry/capabilities/"},

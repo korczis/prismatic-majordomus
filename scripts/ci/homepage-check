@@ -42,7 +42,11 @@
 #               from site/data/evidence.json (the run the evidence page reads, which says the
 #               same count), named by the commit it was recorded at and how far behind the
 #               built one, or the words "not yet measured" and no number when no run measured
-#               it (I3916); and it never says a test proves it while fewer are supported
+#               it (I3916); a run whose own state is stale or unknown (failures, a dirty tree,
+#               a refused or absent report) shows no count, only "not confirmed", and
+#               /guarantees/ shows the same figure, any other count there saying it is the
+#               committed ledger's (I4317); and it never says a test proves it while fewer are
+#               supported
 #   promises    a capability word site/data/homepage.toml [promises] declares appears in the
 #               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
 #               guaranteed and supported by a recorded run; a declaration naming a claim that does
@@ -601,6 +605,15 @@ else:
 # number at all, so a 0 can never stand for a run nobody recorded. The evidence page, when the
 # build wrote it, says the same count. And the page never says a test proves it while fewer are
 # supported than declared.
+#
+# What the count may be shown as follows the run's own state (I4317), the word
+# site/templates/partials/run-figure.html derives from the same fields: `current` (the run is
+# of the built commit and confirms its report) and `behind` (a run of an older commit that
+# nothing of its own withholds) show the count; a run whose state is stale or unknown for a
+# reason of its own — failures, a dirty tree, a refused or absent report, evidence.json
+# `unconfirmed` — confirms no count, and every page says "not confirmed" with no number, as
+# /evidence/ says the run does not confirm its report. /guarantees/ and its guaranteed page show
+# the same figure, and any other count they print says it is the committed ledger's.
 wrong = []
 band = re.search(r"<dl\b[^>]*\bdata-claims-proof\b[^>]*>(.*?)</dl>", home, re.S)
 declared = sum(1 for c in caps.get("claims") or [] if c.get("status") == "guaranteed")
@@ -616,10 +629,85 @@ if os.path.exists(ci_path):
         ci = {}
 cl = ci.get("claims") if ci.get("available") is True else None
 measured = isinstance(cl, dict) and cl.get("measured") is True and isinstance(cl.get("supported"), int)
-supported = cl["supported"] if measured else None
-want = str(supported) if measured else "unmeasured"
+run_state = str(ci.get("state") or "unknown") if measured else "unmeasured"
+reasons = [str(r) for r in (ci.get("unconfirmed") or []) if r] if measured else []
 run_commit = str(ci.get("commit") or "") if measured else ""
 behind = ci.get("behind") if measured and isinstance(ci.get("behind"), int) else 0
+if not measured:
+    figure = "unmeasured"
+elif not reasons and run_state == "current":
+    figure = "current"
+elif not reasons and run_state == "stale" and behind > 0:
+    figure = "behind"
+else:
+    figure = "unconfirmed"
+shown = figure in ("current", "behind")
+supported = cl["supported"] if shown else None
+want = str(supported) if shown else figure
+withheld = (f"the recorded run of {run_commit[:12]} is {run_state}"
+            + (f", {behind} commit(s) behind the built one" if behind else ", at the built commit")
+            + (": " + " ".join(reasons) if reasons else "") + ", so it confirms no count")
+
+def element(text, m):
+    """the whole element whose start tag the match `m` begins, balanced by its tag name, and its
+    inner markup; None when it never closes."""
+    tag = re.match(r"<([a-zA-Z0-9]+)", m.group(0)).group(1)
+    depth, pos = 0, m.start()
+    for t in re.finditer(rf"<(/?){tag}\b[^>]*>", text[m.start():]):
+        depth += -1 if t.group(1) else 1
+        if depth == 0:
+            return text[m.start():m.start() + t.end()], text[m.end():m.start() + t.start()]
+    return None
+
+def judge_figure(where, text):
+    """the problems of the supported figure in `text` (a page or the proof band), against the run."""
+    out = []
+    fm = re.search(r'<[a-zA-Z0-9]+\b[^>]*\bdata-supported="([^"]*)"[^>]*>', text)
+    el = element(text, fm) if fm else None
+    if not el:
+        return [f"{where} does not say how many guaranteed claims a recorded run supports"], None
+    got, inner = fm.group(1), el[1]
+    said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", inner)).split())
+    sa = re.search(r'\bdata-supported-state="([^"]*)"', fm.group(0))
+    if got != want:
+        if figure == "unconfirmed" and re.fullmatch(r"[0-9]+", got):
+            out.append(f"{where}: the supported figure reads {got!r} ({said!r}), and {withheld}; it must say 'not confirmed', as the evidence page does")
+        else:
+            out.append(f"{where}: the supported figure reads {got!r} ({said!r}), and the recorded run the evidence page reads says {want!r}")
+        return out, el[0]
+    if measured:
+        if not sa or sa.group(1) != run_state:
+            out.append(f"{where}: the supported figure says its run is {sa.group(1) if sa else 'in no state'!r} (data-supported-state), and the run's state is {run_state!r}")
+        cm = re.search(r'\bdata-supported-commit="([^"]*)"', inner)
+        if not cm or cm.group(1) != run_commit:
+            out.append(f"{where}: the supported figure names the revision {cm.group(1)[:12] if cm else 'nowhere'!r}, and its run was recorded at {run_commit[:12]!r}")
+        bm = re.search(r'\bdata-supported-behind="([0-9]+)"', inner)
+        if behind and (not bm or int(bm.group(1)) != behind):
+            out.append(f"{where}: the run behind the supported figure is {behind} commit(s) behind the built one, and the figure says {bm.group(1) if bm else 'nothing of it'}")
+        if not behind and bm:
+            out.append(f"{where}: the supported figure says its run is {bm.group(1)} commit(s) behind, and it was recorded at the built commit")
+    if shown:
+        if want not in said.split():
+            out.append(f"{where}: the supported figure is marked {got!r}, and its words do not show it: {said!r}")
+    elif figure == "unconfirmed":
+        if "not confirmed" not in said:
+            out.append(f"{where}: {withheld}, and the supported figure does not say 'not confirmed': {said!r}")
+        # the revision and the distance are named; anything else numeric is a count it does not have
+        bare = re.sub(r'<([a-zA-Z0-9]+)\b[^>]*\bdata-supported-(?:commit|behind)="[^"]*"[^>]*>.*?</\1>', " ", inner, flags=re.S)
+        bare = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", bare)).split())
+        if re.search(r"\d", bare):
+            out.append(f"{where}: {withheld}, and the supported figure shows a number: {said!r}")
+    else:
+        if "not yet measured" not in said:
+            out.append(f"{where}: no recorded run measured the guaranteed claims, and the supported figure does not say 'not yet measured': {said!r}")
+        if re.search(r"\d", said):
+            out.append(f"{where}: no recorded run measured the guaranteed claims, and the supported figure shows a number: {said!r}")
+    return out, el[0]
+
+def strip_where(problems, where):
+    """the homepage's findings read as they always have, without a page name in front"""
+    return [p[len(where) + 2:] if p.startswith(where + ": ") else p for p in problems]
+
 if not band:
     wrong.append("the homepage has no claims proof band (<dl data-claims-proof>)")
 else:
@@ -627,31 +715,9 @@ else:
     dm = re.search(r'data-declared="guaranteed"[^>]*>\s*([^<]*?)\s*<', b)
     if not dm or dm.group(1) != str(declared):
         wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
-    sm = re.search(r'<dd\b[^>]*\bdata-supported="([^"]*)"[^>]*>(.*?)</dd>', b, re.S)
-    if not sm:
-        wrong.append("the proof band does not say how many guaranteed claims a recorded run supports")
-    else:
-        got, inner = sm.group(1), sm.group(2)
-        said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", inner)).split())
-        if got != want:
-            wrong.append(f"the supported figure reads {got!r} ({said!r}), and the recorded run the evidence page reads says {want!r}")
-        elif measured:
-            if want not in said.split():
-                wrong.append(f"the supported figure is marked {got!r}, and its words do not show it: {said!r}")
-            cm = re.search(r'\bdata-supported-commit="([^"]*)"', inner)
-            if not cm or cm.group(1) != run_commit:
-                wrong.append(f"the supported figure names the revision {cm.group(1)[:12] if cm else 'nowhere'!r}, and its run was recorded at {run_commit[:12]!r}")
-            bm = re.search(r'\bdata-supported-behind="([0-9]+)"', inner)
-            if behind and (not bm or int(bm.group(1)) != behind):
-                wrong.append(f"the run behind the supported figure is {behind} commit(s) behind the built one, and the figure says {bm.group(1) if bm else 'nothing of it'}")
-            if not behind and bm:
-                wrong.append(f"the supported figure says its run is {bm.group(1)} commit(s) behind, and it was recorded at the built commit")
-        else:
-            if "not yet measured" not in said:
-                wrong.append(f"no recorded run measured the guaranteed claims, and the supported figure does not say 'not yet measured': {said!r}")
-            if re.search(r"\d", said):
-                wrong.append(f"no recorded run measured the guaranteed claims, and the supported figure shows a number: {said!r}")
-# the evidence page reads the same run, so it says the same count
+    problems, _ = judge_figure("the proof band", b)
+    wrong.extend(strip_where(problems, "the proof band"))
+# the evidence page reads the same run, so it says the same count, or the same word
 ev_page = os.path.join(pub, "evidence", "index.html")
 if os.path.exists(ev_page):
     em = re.search(r'\bdata-ci-supported="([^"]*)"', open(ev_page, errors="replace").read())
@@ -659,15 +725,41 @@ if os.path.exists(ev_page):
         wrong.append("the evidence page does not say how many guaranteed claims the recorded run supports (data-ci-supported)")
     elif em.group(1) != want:
         wrong.append(f"the evidence page counts {em.group(1)!r} supported guaranteed claim(s), and the homepage's figure is {want!r}")
+# /guarantees/ and its guaranteed page show the homepage's figure, and any other count of
+# supported guarantees they print says it is the committed ledger's, never "a recorded run"
+guarantee_pages = 0
+for rel in ("guarantees/index.html", "guarantees/guaranteed/index.html"):
+    gp = os.path.join(pub, rel)
+    if not os.path.exists(gp):
+        continue
+    guarantee_pages += 1
+    where = "/" + rel[:-len("index.html")]
+    gtext = open(gp, errors="replace").read()
+    problems, el = judge_figure(where, gtext)
+    wrong.extend(problems)
+    rest = gtext.replace(el, " ") if el else gtext
+    for lm in re.finditer(r'<[a-zA-Z0-9]+\b[^>]*\bdata-ledger-supported="[^"]*"[^>]*>', rest):
+        le = element(rest, lm)
+        lsaid = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", le[1] if le else "")).split())
+        if "ledger" not in lsaid:
+            wrong.append(f"{where}: a second supported figure ({lsaid!r}) does not say it counts the committed ledger, so it reads as the recorded run's")
+        rest = rest.replace(le[0], " ") if le else rest
+    rest_said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", rest)).split())
+    for om in re.finditer(r"\b([0-9]+) supported by (?:a|the) recorded run\b", rest_said):
+        wrong.append(f"{where}: counts {om.group(1)} supported by a recorded run apart from the run's figure ({want!r}), and does not say it is another count")
 if (supported or 0) < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
-    wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported if measured else 'an unmeasured number'} of {declared} declared guarantee(s)")
+    wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported if shown else ('an unconfirmed number' if figure == 'unconfirmed' else 'an unmeasured number')} of {declared} declared guarantee(s)")
+also = (f", the count the evidence page reads" + (" and /guarantees/ shows" if guarantee_pages else ""))
 if wrong:
     for w in wrong:
         bad("declared", w)
-elif measured:
+elif shown:
     ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by the recorded run of {run_commit[:12]}"
                    + (f", {behind} commit(s) behind the built one" if behind else ", the built commit")
-                   + ", the count the evidence page reads")
+                   + also)
+elif figure == "unconfirmed":
+    ok("declared", f"the proof band says {declared} declared guaranteed and, {withheld}, 'not confirmed' supported, never a count"
+                   + (", the word the evidence page reads" + (" and /guarantees/ shows" if guarantee_pages else "")))
 else:
     ok("declared", f"the proof band says {declared} declared guaranteed and, with no recorded run measured, 'not yet measured' supported, never a number")
 
