@@ -37722,6 +37722,8 @@
             "partial is not refused for the mesh",
             "finish claims the scope once a server answers, and the rule passes"
           ],
+          "completed_at": "2026-10-26T03:33:35Z",
+          "completed_event": "sha256:436f16600bd78c9a40b40401764e98435920bd7db46380b6077d7e0489628191",
           "created_at": "2026-10-10",
           "current_state": "No validator reads mesh_claim; finish completes a task whose scope was never on the mesh.",
           "depends_on": [
@@ -37744,11 +37746,15 @@
             "docs/MESH.md"
           ],
           "slug": "built-off-the-mesh-is-refused",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-26T03:32:28Z",
+          "started_event": "sha256:14581cc28efdb7c86c7405d3dc1231bc8283e389ff6204a9f70ac338d0812c4a",
+          "updated_at": "2026-10-26T03:33:35Z",
           "validation": [
             "bin/majordomus plan validate",
             "bash test/run.sh 3068_a_task_off_the_mesh_is_refused 3067_a_task_is_claimed_on_the_mesh 18_doctrine_wiring 3022_the_rule_package_is_stamped_and_adopter_neutral"
-          ]
+          ],
+          "verified_at": "2026-10-26T03:32:50Z",
+          "verified_event": "sha256:6ed9767a0489e87109865c95e8a4b586859ecaba178232b3d0fb8b436e3a1878"
         }
       },
       {
@@ -39845,6 +39851,8 @@
             "`majordomus ui --no-open <screen>` prints /ui/<screen> for a screen SCREENS holds and refuses an unknown screen by name, listing the known ones",
             "The command appears in the generated command reference and the just bridge without a hand-written entry"
           ],
+          "completed_at": "2026-10-28T12:26:01Z",
+          "completed_event": "sha256:617444d1801f5bf7d239d4714964ed608c6e3e468854917597fa4e0d2854cae4",
           "created_at": "2026-10-12",
           "current_state": "`majordomus ui` is an unknown command. A person opens /ui on the address `majordomus serve status` prints, or with `just open ui`.",
           "depends_on": [
@@ -39871,12 +39879,16 @@
             ".ai/repo/project/issues/I2484.yaml"
           ],
           "slug": "majordomus-ui-opens-the-dashboard",
-          "updated_at": "2026-10-12",
+          "started_at": "2026-10-28T12:24:24Z",
+          "started_event": "sha256:6c470df4455826400e84aea84cab417d2ec89c6481abfba21051ac6904b96c55",
+          "updated_at": "2026-10-28T12:26:01Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --lib commands::",
             "majordomus generate --check"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:24:45Z",
+          "verified_event": "sha256:0b936ceb40968c8b0b3aee24f9e491944af7111009a08af75b6a0a5b98e0070f"
         }
       },
       {
@@ -44903,6 +44915,8 @@
             "A peer restarted under a new instance is linked again after its first refusal as a previous instance, without a restart of the dialer",
             "mesh_verify reports a failing check, with the dominant rejection reason, when rejected events rise and no event is received across a sync round"
           ],
+          "completed_at": "2026-10-26T12:40:51Z",
+          "completed_event": "sha256:8709d3d4d95c2e794edff5e1ef4233ffb5c23fc24b2bdaa5400e1fb14b8d5701",
           "created_at": "2026-10-17",
           "depends_on": [],
           "evidence_required": [
@@ -44923,7 +44937,9 @@
             "docs/MESH.md"
           ],
           "slug": "a-released-claim-reaches-every-runtime",
-          "updated_at": "2026-10-17",
+          "started_at": "2026-10-26T12:39:58Z",
+          "started_event": "sha256:fa99483ffa382887e8b61bd4f40058f709319e94300207f260f7f25d1335d1e6",
+          "updated_at": "2026-10-26T12:40:51Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh_cooperation"
@@ -48460,6 +48476,8 @@
             "idd.rs and intent.rs read plan.issues and plan.roadmap through view::items wherever they only read them",
             "system.http.ui.idd and system.http.live.ui.idd warm p95 are within their 100 ms budget in the ui job"
           ],
+          "completed_at": "2026-10-28T12:20:52Z",
+          "completed_event": "sha256:f33cd01d836371647cc4f43effaaccbf35e63eb32d85cc9d98e13843f05f95f0",
           "created_at": "2026-10-21",
           "current_state": "idd.rs and intent.rs call view::list on plan.issues and plan.roadmap, a to_vec of the whole answer, on every request.",
           "depends_on": [],
@@ -48483,11 +48501,15 @@
             "docs"
           ],
           "slug": "the-intent-workspace-borrows-the-plan",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-28T12:19:31Z",
+          "started_event": "sha256:6affa37039483a7cfe8c2d6cc5a3a1e923a4846012df71d0b0bee7e3eada783f",
+          "updated_at": "2026-10-28T12:20:52Z",
           "validation": [
             "cargo test --lib ui::",
             "majordomus bench system.http.ui.idd --transport system --profile ci --no-write --check"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:19:57Z",
+          "verified_event": "sha256:c76af5621014bb2257162699b975854b1be4aeb1cb3e90cf350ec9b54749681a"
         }
       },
       {
@@ -66942,6 +66964,8 @@
             "/ui/panels/shared-scope lists every pair of the named intent's issues and is a panel the UI dispatcher answers",
             "bench --check passes system.http.ui.idd and system.http.live.ui.idd within the 100 ms warm p95 budget, which is unchanged"
           ],
+          "completed_at": "2026-10-28T12:28:19Z",
+          "completed_event": "sha256:f5ec69372b0464837e979f4e3381f3f0d32ca07cf2714e50ce1f538fd98e14f6",
           "created_at": "2026-10-21",
           "current_state": "The fold renders every entry of plan.waves serialised_by_scope whose subject serves the intent; render clones plan.waves (1.6 MB) and plan.issues (1 MB) as Vec<Value> on each request.",
           "depends_on": [],
@@ -66963,7 +66987,7 @@
           "slug": "the-intent-workspace-answers-within-its-budget",
           "started_at": "2026-10-21T02:39:44Z",
           "started_event": "sha256:c67e196625e0d794f73188cba8e30e31848c7fdb816a56a535591dc55740a270",
-          "updated_at": "2026-10-21T02:51:16Z",
+          "updated_at": "2026-10-28T12:28:19Z",
           "validation": [
             "cargo test --lib -- ui::",
             "majordomus bench system.http.ui.idd --transport system --profile ci --no-write"
@@ -67663,6 +67687,8 @@
             "/roadmap still shows every status count from the plan",
             "Rule v2 and homepage-check agree, and a case fails when plan counts return to the hero"
           ],
+          "completed_at": "2026-10-28T12:22:22Z",
+          "completed_event": "sha256:43c2fb3e68d16e3ef7339822aa7ee8dcbdcaa007531f34adf368cc6f5e75f691",
           "created_at": "2026-10-22",
           "depends_on": [],
           "desired_state": "The hero shows no plan counts; /roadmap shows them; rule v2 and homepage-check agree, and a case refuses plan counts back on the hero.",
@@ -67684,11 +67710,15 @@
           ],
           "serves": [],
           "slug": "the-plan-counts-leave-the-hero",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-28T12:21:23Z",
+          "started_event": "sha256:94078e305d1c5255a6fc783d35a6308b4abf2de6112307c16e507527278e4244",
+          "updated_at": "2026-10-28T12:22:22Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/ci/homepage-check"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:21:48Z",
+          "verified_event": "sha256:981e7ec0a023d6c6ac16079b68e007d183709953233c56023814d6f263381714"
         }
       },
       {
@@ -67783,6 +67813,8 @@
             "A listing shorter than the repository issue count exits 12 and nothing is written",
             "Cases 602, 894 and 1038 drive the adapter through issue list and api graphql"
           ],
+          "completed_at": "2026-10-26T12:28:58Z",
+          "completed_event": "sha256:8b74b3892f659b2d45b2f8173a7b1438b32839c823e1e63776b84d667f60b32b",
           "created_at": "2026-10-22",
           "depends_on": [],
           "evidence_required": [
@@ -67802,7 +67834,9 @@
           ],
           "serves": [],
           "slug": "the-projection-reads-every-issue",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T12:28:17Z",
+          "started_event": "sha256:5b744645e14b52e8347f033ba0858604cc5b806df65c49482bba3d86b998ab57",
+          "updated_at": "2026-10-26T12:28:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 894_github_sync_applies_only_the_trunk"
@@ -68203,6 +68237,8 @@
             "Every consumer's plan-output condition is covered by its producer's, shown by a case; a narrow plan skips both producers",
             "Cases 401, 357, 3019, 3402 and 26 pass; evidence is about 5 min shorter on a full plan than on run 39762797718"
           ],
+          "completed_at": "2026-10-26T12:30:08Z",
+          "completed_event": "sha256:e963cb38ac726ed726ca9827dde22328ed3e15e00fbcba9feb7a3ca7bf794fb7",
           "created_at": "2026-10-22",
           "depends_on": [],
           "evidence_required": [
@@ -68224,7 +68260,9 @@
             ".ai/repo/project/issues/I3939.yaml"
           ],
           "slug": "the-executable-is-built-once-per-run",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T12:29:28Z",
+          "started_event": "sha256:77f7105cce751636b567b581f7362ebd9e3c7ce9fd830ae8fa3ffd40138fcf47",
+          "updated_at": "2026-10-26T12:30:39Z",
           "validation": [
             "actionlint .github/workflows/validate.yml"
           ]
@@ -68985,6 +69023,8 @@
             "scripts/reap-orphans, over the bound while a build runs, evicts stale units under the lock rather than keeping the whole directory",
             "After a build, a held lock is waited for in the background, bounded, and the build that finished does not wait"
           ],
+          "completed_at": "2026-10-28T12:19:11Z",
+          "completed_event": "sha256:0658e22aa33067db19306b1cee004261ae6341f383ae78d4b68004598a04c88f",
           "created_at": "2026-10-23",
           "depends_on": [
             "I2787"
@@ -69012,13 +69052,17 @@
             ".ai/repo/adrs/0139-worktrees-share-what-cargo-compiles-on-the-way-and-keep-thei.md"
           ],
           "slug": "the-shared-build-dir-stays-bounded",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-28T12:17:50Z",
+          "started_event": "sha256:dbbe5a2770f59c0a910ffb858256534e3a1e7090435e1c31edcfc5f8f53de9df",
+          "updated_at": "2026-10-28T12:19:11Z",
           "validation": [
             "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
             "bash test/run.sh 3196_stale_crate_artifacts_are_pruned_under_cargos_lock",
             "bash test/run.sh 1022_worktrees_share_build_intermediates",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:18:30Z",
+          "verified_event": "sha256:ef3714d5798c82f0f0c61a6b60e8b8b7907e1034224ab898f778201379e90134"
         }
       },
       {
@@ -69679,6 +69723,8 @@
         "route": "/cockpit/objects/issue/i3990",
         "source": ".ai/repo/project/issues/I3990.yaml",
         "facts": {
+          "completed_at": "2026-10-28T12:15:38Z",
+          "completed_event": "sha256:3f32438829a0686362358a001b8bbfcb97e9c26c84da3db8600922a62d3ca06e",
           "created_at": "2026-10-23",
           "depends_on": [],
           "evidence_required": [
@@ -69727,13 +69773,17 @@
             ".ai/repo/rules/project/the-cooperation-model-is-the-owners-word.v2.md"
           ],
           "slug": "a-claim-lives-by-its-holders-progress",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-28T12:14:32Z",
+          "started_event": "sha256:ec0748c607a918b1ce446030784f0a0fbb80c65d93bb9564066bcaec14ae03d6",
+          "updated_at": "2026-10-28T12:15:38Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- mesh:: peers:: mcp::protocol monitor::mesh",
             "bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing 3051_an_unlisted_event_field_fails_the_mesh_check",
             "bash scripts/ci/mesh-check",
             "bin/majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:14:58Z",
+          "verified_event": "sha256:5cf504337843f004082d5a578c1d7270a06921f51f3d628334918f90095fe8b7"
         }
       },
       {
@@ -70506,6 +70556,8 @@
             "bench system.http.ui.idd and system.http.ui.issues warm p95 fall by at least a third against a build of the same commit without the change",
             "ui-checks' warm-budget step passes on CI without a rerun"
           ],
+          "completed_at": "2026-10-28T12:24:04Z",
+          "completed_event": "sha256:e3552ce091968db5c4823d83717c68a14d9cc0f3345acacd5829f9a4e96327d7",
           "created_at": "2026-10-24",
           "depends_on": [],
           "evidence_required": [
@@ -70531,12 +70583,16 @@
           ],
           "serves": [],
           "slug": "a-warm-screen-copies-nothing-per-request",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-28T12:22:41Z",
+          "started_event": "sha256:1960e8ae8a5e1e493aaa04ef42b506e249bd4483cfa88c4d6539dd975af1e487",
+          "updated_at": "2026-10-28T12:24:04Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib -- cockpit::html ui::",
             "majordomus bench system.http.ui.idd --transport system --profile ci --no-write",
             "majordomus bench system.http.ui.issues --transport system --profile ci --no-write"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:23:17Z",
+          "verified_event": "sha256:2a1a53468ea5ec96fb810f63c0cbace53e125472add9ae66514ff258db5b0d3b"
         }
       },
       {
@@ -70803,6 +70859,8 @@
             "A departed slot of the same client that also held an unnamed claim is kept",
             "A departed slot of the same client name at a different address is kept"
           ],
+          "completed_at": "2026-10-28T12:16:51Z",
+          "completed_event": "sha256:ed639f529dbb71b00d8c65b6fc2fb547fe61a2c63874b3feb79d60dbead5714f",
           "created_at": "2026-10-25",
           "current_state": "PeerBoard::detach marks a slot with claims departed and drops the oldest departed slots past RETAINED; nothing recognises that a newer slot is the same worker saying the same thing.",
           "depends_on": [],
@@ -70825,10 +70883,14 @@
           ],
           "serves": [],
           "slug": "a-departed-peer-that-repeats-another-is-not-kept",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-28T12:16:01Z",
+          "started_event": "sha256:e539fba86c382af10099bbc97bd9d47713d1b4dd289381dcd015d4dd880dc187",
+          "updated_at": "2026-10-28T12:16:51Z",
           "validation": [
             "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib peers::"
-          ]
+          ],
+          "verified_at": "2026-10-28T12:16:22Z",
+          "verified_event": "sha256:ab6ac90188a37f7d9b183cda8b6dbc5a9450873ebd44c0317f427b3b062bfb1e"
         }
       },
       {
