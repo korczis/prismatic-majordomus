@@ -13,7 +13,8 @@
 #      jobs that run once beside the critical path (plan -> build -> the suite and ui shards
 #      -> suite -> evidence -> ci) or are its cheap unions: three runners of one machine
 #      serialise a full run's thirty jobs into hours (run 40407809503), while the shards run
-#      twenty at once on GitHub-hosted runners;
+#      twenty at once on GitHub-hosted runners. structure is not of it: its gates took 3214 s
+#      on lundra-3 against 36-48 minutes hosted, past the job's bound (run 40613243708);
 #   3  the plan's runner step sends a fork's pull request to ubuntu-latest whatever the
 #      variable says, a same-repository one and a push to the chosen pool, and an unset or
 #      unreadable choice to ubuntu-latest;
@@ -28,7 +29,7 @@
 W="$ROOT/.github/workflows/validate.yml"
 [ -f "$W" ] || { echo "    .github/workflows/validate.yml is missing"; exit 1; }
 EXPR="\${{ fromJSON(needs.plan.outputs.runner || '\"ubuntu-latest\"') }}"
-FIRST=" structure suite coverage evidence site-probe interactions ui cockpit mesh-lab pages ci "
+FIRST=" suite coverage evidence site-probe interactions ui cockpit mesh-lab pages ci "
 
 # "<job>\t<runs-on>" for every job
 runs_on() {

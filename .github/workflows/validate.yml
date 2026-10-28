@@ -337,17 +337,13 @@ jobs:
   structure:
     needs: [plan, build]
     timeout-minutes: 55
-    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
+    # I4242: hosted, not the first wave: its 42 gates took 3214 s on lundra-3 against 36-48
+    # minutes hosted, and the job's bound cancelled them there (run 40613243708)
+    runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
-      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
-      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
-      - if: runner.environment == 'self-hosted'
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
       # the whole history and its tags: `version-matches-surface` asks what the public
       # surface has lost since the last release, and it finds that release with
       # `git tag --list 'v[0-9]*'` and reads the registry out of it with `git show`. A

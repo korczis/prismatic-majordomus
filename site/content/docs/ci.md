@@ -335,8 +335,10 @@ browser. Reproduce one CI shard with `MJ_PROBE_SHARD=2/6 MJ_PROBE_JOBS=4 scripts
 The plan job decides, once, the runner of the first wave, and each first-wave job reads it
 as `fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"')` (I4242). The first wave is
 the jobs that run once beside the critical path (plan, build, the suite and ui shards, suite,
-evidence, ci) or are its cheap unions: structure, suite, coverage, evidence, site-probe,
-interactions, ui, cockpit, mesh-lab, pages and ci. Everything else stays on `ubuntu-latest`:
+evidence, ci) or are its cheap unions: suite, coverage, evidence, site-probe,
+interactions, ui, cockpit, mesh-lab, pages and ci. Everything else stays on `ubuntu-latest`,
+structure among them (its gates took 3214 s on lundra-3 against 36-48 minutes hosted, past
+the job's 55-minute bound, run 40613243708):
 three runners of one machine serialise a full run's thirty jobs into hours (run
 40407809503), while GitHub-hosted runners take the shards twenty at once. The pool is the
 repository's own machines: the repository variable `MJ_RUNNER` names them, as a
@@ -372,8 +374,8 @@ proved on a branch first with `gh workflow run validate.yml --ref <branch> -f ru
 `pages.yml` and `release.yml` hold deploy and release credentials and stay hosted. A
 GitHub-hosted image carries Node and the pool need not, so every first-wave job sets Node up
 on a self-hosted runner: `setup-site`, or `actions/setup-node` guarded by
-`runner.environment == 'self-hosted'` (structure failed on lundra without it, run
-40416931397). Case 4242 holds every job to the planned runner and to that Node, and drives
+`runner.environment == 'self-hosted'` (structure, then of the first wave, failed on lundra
+without it, run 40416931397). Case 4242 holds every job to the planned runner and to that Node, and drives
 the plan's runner step with a fork's event.
 
 ## Caches and artifacts
