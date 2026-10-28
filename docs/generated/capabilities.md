@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -44,7 +44,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `layout` | Layer layout | behaviorally_verified | 1 | [`modules/layout.md`](modules/layout.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mcp` | MCP projection | experimental | 1 | [`modules/mcp.md`](modules/mcp.md) |
-| `mesh` | Mesh | experimental | 29 | [`modules/mesh.md`](modules/mesh.md) |
+| `mesh` | Mesh | experimental | 30 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `monitor` | The monitor | experimental | 1 | [`modules/monitor.md`](modules/monitor.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
@@ -185,6 +185,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `lifecycle.recovery` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_recovery` | `majordomus://lifecycle/recovery` | `GET /api/v1/lifecycle/recovery` | — | process, 2 entries, 2s | required |
 | `lifecycle.runtime` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_runtime` | — | `GET /api/v1/lifecycle/runtime` | — | process, 2 entries, 2s | required |
 | `mcp.projection` | `mcp` | query | experimental | `majordomus_mcp` | `majordomus://mcp` | `GET /api/v1/mcp` | — | — | required |
+| `mesh.beat` | `mesh` | command | experimental | `majordomus_mesh_beat` | — | `POST /api/v1/mesh/beats` | — | — | waived (transient_state) |
 | `mesh.build_cache.ensure` | `mesh` | command | experimental | — | — | — | `majordomus mesh build-cache ensure` | — | waived (destructive) |
 | `mesh.build_cache.env` | `mesh` | query | experimental | `majordomus_mesh_build_cache_env` | — | `GET /api/v1/mesh/build-cache/env` | `majordomus mesh build-cache env` | — | waived (external_dependency) |
 | `mesh.build_cache.key` | `mesh` | query | experimental | `majordomus_mesh_build_cache_key` | — | `GET /api/v1/mesh/build-cache/key` | `majordomus mesh build-cache key` | — | waived (external_dependency) |

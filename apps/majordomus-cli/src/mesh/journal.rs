@@ -81,6 +81,15 @@ pub const MAX_PENDING: usize = 256;
 /// The most paths one claim or review names.
 pub const MAX_SCOPE_PATHS: usize = 64;
 
+/// The longest a session beat may keep its claims alive without another, in seconds: an
+/// hour. A session that waits longer than that on a person has stopped as far as the mesh
+/// is concerned, and a bound is what keeps one beat from holding a scope for a day.
+pub const MAX_SESSION_TTL_SECONDS: u32 = 3600;
+
+/// The longest phase a session beat carries, in bytes: one line naming what a session waits
+/// on, never a log.
+pub const MAX_PHASE_BYTES: usize = 160;
+
 /// The most streams one node may occupy: runtime and instance ids are free to invent, so a
 /// single trusted key must not be able to fill the stream table.
 pub const MAX_STREAMS_PER_NODE: usize = 64;
@@ -556,6 +565,33 @@ pub enum EventBody {
         /// The session id within the stream.
         session: String,
     },
+    /// A session made progress, and its exclusive claims keep excluding for `ttl_seconds`
+    /// more on the clock of whoever reads this (I3990).
+    ///
+    /// The runtime's own beat proves the runtime is alive, and nothing more: a worker stuck
+    /// on a permission dialog, hung or crashed behind a live server kept every exclusive
+    /// claim it held for as long as that server ran — the 5d executor held the integration
+    /// lease for hours and never answered (2026-10-22). A session beat is the second layer:
+    /// written only while the holder does real work — an MCP request other than `ping`, an
+    /// announcement, a claim, or an explicit `mesh beat` from a long-running process that
+    /// says what it is waiting on — it lets every runtime suspend the exclusive claims of a
+    /// session that stopped. It is aged on the reader's monotonic clock from the moment the
+    /// reader stored it, like a stream's beat, so no two wall clocks are compared.
+    /// `ttl_seconds` 0 says "judge me by the stream alone", which is how a session that
+    /// never beat is judged; this executable never writes it, because a beat that turns the
+    /// rule off in silence is the 5d incident again. A runtime older than the kind stores
+    /// and relays it opaque and keeps judging by the stream.
+    SessionBeat {
+        /// The session id within the stream.
+        session: String,
+        /// Seconds the session's claims live past this beat without another; 0 for none.
+        ttl_seconds: u32,
+        /// What the session is doing, when it said: `waiting on CI run 123`, `holding the
+        /// build lock`. A phase is progress too — a process that waits on something
+        /// outside itself is working — and every surface shows it beside the session.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        phase: Option<String>,
+    },
     /// A session claimed a scope.
     ClaimAcquired {
         /// The claim id within the stream.
@@ -578,6 +614,13 @@ pub enum EventBody {
     ClaimReleased {
         /// The claim id within the stream.
         claim: String,
+        /// Why its runtime released it, when the runtime and not the session decided: a
+        /// suspended exclusive claim whose scope another session was admitted to while it
+        /// was silent is released at its holder's next beat rather than re-armed, so two
+        /// sessions never both hold one scope (I3990). A runtime older than the field reads
+        /// the release without it, which is all it needs.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        reason: Option<String>,
     },
     /// A handover was published for other runtimes to consume.
     HandoverPublished {
@@ -782,6 +825,7 @@ pub const REVIEW_BODY_MAX: usize = 8 * 1024;
 pub const KNOWN_KINDS: &[&str] = &[
     "session_opened",
     "session_closed",
+    "session_beat",
     "claim_acquired",
     "claim_released",
     "handover_published",
@@ -802,7 +846,7 @@ impl EventBody {
     /// ```
     /// use majordomus_cli::mesh::journal::{EventBody, KNOWN_KINDS};
     ///
-    /// let released = EventBody::ClaimReleased { claim: "c1".into() };
+    /// let released = EventBody::ClaimReleased { claim: "c1".into(), reason: None };
     /// assert_eq!(released.kind(), "claim_released");
     /// assert_eq!(serde_json::to_value(&released).unwrap()["kind"], released.kind());
     /// assert!(KNOWN_KINDS.contains(&released.kind()));
@@ -811,6 +855,7 @@ impl EventBody {
         match self {
             EventBody::SessionOpened { .. } => "session_opened",
             EventBody::SessionClosed { .. } => "session_closed",
+            EventBody::SessionBeat { .. } => "session_beat",
             EventBody::ClaimAcquired { .. } => "claim_acquired",
             EventBody::ClaimReleased { .. } => "claim_released",
             EventBody::HandoverPublished { .. } => "handover_published",
@@ -873,6 +918,22 @@ impl EventBody {
                 Ok(())
             }
             EventBody::SessionClosed { session } => ident("session", session),
+            EventBody::SessionBeat {
+                session,
+                ttl_seconds,
+                phase,
+            } => {
+                ident("session", session)?;
+                if *ttl_seconds > MAX_SESSION_TTL_SECONDS {
+                    return Err(format!(
+                        "a session beat ttl of {ttl_seconds} s exceeds {MAX_SESSION_TTL_SECONDS}"
+                    ));
+                }
+                if let Some(v) = phase {
+                    line("phase", v, MAX_PHASE_BYTES)?;
+                }
+                Ok(())
+            }
             EventBody::ClaimAcquired {
                 claim,
                 session,
@@ -892,7 +953,13 @@ impl EventBody {
                 }
                 Ok(())
             }
-            EventBody::ClaimReleased { claim } => ident("claim", claim),
+            EventBody::ClaimReleased { claim, reason } => {
+                ident("claim", claim)?;
+                if let Some(v) = reason {
+                    line("reason", v, 256)?;
+                }
+                Ok(())
+            }
             EventBody::HandoverPublished { handover } => {
                 if handover.id != HandoverBody::digest_of(&handover.body) {
                     return Err("the handover id is not the digest of its body".into());
@@ -1524,6 +1591,53 @@ impl StreamLiveness {
     }
 }
 
+/// Whether a session still makes progress, on this runtime's clock: the second layer of
+/// liveness, under [`StreamLiveness`] (I3990). A stream that beats proves its runtime is
+/// up; a session beat proves the worker behind one of its sessions is still sending real
+/// work. `Unreported` is every session that never beat, or whose newest beat carries ttl
+/// 0 — it is judged by its stream alone, as every session was before this layer, which is
+/// what keeps a command-line claim that never beats and an older runtime's claim exactly as
+/// they were.
+///
+/// ```
+/// use std::time::Duration;
+/// use majordomus_cli::mesh::journal::SessionProgress;
+///
+/// assert!(SessionProgress::Unreported.holds() && SessionProgress::Within.holds());
+/// let silent = SessionProgress::Silent { ttl_seconds: 600, age: Duration::from_secs(601) };
+/// assert!(!silent.holds(), "its exclusive claims are suspended though its runtime beats");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SessionProgress {
+    /// The session never beat, or asked to be judged by its stream (ttl 0).
+    Unreported,
+    /// Its newest beat is within its ttl.
+    Within,
+    /// Its newest beat is older than its ttl (plus the grace a foreign stream is given).
+    Silent {
+        /// The ttl the beat carried.
+        ttl_seconds: u32,
+        /// How long ago this runtime stored the beat.
+        age: Duration,
+    },
+}
+
+impl SessionProgress {
+    /// Whether the session's claims still hold as far as progress goes.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::journal::SessionProgress;
+    ///
+    /// assert!(SessionProgress::Within.holds());
+    /// let silent = SessionProgress::Silent { ttl_seconds: 8, age: Duration::from_secs(9) };
+    /// assert!(!silent.holds());
+    /// ```
+    pub fn holds(self) -> bool {
+        !matches!(self, SessionProgress::Silent { .. })
+    }
+}
+
 /// The journal's counters since start: how much it holds, how much it has written,
 /// received, absorbed, refused, held back and compacted away. They are what makes a
 /// replication problem diagnosable from one machine — a runtime whose `received` never
@@ -1655,6 +1769,11 @@ struct StreamLog {
     /// When this journal first held the stream: a stream whose beat has never been heard
     /// here has been silent since then, not since forever.
     learned_at: Instant,
+    /// Each session's newest [`EventBody::SessionBeat`]: when this journal stored it, on
+    /// its own clock, the ttl it carried and the phase it named. Set where the event is stored — written,
+    /// received or reloaded — exactly as `learned_at` is, so a beat is aged from the moment
+    /// this runtime held it and never from its author's wall clock (I3990).
+    session_beats: BTreeMap<String, (Instant, u32, Option<String>)>,
 }
 
 impl StreamLog {
@@ -1667,6 +1786,23 @@ impl StreamLog {
             beat_sig: None,
             fresh_at: None,
             learned_at: Instant::now(),
+            session_beats: BTreeMap::new(),
+        }
+    }
+
+    /// Remember a session beat the stream carries, if `event` is one, as stored now.
+    fn note_session_beat(&mut self, event: &MeshEvent) {
+        if event.kind() != "session_beat" {
+            return;
+        }
+        if let Some(EventBody::SessionBeat {
+            session,
+            ttl_seconds,
+            phase,
+        }) = event.body()
+        {
+            self.session_beats
+                .insert(session, (Instant::now(), ttl_seconds, phase));
         }
     }
 
@@ -2095,12 +2231,9 @@ impl Journal {
             )));
         }
         inner.lamport = lamport;
-        inner
-            .streams
-            .get_mut(&self.own)
-            .expect("own stream")
-            .events
-            .insert(seq, event.clone());
+        let log = inner.streams.get_mut(&self.own).expect("own stream");
+        log.note_session_beat(&event);
+        log.events.insert(seq, event.clone());
         inner.arrive(&self.own, seq);
         inner.tallies.written += 1;
         let durability = self.persist(std::slice::from_ref(&event));
@@ -2594,10 +2727,12 @@ impl Journal {
             return None;
         }
         let mut applied = vec![event.clone()];
+        log.note_session_beat(&event);
         log.events.insert(event.seq, event);
         let mut next = high + 2;
         while let Some(successor) = log.pending.remove(&next) {
             applied.push(successor.clone());
+            log.note_session_beat(&successor);
             log.events.insert(next, successor);
             next += 1;
         }
@@ -2737,6 +2872,101 @@ impl Journal {
             .collect()
     }
 
+    /// Whether the session `key` (`<stream>/<session>`, as the fold names it) still makes
+    /// progress, on this runtime's clock (I3990). The holder's own runtime judges its own
+    /// sessions by their ttl alone; every other runtime adds `grace` — the stream expiry —
+    /// because the beat reached it later than it was written, by up to a sync round and a
+    /// relay. The holder therefore always reads the claim suspended first.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionProgress};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let key = format!("{}/s1", j.own_stream());
+    /// assert_eq!(j.session_progress(&key, Duration::ZERO), SessionProgress::Unreported);
+    ///
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600, phase: None }).unwrap();
+    /// assert_eq!(j.session_progress(&key, Duration::ZERO), SessionProgress::Within);
+    ///
+    /// // ttl 0: judge me by my stream, as before
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 0, phase: None }).unwrap();
+    /// assert_eq!(j.session_progress(&key, Duration::ZERO), SessionProgress::Unreported);
+    /// ```
+    pub fn session_progress(&self, key: &str, grace: Duration) -> SessionProgress {
+        self.session_progress_at(key, grace, Instant::now())
+    }
+
+    /// How long ago, on this runtime's clock, it stored the newest session beat of `key`
+    /// (`<stream>/<session>`), and the phase it named; `None` when the session never beat.
+    /// What a surface shows as a session's progress (I3990).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let key = format!("{}/s1", j.own_stream());
+    /// assert!(j.session_beat_age(&key).is_none());
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 600,
+    ///     phase: Some("waiting on CI".into()) }).unwrap();
+    /// let (_, phase) = j.session_beat_age(&key).unwrap();
+    /// assert_eq!(phase.as_deref(), Some("waiting on CI"));
+    /// ```
+    pub fn session_beat_age(&self, key: &str) -> Option<(Duration, Option<String>)> {
+        let (stream, session) = key.split_once('/')?;
+        let stream = StreamId::parse(stream)?;
+        let inner = self.inner.lock().expect("journal lock");
+        let (stored, _, phase) = inner.streams.get(&stream)?.session_beats.get(session)?;
+        Some((stored.elapsed(), phase.clone()))
+    }
+
+    /// [`Journal::session_progress`] measured at `now`: what the tests use to age a beat
+    /// without sleeping.
+    pub(crate) fn session_progress_at(
+        &self,
+        key: &str,
+        grace: Duration,
+        now: Instant,
+    ) -> SessionProgress {
+        let Some((stream, session)) = key
+            .split_once('/')
+            .and_then(|(s, session)| Some((StreamId::parse(s)?, session)))
+        else {
+            return SessionProgress::Unreported;
+        };
+        let inner = self.inner.lock().expect("journal lock");
+        let Some((stored, ttl)) = inner.streams.get(&stream).and_then(|log| {
+            log.session_beats
+                .get(session)
+                .map(|(at, ttl, _)| (*at, *ttl))
+        }) else {
+            return SessionProgress::Unreported;
+        };
+        if ttl == 0 {
+            return SessionProgress::Unreported;
+        }
+        let grace = if stream == self.own {
+            Duration::ZERO
+        } else {
+            grace
+        };
+        let age = now.saturating_duration_since(stored);
+        if age <= Duration::from_secs(u64::from(ttl)) + grace {
+            SessionProgress::Within
+        } else {
+            SessionProgress::Silent {
+                ttl_seconds: ttl,
+                age,
+            }
+        }
+    }
+
     /// Every held event, in stream-then-sequence order. Events waiting for a gap are not
     /// here: what this returns is what the journal is prepared to stand behind, and the
     /// fold takes it whole, which is why the order it comes out in does not matter to the
@@ -2847,6 +3077,37 @@ impl Journal {
         cursor: Option<&Cursor>,
         limit: usize,
     ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
+        self.events_since_shown(cursor, limit, |_| true)
+    }
+
+    /// [`Journal::events_since`] of only the events `shown` keeps: an event it leaves out
+    /// moves the cursor past it without counting toward `limit`, so a page is short only at
+    /// the end of the journal and a walk resumed from each cursor still misses none. This is
+    /// how `mesh.events` leaves the session beats out of a walk by cursor (I3990).
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionBeat { session: "s1".into(), ttl_seconds: 60,
+    ///     phase: None }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    ///
+    /// let no_beats = |e: &MeshEvent| e.kind() != "session_beat";
+    /// let (first, cursor) = j.events_since_shown(None, 1, no_beats).unwrap();
+    /// assert_eq!(first.len(), 1, "the beat is passed over, not counted");
+    /// assert_eq!(first[0].kind(), "session_closed");
+    /// assert!(j.events_since_shown(Some(&cursor), 100, no_beats).unwrap().0.is_empty());
+    /// ```
+    pub fn events_since_shown(
+        &self,
+        cursor: Option<&Cursor>,
+        limit: usize,
+        shown: impl Fn(&MeshEvent) -> bool,
+    ) -> Result<(Vec<MeshEvent>, Cursor), CursorError> {
         let instance = self.own.instance();
         let from = match cursor {
             Some(c) if c.instance != instance => {
@@ -2870,6 +3131,7 @@ impl Journal {
                     .streams
                     .get(stream)
                     .and_then(|l| l.events.get(seq))
+                    .filter(|e| shown(e))
                     .cloned(),
             );
             last = arrival;
@@ -3438,6 +3700,183 @@ mod tests {
 
     fn accept_all(_: &MeshEvent) -> Result<(), Rejection> {
         Ok(())
+    }
+
+    /// A session beat crosses a link as any event does, and each runtime ages it from the
+    /// moment it stored it, on its own clock: the writer judges it by its ttl alone, a
+    /// reader by its ttl and the grace a relayed beat is owed. A beat over the bound is
+    /// refused on both sides, and the phase a beat names travels with it (I3990).
+    #[test]
+    fn a_session_beat_round_trips_and_is_aged_on_the_readers_clock() {
+        let a = journal("0000000000000001");
+        let b = journal("0000000000000002");
+        a.append_own(EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: Some("waiting on CI run 42".into()),
+        })
+        .unwrap();
+        let report = b.ingest(&a.missing_for(&b.marks(), 1 << 20), &accept_all);
+        assert_eq!(report.accepted, 1, "a known kind, stored and folded");
+        let beat = &b.events()[0];
+        assert_eq!(beat.kind(), "session_beat");
+        assert!(matches!(
+            beat.body(),
+            Some(EventBody::SessionBeat { ttl_seconds: 8, .. })
+        ));
+        let (_, phase) = b
+            .session_beat_age(&format!("{}/board-p1", a.own_stream()))
+            .unwrap();
+        assert_eq!(phase.as_deref(), Some("waiting on CI run 42"));
+
+        let key = format!("{}/board-p1", a.own_stream());
+        let grace = Duration::from_secs(30);
+        let now = Instant::now();
+        assert_eq!(
+            a.session_progress_at(&key, grace, now),
+            SessionProgress::Within
+        );
+        assert_eq!(
+            b.session_progress_at(&key, grace, now),
+            SessionProgress::Within
+        );
+        // nine seconds on: past the ttl for the writer, within ttl and grace for the reader
+        let later = now + Duration::from_secs(9);
+        assert!(matches!(
+            a.session_progress_at(&key, grace, later),
+            SessionProgress::Silent { ttl_seconds: 8, .. }
+        ));
+        assert_eq!(
+            b.session_progress_at(&key, grace, later),
+            SessionProgress::Within
+        );
+        // and past both
+        let gone = now + Duration::from_secs(39);
+        assert!(!b.session_progress_at(&key, grace, gone).holds());
+        // a session that never beat is judged by its stream alone
+        let other = format!("{}/board-p2", a.own_stream());
+        assert_eq!(
+            b.session_progress_at(&other, grace, gone),
+            SessionProgress::Unreported
+        );
+
+        let unbounded = EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: MAX_SESSION_TTL_SECONDS + 1,
+            phase: None,
+        };
+        assert!(unbounded.validate().is_err());
+        assert!(a.append_own(unbounded).is_err());
+        let rambling = EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: 8,
+            phase: Some("waiting\non two lines".into()),
+        };
+        assert!(rambling.validate().is_err(), "a phase is one line");
+        // the field is optional on the wire: a beat without it reads, and says no phase
+        let bare = serde_json::json!({ "kind": "session_beat", "session": "s1", "ttl_seconds": 8 });
+        assert_eq!(
+            serde_json::from_value::<EventBody>(bare).unwrap(),
+            EventBody::SessionBeat {
+                session: "s1".into(),
+                ttl_seconds: 8,
+                phase: None
+            }
+        );
+    }
+
+    /// A beat names its session by the identifier the session opened under, and a release
+    /// its claim by the claim's: neither is free text. The reason a runtime gives for a
+    /// release it decided is one bounded line (I3990), and the typed body's kind is the
+    /// wire word a peer reads.
+    #[test]
+    fn a_beat_and_a_release_name_identifiers_and_a_release_reason_is_one_line() {
+        let beat = EventBody::SessionBeat {
+            session: "board-p1".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        assert_eq!(beat.kind(), "session_beat");
+        assert!(KNOWN_KINDS.contains(&beat.kind()));
+        assert!(beat.validate().is_ok());
+        let unnamed = EventBody::SessionBeat {
+            session: "two words".into(),
+            ttl_seconds: 8,
+            phase: None,
+        };
+        let refused = unnamed.validate().unwrap_err();
+        assert!(
+            refused.contains("session 'two words' is not an identifier"),
+            "{refused}"
+        );
+
+        let released = |claim: &str, reason: Option<&str>| EventBody::ClaimReleased {
+            claim: claim.into(),
+            reason: reason.map(Into::into),
+        };
+        assert!(released("c-1", Some("overtaken while silent"))
+            .validate()
+            .is_ok());
+        let unclaimed = released("not/a claim", None).validate().unwrap_err();
+        assert!(
+            unclaimed.contains("claim 'not/a claim' is not an identifier"),
+            "{unclaimed}"
+        );
+        let two_lines = released("c-1", Some("overtaken\nwhile silent"))
+            .validate()
+            .unwrap_err();
+        assert!(
+            two_lines.contains("reason is over 256 bytes"),
+            "{two_lines}"
+        );
+        let long = "x".repeat(257);
+        assert!(released("c-1", Some(&long)).validate().is_err());
+    }
+
+    /// Progress is read of a session key `<stream>/<session>` alone: a key without a stream,
+    /// with one that is not a stream id, of a stream this journal never heard or of a session
+    /// that never beat has no beat age and is unreported — judged by its stream, as before
+    /// I3990 — and only a silent session's claims stop holding.
+    #[test]
+    fn a_key_that_names_no_beaten_session_is_unreported_and_has_no_beat_age() {
+        let j = journal("0000000000000001");
+        j.append_own(EventBody::SessionBeat {
+            session: "s1".into(),
+            ttl_seconds: 600,
+            phase: Some("waiting on CI".into()),
+        })
+        .unwrap();
+        let own = format!("{}/s1", j.own_stream());
+        assert_eq!(
+            j.session_progress(&own, Duration::ZERO),
+            SessionProgress::Within
+        );
+        assert!(j.session_beat_age(&own).is_some());
+        let stranger = journal("0000000000000002");
+        let elsewhere = format!("{}/s1", stranger.own_stream());
+        for key in [
+            "s1".to_string(),
+            "not-a-stream/s1".to_string(),
+            elsewhere,
+            format!("{}/s2", j.own_stream()),
+        ] {
+            assert_eq!(
+                j.session_progress(&key, Duration::ZERO),
+                SessionProgress::Unreported,
+                "{key}"
+            );
+            assert!(j.session_beat_age(&key).is_none(), "{key}");
+        }
+        assert!(SessionProgress::Within.holds());
+        assert!(
+            SessionProgress::Unreported.holds(),
+            "the stream rule decides"
+        );
+        let silent = SessionProgress::Silent {
+            ttl_seconds: 8,
+            age: Duration::from_secs(9),
+        };
+        assert!(!silent.holds());
     }
 
     #[test]
@@ -4469,7 +4908,10 @@ mod tests {
             })
             .unwrap();
         sibling
-            .append_own(EventBody::ClaimReleased { claim: "c1".into() })
+            .append_own(EventBody::ClaimReleased {
+                claim: "c1".into(),
+                reason: None,
+            })
             .unwrap();
         let refused = observer.ingest(
             &sibling.missing_for(&observer.marks(), usize::MAX),
@@ -4917,7 +5359,10 @@ mod tests {
         };
         out.push(j.append_own(acquired).unwrap());
         let ended = match ending {
-            1 => Some(EventBody::ClaimReleased { claim: "c1".into() }),
+            1 => Some(EventBody::ClaimReleased {
+                claim: "c1".into(),
+                reason: None,
+            }),
             2 => Some(EventBody::SessionClosed {
                 session: "s1".into(),
             }),

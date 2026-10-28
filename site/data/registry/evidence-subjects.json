@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "1.0.0-alpha.8"
+    "version": "1.0.0-alpha.9"
   },
   "route": "/evidence/",
   "kinds": [
@@ -591,6 +591,11 @@
       "kind": "capability",
       "subject": "capability:mcp.projection",
       "path": "/evidence/capabilities/mcp-projection/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:mesh.beat",
+      "path": "/evidence/capabilities/mesh-beat/"
     },
     {
       "kind": "capability",
@@ -2949,6 +2954,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:mesh beat",
+      "path": "/evidence/commands/mesh-beat/"
+    },
+    {
+      "kind": "command",
       "subject": "command:mesh build-cache ensure",
       "path": "/evidence/commands/mesh-build-cache-ensure/"
     },
@@ -3421,6 +3431,11 @@
       "kind": "command",
       "subject": "command:start",
       "path": "/evidence/commands/start/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:ui",
+      "path": "/evidence/commands/ui/"
     },
     {
       "kind": "command",
@@ -5300,6 +5315,16 @@
       "kind": "capability",
       "id": "mcp.projection",
       "page": "/evidence/capabilities/mcp-projection/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:mesh.beat": {
+      "kind": "capability",
+      "id": "mesh.beat",
+      "page": "/evidence/capabilities/mesh-beat/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -16019,6 +16044,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:mesh beat": {
+      "kind": "command",
+      "id": "mesh beat",
+      "page": "/evidence/commands/mesh-beat/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:mesh build-cache ensure": {
       "kind": "command",
       "id": "mesh build-cache ensure",
@@ -18491,6 +18535,25 @@
           "test": "suite:32_refusal_lifecycle",
           "path": "test/cases/32_refusal_lifecycle.sh",
           "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:ui": {
+      "kind": "command",
+      "id": "ui",
+      "page": "/evidence/commands/ui/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
         }
       ],
       "mechanisms": [],
@@ -21389,6 +21452,18 @@
       "programs": [],
       "members": [
         "capability:mesh.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_mesh_beat": {
+      "kind": "mcp",
+      "id": "majordomus_mesh_beat",
+      "alias_of": "capability:mesh.beat",
+      "programs": [],
+      "members": [
+        "capability:mesh.beat"
       ],
       "routes": [],
       "mechanisms": [],
@@ -24570,6 +24645,29 @@
         }
       ],
       "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.an-exclusive-claim-lives-by-its-holders-progress": {
+      "kind": "rule",
+      "id": "project.an-exclusive-claim-lives-by-its-holders-progress",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:3990_a_claim_lapses_when_its_session_stops_progressing",
+          "path": "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/3990_a_claim_lapses_when_its_session_stops_progressing.sh",
+            ".ai/repo/rules/project/an-exclusive-claim-lives-by-its-holders-progress.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/mesh-check"
+      ],
       "findings": []
     },
     "rule:project.an-expedited-landing-is-the-owners-word": {
@@ -29452,6 +29550,7 @@
     "suite:194_audit_rows_are_planned",
     "suite:240_the_session_domain_is_typed",
     "suite:241_merge_policy_claims_only_generator_output",
+    "suite:2484_majordomus_ui_opens_the_dashboard",
     "suite:278_the_gate_runner_clears_the_share",
     "suite:279_the_publication_age_is_the_oldest_debt",
     "suite:280_capture_status_states_its_denominator",

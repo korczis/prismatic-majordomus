@@ -1,11 +1,36 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `mesh` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 1.0.0-alpha.8 -->
+     Generator: majordomus-cli 1.0.0-alpha.9 -->
 # Module `mesh` — Mesh
 
 The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.
 
-Stability: experimental. Capabilities: 29.
+Stability: experimental. Capabilities: 30.
+
+## `mesh.beat` — Say a session is making progress
+
+Record that a session of this runtime is making progress, with the phase it is in (`waiting on CI run 123`) and optionally the running process it speaks for. A session that has beaten lives by its beats: its exclusive claims are suspended — they refuse nobody — once no beat arrives within `cooperation.session_ttl_seconds`, and hold again at the next. A worker's MCP requests other than `ping` beat for it; this is the way for a long-running process that sends none. A beat within a quarter of the ttl with an unchanged phase writes nothing and answers the last one. Writes this runtime's journal only.
+
+| | |
+|---|---|
+| kind | command |
+| stability | experimental |
+| MCP tool | `majordomus_mesh_beat` |
+| HTTP | `POST /api/v1/mesh/beats` |
+| cache | — |
+| benchmark | waived (transient_state) |
+| provenance | builtin majordomus_cli::capability::builtin::mesh |
+| tags | mesh, coordination, cooperation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `session` | string or null | no | The session making progress; the calling MCP session's own when omitted. It must be
+a session this runtime opened (a claim opens one). |
+| `phase` | string or null | no | What the session is doing, one line: `waiting on CI run 123`, `holding the build
+lock`. Redacted before it is signed, and shown beside the session everywhere. |
+| `pid` | integer or null | no | The process the beat speaks for; refused unless it is running on this machine. |
+
+Output: `Written`.
 
 ## `mesh.build_cache.ensure` — Restore an install before its command, and save it after
 
@@ -102,7 +127,7 @@ Output: `ProvisionReport`.
 
 ## `mesh.claim` — Claim a scope across the mesh
 
-Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.
+Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own; and an exclusive claim of a session that beats is suspended — refusing nobody — while its holder makes no progress within its ttl. Writes this runtime's journal only.
 
 | | |
 |---|---|
@@ -215,6 +240,12 @@ from a healed partition included (I2733). A cursor another run issued is refused
 wants the journal as it stands now asks for. Still in Lamport order, and `lamport` is
 then the newest stamp the journal holds, so resuming after it reads only what comes
 next. Without it the journal is read forward from `after`, a page at a time. |
+| `beats` | boolean or null | no | Include the `session_beat` events, which are left out by default: a working session's
+runtime writes one every few minutes to keep its claims alive (I3990), and a reader
+of the journal wants what sessions did rather than that they are still doing it.
+A walk by `after` cuts its page before the beats leave it, so its `lamport` resumes
+after them; a walk by `cursor` passes them over without counting them toward `limit`.
+Paging misses nothing either way. |
 
 Output: `EventList`.
 
