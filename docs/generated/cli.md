@@ -109,6 +109,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus prs drain`](#majordomus-prs-drain) | `/docs/cli/prs/drain/` | Merge the next ready pull request, verify it landed, observe again, and repeat — at most `--max` merges; `--dry-run` decides without acting |
 | [`majordomus prs cleanup`](#majordomus-prs-cleanup) | `/docs/cli/prs/cleanup/` | Close the pull requests whose work is provably on master already; without `--apply` it only lists them |
 | [`majordomus prs repair`](#majordomus-prs-repair) | `/docs/cli/prs/repair/` | Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act |
+| [`majordomus prs supervise`](#majordomus-prs-supervise) | `/docs/cli/prs/supervise/` | Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a run queued past its workflow's bound with no job started, or one in progress past its bound. A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken |
 | [`majordomus prs events`](#majordomus-prs-events) | `/docs/cli/prs/events/` | The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded |
 | [`majordomus prs trains`](#majordomus-prs-trains) | `/docs/cli/prs/trains/` | The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under `refs/prep/<n>` (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent |
 | [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed |
@@ -2918,7 +2919,7 @@ Examples:
 
 Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
 
-Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs trains`](#majordomus-prs-trains), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
+Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs supervise`](#majordomus-prs-supervise), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs trains`](#majordomus-prs-trains), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
 
 ```text
 majordomus prs [OPTIONS] [COMMAND]
@@ -3142,6 +3143,35 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-prs-supervise"></a>
+## `majordomus prs supervise`
+
+Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a run queued past its workflow's bound with no job started, or one in progress past its bound. A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken
+
+```text
+majordomus prs supervise [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--apply` | flag | — | Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act |
+| `--dry-run` | flag | — | Decide and change nothing: the default, spelled out |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Supervising the CI runs starts from the forge, or not at all** — `supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.
+
+  ```console
+  $ majordomus prs supervise --dry-run
+  ```
+
+  Verified: exits 12.
 
 <a id="majordomus-prs-events"></a>
 ## `majordomus prs events`

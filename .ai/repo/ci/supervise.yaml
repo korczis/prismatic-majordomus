@@ -1,0 +1,94 @@
+version: 1
+
+# ---------------------------------------------------------------- what this workflow is for
+# `majordomus prs supervise --apply` (I3903) judges every in-flight GitHub Actions run of this
+# repository against the bounds below and force-cancels the ones past them, or superseded while
+# something waits behind them, each with its reason on the integration audit trail
+# (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`). The decision is
+# apps/majordomus-cli/src/integration/supervise.rs, pure and unit-tested; the forge side is
+# integration/runs.rs; .github/workflows/supervise.yml only runs the command.
+#
+# Why. On 2026-10-28 train 10a's and 10b's new validate runs sat `pending` for hours behind
+# their own superseded runs. Validate's concurrency group is one per pull request and never
+# cancels in progress, deliberately: a started run reaches its verdict, and #576 was once
+# cancelled four times in a row without ever producing one (the comment above `concurrency:`
+# in validate.yml). Nothing ended a run whose head nobody would merge while the verdict that
+# mattered waited behind it; the owner ordered that CI never stay stuck for hours again.
+#
+# What ends a run, and nothing else:
+#   superseded_blocks_successor  a pull_request run of a workflow declared `superseded:
+#                                per_pull_request`, whose head is no longer its pull
+#                                request's, while a newer run of the same pull request waits in
+#                                the same group. With nothing waiting it is left alone: the
+#                                concurrency rationale stands.
+#   queued_past_bound            queued longer than `queued_minutes` with no job started.
+#   running_past_bound           in progress longer than `running_minutes`, from its start.
+#
+# What is never cancelled for being superseded is fixed in the code, not declared here: a push
+# to the default branch, any other push (a tag push among them), the schedule, a dispatch, a
+# release, and every run of the pages or release workflows. The supervisor's own runs are never
+# cancelled at all, and a workflow named nowhere below is judged by nothing.
+#
+# Before each cancel the run and its pull request's head are read again, and the run is
+# cancelled only if the same reason still holds (the drain's observe-twice discipline). The
+# act is recorded first; a trail that cannot be written stops every act. The cancel is the
+# forge's force-cancel: `gh run cancel` on a queued run has returned success and done nothing.
+trigger:
+  branch: master
+  schedule: '*/10 * * * *'
+  # event-driven: a new validate run that would wait behind a superseded one is unblocked
+  # within a minute of being requested, not at the next tick
+  workflow_run: validate
+  workflow_run_types: requested
+
+supervisor: supervise
+
+report:
+  command: majordomus prs supervise --apply
+  # 0: nothing needed doing, or every act succeeded or was rightly skipped on a second read.
+  # 12: the forge could not be read or an act could not be taken, and the job fails on it.
+  # 10 is a dry run's finding and never happens under --apply.
+  fails_on: unusable
+
+# ---------------------------------------------------------------- the bounds
+# Generous on purpose: a bound turns a hang into an end, and must never cut a healthy run.
+# `queued_minutes` is at least 240 everywhere. `running_minutes` is the workflow's largest job
+# `timeout-minutes` plus 30, so a run is ended only after its longest job would already have
+# been killed by its own bound; raise a job's timeout and the test
+# `the_declared_bounds_hold_to_every_workflows_real_timeouts` asks for this number to follow.
+bounds:
+  docker-image:
+    queued_minutes: 240
+    running_minutes: 75
+  github:
+    queued_minutes: 240
+    running_minutes: 90
+  pages:
+    queued_minutes: 240
+    running_minutes: 110
+  pr-meta:
+    queued_minutes: 240
+    running_minutes: 70
+  provider:
+    queued_minutes: 240
+    running_minutes: 105
+  queue:
+    queued_minutes: 240
+    running_minutes: 60
+  release:
+    queued_minutes: 240
+    running_minutes: 75
+  release-path:
+    queued_minutes: 240
+    running_minutes: 35
+  telemetry:
+    queued_minutes: 240
+    running_minutes: 40
+  validate:
+    queued_minutes: 240
+    running_minutes: 255
+    # `validate-<pull request>` for its pull_request runs, never cancel-in-progress
+    superseded: per_pull_request
+  version:
+    queued_minutes: 240
+    running_minutes: 50

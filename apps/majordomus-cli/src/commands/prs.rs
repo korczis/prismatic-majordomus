@@ -4,8 +4,8 @@
 //! queue the integration module builds from the last recorded observation — the same value
 //! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
 //! never reach the network; neither does `repair` without `--apply`, which decides on the same
-//! queue. `refresh`, `drain`, `repair --apply` and `cleanup` are the ones that do, and each says
-//! so in its help.
+//! queue. `refresh`, `drain`, `repair --apply`, `cleanup` and `supervise` are the ones that do,
+//! and each says so in its help.
 //!
 //! Exit codes: 0 when the answer is complete; 10 when it is a finding (a stale or absent
 //! observation, a drain that stopped on a verification failure, a pull request that is not
@@ -406,6 +406,92 @@ fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Re
     w(out, lines.join("\n"))
 }
 
+/// `prs supervise`: judge every in-flight CI run against the declared bounds and, with
+/// `apply`, force-cancel what was decided ([`integration::runs`]).
+fn supervise(
+    root: &std::path::Path,
+    apply: bool,
+    format: OutputFormat,
+    out: &mut impl Write,
+) -> Result<u8> {
+    let model = integration::supervise::read_model(root).map_err(unusable)?;
+    let mut forge = integration::runs::GhRunForge::connect(root)
+        .map_err(|e| unusable(format!("the forge could not be read: {e}")))?;
+    // the supervising run's own id, when it runs in GitHub Actions: never cancelled
+    let self_run = std::env::var("GITHUB_RUN_ID")
+        .ok()
+        .and_then(|v| v.parse::<u64>().ok());
+    let now = || {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0)
+    };
+    let report = integration::runs::supervise(root, &mut forge, &model, &now, self_run, apply)
+        .map_err(|e| unusable(format!("the forge could not be read: {e}")))?;
+    if format == OutputFormat::Json {
+        json(out, &report)?;
+        return Ok(report.exit_code());
+    }
+    let mut lines = vec![format!(
+        "{} in-flight run(s) of {} judged at {}{}",
+        report.in_flight,
+        report.repository,
+        report.observed_at,
+        if apply {
+            ""
+        } else {
+            " (dry run: nothing is cancelled)"
+        }
+    )];
+    for d in &report.decisions {
+        lines.push(format!(
+            "cancel  run {:<12} {:<12} {:<18} {:<26} {}",
+            d.run,
+            trunc(&d.workflow, 12),
+            trunc(&d.event, 18),
+            d.reason.word(),
+            d.reason.explain()
+        ));
+    }
+    for h in &report.held {
+        let why = match &h.reason {
+            integration::supervise::HoldReason::SupersededWithoutSuccessor { pull_request } => {
+                format!("superseded, and nothing of #{pull_request} waits behind it: it reaches its verdict")
+            }
+            integration::supervise::HoldReason::Protected { protection } => format!(
+                "superseded, but never cancelled for it ({})",
+                serde_json::to_value(protection)
+                    .ok()
+                    .and_then(|v| v.as_str().map(str::to_string))
+                    .unwrap_or_default()
+            ),
+            integration::supervise::HoldReason::Supervisor => "the supervisor's own run".into(),
+            integration::supervise::HoldReason::Unjudgeable { detail } => {
+                format!("not judged: {detail}")
+            }
+        };
+        lines.push(format!(
+            "hold    run {:<12} {:<12} {:<18} {why}",
+            h.run,
+            trunc(&h.workflow, 12),
+            trunc(&h.event, 18)
+        ));
+    }
+    for a in &report.acts {
+        let word = serde_json::to_value(a.outcome)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_string))
+            .unwrap_or_default();
+        lines.push(format!("{word:<11} run {:<12} {}", a.run, a.detail));
+    }
+    if report.decisions.is_empty() {
+        lines.push("nothing to cancel".into());
+    }
+    w(out, lines.join("\n"))?;
+    Ok(report.exit_code())
+}
+
 /// Run `majordomus prs`.
 pub fn run(args: PrsArgs) -> Result<u8> {
     let root = root_of(&args)?;
@@ -651,6 +737,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             Ok(0)
         }
         PrsCommand::Trains => trains(&root, format, &mut out),
+        PrsCommand::Supervise { apply, .. } => supervise(&root, apply, format, &mut out),
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {

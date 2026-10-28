@@ -893,6 +893,8 @@ json` stays the list of pull requests to close.
   | `reopened`, `reopen_failed` (with its class, saying whether it was left closed) | after it |
   | `idle` | nothing was ready |
   | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
+  | `run_cancel_attempted` | `prs supervise --apply` is about to force-cancel a CI run; the detail names the run and its reason, read again just now |
+  | `run_cancelled`, `run_cancel_failed` (with its class) | after it |
 
   An event may also carry `evidence` (the assessment's, on the acts named above as carrying it),
   `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
@@ -965,6 +967,7 @@ json` stays the list of pull requests to close.
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by an authorised successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 | `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
 | `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
+| `majordomus prs supervise [--apply]` | yes | judge every in-flight CI run against `.ai/repo/ci/supervise.yaml` and name each to cancel with its reason; `--apply` force-cancels them, each read again and recorded first (docs/CI.md) |
 
 </div>
 

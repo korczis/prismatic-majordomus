@@ -622,6 +622,13 @@ pub enum IntegrationAction {
     /// A continuous drain's cycle could not observe the forge, and the outage was short
     /// enough to wait out ([`CONTINUOUS_TRANSIENT_LIMIT`]).
     ObserveFailed,
+    /// `prs supervise --apply` is about to force-cancel a CI run; the detail names the run
+    /// and the reason it was decided on, read again just now ([`super::runs`]).
+    RunCancelAttempted,
+    /// The run was force-cancelled.
+    RunCancelled,
+    /// The forge refused to cancel it.
+    RunCancelFailed,
 }
 
 impl IntegrationAction {
@@ -659,6 +666,9 @@ impl IntegrationAction {
             IntegrationAction::RepairRefused => "repair_refused",
             IntegrationAction::Idle => "idle",
             IntegrationAction::ObserveFailed => "observe_failed",
+            IntegrationAction::RunCancelAttempted => "run_cancel_attempted",
+            IntegrationAction::RunCancelled => "run_cancelled",
+            IntegrationAction::RunCancelFailed => "run_cancel_failed",
         }
     }
 }
@@ -853,7 +863,9 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
         event.class = match event.action {
             IntegrationAction::StaleDecision => Some(FailureClass::Stale),
             // a reopen is refused in the forge's words, as a merge is
-            IntegrationAction::MergeFailed | IntegrationAction::ReopenFailed => {
+            IntegrationAction::MergeFailed
+            | IntegrationAction::ReopenFailed
+            | IntegrationAction::RunCancelFailed => {
                 Some(FailureClass::of_merge_refusal(&event.detail))
             }
             IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {

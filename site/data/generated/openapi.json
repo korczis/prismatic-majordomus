@@ -28655,7 +28655,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"reopen_attempted\" | \"reopened\" | \"reopen_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\" | \"run_cancel_attempted\" | \"run_cancelled\" | \"run_cancel_failed\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -28785,6 +28785,18 @@
         {
           "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`).",
           "value": "observe_failed"
+        },
+        {
+          "description": "`prs supervise --apply` is about to force-cancel a CI run; the detail names the run\nand the reason it was decided on, read again just now (`super::runs`).",
+          "value": "run_cancel_attempted"
+        },
+        {
+          "description": "The run was force-cancelled.",
+          "value": "run_cancelled"
+        },
+        {
+          "description": "The forge refused to cancel it.",
+          "value": "run_cancel_failed"
         }
       ],
       "variants": []

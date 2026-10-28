@@ -4072,7 +4072,7 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain` and `cleanup`
+/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain`, `cleanup` and `supervise`
 /// reads the last recorded forge observation and never reaches the network.
 /// # Example
 ///
@@ -4101,7 +4101,7 @@ pub struct PrsArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus prs`. `status`, `plan`, `explain` and `events` render the
-/// recorded observation offline; `refresh`, `drain` and `cleanup` reach the forge, and a
+/// recorded observation offline; `refresh`, `drain`, `cleanup` and `supervise` reach the forge, and a
 /// drain is bounded by `--max` merges and, without `--dry-run`, holds the base branch's
 /// integration lease while it acts.
 /// # Example
@@ -4126,6 +4126,14 @@ pub struct PrsArgs {
 /// let Command::Prs(args) = cli.command else { panic!() };
 /// assert!(matches!(args.command, Some(PrsCommand::Repair { apply: false, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "repair", "137", "--apply", "--dry-run"]).is_err());
+/// // supervising the CI runs is a dry run unless it is applied, and never both
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "supervise"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Supervise { apply: false, .. })));
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "supervise", "--apply"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Supervise { apply: true, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "supervise", "--apply", "--dry-run"]).is_err());
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -4178,6 +4186,15 @@ pub enum PrsCommand {
         /// The pull request: its number, or its head branch.
         target: String,
         /// Act: take the lease, observe the forge again, record the act, merge, derive, commit and push. Without it nothing is changed, fetched or recorded.
+        #[arg(long)]
+        apply: bool,
+        /// Decide and change nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
+    },
+    /// Judge every in-flight CI run against the bounds `.ai/repo/ci/supervise.yaml` declares, and name each one to cancel with its reason: a pull request's run of a head that moved while a newer run of it waits behind it in the same concurrency group, a run queued past its workflow's bound with no job started, or one in progress past its bound. A run of the default branch, a tag, the schedule, a dispatch or a release, and every pages or release run, is never cancelled for being superseded; the supervising workflow's own run never at all. A dry run by default, which reaches the forge to read and changes nothing. Exit 0 when nothing needs doing, 10 for decisions a dry run found, 12 when the forge could not be read or an act could not be taken
+    Supervise {
+        /// Act: read each run and its pull request's head again, and only if the decision still holds, record the act on the integration trail and force-cancel the run. A trail that cannot be written stops every act.
         #[arg(long)]
         apply: bool,
         /// Decide and change nothing: the default, spelled out.
@@ -6390,6 +6407,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "repair", "1"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs supervise",
+        examples: &[ExampleDoc {
+            id: "prs-supervise-dry-run-no-forge",
+            title: "Supervising the CI runs starts from the forge, or not at all",
+            description: "`supervise` reads every queued, waiting and running workflow run and every open pull request's head, and decides which runs to cancel and why: superseded while a newer run waits behind it, queued past its bound, or running past it. Without `--apply` it only prints the decisions. A repository that declares no bounds, or has no GitHub remote to read runs from, cannot be supervised: it exits 12 before deciding anything, and nothing is cancelled or recorded.",
+            argv: &["prs", "supervise", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

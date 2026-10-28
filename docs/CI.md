@@ -419,6 +419,36 @@ dispatch, a run on a record branch, and a run whose pull request GitHub does not
 reading that cannot be made lets a run proceed and touches nothing. The model is
 `.ai/repo/ci/release-path.yaml`; case 3027 holds the decisions and the wiring.
 
+### A stuck or superseded run is stopped by its bound
+
+Nothing waits for hours (I3903). Validate's concurrency group is one per pull request and never
+cancels in progress, so a newer commit waits behind the run already going; on 2026-10-28 two
+trains' new validate runs sat `pending` for hours behind their own superseded runs, whose
+verdicts nobody would read. `.github/workflows/supervise.yml` runs
+`majordomus prs supervise --apply` on every requested validate run (`workflow_run`, so a new run
+that would wait is unblocked within a minute), every ten minutes on the schedule, and on
+dispatch. It judges every queued, waiting and running run of the repository against the bounds
+`.ai/repo/ci/supervise.yaml` declares, and force-cancels a run for one of three reasons:
+
+| Reason | When |
+|---|---|
+| `superseded_blocks_successor` | a `pull_request` run of validate whose head is no longer its pull request's, while a newer run of the same pull request waits in the same group |
+| `queued_past_bound` | queued longer than its workflow's `queued_minutes` (240 everywhere) with no job started |
+| `running_past_bound` | in progress longer than its workflow's `running_minutes`: its largest job timeout plus 30 |
+
+A superseded run with nothing waiting behind it is left alone: a started run reaches its
+verdict, which is the reason the group never cancels in progress. A push to master, any other
+push (a tag among them), the schedule, a dispatch, a release, and every pages or release run is
+never cancelled for being superseded; the supervisor's own run is never cancelled at all. Each
+run decided on is read again, with its pull request's head, immediately before the act, and
+cancelled only if the same reason still holds; the act is written to the integration audit
+trail first (`run_cancel_attempted`, then `run_cancelled` or `run_cancel_failed`), and a trail
+that cannot be written stops every act. Without `--apply` the command prints the same decisions
+and exits 10 when there are any. The decision is
+`apps/majordomus-cli/src/integration/supervise.rs`, the forge side `integration/runs.rs`, and
+the test `the_declared_bounds_hold_to_every_workflows_real_timeouts` holds the record to every
+workflow's job timeouts.
+
 The `pages` job judges the site only after the deployment of its own commit (I2711). It starts
 minutes after the push that also starts that commit's deploy, and on 2026-10-14 run
 38600347235 read the site while the deploy was in flight and went red; a rerun passed.

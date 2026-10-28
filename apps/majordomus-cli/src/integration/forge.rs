@@ -383,7 +383,7 @@ pub struct GhForge<'a> {
     pub root: &'a Path,
 }
 
-fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+pub(super) fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
     let out = Command::new("gh")
         .current_dir(root)
         .args(args)
@@ -398,7 +398,10 @@ fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> 
 
 /// `gh`, asked again on a transient failure ([`super::retry`]): every call here is a read,
 /// so asking twice is harmless. A refusal is returned as it came, for the caller to read.
-fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+pub(super) fn gh_retrying(
+    root: &Path,
+    args: &[&str],
+) -> Result<(bool, String, String), ForgeError> {
     super::retry::forge(|| {
         let (ok, out, err) = gh(root, args).map_err(|e| e.0)?;
         if !ok && super::retry::transient(&err) {

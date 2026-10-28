@@ -3234,6 +3234,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:prs supervise",
+      "path": "/evidence/commands/prs-supervise/"
+    },
+    {
+      "kind": "command",
       "subject": "command:prs trains",
       "path": "/evidence/commands/prs-trains/"
     },
@@ -17266,6 +17271,25 @@
       "kind": "command",
       "id": "prs status",
       "page": "/evidence/commands/prs-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:prs supervise": {
+      "kind": "command",
+      "id": "prs supervise",
+      "page": "/evidence/commands/prs-supervise/",
       "programs": [
         "native"
       ],
