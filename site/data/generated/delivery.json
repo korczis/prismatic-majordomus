@@ -2,9 +2,9 @@
   "schema": 1,
   "observed": {
     "mode": "at",
-    "trunk": "bdbd07ef6f65b0f440f863de945f5fbd3149addc",
-    "commit": "bdbd07ef6f65b0f440f863de945f5fbd3149addc",
-    "observed_at": "2026-10-25T14:05:31Z"
+    "trunk": "87e56444e91d7a0acef9ed088f995a1bce8a7488",
+    "commit": "87e56444e91d7a0acef9ed088f995a1bce8a7488",
+    "observed_at": "2026-10-25T14:42:18Z"
   },
   "stages": [
     "none",
@@ -18,8 +18,8 @@
     {
       "name": "history",
       "state": "read",
-      "detail": "1868 merge commit(s) and 3153 other commit(s) in the history of bdbd07ef6f65b0f440f863de945f5fbd3149addc",
-      "observed_at": "2026-10-25T14:05:31Z"
+      "detail": "1868 merge commit(s) and 3154 other commit(s) in the history of 87e56444e91d7a0acef9ed088f995a1bce8a7488",
+      "observed_at": "2026-10-25T14:42:18Z"
     },
     {
       "name": "merged_titles",
@@ -27,10 +27,16 @@
       "detail": "the titles of merged pull requests are the forge's, and an answer at a commit reads that commit's history only; the live answer (no `at`) reads them"
     },
     {
+      "name": "planning",
+      "state": "read",
+      "detail": "99 commit(s) naming an issue change only plan records and their projections, and prove no merge",
+      "observed_at": "2026-10-25T14:42:18Z"
+    },
+    {
       "name": "releases",
       "state": "read",
-      "detail": "36 release record(s) under .ai/repo/releases",
-      "observed_at": "2026-10-25T14:05:31Z"
+      "detail": "37 release record(s) under .ai/repo/releases",
+      "observed_at": "2026-10-25T14:42:18Z"
     },
     {
       "name": "publication",
@@ -51,12 +57,12 @@
   "tallies": {
     "branch": 0,
     "deployed": 0,
-    "merged": 51,
-    "none": 819,
+    "merged": 0,
+    "none": 881,
     "pr_open": 0,
-    "released": 157
+    "released": 155
   },
-  "unsettled": 976,
+  "unsettled": 1036,
   "issues": [
     {
       "issue": "I0001",
@@ -266,12 +272,12 @@
         "via": "subject",
         "merged_at": "2026-09-04T07:03:08Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.3.1",
         "commit": "45f921efb5f82c517f13467b0bf9903256349470",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -375,9 +381,11 @@
       "title": "Define the execution record, including what an absence looks like",
       "milestone": "execution-telemetry",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "4cfa5374f8c330b7eb074a2803219d7179f00d82",
         "pull_request": 2363,
@@ -385,8 +393,21 @@
         "title": "docs(plan): the telemetry record is done, and its writer is I3288 (I0301)",
         "via": "title_or_branch",
         "merged_at": "2026-10-22T21:23:13Z",
-        "merges": 4,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 3,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "2760d637c7c3def0d6092fa4c3ba1e2d056dbb1d",
+        "title": "chore(derive): the derived data follows I3287's fix, derived once (I0301)",
+        "via": "subject",
+        "merged_at": "2026-10-22T19:28:04Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -609,12 +630,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T01:48:04Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -633,12 +654,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T02:42:11Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -736,17 +757,27 @@
         "publication"
       ],
       "merged": {
+        "commit": "473d833be97faf2af93ec59c6723911fe18ec9ba",
+        "pull_request": 1054,
+        "branch": "feature/session-records-are-capped-and-archived",
+        "title": "feat(session): session records are capped by policy and archived on request (I0806)",
+        "via": "title_or_branch",
+        "merged_at": "2026-10-13T19:03:28Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "289cbbe4ddb463925dc704645764889748f6fa2b",
         "title": "chore(derive): the derived data follows master e8505a431d into I0806's record",
         "via": "subject",
         "merged_at": "2026-10-14T20:20:42Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v0.27.0",
-        "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v0.24.1",
+        "commit": "92f11cda7c3362e02731e90d93768ffc90658bf5",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -825,12 +856,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T07:57:32Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -934,16 +965,23 @@
       "title": "Flattened YAML is cached under .ai/local/cache by content hash",
       "milestone": "M004",
       "status": "VERIFY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "aafa0179f84901d01ed47f1634c1b943f61c3e44",
         "title": "feat(yaml): a flatten is cached by its content under .ai/local/cache/flat (I0821)",
         "via": "subject",
         "merged_at": "2026-10-16T10:24:24Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1082,12 +1120,12 @@
         "via": "subject",
         "merged_at": "2026-10-21T07:06:05Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1142,12 +1180,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T07:45:45Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1287,16 +1325,19 @@
       "title": "Liveness and readiness are registered capabilities, not router hacks",
       "milestone": "fly-deployment",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "e714307d6e20c7d46d1f000fed78a894adabafc0",
         "title": "chore(plan): I0905 is done; its evidence is bound to the tests that already prove it",
         "via": "subject",
         "merged_at": "2026-10-23T14:28:28Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1376,16 +1417,23 @@
       "title": "The image serves the site the canonical pipeline produced",
       "milestone": "fly-deployment",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "9c9b1157845bc9143246e9a983e4d31dfe5c20d9",
         "title": "feat(deploy): a deployment's slug carries the site built at its own commit (I0912, ADR 0223)",
         "via": "subject",
         "merged_at": "2026-10-23T02:20:32Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1525,12 +1573,13 @@
       "title": "The decision is recorded where architecture decisions are recorded",
       "milestone": "fly-deployment",
       "status": "CANCELLED",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "e28daccd9b29247efec9fe352e8b8c630f6f9919",
         "pull_request": 1125,
         "branch": "chore/the-roadmap-records-what-master-delivers",
@@ -1538,12 +1587,7 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-14T08:53:34Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.25.0",
-        "commit": "ac203c34dfc06785b082a463f057cd85bbe5d85b",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1647,23 +1691,19 @@
       "title": "One typed graph composes the registries that already own their facts",
       "milestone": "capability-graph",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "a4979a09b9b91d3f76eb1ce3f7973e33a99999bf",
         "title": "chore(plan): I1001 done, with the evidence the contract asked for",
         "via": "subject",
         "merged_at": "2026-09-06T15:53:35Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.3.1",
-        "commit": "45f921efb5f82c517f13467b0bf9903256349470",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1671,23 +1711,19 @@
       "title": "Relations are typed, inferred from stable identities, and never dangle",
       "milestone": "capability-graph",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "46da8089df1e1bf61ecb39ec9deaf71f9b312b8e",
         "title": "chore(plan): I1002 done, with the evidence the contract asked for",
         "via": "subject",
         "merged_at": "2026-09-06T16:23:55Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.3.1",
-        "commit": "45f921efb5f82c517f13467b0bf9903256349470",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1695,23 +1731,19 @@
       "title": "Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves",
       "milestone": "capability-graph",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "701d3780c67e9323e209ba4ff85796f0d56de8be",
         "title": "chore(plan): I1003 done, with the evidence the contract asked for",
         "via": "subject",
         "merged_at": "2026-09-06T17:22:19Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.3.1",
-        "commit": "45f921efb5f82c517f13467b0bf9903256349470",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1719,23 +1751,19 @@
       "title": "Availability and visibility are metadata, not conditions in a template",
       "milestone": "capability-graph",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "5b817c2ebefd6e46ff9df465ad8a1caf6d67b58e",
         "title": "chore(plan): I1004 done, with the evidence the contract asked for",
         "via": "subject",
         "merged_at": "2026-09-06T17:00:41Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.3.1",
-        "commit": "45f921efb5f82c517f13467b0bf9903256349470",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1743,23 +1771,19 @@
       "title": "The graph is a generated artifact with a schema and no unsafe field",
       "milestone": "capability-graph",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "27662495a56738746d62bd5b09c32672d27fded5",
         "title": "chore(plan): I1005 done, with the evidence the contract asked for",
         "via": "subject",
         "merged_at": "2026-09-06T18:19:28Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.5.0",
-        "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -1982,12 +2006,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T01:05:42Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2007,23 +2031,19 @@
       "title": "The federated model and its two projections are an architecture decision",
       "milestone": "capability-graph",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "a1fc8d8ac15f83c97f7a9af4ee25e1e4563dea5a",
         "title": "chore(plan): I1025 done, with the evidence the contract asked for",
         "via": "subject",
         "merged_at": "2026-09-06T17:00:44Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.3.1",
-        "commit": "45f921efb5f82c517f13467b0bf9903256349470",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2102,12 +2122,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T18:28:32Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2125,13 +2145,21 @@
         "title": "docs(adr): renumber the adoption-footprint ADR to 0169 (I1101)",
         "via": "subject",
         "merged_at": "2026-10-16T13:34:39Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "e3b0e747a635546a14b45c48e588a476341564ee",
+        "title": "chore(plan): I1101 evidence recorded, issue in VERIFY (I1101)",
+        "via": "subject",
+        "merged_at": "2026-10-16T12:27:09Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2499,23 +2527,19 @@
       "title": "A workspace is a declared object of the layer; only its content is local",
       "milestone": "external-workspaces",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "012fed644a0d20ab65944e9eb005ad56a2bd0f28",
         "title": "docs(plan): I1301 is done, and I1302 may not land its schema alone",
         "via": "subject",
         "merged_at": "2026-09-09T18:39:15Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.5.0",
-        "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2523,23 +2547,19 @@
       "title": "Identity, provenance and support level are typed fields, not prose",
       "milestone": "external-workspaces",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "012fed644a0d20ab65944e9eb005ad56a2bd0f28",
         "title": "docs(plan): I1301 is done, and I1302 may not land its schema alone",
         "via": "subject",
         "merged_at": "2026-09-09T18:39:15Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.5.0",
-        "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2582,12 +2602,12 @@
         "via": "subject",
         "merged_at": "2026-09-09T19:47:24Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.5.0",
         "commit": "3a032c1e033ba437325f64f883356269d7a6c73e",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2685,17 +2705,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "4f3c9bdddc0dd67d8d45da72cbeaf94112b1596b",
+        "title": "chore(plan): I1403 is done — the GitHub projection has no backlog, and the ratchet says so",
+        "via": "subject",
+        "merged_at": "2026-10-14T20:16:36Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "fa049026eb1d5f8f1a643d400934cdd0500c9eff",
         "title": "chore(derive): the derived data follows master c0e3585dc8 into I1403's record",
         "via": "subject",
         "merged_at": "2026-10-14T21:16:11Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.27.0",
         "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2773,13 +2801,21 @@
         "title": "docs(adr): a merge GitHub makes is guarded by checks, not by strict (I1409-c)",
         "via": "subject",
         "merged_at": "2026-10-15T07:59:18Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "9910ad089aca72c48371109a4d17bbd384e27c71",
+        "title": "chore(plan): I1409 records fixture_without_history_evaluates from case 3055",
+        "via": "subject",
+        "merged_at": "2026-10-15T07:38:35Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2919,16 +2955,23 @@
       "title": "Gate state is something the runtime can answer",
       "milestone": "development-runtime",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "e46cb5d113f58c7ede77ad996bdaf23c169b72b7",
         "title": "feat(gates): gate state is something the runtime can answer (I1512)",
         "via": "subject",
         "merged_at": "2026-10-15T10:28:01Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2960,12 +3003,13 @@
       "title": "The challenge is one recorded run, and every public surface replays it",
       "milestone": "public-proof",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "c0e3585dc836201089d6b5dd49f5a79fe8bff798",
         "pull_request": 946,
         "branch": "chore/the-plan-holds-what-master-delivers",
@@ -2973,12 +3017,7 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-14T20:51:41Z",
         "merges": 4,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.27.0",
-        "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -2997,12 +3036,12 @@
         "via": "subject",
         "merged_at": "2026-10-14T22:11:41Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.27.0",
         "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3058,12 +3097,13 @@
       "title": "An intent is a typed record whose stage and satisfaction are derived",
       "milestone": "intent-lifecycle",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "ac203c34dfc06785b082a463f057cd85bbe5d85b",
         "pull_request": 1128,
         "branch": "fix/an-intent-without-a-critique-starts-no-work",
@@ -3071,12 +3111,7 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-14T11:02:01Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.25.0",
-        "commit": "ac203c34dfc06785b082a463f057cd85bbe5d85b",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3167,12 +3202,12 @@
         "via": "slug",
         "merged_at": "2026-09-30T08:48:06Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.12.0",
         "commit": "a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3191,12 +3226,12 @@
         "via": "slug",
         "merged_at": "2026-09-28T00:39:14Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.16.0",
         "commit": "f70c522d737cb1ede39f87ee0171cbc3721ead8b",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3348,23 +3383,19 @@
       "title": "The evidence gates read subject findings and widgets",
       "milestone": "test-evidence",
       "status": "BLOCKED",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "42a5715eec2dd2dd5a1b863197e5969e7138b89a",
         "title": "fix(project): issue I1962 no longer scopes the deleted surface-coverage script",
         "via": "subject",
         "merged_at": "2026-09-30T09:35:43Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.12.0",
-        "commit": "a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3431,12 +3462,12 @@
         "via": "slug",
         "merged_at": "2026-10-07T19:45:03Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.16.0",
         "commit": "f70c522d737cb1ede39f87ee0171cbc3721ead8b",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3444,23 +3475,19 @@
       "title": "A layer names the tool version it was written for, and doctor tells version skew from defects",
       "milestone": "adopter-upgrades",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "1aaf9f86d5810348afb6cd564fd619c4798f4b2f",
         "title": "chore(plan): an adopter's upgrade is a planned outcome, I1980-I1991",
         "via": "subject",
         "merged_at": "2026-10-04T14:46:42Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.13.2",
-        "commit": "9a31fed5e576f4e2f33ddf1dd5b5df7abfdd5497",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3480,13 +3507,21 @@
         "title": "feat(commands): the effect class is declared per subcommand and flag (I1981)",
         "via": "title_or_branch",
         "merged_at": "2026-10-11T23:15:29Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "ac95d3b328daa70a58fd22eda047ff06ac4da3ac",
+        "title": "chore(derive): the derived data follows the merged head (I1981)",
+        "via": "subject",
+        "merged_at": "2026-10-11T21:30:09Z",
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3529,12 +3564,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T11:35:30Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3548,17 +3583,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "2d3ee66dacfd49167a3f81e3a3545011fbfa15af",
+        "title": "fix(knowledge): a candidate cites its own commit, and a superseded decision yields none (I1985)",
+        "via": "subject",
+        "merged_at": "2026-10-17T10:31:54Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "35a559f3e4e1ba4d0ebff5de3de9af6f80b3b703",
         "title": "chore(plan): I1985 and I2282 are recorded done, each on a test that ran green on master",
         "via": "subject",
         "merged_at": "2026-10-20T23:51:53Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v1.0.0-alpha.4",
-        "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v0.30.0",
+        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3626,23 +3669,19 @@
       "title": "A comment-only edit of the policy regenerates no bootstrap",
       "milestone": "adopter-upgrades",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "1aaf9f86d5810348afb6cd564fd619c4798f4b2f",
         "title": "chore(plan): an adopter's upgrade is a planned outcome, I1980-I1991",
         "via": "subject",
         "merged_at": "2026-10-04T14:46:42Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.13.2",
-        "commit": "9a31fed5e576f4e2f33ddf1dd5b5df7abfdd5497",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3660,13 +3699,21 @@
         "title": "fix(live): a failed reload consumes no write either (I1992)",
         "via": "subject",
         "merged_at": "2026-10-07T01:09:00Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "2adf4445023e210b50278cf9065c3b86f7052f3e",
+        "title": "docs(plan): I1992, a rebuild that fails consumes no change",
+        "via": "subject",
+        "merged_at": "2026-10-06T16:32:12Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.23.0",
         "commit": "e506c041a44ca9e5853500e10452c648b19ca858",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3674,12 +3721,13 @@
       "title": "Work a session left uncommitted in a worktree is named, not found by luck",
       "milestone": "development-runtime",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "1fb8d6be44d8db56b66caa106c1862217ce48dd1",
         "pull_request": 818,
         "branch": "chore/plan-names-two-runtime-defects",
@@ -3687,12 +3735,7 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-09T09:34:30Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.19.0",
-        "commit": "3d92c25c1297f70f7b72f16e6cd640950e8f7e45",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3820,12 +3863,13 @@
       "title": "A rebuild never replaces the executable a live lease names",
       "milestone": "development-runtime",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "1fb8d6be44d8db56b66caa106c1862217ce48dd1",
         "pull_request": 818,
         "branch": "chore/plan-names-two-runtime-defects",
@@ -3833,12 +3877,7 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-09T09:34:30Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.19.0",
-        "commit": "3d92c25c1297f70f7b72f16e6cd640950e8f7e45",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3857,12 +3896,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T08:12:01Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3906,23 +3945,19 @@
       "title": "A task's scope admits what its derive writes",
       "milestone": "development-runtime",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "192ace8d0ae1f998bd5ad4c1077d7397a8041d6b",
         "title": "fix(plan): I2114 names the files it touches, and I1900 is left as master has it",
         "via": "subject",
         "merged_at": "2026-10-10T13:00:38Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.20.0",
-        "commit": "c8f0e4c5017cd2aefa434a12c6fa95c615a3f9a8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3930,16 +3965,31 @@
       "title": "The slowest case costs a fraction of its budget, and its budget is never raised to follow runner load again",
       "milestone": "ci-critical-path",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
+        "commit": "1cb7621464ab9b1813f9eb5970955b7f3ae3b31e",
+        "title": "perf(site-data): refuse the manifest before deriving; case 95 runs three generations (I2115)",
+        "via": "subject",
+        "merged_at": "2026-10-20T17:38:46Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "2937c955d2c615f3ef3fc73809433b8ebab49781",
         "title": "chore(plan): I2115's lane criteria move to I2350, verbatim (I2115, I2350)",
         "via": "subject",
         "merged_at": "2026-10-20T17:52:38Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3947,23 +3997,19 @@
       "title": "A caller beyond loopback reads, and changes nothing it cannot authenticate",
       "milestone": "runtime-trust",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "dc3c365505aa73afbea2fc0f487dd31fd51a052d",
         "title": "chore(plan): I2123 is done, a caller beyond loopback changes nothing it cannot authenticate",
         "via": "subject",
         "merged_at": "2026-10-15T08:12:44Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.28.0",
-        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -3971,23 +4017,19 @@
       "title": "An event reloaded from disk meets the trust policy in force, and no stamp outruns the clock",
       "milestone": "runtime-trust",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "43933145b2af685e9afc15affa90e03db3caa970",
         "title": "chore(plan): I2124 is recorded done with the tests that prove it",
         "via": "subject",
         "merged_at": "2026-10-15T07:57:09Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.28.0",
-        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4007,23 +4049,19 @@
       "title": "A server that lost its lease hands its sessions on and ends",
       "milestone": "runtime-lifecycle",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "540b3ca5c053730679c5e41c11edb1fe088b58c9",
         "title": "chore(plan): I2127 and I2163 are recorded done with the tests that prove them",
         "via": "subject",
         "merged_at": "2026-10-15T00:05:46Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.27.0",
-        "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4031,23 +4069,19 @@
       "title": "A lease is removed only by the process that holds it, and serve stop stops the server in order",
       "milestone": "runtime-lifecycle",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "2caa75beed921e4a1a080250db2afa7b5ff9b831",
         "title": "chore(plan): I2128 is recorded done with the tests that prove it",
         "via": "subject",
         "merged_at": "2026-10-15T04:39:29Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.28.0",
-        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4079,16 +4113,19 @@
       "title": "A hello names the runtime it is meant for, and no other runtime accepts it",
       "milestone": "runtime-trust",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "e5d2a83b0f14b0833da65bc41fdfb331dd86c094",
         "title": "chore(plan): I2132 is done, both of its replays proven refused",
         "via": "subject",
         "merged_at": "2026-10-15T03:18:35Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4108,23 +4145,19 @@
       "title": "A key removed from the trust list loses its links without a restart, and a node key can be rotated",
       "milestone": "runtime-trust",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "db2d2d31b7744a7059edf1833d229e6e97fd1798",
         "title": "chore(plan): I2134 is done, and its evidence names the tests that prove it",
         "via": "subject",
         "merged_at": "2026-10-15T00:12:47Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.28.0",
-        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4143,12 +4176,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T02:25:56Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4156,12 +4189,13 @@
       "title": "An accepted mesh event is on disk before it counts, and a damaged journal line is reported, never fused or dropped silently",
       "milestone": "mesh-journal-converges",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "990853c51ee015eaa323f337a2241402a8b22c83",
         "pull_request": 1130,
         "branch": "chore/deferred-criteria-become-their-own-issues",
@@ -4169,12 +4203,7 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-14T11:44:36Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.26.0",
-        "commit": "ff3829709616e638596315d6ca42be64b570b74f",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4230,16 +4259,19 @@
       "title": "Every provider's MCP launch configuration is a projection of one declaration, and a drifted one fails a gate",
       "milestone": "mcp-transports-are-reliable",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "5e3cc2d997c4f98ccc5be68694009457aecde51a",
         "title": "docs(plan): the client launch configurations have a carrier (I2148)",
         "via": "subject",
         "merged_at": "2026-10-15T12:25:20Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4258,12 +4290,12 @@
         "via": "subject",
         "merged_at": "2026-10-14T23:12:58Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4318,12 +4350,12 @@
         "via": "subject",
         "merged_at": "2026-10-10T06:15:36Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4331,23 +4363,19 @@
       "title": "A client never attaches to a server of another version without saying so, and a newer client replaces an older server",
       "milestone": "safe-self-update",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "540b3ca5c053730679c5e41c11edb1fe088b58c9",
         "title": "chore(plan): I2127 and I2163 are recorded done with the tests that prove them",
         "via": "subject",
         "merged_at": "2026-10-15T00:05:46Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.27.0",
-        "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4368,12 +4396,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-10T09:55:18Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.20.0",
         "commit": "c8f0e4c5017cd2aefa434a12c6fa95c615a3f9a8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4387,17 +4415,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "8ed40f6eb7ccfad8b9ea0313fdd804fd0560df63",
+        "title": "fix(release): the record pull request's dispatched run is not its verdict (I2282)",
+        "via": "subject",
+        "merged_at": "2026-10-16T08:49:13Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "35a559f3e4e1ba4d0ebff5de3de9af6f80b3b703",
         "title": "chore(plan): I1985 and I2282 are recorded done, each on a test that ran green on master",
         "via": "subject",
         "merged_at": "2026-10-20T23:51:53Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v1.0.0-alpha.4",
-        "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v0.28.0",
+        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4416,12 +4452,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T10:51:37Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4452,12 +4488,12 @@
         "via": "slug",
         "merged_at": "2026-10-11T01:24:22Z",
         "merges": 4,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4490,12 +4526,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-11T12:48:08Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4503,23 +4539,19 @@
       "title": "Whether the work is done is answered by measurement: the done invariant asks about debt, what was left behind and the backlog",
       "milestone": "development-runtime",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "2841459fae7dcabe350048140b71de973bd204b7",
         "title": "chore(plan): I2301 is done, with its evidence at ecb51b2772",
         "via": "subject",
         "merged_at": "2026-10-10T23:14:20Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.21.0",
-        "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4551,16 +4583,19 @@
       "title": "One gate model names what a local check, a pull request, an integration and a release must run, and no second inventory exists",
       "milestone": "ci-critical-path",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "2937c955d2c615f3ef3fc73809433b8ebab49781",
         "title": "chore(plan): I2115's lane criteria move to I2350, verbatim (I2115, I2350)",
         "via": "subject",
         "merged_at": "2026-10-20T17:52:38Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4603,12 +4638,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T04:17:29Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4712,16 +4747,23 @@
       "title": "A trusted machine on the tailnet is found through Tailscale, with no address written by hand",
       "milestone": "the-mesh-works-out-of-the-box",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "35253fcf8f0ea0b5e163cf8afc44cfca4ffac0f8",
         "title": "feat(mesh): the tailnet is a discovery provider, so a machine joining it is found unaided (I2410)",
         "via": "subject",
         "merged_at": "2026-10-21T02:28:48Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4753,23 +4795,19 @@
       "title": "A linked worktree cooperates through its repository's running server, and a start that cannot ensure one says why",
       "milestone": "the-mesh-works-out-of-the-box",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "42291f9eff7f6f07b3ddcf405699e3181b64fe08",
         "title": "chore(plan): I2413 is recorded done; a worktree already cooperates through the primary",
         "via": "subject",
         "merged_at": "2026-10-21T00:07:31Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v1.0.0-alpha.4",
-        "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4777,23 +4815,19 @@
       "title": "mesh.state and mesh.peers answer a filtered summary that fits one tool answer",
       "milestone": "the-mesh-works-out-of-the-box",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "8d0b36d9988c5616cc0a4b42006d61dfd123dc85",
         "title": "chore(plan): eight issues whose code master already carries are recorded done (I2414)",
         "via": "subject",
         "merged_at": "2026-10-17T12:17:02Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4848,12 +4882,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T01:57:34Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4872,12 +4906,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T11:50:35Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4896,12 +4930,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T11:50:35Z",
         "merges": 4,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4932,12 +4966,12 @@
         "via": "slug",
         "merged_at": "2026-10-12T16:22:44Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.22.0",
         "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4956,12 +4990,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T12:10:45Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -4980,12 +5014,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T13:32:49Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5004,12 +5038,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T13:56:26Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5028,12 +5062,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T14:14:29Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5052,12 +5086,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T14:44:34Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5076,12 +5110,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T15:00:05Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5100,12 +5134,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T15:16:34Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5136,12 +5170,12 @@
         "via": "subject",
         "merged_at": "2026-10-11T19:41:57Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.21.0",
         "commit": "722228ef3c9d8db8af6039010f9bf88a106d6cc2",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5160,12 +5194,12 @@
         "via": "subject",
         "merged_at": "2026-10-12T13:49:45Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.22.0",
         "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5184,12 +5218,12 @@
         "via": "subject",
         "merged_at": "2026-10-12T13:49:45Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.22.0",
         "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5208,12 +5242,12 @@
         "via": "subject",
         "merged_at": "2026-10-12T13:31:39Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.22.0",
         "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5258,12 +5292,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-12T17:44:07Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.22.0",
         "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5308,12 +5342,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-13T05:51:39Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.23.0",
         "commit": "e506c041a44ca9e5853500e10452c648b19ca858",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5334,12 +5368,12 @@
         "via": "slug",
         "merged_at": "2026-10-12T22:15:22Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.22.0",
         "commit": "61d44176758eca1ef3f63a82bdf24c2f32215809",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5360,12 +5394,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-13T12:07:35Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.24.1",
         "commit": "92f11cda7c3362e02731e90d93768ffc90658bf5",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5529,16 +5563,31 @@
       "title": "A region projection's host document is not judged as a bootstrap",
       "milestone": "a-second-adopter-is-served",
       "status": "VERIFY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
+        "commit": "4cc8811be00cb2cac15f16fd9093166d23cf0182",
+        "title": "fix(doctor): judge only the generated region of a region projection as a bootstrap (I2588)",
+        "via": "subject",
+        "merged_at": "2026-10-13T18:01:40Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "80bc2035e14e31965a4b7f9deee97666e8809c8a",
         "title": "chore(plan): record I2588 as verified (I2588)",
         "via": "subject",
         "merged_at": "2026-10-13T18:39:31Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5552,17 +5601,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "c4a8f9c56824241e413b2fd651dde7a093846dab",
+        "title": "fix(evidence): the launcher hands evidence subcommands to the executable (I2601)",
+        "via": "subject",
+        "merged_at": "2026-10-13T14:13:28Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "58d522c1a34a82149130841b7c2bcd3a5af420b5",
         "title": "chore(plan): close I2601, I2745, I2746 and two milestones whose evidence holds",
         "via": "subject",
         "merged_at": "2026-10-17T08:03:29Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v0.27.0",
+        "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5583,12 +5640,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-13T17:20:08Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.24.1",
         "commit": "92f11cda7c3362e02731e90d93768ffc90658bf5",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5667,12 +5724,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T10:59:47Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5763,12 +5820,12 @@
         "via": "subject",
         "merged_at": "2026-10-13T21:43:57Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5787,12 +5844,12 @@
         "via": "subject",
         "merged_at": "2026-10-13T21:43:57Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.28.0",
         "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5873,12 +5930,12 @@
         "via": "slug",
         "merged_at": "2026-10-14T12:10:33Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.26.0",
         "commit": "ff3829709616e638596315d6ca42be64b570b74f",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -5981,12 +6038,12 @@
         "via": "subject",
         "merged_at": "2026-10-14T10:29:21Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.27.0",
         "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6084,17 +6141,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "40f3b68293303cff56f52d18fca16b48086a7f9c",
+        "title": "test(mesh): a lost append is said end to end (I2706, case 3052)",
+        "via": "subject",
+        "merged_at": "2026-10-15T03:11:13Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "90bf65b4abb0e050249c332a305dece1e79fd210",
         "title": "chore(plan): four issues whose code the integration top carries are recorded done (I2706)",
         "via": "subject",
         "merged_at": "2026-10-17T18:35:36Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6185,12 +6250,12 @@
         "via": "subject",
         "merged_at": "2026-10-17T10:25:12Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6257,12 +6322,12 @@
         "via": "subject",
         "merged_at": "2026-10-15T04:20:31Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.27.0",
         "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6342,16 +6407,23 @@
       "title": "The MCP reference repeats no registry entry: no hand-written document lists tools",
       "milestone": "capability-graph",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "5b2c2813ca8969db9ae4e9161b16fb18bace6f67",
         "title": "docs(mcp): the MCP reference repeats no registry entry (I2732)",
         "via": "subject",
         "merged_at": "2026-10-15T08:53:30Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6359,23 +6431,19 @@
       "title": "A resumed mesh.events walk returns every event exactly once, across partitions",
       "milestone": "mesh-journal-converges",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "a64fdc1a4957c188eaa5e4058683207af0e26206",
         "title": "docs(plan): a resumed mesh.events walk misses a partitioned writer's event (I2733)",
         "via": "subject",
         "merged_at": "2026-10-15T11:18:29Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.28.0",
-        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6383,23 +6451,19 @@
       "title": "A session joins the mesh at its start and leaves it at its end",
       "milestone": "every-session-joins-the-mesh",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "b248f446ecaded26645a478c51e180c13d0094fc",
         "branch": "feature/a-session-joins-the-mesh-at-start",
         "via": "slug",
         "merged_at": "2026-10-15T18:23:25Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.27.0",
-        "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6420,12 +6484,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-16T03:16:34Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.27.0",
         "commit": "c1a430dcfeb84c2ae24a10154eafa9ed745fe3f8",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6444,12 +6508,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T14:11:07Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6468,12 +6532,12 @@
         "via": "slug",
         "merged_at": "2026-10-16T19:03:45Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6491,13 +6555,21 @@
         "branch": "feature/a-milestone-version-is-inferred",
         "via": "slug",
         "merged_at": "2026-10-16T23:21:06Z",
-        "merges": 8,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 7,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "8642d74374bb89aa4c49c88f724a3412723f7106",
+        "title": "chore(plan): I2742 evidence recorded and verified (I2742)",
+        "via": "subject",
+        "merged_at": "2026-10-16T10:50:16Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6515,13 +6587,21 @@
         "title": "feat(site): /plan/ names its observed commit and each milestone's release (I2743)",
         "via": "subject",
         "merged_at": "2026-10-16T19:33:04Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "33cd3f9a0739f55ad394f73bfaa78135d2480b8c",
+        "title": "chore(plan): I2743 evidence recorded (I2743)",
+        "via": "subject",
+        "merged_at": "2026-10-16T19:17:14Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6535,17 +6615,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "c3f6618cf6d8c0b648652205204d71af1276789d",
+        "title": "feat(ui): the roadmap reads delivery, and its now is where work is (I2744)",
+        "via": "subject",
+        "merged_at": "2026-10-16T15:37:55Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "b4247f3121c46bdba6b87ec5e1b7f4e162acfef8",
         "title": "chore(plan): record I2744's evidence (I2744)",
         "via": "subject",
         "merged_at": "2026-10-16T15:57:20Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6559,17 +6647,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "bad02f37e8f904981a2cbd03a1182a013c631a42",
+        "title": "fix(site): the landing page states no present it does not read (I2745)",
+        "via": "subject",
+        "merged_at": "2026-10-16T10:12:45Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "58d522c1a34a82149130841b7c2bcd3a5af420b5",
         "title": "chore(plan): close I2601, I2745, I2746 and two milestones whose evidence holds",
         "via": "subject",
         "merged_at": "2026-10-17T08:03:29Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v0.28.0",
+        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6583,17 +6679,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "337b41ee72f1f185fc0d9cd947ba54269476d73a",
+        "title": "fix(docs): every published tree draws its diagrams (I2746)",
+        "via": "subject",
+        "merged_at": "2026-10-16T09:51:38Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "58d522c1a34a82149130841b7c2bcd3a5af420b5",
         "title": "chore(plan): close I2601, I2745, I2746 and two milestones whose evidence holds",
         "via": "subject",
         "merged_at": "2026-10-17T08:03:29Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "tag": "v0.28.0",
+        "commit": "441c965549bd018c1b55d34fa66fa5ab16b47411",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6613,30 +6717,26 @@
       "title": "The drift already on the trunk is settled before the gate is made blocking",
       "milestone": "truthful-plan-surfaces",
       "status": "BLOCKED",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "c34a3c00850f0216a54794ec297aa7a30d375329",
         "title": "chore(plan): delivery.json observes the merge of #1304's CI fix (I2748)",
         "via": "subject",
         "merged_at": "2026-10-16T19:21:24Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
       "issue": "I2749",
       "title": "A commit that only plans an issue is not its delivery",
       "milestone": "truthful-plan-surfaces",
-      "status": "READY",
+      "status": "VERIFY",
       "stage": "none",
       "settled": false,
       "unread": [
@@ -6661,23 +6761,19 @@
       "title": "A scope entry is one path, and a path context would refuse is refused at start",
       "milestone": "development-runtime",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "e81e622bd80729d4b3c33fa059a5f0b266d9cdd2",
         "title": "chore(derive): the plan page of I2760",
         "via": "subject",
         "merged_at": "2026-10-16T11:27:11Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.29.0",
-        "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6708,12 +6804,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T14:04:14Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6732,12 +6828,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T22:33:20Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6756,12 +6852,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T23:48:01Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6780,12 +6876,12 @@
         "via": "subject",
         "merged_at": "2026-10-17T03:03:10Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6793,16 +6889,31 @@
       "title": "One portable core runs on the host and as wasm32, and one executed fixture holds both",
       "milestone": "browser-compute",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
+        "commit": "059e010bb4e64ca49ce42c425472a805349562fe",
+        "title": "fix(deploy): a path crate is in the build context and the dependency stage (I2784)",
+        "via": "subject",
+        "merged_at": "2026-10-22T21:42:11Z",
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "70afed8c2f2413c32a87fee0d2810cec7facedeb",
         "title": "fix(deploy): a path crate is in the build context and the dependency stage (I2784)",
         "via": "subject",
         "merged_at": "2026-10-22T21:47:49Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6821,12 +6932,12 @@
         "via": "subject",
         "merged_at": "2026-10-16T22:51:56Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.29.0",
         "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6834,23 +6945,19 @@
       "title": "A build never lets the shared build directory's crate artifacts fill the disk",
       "milestone": "development-runtime",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "cc536298674c93a40e1f26f3412c8313f096139d",
         "title": "docs(plan): the shared build directory's crate artifacts are bounded (I2787)",
         "via": "subject",
         "merged_at": "2026-10-16T23:03:37Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.29.0",
-        "commit": "4a4573690f861473fad383b4ecfd6f868065c13a",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6869,12 +6976,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T00:35:40Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6905,12 +7012,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T05:42:16Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6929,12 +7036,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T03:32:48Z",
         "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6942,23 +7049,19 @@
       "title": "A claim released on one runtime is released on every runtime that holds it, and a link to a restarted peer recovers",
       "milestone": "mesh-journal-converges",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "91ed1dac11c83057591fddac867ccc787ea6ed52",
         "title": "docs(plan): a released mesh claim reaches every runtime that holds it (I2825)",
         "via": "subject",
         "merged_at": "2026-10-17T15:04:24Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -6966,23 +7069,19 @@
       "title": "A GitHub release carries the tool's own changelog for its tag, never GitHub's generated notes",
       "milestone": "safe-self-update",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "4960fa3c75cf9f101fc6caa7aded75344412e955",
         "title": "chore(plan): I2826 names its own case, so the plan status names no missing file",
         "via": "subject",
         "merged_at": "2026-10-18T01:47:24Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7001,12 +7100,12 @@
         "via": "subject",
         "merged_at": "2026-10-17T17:29:24Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7024,13 +7123,21 @@
         "title": "fix(release): a latest.json naming any pre-release is refused, not only the one published (I2829)",
         "via": "subject",
         "merged_at": "2026-10-18T09:01:30Z",
-        "merges": 6,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 3,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "c554c08bc74591bfb2625686bae91670b0fe6747",
+        "title": "chore(plan): I2829 is done, with the evidence that settles it",
+        "via": "subject",
+        "merged_at": "2026-10-17T18:43:01Z",
+        "merges": 3,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7038,23 +7145,19 @@
       "title": "A cancelled MCP call stops, and the client is told it stopped",
       "milestone": "mcp-transports-are-reliable",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "33b6821116817b1fa04d7500e58bcb5d2cb7be99",
         "title": "docs(plan): the MCP cancellation issue is I2840, and I2829 claims no case it does not add",
         "via": "subject",
         "merged_at": "2026-10-17T18:12:32Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7072,13 +7175,21 @@
         "branch": "feature/the-site-probe-is-split",
         "via": "slug",
         "merged_at": "2026-10-21T01:49:02Z",
-        "merges": 7,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 6,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "b6be531113ec565de9a4807b1c16270e23bfa849",
+        "title": "docs(plan): the site-probe split is I2841, in this lane's id block",
+        "via": "subject",
+        "merged_at": "2026-10-17T18:32:21Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7086,23 +7197,19 @@
       "title": "The live site is verified on a schedule, and its last verification is evidence",
       "milestone": "surfaces-never-disagree",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "70b5804e81b59d6ce61360038c5842026e6e013d",
         "title": "docs(plan): I2842, the live site is verified on a schedule (after the alpha)",
         "via": "subject",
         "merged_at": "2026-10-17T20:31:47Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7181,12 +7288,12 @@
         "via": "subject",
         "merged_at": "2026-10-17T23:57:46Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7205,12 +7312,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T08:43:40Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7229,12 +7336,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T02:11:56Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7253,12 +7360,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T04:16:29Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7277,12 +7384,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T17:50:35Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.2",
         "commit": "dd4c0a87cba408222033c89f002ab2d63f48574c",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7421,12 +7528,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T14:42:56Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7444,13 +7551,21 @@
         "title": "test(ui): every branch of the workspace's id linking and the graph library's absence is held (I2900)",
         "via": "subject",
         "merged_at": "2026-10-18T08:53:00Z",
-        "merges": 8,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 5,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "a77d2a93be3ba678c781c3f8612f250a9153a987",
+        "title": "chore(derive): I2900 over the 3220 deferral (I2900)",
+        "via": "subject",
+        "merged_at": "2026-10-18T06:14:53Z",
+        "merges": 3,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7529,12 +7644,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T11:41:53Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7614,23 +7729,19 @@
       "title": "No /ui page shows an issue id that leads nowhere",
       "milestone": "idd-reads-at-a-glance",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "4b15b432b7653a5b7b0cc6e3ec4758cc387d16f7",
         "title": "docs(plan): the owner's /ui/idd review is milestone idd-reads-at-a-glance (I2914)",
         "via": "subject",
         "merged_at": "2026-10-18T04:28:48Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v0.30.0",
-        "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7661,12 +7772,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T21:35:31Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.2",
         "commit": "dd4c0a87cba408222033c89f002ab2d63f48574c",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7685,12 +7796,12 @@
         "via": "subject",
         "merged_at": "2026-10-19T02:45:50Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.2",
         "commit": "dd4c0a87cba408222033c89f002ab2d63f48574c",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7728,17 +7839,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "4f3b3490d6c991d6bac152d188d2dfa87ce0e339",
+        "title": "fix(init): a fresh init leaves doctor clean (I2941)",
+        "via": "subject",
+        "merged_at": "2026-10-17T20:24:03Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "65220a9e5d840a3c522cdf8433a2620267686e71",
         "title": "chore(plan): I2941 is done, with the evidence that settles it",
         "via": "subject",
         "merged_at": "2026-10-17T20:47:45Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7752,17 +7871,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "5b4f8ba6a3ac9b67a02cbc2556b25b42c0be4cce",
+        "title": "fix(install): a dry run initialises nothing, and the install guide says only what is true (I2942)",
+        "via": "subject",
+        "merged_at": "2026-10-18T01:14:09Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "2b383cf28172620ae414c43ec569b3f4f3436e8b",
         "title": "chore(plan): I2942 is done, with the evidence that settles it",
         "via": "subject",
         "merged_at": "2026-10-18T04:07:30Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7780,13 +7907,21 @@
         "title": "fix(ui): an unobserved panel's reason wraps at phone width (I2943)",
         "via": "subject",
         "merged_at": "2026-10-18T11:38:07Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "21b661513bedccc90a231a75c9389db16c1beb22",
+        "title": "chore(plan): I2943 is done, with the evidence that settles it",
+        "via": "subject",
+        "merged_at": "2026-10-18T03:25:21Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7805,12 +7940,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T09:37:04Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7829,12 +7964,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T08:34:56Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7865,12 +8000,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T12:55:14Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -7901,12 +8036,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T08:25:43Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8057,12 +8192,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T16:49:38Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.2",
         "commit": "dd4c0a87cba408222033c89f002ab2d63f48574c",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8081,12 +8216,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T19:29:49Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.2",
         "commit": "dd4c0a87cba408222033c89f002ab2d63f48574c",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8148,17 +8283,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "c0b799497e78abee0b6125c981e1afc9c1e23a80",
+        "title": "fix(site): a commit that a record or the site's data names is in the history (I3007)",
+        "via": "subject",
+        "merged_at": "2026-10-18T15:07:49Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "7a20e31fdd3f2bc02aced709d907caf9bf1f56ad",
         "title": "fix(top): I3007's objective names the template links without writing a placeholder",
         "via": "subject",
         "merged_at": "2026-10-18T18:34:19Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8178,23 +8321,19 @@
       "title": "No record's prose and no board announcement holds a template delimiter",
       "milestone": "surfaces-never-disagree",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "ce424b8669ed33ade0c58c3cefb38b2ca1e6af4d",
         "title": "docs(plan): the derived plan page of I3009",
         "via": "subject",
         "merged_at": "2026-10-19T10:45:28Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v1.0.0-alpha.2",
-        "commit": "905159df7cc24f65c0455a16fc9ccbad37845571",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8224,13 +8363,21 @@
         "title": "fix(ci): the evidence job runs only when a planned lane ran tests (I3013)",
         "via": "subject",
         "merged_at": "2026-10-20T23:13:26Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "2937f3ebf5ff5ced2de174dad138011414879781",
+        "title": "chore(plan): I3013, the evidence job runs only when a planned lane ran tests",
+        "via": "subject",
+        "merged_at": "2026-10-20T20:47:51Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8297,12 +8444,12 @@
         "via": "subject",
         "merged_at": "2026-10-21T01:21:14Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.2",
         "commit": "905159df7cc24f65c0455a16fc9ccbad37845571",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8321,12 +8468,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T08:31:07Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.0",
         "commit": "2dfff96988afe1c580e8e151cf504d1ea97ad0ad",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8345,12 +8492,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T13:09:40Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8369,12 +8516,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T21:45:31Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8393,12 +8540,12 @@
         "via": "subject",
         "merged_at": "2026-10-18T21:45:31Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v0.30.1",
         "commit": "9904000d2df5e88b24ea69defd453e5760dd7602",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8417,12 +8564,12 @@
         "via": "subject",
         "merged_at": "2026-10-19T01:42:12Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.1",
         "commit": "9a5a9b77520bbe9504b04ff89235a6f232377788",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8441,12 +8588,12 @@
         "via": "subject",
         "merged_at": "2026-10-19T03:05:17Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.1",
         "commit": "9a5a9b77520bbe9504b04ff89235a6f232377788",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8454,16 +8601,31 @@
       "title": "A provider hook declares its timeout, and the session end closes its episode inside the budget",
       "milestone": "M003",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
+        "commit": "c6556694ab7e207cc9da181614323088e57dc8ac",
+        "title": "fix(capture): a provider hook declares its timeout, and the session end closes inside it (I3060)",
+        "via": "subject",
+        "merged_at": "2026-10-19T10:36:44Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "8bf9978f8cef98d059b08b9dcc7ddfd13d1549ba",
         "title": "chore(plan): I3060 closed, I3061 recorded",
         "via": "subject",
         "merged_at": "2026-10-21T01:35:08Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.1",
+        "commit": "9a5a9b77520bbe9504b04ff89235a6f232377788",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8471,16 +8633,19 @@
       "title": "A headless or nested provider session is not the worker: its end never hands over the task or writes a tracked record",
       "milestone": "M003",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "8bf9978f8cef98d059b08b9dcc7ddfd13d1549ba",
         "title": "chore(plan): I3060 closed, I3061 recorded",
         "via": "subject",
         "merged_at": "2026-10-21T01:35:08Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8596,23 +8761,19 @@
       "title": "The links of the Deployments table on /ui/delivery meet the target size at every audited width",
       "milestone": "truthful-plan-surfaces",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "ea81bca389d2223ba0d96397f165e6d18bc8c397",
         "title": "docs(plan): record I3079, the Deployments table's link that is too small a target",
         "via": "subject",
         "merged_at": "2026-10-20T18:36:16Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v1.0.0-alpha.2",
-        "commit": "905159df7cc24f65c0455a16fc9ccbad37845571",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8751,12 +8912,12 @@
         "via": "subject",
         "merged_at": "2026-10-20T05:55:26Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.1",
         "commit": "9a5a9b77520bbe9504b04ff89235a6f232377788",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8775,12 +8936,12 @@
         "via": "subject",
         "merged_at": "2026-10-20T07:29:26Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.5",
         "commit": "76c578596631b290f9291691b388f359fbce97ae",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8799,12 +8960,12 @@
         "via": "subject",
         "merged_at": "2026-10-21T06:18:31Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.5",
         "commit": "76c578596631b290f9291691b388f359fbce97ae",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8812,23 +8973,19 @@
       "title": "The Pages build and check hold a site built in every language",
       "milestone": "architecture-is-enforced",
       "status": "DONE",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "eef2f1cb5d2cbcfd4978c21721dbb0d2d2e97cd0",
         "title": "chore(plan): I3094 is done by the alpha.1 top's pages.yml bounds, and master is derived once",
         "via": "subject",
         "merged_at": "2026-10-20T14:35:02Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v1.0.0-alpha.5",
-        "commit": "76c578596631b290f9291691b388f359fbce97ae",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8847,12 +9004,12 @@
         "via": "subject",
         "merged_at": "2026-10-20T22:40:21Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.5",
         "commit": "76c578596631b290f9291691b388f359fbce97ae",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -8883,12 +9040,12 @@
         "via": "subject",
         "merged_at": "2026-10-21T04:12:28Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -9639,17 +9796,24 @@
       "issue": "I3171",
       "title": "The compiled context names source ranges with their reason and confidence, not only whole objects of the layer",
       "milestone": "development-runtime",
-      "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "status": "DONE",
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "f48de8a909081bf8e265a1afc04fceabe7b2a08b",
         "title": "fix(devcontext): every exported source-range item has an example; sorts are canonical (I3171)",
         "via": "subject",
         "merged_at": "2026-10-22T22:28:32Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -9753,16 +9917,23 @@
       "title": "Entering a checkout whose executable is missing or stale starts one background build and says building",
       "milestone": "runtime-lifecycle",
       "status": "CANCELLED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "6d4e35012401ddee342b26dd15f35b618556cdd9",
         "title": "docs(adr): no ordinary command builds — ADR 0222 supersedes ADR 0172, I3180 is cancelled",
         "via": "subject",
         "merged_at": "2026-10-22T23:14:47Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -10874,16 +11045,31 @@
       "title": "A provider declares how it reports usage, with the evidence, beside its lifecycle",
       "milestone": "every-sessions-usage-is-observed",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "ec1277fc10ad12f18372a6049dddb4c8b8a65e87",
         "branch": "feature/a-provider-declares-its-usage-seam",
         "via": "slug",
         "merged_at": "2026-10-22T22:35:38Z",
-        "merges": 6,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "7801f7e3d986368ee3148539b4386ea90073e4c4",
+        "title": "docs(plan): I3287 is recorded done with its case as evidence (I3287)",
+        "via": "subject",
+        "merged_at": "2026-10-22T21:11:24Z",
+        "merges": 4,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -10891,9 +11077,11 @@
       "title": "The shared server receives Claude Code's OpenTelemetry usage events over loopback and records them as reported",
       "milestone": "every-sessions-usage-is-observed",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "4cfa5374f8c330b7eb074a2803219d7179f00d82",
         "pull_request": 2363,
@@ -10902,7 +11090,12 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-22T21:23:13Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -12506,16 +12699,19 @@
       "title": "Every surface names its versions from one derived release model, says which version each one is, and a gate refuses a version that disagrees or is written by hand",
       "milestone": "truthful-plan-surfaces",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "784a3727ac2d99001048194dcdfd6876763e599d",
         "title": "docs(plan): the homepage tells a stranger the truth (I3916-I3919, I3449 to p0)",
         "via": "subject",
         "merged_at": "2026-10-22T15:13:03Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -12534,12 +12730,12 @@
         "via": "subject",
         "merged_at": "2026-10-19T23:00:20Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -12595,16 +12791,23 @@
       "title": "A vendor declares its funding sources in the model catalogue, each with dated, quoted vendor evidence",
       "milestone": "every-model-call-is-paid-from-a-declared-source",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "e9f596482bb89207bfecc2a656490c16d065586a",
         "title": "docs(models): every funding item of the catalogue carries an executable example (I3660)",
         "via": "subject",
         "merged_at": "2026-10-21T01:15:19Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -12636,9 +12839,11 @@
       "title": "An Anthropic API advisor is declared, so a held Anthropic credit grant can pay for review",
       "milestone": "every-model-call-is-paid-from-a-declared-source",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "77ee6c30e0309a160db56192d1485da7cc22ae1e",
         "pull_request": 1758,
@@ -12646,8 +12851,21 @@
         "title": "feat(reasoning): an Anthropic API advisor, so a Claude plan's API credits can pay for review (I3663)",
         "via": "title_or_branch",
         "merged_at": "2026-10-22T19:20:51Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "7b64c2a0817042185181f106fa4de0ca9dd12510",
+        "title": "docs(plan): I3663's scope names the model catalogue it adds claude-opus-5-5 to",
+        "via": "subject",
+        "merged_at": "2026-10-21T01:56:29Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13159,16 +13377,23 @@
       "title": "A deployment names the provider that hosts it, and the provider's files are generated from it",
       "milestone": "fly-deployment",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "27d017ea16ab0ab0df79208bba4735bf6f687528",
         "title": "feat(deploy): a deployment names its provider and its provider files are derived (I3820)",
         "via": "subject",
         "merged_at": "2026-10-21T01:05:06Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13176,16 +13401,23 @@
       "title": "The tree a provider receives is assembled from the deployment object, and master publishes it after green ci",
       "milestone": "fly-deployment",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "fdeee1ac372c6286773e02fa3c3ccac3d0477b8b",
         "title": "test(deploy): every changed line of the slug assembler is covered (I3821)",
         "via": "subject",
         "merged_at": "2026-10-21T10:05:29Z",
         "merges": 4,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13193,16 +13425,23 @@
       "title": "A deployment that names a provider is observed at its own URL, and is active only while it serves master",
       "milestone": "fly-deployment",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "e2c9675d6df8d68330610fbddcce6d46e8848653",
         "title": "fix(health): a deployed build without a checkout names its commit from its build identity (I3822)",
         "via": "subject",
         "merged_at": "2026-10-22T20:45:13Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13210,16 +13449,31 @@
       "title": "The mesh client reaches an https endpoint over TLS and refuses cleartext to a public address",
       "milestone": "an-authorised-node-connects-from-anywhere",
       "status": "DONE",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
+        "commit": "dd334ac00f3ebd0ec7b1e3fed08f38de58bff4d6",
+        "title": "feat(mesh): the mesh client speaks TLS and refuses cleartext to a public address (I3823)",
+        "via": "subject",
+        "merged_at": "2026-10-21T12:31:06Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "c6eda574264852b3dd7f3c63c7539332e9d25ff1",
         "title": "chore(plan): I3823 serves the relay criterion of its intent",
         "via": "subject",
         "merged_at": "2026-10-21T17:55:30Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13238,12 +13492,12 @@
         "via": "subject",
         "merged_at": "2026-10-21T00:07:01Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13263,16 +13517,23 @@
       "title": "A hosted hub keeps one key from a secret, advertises its URL, and shows the mesh only to those it trusts",
       "milestone": "an-authorised-node-connects-from-anywhere",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "75c02225f741cb3b0208bfdf5491bf41e308ecdc",
         "title": "docs(deploy): every exported provider item carries an example (I3826)",
         "via": "subject",
         "merged_at": "2026-10-21T17:40:14Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13280,16 +13541,23 @@
       "title": "The hosted hub is this repository's default rendezvous, and every node shows it as the path from anywhere",
       "milestone": "an-authorised-node-connects-from-anywhere",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "9b6bc437615f0e388e6f686c6456c5bbd7da8906",
         "title": "docs(adr): a hosted server is a rendezvous only over TLS, its key a secret (ADR 0220, I3821-I3827)",
         "via": "subject",
         "merged_at": "2026-10-21T01:41:02Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13297,16 +13565,19 @@
       "title": "A provider declares whether its client drives a browser beside the server, and preflight says when this machine's bridge is missing",
       "milestone": "a-provider-carries-the-contract-natively",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "dc514006fabd8f57bb610da16a5ccc50e8970827",
         "title": "fix(plan): I3829 names the provider rule at its new version (I3287)",
         "via": "subject",
         "merged_at": "2026-10-22T18:47:12Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13368,17 +13639,25 @@
         "publication"
       ],
       "merged": {
+        "commit": "34ca69681f356e4323d3a85a471a2daa1f777efe",
+        "title": "fix(test): a case run removes its own scratch dir however it ends (I3834)",
+        "via": "subject",
+        "merged_at": "2026-10-21T02:10:33Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "42a1ce389ffaa4e9b7b24f23f24b64c88cd27a0f",
         "title": "chore(derive): delivery observes a commit origin holds (I3834)",
         "via": "subject",
         "merged_at": "2026-10-21T08:10:22Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13386,23 +13665,19 @@
       "title": "A node the mesh lists as trusted and present but cannot link is said so, with why, on every surface that names it",
       "milestone": "the-mesh-works-out-of-the-box",
       "status": "READY",
-      "stage": "released",
+      "stage": "none",
       "settled": false,
       "unread": [
-        "publication"
+        "branches",
+        "forge"
       ],
-      "merged": {
+      "planned": {
         "commit": "12c702cdc5459ece28d8fc0a3cb840e1815bf284",
         "title": "docs(plan): a node the mesh lists as present but cannot link says why (I3835)",
         "via": "subject",
         "merged_at": "2026-10-21T01:52:00Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
-      },
-      "released": {
-        "tag": "v1.0.0-alpha.4",
-        "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13445,12 +13720,12 @@
         "via": "subject",
         "merged_at": "2026-10-21T08:47:07Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       },
       "released": {
         "tag": "v1.0.0-alpha.4",
         "commit": "97391192dbbc85ee34b1f35d9ddec55ba61832d3",
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13470,16 +13745,31 @@
       "title": "The intent workspace answers within its 100 ms budget: its shared-scope fold holds the first pairs, not every pair",
       "milestone": "idd-reads-at-a-glance",
       "status": "VERIFY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "b83c6a0fdfbc4cc61a3f9c9105467a5d085aa69b",
         "title": "test(ui): the shared-scope route lists every pair and names what it needs (I3840)",
         "via": "subject",
         "merged_at": "2026-10-22T18:02:40Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "d9c2330a87cbc2bbce9fc44e2c45571cde830cd1",
+        "title": "chore(plan): I3840 verified, its fold test recorded; the budget awaits CI",
+        "via": "subject",
+        "merged_at": "2026-10-21T03:02:17Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13559,16 +13849,23 @@
       "title": "A hung Pages build is replaced by a declared bound, and the right tree is rebuilt, never redeployed",
       "milestone": "the-runtime-supervises-itself",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "9daede484d05a2edca028f4d24cd3f31bee8ff85",
         "title": "fix(pages): a hung Pages build is replaced by a declared bound (I3902)",
         "via": "subject",
         "merged_at": "2026-10-22T22:13:27Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13588,16 +13885,31 @@
       "title": "The integration executor fast-forwards master to every green head, a combined top included, and nothing else lands",
       "milestone": "landing-survives-any-session",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "92946d3e05979e5aa54bb80e98d75b743ec46418",
         "title": "feat(integration): the executor fast-forwards master to every green head (I3910)",
         "via": "subject",
         "merged_at": "2026-10-22T18:50:56Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "b52038cfcdf0276b88ecb404f15644c4f86e65fc",
+        "title": "docs(plan): landing green work survives any session, restart and machine (I3910-I3915)",
+        "via": "subject",
+        "merged_at": "2026-10-22T14:38:08Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13653,16 +13965,19 @@
       "title": "A combined top is composed by a typed command from members declared in a tracked train manifest",
       "milestone": "landing-survives-any-session",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "b52038cfcdf0276b88ecb404f15644c4f86e65fc",
         "title": "docs(plan): landing green work survives any session, restart and machine (I3910-I3915)",
         "via": "subject",
         "merged_at": "2026-10-22T14:38:08Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13670,16 +13985,31 @@
       "title": "The homepage counts supported claims from the run the evidence page reads, and names the revision it was recorded at",
       "milestone": "truthful-plan-surfaces",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "3071f0f8ce79178bae0124dc801399c04a05289f",
         "title": "fix(site): the homepage counts what was proven and shows no backlog (I3916, I3917)",
         "via": "subject",
         "merged_at": "2026-10-22T17:31:43Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "784a3727ac2d99001048194dcdfd6876763e599d",
+        "title": "docs(plan): the homepage tells a stranger the truth (I3916-I3919, I3449 to p0)",
+        "via": "subject",
+        "merged_at": "2026-10-22T15:13:03Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13687,16 +14017,23 @@
       "title": "The plan's status counts leave the homepage hero and stay on the roadmap",
       "milestone": "truthful-plan-surfaces",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "3071f0f8ce79178bae0124dc801399c04a05289f",
         "title": "fix(site): the homepage counts what was proven and shows no backlog (I3916, I3917)",
         "via": "subject",
         "merged_at": "2026-10-22T17:31:43Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13704,16 +14041,23 @@
       "title": "README, CONTRIBUTING and the homepage say truthfully how big the tool is and what its registry counts are",
       "milestone": "truthful-plan-surfaces",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "0cb26dda0343a3c5f818c14cc5a2bc4c3c16b104",
         "title": "docs: the tool's size and its registry figures are said truthfully (I3918)",
         "via": "subject",
         "merged_at": "2026-10-22T17:43:34Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13721,9 +14065,11 @@
       "title": "The coverage gate finds the end of a test module across multi-line and raw string literals",
       "milestone": "ci-critical-path",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "355a0cee79aab7030af2e9e4e39a617ffd47c5dd",
         "pull_request": 2348,
@@ -13731,8 +14077,21 @@
         "title": "fix(ci): the coverage gate reads multi-line and raw strings to the end of a test module (I3919)",
         "via": "title_or_branch",
         "merged_at": "2026-10-22T19:30:26Z",
-        "merges": 3,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 2,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "784a3727ac2d99001048194dcdfd6876763e599d",
+        "title": "docs(plan): the homepage tells a stranger the truth (I3916-I3919, I3449 to p0)",
+        "via": "subject",
+        "merged_at": "2026-10-22T15:13:03Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13740,16 +14099,19 @@
       "title": "The GitHub projection reads every issue, and a listing shorter than the repository refuses rather than reads as missing",
       "milestone": "work-graph-github",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "080a40af4df607e982e789a255f7c6dcd5ff879d",
         "title": "docs(plan): the GitHub projection reads every issue (I3920)",
         "via": "subject",
         "merged_at": "2026-10-22T18:05:05Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -13865,16 +14227,23 @@
       "title": "The executable and the rustdoc surface are built once per run and downloaded by the jobs that drive them",
       "milestone": "ci-critical-path",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "643f9e2697785cb82142576c6c5fa5d5295731e5",
         "title": "fix(top): train 5's pre-push reds, I3939's scope names its case and rustfmt",
         "via": "subject",
         "merged_at": "2026-10-23T08:16:50Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14074,16 +14443,23 @@
       "title": "The shared build directory stays under its bound while builds run: between builds, under cargo's lock, its stale units are evicted oldest first until it is under the bound",
       "milestone": "development-runtime",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "b3ace7b4593525c135dc76bf1d0126c06205ceed",
         "title": "fix(build): the shared build dir stays under its bound while builds run (I3959)",
         "via": "subject",
         "merged_at": "2026-10-23T16:44:06Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14139,16 +14515,31 @@
       "title": "Every pull request carries its metadata, projected from the trunk's records: labels, milestone, assignee and Refs links, never a closing keyword",
       "milestone": "merging-and-referencing-are-enforced",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "9f231f212f83d52b1955567292fee825aa525859",
         "title": "feat(github): a pull request carries its metadata, projected from the records (I3970)",
         "via": "subject",
         "merged_at": "2026-10-22T23:09:01Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
+        "commit": "e6deaf9e9d2fe73555b074adffa8e06365858747",
+        "title": "docs(plan): merging and referencing are enforced (I3970-I3979)",
+        "via": "subject",
+        "merged_at": "2026-10-22T21:09:26Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14252,50 +14643,91 @@
       "title": "Every label, branch prefix and commit type is declared once, projected to GitHub, described in CONTRIBUTING and checked",
       "milestone": "merging-and-referencing-are-enforced",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "e6deaf9e9d2fe73555b074adffa8e06365858747",
         "title": "docs(plan): merging and referencing are enforced (I3970-I3979)",
         "via": "subject",
         "merged_at": "2026-10-22T21:09:26Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
+    },
+    {
+      "issue": "I3990",
+      "title": "An exclusive mesh claim lives by its holder's progress: a session stuck on a dialog, hung or crashed stops refusing others while its server beats on",
+      "milestone": "mcp-transports-are-reliable",
+      "status": "READY",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
     },
     {
       "issue": "I3995",
       "title": "A task started before the first commit finishes: an unborn recorded head is an ancestor of every commit",
       "milestone": "a-stranger-adopts-it-unaided",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "39f371117e93e8a2c67d3b0419f589a2771d14bb",
         "title": "fix(lifecycle): a task started before the first commit is not diverged (I3995)",
         "via": "subject",
         "merged_at": "2026-10-23T02:31:39Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
+    },
+    {
+      "issue": "I3996",
+      "title": "A node's provisioning secret is read on mc's standard input, never from a command line",
+      "milestone": "builds-reuse-the-mesh-cache",
+      "status": "BLOCKED",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
     },
     {
       "issue": "I3999",
       "title": "A fixture holds the skills the site generator reads",
       "milestone": "ci-critical-path",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "33c1948674c9d6d1587cb0bc56be47abc876b460",
         "title": "fix(test): a fixture holds the skills the site generator reads (I3999)",
         "via": "subject",
         "merged_at": "2026-10-23T19:46:26Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14303,16 +14735,19 @@
       "title": "A repeated executions.start with the same key answers one execution",
       "milestone": "a-session-proceeds-through-the-mesh",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "315af95a820bbc59efffdb3be06c9cde578dbaf8",
         "title": "chore(plan): plan the intent a-session-proceeds-through-the-mesh and file I4000-I4009",
         "via": "subject",
         "merged_at": "2026-10-22T23:59:40Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14416,16 +14851,19 @@
       "title": "/watchdog reads liveness and runs wake, handover, reap",
       "milestone": "a-session-proceeds-through-the-mesh",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
-      "merged": {
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ],
+      "planned": {
         "commit": "315af95a820bbc59efffdb3be06c9cde578dbaf8",
         "title": "chore(plan): plan the intent a-session-proceeds-through-the-mesh and file I4000-I4009",
         "via": "subject",
         "merged_at": "2026-10-22T23:59:40Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14445,16 +14883,23 @@
       "title": "A server bound to every interface advertises the addresses it has now",
       "milestone": "mesh-connectivity",
       "status": "BLOCKED",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "25db775046dd55de9908ea132be99eca0142bedc",
         "title": "docs(mesh): the followed endpoints carry their examples (I4013)",
         "via": "subject",
         "merged_at": "2026-10-23T04:43:11Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14486,16 +14931,23 @@
       "title": "A case that compiles the crate runs alone or caps cargo, so the cases beside it are never starved past their bounds",
       "milestone": "ci-critical-path",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "4b9aa6eb9d7ba85bc624131fb3f47d8a1819fe95",
         "title": "fix(top): the timed economics cases run alone (I4199)",
         "via": "subject",
         "merged_at": "2026-10-24T05:54:30Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
     },
     {
@@ -14503,26 +14955,59 @@
       "title": "A warm UI screen borrows what its sources answered and writes its page once, so a plan of any size is not copied per request",
       "milestone": "M004",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "43f1acecb4eb093887d0ba5c29195a8f218ea113",
         "title": "fix(top): the warm UI screens borrow the plan instead of copying it (I4200)",
         "via": "subject",
         "merged_at": "2026-10-24T06:00:48Z",
         "merges": 1,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
+    },
+    {
+      "issue": "I4203",
+      "title": "The ci verdict judges each gate by the receipt of the attempt that ran it, so a rerun that passes is not judged by the attempt that failed",
+      "milestone": "ci-critical-path",
+      "status": "READY",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
+    },
+    {
+      "issue": "I4207",
+      "title": "Only a trends series of the shape the publication writes decides a run link",
+      "milestone": "measurements-are-tracked-over-time",
+      "status": "READY",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
     },
     {
       "issue": "I4220",
       "title": "A run that /trends/ draws is a link the site check decides by provenance",
       "milestone": "measurements-are-tracked-over-time",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
         "commit": "6af2d09cb734c53c610f68841f135c11e2fc781e",
         "pull_request": 2500,
@@ -14531,8 +15016,25 @@
         "via": "title_or_branch",
         "merged_at": "2026-10-24T18:07:06Z",
         "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
+    },
+    {
+      "issue": "I4221",
+      "title": "CI's Rust cache carries the shared build directory, where cargo actually compiles",
+      "milestone": "ci-critical-path",
+      "status": "READY",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
     },
     {
       "issue": "I4222",
@@ -14551,17 +15053,80 @@
       "title": "The pre-commit generation gate answers inside its bound, and a failed case's reason reaches an artifact",
       "milestone": "M004",
       "status": "READY",
-      "stage": "merged",
-      "settled": true,
-      "unread": [],
+      "stage": "released",
+      "settled": false,
+      "unread": [
+        "publication"
+      ],
       "merged": {
+        "commit": "a296782bc167aa6e061ef17af2c3091d84642090",
+        "title": "fix(plan): the scope-conflict scan allocates nothing, and a failed case's reason is kept (I4223)",
+        "via": "subject",
+        "merged_at": "2026-10-24T15:51:17Z",
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "planned": {
         "commit": "f6d61ebea3122e048a6cd23b5bbaedfe9189a046",
         "title": "chore(derive): I4223's derived data observes its merge of master",
         "via": "subject",
         "merged_at": "2026-10-24T20:42:51Z",
-        "merges": 2,
-        "observed_at": "2026-10-25T14:05:31Z"
+        "merges": 1,
+        "observed_at": "2026-10-25T14:42:18Z"
+      },
+      "released": {
+        "tag": "v1.0.0-alpha.8",
+        "commit": "2efeacea03158615db2b497117a8da35b264909b",
+        "observed_at": "2026-10-25T14:42:18Z"
       }
+    },
+    {
+      "issue": "I4227",
+      "title": "A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect",
+      "milestone": "mcp-transports-are-reliable",
+      "status": "READY",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
+    },
+    {
+      "issue": "I4229",
+      "title": "The image's build stage carries every file the crate embeds",
+      "milestone": "development-runtime",
+      "status": "READY",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
+    },
+    {
+      "issue": "I4241",
+      "title": "A follower's shared read is keyed by its own server, so a follower of another context is never handed it",
+      "milestone": "development-runtime",
+      "status": "DONE",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
+    },
+    {
+      "issue": "I4244",
+      "title": "Case 3383 holds the peers screen to its contract: the change, or the reading before it marked as catching up",
+      "milestone": "development-runtime",
+      "status": "DONE",
+      "stage": "none",
+      "settled": false,
+      "unread": [
+        "branches",
+        "forge"
+      ]
     }
   ]
 }

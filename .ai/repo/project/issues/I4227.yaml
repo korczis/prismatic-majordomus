@@ -1,0 +1,33 @@
+id: I4227
+milestone: mcp-transports-are-reliable
+title: A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect
+slug: a-departed-peer-that-repeats-another-is-not-kept
+priority: p1
+profile: implementation
+parallel_safe: true
+serves: []
+objective: "An announce of a named claim drops the departed slots of the same worker (same client name and address) whose every claim it now holds under the same name, so a client that re-attaches on a timer no longer fills the board's departed retention and evicts the sessions that really left."
+why: "On 2026-10-25 at 12:20Z the primary checkout's shared server (port 57351) listed 41 peers: 9 attached and 32 departed, and all 32 departed rows (p200-p232, last seen 0.5-5.6 h earlier) were one codex-chatgpt-mesh-coordinator bridge that re-attaches every ~10 minutes and announces the same claim chatgpt-bridge. The board keeps RETAINED = 32 departed slots (apps/majordomus-cli/src/peers.rs), dropping the oldest past that, so every real session that departed had its retained announcement evicted within one reconnect: the very thing retention exists to keep."
+current_state: "PeerBoard::detach marks a slot with claims departed and drops the oldest departed slots past RETAINED; nothing recognises that a newer slot is the same worker saying the same thing."
+desired_state: "PeerBoard::announce_claim, for a named claim, removes departed slots with the announcer's client name and address (both absent counts as equal) whose claims are all named claims the announcer holds under the same names. A departed slot that also held an unnamed claim or another name, and another session with a different address that uses the same claim name, are kept."
+scope:
+  - apps/majordomus-cli/src/peers.rs
+  - .ai/repo/project/issues/I4227.yaml
+non_scope:
+  - "The RETAINED bound itself, and the order in which departed slots are dropped past it"
+  - "The progress liveness of a peer (I3990, feature/a-claim-lives-by-its-holders-progress), which touches other hunks of the same file"
+  - "The bridge's reconnect cadence, which is the client's"
+  - "Mesh claims, which live in the mesh journal and not on the board"
+depends_on: []
+acceptance_criteria:
+  - "After RETAINED + 4 reconnects of one client announcing the same named claim, a session that departed before them is still listed with its announcement"
+  - "The re-attached client is listed once attached, with no departed copy of itself"
+  - "A departed slot of the same client that also held an unnamed claim is kept"
+  - "A departed slot of the same client name at a different address is kept"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib peers::"
+evidence_required:
+  - "a_departed_peer_that_a_later_announce_repeats_is_not_kept_test"
+risk: "A departed row is dropped only when a newer row of the same client and address holds every claim it held under the same names, so nothing it said is lost; the newer row carries the current text of those claims."
+created_at: 2026-10-25
+updated_at: 2026-10-25

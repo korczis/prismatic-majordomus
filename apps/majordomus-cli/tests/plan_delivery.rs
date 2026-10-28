@@ -345,6 +345,75 @@ fn plan_delivery_at_a_commit_reads_the_history_and_nothing_live() {
     assert!(err.contains("no-such-rev"), "{err}");
 }
 
+/// I2749: a commit or merge that names an issue while changing only plan records and the
+/// projections `.gitattributes` marks `merge=derived` planned it and delivered nothing; the
+/// first commit that changes anything else is its merge.
+#[test]
+fn a_commit_that_only_plans_an_issue_is_not_its_delivery() {
+    let (f, _) = fixture();
+    f.write(".gitattributes", "docs/PLAN_STATUS.md merge=derived\n");
+    f.commit("chore: the plan status is derived");
+    let trunk = f
+        .git(&["rev-parse", "--abbrev-ref", "HEAD"])
+        .trim()
+        .to_string();
+    // a record of the issue, then a projection of the plan: both only plan
+    f.write(
+        ".ai/repo/project/issues/I0004.yaml",
+        &format!("{}# rescoped\n", issue("I0004", "an-untouched-piece")),
+    );
+    f.commit("docs(plan): I0004 is rescoped (I0004)");
+    f.write("docs/PLAN_STATUS.md", "I0004 READY\n");
+    f.commit("chore(plan): the plan status names I0004");
+    // a pull request whose whole change is a record, merged by its title
+    f.git(&["checkout", "-q", "-b", "chore/the-record"]);
+    f.write(
+        ".ai/repo/project/issues/I0004.yaml",
+        &format!("{}# recorded\n", issue("I0004", "an-untouched-piece")),
+    );
+    f.commit("chore: a record");
+    f.git(&["checkout", "-q", &trunk]);
+    f.git(&[
+        "merge",
+        "-q",
+        "--no-ff",
+        "chore/the-record",
+        "-m",
+        "Merge pull request #7 from someone/chore/the-record",
+        "-m",
+        "chore(plan): I0004 is recorded (I0004)",
+    ]);
+    let record_merge = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+
+    let (code, v, err) = cli(&f, &[]);
+    assert_eq!(code, 0, "{err}");
+    let i4 = by_id(&v, "I0004");
+    assert_eq!(i4["stage"], "none", "planning is not delivery: {i4}");
+    assert!(i4.get("merged").is_none(), "{i4}");
+    assert_eq!(
+        (&i4["planned"]["commit"], &i4["planned"]["merges"]),
+        (&json!(record_merge), &json!(3)),
+        "the newest planning commit is named, with how many were passed over: {i4}"
+    );
+    assert_eq!(source(&v, "planning")["state"], "read");
+    // the delivered issue is untouched by the rule
+    assert_eq!(by_id(&v, "I0001")["stage"], "merged");
+
+    // one commit that changes anything else is the delivery, and the planning stays named
+    f.write("lib/untouched.sh", "echo touched\n");
+    f.write("docs/PLAN_STATUS.md", "I0004 DONE\n");
+    f.commit("feat: the untouched piece is touched (I0004)");
+    let delivered = f.git(&["rev-parse", "HEAD"]).trim().to_string();
+    let (_, v, _) = cli(&f, &["--at", &delivered]);
+    let i4 = by_id(&v, "I0004");
+    assert_eq!(i4["stage"], "merged", "{i4}");
+    assert_eq!(
+        (&i4["merged"]["commit"], &i4["merged"]["merges"]),
+        (&json!(delivered), &json!(1))
+    );
+    assert_eq!(i4["planned"]["commit"], record_merge.as_str());
+}
+
 fn mcp_tool(f: &Fixture, name: &str, arguments: Value) -> Value {
     let mut child = common::majordomus()
         .arg("mcp")

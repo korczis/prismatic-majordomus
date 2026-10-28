@@ -1,7 +1,7 @@
 +++
 title = "majordomus economics tasks"
 description = "Each task's wall time, refusals and episodes, from every checkout's ledger; the fields nothing observes yet are named as not observed"
-weight = 216
+weight = 218
 [extra]
 route = "/docs/cli/economics/tasks/"
 command = "majordomus economics tasks"

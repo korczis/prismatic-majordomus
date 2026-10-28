@@ -2035,6 +2035,23 @@
       "tool": "majordomus_mcp"
     },
     {
+      "api_anchor": "/docs/api/mesh/#op-mesh-beat",
+      "claims": [],
+      "cli": null,
+      "id": "mesh.beat",
+      "kind": "command",
+      "module": "mesh",
+      "module_route": "/registry/modules/mesh/",
+      "resource": null,
+      "route": "/registry/capabilities/mesh-beat/",
+      "slug": "mesh-beat",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs",
+      "tests": [],
+      "title": "Say a session is making progress",
+      "tool": "majordomus_mesh_beat"
+    },
+    {
       "api_anchor": null,
       "claims": [],
       "cli": "majordomus mesh build-cache ensure",
@@ -4581,11 +4598,11 @@
     ]
   },
   "counts": {
-    "capabilities": 222,
+    "capabilities": 223,
     "claims": 93,
     "modules": 61
   },
-  "generator": "majordomus-cli 1.0.0-alpha.8",
+  "generator": "majordomus-cli 1.0.0-alpha.9",
   "modules": [
     {
       "capabilities": [
@@ -5558,6 +5575,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "mesh.beat",
+          "route": "/registry/capabilities/mesh-beat/",
+          "slug": "mesh-beat"
+        },
         {
           "id": "mesh.build_cache.ensure",
           "route": "/registry/capabilities/mesh-build-cache-ensure/",

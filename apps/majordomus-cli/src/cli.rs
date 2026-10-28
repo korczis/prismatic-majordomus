@@ -39,6 +39,8 @@ pub enum Command {
     Mcp(McpArgs),
     /// Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/
     Serve(ServeArgs),
+    /// The UI in one step: ensure this checkout's shared server the way `serve ensure` does, print the address of `/ui` (or of `/ui/<screen>`) and open it in a browser
+    Ui(UiArgs),
     /// Introspect the capability registry: what exists, where it came from, how it is exposed
     Capabilities(CapabilitiesArgs),
     /// Write the committed projections of the registry (docs/generated), or check that they are current
@@ -836,6 +838,8 @@ pub enum MeshCommand {
     Claim(MeshClaimArgs),
     /// Release a claim this server's current run holds
     Release(MeshReleaseArgs),
+    /// Say a session is making progress, and what it is doing, so its exclusive claims keep excluding
+    Beat(MeshBeatArgs),
     /// Open, update or close a session on the mesh
     Session(MeshSessionArgs),
     /// Publish a handover of this checkout to the mesh, or consume one another runtime published
@@ -1187,6 +1191,9 @@ pub struct MeshEventsArgs {
     /// The newest events instead of the first ones after `--after`
     #[arg(long)]
     pub newest: bool,
+    /// Include the session beats a working session's runtime writes, hidden by default
+    #[arg(long)]
+    pub beats: bool,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -1368,6 +1375,42 @@ pub struct MeshClaimArgs {
 pub struct MeshReleaseArgs {
     /// The claim's key, `<stream>/<claim>`, as `mesh claim` printed it
     pub claim: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh beat`: a long-running process says its session is making progress, and what it is
+/// doing (I3990). A session that has beaten lives by its beats — its exclusive claims are
+/// suspended, refusing nobody, once no beat arrives within the declared progress ttl — so a
+/// lander waiting on a CI run beats with `--phase "waiting on CI run 123"` while it waits.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshBeatArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "beat", "--session", "lander",
+///     "--phase", "waiting on CI", "--pid", "4242"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Beat(beat) = mesh.command else { panic!("expected `beat`") };
+/// assert_eq!(beat.session, "lander");
+/// assert_eq!(beat.phase.as_deref(), Some("waiting on CI"));
+/// assert_eq!(beat.pid, Some(4242));
+///
+/// // a beat speaks for a named session
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "beat"]).is_err());
+/// ```
+pub struct MeshBeatArgs {
+    /// The session making progress, as it was claimed under
+    #[arg(long)]
+    pub session: String,
+    /// What it is doing, one line: `waiting on CI run 123`
+    #[arg(long)]
+    pub phase: Option<String>,
+    /// The running process of this machine the beat speaks for
+    #[arg(long)]
+    pub pid: Option<u32>,
     #[command(flatten)]
     /// Where the repository is and how to answer.
     pub query: MeshQueryArgs,
@@ -4855,6 +4898,56 @@ pub enum ServeCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus ui`: the primary surface in one step (ADR 0135). It is `serve ensure` and
+/// the address of a screen, with no server and no mode of its own: `serve status` and
+/// `serve stop` answer for the server it ensured.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, UiArgs};
+///
+/// // without a screen, the dashboard; the browser is opened unless asked not to
+/// let cli = Cli::try_parse_from(["majordomus", "ui"]).unwrap();
+/// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// let args: UiArgs = args;
+/// assert!(args.screen.is_none() && !args.no_open && args.idle.is_none());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "ui", "roadmap", "--no-open"]).unwrap();
+/// let Command::Ui(args) = cli.command else { panic!("ui") };
+/// assert_eq!((args.screen.as_deref(), args.no_open), (Some("roadmap"), true));
+/// ```
+pub struct UiArgs {
+    #[command(flatten)]
+    /// Where the repository is found, and the layer options a server it starts is given.
+    pub repo: RepoArgs,
+
+    /// The screen to open, by the last word of its route (`roadmap` is /ui/roadmap);
+    /// without it, the dashboard
+    #[arg(value_name = "SCREEN")]
+    pub screen: Option<String>,
+
+    /// Print the address and open no browser
+    #[arg(long)]
+    pub no_open: bool,
+
+    /// The port a server this call starts asks for first, as for `serve ensure`
+    #[arg(long)]
+    pub port: Option<u16>,
+
+    /// The idle life of a server this call starts, in seconds, as for `serve ensure`
+    #[arg(long, value_name = "SECONDS")]
+    pub idle: Option<u64>,
+
+    /// How long to wait for a server to become ready
+    #[arg(long, value_name = "SECONDS", default_value_t = 20)]
+    pub wait: u64,
+
+    /// Output shape
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus capabilities`.
 pub struct CapabilitiesArgs {
     #[command(flatten)]
@@ -7275,6 +7368,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "ui",
+        examples: &[ExampleDoc {
+            id: "ui-unknown-screen",
+            title: "A screen the UI does not have is refused before a server is started",
+            description: "`majordomus ui` ensures this checkout's shared server as `serve ensure` does, prints the address of /ui (or of /ui/<screen>) and opens it in a browser; `--no-open` only prints it. A screen is named by the last word of its route, and one the navigation does not hold is refused with exit 2 and every screen listed, before the repository is read or anything is started.",
+            argv: &["ui", "nowhere", "--no-open"],
+            setup: &[],
+            expect: Expect::ExitCode(2),
+        }],
+    },
+    CommandExamples {
         command: "serve status",
         examples: &[ExampleDoc {
             id: "serve-status",
@@ -8068,6 +8172,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Release a claim this server holds",
             description: "Only the holder's current run releases a claim; a dead holder's claim expires instead. Without a running server there is nothing to release, and the command exits 10.",
             argv: &["mesh", "release", "stream/c-000000000000"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh beat",
+        examples: &[ExampleDoc {
+            id: "mesh-beat",
+            title: "Keep a waiting session's exclusive claims excluding",
+            description: "A process that waits on something outside itself says so; its session's exclusive claims hold while it beats within the progress ttl and are suspended when it stops. The beat goes to the running server whose journal replicates it; without one the command exits 10 and says so.",
+            argv: &["mesh", "beat", "--session", "lander", "--phase", "waiting-on-ci"],
             setup: &[],
             expect: Expect::ExitCode(10),
         }],

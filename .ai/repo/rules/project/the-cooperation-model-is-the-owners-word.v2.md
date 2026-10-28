@@ -7,7 +7,7 @@ description: The owner's operating decision of 2026-10-16, relaxed by the owner 
 statement: Hold a seat only by holding its exclusive mesh claim; land a pull request or a combined top only pinned to the head whose ci succeeded and which contains the current master, a worker's own green head through the guarded lander's queue; preserve a stale checkout's work in a rescue ref, then bring it current without asking, and bring a pushed branch current by merging master into it; release whenever master holds landed work past the last tag; start no build beside five others or below 35 GiB free; and describe the model by pointing at this rule or reading the live claims, never by copying it.
 status: active
 class: blocking
-depends_on: [project.integration-follows-the-current-master@3, project.an-expedited-landing-is-the-owners-word@1, project.work-is-claimed-before-it-is-built@1, project.mesh-cooperation-is-authenticated@1]
+depends_on: [project.integration-follows-the-current-master@3, project.an-expedited-landing-is-the-owners-word@1, project.work-is-claimed-before-it-is-built@1, project.mesh-cooperation-is-authenticated@1, project.an-exclusive-claim-lives-by-its-holders-progress@1]
 tags: [process, integration, mesh, release, governance]
 
 x-majordomus:
@@ -52,7 +52,11 @@ check or a hook, and paths and identifiers are still claimed before they are bui
 # Required behaviour
 
 1. **A seat is an exclusive mesh claim.** A session holds a seat by holding its claim through
-   `mesh.claim`, releases it when it stops, and loses it when its heartbeat stops. Nothing else
+   `mesh.claim`, releases it when it stops, and loses it when its heartbeat stops — and,
+   while its server beats on, a seat whose holder waits on a dialog, hangs or crashes is
+   suspended within `cooperation.session_ttl_seconds` and no longer refuses the next
+   session; a holder that waits on something outside itself says so with `mesh beat
+   --phase` (I3990, `project.an-exclusive-claim-lives-by-its-holders-progress`). Nothing else
    makes a session a seat: not a name on the board, not a sentence in a handover. The seats and
    the scope each one claims:
 

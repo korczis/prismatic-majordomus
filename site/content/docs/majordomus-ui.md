@@ -24,6 +24,23 @@ wrong and changes in the same commit as the fix.
 - The owner's brief, with its reference screens, is
   `campaigns/majordomus-ui-complete-opus-fable-v3-20261011/`.
 
+## Opening it
+
+`majordomus ui` opens the dashboard and `majordomus ui <screen>` opens one screen, named by
+the last word of its route (`majordomus ui roadmap` is `/ui/roadmap`). The command does
+three things:
+- it converges on this checkout's shared server exactly as `serve ensure` does, so a server
+  that already answers is used and no second one is started;
+- it prints the address alone on standard output;
+- it opens that address with the platform's opener.
+
+`--no-open` prints the address and opens nothing. When no browser can be launched, the
+command says so on standard error and still prints the address. An unknown screen is
+refused with exit 2 before anything is started, and the refusal lists every screen there
+is. The command has no `status` and no `stop` of its own: `serve status` and `serve stop`
+answer for the server it ensured. `test/cases/2484_majordomus_ui_opens_the_dashboard.sh`
+holds this behaviour.
+
 ## The product and its technical reference
 
 The shared server of a checkout serves two surfaces a person reads.
@@ -621,8 +638,6 @@ probe refuses a published first screen with an undecided figure, and
 
 ## What it does not do yet
 
-- `majordomus ui` as a command, which ensures the shared server and opens this surface, is
-  I2484. Until it lands, open `/ui` on the address `majordomus serve status` prints.
 - Nothing on the UI starts work yet: launching a capability, an issue or a milestone through
   the executor and following its run live is the execution control plane of the V4 pack.
   An action on a mesh node is the same, behind the executor (V5); the inspector says so.
