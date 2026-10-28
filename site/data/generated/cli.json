@@ -14848,6 +14848,12 @@
           "command": "majordomus prs prove-dry-run",
           "name": "prove-dry-run",
           "route": "/docs/cli/prs/prove-dry-run/"
+        },
+        {
+          "about": "The executor as a user service (launchd on macOS, systemd --user on Linux) outside every agent session: restarted after a crash, an outage or a lease another executor held, never after a halt, an unverified merge or the rollout gate (I3913)",
+          "command": "majordomus prs service",
+          "name": "service",
+          "route": "/docs/cli/prs/service/"
         }
       ],
       "command": "majordomus prs",
@@ -16461,6 +16467,802 @@
       ],
       "route": "/docs/cli/prs/prove-dry-run/",
       "usage": "majordomus prs prove-dry-run [OPTIONS]"
+    },
+    {
+      "about": "The executor as a user service (launchd on macOS, systemd --user on Linux) outside every agent session: restarted after a crash, an outage or a lease another executor held, never after a halt, an unverified merge or the rollout gate (I3913)",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Write this checkout's executor unit and have the service manager run it; a second install of the same unit changes nothing. The owner runs this: an agent session never installs a service",
+          "command": "majordomus prs service install",
+          "name": "install",
+          "route": "/docs/cli/prs/service/install/"
+        },
+        {
+          "about": "Whether the unit is installed and running, its process, what the service manager says, and the last decision a run left with what to do next",
+          "command": "majordomus prs service status",
+          "name": "status",
+          "route": "/docs/cli/prs/service/status/"
+        },
+        {
+          "about": "Stop the unit and remove it; nothing is left behind",
+          "command": "majordomus prs service uninstall",
+          "name": "uninstall",
+          "route": "/docs/cli/prs/service/uninstall/"
+        },
+        {
+          "about": "What the unit starts: one continuous drain under the lease, ending in exit 0 when a person must look first (a halt, an unverified merge, the rollout gate, a stop) and in exit 75 when what ended it is expected to pass (an outage, an unwritable trail, a lease another executor holds), so the service manager restarts only the second",
+          "command": "majordomus prs service run",
+          "name": "run",
+          "route": "/docs/cli/prs/service/run/"
+        }
+      ],
+      "command": "majordomus prs service",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "service"
+          ],
+          "command": "majordomus prs service",
+          "description": "With no subcommand `service` is `status`: whether this checkout's executor unit is installed and running, what the service manager says and the last decision a run left. A checkout that never installed one says so and exits 10, a finding, with `majordomus prs service install` as what to do next.",
+          "expectation": "exits 10",
+          "id": "prs-service-not-installed",
+          "setup": [],
+          "title": "The executor service of a checkout that never installed one"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "service",
+      "parent_route": "/docs/cli/prs/",
+      "path": [
+        "majordomus",
+        "prs",
+        "service"
+      ],
+      "route": "/docs/cli/prs/service/",
+      "usage": "majordomus prs service [OPTIONS] [COMMAND]"
+    },
+    {
+      "about": "Write this checkout's executor unit and have the service manager run it; a second install of the same unit changes nothing. The owner runs this: an agent session never installs a service",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        },
+        {
+          "command": "majordomus prs service",
+          "name": "service",
+          "route": "/docs/cli/prs/service/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The executable the unit starts. Default: this one, which must not live under a build directory that a clean removes",
+          "long": "executable",
+          "name": "executable",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXECUTABLE"
+        },
+        {
+          "defaults": [
+            "60"
+          ],
+          "global": false,
+          "help": "Seconds between cycles, 30 to 900",
+          "long": "interval",
+          "name": "interval",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTERVAL"
+        },
+        {
+          "defaults": [
+            "3"
+          ],
+          "global": false,
+          "help": "Merges per cycle at most",
+          "long": "max",
+          "name": "max",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Never bring master into a pull request; by default a cycle with nothing ready refreshes the first one that needs it",
+          "long": "no-refresh",
+          "name": "no_refresh",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "NO_REFRESH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs service install",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "service",
+            "install",
+            "--executable",
+            "/opt/majordomus/target/debug/majordomus"
+          ],
+          "command": "majordomus prs service install --executable /opt/majordomus/target/debug/majordomus",
+          "description": "`install` writes the unit only for a stable executable. One under a `target/` build directory, which a clean or a rebuild deletes, is refused with exit 10 before anything is written or asked of the service manager.",
+          "expectation": "exits 10",
+          "id": "prs-service-install-refuses-a-build-dir",
+          "setup": [],
+          "title": "A unit never starts an executable a rebuild removes"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "install",
+      "parent_route": "/docs/cli/prs/service/",
+      "path": [
+        "majordomus",
+        "prs",
+        "service",
+        "install"
+      ],
+      "route": "/docs/cli/prs/service/install/",
+      "usage": "majordomus prs service install [OPTIONS]"
+    },
+    {
+      "about": "Whether the unit is installed and running, its process, what the service manager says, and the last decision a run left with what to do next",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        },
+        {
+          "command": "majordomus prs service",
+          "name": "service",
+          "route": "/docs/cli/prs/service/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs service status",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "service",
+            "status"
+          ],
+          "command": "majordomus prs service status",
+          "description": "`status` reads the unit file under the user's service directory, asks launchd or systemd whether it runs, and reads the last decision a run left beside the executor's state. Nothing installed is a finding, exit 10, never an error.",
+          "expectation": "exits 10",
+          "id": "prs-service-status-not-installed",
+          "setup": [],
+          "title": "Status reads the unit and the last run, and installs nothing"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/prs/service/",
+      "path": [
+        "majordomus",
+        "prs",
+        "service",
+        "status"
+      ],
+      "route": "/docs/cli/prs/service/status/",
+      "usage": "majordomus prs service status [OPTIONS]"
+    },
+    {
+      "about": "Stop the unit and remove it; nothing is left behind",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        },
+        {
+          "command": "majordomus prs service",
+          "name": "service",
+          "route": "/docs/cli/prs/service/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs service uninstall",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "service",
+            "uninstall"
+          ],
+          "command": "majordomus prs service uninstall",
+          "description": "`uninstall` stops and removes this checkout's unit. Where there is none it asks the service manager nothing, says so and exits 0, so it is safe to run twice.",
+          "expectation": "exits 0; prints was not installed",
+          "id": "prs-service-uninstall-nothing",
+          "setup": [],
+          "title": "Uninstalling what was never installed"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "uninstall",
+      "parent_route": "/docs/cli/prs/service/",
+      "path": [
+        "majordomus",
+        "prs",
+        "service",
+        "uninstall"
+      ],
+      "route": "/docs/cli/prs/service/uninstall/",
+      "usage": "majordomus prs service uninstall [OPTIONS]"
+    },
+    {
+      "about": "What the unit starts: one continuous drain under the lease, ending in exit 0 when a person must look first (a halt, an unverified merge, the rollout gate, a stop) and in exit 75 when what ended it is expected to pass (an outage, an unwritable trail, a lease another executor holds), so the service manager restarts only the second",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        },
+        {
+          "command": "majordomus prs service",
+          "name": "service",
+          "route": "/docs/cli/prs/service/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "60"
+          ],
+          "global": false,
+          "help": "Seconds between cycles, 30 to 900",
+          "long": "interval",
+          "name": "interval",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTERVAL"
+        },
+        {
+          "defaults": [
+            "3"
+          ],
+          "global": false,
+          "help": "Merges per cycle at most",
+          "long": "max",
+          "name": "max",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MAX"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Bring master into the first pull request that needs it when nothing is ready",
+          "long": "refresh",
+          "name": "refresh",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REFRESH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs service run",
+      "depth": 3,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "service",
+            "run"
+          ],
+          "command": "majordomus prs service run",
+          "description": "`run` is what the unit starts. A checkout whose audit trail holds fewer than five verified merges is refused a continuous drain (ADR 0101 §13): the run records why, says Stop, and exits 0, so launchd or systemd does not start it again until a person has looked.",
+          "expectation": "exits 0; prints service run ended (Stop)",
+          "id": "prs-service-run-rollout-gate",
+          "setup": [],
+          "title": "The rollout gate stops a service run, and the manager leaves it stopped"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "run",
+      "parent_route": "/docs/cli/prs/service/",
+      "path": [
+        "majordomus",
+        "prs",
+        "service",
+        "run"
+      ],
+      "route": "/docs/cli/prs/service/run/",
+      "usage": "majordomus prs service run [OPTIONS]"
     },
     {
       "about": "A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed",
@@ -40038,10 +40840,10 @@
     }
   ],
   "counts": {
-    "arguments": 1735,
-    "commands": 252,
-    "examples": 253,
-    "runnable": 220
+    "arguments": 1767,
+    "commands": 257,
+    "examples": 258,
+    "runnable": 225
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.9",

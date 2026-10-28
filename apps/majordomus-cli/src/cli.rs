@@ -4192,6 +4192,65 @@ pub enum PrsCommand {
     Brief,
     /// Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
     ProveDryRun,
+    /// The executor as a user service (launchd on macOS, systemd --user on Linux) outside every agent session: restarted after a crash, an outage or a lease another executor held, never after a halt, an unverified merge or the rollout gate (I3913)
+    Service {
+        #[command(subcommand)]
+        /// The subcommand; none is `status`.
+        command: Option<PrsServiceCommand>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus prs service`. Only `install` and `uninstall` write a unit,
+/// and only when the owner runs them; `run` is what the unit starts.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PrsCommand, PrsServiceCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "service", "install", "--interval", "60"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Service { command: Some(PrsServiceCommand::Install { interval: 60, max: 3, no_refresh: false, .. }) })
+/// ));
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "service"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Service { command: None })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "service", "run", "--interval", "5"]).is_err());
+/// ```
+pub enum PrsServiceCommand {
+    /// Write this checkout's executor unit and have the service manager run it; a second install of the same unit changes nothing. The owner runs this: an agent session never installs a service
+    Install {
+        /// The executable the unit starts. Default: this one, which must not live under a build directory that a clean removes
+        #[arg(long)]
+        executable: Option<std::path::PathBuf>,
+        /// Seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 60, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
+        /// Merges per cycle at most
+        #[arg(long, default_value_t = 3)]
+        max: usize,
+        /// Never bring master into a pull request; by default a cycle with nothing ready refreshes the first one that needs it
+        #[arg(long)]
+        no_refresh: bool,
+    },
+    /// Whether the unit is installed and running, its process, what the service manager says, and the last decision a run left with what to do next
+    Status,
+    /// Stop the unit and remove it; nothing is left behind
+    Uninstall,
+    /// What the unit starts: one continuous drain under the lease, ending in exit 0 when a person must look first (a halt, an unverified merge, the rollout gate, a stop) and in exit 75 when what ended it is expected to pass (an outage, an unwritable trail, a lease another executor holds), so the service manager restarts only the second
+    Run {
+        /// Seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 60, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
+        /// Merges per cycle at most
+        #[arg(long, default_value_t = 3)]
+        max: usize,
+        /// Bring master into the first pull request that needs it when nothing is ready
+        #[arg(long)]
+        refresh: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -6335,6 +6394,61 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "trains"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service",
+        examples: &[ExampleDoc {
+            id: "prs-service-not-installed",
+            title: "The executor service of a checkout that never installed one",
+            description: "With no subcommand `service` is `status`: whether this checkout's executor unit is installed and running, what the service manager says and the last decision a run left. A checkout that never installed one says so and exits 10, a finding, with `majordomus prs service install` as what to do next.",
+            argv: &["prs", "service"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service status",
+        examples: &[ExampleDoc {
+            id: "prs-service-status-not-installed",
+            title: "Status reads the unit and the last run, and installs nothing",
+            description: "`status` reads the unit file under the user's service directory, asks launchd or systemd whether it runs, and reads the last decision a run left beside the executor's state. Nothing installed is a finding, exit 10, never an error.",
+            argv: &["prs", "service", "status"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service install",
+        examples: &[ExampleDoc {
+            id: "prs-service-install-refuses-a-build-dir",
+            title: "A unit never starts an executable a rebuild removes",
+            description: "`install` writes the unit only for a stable executable. One under a `target/` build directory, which a clean or a rebuild deletes, is refused with exit 10 before anything is written or asked of the service manager.",
+            argv: &["prs", "service", "install", "--executable", "/opt/majordomus/target/debug/majordomus"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs service uninstall",
+        examples: &[ExampleDoc {
+            id: "prs-service-uninstall-nothing",
+            title: "Uninstalling what was never installed",
+            description: "`uninstall` stops and removes this checkout's unit. Where there is none it asks the service manager nothing, says so and exits 0, so it is safe to run twice.",
+            argv: &["prs", "service", "uninstall"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["was not installed"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs service run",
+        examples: &[ExampleDoc {
+            id: "prs-service-run-rollout-gate",
+            title: "The rollout gate stops a service run, and the manager leaves it stopped",
+            description: "`run` is what the unit starts. A checkout whose audit trail holds fewer than five verified merges is refused a continuous drain (ADR 0101 §13): the run records why, says Stop, and exits 0, so launchd or systemd does not start it again until a person has looked.",
+            argv: &["prs", "service", "run"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["service run ended (Stop)"]),
         }],
     },
     CommandExamples {

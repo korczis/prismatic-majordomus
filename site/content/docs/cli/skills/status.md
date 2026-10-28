@@ -1,7 +1,7 @@
 +++
 title = "majordomus skills status"
 description = "Every skill with its derived standing: tested, documented, enforced, used"
-weight = 238
+weight = 243
 [extra]
 route = "/docs/cli/skills/status/"
 command = "majordomus skills status"
