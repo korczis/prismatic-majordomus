@@ -70958,6 +70958,49 @@
         }
       },
       {
+        "id": "majordomus://issue/I4317",
+        "kind": "issue",
+        "label": "I4317",
+        "summary": "The homepage's supported figure follows the recorded run's state, and /guarantees/ shows the same figure",
+        "route": "/cockpit/objects/issue/i4317",
+        "source": ".ai/repo/project/issues/I4317.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "evidence_required": [
+            "test",
+            "ci"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4317.yaml",
+            "site/templates/partials/run-figure.html",
+            "site/templates/partials/supported-figure.html",
+            "site/templates/partials/evidence-chain.html",
+            "site/templates/index.html",
+            "site/templates/evidence.html",
+            "site/templates/guarantees.html",
+            "site/templates/status.html",
+            "site/templates/claim.html",
+            "site/templates/features-matrix.html",
+            "scripts/ci/homepage-check",
+            "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
+            "test/cases/12_site_build.sh"
+          ],
+          "slug": "the-homepage-supported-figure-follows-the-runs-state",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bash test/run.sh 544_the_homepage_counts_declared_apart_from_supported",
+            "bash test/run.sh 333_homepage_narrative 3105_the_homepage_states_no_present_it_does_not_read",
+            "bash test/run.sh 12_site_build",
+            "scripts/site-build && scripts/ci/homepage-check",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4318",
         "kind": "issue",
         "label": "I4318",
@@ -133261,6 +133304,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4317",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4317",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4318",
         "target": "kind:issue",
         "kind": "is_a"
@@ -144902,8 +144955,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4018,
-      "edges": 9264,
+      "nodes": 4019,
+      "edges": 9266,
       "acyclic": false,
       "truncated": false
     }

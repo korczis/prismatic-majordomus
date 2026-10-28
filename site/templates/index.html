@@ -43,9 +43,13 @@
     evidence and never committed): the dataset the evidence page reads. Its `claims` counts the
     guaranteed claims the nearest complete run supports, beside the commit that run was
     recorded at and how far behind this build that commit is. A build without it, or a run
-    that counted nothing, is not measured, and the proof band says so in words (I3916) -#}
+    that counted nothing, is not measured, and the proof band says so in words (I3916). What
+    the count may be shown as follows the run's own state, the word partials/run-figure.html
+    derives: a run that recorded failures or ran in a dirty tree confirms no count, and the
+    band says so in the words /evidence/ uses (I4317) -#}
 {%- set ci = load_data(path="data/evidence.json", required=false) -%}
-{%- set ci_measured = false -%}{%- if ci and ci.available and ci.claims and ci.claims.measured %}{% set ci_measured = true %}{% endif -%}
+{%- set ci_figure %}{% include "partials/run-figure.html" %}{% endset -%}{%- set ci_figure = ci_figure | trim -%}
+{%- set ci_measured = ci_figure in ["current", "behind"] -%}
 {#- the rules a machine enforces are the rule package's blocking doctrines: each resolves to a
     validator function, a command that dispatches it, a test and a CI job, and stops the command
     (data/generated/doctrines.json `counts.blocking`). It is the figure /doctrines/ shows under
@@ -517,11 +521,13 @@
         supports is the count of the run the evidence page reads (data/evidence.json `claims`),
         named by the commit it was recorded at and its distance from this build, counted apart
         and never folded into the declared figure. Without that run the figure is words, never
-        a 0 (I3916); scripts/ci/homepage-check `declared` holds both pages to the one count. -#}
+        a 0 (I3916), and a run whose own state withholds its count shows none (I4317): the
+        figure is partials/supported-figure.html, the one /guarantees/ shows, and
+        scripts/ci/homepage-check `declared` holds the three pages to the one run. -#}
     <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4" data-claims-proof>
       {%- for sid in caps.status_order %}
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle"><a href="{{ get_url(path='/guarantees/', trailing_slash=true) }}#{{ sid }}" class="hover:underline">{{ sid }} claims, declared</a></dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="{{ sid }}">{{ [c for c in caps.claims if c.status == sid] | length }}</dd>
-        {%- if sid == "guaranteed" %}<dd class="mt-2 text-xs text-body" data-supported="{% if ci_measured %}{{ ci.claims.supported }}{% else %}unmeasured{% endif %}">{% if ci_measured %}<span class="font-mono font-bold text-heading">{{ ci.claims.supported }}</span> supported by the recorded run of <a href="{{ project.repository_url }}/commit/{{ ci.commit }}" class="font-mono underline" data-supported-commit="{{ ci.commit }}">{{ ci.commit | truncate(length=7, end="") }}</a>{% if ci.behind > 0 %}, <span data-supported-behind="{{ ci.behind }}">{{ ci.behind }} commit(s) behind</span> the one this page was built from{% else %}, the commit this page was built from{% endif %}{% else %}{{ <badge status="unknown" /> }} supported by a recorded run: not yet measured{% endif %} · <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">the evidence</a></dd>{% endif %}
+        {%- if sid == "guaranteed" %}{%- set sf_tag = "dd" -%}{%- set sf_class = "mt-2 text-xs text-body" -%}{%- set sf_links = true -%}{% include "partials/supported-figure.html" %}{% endif %}
         <dd class="mt-2 hidden text-xs leading-relaxed text-body sm:block">{{ caps.statuses[sid] }}</dd></div>
       {%- endfor %}
     </dl>
