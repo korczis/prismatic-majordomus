@@ -775,17 +775,7 @@ impl BuildCacheOffer {
         };
         word("protocol", &self.protocol, 16)?;
         word("provider", &self.provider, 32)?;
-        let address = self
-            .endpoint
-            .strip_prefix("http://")
-            .or_else(|| self.endpoint.strip_prefix("https://"));
-        let addressed = self.endpoint.len() <= 256
-            && address.is_some_and(|a| {
-                !a.is_empty()
-                    && a.bytes()
-                        .all(|b| b.is_ascii_alphanumeric() || b".-:[]".contains(&b))
-            });
-        if !addressed {
+        if !super::build_cache::is_an_address_alone(&self.endpoint, true) {
             return Err(
                 "the endpoint is not http:// or https:// and an address alone \
                  (no user information, path, query or fragment)"

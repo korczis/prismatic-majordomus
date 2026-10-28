@@ -7302,7 +7302,7 @@
       "variants": []
     },
     {
-      "description": "One node's offer. Carries no credential and no secret of any kind.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```",
+      "description": "One node's offer. Carries no credential and no secret of any kind.\n\n#### Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n// an endpoint with a place for a credential is neither written nor read\nlet keyed = Offer { endpoint: \"http://k:s3cr3t@192.168.100.30:9000\".into(), ..offer };\nassert!(!serde_json::to_string(&keyed).unwrap_err().to_string().contains(\"s3cr3t\"));\n```",
       "home": "mesh",
       "is_enum": false,
       "name": "BuildCacheNodeOffer",
