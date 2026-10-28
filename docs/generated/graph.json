@@ -17332,14 +17332,6 @@
         "source": "docs/PLANNING.md"
       },
       {
-        "id": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "label": "docs/PLAN_STATUS.md",
-        "summary": "Plan status",
-        "route": "/cockpit/objects/document/docs-plan-status-md",
-        "source": "docs/PLAN_STATUS.md"
-      },
-      {
         "id": "majordomus://document/docs/PREFLIGHT.md",
         "kind": "document",
         "label": "docs/PREFLIGHT.md",
@@ -70958,6 +70950,617 @@
         }
       },
       {
+        "id": "majordomus://issue/I4320",
+        "kind": "issue",
+        "label": "I4320",
+        "summary": "An evidence commit recorded on a branch is resolved to the commit that landed it, and is re-stamped with it",
+        "route": "/cockpit/objects/issue/i4320",
+        "source": ".ai/repo/project/issues/I4320.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [
+            "I4333"
+          ],
+          "evidence_required": [
+            "evidence_commit_resolved_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "The landed predicate itself, forge and patch-id rules included: I4333",
+            "Refusing (FAIL) an off-trunk commit: it stays a WARN until adopters with existing off-trunk entries have re-stamped them",
+            "Re-stamping automatically from a hook or at merge time: the re-stamp is a command a person or the landing lane runs",
+            "scripts/ci/link-check's own rule for this repository's pages"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            "lib/common.sh",
+            "docs/PLANNING.md",
+            "docs/EVIDENCE.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "an-evidence-commit-is-resolved-through-its-landing",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4321",
+        "kind": "issue",
+        "label": "I4321",
+        "summary": "A critique or gap file that fails its schema is named by intent validate, and never reads as no critique",
+        "route": "/cockpit/objects/issue/i4321",
+        "source": ".ai/repo/project/issues/I4321.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A critique with a finding class outside the enum makes intent validate print critique_invalid naming the file and the failing schema path, and no plan_not_critiqued for its intent",
+            "A gap file that fails gap/v1 makes intent validate print gap_invalid naming the file",
+            "An intent with no critique file still prints plan_not_critiqued, unchanged",
+            "Starting work that serves an intent whose only critique is invalid is refused through the built executable, and the refusal names critique_invalid",
+            "Before the change the new unit test fails on the plan_not_critiqued it reads"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "invalid_critique_is_named"
+          ],
+          "milestone": "intent-planning",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_review.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/index.rs",
+            "apps/majordomus-cli/tests/intent_plan.rs",
+            "test/cases/386_a_plan_is_held_to_its_intent.sh",
+            "docs/PLANNING.md"
+          ],
+          "serves": [
+            "intent-planning#critique-precedes-execution"
+          ],
+          "slug": "an-invalid-critique-is-named-not-missing",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_review::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --test intent_plan",
+            "MJ_TEST_JOBS=4 bash test/run.sh 386_a_plan_is_held_to_its_intent"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4322",
+        "kind": "issue",
+        "label": "I4322",
+        "summary": "plan validate and intent validate read the project through one discovery rule, and a record left untracked is named",
+        "route": "/cockpit/objects/issue/i4322",
+        "source": ".ai/repo/project/issues/I4322.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "one_discovery_rule_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Changing the default discovery mode",
+            "Files outside .ai/repo, and files a class pathspec does not match",
+            "A critique or gap that is tracked but fails its schema: I4321"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/project.sh",
+            "lib/plan.sh",
+            "apps/majordomus-cli/src/discovery/mod.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "one-discovery-rule-for-the-project-model",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib discovery::",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4323",
+        "kind": "issue",
+        "label": "I4323",
+        "summary": "A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update",
+        "route": "/cockpit/objects/issue/i4323",
+        "source": ".ai/repo/project/issues/I4323.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "full_disk_is_one_finding_case"
+          ],
+          "milestone": "failure-is-visible",
+          "non_scope": [
+            "Reclaiming disk space in finished worktrees: I4324",
+            "Freeing space: doctor reports and never deletes",
+            "A monitor or health source for the machine's free disk, beside I3825's build floor",
+            "The MCP runtime's own writers (lease, mesh journal, generated output) in the same docs/MCP.md row"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/session.sh",
+            "lib/rules.sh",
+            "lib/common.sh",
+            "docs/MCP.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "a-full-disk-is-one-finding",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bin/majordomus doctor",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4324",
+        "kind": "issue",
+        "label": "I4324",
+        "summary": "A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash",
+        "route": "/cockpit/objects/issue/i4324",
+        "source": ".ai/repo/project/issues/I4324.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fixture with `landing: squash`, a clean worktree whose branch was squash-merged is listed by `worktree cleanup` as eligible",
+            "A kept finished worktree with an ignored node_modules/ and target/ is listed by `cleanup --build-output` with each size, and `--remove` deletes both and leaves every tracked file and the branch",
+            "A node_modules/ that is not ignored, or holds a tracked file, is listed as kept with the reason and is never removed",
+            "A directory that is a process's cwd, or was written within the idle window, is kept",
+            "Before the change the case fails on the squash-merged worktree missing from the eligible list"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On master 81ef931a3e1, a squash-merged worktree is never cleanup-eligible, and no command reclaims the node_modules/ or target/ of a worktree that is kept.",
+          "depends_on": [
+            "I4333"
+          ],
+          "evidence_required": [
+            "finished_worktree_build_output_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "The landed predicate: I4333",
+            "The container runtime's cache and cargo's private build directories (I3833)",
+            "Removing whole worktrees beyond today's guards (I3832)",
+            "Other build output (dist/, .next/, caches): a later list, once an adopter asks for it",
+            "Doctor's report of a full disk: I4323"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/commands/worktree.rs",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "finished-worktrees-give-back-their-build-output",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4325",
+        "kind": "issue",
+        "label": "I4325",
+        "summary": "node:test and Playwright are runners in code, so a claim proven by an adopter's JavaScript suite can be recorded, and an unproven intent names the runner set as its cause",
+        "route": "/cockpit/objects/issue/i4325",
+        "source": ".ai/repo/project/issues/I4325.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "node_and_playwright_runners_case"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A runner declared in the layer: docs/EVIDENCE.md:87-89 decides that a runner is code, and this issue keeps that decision",
+            "The JUnit importer itself (I3124): when it lands, its cases resolve through the same TestId::of",
+            "Criteria that cite a profile verification (I3395)",
+            "Running node, npm or a browser from Majordomus"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "docs/EVIDENCE.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "node-test-and-playwright-are-runners",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib evidence::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib intent_realization::",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4326",
+        "kind": "issue",
+        "label": "I4326",
+        "summary": "The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name",
+        "route": "/cockpit/objects/issue/i4326",
+        "source": ".ai/repo/project/issues/I4326.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "current_state": "On master 81ef931a3e1, queued and in-progress runs never reach the monitor, so even one repository's queue depth is invisible, and no surface notices that a whole account starts no job.",
+          "depends_on": [],
+          "evidence_required": [
+            "forge_starvation_unit_tests"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "non_scope": [
+            "An adopter's own release or deploy script and its bound: such a script may read the signal, and this issue does not change it",
+            "Job-slot contention between this repository's own workflows (I2710, I2662)",
+            "Cancelling or re-running anything because of the signal"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/monitor",
+            "apps/majordomus-cli/src/integration",
+            "apps/majordomus-cli/src/capability/builtin",
+            "docs/MONITOR.md"
+          ],
+          "serves": [
+            "nothing-in-the-mesh-waits-on-something-dead#states-are-classified"
+          ],
+          "slug": "forge-starvation-is-a-signal",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib monitor::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4327",
+        "kind": "issue",
+        "label": "I4327",
+        "summary": "A session can declare that it takes reviews, an open review request lists who may answer it, and a repository with no eligible reviewer is a finding",
+        "route": "/cockpit/objects/issue/i4327",
+        "source": ".ai/repo/project/issues/I4327.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A request for repository R lists exactly the live sessions whose declared mandate covers R, minus the requester and the sessions of its task, on mesh state, the brief and /ui/mesh",
+            "With no such session, mesh doctor and the brief print review_no_eligible_reviewer naming R and the request",
+            "A session that answers `declined` is listed under declines and not as eligible, and the request stays open",
+            "A session of a runtime that carries the `reviews` feature but declares no mandate is never eligible",
+            "A journal written before the change, with no mandate and no declined answers, reads as before",
+            "Before the change the eligibility test fails, because every linked peer passes the reviews check"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "review_eligibility_unit_tests"
+          ],
+          "milestone": "the-mesh-works-out-of-the-box",
+          "non_scope": [
+            "The link protocol's FEATURES list and its negotiation",
+            "How old a request is and when it lapses (I3608)",
+            "The count of unanswered requests in a session's read (I2690)",
+            "Choosing or assigning a reviewer automatically",
+            "OSCILLA's review-verdict rule itself"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/mesh/journal.rs",
+            "apps/majordomus-cli/src/mesh/cooperation.rs",
+            "apps/majordomus-cli/src/mesh/state.rs",
+            "apps/majordomus-cli/src/capability/builtin",
+            "apps/majordomus-cli/src/ui",
+            "docs/MESH.md"
+          ],
+          "serves": [],
+          "slug": "a-review-request-names-who-may-answer",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::cooperation::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::state::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib mesh::journal::"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4328",
+        "kind": "issue",
+        "label": "I4328",
+        "summary": "A local task claim says how old it is, who holds it and whether its work has landed, and a stale one stops reading as overlap",
+        "route": "/cockpit/objects/issue/i4328",
+        "source": ".ai/repo/project/issues/I4328.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "current_state": "On master 81ef931a3e1, a finished but unclosed task in a squash-merged worktree prints the same overlap line as a task someone is working on now.",
+          "depends_on": [
+            "I4333"
+          ],
+          "evidence_required": [
+            "stale_claim_overlap_case"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The landed predicate: I4333",
+            "Removing merged worktrees (I3832)",
+            "The staleness of exclusive mesh claims (I3990)",
+            "Closing a stale task automatically: only its holder or the owner finishes it"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/start.sh",
+            "lib/check.sh",
+            "lib/common.sh",
+            "docs/WORKTREES.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "a-stale-task-claim-is-named-not-overlapping",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4329",
+        "kind": "issue",
+        "label": "I4329",
+        "summary": "plan list --json is the plan.issues shape with each issue's owner, `run` is in the top-level help, and docs/CLI.md states the JSON flags as they are",
+        "route": "/cockpit/objects/issue/i4329",
+        "source": ".ai/repo/project/issues/I4329.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "For a fixture plan, `majordomus plan list --json` and `majordomus run plan.issues --format json` give the same issue objects, with depends_on and blocked_by as arrays",
+            "An issue declaring `owner: x` carries owner x in both, and an issue without one carries none",
+            "`majordomus --help` lists run",
+            "Every command docs/CLI.md says takes --json accepts it, and the guard fails when one does not",
+            "Before the change the case fails on the string-typed depends_on"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "one_issue_shape_case"
+          ],
+          "milestone": "surfaces-never-disagree",
+          "non_scope": [
+            "Adding fields the issue schema does not declare",
+            "The human-readable table of plan list",
+            "Renaming either JSON flag"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            "bin/majordomus",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "one-issue-shape-and-a-findable-run",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4330",
+        "kind": "issue",
+        "label": "I4330",
+        "summary": "plan next and plan waves give each open issue its tail, and split the open graph into lanes with one take-next each",
+        "route": "/cockpit/objects/issue/i4330",
+        "source": ".ai/repo/project/issues/I4330.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "On a fixture graph A->B->C and D->E with A and D ready, A has tail 2 and D has tail 1, and plan next names A first",
+            "plan waves in JSON gives every open issue its tail and lane, and the fixture has two lanes, each with one take_next",
+            "Two components whose issues share a scope path form one lane",
+            "The roadmap's per-milestone critical path is unchanged on master's plan",
+            "Before the change the ordering test fails, because D precedes A by id"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On master 81ef931a3e1, plan.next orders READY issues by wave, priority and id, no issue carries a tail, and plan.waves reports scope-overlap serialisation but no lanes.",
+          "depends_on": [],
+          "desired_state": "Each open issue carries its tail and lane, plan next names the ready issue with the longest tail first, and plan waves lists the lanes, each with one take-next.",
+          "evidence_required": [
+            "plan_tail_and_lanes_unit_tests"
+          ],
+          "milestone": "the-plan-says-what-a-fix-unblocks",
+          "non_scope": [
+            "Reporting a claimed or PR'd issue as taken, and claim staleness (I3971, I3754, I3990)",
+            "What accepting an issue unblocks, counted by plan.impact (I3267): tail is depth, not count"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/ui/milestone.rs",
+            "docs/PLANNING.md"
+          ],
+          "serves": [],
+          "slug": "the-plan-gives-each-issue-its-tail-and-lane",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4331",
+        "kind": "issue",
+        "label": "I4331",
+        "summary": "pack build never leaves an un-ignored copy of the repository in its work tree",
+        "route": "/cockpit/objects/issue/i4331",
+        "source": ".ai/repo/project/issues/I4331.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "In a fixture repository that does not ignore tmp/, pack build refuses, names the path and both remedies, writes nothing, and `git status --porcelain` is unchanged",
+            "With tmp/ ignored through .gitignore, or through .git/info/exclude, pack build writes the pack as before, its output names the path as ignored, and pack verify on that path passes",
+            "An --out path that is inside the work tree and not ignored is refused the same way",
+            "Before the change the case fails on the untracked pack files git status reports"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On master 81ef931a3e1, pack build writes under <root>/tmp/packs/ whether or not the path is ignored, and its output does not say.",
+          "depends_on": [],
+          "evidence_required": [
+            "pack_output_is_ignored_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "Moving the default output outside the work tree or under .git/, which would break pack.verify's inside() rule",
+            "Writing to .git/info/exclude or .gitignore on the adopter's behalf: the refusal names the line to add",
+            "What pack plan selects or refuses"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/pack/mod.rs",
+            "apps/majordomus-cli/src/cli/local.rs",
+            "docs/ADOPTION.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "pack-build-output-is-ignored-or-refused",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib pack::",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4332",
+        "kind": "issue",
+        "label": "I4332",
+        "summary": "A release left half-published is named with its finishing step: tagged with no forge Release, or released with no successful deployment",
+        "route": "/cockpit/objects/issue/i4332",
+        "source": ".ai/repo/project/issues/I4332.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "current_state": "On master 81ef931a3e1, a trunk tag with no forge Release, and a Release whose deployment failed, both read as current, owed or overdue, the same as a fully published release.",
+          "depends_on": [
+            "I3070"
+          ],
+          "evidence_required": [
+            "interrupted_publish_is_named"
+          ],
+          "milestone": "a-version-follows-the-work",
+          "non_scope": [
+            "Creating the missing Release: Majordomus names the step, and the repository's publish takes it",
+            "OSCILLA's release:publish script",
+            "This repository's scripts/ci/release-check and its pending tag (I2712)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/release/currency.rs",
+            "apps/majordomus-cli/src/release/compat.rs",
+            "apps/majordomus-cli/src/deploy/observed.rs",
+            "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+            "docs/RELEASE.md",
+            "test/cases/3470_the_release_follows_the_work.sh"
+          ],
+          "serves": [
+            "a-version-follows-every-session#measured"
+          ],
+          "slug": "an-interrupted-publish-is-named",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib release::currency::",
+            "MJ_TEST_JOBS=4 bash test/run.sh 3470_the_release_follows_the_work"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4333",
+        "kind": "issue",
+        "label": "I4333",
+        "summary": "Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands",
+        "route": "/cockpit/objects/issue/i4333",
+        "source": ".ai/repo/project/issues/I4333.yaml",
+        "facts": {
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "one_landed_predicate_case"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "non_scope": [
+            "The executor's own merge method: ADR 0101's executor still lands by merge commit and never by squash",
+            "A rebase landing: a later value of `landing` once a repository that rebases asks for it",
+            "Fetching from the forge inside a check: the forge rule reads the observation already made, and without one the check reads 'not judged'",
+            "The readers' own changes in output (evidence, worktree build output, task claims): I4320, I4324, I4328"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/worktree",
+            "apps/majordomus-cli/src/convergence",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/integration/relation.rs",
+            "lib/project.sh",
+            "lib/common.sh",
+            "share/schemas/majordomus/policy/policy.v1.schema.json",
+            "docs/WORKTREES.md",
+            "docs/INTEGRATION.md",
+            "test/cases"
+          ],
+          "serves": [],
+          "slug": "one-landed-predicate-for-any-landing",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib worktree::",
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib integration::relation::",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -116284,11 +116887,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://document/docs/PLAN_STATUS.md",
-        "target": "kind:document",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://document/docs/PREFLIGHT.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -133219,6 +133817,166 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4320",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4320",
+        "target": "majordomus://issue/I4333",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4320",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4321",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4321",
+        "target": "majordomus://milestone/intent-planning",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4322",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4322",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4323",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4323",
+        "target": "majordomus://milestone/failure-is-visible",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4324",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4324",
+        "target": "majordomus://issue/I4333",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4324",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4325",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4325",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4326",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4326",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4327",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4327",
+        "target": "majordomus://milestone/the-mesh-works-out-of-the-box",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4328",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4328",
+        "target": "majordomus://issue/I4333",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4328",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4329",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4329",
+        "target": "majordomus://milestone/surfaces-never-disagree",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4330",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4330",
+        "target": "majordomus://milestone/the-plan-says-what-a-fix-unblocks",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4331",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4331",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4332",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4332",
+        "target": "majordomus://issue/I3070",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4332",
+        "target": "majordomus://milestone/a-version-follows-the-work",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4333",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4333",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144845,8 +145603,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4029,
+      "edges": 9292,
       "acyclic": false,
       "truncated": false
     }

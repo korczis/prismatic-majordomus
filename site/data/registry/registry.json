@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "326db0de65f0ecdbe0e433acc57f0162b9bd0c871c079d920d9bb11725baf95e",
     "summary": {
-      "total": 3552,
+      "total": 3565,
       "builtin": 220,
-      "declarative": 3332,
+      "declarative": 3345,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3332
+        "resource": 3345
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3342
+        "implemented": 3355
       },
       "mcp_tools": 206,
-      "mcp_resources": 3389,
+      "mcp_resources": 3402,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91083,7 +91083,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 353,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1036,
+        "capabilities": 1050,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "f036440a29244c46b710a826a3599f1762e46305bfe876699478f0eb3453c51c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92107,13 +92107,13 @@
       "deployment": 1,
       "derive-offload": 1,
       "distribution-model": 1,
-      "document": 353,
+      "document": 352,
       "domain": 6,
       "feature": 29,
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
+      "issue": 1050,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -92131,7 +92131,9 @@
       "use-case": 49,
       "workspace": 1
     },
-    "diagnostics": {},
+    "diagnostics": {
+      "warning": 1
+    },
     "objects": [
       {
         "uri": "majordomus://adr/adr-0001",
@@ -99550,15 +99552,6 @@
         "path": "docs/PLANNING.md",
         "source_class": "document",
         "bytes": 44972
-      },
-      {
-        "uri": "majordomus://document/docs/PLAN_STATUS.md",
-        "kind": "document",
-        "identity": "docs/PLAN_STATUS.md",
-        "title": "Plan status",
-        "path": "docs/PLAN_STATUS.md",
-        "source_class": "document",
-        "bytes": 993556
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114883,6 +114876,160 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4320",
+        "kind": "issue",
+        "identity": "I4320",
+        "title": "An evidence commit recorded on a branch is resolved to the commit that landed it, and is re-stamped with it",
+        "description": "plan validate judges the commit of every evidence entry on issues and milestones. A commit in the trunk's history (mj_commit_in_history, lib/common.sh:761-769) is fine, as today. For a commit outside it, plan validate asks the landed predicate of I4333 which trunk commit landed the branch that held it: the merge commit of the merged pull request whose commits include it, or the trunk commit with the same combined patch-id. When one is found, plan validate prints `INFO evidence_commit_landed <id> <covers> <sha> — landed as <trunk sha> (#<pr>|patch-id); re-stamp: majordomus plan evidence --restamp <id>`. When none is found, it prints `WARN evidence_commit_off_trunk <id> <covers> <sha> — not in <trunk>'s history and no landing found`. When the clone cannot decide (exit 2: shallow, or the object is missing), it prints `INFO evidence_commit_not_judged`. `majordomus plan evidence --restamp [<id>]` rewrites each resolved entry's commit: to its landing commit. It keeps recorded_at and the rest of the entry, and adds the landing to the ledger event, so the record holds a trunk commit after one follow-up commit on the trunk. Under `landing: squash`, plan evidence on a branch says that the commit will be resolved through its pull request once the branch lands.",
+        "path": ".ai/repo/project/issues/I4320.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5732
+      },
+      {
+        "uri": "majordomus://issue/I4321",
+        "kind": "issue",
+        "identity": "I4321",
+        "title": "A critique or gap file that fails its schema is named by intent validate, and never reads as no critique",
+        "description": "intent validate reads the index diagnostics on paths under .ai/repo/project/critiques/ and .ai/repo/project/gaps/. It reports each one as FAIL critique_invalid or FAIL gap_invalid, against the intent the file declares: its `intent:` value when the YAML parses, otherwise the filename stem. The finding names the file and the schema error. plan_not_critiqued is reported only for an intent that has no critique file at all, valid or not. The refusal to execute work on an intent whose only critique is invalid names critique_invalid as its reason.",
+        "path": ".ai/repo/project/issues/I4321.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4521
+      },
+      {
+        "uri": "majordomus://issue/I4322",
+        "kind": "issue",
+        "identity": "I4322",
+        "title": "plan validate and intent validate read the project through one discovery rule, and a record left untracked is named",
+        "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`.",
+        "path": ".ai/repo/project/issues/I4322.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4604
+      },
+      {
+        "uri": "majordomus://issue/I4323",
+        "kind": "issue",
+        "identity": "I4323",
+        "title": "A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update",
+        "description": "lib/doctor.sh starts with a scratch preflight. It writes a probe through mktemp in ${TMPDIR:-/tmp} and in the repository's git directory, and reads the free space of both volumes with df -Pk. If a probe write fails, or free space is below a floor stated beside the check (overridable through an environment variable), doctor prints one `FAIL disk — no space left on device (<volume>: <free> free)` before any other check. Every check that reads a mktemp scratch file is then reported as `INFO <check> — not judged: disk`, never as a FAIL whose remedy writes. Those checks are the projection regions (doctor.sh:335), the canonical model (:1388), session front matter (lib/session.sh:1257), the rules vendor manifest (lib/rules.sh:372-373) and the context builder. The pre-commit hook line that init tells an adopter to add and doctor verifies (lib/init.sh:210-222, `majordomus doctor || exit $?`) therefore blocks the commit on the disk alone and names it as the cause. docs/MCP.md's failure table changes its 'the disk is full' row from 'limitation: not tested' to the case this issue adds, for doctor's part.",
+        "path": ".ai/repo/project/issues/I4323.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4544
+      },
+      {
+        "uri": "majordomus://issue/I4324",
+        "kind": "issue",
+        "identity": "I4324",
+        "title": "A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash",
+        "description": "Two changes to `majordomus worktree cleanup`. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay.",
+        "path": ".ai/repo/project/issues/I4324.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4620
+      },
+      {
+        "uri": "majordomus://issue/I4325",
+        "kind": "issue",
+        "identity": "I4325",
+        "title": "node:test and Playwright are runners in code, so a claim proven by an adopter's JavaScript suite can be recorded, and an unproven intent names the runner set as its cause",
+        "description": "Two new variants of Runner (apps/majordomus-cli/src/evidence/mod.rs:207), each with a branch in TestId::of (:450) and a reader in the recorder (evidence/record.rs). This follows docs/EVIDENCE.md:87-89: a third runner is a code change, not configuration. Runner::Node is node's built-in test runner. Its paths are the file names `node --test` finds by default (`*.test.{js,mjs,cjs}`, `*-test.*`, `*_test.*`, `test-*.*`, `test.*`, and files under a `test/` directory), its id is `node:<path>`, and its report is the TAP stream of `node --test --test-reporter=tap`, one top-level test per file. Runner::Playwright is @playwright/test. Its paths are the `*.spec.{js,jsx,ts,tsx,mjs,cjs}` half of its default testMatch. The `*.test.*` half is left to node, so that no path belongs to two runners. Its report is the file its JSON reporter writes. `majordomus evidence record --origin ci --runner node|playwright --report <file>` reads the report at the commit and tree it was run on, and merges it into the ledger as record does for test/run.sh and cargo today. Majordomus never runs node or a browser itself. The runner answers EVIDENCE.md's objection, 'a runner nothing executes is a runner whose results nothing can record', because each variant comes with the reader for the report its runner writes. Second, separately: a criterion whose claim names a path no runner drives keeps that cause up to the intent. Today intent.rs:216-217 folds ProofState::Unrunnable and NoTest into IntentEvidenceState::NotRun, so closed_work_unproven (intent_realization.rs:795-805) says 'no recorded run'. After the change it says `criterion <c> cites <path>, which no runner drives (runners: suite test/cases/*.sh, crate apps/majordomus-cli/tests/*.rs, ...)`. A missing runner and a missing run then read differently.",
+        "path": ".ai/repo/project/issues/I4325.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 6374
+      },
+      {
+        "uri": "majordomus://issue/I4326",
+        "kind": "issue",
+        "identity": "I4326",
+        "title": "The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name",
+        "description": "Three steps, each useful alone. (1) The monitor's GitHub source keeps queued and in-progress workflow runs, not only completed ones. Today workflow_run (apps/majordomus-cli/src/monitor/github.rs:307-310) returns None for every run whose status is not completed. With this step the monitor reports each repository's queue depth: runs queued, runs in progress, and the age of the oldest queued run. (2) From those reads across the repositories of the checkouts this host serves, plus any the policy lists, the monitor derives one forge_starved signal: queued > 0 and in progress == 0 in every one of them for longer than a bound stated beside the signal. The signal carries its start and the queued count per repository. It is kept separate from slot contention between this repository's own workflows (I2710, I2662) and from the wait before a run starts (I3202). Health reads it as a degraded dimension. (3) A blocked integration train, and a wait Majordomus itself manages on a workflow run, name the signal as their cause while it holds. I3903's planned cancellation of runs queued past their bound must not cancel a run while the signal holds. If I3903 lands first, this issue adds that exception there.",
+        "path": ".ai/repo/project/issues/I4326.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4797
+      },
+      {
+        "uri": "majordomus://issue/I4327",
+        "kind": "issue",
+        "identity": "I4327",
+        "title": "A session can declare that it takes reviews, an open review request lists who may answer it, and a repository with no eligible reviewer is a finding",
+        "description": "SessionInfo (apps/majordomus-cli/src/mesh/journal.rs:365) gains an optional `reviews` mandate: the repositories, and optionally the path prefixes, the session will review. A session declares it when it opens, through the mesh.session.open capability (MCP majordomus_mesh_session_open, HTTP POST /api/v1/mesh/sessions; it has no CLI projection today), and may change it later. A session that declares nothing takes no reviews. ReviewAnswered (journal.rs:661-671) gains a fourth answer, `declined`, beside approved, changes_requested and commented, with a note, so that 'not mine' is recorded and is never read as a verdict on the change. For each open review request, mesh state derives its eligible answerers: the live sessions whose mandate covers the request's repository and scope, minus the requesting session, minus sessions of the same task (a builder's own subagents), and minus any session that declined it. mesh state, mesh peers, the brief and /ui/mesh list them, and list the declines apart. mesh doctor and the brief print `WARN review_no_eligible_reviewer <repository> <request>` when the set is empty. The link FEATURES list (mesh/link.rs:63) is unchanged: `reviews` there means that a runtime's link protocol carries review events, and request_review's FeatureUnsupported refusal (mesh/cooperation.rs:4453-4470) keeps that meaning, with wording that no longer suggests the runtime will review.",
+        "path": ".ai/repo/project/issues/I4327.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 5324
+      },
+      {
+        "uri": "majordomus://issue/I4328",
+        "kind": "issue",
+        "identity": "I4328",
+        "title": "A local task claim says how old it is, who holds it and whether its work has landed, and a stale one stops reading as overlap",
+        "description": "mj_report_overlap (lib/start.sh:182-195) is printed by `majordomus start` (lib/start.sh:170) and by `majordomus check --overlap` (lib/check.sh:48, :342-344). It qualifies each active task of another worktree with four facts: the age of its last checkpoint (checkpoint_at), its branch, whether a session is attached, and whether the branch has landed by the predicate of I4333. A claim whose branch has landed, or one that no session holds and whose checkpoint is older than a bound stated beside the check (default 7 days), prints `INFO overlap-stale <worktree> — claims <path>; task <id>, checkpoint <age> ago, <landed as <commit> (#<pr>)|unheld> (close it: majordomus finish in <worktree>)` instead of the live overlap line. A live claim's line gains its task id, age and branch.",
+        "path": ".ai/repo/project/issues/I4328.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4268
+      },
+      {
+        "uri": "majordomus://issue/I4329",
+        "kind": "issue",
+        "identity": "I4329",
+        "title": "plan list --json is the plan.issues shape with each issue's owner, `run` is in the top-level help, and docs/CLI.md states the JSON flags as they are",
+        "description": "Four narrow changes. (1) `majordomus plan list --json` emits the issue objects of the plan.issues capability, and drops the second shape built at lib/plan.sh:279-291, where depends_on and blocked_by are comma-joined strings and scope, serves, dependents and owner are missing. (2) PlanIssue (apps/majordomus-cli/src/plan.rs:366-413) carries the issue's declared `owner` (share/schemas/majordomus/issue/issue.v1.schema.json:48), so plan.issues gives it on every projection. (3) The top-level usage (bin/majordomus:38 onward) lists `run <capability> [--format json]`, which today is reachable only if one already knows it (apps/majordomus-cli/src/cli.rs:85). plan list's help names plan.issues as the full shape. (4) docs/CLI.md:35 says '`--json` on any read-only command emits one JSON object per finding', which is not true of the executable's commands. It is corrected to say which commands take --json and which take --format json, or both flags are accepted on every read-only command, whichever the owner chooses. A guard keeps the page and the parsers in agreement.",
+        "path": ".ai/repo/project/issues/I4329.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4126
+      },
+      {
+        "uri": "majordomus://issue/I4330",
+        "kind": "issue",
+        "identity": "I4330",
+        "title": "plan next and plan waves give each open issue its tail, and split the open graph into lanes with one take-next each",
+        "description": "apps/majordomus-cli/src/plan.rs computes a tail for every open issue: the length of the longest chain of open dependents after it, beside its wave, which is the longest path to it (plan.rs:375). plan.next and plan.ready rank READY issues by (tail descending, wave, priority, id) instead of (wave, priority, id) (plan.rs:567-580), so the first issue named is the one that unblocks the most remaining depth. plan.waves also splits the open graph into lanes: the weakly connected components of the open dependency graph, merged where their issues share a scope path (the I0004 serialisation). Each lane has its ready issues ordered by tail and one take_next. Every issue object on the CLI, HTTP and MCP carries its tail and its lane. ui/milestone.rs critical_path() (I2471) reads the same longest-chain function.",
+        "path": ".ai/repo/project/issues/I4330.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3435
+      },
+      {
+        "uri": "majordomus://issue/I4331",
+        "kind": "issue",
+        "identity": "I4331",
+        "title": "pack build never leaves an un-ignored copy of the repository in its work tree",
+        "description": "Before it writes, pack build checks its output directory with `git check-ignore`. That is the default <root>/tmp/packs/<repo>-<profile>-<commit12> (apps/majordomus-cli/src/pack/mod.rs:1189-1220) or the --out path. When the directory lies inside the work tree and is not ignored, pack build refuses and writes nothing. The refusal names the path and three remedies: ignore tmp/ in .gitignore, ignore it locally in .git/info/exclude (no commit needed), or pass --out with an ignored directory. On success, the output line names the path written and says that it is ignored. pack.verify keeps its rule that a pack is verified where it was built, inside the repository (inside(), apps/majordomus-cli/src/capability/builtin/pack.rs:115-133). That is why the fix is a refusal and not a new default outside the work tree. Writing under .git/ does not work either: in a linked worktree .git is a file, and the common git directory lies outside the work tree, where inside() refuses it.",
+        "path": ".ai/repo/project/issues/I4331.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3736
+      },
+      {
+        "uri": "majordomus://issue/I4332",
+        "kind": "issue",
+        "identity": "I4332",
+        "title": "A release left half-published is named with its finishing step: tagged with no forge Release, or released with no successful deployment",
+        "description": "release.currency compares the newest v* tag the trunk contains with the forge releases that deploy.observed records (apps/majordomus-cli/src/deploy/observed.rs:120-152, ObservedRelease). A tag with no forge release gets a new stance, interrupted, beside current, owed and overdue. The brief and doctor print `WARN release <tag> tagged <age> ago with no forge Release — the publish stopped after its tag (finish: create the Release for <tag>, then its record)`. The second half-state is a tag that has a forge Release while the deployment of that release's commit failed or never happened. That means no ObservedDeployment (observed.rs:84-118) to the environment the release path declares (github-pages for a Pages site) at the tag's commit, or a newer one, has state success. That tag reads `WARN release <tag> released <age> ago, not deployed — <environment> at <sha>: <state>|none (finish: redeploy <tag>, then verify it)`. When no observation exists (no token, offline, never observed), the line carries the qualifier 'forge not observed' and never one of these stances. This is release.currency, which every adopter reads through the brief and doctor. It is separate from I2712, which concerns this repository's own scripts/ci/release-check.",
+        "path": ".ai/repo/project/issues/I4332.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 4900
+      },
+      {
+        "uri": "majordomus://issue/I4333",
+        "kind": "issue",
+        "identity": "I4333",
+        "title": "Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands",
+        "description": "One function decides whether a branch, or a head commit, has landed on the trunk, and says how it decided. There are three ways. By ancestry, which is today's rule. By the forge: a pull request from this repository whose head is that tip is MERGED and its merge commit is in the trunk. integration/forge.rs merged_branches_of and deploy/observed.rs ObservedMergedPullRequest already read this. Offline: the patch-id (`git patch-id --stable`) of the branch's combined diff from its merge base equals the patch-id of one trunk commit after that merge base. That works only while the clone still holds the branch's commits. After the branch is deleted, the forge is the only rule that can still decide. policy.yaml gains `landing: merge | squash` (policy.v1 schema), with merge as the default. Under merge only ancestry is asked, so nothing changes. Under squash the forge and patch-id rules are asked too. A check that needs the forge and cannot read it answers 'not judged', never 'not landed'. Every reader that decides 'landed' today calls this function: worktree cleanup and topology (worktree/state.rs:514-536 merged_into, which runs `git branch --merged`, read by worktree/service.rs:835-840 cleanup_eligible), convergence (convergence/mod.rs:358, Disposition::Integrated), and the fallback of the release an issue landed in (plan.rs:1454 and lib/project.sh:191, `git log --merges --grep`). integration/relation.rs:139 patches_upstream adds the combined patch-id as a second test beside `git cherry`. The issues that need this predicate depend on it: I4320 (evidence commits), I4324 (finished worktrees) and I4328 (task claims).",
+        "path": ".ai/repo/project/issues/I4333.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 7389
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128311,7 +128458,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 353
+      "objects": 352
     },
     {
       "name": "domain",
@@ -128368,7 +128515,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1036
+      "objects": 1050
     },
     {
       "name": "knowledge",

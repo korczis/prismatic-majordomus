@@ -1,0 +1,39 @@
+id: I4323
+milestone: failure-is-visible
+title: "A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update"
+slug: a-full-disk-is-one-finding
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "lib/doctor.sh starts with a scratch preflight. It writes a probe through mktemp in ${TMPDIR:-/tmp} and in the repository's git directory, and reads the free space of both volumes with df -Pk. If a probe write fails, or free space is below a floor stated beside the check (overridable through an environment variable), doctor prints one `FAIL disk — no space left on device (<volume>: <free> free)` before any other check. Every check that reads a mktemp scratch file is then reported as `INFO <check> — not judged: disk`, never as a FAIL whose remedy writes. Those checks are the projection regions (doctor.sh:335), the canonical model (:1388), session front matter (lib/session.sh:1257), the rules vendor manifest (lib/rules.sh:372-373) and the context builder. The pre-commit hook line that init tells an adopter to add and doctor verifies (lib/init.sh:210-222, `majordomus doctor || exit $?`) therefore blocks the commit on the disk alone and names it as the cause. docs/MCP.md's failure table changes its 'the disk is full' row from 'limitation: not tested' to the case this issue adds, for doctor's part."
+why: "Observed on 2026-10-28 on the shared Mac that runs OSCILLA (korczis/oscilla) and Majordomus worktrees, with majordomus 1.0.0-alpha.8. Free disk fell to 128 MB (ENOSPC). The pre-commit `majordomus doctor` of an OSCILLA commit then blocked the commit with many FAILs: `.ai/repo/project — the canonical model does not load`, `AGENTS.md/CLAUDE.md/GEMINI.md — region markers are absent (run: majordomus update)`, `rules vendor manifest.yaml does not parse`, `session ... front matter does not parse`, `context builder failed`. The real cause, `printf: write error: No space left on device` from lib/knowledge.sh, appeared once, in the middle of the output. Following the printed remedy, `majordomus update`, would have rewritten the bootstraps on a full disk and could have truncated them. On master 81ef931a3e1, neither doctor nor the hook checks free space or the result of a scratch write. Each check reads an empty or partial scratch file and reports it as a defect of the layer. region_absent's remedy is `majordomus update` (doctor.sh:335). docs/MCP.md:864 already lists 'the disk is full' as unmeasured: 'no test or case fills a filesystem, so what a write refused for space does to each writer is not shown'."
+current_state: "On master 81ef931a3e1, a mktemp write that fails in doctor becomes a FAIL of whichever check read the scratch file, carrying that check's remedy. The pre-commit hook passes those FAILs through as the reason the commit was refused."
+desired_state: "On a full or unwritable scratch volume, doctor's first FAIL is `disk`, and it is the only FAIL that depends on the disk. The dependent checks read `not judged: disk`, and no printed remedy writes. The pre-commit hook refuses the commit with that one line. On a writable volume above the floor, the output is unchanged."
+scope:
+  - "lib/doctor.sh"
+  - "lib/session.sh"
+  - "lib/rules.sh"
+  - "lib/common.sh"
+  - "docs/MCP.md"
+  - "test/cases"
+non_scope:
+  - "Reclaiming disk space in finished worktrees: I4324"
+  - "Freeing space: doctor reports and never deletes"
+  - "A monitor or health source for the machine's free disk, beside I3825's build floor"
+  - "The MCP runtime's own writers (lease, mesh journal, generated output) in the same docs/MCP.md row"
+depends_on: []
+acceptance_criteria:
+  - "With TMPDIR pointed at a directory the case makes unwritable, doctor prints FAIL disk once, before any other FAIL, and no region-marker, canonical-model, front-matter, vendor-manifest or context-builder FAIL"
+  - "With the floor override set above the volume's free space, the same output appears"
+  - "No line of either run names `majordomus update` as a remedy"
+  - "A commit attempted under the same TMPDIR is refused by the installed pre-commit hook with FAIL disk as its only FAIL"
+  - "On a writable volume above the floor, doctor's output equals the output before the change"
+  - "Before the change the case fails on the region-marker FAIL it forbids"
+validation:
+  - "bin/majordomus doctor"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "full_disk_is_one_finding_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28

@@ -1,0 +1,37 @@
+id: I4329
+milestone: surfaces-never-disagree
+title: "plan list --json is the plan.issues shape with each issue's owner, `run` is in the top-level help, and docs/CLI.md states the JSON flags as they are"
+slug: one-issue-shape-and-a-findable-run
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Four narrow changes. (1) `majordomus plan list --json` emits the issue objects of the plan.issues capability, and drops the second shape built at lib/plan.sh:279-291, where depends_on and blocked_by are comma-joined strings and scope, serves, dependents and owner are missing. (2) PlanIssue (apps/majordomus-cli/src/plan.rs:366-413) carries the issue's declared `owner` (share/schemas/majordomus/issue/issue.v1.schema.json:48), so plan.issues gives it on every projection. (3) The top-level usage (bin/majordomus:38 onward) lists `run <capability> [--format json]`, which today is reachable only if one already knows it (apps/majordomus-cli/src/cli.rs:85). plan list's help names plan.issues as the full shape. (4) docs/CLI.md:35 says '`--json` on any read-only command emits one JSON object per finding', which is not true of the executable's commands. It is corrected to say which commands take --json and which take --format json, or both flags are accepted on every read-only command, whichever the owner chooses. A guard keeps the page and the parsers in agreement."
+why: "Observed in OSCILLA (korczis/oscilla) on 2026-10-28 with majordomus 1.0.0-alpha.8. To build a dispatch board, the session needed each open issue's dependencies, scope, owner and serves. `majordomus plan list --json` returned depends_on as one string (`\"depends_on\":\"S063\"`) and no scope, owner or serves, so the session parsed the issue YAML itself. `majordomus intent list --json` failed with 'unexpected argument --json', and `majordomus plan list --format json` failed with 'plan: unknown option --format', although docs/CLI.md:35 promises --json on any read-only command. The full shape already exists: `majordomus run plan.issues --format json` returns depends_on and blocked_by as arrays, with scope, serves and dependents (capability/builtin/plan.rs:570-584, cli: None). But `run` is missing from the top-level usage and plan list does not mention it, so the session found it only after building its own parser. Owner is missing even there: PlanIssue has no owner field, although issue.v1 declares one. Related: I1406 made the plan's derivations capabilities, and I3607 chooses the mesh state view the same way on every surface."
+current_state: "On master 81ef931a3e1 there are two issue shapes (lib/plan.sh:279-291 and plan.rs:366-413), neither carries owner, `run` is not in the top-level usage, and docs/CLI.md:35 describes a --json flag that the Rust commands refuse."
+desired_state: "plan list --json and plan.issues give one issue shape with owner on the CLI, HTTP and MCP. The top-level help lists `run`. docs/CLI.md states the JSON flags each command accepts, and a guard fails when the page and the parsers disagree."
+scope:
+  - "lib/plan.sh"
+  - "bin/majordomus"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "docs/CLI.md"
+  - "test/cases"
+non_scope:
+  - "Adding fields the issue schema does not declare"
+  - "The human-readable table of plan list"
+  - "Renaming either JSON flag"
+depends_on: []
+acceptance_criteria:
+  - "For a fixture plan, `majordomus plan list --json` and `majordomus run plan.issues --format json` give the same issue objects, with depends_on and blocked_by as arrays"
+  - "An issue declaring `owner: x` carries owner x in both, and an issue without one carries none"
+  - "`majordomus --help` lists run"
+  - "Every command docs/CLI.md says takes --json accepts it, and the guard fails when one does not"
+  - "Before the change the case fails on the string-typed depends_on"
+validation:
+  - "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib plan::"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "one_issue_shape_case"
+serves: []
+created_at: 2026-10-28
+updated_at: 2026-10-28
