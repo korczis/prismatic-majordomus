@@ -11,8 +11,8 @@ current_state: "scripts/github-sync lines 36-43 list six states. note DRIFT miss
 desired_state: "github-sync --check reports never-created and deleted-remotely as two states, each with the action --apply would take. --apply creates a never-created record and refuses a deleted-remotely one, naming it, until a person decides. A fixture case proves both and proves the refusal writes nothing."
 scope:
   - "scripts/github-sync"
-  - "test/cases"
-  - "docs"
+  - "test/cases/45_github_projection.sh"
+  - "docs/PLANNING.md"
   - ".ai/repo/project/issues/I4290.yaml"
 non_scope:
   - "Restoring deleted GitHub issues, or deciding for a person whether a deleted record is re-created"
