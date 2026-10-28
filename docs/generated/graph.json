@@ -70958,6 +70958,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I4350",
+        "kind": "issue",
+        "label": "I4350",
+        "summary": "plan validate refuses a scope that names a directory holding a file another issue plans, so its warnings never publish a path nobody has written",
+        "route": "/cockpit/objects/issue/i4350",
+        "source": ".ai/repo/project/issues/I4350.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A plan where one issue scopes test/cases and another plans test/cases/<new>.sh in the same wave fails plan validate, naming both issues and the directory",
+            "Two issues sharing an existing file still produce only the scope_conflict warning",
+            "Every issue on master passes plan validate after the change, or the change narrows the scopes that fail"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "test"
+          ],
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "scripts/ci/reference-check and case 59, which stay as strict as they are",
+            "The overlap rule itself (overlap and overlap_normal)"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/plan.rs",
+            ".ai/repo/project/issues/I4350.yaml"
+          ],
+          "serves": [],
+          "slug": "a-directory-scope-over-a-planned-file-is-refused",
+          "validation": [
+            "majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -71765,7 +71802,7 @@
         "summary": "a translated copy doubled the pages a browser sweep drives (2545 to 5090), and interaction-probe hit its 3300 s bound at page 2250 on run 39285861377; a copy shares its English page's template and controls, so it is driven only when its set of (spec, control signature) differs from every copy of its language driven before it (57 of 2136 copies)",
         "route": "/cockpit/objects/knowledge/s-20261019205653-344d-8a56a0a79628",
         "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
-        "status": "candidate",
+        "status": "superseded",
         "facts": {
           "about": "gate:interaction-probe",
           "class": "lesson",
@@ -71870,6 +71907,86 @@
           "about": "apps/majordomus-cli/src/lease.rs",
           "class": "lesson",
           "date": "2026-10-20",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-0aec4acf4c97",
+        "summary": "an issue scope that names a directory (test/cases, docs, .ai/repo/rules) makes plan validate's scope_conflict warnings name files other issues plan and nobody wrote; docs/PLAN_STATUS.md publishes them and reference-check fails case 59; met three times on 2026-10-28 (I0703/I4291/I4292, I4306, I4290), each fixed by narrowing the scope to file paths",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-0aec4acf4c97.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/project/issues/README.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-50e730b63c1e",
+        "summary": "two issue ids were taken twice within two days despite the rule: I4251 by a capture-mod fix at 13:03 and a brief status-line fix at 14:57 on 10-27, and I4296 on 10-28 by #2633's commit at 18:37Z while another session had held an exclusive mesh claim on I4296.yaml since 18:16Z; ids are allocated from the refs alone, and the allocator and gate that would decide it are owed by I3974",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-50e730b63c1e.md",
+        "status": "verified",
+        "facts": {
+          "about": "rule:project.work-is-claimed-before-it-is-built",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "enforcement",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-6180b2b50b3f",
+        "summary": "a majordomus task started in a train worktree (integration/train-10b-20261028) only to hold a reasoning record bound every push of that checkout to the pre-push finish --check for two hours, until it was closed as no_match; the session reported the check refusing the train's push on scope and mesh",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-6180b2b50b3f.md",
+        "status": "verified",
+        "facts": {
+          "about": ".ai/repo/workflows/task-lifecycle.md",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
+        "kind": "knowledge",
+        "label": "s-20261028215542-dcf9-f7cf4b4595b9",
+        "summary": "an HTTP 429 whose body says the account's quota or credit is exhausted (insufficient_quota, credit_balance_exhausted) is typed rate_limited, which recovers after its retry-after, and a CLI client that exits with IneligibleTierError is typed error, so the plan keeps selecting advisors that cannot answer (gemini selected three runs in a row on assessment-20261028T185442897Z-849b27)",
+        "route": "/cockpit/objects/knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
+        "source": ".ai/repo/knowledge/curated/s-20261028215542-dcf9-f7cf4b4595b9.md",
+        "status": "verified",
+        "facts": {
+          "about": "scripts/lib/advisors/contract.mjs",
+          "class": "lesson",
+          "date": "2026-10-28",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -133219,6 +133336,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4350",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4350",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -133465,6 +133592,26 @@
       },
       {
         "source": "majordomus://knowledge/s-20261020233257-5779-e6add8c93c8a",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-0aec4acf4c97",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-50e730b63c1e",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-6180b2b50b3f",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215542-dcf9-f7cf4b4595b9",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -144845,8 +144992,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4021,
+      "edges": 9267,
       "acyclic": false,
       "truncated": false
     }
