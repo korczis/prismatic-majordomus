@@ -66507,6 +66507,8 @@
             "doctor and rustdoc report and do not refuse; the worktree guard and the SSH permissions check still refuse",
             "doctor still finds each enforcement wired by its hook"
           ],
+          "completed_at": "2026-10-28T17:19:49Z",
+          "completed_event": "sha256:9c3b29fbc5cd6648a5281d89873a5bfb7ee8cc183134602e8ced59e5c94407c2",
           "created_at": "2026-10-21",
           "depends_on": [],
           "evidence_required": [
@@ -66536,7 +66538,9 @@
             "test/cases/3948_a_local_gate_reports_and_ci_decides.sh"
           ],
           "slug": "a-local-gate-reports-and-ci-decides",
-          "updated_at": "2026-10-23"
+          "started_at": "2026-10-28T17:18:42Z",
+          "started_event": "sha256:b99f6da2efeb9aada5f1df93fd27cb2239f261ef252ba90fa436fc6c60b3a8e5",
+          "updated_at": "2026-10-28T17:19:49Z"
         }
       },
       {
@@ -68370,6 +68374,8 @@
             "Putting shell-lint and core-check back into the ci-structure recipe in a copy of .just/ci.just makes the inventory exit 10",
             "The inventory runs in CI through the model"
           ],
+          "completed_at": "2026-10-28T17:21:26Z",
+          "completed_event": "sha256:fd43b2422cdc3fca6656eed0d88a393f329ad6adbd62b6bd981826299349c08b",
           "created_at": "2026-10-23",
           "depends_on": [],
           "evidence_required": [
@@ -68393,7 +68399,9 @@
             ".ai/repo/project/issues/I3943.yaml"
           ],
           "slug": "a-second-gate-list-is-found",
-          "updated_at": "2026-10-23",
+          "started_at": "2026-10-28T17:20:42Z",
+          "started_event": "sha256:61e5b93e25e1c85979809381489cb46262ade049a6b451f89a7722e360c1c90d",
+          "updated_at": "2026-10-28T17:21:26Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE bash test/run.sh 3943_a_second_gate_list_is_found 94_ci_plan 26_ci_wiring 131_completion_gates",
             "scripts/ci-plan --inventory",
@@ -70551,6 +70559,8 @@
             "Case 94 fails against master's verdict on a fixture with a stale red and a fresh green receipt of one gate, and passes with the fix",
             "A `gh run rerun --failed` whose rerun gate passes yields a green ci verdict"
           ],
+          "completed_at": "2026-10-28T17:22:49Z",
+          "completed_event": "sha256:a3fbbfddaa26f05d1a41329a36354562f28c4a77546ac0603914f4a25a941a6f",
           "created_at": "2026-10-24",
           "depends_on": [],
           "evidence_required": [
@@ -70572,7 +70582,9 @@
           ],
           "serves": [],
           "slug": "a-rerun-is-judged-by-its-own-receipts",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-28T17:21:51Z",
+          "started_event": "sha256:6a1aa3e2e35628cf6b7e7d67b4785121423e9d77b0c782f10637d61db784bf5b",
+          "updated_at": "2026-10-28T17:22:49Z",
           "validation": [
             "bash test/run.sh 94_ci_plan"
           ]
@@ -70591,6 +70603,8 @@
             "The same run named by a series of schema trends/v0 is refused as undecidable offline (exit 10)",
             "The same run named by a top-level JSON list is refused (exit 10), not a crash"
           ],
+          "completed_at": "2026-10-28T17:24:22Z",
+          "completed_event": "sha256:aa8b687623416c60709af864b6536bd3c5002270dd4e7f39334cfc3791190398",
           "current_state": "link-check reads `.get('runs')` of whatever site/data/trends.json parses to: any object's runs are decided, and a JSON list raises AttributeError.",
           "depends_on": [],
           "desired_state": "Only an object whose schema is trends/v1 contributes runs; a series of another schema or none leaves those run links refused as undecidable offline (exit 10), and case 335 holds both.",
@@ -70613,6 +70627,9 @@
           ],
           "serves": [],
           "slug": "a-trends-series-is-trusted-by-its-schema",
+          "started_at": "2026-10-28T17:23:35Z",
+          "started_event": "sha256:5673290b06ed55519318ef92705e764852f722b762822aa49c915c3904f7b396",
+          "updated_at": "2026-10-28T17:24:22Z",
           "validation": [
             "bash test/run.sh 335_every_link_resolves"
           ]
