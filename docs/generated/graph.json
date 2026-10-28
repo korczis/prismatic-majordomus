@@ -70958,6 +70958,47 @@
         }
       },
       {
+        "id": "majordomus://issue/I4338",
+        "kind": "issue",
+        "label": "I4338",
+        "summary": "A pull request labelled hold gives its validate slot back to its train and never reads green on its own",
+        "route": "/cockpit/objects/issue/i4338",
+        "source": ".ai/repo/project/issues/I4338.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The plan job's first step cancels the run of a pull request labelled hold and writes the reason to the step summary",
+            "A held member's run that is not cancelled fails, so its ci never reads green",
+            "A pull request without hold, and every non-pull_request event, plans and runs exactly as before (case 26_ci_wiring and case 94_ci_plan pass)"
+          ],
+          "created_at": "2026-10-28",
+          "current_state": "On 81ef931a3e1 every pull request event (opened, synchronize, reopened, labeled) starts a full validate whatever its labels; a held member's run queues behind or ahead of its train's.",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "Which pull requests carry hold: the train holder and the members' authors decide that",
+            "Runs of master, the schedule or a dispatch"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "A hold label left on a pull request that should land alone stops its CI; removing the label and pushing, or labelling it ci:full after removing hold, brings the run back.",
+          "scope": [
+            ".ai/repo/project/issues/I4338.yaml",
+            ".github/workflows/validate.yml"
+          ],
+          "slug": "a-held-member-yields-to-its-train",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "actionlint .github/workflows/validate.yml",
+            "scripts/ci/step-bound-check",
+            "bash test/run.sh 26_ci_wiring"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -133219,6 +133260,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4338",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4338",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -144845,8 +144896,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4017,
+      "edges": 9263,
       "acyclic": false,
       "truncated": false
     }
