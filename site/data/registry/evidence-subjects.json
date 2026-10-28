@@ -54,6 +54,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:board.snapshot",
+      "path": "/evidence/capabilities/board-snapshot/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:brief.session",
       "path": "/evidence/capabilities/brief-session/"
     },
@@ -2424,6 +2429,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:board snapshot",
+      "path": "/evidence/commands/board-snapshot/"
+    },
+    {
+      "kind": "command",
       "subject": "command:brief",
       "path": "/evidence/commands/brief/"
     },
@@ -4046,6 +4056,18 @@
       "programs": [],
       "members": [
         "command:blackboard"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:board.snapshot": {
+      "kind": "capability",
+      "id": "board.snapshot",
+      "page": "/evidence/capabilities/board-snapshot/",
+      "programs": [],
+      "members": [
+        "command:board snapshot"
       ],
       "routes": [],
       "mechanisms": [],
@@ -12516,6 +12538,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:board snapshot": {
+      "kind": "command",
+      "id": "board snapshot",
+      "page": "/evidence/commands/board-snapshot/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:brief": {
       "kind": "command",
       "id": "brief",
@@ -20297,6 +20338,18 @@
       "programs": [],
       "members": [
         "capability:blackboard.snapshot"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_board_snapshot": {
+      "kind": "mcp",
+      "id": "majordomus_board_snapshot",
+      "alias_of": "capability:board.snapshot",
+      "programs": [],
+      "members": [
+        "capability:board.snapshot"
       ],
       "routes": [],
       "mechanisms": [],
@@ -29385,6 +29438,7 @@
   "excluded": [
     "crate:availability",
     "crate:bench",
+    "crate:board_snapshot",
     "crate:brief",
     "crate:capability_cache_switch",
     "crate:cli",

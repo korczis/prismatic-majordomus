@@ -6,27 +6,27 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "fb2f366055c0eccc1f35b6bb18bb7c3a02a4521fdacf3c82d3b2417d4078eff2",
     "summary": {
-      "total": 3552,
-      "builtin": 220,
-      "declarative": 3332,
+      "total": 3554,
+      "builtin": 221,
+      "declarative": 3333,
       "by_kind": {
         "command": 36,
-        "query": 184,
-        "resource": 3332
+        "query": 185,
+        "resource": 3333
       },
       "by_stability": {
         "behaviorally_verified": 147,
-        "experimental": 63,
-        "implemented": 3342
+        "experimental": 64,
+        "implemented": 3343
       },
-      "mcp_tools": 206,
-      "mcp_resources": 3389,
-      "http_routes": 212,
-      "cli_commands": 120,
-      "modules": 94,
-      "benchmark_required": 181,
+      "mcp_tools": 207,
+      "mcp_resources": 3390,
+      "http_routes": 213,
+      "cli_commands": 121,
+      "modules": 95,
+      "benchmark_required": 182,
       "benchmark_waived": 39,
       "cached": 55
     },
@@ -1432,6 +1432,132 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
+      },
+      {
+        "id": "board.snapshot",
+        "module": "board",
+        "kind": "query",
+        "title": "The delivery board's documents",
+        "description": "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached.",
+        "input": {
+          "name": "BoardSnapshotInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "by": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest."
+              }
+            },
+            "description": "The input of `board.snapshot`.",
+            "title": "BoardSnapshotInput"
+          }
+        },
+        "output": {
+          "name": "BoardSnapshot",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "digest": {
+                "type": "string",
+                "description": "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest."
+              },
+              "master_sha": {
+                "type": "string",
+                "description": "The commit described, empty when the checkout has none."
+              },
+              "master_committed_at": {
+                "type": "string",
+                "description": "Its committer time, RFC 3339."
+              },
+              "master_ref": {
+                "type": "string",
+                "description": "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`."
+              },
+              "document_limit": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The bound every document is under, in bytes of compact JSON."
+              },
+              "sizes": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "Each document's compact size, in bytes, by id."
+              },
+              "documents": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work."
+              },
+              "diagnostics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case."
+              }
+            },
+            "required": [
+              "digest",
+              "master_sha",
+              "master_committed_at",
+              "master_ref",
+              "document_limit",
+              "sizes",
+              "documents"
+            ],
+            "description": "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state.",
+            "title": "BoardSnapshot"
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::board"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_board_snapshot"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/board/snapshot"
+          },
+          "cli": {
+            "path": [
+              "board",
+              "snapshot"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "board",
+          "plan",
+          "delivery"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs"
       },
       {
         "id": "brief.session",
@@ -90800,6 +90926,18 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/blackboard.rs"
       },
       {
+        "id": "board",
+        "title": "The delivery board",
+        "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it.",
+        "stability": "experimental",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "board.snapshot"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs"
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "description": "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing.",
@@ -91383,7 +91521,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1036,
+        "capabilities": 1037,
         "capability_ids": []
       },
       {
@@ -92073,7 +92211,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "120cb51435d1086a963ac4b91da6653a7d0bdb0ceb95951168e963e6c0df175c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92251,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
+      "issue": 1037,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -99558,7 +99696,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993556
+        "bytes": 1002252
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -102413,7 +102551,7 @@
         "path": ".ai/repo/features/planning.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3245,
+        "bytes": 3252,
         "tags": [
           "plan",
           "milestones",
@@ -114881,6 +115019,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 3014
+      },
+      {
+        "uri": "majordomus://issue/I4294",
+        "kind": "issue",
+        "identity": "I4294",
+        "title": "The delivery board's documents are derived by one capability, and every open milestone has a lane",
+        "description": "board.snapshot composes the documents the delivery board reads (meta, milestones, intents, prs and issues-<lane>) from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes declared once in share/board.yaml. It answers a digest over the documents that leaves out meta.syncedAt and meta.syncedBy, keeps every document under 250000 bytes by splitting a lane into issues-<lane>-2 and onwards, refuses an open milestone that is in no lane, and is projected as the MCP tool majordomus_board_snapshot, GET /api/v1/board/snapshot and majordomus board snapshot.",
+        "path": ".ai/repo/project/issues/I4294.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3840
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -128368,7 +128517,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1036
+      "objects": 1037
     },
     {
       "name": "knowledge",
@@ -161105,6 +161254,231 @@
       {
         "path": [
           "majordomus",
+          "board"
+        ],
+        "route": "/docs/cli/board/",
+        "executable": false,
+        "usage": "majordomus board [OPTIONS] <COMMAND>",
+        "about": "The delivery board's documents, derived: meta, milestones, intents, the pull request queue and the open issues of each lane share/board.yaml declares, with a digest that is equal for equal state; an open milestone in no lane is refused by name",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "board",
+              "snapshot"
+            ],
+            "route": "/docs/cli/board/snapshot/",
+            "executable": true,
+            "usage": "majordomus board snapshot [OPTIONS]",
+            "about": "Every document of the delivery board by id, each under 250000 bytes, and the digest over them without meta.syncedAt and meta.syncedBy; refused, naming it, when an open milestone is in no lane",
+            "args": [
+              {
+                "name": "by",
+                "long": "by",
+                "positional": false,
+                "help": "Who takes the snapshot, as meta.syncedBy names it (default: board.snapshot)",
+                "value_name": "BY",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "board-snapshot-refused",
+                "title": "An open milestone in no lane is refused by name",
+                "description": "The same answer `GET /api/v1/board/snapshot` and the MCP tool `majordomus_board_snapshot` return: the delivery board's documents by id (`meta`, `milestones`, `intents`, `prs`, and `issues-<lane>` for each lane with open work), each document's size under the 250000-byte bound, and a digest over them that leaves out `meta.syncedAt` and `meta.syncedBy`. The lanes are declared once, in share/board.yaml, and a milestone that is not DONE and is in no lane is refused rather than filed under other. This fixture's milestone is in no lane of the distribution's declaration, so the snapshot is refused, naming it, and the exit code is 10: a verdict not satisfied.",
+                "argv": [
+                  "board",
+                  "snapshot",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus board snapshot --format json",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "skills"
         ],
         "route": "/docs/cli/skills/",
@@ -163034,6 +163408,23 @@
         },
         "input": "BlackboardInput",
         "output": "Blackboard"
+      },
+      {
+        "name": "majordomus_board_snapshot",
+        "id": "board.snapshot",
+        "title": "The delivery board's documents",
+        "description": "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached.",
+        "kind": "query",
+        "read_only": true,
+        "effect": "read",
+        "hints": {
+          "read_only": true,
+          "destructive": false,
+          "idempotent": true,
+          "open_world": false
+        },
+        "input": "BoardSnapshotInput",
+        "output": "BoardSnapshot"
       },
       {
         "name": "majordomus_brief",
@@ -166923,6 +167314,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/board/snapshot",
+        "id": "board.snapshot",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/brief",
         "id": "brief.session",
         "kind": "query"
@@ -168351,6 +168748,64 @@
         "case": "addressed",
         "cached": false,
         "route": "GET /api/v1/blackboard"
+      },
+      {
+        "key": "board.snapshot|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "board.snapshot",
+        "module": "board",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "board.snapshot|direct|named",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "board.snapshot",
+        "module": "board",
+        "case": "named",
+        "cached": false
+      },
+      {
+        "key": "board.snapshot|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "board.snapshot",
+        "module": "board",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_board_snapshot"
+      },
+      {
+        "key": "board.snapshot|mcp|named",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "board.snapshot",
+        "module": "board",
+        "case": "named",
+        "cached": false,
+        "tool": "majordomus_board_snapshot"
+      },
+      {
+        "key": "board.snapshot|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "board.snapshot",
+        "module": "board",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/board/snapshot"
+      },
+      {
+        "key": "board.snapshot|http|named",
+        "kind": "capability",
+        "transport": "http",
+        "id": "board.snapshot",
+        "module": "board",
+        "case": "named",
+        "cached": false,
+        "route": "GET /api/v1/board/snapshot"
       },
       {
         "key": "brief.session|direct|default",
@@ -176186,6 +176641,27 @@
           "cases": 2
         },
         {
+          "subject": "board.snapshot",
+          "module": "board",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "board.snapshot",
+          "module": "board",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "board.snapshot",
+          "module": "board",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
           "subject": "brief.session",
           "module": "brief",
           "transport": "direct",
@@ -180810,22 +181286,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 220,
-          "covered": 181,
+          "required": 221,
+          "covered": 182,
           "missing": 0,
           "waived": 39,
           "inapplicable": 0
         },
         "http": {
-          "required": 212,
-          "covered": 181,
+          "required": 213,
+          "covered": 182,
           "missing": 0,
           "waived": 31,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 206,
-          "covered": 176,
+          "required": 207,
+          "covered": 177,
           "missing": 0,
           "waived": 30,
           "inapplicable": 0
@@ -180838,8 +181314,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 652,
-          "covered": 552,
+          "required": 655,
+          "covered": 555,
           "missing": 0,
           "waived": 100,
           "inapplicable": 0

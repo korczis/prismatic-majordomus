@@ -127,6 +127,8 @@ pub enum Command {
     Brief(BriefArgs),
     /// Who works on what in this repository, on every board and every linked machine: each worker with its client, intent, checkout, branch and claims, the claims that meet, the reviews and handovers that wait, typed relations verified only by an explicit identifier, and whether every source could be read — asked of the server holding this checkout's lease
     Blackboard(BlackboardArgs),
+    /// The delivery board's documents, derived: meta, milestones, intents, the pull request queue and the open issues of each lane share/board.yaml declares, with a digest that is equal for equal state; an open milestone in no lane is refused by name
+    Board(BoardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
     Skills(SkillsArgs),
     /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
@@ -271,6 +273,54 @@ pub struct DashboardArgs {
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
     /// Output shape
     pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus board`: the `board` capabilities on the command line (I4294).
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BoardArgs, BoardCommand, Cli, Command, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "board", "snapshot", "--by", "s1", "--format", "json"]).unwrap();
+/// let Command::Board(args) = cli.command else { panic!("not the board command") };
+/// let args: BoardArgs = args;
+/// let BoardCommand::Snapshot { by } = args.command;
+/// assert_eq!(by.as_deref(), Some("s1"));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct BoardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `snapshot`. Required: the group runs nothing of its own.
+    pub command: BoardCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus board`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{BoardCommand, Cli, Command};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "board", "snapshot"]).unwrap();
+/// let Command::Board(args) = cli.command else { panic!("not the board command") };
+/// assert!(matches!(args.command, BoardCommand::Snapshot { by: None }));
+/// ```
+pub enum BoardCommand {
+    /// Every document of the delivery board by id, each under 250000 bytes, and the digest over them without meta.syncedAt and meta.syncedBy; refused, naming it, when an open milestone is in no lane
+    Snapshot {
+        /// Who takes the snapshot, as meta.syncedBy names it (default: board.snapshot)
+        #[arg(long)]
+        by: Option<String>,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -5939,6 +5989,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["blackboard", "--this-checkout", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/complete", "/sources", "/workers", "/conflicts", "/cursor"]),
+        }],
+    },
+    CommandExamples {
+        command: "board snapshot",
+        examples: &[ExampleDoc {
+            id: "board-snapshot-refused",
+            title: "An open milestone in no lane is refused by name",
+            description: "The same answer `GET /api/v1/board/snapshot` and the MCP tool `majordomus_board_snapshot` return: the delivery board's documents by id (`meta`, `milestones`, `intents`, `prs`, and `issues-<lane>` for each lane with open work), each document's size under the 250000-byte bound, and a digest over them that leaves out `meta.syncedAt` and `meta.syncedBy`. The lanes are declared once, in share/board.yaml, and a milestone that is not DONE and is in no lane is refused rather than filed under other. This fixture's milestone is in no lane of the distribution's declaration, so the snapshot is refused, naming it, and the exit code is 10: a verdict not satisfied.",
+            argv: &["board", "snapshot", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

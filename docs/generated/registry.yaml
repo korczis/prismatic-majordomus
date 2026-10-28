@@ -17,6 +17,12 @@ modules:
     stability: experimental
     source: builtin
     capabilities: 1
+  - id: board
+    title: The delivery board
+    description: "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it."
+    stability: experimental
+    source: builtin
+    capabilities: 1
   - id: brief
     title: The session brief
     description: "What surrounds one working session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, each section asked of its owner once and saying whether it could be read. The answer a session reports on itself from without being asked, and the one a provider mod shows as its status line (ADR 0136). Writes nothing."
@@ -1361,6 +1367,101 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/blackboard.rs
+  - id: board.snapshot
+    module: board
+    kind: query
+    title: "The delivery board's documents"
+    description: "Every document of the delivery board by id: meta (the commit, the lanes, the issue counts, the release), milestones in roadmap order, intents, the pull request queue from the last recorded observation, and the open issues of each lane as issues-<lane>, split into issues-<lane>-2 and onwards so that no document serializes past 250000 bytes. The digest is a SHA-256 over the canonical JSON of the documents with meta.syncedAt and meta.syncedBy left out, so equal state is an equal digest. A milestone that is not DONE and is in no lane of share/board.yaml is refused by name, never filed under other. An unobserved queue is said in prs.unavailable and the diagnostics, never refused. Mesh seats, live work, CI runners and blockers are the sync step's and are not here. Reads only; nothing is cached."
+    input:
+      name: BoardSnapshotInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          by:
+            type:
+              - string
+              - "null"
+            description: "Who takes the snapshot, as `meta.syncedBy` names it; `board.snapshot` when absent.\nLeft out of the digest."
+        description: "The input of `board.snapshot`."
+        title: BoardSnapshotInput
+    output:
+      name: BoardSnapshot
+      schema:
+        type: object
+        properties:
+          digest:
+            type: string
+            description: "`sha256:<hex>` over the canonical JSON of the documents, `meta.syncedAt` and\n`meta.syncedBy` left out: equal state, equal digest."
+          master_sha:
+            type: string
+            description: "The commit described, empty when the checkout has none."
+          master_committed_at:
+            type: string
+            description: "Its committer time, RFC 3339."
+          master_ref:
+            type: string
+            description: "The ref it was read from: `refs/remotes/origin/master`, else `HEAD`."
+          document_limit:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "The bound every document is under, in bytes of compact JSON."
+          sizes:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "Each document's compact size, in bytes, by id."
+          documents:
+            type: object
+            additionalProperties: true
+            description: "The documents, by id: `meta`, `milestones`, `intents`, `prs`, and `issues-<lane>`\n(then `issues-<lane>-2`, ...) for each lane with open work."
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: "What could not be read, in words: an unobserved pull request queue, a lane naming a\nmilestone the plan lacks. Empty is the ordinary case."
+        required:
+          - digest
+          - master_sha
+          - master_committed_at
+          - master_ref
+          - document_limit
+          - sizes
+          - documents
+        description: "The answer of `board.snapshot`: every document of the board by id, and the digest that\nsays whether two snapshots describe the same state."
+        title: BoardSnapshot
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::board
+    exposure:
+      mcp:
+        tool: majordomus_board_snapshot
+      http:
+        method: GET
+        path: /api/v1/board/snapshot
+      cli:
+        path:
+          - board
+          - snapshot
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - board
+      - plan
+      - delivery
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/board.rs
   - id: brief.session
     module: brief
     kind: query

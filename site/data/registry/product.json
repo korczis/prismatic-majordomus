@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "1.0.0-alpha.9"
   },
-  "fingerprint": "35d2fa6c5a615e887d9900632ca6c633dece057930713c7d0dcdd36fdd816a8b",
+  "fingerprint": "fd57df4720e112813d738ddbab0ac0099817d831eea51dd03f80443f0989c2b7",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -13,8 +13,8 @@
     "features_all": 29,
     "featured": 16,
     "providers": 6,
-    "modules": 60,
-    "modules_covered": 58,
+    "modules": 61,
+    "modules_covered": 59,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 31,
@@ -1162,7 +1162,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 83,
+        "capabilities": 84,
         "moments": 17
       },
       "evidence": {
@@ -13133,7 +13133,8 @@
         "plan",
         "devtask",
         "intents",
-        "intent_realization"
+        "intent_realization",
+        "board"
       ],
       "commands": [
         "plan"
@@ -13468,6 +13469,24 @@
               "cli": "majordomus intent realization"
             }
           ]
+        },
+        {
+          "id": "board",
+          "title": "The delivery board",
+          "description": "The documents the delivery board reads, derived from the plan, the roadmap, the intents, the recorded pull request queue and the release currency, with the lanes share/board.yaml declares once. Every open milestone is in a lane or the snapshot refuses, naming it.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/board.rs",
+          "capabilities": [
+            {
+              "id": "board.snapshot",
+              "title": "The delivery board's documents",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_board_snapshot",
+              "route": "GET /api/v1/board/snapshot",
+              "cli": "majordomus board snapshot"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -13485,7 +13504,7 @@
         },
         {
           "name": "issue",
-          "objects": 1036
+          "objects": 1037
         },
         {
           "name": "intent",
@@ -13693,13 +13712,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 26,
-        "mcp_tools": 26,
-        "mcp_resources": 1235,
-        "http_routes": 26,
-        "cli_paths": 13,
+        "capabilities": 27,
+        "mcp_tools": 27,
+        "mcp_resources": 1236,
+        "http_routes": 27,
+        "cli_paths": 14,
         "commands": 1,
-        "objects": 1232,
+        "objects": 1233,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -13714,7 +13733,8 @@
           "rejected": 1
         },
         "modules": {
-          "behaviorally_verified": 5
+          "behaviorally_verified": 5,
+          "experimental": 1
         }
       },
       "domain_ref": {
@@ -16865,6 +16885,13 @@
         "features": []
       },
       {
+        "id": "board",
+        "title": "The delivery board",
+        "features": [
+          "planning"
+        ]
+      },
+      {
         "id": "brief",
         "title": "The session brief",
         "features": [
@@ -17632,7 +17659,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (1036)",
+        "title": "issue (1037)",
         "features": [
           "planning"
         ]
@@ -18692,17 +18719,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 3552,
-    "builtin": 220,
-    "declarative": 3332,
-    "modules": 60,
-    "mcp_tools": 206,
-    "mcp_resources": 3389,
-    "http_routes": 212,
-    "cli_commands": 220,
+    "capabilities": 3554,
+    "builtin": 221,
+    "declarative": 3333,
+    "modules": 61,
+    "mcp_tools": 207,
+    "mcp_resources": 3390,
+    "http_routes": 213,
+    "cli_commands": 221,
     "shell_commands": 30,
     "kinds": 34,
-    "objects": 3332,
+    "objects": 3333,
     "by_kind": {
       "adr": 166,
       "application": 5,
@@ -18721,7 +18748,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1036,
+      "issue": 1037,
       "knowledge": 58,
       "mesh-declaration": 1,
       "milestone": 111,
