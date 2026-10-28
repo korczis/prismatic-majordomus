@@ -67,7 +67,7 @@ with_node() {
     /^      - if: runner\.environment == .self-hosted.[ \t]*$/ { guard = 1; next }
     guard && /^        uses: actions\/setup-node@/ { print job; guard = 0; next }
     /^        uses: \.\/\.github\/actions\/setup-site[ \t]*$/ { print job; next }
-    /^      - / { guard = 0 }' "$1" | sort -u
+    /^      - / { guard = 0 }' "$1" | LC_ALL=C sort -u
 }
 NODE=" $(with_node "$W" | tr '\n' ' ') "
 for job in $FIRST; do
