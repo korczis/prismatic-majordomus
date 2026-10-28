@@ -71114,7 +71114,8 @@
           "current_state": "On 81ef931a3e1 scripts/generate-site-data writes no quality data, site/data/nav.toml has no quality entry, and no site template renders a finding.",
           "depends_on": [
             "I4297",
-            "I4298"
+            "I4298",
+            "I4316"
           ],
           "evidence_required": [
             "quality_page_is_published_at_its_commit"
@@ -71359,7 +71360,8 @@
           "created_at": "2026-10-28",
           "current_state": "On 81ef931a3e1 the site vendors the ECharts 6.0.0 common build, charts.js reads data-chart=bar|line, and tokens.yaml has no ramp.",
           "depends_on": [
-            "I4299"
+            "I4299",
+            "I4316"
           ],
           "evidence_required": [
             "treemap_is_drawn_over_its_table"
@@ -71836,7 +71838,8 @@
           "created_at": "2026-10-28",
           "current_state": "On 81ef931a3e1 scripts/generate-site-data writes no trace data and no site template renders a trace.",
           "depends_on": [
-            "I4298"
+            "I4298",
+            "I4316"
           ],
           "evidence_required": [
             "trace_is_drawn_over_its_table"
@@ -71885,7 +71888,9 @@
             "status_tone and the donut agree for every plan status word, each filed in share/design/tokens.yaml"
           ],
           "created_at": "2026-10-28",
-          "depends_on": [],
+          "depends_on": [
+            "I4316"
+          ],
           "evidence_required": [
             "donut_colours_by_status_token"
           ],
@@ -71969,6 +71974,49 @@
             "scripts/site-build",
             "scripts/site-check",
             "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4316",
+        "kind": "issue",
+        "label": "I4316",
+        "summary": "New review surfaces start from a Flowbite Pro block, adapted, with every colour and type value read from the --mj-* tokens and no Pro source in the tree",
+        "route": "/cockpit/objects/issue/i4316",
+        "source": ".ai/repo/project/issues/I4316.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0036 records the amendment: the review surfaces start from a named Flowbite Pro block, every colour and type value is a --mj-* token, and no Pro source is committed",
+            "design-check fails a planted review template that uses a raw palette class (for example bg-blue-600) instead of a token, naming the file and the class",
+            "design-check fails a planted file that is a byte-for-byte copy of a Flowbite Pro source, naming it, and passes on the tree"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "design_check_refuses_raw_palette_and_pro_source"
+          ],
+          "milestone": "a-review-is-published-at-its-commit",
+          "non_scope": [
+            "Restyling existing pages that are not review surfaces; one-kit-on-every-surface owns the rest of the kit",
+            "Committing or vendoring any Flowbite Pro source file, stylesheet or script",
+            "A second CSS framework or a CDN load"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4316.yaml",
+            ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
+            "scripts/ci/design-check"
+          ],
+          "serves": [
+            "a-review-is-seen-at-its-commit#findings-are-published-at-their-commit"
+          ],
+          "slug": "review-surfaces-start-from-flowbite-pro",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "MAJORDOMUS_SHARE=$PWD/share scripts/ci/design-check",
+            "bin/majordomus adr check"
           ]
         }
       },
@@ -134384,6 +134432,11 @@
       },
       {
         "source": "majordomus://issue/I4299",
+        "target": "majordomus://issue/I4316",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4299",
         "target": "majordomus://milestone/a-review-is-published-at-its-commit",
         "kind": "belongs_to"
       },
@@ -134460,6 +134513,11 @@
       {
         "source": "majordomus://issue/I4304",
         "target": "majordomus://issue/I4299",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4304",
+        "target": "majordomus://issue/I4316",
         "kind": "depends_on"
       },
       {
@@ -134609,6 +134667,11 @@
       },
       {
         "source": "majordomus://issue/I4312",
+        "target": "majordomus://issue/I4316",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4312",
         "target": "majordomus://milestone/a-finding-is-tracked-to-its-issue",
         "kind": "belongs_to"
       },
@@ -134616,6 +134679,11 @@
         "source": "majordomus://issue/I4313",
         "target": "kind:issue",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4313",
+        "target": "majordomus://issue/I4316",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://issue/I4313",
@@ -134639,6 +134707,16 @@
       },
       {
         "source": "majordomus://issue/I4314",
+        "target": "majordomus://milestone/a-review-is-published-at-its-commit",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4316",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4316",
         "target": "majordomus://milestone/a-review-is-published-at-its-commit",
         "kind": "belongs_to"
       },
@@ -146279,8 +146357,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4038,
-      "edges": 9324,
+      "nodes": 4039,
+      "edges": 9330,
       "acyclic": false,
       "truncated": false
     }
