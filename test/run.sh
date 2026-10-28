@@ -81,6 +81,17 @@ unset mj_git_local
 # and fails what it measures about the default (case 85). A case that wants another
 # interface states it itself.
 unset MAJORDOMUS_HTTP_HOST
+# Nor does a case inherit the provider session the runner happens to run inside. This
+# repository is developed inside one, and `session start` keys a hand-opened episode by it,
+# so a case that asserts the hand-opened episode passed in CI, where no provider runs, and
+# failed on every local run and pre-push of a worker inside Claude Code (case 60). The
+# variables are the lifecycle adapters' own column, read from the table that declares them;
+# a case that drives a provider session sets one itself, as case 111 does.
+for mj_provider_var in MAJORDOMUS_PROVIDER_SESSION $(sed -n "s/^MJ_CAPTURE_LIFECYCLE='\(.*\)'\$/\1/p" "$ROOT/lib/capture.sh" \
+    | awk '$13 != "" && $13 != "-" { print $13 }'); do
+  unset "$mj_provider_var"
+done
+unset mj_provider_var
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
 # A case must not act on the machine it measures: a build a case starts on a machine below the
 # reclaim mark would otherwise run the reaper over this machine's real worktrees

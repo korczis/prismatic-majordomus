@@ -71765,7 +71765,7 @@
         "summary": "a translated copy doubled the pages a browser sweep drives (2545 to 5090), and interaction-probe hit its 3300 s bound at page 2250 on run 39285861377; a copy shares its English page's template and controls, so it is driven only when its set of (spec, control signature) differs from every copy of its language driven before it (57 of 2136 copies)",
         "route": "/cockpit/objects/knowledge/s-20261019205653-344d-8a56a0a79628",
         "source": ".ai/repo/knowledge/candidates/s-20261019205653-344d-8a56a0a79628.md",
-        "status": "candidate",
+        "status": "superseded",
         "facts": {
           "about": "gate:interaction-probe",
           "class": "lesson",
@@ -71870,6 +71870,46 @@
           "about": "apps/majordomus-cli/src/lease.rs",
           "class": "lesson",
           "date": "2026-10-20",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
+        "kind": "knowledge",
+        "label": "s-20261028220703-a55b-88cb8a942917",
+        "summary": "a commit message that names an issue id carried only by an open pull request is refused as commit.unresolved_reference until that pull request lands; the message names the pull request instead, and the id once it is on master",
+        "route": "/cockpit/objects/knowledge/s-20261028220703-a55b-88cb8a942917",
+        "source": ".ai/repo/knowledge/curated/s-20261028220703-a55b-88cb8a942917.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/commit/verdict.rs",
+          "class": "lesson",
+          "date": "2026-10-28",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028220703-a55b-90f229e08ef6",
+        "kind": "knowledge",
+        "label": "s-20261028220703-a55b-90f229e08ef6",
+        "summary": "session start by hand inside a provider's process keyed the episode hand while every writer resolved the same process to its provider session, so the knowledge observe the evolve skill asks for next was refused with no episode is open in this checkout for this caller",
+        "route": "/cockpit/objects/knowledge/s-20261028220703-a55b-90f229e08ef6",
+        "source": ".ai/repo/knowledge/curated/s-20261028220703-a55b-90f229e08ef6.md",
+        "status": "verified",
+        "facts": {
+          "about": "lib/session.sh",
+          "class": "lesson",
+          "date": "2026-10-28",
           "epistemics": "observed",
           "route": "project",
           "tags": [
@@ -91141,6 +91181,43 @@
           ],
           "working_tree": "dirty",
           "worktree_id": "30e434191b0f1c31"
+        }
+      },
+      {
+        "id": "majordomus://session/s-20261028215445-b7a3",
+        "kind": "session",
+        "label": "s-20261028215445-b7a3",
+        "summary": "Session s-20261028215445-b7a3 on chore/the-sessions-lessons-of-2026-10-28-are-reviewed",
+        "route": "/cockpit/objects/session/s-20261028215445-b7a3",
+        "source": ".ai/repo/sessions/20261028T220702Z--s-20261028215445-b7a3--chore-the-sessions-lessons-of-2026-10-28-are-reviewed--81ef931--a22beb8e4db8dc53.md",
+        "facts": {
+          "branch": "chore/the-sessions-lessons-of-2026-10-28-are-reviewed",
+          "changed_files": [
+            "lib/session.sh",
+            "test/cases/111_session_per_provider.sh"
+          ],
+          "checkpoints": [],
+          "closed_at": "2026-10-28T22:06:59Z",
+          "commits": [],
+          "created_at": "2026-10-28T22:06:59Z",
+          "decisions": [],
+          "evidence": [],
+          "handovers": [],
+          "head": "81ef931a3e156907f1784c64c509884f565c17f0",
+          "issues": [],
+          "milestones": [],
+          "outcome": "closed",
+          "profile": "implementation",
+          "questions": [],
+          "repository_id": "git@github.com:korczis/prismatic-majordomus.git",
+          "session_id": "s-20261028215445-b7a3",
+          "start_head": "81ef931a3e156907f1784c64c509884f565c17f0",
+          "start_working_tree": "clean",
+          "started_at": "2026-10-28T21:54:45Z",
+          "task_id": "t-20261028215508-b6d7",
+          "tasks": [],
+          "working_tree": "dirty",
+          "worktree_id": "e34570fc9c686628"
         }
       },
       {
@@ -133469,6 +133546,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261028220703-a55b-88cb8a942917",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028220703-a55b-90f229e08ef6",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -137465,6 +137552,11 @@
       },
       {
         "source": "majordomus://session/s-20261020233257-5779",
+        "target": "kind:session",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://session/s-20261028215445-b7a3",
         "target": "kind:session",
         "kind": "is_a"
       },
@@ -144845,8 +144937,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4019,
+      "edges": 9264,
       "acyclic": false,
       "truncated": false
     }
