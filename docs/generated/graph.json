@@ -59064,6 +59064,8 @@
             "An absent plan yields a 'no proof plan is registered' finding",
             "Every new public item has a rustdoc example that runs"
           ],
+          "completed_at": "2026-10-28T17:05:56Z",
+          "completed_event": "sha256:a076d31cd8686f9ca921f34637eb8370ef787fc85e347b8ee6a82048ff1138af",
           "created_at": "2026-10-19",
           "desired_state": "economics::proof::load(root) returns the validated plan or its findings, fail-closed; an absent file reads as no plan, never an empty valid plan; every public item has a rustdoc example.",
           "evidence_required": [
@@ -59090,12 +59092,16 @@
             "the-product-proves-it-pays#plan-is-registered-before-runs"
           ],
           "slug": "a-proof-plan-is-a-validated-record",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-28T17:04:39Z",
+          "started_event": "sha256:9cdae82a022b8d1266eaa15430b6273ff596b77be6c6a8d90b5b2647560be9fb",
+          "updated_at": "2026-10-28T17:05:56Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --doc economics::proof",
             "cargo fmt --manifest-path apps/majordomus-cli/Cargo.toml --check"
-          ]
+          ],
+          "verified_at": "2026-10-28T17:05:11Z",
+          "verified_event": "sha256:6ef806d05b309509c30d19961baf874af586ab3e0c1f2d26c109b498cfefae7d"
         }
       },
       {
@@ -60331,6 +60337,8 @@
             "Response types use a TaskEconomics prefix and no OpenAPI component collides",
             "CLI JSON, HTTP and MCP return the same reading"
           ],
+          "completed_at": "2026-10-28T17:08:05Z",
+          "completed_event": "sha256:4b092384ec148e6e827f8f7d2d04971524d80e09da99c86913e0b63cc8518e49",
           "created_at": "2026-10-19",
           "desired_state": "majordomus economics tasks (CLI, HTTP, MCP) answers every task in the ledgers it read; wall time and episodes are measured; other fields read not_observed with their supplier.",
           "evidence_required": [
@@ -60361,12 +60369,16 @@
             "the-product-proves-it-pays#every-task-states-its-delivery-economics"
           ],
           "slug": "each-task-states-its-delivery-economics",
-          "updated_at": "2026-10-19",
+          "started_at": "2026-10-28T17:06:25Z",
+          "started_event": "sha256:73cc2c268903d923952b2e71b2dc8f8b13839f3dcd0a69faced30746de08cf68",
+          "updated_at": "2026-10-28T17:08:05Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test economics",
             "majordomus generate --check",
             "majordomus plan validate"
-          ]
+          ],
+          "verified_at": "2026-10-28T17:07:01Z",
+          "verified_event": "sha256:fef5c72d306186d6a70b0cde690304515bf35e0ef0de6570ed1fd475101434aa"
         }
       },
       {
