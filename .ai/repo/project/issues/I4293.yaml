@@ -1,4 +1,4 @@
-id: I4251
+id: I4293
 milestone: development-runtime
 title: "The brief tells the truth: no finished task, no stale PR count, no self-overlap, and no client left off the board by a restart"
 slug: the-brief-tells-the-truth
@@ -10,7 +10,7 @@ why: "On 2026-10-27 an adopter repository's status line read `<a finished task> 
 current_state: "On 23be6be6303 (stacked on #2599): brief.rs session_section takes continuity's task whatever its outcome. commands/prs.rs brief() prints the queue's tallies without comparing the forge's reported base head with origin/<base>. brief.rs mesh_section counts an overlap when either side is this runtime's. mcp/bridge.rs heartbeat() maps a 404 (session forgotten) to Ok, and commands/mcp.rs re-attaches only inside handle(), on a client message."
 desired_state: "Unit tests fail without each fix: a_task_that_is_not_running_is_not_the_sessions_task, a_line_from_an_observation_the_trunk_has_moved_past_says_it_is_stale, the_prs_words_of_a_stale_observation_say_so_with_its_age, an_overlap_among_this_runtimes_own_claims_is_not_for_it, a_heartbeat_the_server_forgot_reattaches_and_replays_the_announcement, a_heartbeat_without_a_session_opens_one_and_without_an_initialize_sends_nothing, a_bridge_follows_the_server_to_its_new_address."
 scope:
-  - ".ai/repo/project/issues/I4251.yaml"
+  - ".ai/repo/project/issues/I4293.yaml"
   - "apps/majordomus-cli/src/capability/builtin/brief.rs"
   - "apps/majordomus-cli/src/commands/prs.rs"
   - "apps/majordomus-cli/src/mcp/bridge.rs"

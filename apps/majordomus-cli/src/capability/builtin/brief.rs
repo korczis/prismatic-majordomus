@@ -445,7 +445,7 @@ fn session_section(ctx: &Context, provider_session: Option<&str>) -> BriefSessio
     };
     // Only a running task is this session's task. `current.yaml` keeps the last task after it
     // finished (outcome `partial`, `completed`, ...) or was handed over, and the brief once
-    // showed such a task for weeks as the work in hand (I4251).
+    // showed such a task for weeks as the work in hand (I4293).
     fn running(c: &Continuity) -> Option<&super::continuity::ActiveTask> {
         c.task.as_ref().filter(|t| task_is_running(&t.outcome))
     }
@@ -606,7 +606,7 @@ fn peers_section(
 /// Whether an overlap between two claims is something this runtime is told: one of the two
 /// is its own and the other is not. An overlap among this runtime's own claims (one
 /// session's subagents in several worktrees) is not news to it, and one between two other
-/// runtimes is theirs (I4251).
+/// runtimes is theirs (I4293).
 fn overlap_is_news(own: &[&str], first: &str, second: &str) -> bool {
     own.contains(&first) != own.contains(&second)
 }
@@ -1034,7 +1034,7 @@ fn task_label(id: &str, words: &str) -> String {
 
 /// The integration queue in a few words, from the sentence `prs brief` writes: its open count
 /// and its next merge, marked stale with the observation's age when that sentence says the
-/// trunk has moved past what the forge reported (I4251).
+/// trunk has moved past what the forge reported (I4293).
 fn prs_words(summary: &str) -> String {
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -1333,7 +1333,7 @@ mod tests {
 
     /// The count of an observation this clone's trunk has moved past is never shown as if it
     /// were current: `prs 23 open` from a 101-minute-old observation was the owner's reading
-    /// on 2026-10-27, while GitHub held 4 (I4251).
+    /// on 2026-10-27, while GitHub held 4 (I4293).
     #[test]
     fn the_prs_words_of_a_stale_observation_say_so_with_its_age() {
         let at = crate::peers::epoch_seconds("2026-10-27T10:10:51Z").expect("an instant");
@@ -1626,7 +1626,7 @@ mod tests {
 
     /// `current.yaml` keeps the last task after it finished. On 2026-10-27 the brief of
     /// an adopter repository showed a task that had finished `partial` fourteen days
-    /// earlier as the session's task (I4251).
+    /// earlier as the session's task (I4293).
     #[test]
     fn a_task_that_is_not_running_is_not_the_sessions_task() {
         let repo = SyntheticRepository::small().expect("a repository");
@@ -2105,7 +2105,7 @@ mod tests {
         );
         a.dial(&["b:1".into()]).expect("B welcomes A");
         // two of this runtime's workers claim scopes that meet, which is not news to it
-        // (I4251), and one asks this runtime itself for a review; its own handover waits on
+        // (I4293), and one asks this runtime itself for a review; its own handover waits on
         // nobody here
         a.claim(
             &SessionInfo::named("s1", "cli"),
@@ -2256,7 +2256,7 @@ mod tests {
 
     /// One session's subagents claim in several worktrees, so this runtime's own claims meet
     /// each other. On 2026-10-27 an adopter repository's line said `mesh 0/0 +4 for you` for such
-    /// overlaps, while `check --overlap` found none (I4251). They are not news to this
+    /// overlaps, while `check --overlap` found none (I4293). They are not news to this
     /// runtime; a claim of another runtime that meets one of them is.
     #[test]
     fn an_overlap_among_this_runtimes_own_claims_is_not_for_it() {

@@ -20,7 +20,7 @@ related:
   - file:docs/BRIEF.md
   - file:.ai/repo/adrs/0207-a-new-mechanism-is-admitted-only-with-the-measured-problem-it-re.md
   - file:.ai/repo/project/issues/I4250.yaml
-  - file:.ai/repo/project/issues/I4251.yaml
+  - file:.ai/repo/project/issues/I4293.yaml
   - test:test/cases/1065_a_session_briefs_itself.sh
   - test:test/cases/4250_the_brief_reports_only_what_changed.sh
 ---
@@ -159,7 +159,7 @@ checks that what `capture install` writes is the change-aware module.
 
 The same day the owner read an adopter repository's line as
 `<a finished task> @main | peers 1/<n>b | mesh 0/0 +4 for you | prs <n> open | release ?`
-and found four of its words false. Issue I4251 carries the correction.
+and found four of its words false. Issue I4293 carries the correction.
 
 1. **Only a running task is the session's task.** `current.yaml` keeps the last task after it
    finished or was handed over. That task had finished `partial` fourteen days earlier. The

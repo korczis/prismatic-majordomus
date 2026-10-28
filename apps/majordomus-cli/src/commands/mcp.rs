@@ -112,7 +112,7 @@ impl Heartbeat {
     /// Ping the server on [`HEARTBEAT`], and keep the client attached through a restart: a
     /// server that forgot the session is re-attached to by the beat itself, and a server
     /// gone from its address is followed to where the repository's lease says it serves now
-    /// (I4251). Before, both waited for the client's next message, and an idle client
+    /// (I4293). Before, both waited for the client's next message, and an idle client
     /// stayed off the board.
     fn start(bridge: Arc<Mutex<Bridge>>, repo: Repository) -> Self {
         let stop = Arc::new(AtomicBool::new(false));

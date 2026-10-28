@@ -799,7 +799,7 @@ pub(crate) fn brief(root: &std::path::Path) -> Option<String> {
                 lanes.join(", ")
             ));
             // the counts above are the forge's at that observation; once this clone's trunk
-            // has moved past what the forge reported, they are not today's (I4251)
+            // has moved past what the forge reported, they are not today's (I4293)
             let local = integration::local_master(root, &obs.base);
             if let Some(note) = stale_note(&obs.base, &obs.base_sha, local.as_deref()) {
                 parts.push(note);
@@ -1246,7 +1246,7 @@ mod tests {
 
     /// On 2026-10-27 an adopter repository's line said `prs 23 open` from an observation 101
     /// minutes old, the forge having reported main at one head while this clone's main was at
-    /// another and GitHub held 4 open (I4251). The line says so now.
+    /// another and GitHub held 4 open (I4293). The line says so now.
     #[test]
     fn a_line_from_an_observation_the_trunk_has_moved_past_says_it_is_stale() {
         let reported = "9f8e7d6c5b4a";

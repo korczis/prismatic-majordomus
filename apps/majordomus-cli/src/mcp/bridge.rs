@@ -1146,7 +1146,7 @@ impl Bridge {
     ///
     /// A server that restarted at the same address answers the ping with 404: it forgot the
     /// session. The heartbeat re-opens it at once with the client's own initialize and
-    /// replays every announcement ([`Bridge::reinitialize`]). Before I4251 the 404 was taken
+    /// replays every announcement ([`Bridge::reinitialize`]). Before I4293 the 404 was taken
     /// for a pong, so an idle client stayed off the new server's board until it next sent a
     /// message. On 2026-10-27 two sessions of an adopter repository were missing from the board for
     /// hours after a restart, and they worked on the same pull requests without seeing each
@@ -1571,7 +1571,7 @@ mod tests {
     /// A server that restarted at the same address forgets the session and answers the next
     /// ping 404. The heartbeat re-attaches on that beat, with the client's own initialize and
     /// its announcement, so that an idle client is back on the board without sending a
-    /// message. Before I4251 the 404 counted as a pong; two sessions of an adopter repository
+    /// message. Before I4293 the 404 counted as a pong; two sessions of an adopter repository
     /// stayed off the board for hours after a restart on 2026-10-27.
     #[test]
     fn a_heartbeat_the_server_forgot_reattaches_and_replays_the_announcement() {
@@ -1590,7 +1590,7 @@ mod tests {
         bridge.handle(&initialize()).expect("initialized");
         let announce = json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {
             "name": crate::capability::builtin::peers::ANNOUNCE_TOOL,
-            "arguments": { "intent": "I4251: the brief", "scope": ["docs"] } } });
+            "arguments": { "intent": "I4293: the brief", "scope": ["docs"] } } });
         bridge.handle(&announce).expect("announced");
         bridge.heartbeat().expect("the beat re-attached");
         // asked before the server is joined: a bridge that took the 404 for a pong would
@@ -1630,7 +1630,7 @@ mod tests {
         );
         assert_eq!(
             seen[5]["message"]["params"]["arguments"]["intent"],
-            "I4251: the brief"
+            "I4293: the brief"
         );
     }
 
