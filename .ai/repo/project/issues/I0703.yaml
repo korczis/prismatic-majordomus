@@ -12,7 +12,8 @@ desired_state: "Every command that writes a durable record follows the decision,
 scope:
   - lib
   - share
-  - test/cases
+  - test/run.sh
+  - test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh
 non_scope:
   - Any behaviour the decision did not choose
 depends_on:
