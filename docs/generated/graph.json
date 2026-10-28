@@ -25183,7 +25183,7 @@
             "Every command that writes a durable record is covered, not only decision",
             "The case from I0701 asserts the guarantee rather than the gap",
             "A refusal names the rule and the command that resolves it",
-            "If the rule is enforced, it is declared in share/doctrines.yaml and doctor proves it reaches its command"
+            "If a refusal is enforced, the rule that carries it names an x-majordomus validator and doctor proves it reaches its command"
           ],
           "created_at": "2026-09-04",
           "depends_on": [
@@ -25205,10 +25205,13 @@
           "scope": [
             "lib",
             "share",
-            "test/cases"
+            "test/run.sh",
+            "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
           ],
           "slug": "implement-attribution",
-          "updated_at": "2026-10-21",
+          "started_at": "2026-10-25T20:39:51Z",
+          "started_event": "sha256:b1981b4fe87da0141dea895c73c3b01134092403660c1cb3e28bc97cae321ec5",
+          "updated_at": "2026-10-28",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -43613,6 +43616,8 @@
         "route": "/cockpit/objects/issue/i2733",
         "source": ".ai/repo/project/issues/I2733.yaml",
         "facts": {
+          "completed_at": "2026-10-25T18:53:43Z",
+          "completed_event": "sha256:3393645c376270ce1995425bb8d928dd5a6b00c05d956c7e48e789670a7c1ca2",
           "created_at": "2026-10-15",
           "depends_on": [
             "I2140"
@@ -43637,7 +43642,9 @@
             "docs/MESH.md"
           ],
           "slug": "a-resumed-walk-misses-a-partitioned-event",
-          "updated_at": "2026-10-15",
+          "started_at": "2026-10-25T18:52:58Z",
+          "started_event": "sha256:0f8f05c2c3e232527245b3586180a46cb1f41251adf863ae9183a493fa684ace",
+          "updated_at": "2026-10-25T18:53:43Z",
           "validation": [
             "bin/majordomus plan validate",
             "cargo test --test mesh",
@@ -63927,6 +63934,8 @@
             "A malformed MJ_PROBE_SHARD is refused before a browser is opened",
             "A probe finding still fails the shard that found it, naming the page and the spec"
           ],
+          "completed_at": "2026-10-25T18:51:58Z",
+          "completed_event": "sha256:dc3edbf1703850a60cd025827dd6562a23510e2bff3e6baf5b25f4f0bd44f6f7",
           "created_at": "2026-10-20",
           "current_state": "One interactions job rebuilds the site (rustdoc included) and drives every page in one step under a bound that has had to grow with every route the site adds.",
           "depends_on": [
@@ -63952,7 +63961,9 @@
             "docs/CI.md"
           ],
           "slug": "the-interaction-probe-is-split",
-          "updated_at": "2026-10-20",
+          "started_at": "2026-10-25T18:51:14Z",
+          "started_event": "sha256:00f9afcf6f14c3e94f7457cff198bea1d056734500b60f56452037dfe6b921f5",
+          "updated_at": "2026-10-25T18:51:58Z",
           "validation": [
             "bin/majordomus plan validate",
             "MJ_TEST_JOBS=4 bash test/run.sh 3603_every_page_is_exercised_by_exactly_one_shard 337_every_control_does_what_it_says 3602_every_route_is_probed_by_exactly_one_shard"
@@ -67762,6 +67773,8 @@
             "The homepage names builtin capabilities and generated resources apart, each from the dataset",
             "site-check fails when either figure disagrees with the dataset"
           ],
+          "completed_at": "2026-10-26T10:53:04Z",
+          "completed_event": "sha256:b896b909f670637130cb97f545682f69a7ce4f07d8ec89c5cb8d66b64d9ed033",
           "created_at": "2026-10-22",
           "current_state": "README.md:129 and CONTRIBUTING.md:3,36 as quoted; product.json telemetry counts 3300 capabilities as 208 builtin and 3092 declarative, one per object (site.rs:1247-1260).",
           "depends_on": [],
@@ -67783,11 +67796,15 @@
           ],
           "serves": [],
           "slug": "the-size-of-the-tool-is-said-truthfully",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-26T10:50:52Z",
+          "started_event": "sha256:286eb3c602130c85ce9e13c0ea362e8d05df5265a6dc23c3d218c9e6330c10ed",
+          "updated_at": "2026-10-26T10:53:04Z",
           "validation": [
             "bin/majordomus plan validate",
             "scripts/site-check"
-          ]
+          ],
+          "verified_at": "2026-10-26T10:51:11Z",
+          "verified_event": "sha256:3251955ee0d96ec379665a5a798c1a38d6251087687c89518620b75214a71ddd"
         }
       },
       {
@@ -67803,6 +67820,8 @@
             "A raw string with hashes and braces is skipped whole",
             "Case 132 fails if the scanner closes the module early"
           ],
+          "completed_at": "2026-10-25T18:45:51Z",
+          "completed_event": "sha256:d0f6d76eb9db71f93530138d640df8ef1e2723b967b931817d7129b430ef2cce",
           "created_at": "2026-10-22",
           "current_state": "test_lines (scripts/rust-coverage:268-318) skips a string only within one line and does not know raw strings.",
           "depends_on": [],
@@ -67821,7 +67840,9 @@
           ],
           "serves": [],
           "slug": "the-coverage-scanner-reads-raw-strings",
-          "updated_at": "2026-10-22",
+          "started_at": "2026-10-25T18:45:02Z",
+          "started_event": "sha256:efa216f027295d3f0a75e2a6df6ac5d6ce56a7bdb90ce85202afb5d174b1c087",
+          "updated_at": "2026-10-25T18:45:51Z",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 132_coverage_differential"
@@ -70545,6 +70566,8 @@
             "76 and 493 run their cargo test with CARGO_BUILD_JOBS=2 and RUST_TEST_THREADS=2",
             "Case 4199 passes on the tree and, on a fixture, flags exactly an uncapped compile while a capped one, an exclusive one and cargo written only as text pass"
           ],
+          "completed_at": "2026-10-25T18:47:57Z",
+          "completed_event": "sha256:80bab1d2e8a3a5ba6518a59efefc60be45fed8ed21a0df1281372637c53e9c1c",
           "created_at": "2026-10-24",
           "depends_on": [],
           "evidence_required": [
@@ -70568,7 +70591,9 @@
           ],
           "serves": [],
           "slug": "a-case-that-compiles-never-starves-its-neighbours",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T18:47:20Z",
+          "started_event": "sha256:dd8db5979724b7a2f7ca98f6f6ae0f93bdeb6415306b8182dbf4203e32b828ad",
+          "updated_at": "2026-10-25T18:47:57Z",
           "validation": [
             "env -u MAJORDOMUS_SHARE -u MAJORDOMUS_HTTP_HOST -u MJ_ROOT bash test/run.sh 4199_a_case_that_compiles_never_starves_its_neighbours 431_economics_claims_gated",
             "majordomus plan validate"
@@ -70719,6 +70744,8 @@
             "A link to the run site/data/evidence.json names is still decided",
             "A link to a run neither file names is still refused as undecidable offline (exit 10)"
           ],
+          "completed_at": "2026-10-25T18:49:56Z",
+          "completed_event": "sha256:7c22819f39b4e32fc31467dc5991719771f32438ad6898fdb26a17bdd405190d",
           "created_at": "2026-10-24",
           "current_state": "link-check builds its set of decided runs from site/data/evidence.json alone; every other Actions run link is refused.",
           "depends_on": [],
@@ -70743,7 +70770,9 @@
           ],
           "serves": [],
           "slug": "a-trends-run-is-decided-by-provenance",
-          "updated_at": "2026-10-24",
+          "started_at": "2026-10-25T18:49:05Z",
+          "started_event": "sha256:7fe0141012ab0ced7e96cf991feeeabe269a5e02dd7cfeaaaf4ef4d3e7bec709",
+          "updated_at": "2026-10-25T18:49:56Z",
           "validation": [
             "bash test/run.sh 335_every_link_resolves"
           ]
@@ -70886,6 +70915,48 @@
         }
       },
       {
+        "id": "majordomus://issue/I4226",
+        "kind": "issue",
+        "label": "I4226",
+        "summary": "Case 1096 matches a page from a here-string, so a match is never read as a miss",
+        "route": "/cockpit/objects/issue/i4226",
+        "source": ".ai/repo/project/issues/I4226.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh has no printf piped into grep",
+            "Case 1096 passes, with the same checks and messages as before"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I2486"
+          ],
+          "desired_state": "Each of those checks is grep -q or grep -qE with the page as a here-string. What the case asserts, its patterns and its messages are unchanged.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "non_scope": [
+            "what case 1096 asserts, or the UI behaviour it covers (I2486)",
+            "other cases with the same pipe form"
+          ],
+          "objective": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/1096_no_screen_waits_for_a_source.sh",
+            ".ai/repo/project/issues/I4226.yaml"
+          ],
+          "serves": [],
+          "slug": "case-1096-matches-without-a-pipe",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=2 bash test/run.sh 1096_no_screen_waits_for_a_source",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4227",
         "kind": "issue",
         "label": "I4227",
@@ -70945,6 +71016,8 @@
             "The test passes on master's sources",
             "A source that embeds ../../../share/advisors.yaml fails the test, naming that source and that path"
           ],
+          "completed_at": "2026-10-28T12:21:51Z",
+          "completed_event": "sha256:696786b194b53fd1b252a9c86113ee65a360c836caee55219213f16bd2b885e7",
           "created_at": "2026-10-25",
           "current_state": "On 2efeacea031 nothing short of building the image checks that an embedded file reaches the build context.",
           "depends_on": [],
@@ -70965,9 +71038,93 @@
           ],
           "serves": [],
           "slug": "the-build-stage-carries-every-embedded-file",
-          "updated_at": "2026-10-25",
+          "started_at": "2026-10-28T12:21:13Z",
+          "started_event": "sha256:5b94084682b89e2a8ee5e316d419ed92d0fd167ea7b54c69a934555e364f328e",
+          "updated_at": "2026-10-28T12:21:51Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib deploy::render::tests::the_build_stage_carries_every_file_the_package_embeds"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4230",
+        "kind": "issue",
+        "label": "I4230",
+        "summary": "Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+        "route": "/cockpit/objects/issue/i4230",
+        "source": ".ai/repo/project/issues/I4230.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With more free than the reclaim mark, a generation idle for 30 minutes is kept and the bound says every other unit was written within 60 min",
+            "Below the reclaim mark, the same generation is evicted, one idle for 2 minutes is kept, and the bound names the free space, the mark and the age it applied",
+            "A pressure age of 0 keeps the hour, and an idle age of 0 evicts nothing, under the mark too",
+            "Without the change, case 3959's pressure section fails"
+          ],
+          "created_at": "2026-10-25",
+          "depends_on": [
+            "I3959"
+          ],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "the bound's size (MAJORDOMUS_SHARED_BUILD_CAP_MB) and its lock wait",
+            "the age sweeps of I2713 and I2787 and the private build directories"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "lib/rust_bin.sh",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
+            "docs/WORKTREES.md",
+            ".ai/repo/project/issues/I4230.yaml"
+          ],
+          "serves": [],
+          "slug": "the-bound-evicts-under-pressure",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4232",
+        "kind": "issue",
+        "label": "I4232",
+        "summary": "A build of the portable core from the repository's root keeps the executable's rlib of it",
+        "route": "/cockpit/objects/issue/i4232",
+        "source": ".ai/repo/project/issues/I4232.yaml",
+        "facts": {
+          "created_at": "2026-10-25",
+          "current_state": "Measured at origin/master 2efeacea031 on 2026-10-25: apps/majordomus-core/Cargo.toml declares crate-type = [\\\"rlib\\\", \\\"cdylib\\\"].",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "the shared build-dir itself (.cargo/config.toml, ADR 0139)",
+            "the core's code, its own Cargo.lock and its tests"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-core/Cargo.toml",
+            "scripts/rust-check",
+            "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+            ".ai/repo/project/issues/I4232.yaml"
+          ],
+          "serves": [],
+          "slug": "a-core-build-keeps-its-own-rlib",
+          "updated_at": "2026-10-25",
+          "validation": [
+            "MJ_TEST_JOBS=1 bash test/run.sh 4232_a_core_build_keeps_its_own_rlib",
+            "scripts/rust-check --portable-core",
+            "bin/majordomus plan validate"
           ]
         }
       },
@@ -71057,6 +71214,291 @@
           ],
           "verified_at": "2026-10-27T13:03:36Z",
           "verified_event": "sha256:cb9d04365a589f11615e85557b228a37f5eb07f7058372c50086fc6165242779"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4245",
+        "kind": "issue",
+        "label": "I4245",
+        "summary": "The served-executable tests run the copy they just wrote once it is let go, not while a forked child holds it",
+        "route": "/cockpit/objects/issue/i4245",
+        "source": ".ai/repo/project/issues/I4245.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The served_executable tests pass, each child started through retrying_busy",
+            "A busy copy is waited for; any other failure to start is not"
+          ],
+          "completed_at": "2026-10-27T14:55:58Z",
+          "completed_event": "sha256:9525ade492b2b8523e7a560e4c1312dccc80efd7b68d3842cfe682bf3f66b264",
+          "created_at": "2026-10-27",
+          "current_state": "Measured at origin/master 7ddc32da8d4 on 2026-10-27: run_child calls Command::output() on the fresh copy once and unwraps it.",
+          "depends_on": [],
+          "desired_state": "run_child calls Command::output() through crate::process::retrying_busy, which asks again for up to five seconds while the file is busy and answers any other failure at once.",
+          "evidence_required": [
+            "rust"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "The production exec of the copy, which already falls back to serving in place"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/served_executable.rs",
+            ".ai/repo/project/issues/I4245.yaml"
+          ],
+          "serves": [],
+          "slug": "a-served-copy-is-run-when-it-is-let-go",
+          "started_at": "2026-10-27T14:54:40Z",
+          "started_event": "sha256:c31e913fd58660828577883f139627604febbfe246454ecaf8d4c911ec4dbc66",
+          "updated_at": "2026-10-27T14:55:58Z",
+          "validation": [
+            "cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib served_executable:: process::"
+          ],
+          "verified_at": "2026-10-27T14:55:29Z",
+          "verified_event": "sha256:e071290183e741f4265703f19beb6c2a18ca8e5239433262c2dc7b778d387b5a"
+        }
+      },
+      {
+        "id": "majordomus://issue/I4251",
+        "kind": "issue",
+        "label": "I4251",
+        "summary": "capture install writes no Markdown link that leaves the adopting repository",
+        "route": "/cockpit/objects/issue/i4251",
+        "source": ".ai/repo/project/issues/I4251.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every relative link in every Markdown file capture install writes resolves inside the repository",
+            "Every relative link of every mod under share/mods stays inside the mod's directory",
+            "The case fails on master's brief README and on a mod copy with an escaping link"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "share/mods/claude-code/majordomus-brief/README.md links `../../../../docs/BRIEF.md`.",
+          "depends_on": [],
+          "desired_state": "The README links https://majordomus.dev/docs/brief/; case 4251 refuses any packaged or installed mod link that leaves its root.",
+          "evidence_required": [
+            "case_mod_links_stay_inside"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4251.yaml",
+            "share/mods/claude-code/majordomus-brief/README.md",
+            "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh"
+          ],
+          "slug": "a-mod-links-nothing-outside-the-repository",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4251_a_mod_links_nothing_outside_the_repository"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4253",
+        "kind": "issue",
+        "label": "I4253",
+        "summary": "The remedy doctor names for an orphan skill is a command the shell runs",
+        "route": "/cockpit/objects/issue/i4253",
+        "source": ".ai/repo/project/issues/I4253.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "majordomus skills explain <id> answers the executable's report",
+            "No doctor remedy for skills names a subcommand the shell refuses"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "lib/skills.sh dispatches list, show and check; explain is the executable's.",
+          "depends_on": [],
+          "desired_state": "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts.",
+          "evidence_required": [
+            "case_skills_explain_reaches_the_executable"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4253.yaml",
+            "lib/skills.sh",
+            "bin/majordomus",
+            "test/cases/4253_every_skill_remedy_runs.sh"
+          ],
+          "slug": "skills-explain-reaches-the-executable",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4253_every_skill_remedy_runs"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4258",
+        "kind": "issue",
+        "label": "I4258",
+        "summary": "Documents below docs/ are knowledge without a hand-declared class each",
+        "route": "/cockpit/objects/issue/i4258",
+        "source": ".ai/repo/project/issues/I4258.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fresh init discovers docs/a/b.md as a document",
+            "No file is claimed by two classes"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "One level of docs/ is discovered.",
+          "depends_on": [],
+          "desired_state": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+          "evidence_required": [
+            "case_knowledge_discovers_documents_below_docs"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4258.yaml",
+            "share/skeleton/ai/repo/knowledge/sources.yaml",
+            "test/cases/4258_documents_below_docs_are_discovered.sh"
+          ],
+          "slug": "knowledge-discovers-documents-below-docs",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4258_documents_below_docs_are_discovered"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4265",
+        "kind": "issue",
+        "label": "I4265",
+        "summary": "The hook line init prints runs doctor in its commit context",
+        "route": "/cockpit/objects/issue/i4265",
+        "source": ".ai/repo/project/issues/I4265.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The printed hook line sets the commit context",
+            "doctor reports it wired"
+          ],
+          "created_at": "2026-10-27",
+          "current_state": "init prints `majordomus doctor || exit $?`.",
+          "depends_on": [],
+          "desired_state": "init prints the commit-context form, and doctor's wiring check accepts it.",
+          "evidence_required": [
+            "case_the_commit_hook_runs_doctor_in_commit_co"
+          ],
+          "milestone": "a-second-adopter-is-served",
+          "objective": "init prints the commit-context form, and doctor's wiring check accepts it.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4265.yaml",
+            "lib/init.sh",
+            "lib/doctor.sh",
+            "docs/ADOPTION.md",
+            "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
+          ],
+          "slug": "the-commit-hook-runs-doctor-in-commit-context",
+          "updated_at": "2026-10-27",
+          "validation": [
+            "bash test/run.sh 4265_the_adopter_hook_runs_doctor_in_commit_context"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4291",
+        "kind": "issue",
+        "label": "I4291",
+        "summary": "The executable's record writers attribute a record as the shell's do",
+        "route": "/cockpit/objects/issue/i4291",
+        "source": ".ai/repo/project/issues/I4291.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No Rust writer of a durable record reads the session pointer to name a session",
+            "With two episodes open in one checkout, a plan transition, a continuity publish and a reasoning record each name the calling episode, and none relates a task the other episode opened",
+            "An MCP plan transition names the episode of the connection that made it"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "rust_attribution_two_episodes",
+            "suite"
+          ],
+          "milestone": "M002",
+          "non_scope": [
+            "The shell writers, which I0703 covered and I4292 completes",
+            "Verifying who a worker is: the identity stays the one the session supplies (ADR 0164)"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "debugging",
+          "risk": "Three Rust writers share the pointer read; fixing ledger.rs and not continuity or reasoning leaves a defect that looks fixed.",
+          "scope": [
+            ".ai/repo/project/issues/I4291.yaml",
+            "apps/majordomus-cli/src/ledger.rs",
+            "apps/majordomus-cli/src/plan.rs",
+            "apps/majordomus-cli/src/capability/builtin/plan.rs",
+            "apps/majordomus-cli/src/continuity",
+            "apps/majordomus-cli/src/reasoning",
+            "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
+          ],
+          "slug": "rust-writers-attribute-as-the-shell",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ledger::",
+            "bash test/run.sh 3049"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4292",
+        "kind": "issue",
+        "label": "I4292",
+        "summary": "The shell writers ADR 0164 did not name attribute through mj_record_attribution",
+        "route": "/cockpit/objects/issue/i4292",
+        "source": ".ai/repo/project/issues/I4292.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "With two episodes open in one checkout, session close, finish, evidence, gate and the mesh join each name the calling episode, and none attaches to the task the other episode opened",
+            "Every refusal names the rule that refused and the command that resolves it",
+            "No ledger line carries the literal task_id none"
+          ],
+          "created_at": "2026-10-28",
+          "depends_on": [],
+          "evidence_required": [
+            "suite",
+            "doctor"
+          ],
+          "milestone": "M002",
+          "non_scope": [
+            "The six writers ADR 0164 named, already covered by I0703",
+            "The Rust writers (I4291)"
+          ],
+          "objective": "Every shell command that writes a durable record goes through mj_record_attribution, and one that cannot relate a task to its caller refuses by name, saying what to run instead.",
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "debugging",
+          "risk": "finish and gate decide whether work counts as done; a refusal that is wrong there stops a worker, so each refusal has to name the command that resolves it in the same breath.",
+          "scope": [
+            ".ai/repo/project/issues/I4292.yaml",
+            "lib/session.sh",
+            "lib/finish.sh",
+            "lib/evidence.sh",
+            "lib/gates.sh",
+            "lib/capture.sh",
+            "lib/knowledge.sh",
+            "share/events.yaml",
+            "test/cases/3049_a_second_workers_record_lands_on_the_first_workers_task.sh"
+          ],
+          "slug": "remaining-shell-writers-attribute",
+          "updated_at": "2026-10-28",
+          "validation": [
+            "bash test/run.sh 3049",
+            "bash test/run.sh",
+            "bin/majordomus doctor"
+          ]
         }
       },
       {
@@ -72276,11 +72718,12 @@
           "scope": [
             "lib",
             "share",
+            "apps/majordomus-cli/src",
             "test/cases",
             "docs"
           ],
           "slug": "record-attribution",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-28",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
@@ -94564,6 +95007,41 @@
         "label": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh",
         "route": "/cockpit/objects/test/test-cases-4223-a-failed-cases-reason-reaches-the-artifact-sh",
         "source": "test/cases/4223_a_failed_cases_reason_reaches_the_artifact.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "kind": "test",
+        "label": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "route": "/cockpit/objects/test/test-cases-4232-a-core-build-keeps-its-own-rlib-sh",
+        "source": "test/cases/4232_a_core_build_keeps_its_own_rlib.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+        "kind": "test",
+        "label": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+        "route": "/cockpit/objects/test/test-cases-4251-a-mod-links-nothing-outside-the-repository-sh",
+        "source": "test/cases/4251_a_mod_links_nothing_outside_the_repository.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4253_every_skill_remedy_runs.sh",
+        "kind": "test",
+        "label": "test/cases/4253_every_skill_remedy_runs.sh",
+        "route": "/cockpit/objects/test/test-cases-4253-every-skill-remedy-runs-sh",
+        "source": "test/cases/4253_every_skill_remedy_runs.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
+        "kind": "test",
+        "label": "test/cases/4258_documents_below_docs_are_discovered.sh",
+        "route": "/cockpit/objects/test/test-cases-4258-documents-below-docs-are-discovered-sh",
+        "source": "test/cases/4258_documents_below_docs_are_discovered.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+        "kind": "test",
+        "label": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+        "route": "/cockpit/objects/test/test-cases-4265-the-adopter-hook-runs-doctor-in-commit-context-sh",
+        "source": "test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh"
       },
       {
         "id": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -133281,6 +133759,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4226",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4226",
+        "target": "majordomus://issue/I2486",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4226",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4227",
         "target": "kind:issue",
         "kind": "is_a"
@@ -133301,6 +133794,31 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4230",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "majordomus://issue/I3959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I4230",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4232",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4232",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4241",
         "target": "kind:issue",
         "kind": "is_a"
@@ -133318,6 +133836,76 @@
       {
         "source": "majordomus://issue/I4244",
         "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4245",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4245",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4251",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4253",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4253",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4258",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4258",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4265",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4265",
+        "target": "majordomus://milestone/a-second-adopter-is-served",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4291",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4291",
+        "target": "majordomus://milestone/M002",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4292",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4292",
+        "target": "majordomus://milestone/M002",
         "kind": "belongs_to"
       },
       {
@@ -139851,6 +140439,31 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4232_a_core_build_keeps_its_own_rlib.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4251_a_mod_links_nothing_outside_the_repository.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4253_every_skill_remedy_runs.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4258_documents_below_docs_are_discovered.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/4265_the_adopter_hook_runs_doctor_in_commit_context.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/42_dag_waves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -144947,8 +145560,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4016,
-      "edges": 9261,
+      "nodes": 4031,
+      "edges": 9288,
       "acyclic": false,
       "truncated": false
     }
