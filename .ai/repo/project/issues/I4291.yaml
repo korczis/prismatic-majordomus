@@ -1,0 +1,36 @@
+id: I4291
+milestone: M002
+title: The executable's record writers attribute a record as the shell's do
+slug: rust-writers-attribute-as-the-shell
+priority: p1
+profile: debugging
+parallel_safe: false
+objective: "Every record the Rust executable writes names the caller's own episode by ADR 0164's resolution, never the checkout's session pointer, and relates the active task only when no other open episode opened it."
+why: "ADR 0164 was implemented in the shell alone. A plan transition made through the MCP tool or the command line goes through the executable's ledger writer, which still reads the session pointer, so a worker transitioning an issue in a checkout another worker opened stamps the plan event with the other worker's session: the misattribution M002 exists to end, on the path the most workers now use."
+current_state: "At master 81ef931a3e1, apps/majordomus-cli/src/ledger.rs open_session_id reads state/session-current.yaml, or state/session-<MJ_SESSION_KEY>.yaml, a file nothing writes; it has no provider-session step and no single-open-episode rule. Its caller is plan.rs (crate::ledger::append), reached by every plan transition, including majordomus_plan_transition over MCP. continuity/local.rs takes the published handover's session from the same pointer, and reasoning/store.rs takes the active task with no check of which episode opened it and records no session."
+desired_state: "One Rust resolver mirrors mj_open_session_id and mj_task_opening_session: the explicit MJ_SESSION_KEY through sessions-open/, then the provider's session variables, then the one open episode or none, never the pointer; a capability call passes its own connection's episode. ledger::append, continuity publish and reasoning record use it, and a test with two open episodes in one checkout proves that each writer names its caller's episode and leaves the other's task unattributed."
+scope:
+  - ".ai/repo/project/issues/I4291.yaml"
+  - "apps/majordomus-cli/src/ledger.rs"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "apps/majordomus-cli/src/capability/builtin/plan.rs"
+  - "apps/majordomus-cli/src/continuity"
+  - "apps/majordomus-cli/src/reasoning"
+  - "test/cases"
+non_scope:
+  - "The shell writers, which I0703 covered and I4292 completes"
+  - "Verifying who a worker is: the identity stays the one the session supplies (ADR 0164)"
+depends_on: []
+acceptance_criteria:
+  - "No Rust writer of a durable record reads the session pointer to name a session"
+  - "With two episodes open in one checkout, a plan transition, a continuity publish and a reasoning record each name the calling episode, and none relates a task the other episode opened"
+  - "An MCP plan transition names the episode of the connection that made it"
+validation:
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --lib ledger::"
+  - "bash test/run.sh 3049"
+evidence_required:
+  - rust_attribution_two_episodes
+  - suite
+risk: "Three Rust writers share the pointer read; fixing ledger.rs and not continuity or reasoning leaves a defect that looks fixed."
+created_at: 2026-10-28
+updated_at: 2026-10-28

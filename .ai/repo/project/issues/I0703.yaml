@@ -7,7 +7,7 @@ profile: debugging
 parallel_safe: false
 objective: "Implement whatever I0702 decided across every command that writes a durable record, and turn the characterisation case into one that asserts the new behaviour."
 why: "A defect is fixed when the case that reproduced it goes from describing the gap to describing the guarantee. Anything less leaves the next worker unable to tell which of the two the code is in."
-current_state: "Implemented and on master. ADR 0164 was accepted on 2026-10-22 with the amendment that a task is related unless another episode that is still open opened it, and the implementation landed through train 5 (b0e33db797d, fixed in d078fb2309e) and is carried by master 2efeacea031. lib/common.sh prepares attribution once in mj_record_attribution: mj_open_session_id names the caller's own episode, an explicit identity with no open episode names none, and with no identity it names the one open episode or none, never the pointer's guess; mj_task_opening_session and mj_session_is_open relate the active task unless a different live episode opened it. Every writer uses it and passes the prepared session to mj_ledger_append: decision add (lib/decision.sh), question add and resolve (lib/question.sh), checkpoint (lib/checkpoint.sh), check --checkpoint (lib/check.sh), handover (lib/handover.sh), knowledge observe (lib/knowledge.sh) and derive (lib/derive.sh). Case 3049 asserts the guarantee: I0701's zero-episode example, two real episodes under one $USER, the caller's own task, an unknown explicit identity and anonymous calls; cases 111, 61 and 388 prove the per-provider episode and a task carried across episodes and providers. ADR 0164 refuses nothing and share/doctrines.yaml no longer exists (rules carry x-majordomus validators), so the refusal and doctrine criteria have nothing to cover. Running the suite from inside an agent exposed one defect left over: case 61 failed because test/run.sh let the host's CLAUDE_CODE_SESSION_ID through, which ADR 0164 reads as a supplied identity with no episode; test/run.sh now drops the provider session variables the lifecycle adapters declare."
+current_state: "Started, not done. ADR 0164 was accepted on 2026-10-22 with the amendment that a task is related unless another episode that is still open opened it, and the shell half landed through train 5 (b0e33db797d, fixed in d078fb2309e). lib/common.sh prepares attribution once in mj_record_attribution: mj_open_session_id names the caller's own episode, an explicit identity with no open episode names none, and with no identity it names the one open episode or none; mj_task_opening_session and mj_session_is_open relate the active task unless a different live episode opened it. The six writers ADR 0164 names use it and pass the prepared session to mj_ledger_append: decision add (lib/decision.sh), question add and resolve (lib/question.sh), checkpoint (lib/checkpoint.sh), check --checkpoint (lib/check.sh), handover (lib/handover.sh) and knowledge observe (lib/knowledge.sh). Case 3049 asserts the guarantee for two real episodes under one $USER (it passed at 81ef931a3e1, 1/1 in 31.8 s); cases 111, 61 and 388 prove the per-provider episode and a task carried across episodes and providers; test/run.sh drops the provider session variables the lifecycle adapters declare, so a suite run from inside an agent no longer hands every case the host's session. Not every writer is covered, so criterion 1 is unmet: an adversarially verified audit at master 81ef931a3e1 (2026-10-28) found that the Rust ledger writer (apps/majordomus-cli/src/ledger.rs open_session_id, reached by every plan transition through plan.rs) still reads the session pointer, as do continuity publish (continuity/local.rs) and reasoning record (reasoning/store.rs takes the task with no opener check) - I4291; and that session close, finish, evidence, gate and the mesh join still attribute to the checkout's task, while knowledge observe refuses without naming a rule - I4292. The DONE stamped on 2026-10-26 was withdrawn on the owner's word on 2026-10-28; this issue completes when I4291 and I4292 have landed and the suite and doctor evidence is taken again."
 desired_state: "Every command that writes a durable record follows the decision, the case asserts the new behaviour, and a refusal — if that is what was chosen — names the rule that refused and what to run instead."
 scope:
   - lib
@@ -21,7 +21,7 @@ acceptance_criteria:
   - Every command that writes a durable record is covered, not only decision
   - The case from I0701 asserts the guarantee rather than the gap
   - A refusal names the rule and the command that resolves it
-  - If the rule is enforced, it is declared in share/doctrines.yaml and doctor proves it reaches its command
+  - If a refusal is enforced, the rule that carries it names an x-majordomus validator and doctor proves it reaches its command
 validation:
   - bash test/run.sh
   - bin/majordomus doctor
@@ -30,13 +30,9 @@ evidence_required:
   - doctor
 risk: "Three commands share this resolution path; fixing one and not the others leaves a defect that looks fixed, which is worse than one that looks broken."
 created_at: 2026-09-04
-updated_at: 2026-10-26T03:03:26Z
+updated_at: 2026-10-28
 started_at: 2026-10-25T20:39:51Z
 started_event: sha256:b1981b4fe87da0141dea895c73c3b01134092403660c1cb3e28bc97cae321ec5
-verified_at: 2026-10-26T03:03:01Z
-verified_event: sha256:2591b93f407e84cc6badb438ed68670a47fcf5f6f590a2680b4c7dc8b032342e
-completed_at: 2026-10-26T03:03:26Z
-completed_event: sha256:d5712bb877b9ce5151309c35b495fd635f9bb1b90da614da632df72d7498823e
 evidence:
   - covers: doctor
     type: test
