@@ -43,10 +43,12 @@
 #               same count), named by the commit it was recorded at and how far behind the
 #               built one, or the words "not yet measured" and no number when no run measured
 #               it (I3916); a run whose own state is stale or unknown (failures, a dirty tree,
-#               a refused or absent report) shows no count, only "not confirmed", and
-#               /guarantees/ shows the same figure, any other count there saying it is the
-#               committed ledger's (I4317); and it never says a test proves it while fewer are
-#               supported
+#               a refused or absent report) shows no count, only "not confirmed"; the
+#               homepage's evidence chain (its last node and that node's detail) and
+#               /guarantees/ show the same figure, and every page under /guarantees/ and
+#               /features/matrix/ that shows another count or verdict says it is the committed
+#               ledger's, never a recorded run's (I4317); and it never says a test proves it
+#               while fewer are supported
 #   promises    a capability word site/data/homepage.toml [promises] declares appears in the
 #               hand-written copy (marketing.toml, manifesto.toml) only while the claim it names is
 #               guaranteed and supported by a recorded run; a declaration naming a claim that does
@@ -717,6 +719,48 @@ else:
         wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
     problems, _ = judge_figure("the proof band", b)
     wrong.extend(strip_where(problems, "the proof band"))
+# the homepage's evidence chain shows the same run's figure a second time, on its last node and
+# in that node's detail (partials/evidence-chain.html): each value carries the band's
+# data-supported and data-supported-state, and its words are the count when the run shows one,
+# otherwise exactly "not confirmed" or "unmeasured" — never a count the run does not confirm,
+# and, while it shows none, no other number than the declared total and the run's commit
+chain_words = want if shown else ("not confirmed" if figure == "unconfirmed" else "unmeasured")
+def judge_chain(kind, label):
+    where = f"the evidence chain's {label} 'supported by the recorded run'"
+    m = re.search(rf'<[a-zA-Z0-9]+\b[^>]*\bdata-chain-{kind}="evidence"[^>]*>', home)
+    el = element(home, m) if m else None
+    if not el:
+        return [f"{where} is missing (data-chain-{kind}=\"evidence\")"]
+    vm = re.search(r'<[a-zA-Z0-9]+\b[^>]*\bdata-supported="([^"]*)"[^>]*>', el[1])
+    ve = element(el[1], vm) if vm else None
+    if not ve:
+        return [f"{where} does not mark the run's figure (data-supported)"]
+    out = []
+    got = vm.group(1)
+    val = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", ve[1])).split())
+    sa = re.search(r'\bdata-supported-state="([^"]*)"', vm.group(0))
+    if got != want:
+        out.append(f"{where} reads {got!r} ({val!r}), and the recorded run the evidence page reads says {want!r}"
+                   + (f": {withheld}" if figure == "unconfirmed" else ""))
+    elif not sa or sa.group(1) != run_state:
+        out.append(f"{where} says its run is {sa.group(1) if sa else 'in no state'!r} (data-supported-state), and the run's state is {run_state!r}")
+    if val != chain_words:
+        out.append(f"{where} shows {val!r}, and the run's figure is {chain_words!r}"
+                   + (f": {withheld}" if figure == "unconfirmed" and re.search(r"\d", val) else ""))
+    if not shown:
+        rest = el[0].replace(ve[0], " ")
+        rest = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", rest)).split())
+        rest = rest.replace(f"of {declared} guaranteed", " ")
+        if run_commit:
+            rest = rest.replace(run_commit[:7], " ")
+        if re.search(r"\d", rest):
+            said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", el[1])).split())
+            out.append(f"{where} shows a number beside the run's {chain_words!r}: {said!r}")
+    return out
+chain = re.search(r"<[a-zA-Z0-9]+\b[^>]*\sdata-chain(?=[\s>=])[^>]*>", home)
+if chain:
+    wrong.extend(judge_chain("node", "node"))
+    wrong.extend(judge_chain("detail", "detail"))
 # the evidence page reads the same run, so it says the same count, or the same word
 ev_page = os.path.join(pub, "evidence", "index.html")
 if os.path.exists(ev_page):
@@ -726,27 +770,51 @@ if os.path.exists(ev_page):
     elif em.group(1) != want:
         wrong.append(f"the evidence page counts {em.group(1)!r} supported guaranteed claim(s), and the homepage's figure is {want!r}")
 # /guarantees/ and its guaranteed page show the homepage's figure, and any other count of
-# supported guarantees they print says it is the committed ledger's, never "a recorded run"
+# supported guarantees they print says it is the committed ledger's, never "a recorded run".
+# The same holds on every other page that shows the ledger's verdict — each claim's page under
+# /guarantees/ and /features/matrix/ — which carry no run figure: what they show is the
+# committed ledger's (product.json `evidence`), and words saying a recorded run supports or
+# does not support a claim there are the ledger's verdict labelled as the run's
 guarantee_pages = 0
+ledger_pages = []
 for rel in ("guarantees/index.html", "guarantees/guaranteed/index.html"):
-    gp = os.path.join(pub, rel)
-    if not os.path.exists(gp):
-        continue
-    guarantee_pages += 1
+    if os.path.exists(os.path.join(pub, rel)):
+        ledger_pages.append((rel, True))
+gdir = os.path.join(pub, "guarantees")
+for d, dirs, files in os.walk(gdir):
+    dirs.sort()
+    if "index.html" in files:
+        rel = os.path.relpath(os.path.join(d, "index.html"), pub).replace(os.sep, "/")
+        if rel not in ("guarantees/index.html", "guarantees/guaranteed/index.html"):
+            ledger_pages.append((rel, False))
+if os.path.exists(os.path.join(pub, "features", "matrix", "index.html")):
+    ledger_pages.append(("features/matrix/index.html", False))
+for rel, figured in ledger_pages:
     where = "/" + rel[:-len("index.html")]
-    gtext = open(gp, errors="replace").read()
-    problems, el = judge_figure(where, gtext)
-    wrong.extend(problems)
+    gtext = open(os.path.join(pub, rel), errors="replace").read()
+    el = None
+    if figured:
+        guarantee_pages += 1
+        problems, el = judge_figure(where, gtext)
+        wrong.extend(problems)
     rest = gtext.replace(el, " ") if el else gtext
+    # a ledger figure names the ledger, and stays in the text scanned below: naming the ledger
+    # somewhere in it does not license calling its verdict a recorded run's
     for lm in re.finditer(r'<[a-zA-Z0-9]+\b[^>]*\bdata-ledger-supported="[^"]*"[^>]*>', rest):
         le = element(rest, lm)
         lsaid = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", le[1] if le else "")).split())
         if "ledger" not in lsaid:
             wrong.append(f"{where}: a second supported figure ({lsaid!r}) does not say it counts the committed ledger, so it reads as the recorded run's")
-        rest = rest.replace(le[0], " ") if le else rest
     rest_said = " ".join(html.unescape(re.sub(r"<[^>]+>", " ", rest)).split())
-    for om in re.finditer(r"\b([0-9]+) supported by (?:a|the) recorded run\b", rest_said):
+    counted = []
+    for om in re.finditer(r"\b([0-9]+(?:/[0-9]+)?)(?: claims)? supported by (?:a|the) recorded run\b", rest_said):
+        counted.append(om.span())
         wrong.append(f"{where}: counts {om.group(1)} supported by a recorded run apart from the run's figure ({want!r}), and does not say it is another count")
+    for pm in re.finditer(r"\b(?:(?:not|un)\s*)?supported by (?:a|the) recorded run\b", rest_said, re.I):
+        if any(a <= pm.start() < b for a, b in counted):
+            continue
+        ctx = rest_said[max(0, pm.start() - 40):pm.end() + 40].strip()
+        wrong.append(f"{where}: says {pm.group(0)!r} apart from the run's figure ({ctx!r}), and what it shows is the committed ledger's verdict, not the recorded run's")
 if (supported or 0) < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
     wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported if shown else ('an unconfirmed number' if figure == 'unconfirmed' else 'an unmeasured number')} of {declared} declared guarantee(s)")
 also = (f", the count the evidence page reads" + (" and /guarantees/ shows" if guarantee_pages else ""))

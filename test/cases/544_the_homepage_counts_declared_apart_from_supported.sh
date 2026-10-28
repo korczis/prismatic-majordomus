@@ -28,6 +28,12 @@
 # is the committed ledger's fails, and a figure that disagrees with the run fails on each page.
 # The real templates read one definition of the figure's word (partials/run-figure.html) and
 # draw one figure (partials/supported-figure.html) on the homepage and both guarantees pages.
+# The evidence chain shows the same figure on its last node and that node's detail: a chain
+# showing a count beside a stale run (the review of 3d0e11d), one whose attribute reads the
+# count again, a number beside its withheld word, a state that is not the run's and a missing
+# detail each fail. Every claim's page under /guarantees/ and /features/matrix/ show the
+# committed ledger's verdict and say so: "not supported by a recorded run" on a claim page and
+# "0/9 claims supported by a recorded run" in the matrix fail, as each page was served.
 . "$ROOT/test/lib.sh"
 CHECK="$ROOT/scripts/ci/homepage-check"
 [ -x "$CHECK" ] || { echo "    scripts/ci/homepage-check is missing or not executable"; exit 1; }
@@ -179,6 +185,52 @@ guarantees "<p data-supported=\"2\" data-supported-state=\"stale\"><span>2</span
 expect_finding 10 "/guarantees/: the supported figure reads '2' .*so it confirms no count" "/guarantees/ counting what a stale run does not confirm"
 expect_finding 10 "/guarantees/guaranteed/: the supported figure reads '2'" "the guaranteed page counting it too"
 
+# --- the homepage's evidence chain shows the run's figure a second time, on its last node and in
+#     that node's detail (partials/evidence-chain.html); each value is the band's figure. A
+#     review on 2026-10-28 replaced both chain values of a build beside a stale run with '232'
+#     and `declared` still passed: the chain was read by nothing.
+chain() { # <data-supported> <state> <words> <unit>: the chain's evidence node and its detail
+  sed -i.bak "s#</section>#<figure class=\"x\" data-chain x-data=\"{}\"><button type=\"button\" data-chain-node=\"evidence\"><span data-supported=\"$1\" data-supported-state=\"$2\">$3</span><span>supported by the recorded run</span></button><div id=\"chain-detail-evidence\" data-chain-detail=\"evidence\"><p>supported by the recorded run</p><p data-supported=\"$1\" data-supported-state=\"$2\">$3</p><p>of 3 guaranteed$4</p></div></figure></section>#" "$home"
+}
+fresh; chain 2 stale 2 " · recorded at 0123456, stale"
+expect_finding 0 '^OK   declared .*2 supported by the recorded run of 0123456789ab' "a chain that shows the band's count of a run behind the build"
+fresh; at_built stale "$DIRTY" "$FAILED"; not_confirmed stale "$STALE_WORDS"; chain unconfirmed stale "not confirmed" " · the run of 0123456 is stale"
+expect_finding 0 "'not confirmed' supported, never a count" "a chain beside a stale run, said as not confirmed"
+fresh; at_built stale "$DIRTY" "$FAILED"; not_confirmed stale "$STALE_WORDS"; chain unconfirmed stale 2 " · the run of 0123456 is stale"
+expect_finding 10 "the evidence chain's node 'supported by the recorded run' shows '2', and the run's figure is 'not confirmed': the recorded run of 0123456789ab is stale" "the reviewed defect: a chain showing a count beside a stale run"
+expect_finding 10 "the evidence chain's detail 'supported by the recorded run' shows '2'" "the chain's detail showing it too"
+fresh; at_built stale "$DIRTY" "$FAILED"; not_confirmed stale "$STALE_WORDS"; chain 2 stale 2 " · recorded at 0123456"
+expect_finding 10 "the evidence chain's node 'supported by the recorded run' reads '2' \('2'\), and the recorded run the evidence page reads says 'unconfirmed'" "a chain whose template reads the count again"
+fresh; at_built stale "$DIRTY" "$FAILED"; not_confirmed stale "$STALE_WORDS"; chain unconfirmed stale "not confirmed" " · the run of 0123456 is stale, 2 counted"
+expect_finding 10 "the evidence chain's detail 'supported by the recorded run' shows a number beside the run's 'not confirmed'" "a count beside the chain's withheld word"
+fresh; at_built stale "$DIRTY" "$FAILED"; not_confirmed stale "$STALE_WORDS"; chain unconfirmed current "not confirmed" " · the run of 0123456 is stale"
+expect_finding 10 "the evidence chain's node 'supported by the recorded run' says its run is 'current' \(data-supported-state\), and the run's state is 'stale'" "a chain calling a stale run current"
+fresh; rm "$ev"; unmeasured; chain unmeasured unmeasured unmeasured ""
+expect_finding 0 "'not yet measured' supported, never a number" "a chain with no run measured"
+fresh; chain 2 stale 2 " · recorded at 0123456, stale"; sed -i.bak 's# data-chain-detail="evidence"##' "$home"
+expect_finding 10 "the evidence chain's detail 'supported by the recorded run' is missing" "a chain without the evidence detail"
+
+# --- every page that shows the committed ledger's verdict says it is the ledger's: each claim's
+#     page under /guarantees/ and /features/matrix/. Evidence from the same review: with a
+#     current run, the homepage printed '232 supported by the recorded run of 0123456, the
+#     commit this page was built from' while /guarantees/ci-verdict/ printed 'not supported by
+#     a recorded run' and /features/matrix/ '0/N claims supported by a recorded run' on every row.
+cpage="$F/site/public/guarantees/ci-verdict/index.html"
+mpage="$F/site/public/features/matrix/index.html"
+claim_page() { mkdir -p "$(dirname "$cpage")"; printf '<html><head><title>claim</title></head><body><p><span class="mj-badge" data-claim="a">stale</span><span data-ledger-supported="unsupported">%s</span></p></body></html>\n' "$1" > "$cpage"; }
+matrix_page() { mkdir -p "$(dirname "$mpage")"; printf '<html><head><title>matrix</title></head><body><table><tr><td data-ledger-supported="f">0/9<span class="sr-only"> %s</span></td></tr></table></body></html>\n' "$1" > "$mpage"; }
+fresh; claim_page "Declared guaranteed, and not supported by the runs the committed ledger records: the test is named, and the ledger holds no passing run of the current inputs."
+matrix_page "claims supported by the runs the committed ledger records"
+expect_finding 0 '^OK   declared ' "a claim page and the matrix that name the ledger"
+fresh; claim_page "Declared guaranteed, and not supported by a recorded run: the test is named, and the ledger holds no passing run of the current inputs."
+expect_finding 10 "/guarantees/ci-verdict/: says 'not supported by a recorded run' apart from the run's figure .*the committed ledger's verdict, not the recorded run's" "a claim page as served beside the homepage's count"
+fresh; claim_page "Supported by a recorded run whose inputs this claim names have not changed since."
+expect_finding 10 "/guarantees/ci-verdict/: says 'Supported by a recorded run'" "a claim page calling the ledger's verdict a run's"
+fresh; matrix_page "claims supported by a recorded run"
+expect_finding 10 "/features/matrix/: a second supported figure \('0/9 claims supported by a recorded run'\) does not say it counts the committed ledger" "the matrix as served beside the homepage's count"
+fresh; matrix_page "claims supported"; sed -i.bak 's# data-ledger-supported="f"##' "$mpage"; sed -i.bak 's#claims supported</span>#claims supported by a recorded run</span>#' "$mpage"
+expect_finding 10 "/features/matrix/: counts 0/9 supported by a recorded run apart from the run's figure" "a matrix count that is not marked as the ledger's"
+
 # --- the evidence page reads the same run, and says the same count
 fresh; sed -i.bak 's#data-ci-supported="2"#data-ci-supported="0"#' "$evpage"
 expect_finding 10 "the evidence page counts '0' supported guaranteed claim\(s\), and the homepage's figure is '2'" "an evidence page that disagrees"
@@ -220,6 +272,14 @@ RF="$ROOT/site/templates/partials/run-figure.html"
 grep -qF 'rf_reasons == 0 and rf_state == "current"' "$RF" || { echo "    a run that does not confirm its report may show its count as current"; exit 1; }
 grep -qF 'model.evidence.supported' "$TPL" && { echo "    the homepage still reads the committed ledger's supported count"; exit 1; }
 grep -qF 'data-ci-supported="{{ ci.claims.supported }}"' "$ROOT/site/templates/evidence.html" || { echo "    the evidence page does not show the recorded run's count"; exit 1; }
+CHAIN="$ROOT/site/templates/partials/evidence-chain.html"
+[ "$(grep -cF 'data-supported="{{ chain_sv }}" data-supported-state="{{ chain_ss }}"' "$CHAIN")" -eq 2 ] \
+  || { echo "    the evidence chain's node and detail do not both carry the run's figure"; exit 1; }
+for t in claim.html features-matrix.html; do
+  grep -qF 'data-ledger-supported=' "$ROOT/site/templates/$t" || { echo "    site/templates/$t shows the ledger's verdict without naming it"; exit 1; }
+  grep -qiE 'supported by (a|the) recorded run' "$ROOT/site/templates/$t" \
+    && { echo "    site/templates/$t still calls the committed ledger's verdict a recorded run's"; exit 1; }
+done
 grep -A1 '^  - id: guaranteed$' "$ROOT/docs/CLAIMS.yaml" | grep -q 'test proves it' \
   && { echo "    docs/CLAIMS.yaml still says a test proves every guaranteed claim"; exit 1; }
 exit 0
