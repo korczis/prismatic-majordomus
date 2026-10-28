@@ -44166,6 +44166,8 @@
             "A commit naming an issue that changes any other path still makes it merged",
             "plan drift on the trunk no longer reports I1302, I1305, I1900, I1962, I1980 or I2484 as merged_not_recorded"
           ],
+          "completed_at": "2026-10-28T23:37:35Z",
+          "completed_event": "sha256:830375688143134c3b58d7d942b5a5c2b937b51ba7a166ff233965ef39673f07",
           "created_at": "2026-10-16",
           "current_state": "delivery.rs takes the newest commit or merge in the trunk's history whose subject, title or branch names the issue as its merge, whatever that commit changed.",
           "depends_on": [
@@ -44192,7 +44194,7 @@
           "slug": "a-commit-that-only-plans-an-issue-is-not-its-delivery",
           "started_at": "2026-10-25T20:03:20Z",
           "started_event": "sha256:67a989a3496cf18eed747bc7539e6a1d3c3a32b6b766aec363b163eccc800ac1",
-          "updated_at": "2026-10-25T21:09:39Z",
+          "updated_at": "2026-10-28T23:37:35Z",
           "validation": [
             "cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test plan_delivery",
             "bash test/run.sh 3100_an_issue_delivery_is_inferred 3101_merged_work_unrecorded_is_drift",
