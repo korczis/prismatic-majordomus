@@ -6,7 +6,7 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af",
+    "fingerprint": "4684f900c9f01ce6d5a4ab624969c9077f53a875714e29cc1529ec6fd5df29b3",
     "summary": {
       "total": 3552,
       "builtin": 220,
@@ -57611,7 +57611,9 @@
                   },
                   "endpoint": {
                     "type": "string",
-                    "description": "The non-secret address a client connects to."
+                    "description": "The non-secret address a client connects to.",
+                    "maxLength": 256,
+                    "pattern": "^(https?://)?[A-Za-z0-9.:\\[\\]-]+$"
                   },
                   "bucket": {
                     "type": "string",
@@ -57662,7 +57664,7 @@
                   "health",
                   "age_seconds"
                 ],
-                "description": "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n```"
+                "description": "One node's offer. Carries no credential and no secret of any kind.\n\n# Example\n\n```\nuse majordomus_cli::mesh::build_cache::{Health, Offer, Scope};\nlet offer = Offer {\n    node: \"n1\".into(), protocol: \"s3\".into(), provider: \"minio\".into(),\n    scope: Scope::Lan, endpoint: \"http://192.168.100.30:9000\".into(),\n    bucket: \"majordomus-build-cache\".into(), priority: 0, headroom_gib: Some(200),\n    health: Health::Healthy, age_seconds: 3, rtt_ms: None,\n};\nassert_eq!(offer.node, \"n1\");\nassert!(!serde_json::to_string(&offer).unwrap().contains(\"secret\"));\n// an endpoint with a place for a credential is neither written nor read\nlet keyed = Offer { endpoint: \"http://k:s3cr3t@192.168.100.30:9000\".into(), ..offer };\nassert!(!serde_json::to_string(&keyed).unwrap_err().to_string().contains(\"s3cr3t\"));\n```"
               },
               "BuildCacheScope": {
                 "oneOf": [
@@ -92073,7 +92075,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7a5e4d82929a4b571150fbd3f203942610b1332bfc49a8609a6fc989532ed7b3",
+    "fingerprint": "bdfb20ed0bfd9482bf06e2fe8fda1f41ae3fca9939b2d84141e7a390cc4b014e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -99558,7 +99560,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 993556
+        "bytes": 995732
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -107719,7 +107721,7 @@
         "path": ".ai/repo/project/issues/I2670.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1883
+        "bytes": 3585
       },
       {
         "uri": "majordomus://issue/I2671",
