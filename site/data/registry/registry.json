@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "bfe498ecbbafb51ab21c50cc4dc9185b76a3fcf7249658d9b88dd39da2371a64",
+    "fingerprint": "081dc8e25d57da14f7edec1983e913b50fd1f79d8ca0b2e610da001b53e71f68",
     "summary": {
-      "total": 3570,
+      "total": 3571,
       "builtin": 220,
-      "declarative": 3350,
+      "declarative": 3351,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3350
+        "resource": 3351
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3360
+        "implemented": 3361
       },
       "mcp_tools": 206,
-      "mcp_resources": 3407,
+      "mcp_resources": 3408,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1053,
+        "capabilities": 1054,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "84641565beac2d30a44cdbbb11cb6055de486182af4f4b3015068dd94aa8f6c4",
+    "fingerprint": "30e79012c8643c29c522ab90587fdb64c9d0adb069518fc68b9853b5d661f83e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,7 +92113,7 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1053,
+      "issue": 1054,
       "knowledge": 59,
       "mesh-declaration": 1,
       "milestone": 111,
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1041324
+        "bytes": 1045713
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114883,6 +114883,17 @@
         "bytes": 3014
       },
       {
+        "uri": "majordomus://issue/I4340",
+        "kind": "issue",
+        "identity": "I4340",
+        "title": "The reaper bounds the shared build directory although cargo writes no CACHEDIR.TAG into a build-dir",
+        "description": "scripts/reap-orphans applies the shared build directory's size bound by evicting its stale units, under cargo's lock, whenever the directory is over its bound and either a build is running or it carries no CACHEDIR.TAG; only the removal of the whole directory still asks for the tag.",
+        "path": ".ai/repo/project/issues/I4340.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3787
+      },
+      {
         "uri": "majordomus://issue/I4341",
         "kind": "issue",
         "identity": "I4341",
@@ -124617,7 +124628,7 @@
         "identity": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "path": "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
         "source_class": "case",
-        "bytes": 8192
+        "bytes": 8371
       },
       {
         "uri": "majordomus://test/test/cases/3131_a_new_worktree_starts_from_the_remote_trunk.sh",
@@ -125825,7 +125836,7 @@
         "identity": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
         "path": "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh",
         "source_class": "case",
-        "bytes": 17141
+        "bytes": 18727
       },
       {
         "uri": "majordomus://test/test/cases/3963_a_merge_of_master_derives_in_one_go.sh",
@@ -128574,7 +128585,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1053
+      "objects": 1054
     },
     {
       "name": "knowledge",

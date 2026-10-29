@@ -70968,6 +70968,41 @@
         }
       },
       {
+        "id": "majordomus://issue/I4340",
+        "kind": "issue",
+        "label": "I4340",
+        "summary": "The reaper bounds the shared build directory although cargo writes no CACHEDIR.TAG into a build-dir",
+        "route": "/cockpit/objects/issue/i4340",
+        "source": ".ai/repo/project/issues/I4340.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "ci"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Running the reaper on a schedule on a development machine; the build path's own pass (mj_cargo_bounded) and the build host's disk guard (I4352) are the scheduled bounds",
+            "The bound's size, idle age or eviction order (I3959)"
+          ],
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4340.yaml",
+            "scripts/reap-orphans",
+            "test/cases/3125_the_reaper_asks_cargo_for_the_build_dir.sh",
+            "test/cases/3959_the_shared_build_dir_stays_under_its_bound.sh"
+          ],
+          "slug": "the-reaper-bounds-an-untagged-build-dir",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "bash test/run.sh 3959_the_shared_build_dir_stays_under_its_bound 3125_the_reaper_asks_cargo_for_the_build_dir",
+            "shellcheck -x scripts/reap-orphans"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I4341",
         "kind": "issue",
         "label": "I4341",
@@ -134099,6 +134134,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4340",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4340",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I4341",
         "target": "kind:issue",
         "kind": "is_a"
@@ -145995,8 +146040,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4034,
-      "edges": 9314,
+      "nodes": 4035,
+      "edges": 9316,
       "acyclic": false,
       "truncated": false
     }

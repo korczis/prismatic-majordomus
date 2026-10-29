@@ -25,6 +25,8 @@
 #     bounded, and evicts once the stand-in build lets go, without the build waiting for it;
 #   - scripts/reap-orphans, over the bound while a build runs, evicts stale units instead of
 #     keeping the whole directory.
+#   - and over the bound without cargo's CACHEDIR.TAG, as cargo leaves a build-dir apart from its
+#     target-dir, it evicts stale units with nobody building instead of skipping it (I4340).
 . "$ROOT/test/lib.sh"
 
 LIB="$ROOT/lib/rust_bin.sh"
@@ -321,6 +323,27 @@ never_all
 [ -d "$B" ] || { echo "    the reaper removed the whole directory under a running build"; exit 1; }
 expect_grep 'evicting stale units under cargo.s lock'
 expect_grep 'evicted 5 unit\(s\)'
+cleanup_pids
+
+# ---------------------------------------------------------------- the reaper, on cargo's build-dir
+# as cargo really leaves a build-dir apart from its target-dir: no CACHEDIR.TAG, its
+# .rustc_info.json. The reaper skipped it whole for want of the tag, so the bound never applied
+# from there (I4340); nobody is building, and its units are evicted, never the directory.
+printf '#!/bin/sh\necho "/bin/sleep 1"\n' > "$T/stub/ps"
+fixture
+rm -f "$B/CACHEDIR.TAG"; echo '{}' > "$B/.rustc_info.json"
+hold "$D/libmajordomus_cli-eeeeeeeeeeeeeeee.rlib"
+RC=0
+LAST_OUT="$(MJ_ROOT="$R" PATH="$T/stub:$PATH" MAJORDOMUS_SHARED_BUILD_DIR="$B" MAJORDOMUS_SHARED_BUILD_CAP_MB="$CAP" \
+  MAJORDOMUS_SHARED_BUILD_EVICT_IDLE_MIN=60 "$ROOT/scripts/reap-orphans" --targets --reclaim 2>&1)" || RC=$?
+[ "$RC" = 0 ] || { echo "    the reaper's --reclaim on an untagged build-dir exited $RC"; printf '%s\n' "$LAST_OUT"; exit 1; }
+# shellcheck disable=SC2086
+gone $EVICTED
+kept "$D/libmajordomus_cli-cccccccccccccccc.rlib" "$INC/s-new-2def-working" "$D/libserde-dddddddddddddddd.rlib" \
+  "$D/libmajordomus_cli-1111111111111111.rlib" "$D/libmajordomus_cli-eeeeeeeeeeeeeeee.rlib" "$B/.rustc_info.json"
+expect_grep 'no CACHEDIR.TAG of cargo.s, so it is not removed whole: evicting stale units under cargo.s lock'
+expect_grep 'evicted 5 unit\(s\)'
+expect_no_grep 'not provably the build directory cargo named'
 cleanup_pids
 
 echo "    ok: over its bound the build directory loses its stale units oldest first until it is under it, under cargo's lock, from the build path and the reaper; held, named, open, recent and named-by-a-Cargo.lock units stay"
