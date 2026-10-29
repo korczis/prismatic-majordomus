@@ -1,0 +1,28 @@
+id: I4363
+milestone: the-runtime-supervises-itself
+title: "A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s"
+slug: a-parked-monitor-follow-does-not-spin
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "`majordomus monitor --follow` (and with `--until` or `--for`) that has nothing new to print blocks on its server's stream or sleeps on a declared interval between asks, so a follower parked for 10 s uses less than 1 s of CPU. The first step finds the loop that spins (apps/majordomus-cli/src/commands/monitor.rs and apps/majordomus-cli/src/monitor) and records it in this issue before the code changes."
+why: "On 2026-10-24 four or five parked followers held a machine's load near 64 for an hour, each measured at 3.7 s of CPU per 10 s, and sessions were told to stop using the stream docs/MONITOR.md tells them to follow. Measured again on 2026-10-29 with the debug executable at ab447585c29: one `monitor --follow --for <name>` used 1.25 s of CPU between its 3rd and 13th second with nothing to print."
+current_state: "Verified at ab447585c29 by the measurement above (ps -o time, 10 s apart); no record owned the defect, and the stream's waiters were replaced by gh polling loops in sessions' private notes."
+desired_state: "A parked follower is idle, and a case or test measures its CPU time over an interval."
+scope:
+  - "apps/majordomus-cli/src/commands/monitor.rs"
+  - "apps/majordomus-cli/src/monitor"
+  - "docs/MONITOR.md"
+  - "test/cases/1051_a_followed_stream_can_be_waited_on.sh"
+  - ".ai/repo/project/issues/I4363.yaml"
+acceptance_criteria:
+  - "A follower parked for 10 s with nothing to print uses less than 1 s of CPU, measured by a test that reads the process's CPU time twice, 10 s apart"
+  - "A follower still prints a new moment within its declared interval"
+validation:
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 1051_a_followed_stream_can_be_waited_on"
+  - "bin/majordomus plan validate"
+evidence_required:
+  - suite
+depends_on: []
+created_at: 2026-10-29
+updated_at: 2026-10-29

@@ -5,7 +5,7 @@
 
 The one declaration of how every surface of this tool looks — the semantic roles, the status vocabulary, the type scale, the theme contract — as this executable carries it: its fingerprint, its tokens, what any one of them means, and whether the colours it pairs are readable on one another. The stylesheets the site and the Cockpit load, the tokens the executable's own pages compile in, and the dataset the site's templates read are all projections of it; a page compares its `--mj-design` with this fingerprint to know whether it is wearing the design this executable was built with.
 
-Stability: behaviorally_verified. Capabilities: 4.
+Stability: behaviorally_verified. Capabilities: 5.
 
 ## `design.contrast` — Whether the declared colours can be read
 
@@ -47,6 +47,29 @@ One token by name or by the custom property it becomes: what it is for, what it 
 palette entry (`gray-600`), or the custom property any of them becomes (`--mj-fg`). |
 
 Output: `Token`.
+
+## `design.licence` — Whether a public tree holds a licensed kit's files
+
+The never-publish gate: the raw bytes of every tracked file, committed bundles included (staged, committed where that differs, and the working copy where it differs), and of every untracked file under each `ui.publish` directory, read through symbolic links and into nested repositories as a deploy archives it, compared whole, exactly and with every run of whitespace made one space, against the kit-evidence/v1 fingerprints of the declared kit's licensed files. `refused` names each file and, where the evidence says, the licensed source; `not_judged` is a public tree that declares a kit, tracks a UI file and has no evidence here, and fails like `refused`; a `ui:` block that cannot be used as written (an absolute `ui.publish` or `ui.evidence` entry) is `not_judged` too, naming the entry; `inactive` is no kit declared, a private tree without evidence, or no UI file; `active` is judged and clean, or private. The evidence is the file the input names, else the policy's `~`-relative `ui.evidence` entries; an error names the file and the line, never its content. Near-copies and fragments inlined in a larger file are not judged: the evidence holds whole-file fingerprints only.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_design_licence` |
+| CLI | `majordomus design licence` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::design |
+| tags | design, ui, licence, governance |
+
+| input | type | required | description |
+|---|---|---|---|
+| `evidence` | string or null | no | A kit-evidence/v1 file, as the caller names it (CI points this at the file it decoded
+`MAJORDOMUS_KIT_EVIDENCE_<KIT>` into). Absent reads the policy's `ui.evidence`
+entries under `$HOME`. |
+
+Output: `LicenceReport`.
 
 ## `design.system` — The design system
 

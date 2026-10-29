@@ -560,6 +560,26 @@
       "external": false
     },
     {
+      "id": "lib/fleet.sh",
+      "kind": "module",
+      "label": "fleet",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
+      "id": ".ai/repo/skills",
+      "kind": "artifact",
+      "label": "repo/skills",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/init.sh",
       "kind": "module",
       "label": "init",
@@ -643,16 +663,6 @@
       "id": ".ai/repo/workflows",
       "kind": "artifact",
       "label": "repo/workflows",
-      "command": null,
-      "summary": null,
-      "read_only": null,
-      "route": null,
-      "external": false
-    },
-    {
-      "id": ".ai/repo/skills",
-      "kind": "artifact",
-      "label": "repo/skills",
       "command": null,
       "summary": null,
       "read_only": null,
@@ -1049,6 +1059,11 @@
     {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/checkpoints",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "reads"
     },
     {
@@ -1582,6 +1597,21 @@
       "kind": "sources"
     },
     {
+      "source": "lib/fleet.sh",
+      "target": "lib/rules.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": "lib/skills.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/gates.sh",
       "target": "lib/rust_bin.sh",
       "kind": "sources"
@@ -1667,6 +1697,16 @@
       "kind": "sources"
     },
     {
+      "source": "lib/rules.sh",
+      "target": "lib/fleet.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/capture.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/session.sh",
       "target": "lib/changed.sh",
       "kind": "sources"
@@ -1698,6 +1738,11 @@
     },
     {
       "source": "lib/skills.sh",
+      "target": "lib/fleet.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/skills.sh",
       "target": "lib/knowledge.sh",
       "kind": "sources"
     },
@@ -1724,6 +1769,11 @@
     {
       "source": "lib/start.sh",
       "target": "lib/intent_binding.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/update.sh",
+      "target": "lib/fleet.sh",
       "kind": "sources"
     },
     {
@@ -1899,6 +1949,16 @@
     {
       "source": "lib/finish.sh",
       "target": ".ai/local/state/handovers",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": ".ai/repo/rules/vendor",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/fleet.sh",
+      "target": ".ai/repo/skills",
       "kind": "uses"
     },
     {
