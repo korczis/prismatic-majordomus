@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.20.0 -->
+     Generator: majordomus-cli 0.21.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -106,8 +106,13 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus prs cleanup`](#majordomus-prs-cleanup) | `/docs/cli/prs/cleanup/` | Close the pull requests whose work is provably on master already; without `--apply` it only lists them |
 | [`majordomus prs repair`](#majordomus-prs-repair) | `/docs/cli/prs/repair/` | Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act |
 | [`majordomus prs events`](#majordomus-prs-events) | `/docs/cli/prs/events/` | The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded |
+| [`majordomus prs trains`](#majordomus-prs-trains) | `/docs/cli/prs/trains/` | The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent |
 | [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed |
 | [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run) | `/docs/cli/prs/prove-dry-run/` | Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on |
+| [`majordomus offload`](#majordomus-offload) | `/docs/cli/offload/` | A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed |
+| [`majordomus offload hosts`](#majordomus-offload-hosts) | `/docs/cli/offload/hosts/` | The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0 |
+| [`majordomus offload probe`](#majordomus-offload-probe) | `/docs/cli/offload/probe/` | Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one |
+| [`majordomus offload derive`](#majordomus-offload-derive) | `/docs/cli/offload/derive/` | Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out |
 | [`majordomus convergence`](#majordomus-convergence) | `/docs/cli/convergence/` | Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them |
 | [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
 | [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
@@ -161,6 +166,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus mesh review`](#majordomus-mesh-review) | `/docs/cli/mesh/review/` | Ask the mesh for a review, or answer a request |
 | [`majordomus mesh review request`](#majordomus-mesh-review-request) | `/docs/cli/mesh/review/request/` | Ask for a review of a branch, commit or pull request |
 | [`majordomus mesh review answer`](#majordomus-mesh-review-answer) | `/docs/cli/mesh/review/answer/` | Answer a review request |
+| [`majordomus monitor`](#majordomus-monitor) | `/docs/cli/monitor/` | Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked |
 | [`majordomus models`](#majordomus-models) | `/docs/cli/models/` | The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate |
 | [`majordomus models list`](#majordomus-models-list) | `/docs/cli/models/list/` | Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order |
 | [`majordomus models route`](#majordomus-models-route) | `/docs/cli/models/route/` | Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out |
@@ -215,6 +221,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus pack verify`](#majordomus-pack-verify) | `/docs/cli/pack/verify/` | Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read |
 | [`majordomus dashboard`](#majordomus-dashboard) | `/docs/cli/dashboard/` | The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it |
 | [`majordomus dashboard overview`](#majordomus-dashboard-overview) | `/docs/cli/dashboard/overview/` | Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown |
+| [`majordomus brief`](#majordomus-brief) | `/docs/cli/brief/` | What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
 | [`majordomus skills status`](#majordomus-skills-status) | `/docs/cli/skills/status/` | Every skill with its derived standing: tested, documented, enforced, used |
 | [`majordomus skills explain`](#majordomus-skills-explain) | `/docs/cli/skills/explain/` | One skill in full: each naming test and its evidence, its page, its gates, every invocation |
@@ -237,7 +244,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus offload`](#majordomus-offload), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus monitor`](#majordomus-monitor), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus brief`](#majordomus-brief), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -2772,7 +2779,7 @@ Examples:
 
 Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
 
-Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
+Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs trains`](#majordomus-prs-trains), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
 
 ```text
 majordomus prs [OPTIONS] [COMMAND]
@@ -3024,6 +3031,33 @@ Examples:
 
   Verified: exits 0; prints no integration action.
 
+<a id="majordomus-prs-trains"></a>
+## `majordomus prs trains`
+
+The trains of stacked pull requests, in landing order: each link's disposition, relation to master, prepared head under refs/prep/<n> (pushed or pending) and turn. Offline and read-only, from the last recorded observation; exit 10 when it is stale or absent
+
+```text
+majordomus prs trains [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The trains of stacked pull requests, where nothing is observed** — Every open pull request stacked on another, grouped into trains in landing order, with each link's prepared head under refs/prep/<n> and whether it was pushed. The same answer `GET /api/v1/pull-requests/trains` gives and /cockpit/trains draws. With no observation recorded it says why and exits 10.
+
+  ```console
+  $ majordomus prs trains
+  ```
+
+  Verified: exits 10.
+
 <a id="majordomus-prs-brief"></a>
 ## `majordomus prs brief`
 
@@ -3074,6 +3108,113 @@ Examples:
 
   ```console
   $ majordomus prs prove-dry-run
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-offload"></a>
+## `majordomus offload`
+
+A branch's derive run on another machine the repository declares (.ai/repo/offload/), in that machine's turn: the hosts and their limits, a probe that names the host a derive would take, and the derive itself — bundle in, a FIFO queue on the host, a build directory of its own, bundle back, staged and never committed
+
+Subcommands: [`majordomus offload hosts`](#majordomus-offload-hosts), [`majordomus offload probe`](#majordomus-offload-probe), [`majordomus offload derive`](#majordomus-offload-derive).
+
+```text
+majordomus offload [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--declaration` | `<FILE>` | — | Read this derive-offload declaration file instead of the repository's (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-offload-hosts"></a>
+## `majordomus offload hosts`
+
+The declared hosts and their limits, the queue and the remote layout, as the declaration states them; reads no host. A repository that declares none says so and exits 0
+
+```text
+majordomus offload hosts [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--declaration` | `<FILE>` | — | Read this derive-offload declaration file instead of the repository's (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The declared hosts, or the answer that there are none** — Reads the repository's derive-offload declaration (.ai/repo/offload/*.yaml) and prints it with every default filled in: the hosts in tie-break order, each one's free-space minimum and ssh identity file, the queue's paths and the layout on a host. No host is contacted. This fixture declares none, which is an answer, not an error: `declared` is false and the declaration is null.
+
+  ```console
+  $ majordomus offload hosts --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /declared, /declaration.
+
+<a id="majordomus-offload-probe"></a>
+## `majordomus offload probe`
+
+Measure every declared host — free space, derives running or waiting — and name the one a derive would take; exit 12 when none can take one
+
+```text
+majordomus offload probe [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--declaration` | `<FILE>` | — | Read this derive-offload declaration file instead of the repository's (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **No declared host, no probe** — Measures every declared host over ssh — free space under its home, derives running or waiting in its queue — and names the one a derive would take: the eligible host with the fewest, ties to the one declared first. A repository that declares no host has nothing to measure, and the probe refuses with 12 rather than reporting an empty success.
+
+  ```console
+  $ majordomus offload probe
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-offload-derive"></a>
+## `majordomus offload derive`
+
+Derive a worktree on a declared host and stage what it changed; nothing is committed or pushed. Exit 2 on an untracked file or an unresolved merge, 10 when the derive fails, 11 when it deletes a tracked file, 12 when no host can take it, 75 when the queue's wait runs out
+
+```text
+majordomus offload derive [OPTIONS] [WORKTREE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<WORKTREE>` | `<WORKTREE>` | `.` | The worktree to derive |
+| `--host` | `<HOST>` | — | A declared host, by id or address, instead of the one the probe chooses |
+| `--keep` | flag | — | Keep the host's worktree after the derive (it is removed by default; a failed derive's is always kept) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--declaration` | `<FILE>` | — | Read this derive-offload declaration file instead of the repository's (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A derive with nowhere to go is refused before anything travels** — Sends the worktree as it stands to a declared host as a git bundle, waits its turn in the host's FIFO queue, derives in a build directory of its own and stages the files the derive changed; nothing is committed or pushed. With no host declared it refuses with 12 before it reads the worktree, contacts anything or writes a ref.
+
+  ```console
+  $ majordomus offload derive .
   ```
 
   Verified: exits 12.
@@ -4618,6 +4759,52 @@ Examples:
 
   Verified: exits 10.
 
+<a id="majordomus-monitor"></a>
+## `majordomus monitor`
+
+Everything that happens around this repository, followed in one stream: mesh sessions, claims, handovers and reviews on every linked machine, the executor's merges and failures, and GitHub's pull requests and runs, with what is addressed to you marked
+
+```text
+majordomus monitor [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--follow` | flag | — | Keep following: ask again every `--interval` seconds and print only what is new |
+| `--after` | `<AFTER>` | — | Start after this cursor (a page's `cursor`), instead of the newest signals |
+| `--limit` | `<LIMIT>` | — | At most this many signals per page (default 50, at most 500) |
+| `--sources` | `<SOURCES>` | — | A comma-separated subset of mesh, executor and github (default: all three) |
+| `--for` | `<READER>` | — | Your names, comma-separated (a worker such as 1b, a role, a login): what names them is marked for you; default $MAJORDOMUS_MONITOR_FOR |
+| `--since` | `<SINCE>` | — | How far back the first page reaches: seconds, or a number with s, m, h or d (default 1h) |
+| `--match` | `<PATTERN>` | — | Keep only signals whose summary contains this text (case-insensitive) |
+| `--count` | `<COUNT>` | — | Stop following after this many signals |
+| `--until` | `<UNTIL>` | — | Stop following at the first signal of this kind (e.g. merged, review_requested, run_failed) |
+| `--timeout` | `<TIMEOUT>` | — | Give up following after this long, exiting 10: seconds, or a number with s, m, h or d |
+| `--interval` | `<INTERVAL>` | `2` | Seconds between two asks while following |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | `text` for a person, `json` for a machine; both render the same answer — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What happened in the last half hour** — One page of the stream — the mesh, the executor's trail and GitHub — with what names you listed first. With no running server the answer is the reason.
+
+  ```console
+  $ majordomus monitor --since 30m --for 1b
+  ```
+
+  Verified: exits 0; prints no running server.
+
+- **Wait for a pull request to merge** — Follow the stream and exit 0 at the first merge whose summary names #885; `--timeout` gives up with exit 10, as it does here within a second when no server answers.
+
+  ```console
+  $ majordomus monitor --follow --match '#885' --until merged --timeout 1s --interval 1
+  ```
+
+  Verified: exits 10.
+
 <a id="majordomus-models"></a>
 ## `majordomus models`
 
@@ -6101,6 +6288,37 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-brief"></a>
+## `majordomus brief`
+
+What surrounds this session, in one line and in a few: its episode and task, the peers of every board, the mesh, the integration queue and the derive queue, asked of the server holding this checkout's lease
+
+```text
+majordomus brief [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--line` | flag | — | Print the one-line brief alone: the status line's text |
+| `--keep-awake` | flag | — | Print what a session is told at its start about keeping itself awake, then the one-line brief |
+| `--session` | `<ID>` | — | The provider's own session identity: the brief names the open episode it owns |
+| `--this-checkout` | flag | — | Read this checkout's board alone instead of every checkout's |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The one-line brief, composed here when no server answers** — The same answer `GET /api/v1/brief` and the MCP tool `majordomus_brief` return, rendered as its one line: this session's task or episode and branch, the peers of the boards read, the mesh, the integration queue and the derive lock, every section present whatever its state. The command line asks the server holding this checkout's lease, which holds the board and the mesh; this fixture has no server, so the brief is composed by this process and says so in its multi-line form.
+
+  ```console
+  $ majordomus brief --line --this-checkout
+  ```
+
+  Verified: exits 0.
 
 <a id="majordomus-skills"></a>
 ## `majordomus skills`
