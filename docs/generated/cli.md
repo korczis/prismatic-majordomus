@@ -242,9 +242,10 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus shell check`](#majordomus-shell-check) | `/docs/cli/shell/check/` | Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured |
 | [`majordomus layout`](#majordomus-layout) | `/docs/cli/layout/` | The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract |
 | [`majordomus layout check`](#majordomus-layout-check) | `/docs/cli/layout/check/` | Refuse every path a declared layout excludes, naming the contract; exit 10 on a finding, 12 when the halves cannot be read |
-| [`majordomus design`](#majordomus-design) | `/docs/cli/design/` | The UI kit the repository's interface is built on: judged against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout), and declared in the repository as its rule, policy block and gates |
+| [`majordomus design`](#majordomus-design) | `/docs/cli/design/` | The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints |
 | [`majordomus design kit`](#majordomus-design-kit) | `/docs/cli/design/kit/` | Whether the interface is built on the kit: every finding with its signal, path, evidence and remedy; exit 0 when clean or when there is no interface, 10 on a finding under --check, 2 for a policy that cannot be read |
-| [`majordomus design kit adopt`](#majordomus-design-kit-adopt) | `/docs/cli/design/kit/adopt/` | Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and the design_kit policy block once the policy schema declares it; idempotent, and --dry-run writes nothing |
+| [`majordomus design kit adopt`](#majordomus-design-kit-adopt) | `/docs/cli/design/kit/adopt/` | Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing |
+| [`majordomus design licence`](#majordomus-design-licence) | `/docs/cli/design/licence/` | Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed |
 | [`majordomus pack`](#majordomus-pack) | `/docs/cli/pack/` | The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output |
 | [`majordomus pack plan`](#majordomus-pack-plan) | `/docs/cli/pack/plan/` | What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read |
 | [`majordomus pack build`](#majordomus-pack-build) | `/docs/cli/pack/build/` | Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one |
@@ -6948,9 +6949,9 @@ Examples:
 <a id="majordomus-design"></a>
 ## `majordomus design`
 
-The UI kit the repository's interface is built on: judged against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout), and declared in the repository as its rule, policy block and gates
+The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints
 
-Subcommands: [`majordomus design kit`](#majordomus-design-kit).
+Subcommands: [`majordomus design kit`](#majordomus-design-kit), [`majordomus design licence`](#majordomus-design-licence).
 
 ```text
 majordomus design [OPTIONS] <COMMAND>
@@ -6997,7 +6998,7 @@ Examples:
 <a id="majordomus-design-kit-adopt"></a>
 ## `majordomus design kit adopt`
 
-Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and the design_kit policy block once the policy schema declares it; idempotent, and --dry-run writes nothing
+Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing
 
 ```text
 majordomus design kit adopt [OPTIONS] <PROFILE>
@@ -7015,13 +7016,42 @@ majordomus design kit adopt [OPTIONS] <PROFILE>
 
 Examples:
 
-- **What adopting Flowbite Pro would write, before anything is written** — Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). The `design_kit` block is written once the policy schema declares it; until then a note says why it is not, and flowbite-pro is the profile judged when the policy names none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.
+- **What adopting Flowbite Pro would write, before anything is written** — Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with `ui.kit: flowbite-pro` (set in its `ui:` block, or the block appended when there is none) and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). Exemptions under `ui.exempt` are the repository's to declare, and adoption writes none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.
 
   ```console
   $ majordomus design kit adopt flowbite-pro --dry-run --format json
   ```
 
   Verified: exits 0; prints one JSON document carrying /writes, /notes, /dry_run.
+
+<a id="majordomus-design-licence"></a>
+## `majordomus design licence`
+
+Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed
+
+```text
+majordomus design licence [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--evidence` | `<FILE>` | — | A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME |
+| `--json` | flag | — | The same as --format json |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree; `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Whether a public tree holds a licensed kit's files** — The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.
+
+  ```console
+  $ majordomus design licence --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /verdict, /fails, /kit, /visibility, /matches.
 
 <a id="majordomus-pack"></a>
 ## `majordomus pack`

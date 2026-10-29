@@ -42,6 +42,7 @@ pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
+pub(crate) mod design_licence;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;

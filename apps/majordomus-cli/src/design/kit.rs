@@ -21,10 +21,13 @@
 //! - [`Tree::read`] is the only code that touches the filesystem: it lists the repository's
 //!   files (in a Git work tree the tracked ones and the untracked ones Git does not ignore,
 //!   elsewhere every file below the root), skips what the profile calls dependencies and
-//!   build output, and keeps the text of the files a signal reads.
-//! - [`judge`] takes that tree, the profile, the repository's policy and the licence
-//!   evidence's [`LicenceState`] and returns a [`KitReport`]. It reads nothing else, so every
-//!   signal is unit-tested on a tree built in memory.
+//!   build output, and keeps the text of the files a signal reads. A Git submodule, and a
+//!   Git repository nested in the work tree that it does not track, is judged in its own
+//!   repository: it is listed as a notice that names it, and nothing below it is read.
+//! - [`judge`] takes that tree, the profile, the repository's policy and the design
+//!   licence's [`LicenceState`] and returns a [`KitReport`]. It reads nothing else, so every
+//!   signal is unit-tested on a tree built in memory. [`licence_state`] asks the design
+//!   licence (I4336) through its library function.
 //!
 //! The signals:
 //!
@@ -37,11 +40,14 @@
 //! | S4 | Is no other kit a dependency or an import? (Alpine is reported, not refused.) |
 //! | S5 | Does every root layout carry the shell? |
 //!
-//! Every finding names its signal, the path, the evidence and the remedy. An exemption is a
-//! policy entry `{path, because}`; it moves a finding to the exempted list, which every
-//! answer prints, so an exemption is never silent. A policy that cannot be read, or an
-//! exemption without a reason, is a bad policy: nothing is judged under it. A licensed marker
-//! the licence evidence does not decide as active is a finding no exemption moves.
+//! Every finding names its signal, the path, the evidence and the remedy. The policy's `ui:`
+//! block, which the design licence declares, names the profile (`ui.kit`) and the
+//! exemptions (`ui.exempt`); an exemption is exactly `{path, because}`, it moves every
+//! finding at its path to the exempted list, which every answer prints, so an exemption is
+//! never silent. The root layouts, the role aliases and which layouts are marketing pages
+//! are the profile's alone. A policy that cannot be read, or an exemption without a reason,
+//! is a bad policy: nothing is judged under it. A licensed marker the design licence does not
+//! decide as active is a finding no exemption moves.
 //!
 //! The module is the crate's own (its parent is `pub(crate)`), so its examples are the unit
 //! tests below: `a_conformant_tree_is_clean` is the example this header would carry.
@@ -54,6 +60,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
+use crate::design::licence;
 use crate::discovery::glob::Glob;
 use crate::metadata::yaml;
 
@@ -66,8 +73,9 @@ pub const DEFAULT_PROFILE: &str = "flowbite-pro";
 /// The repository's policy, where the kit's block is read from.
 pub const POLICY: &str = ".ai/repo/policy.yaml";
 
-/// The policy key of the block. Read only through [`policy_block`].
-pub const POLICY_KEY: &str = "design_kit";
+/// The policy key of the block, the design licence's `ui:` (I4336). Read only through
+/// [`policy_block`].
+pub const POLICY_KEY: &str = "ui";
 
 /// The format version of a kit profile this module reads.
 pub const PROFILE_SCHEMA: u64 = 1;
@@ -91,10 +99,6 @@ const NOT_PUBLISHED: [&str; 5] = ["node_modules", "deps", "_build", "tmp", ".git
 
 /// A gh-pages deploy's publish directory, in a workflow.
 const PUBLISH_DIR: &str = r#"(?m)\bpublish_dir:\s*["']?([^\s"'#]+)"#;
-
-/// Where the distribution declares the keys a policy may carry, relative to its share
-/// directory: adoption writes the kit's block only where this schema admits it.
-pub const POLICY_SCHEMA: &str = "schemas/majordomus/policy/policy.v1.schema.json";
 
 /// An entry of a pnpm workspace file's package list.
 const PNPM_ENTRY: &str = r#"(?m)^\s*-\s*["']?([^"'\s]+)"#;
@@ -244,6 +248,11 @@ pub struct PluginMarkers {
     pub v3_plugin: String,
     /// The content glob under Tailwind 3.
     pub v3_content: String,
+    /// The identifier a Tailwind 3 configuration binds to the kit's helper (flowbite-react's
+    /// `flowbite-react/tailwind`), as capture group 1 or 2; the configuration then passes the
+    /// plugin and the content only by calling `<identifier>.plugin()` and
+    /// `<identifier>.content()`, never another object's method of that name.
+    pub v3_binding: String,
     /// Tailwind compiled in the browser.
     pub play_cdn: String,
     /// The kit fetched from a CDN.
@@ -286,6 +295,11 @@ pub struct LicensedMarker {
     /// Matched against the text of every file a signal reads.
     #[serde(default)]
     pub text: Option<String>,
+    /// Matched against the name of every dependency a package manifest declares under
+    /// dependencies, devDependencies, peerDependencies or optionalDependencies, and never
+    /// against another key of the manifest.
+    #[serde(default)]
+    pub dependency: Option<String>,
 }
 
 /// Another kit.
@@ -330,6 +344,13 @@ pub struct ShellMarkers {
     pub layouts: Vec<String>,
     /// The file beside a `*.html.heex` layout that is judged with it.
     pub companion: String,
+    /// The templates an embedded-markup layout module (`layouts.ex`) draws its app and root
+    /// layouts with, in its templates directory: only these are judged with it, so another
+    /// template there (an email's) never supplies the shell.
+    pub embedded_templates: Vec<String>,
+    /// The root layouts judged as a marketing page, by a navbar and a footer, instead of the
+    /// application shell: a published site's.
+    pub marketing_layouts: Vec<String>,
     /// A fixed top navbar.
     pub fixed_nav: String,
     /// The sidebar.
@@ -415,6 +436,7 @@ struct LicensedRe {
     name: String,
     path: Option<Regex>,
     text: Option<Regex>,
+    dependency: Option<Regex>,
 }
 
 /// The profile's expressions, compiled.
@@ -425,6 +447,7 @@ struct Compiled {
     v3_entry: Regex,
     v3_plugin: Regex,
     v3_content: Regex,
+    v3_binding: Regex,
     play_cdn: Regex,
     cdn_flowbite: Regex,
     loaded: Regex,
@@ -483,9 +506,9 @@ impl Compiled {
                 );
             }
             for (n, m) in licence.markers.iter().enumerate() {
-                if m.path.is_none() && m.text.is_none() {
+                if m.path.is_none() && m.text.is_none() && m.dependency.is_none() {
                     return Err(format!(
-                        "the profile's licence.markers[{n}] ({}) has neither a path nor a text expression",
+                        "the profile's licence.markers[{n}] ({}) has neither a path, a text nor a dependency expression",
                         m.name
                     ));
                 }
@@ -502,6 +525,11 @@ impl Compiled {
                         .as_deref()
                         .map(|r| compile(&at("text"), r))
                         .transpose()?,
+                    dependency: m
+                        .dependency
+                        .as_deref()
+                        .map(|r| compile(&at("dependency"), r))
+                        .transpose()?,
                 });
             }
         }
@@ -513,6 +541,7 @@ impl Compiled {
             v3_entry: compile("wiring.plugin.v3_entry", &plugin.v3_entry)?,
             v3_plugin: compile("wiring.plugin.v3_plugin", &plugin.v3_plugin)?,
             v3_content: compile("wiring.plugin.v3_content", &plugin.v3_content)?,
+            v3_binding: compile("wiring.plugin.v3_binding", &plugin.v3_binding)?,
             play_cdn: compile("wiring.plugin.play_cdn", &plugin.play_cdn)?,
             cdn_flowbite: compile("wiring.plugin.cdn_flowbite", &plugin.cdn_flowbite)?,
             loaded: compile("wiring.loaded", &p.wiring.loaded)?,
@@ -569,18 +598,22 @@ fn import_pattern(packages: &[String]) -> Result<Option<Regex>, String> {
 
 // ------------------------------------------------------------------ the licence
 
-/// What the licence evidence of a licensed kit says about a repository: the seam the design
-/// licence (I4336) fills. Until it does, [`licence_state`] answers `not_judged`.
+/// What the design licence (I4336, [`crate::design::licence`]) says about a repository,
+/// as the judge of a licensed kit's markers reads it. [`licence_state`] maps its verdict.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum LicenceState {
-    /// The evidence was read and the licence holds.
+    /// The design licence judged the tree with the evidence held and found it clean, or the
+    /// tree is private: the licence holds.
     Active,
-    /// The evidence was read and the licence does not hold.
+    /// The design licence judged nothing and needed to judge nothing: no kit is declared, a
+    /// private tree without evidence, or no UI file. Licensed markers there are unlicensed.
     Inactive,
-    /// Nothing judged the evidence.
+    /// The design licence owed a judgement and could not give one, or could not be asked:
+    /// no evidence where a public tree owes it, a `ui:` block it cannot use, a tree it
+    /// cannot list.
     NotJudged,
-    /// The evidence could not be judged: absent where it is owed, or unreadable.
+    /// The design licence refused the tree: a public tree holds a licensed file's bytes.
     Refused,
 }
 
@@ -592,10 +625,11 @@ pub enum KitVariant {
     NotUsed,
     /// Licensed markers, and the licence is active.
     Licensed,
-    /// Licensed markers, and the licence is inactive: a finding.
+    /// Licensed markers, and the licence is inactive or the design licence refused the
+    /// tree: a finding.
     Unlicensed,
-    /// Licensed markers, and evidence nobody judged or that was refused: the judge cannot
-    /// decide, and that is a finding, never a pass.
+    /// Licensed markers, and a licence nobody could judge: the judge cannot decide, and that
+    /// is a finding, never a pass.
     Undecided,
 }
 
@@ -607,23 +641,54 @@ impl KitVariant {
 }
 
 /// Decide the variant from whether the tree carries a licensed marker and what the
-/// evidence says. Only an active licence turns licensed markers into a pass.
+/// licence says. Only an active licence turns licensed markers into a pass.
 pub fn decide(carries_licensed_markers: bool, state: LicenceState) -> KitVariant {
     if !carries_licensed_markers {
         return KitVariant::NotUsed;
     }
     match state {
         LicenceState::Active => KitVariant::Licensed,
-        LicenceState::Inactive => KitVariant::Unlicensed,
-        LicenceState::NotJudged | LicenceState::Refused => KitVariant::Undecided,
+        LicenceState::Inactive | LicenceState::Refused => KitVariant::Unlicensed,
+        LicenceState::NotJudged => KitVariant::Undecided,
     }
 }
 
-/// What the licence evidence says for `profile` in the repository at `root`. This is the
-/// one function the design licence (I4336) replaces; until then nothing reads the evidence
-/// and the answer is `not_judged`, which [`decide`] never turns into a pass.
-pub fn licence_state(_root: &Path, _profile: &Profile) -> LicenceState {
-    LicenceState::NotJudged
+/// The design licence's verdict as a [`LicenceState`]: active and inactive pass through,
+/// refused stays refused, and not judged stays undecided.
+pub fn licence_state_of(verdict: licence::Verdict) -> LicenceState {
+    match verdict {
+        licence::Verdict::Active => LicenceState::Active,
+        licence::Verdict::Inactive => LicenceState::Inactive,
+        licence::Verdict::Refused => LicenceState::Refused,
+        licence::Verdict::NotJudged => LicenceState::NotJudged,
+    }
+}
+
+/// What the design licence says for `profile` in the repository at `root`, asked through
+/// its library function ([`licence::assess_root`]) with the policy's `ui:` block, the
+/// evidence its `ui.evidence` entries name under `$HOME`, and `MAJORDOMUS_VISIBILITY`. A
+/// free kit's profile owes no answer; an evidence format the design licence does not read,
+/// and a question it cannot answer at all, are `not_judged`, never a pass.
+pub fn licence_state(root: &Path, profile: &Profile) -> LicenceState {
+    let Some(markers) = &profile.licence else {
+        return LicenceState::NotJudged;
+    };
+    if markers.evidence != licence::EVIDENCE_SCHEMA {
+        return LicenceState::NotJudged;
+    }
+    let policy = std::fs::read_to_string(root.join(POLICY)).ok();
+    let home = std::env::var_os("HOME").map(std::path::PathBuf::from);
+    let tightened = std::env::var(licence::VISIBILITY_ENV).ok();
+    match licence::assess_root(
+        root,
+        policy.as_deref(),
+        None,
+        home.as_deref(),
+        tightened.as_deref(),
+    ) {
+        Ok(report) => licence_state_of(report.verdict),
+        Err(_) => LicenceState::NotJudged,
+    }
 }
 
 /// How the tree stands against a licensed kit's licence.
@@ -641,43 +706,21 @@ pub struct KitLicence {
 
 // ------------------------------------------------------------------ the policy
 
-/// The kit's block of a parsed policy. With [`block_text`] (what adoption writes) and
-/// [`schema_admits_block`] (whether it may), this is where the policy's key for the kit
-/// lives: judgement and adoption both read and write the block through these three.
+/// The `ui:` block of a parsed policy, which the design licence (I4336) declares and this
+/// judge shares with it. With [`kit_line`] (what adoption writes), this is where the policy's
+/// key for the kit lives: judgement and adoption both read and write it through these two.
 ///
-/// Moving the block to the `ui.kit` and `ui.exempt` keys of the design licence (I4336) is
-/// therefore one change of code, and not one change in all: the block carries `layouts`,
-/// `roles` and an exemption's `signals` and `shell`, which I4336's `ui` schema does not
-/// declare (it closes an exemption to `path` and `because`). That shape is agreed with
-/// I4336's schema first, and the profile, the rule template and ADR 0230 follow it.
+/// The block is the repository's, and two of its keys are this judge's: `ui.kit`, the
+/// profile's id (empty, or absent, when no kit is adopted), and `ui.exempt`, each entry
+/// exactly `{path, because}`. The root layouts and the role aliases are the profile's alone,
+/// and an exemption covers every exemptable signal at its path (ADR 0230).
 pub fn policy_block(map: &Map<String, Value>) -> Option<&Value> {
     map.get(POLICY_KEY)
 }
 
-/// The block adoption appends to a policy, naming `profile`, with the comment above it.
-pub fn block_text(profile: &str) -> String {
-    format!(
-        "\n# The UI kit `majordomus design kit` judges this repository against (rule\n\
-         # project.ui-uses-flowbite-pro, ADR 0230), written by `majordomus design kit adopt\n\
-         # {profile}`. Declare every exemption under `exempt:`, a block list whose entries\n\
-         # carry `path:` and `because:` (optionally `signals:` and `shell: marketing`).\n\
-         {POLICY_KEY}:\n  profile: {profile}\n"
-    )
-}
-
-/// Whether the distribution's policy schema ([`POLICY_SCHEMA`] under `share`) admits the
-/// kit's block. `majordomus doctor` refuses a policy key the schema does not declare, so
-/// adoption never writes a block the schema would refuse; an unreadable schema admits
-/// nothing.
-pub fn schema_admits_block(share: &Path) -> bool {
-    std::fs::read_to_string(share.join(POLICY_SCHEMA))
-        .ok()
-        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
-        .is_some_and(|schema| {
-            schema
-                .pointer(&format!("/properties/{POLICY_KEY}"))
-                .is_some()
-        })
+/// The line adoption writes under `ui:` to name `profile`.
+pub fn kit_line(profile: &str) -> String {
+    format!("kit: {profile}")
 }
 
 /// A signal of the profile.
@@ -699,32 +742,13 @@ pub enum KitSignal {
     S5,
 }
 
-impl KitSignal {
-    fn parse(text: &str) -> Option<Self> {
-        match text {
-            "S1" => Some(KitSignal::S1),
-            "S2" => Some(KitSignal::S2),
-            "S3" => Some(KitSignal::S3),
-            "S4" => Some(KitSignal::S4),
-            "S5" => Some(KitSignal::S5),
-            _ => None,
-        }
-    }
-}
-
-/// One exemption of the policy.
+/// One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct KitExemption {
     /// The path or glob a finding's path matches.
     pub path: String,
-    /// Why the path does not owe it.
+    /// Why the path is not held to the kit.
     pub because: String,
-    /// Only these signals; empty is every signal.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub signals: Vec<KitSignal>,
-    /// `marketing`: S5 judges a navbar and a footer instead of the application shell.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub shell: Option<String>,
     /// How many findings it moved to the exempted list.
     #[serde(default)]
     pub matched: usize,
@@ -738,41 +762,27 @@ impl KitExemption {
             || Glob::new(base).matches(path)
     }
 
-    fn is_marketing(&self) -> bool {
-        self.shell.as_deref() == Some("marketing")
-    }
-
-    /// Whether this exemption moves `finding` to the exempted list. A marketing exemption
-    /// changes what S5 judges at its path and covers no finding of its own, unless it also
-    /// names signals; a finding about the repository as a whole has no path to exempt.
+    /// Whether this exemption moves `finding` to the exempted list: every finding at a path
+    /// it covers. A finding about the repository as a whole has no path to exempt, and a
+    /// licensed marker's finding never reaches this question.
     fn exempts(&self, finding: &KitFinding) -> bool {
-        let signal = if self.signals.is_empty() {
-            !self.is_marketing()
-        } else {
-            self.signals.contains(&finding.signal)
-        };
-        signal && !finding.path.is_empty() && self.covers(&finding.path)
+        !finding.path.is_empty() && self.covers(&finding.path)
     }
 }
 
-/// The repository's kit block, read.
+/// The repository's `ui:` block, as this judge reads it.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct KitPolicy {
-    /// Whether the policy declares the block.
+    /// Whether the policy adopts a kit: `ui.kit` names a profile.
     pub declared: bool,
-    /// The profile it names.
+    /// The profile judged: the one `ui.kit` names, else the default.
     pub profile: String,
-    /// The root layouts it names instead of the profile's.
-    pub layouts: Option<Vec<String>>,
-    /// The role aliases it adds.
-    pub roles: Roles,
     /// Its exemptions.
     pub exempt: Vec<KitExemption>,
 }
 
 impl KitPolicy {
-    /// The policy of a repository that declares no block: the default profile, nothing
-    /// exempted.
+    /// The policy of a repository that adopts no kit: the default profile, nothing exempted.
     pub fn absent() -> Self {
         KitPolicy {
             declared: false,
@@ -795,68 +805,27 @@ impl KitPolicy {
         }
     }
 
-    /// Read the block itself.
+    /// Read the block itself. Only `kit` and `exempt` are read; the block's other keys are
+    /// the design licence's (`visibility`, `publish`, `evidence`), and the policy schema
+    /// closes the block to the keys it declares.
     pub fn from_block(block: &Value) -> Result<Self, Vec<String>> {
         let mut errors = Vec::new();
         let Some(map) = block.as_object() else {
             return Err(vec![format!("{POLICY_KEY} is not a mapping")]);
         };
-        for key in map.keys() {
-            if !["profile", "layouts", "roles", "exempt"].contains(&key.as_str()) {
+        let profile = match map.get("kit") {
+            None | Some(Value::Null) => String::new(),
+            Some(Value::String(p)) => p.trim().to_string(),
+            Some(other) => {
                 errors.push(format!(
-                    "{POLICY_KEY}.{key} is not a key of the block (profile, layouts, roles, exempt)"
+                    "{POLICY_KEY}.kit is {other}, and it names a kit profile of the distribution or is empty"
                 ));
-            }
-        }
-        let profile = match map.get("profile").and_then(Value::as_str) {
-            Some(p) if !p.trim().is_empty() => p.trim().to_string(),
-            _ => {
-                errors.push(format!("{POLICY_KEY}.profile names no profile"));
                 String::new()
             }
         };
-        let strings = |value: &Value, at: &str, errors: &mut Vec<String>| -> Vec<String> {
-            match value.as_array() {
-                Some(items) => items
-                    .iter()
-                    .filter_map(|i| match i.as_str() {
-                        Some(s) if !s.trim().is_empty() => Some(s.trim().to_string()),
-                        _ => {
-                            errors.push(format!("{at} holds an entry that is not a string"));
-                            None
-                        }
-                    })
-                    .collect(),
-                None => {
-                    errors.push(format!("{at} is not a list"));
-                    Vec::new()
-                }
-            }
-        };
-        let layouts = map
-            .get("layouts")
-            .map(|v| strings(v, &format!("{POLICY_KEY}.layouts"), &mut errors));
-        let mut roles = Roles::default();
-        if let Some(v) = map.get("roles") {
-            match v.as_object() {
-                Some(r) => {
-                    for (role, list) in r {
-                        let at = format!("{POLICY_KEY}.roles.{role}");
-                        let values = strings(list, &at, &mut errors);
-                        match role.as_str() {
-                            "page" => roles.page = values,
-                            "surface" => roles.surface = values,
-                            "border" => roles.border = values,
-                            _ => errors.push(format!("{at} is not a role (page, surface, border)")),
-                        }
-                    }
-                }
-                None => errors.push(format!("{POLICY_KEY}.roles is not a mapping")),
-            }
-        }
         let mut exempt = Vec::new();
         match map.get("exempt") {
-            None => {}
+            None | Some(Value::Null) => {}
             Some(Value::Array(items)) => {
                 for (n, item) in items.iter().enumerate() {
                     let at = format!("{POLICY_KEY}.exempt[{n}]");
@@ -868,17 +837,19 @@ impl KitPolicy {
             }
             Some(_) => errors.push(format!("{POLICY_KEY}.exempt is not a list")),
         }
-        if errors.is_empty() {
-            Ok(KitPolicy {
-                declared: true,
-                profile,
-                layouts,
-                roles,
-                exempt,
-            })
-        } else {
-            Err(errors)
+        if !errors.is_empty() {
+            return Err(errors);
         }
+        let declared = !profile.is_empty();
+        Ok(KitPolicy {
+            declared,
+            profile: if declared {
+                profile
+            } else {
+                DEFAULT_PROFILE.into()
+            },
+            exempt,
+        })
     }
 }
 
@@ -888,9 +859,9 @@ fn exemption(item: &Value, at: &str) -> Result<KitExemption, Vec<String>> {
         return Err(vec![format!("{at} is not a mapping of path and because")]);
     };
     for key in map.keys() {
-        if !["path", "because", "signals", "shell"].contains(&key.as_str()) {
+        if !["path", "because"].contains(&key.as_str()) {
             errors.push(format!(
-                "{at}.{key} is not a key of an exemption (path, because, signals, shell)"
+                "{at}.{key} is not a key of an exemption, which is exactly path and because"
             ));
         }
     }
@@ -911,38 +882,10 @@ fn exemption(item: &Value, at: &str) -> Result<KitExemption, Vec<String>> {
             "{at} ({path}) gives no because: an exemption is a decision with its reason"
         ));
     }
-    let mut signals = Vec::new();
-    if let Some(v) = map.get("signals") {
-        match v.as_array() {
-            Some(items) => {
-                for s in items {
-                    match s.as_str().and_then(KitSignal::parse) {
-                        Some(sig) => signals.push(sig),
-                        None => errors.push(format!(
-                            "{at}.signals holds {s}, which is not one of S1, S2, S3, S4, S5"
-                        )),
-                    }
-                }
-            }
-            None => errors.push(format!("{at}.signals is not a list")),
-        }
-    }
-    let shell = match map.get("shell") {
-        None => None,
-        Some(Value::String(s)) if s == "marketing" => Some(s.clone()),
-        Some(other) => {
-            errors.push(format!(
-                "{at}.shell is {other}, and the one shell an exemption may name is marketing"
-            ));
-            None
-        }
-    };
     if errors.is_empty() {
         Ok(KitExemption {
             path,
             because,
-            signals,
-            shell,
             matched: 0,
         })
     } else {
@@ -962,6 +905,10 @@ pub struct Tree {
     pub texts: BTreeMap<String, String>,
     /// Every file below a vendored directory of the profile, by path only.
     pub vendored: BTreeSet<String>,
+    /// Every Git repository of its own inside this one, by path: a submodule (`true`) or an
+    /// untracked nested repository (`false`). Nothing below one is read: a submodule is
+    /// judged in its own repository, and the answer names each one in a notice.
+    pub nested: BTreeMap<String, bool>,
 }
 
 /// Where a listed file stands against the profile's directories.
@@ -998,9 +945,13 @@ fn placement(profile: &Profile, path: &str) -> Placement {
 }
 
 /// The files of the Git work tree whose top is `root`: the tracked ones and the untracked
-/// ones Git does not ignore. `None` when `root` is not the top of a work tree, or Git cannot
-/// say, and the walk lists the files instead.
-fn git_files(root: &Path) -> Option<BTreeSet<String>> {
+/// ones Git does not ignore, with the submodules Git tracks. `None` when `root` is not the
+/// top of a work tree, or Git cannot say, and the walk lists the files instead.
+///
+/// Git lists a submodule as its gitlink, one path that is a directory on disk, and an
+/// untracked repository nested in the work tree as its directory with a trailing `/`; it
+/// lists nothing below either, and neither is read here.
+fn git_files(root: &Path) -> Option<(BTreeSet<String>, BTreeSet<String>)> {
     let git = |args: &[&str]| {
         std::process::Command::new("git")
             .arg("-C")
@@ -1026,14 +977,25 @@ fn git_files(root: &Path) -> Option<BTreeSet<String>> {
         "--others",
         "--exclude-standard",
     ])?;
-    Some(
+    let staged = git(&["ls-files", "-z", "--stage"])?;
+    let submodules: BTreeSet<String> = staged
+        .stdout
+        .split(|b| *b == 0)
+        .filter_map(|line| {
+            let line = String::from_utf8_lossy(line);
+            let (meta, path) = line.split_once('\t')?;
+            meta.starts_with("160000 ").then(|| path.to_string())
+        })
+        .collect();
+    Some((
         listed
             .stdout
             .split(|b| *b == 0)
             .filter(|p| !p.is_empty())
             .map(|p| String::from_utf8_lossy(p).into_owned())
             .collect(),
-    )
+        submodules,
+    ))
 }
 
 /// Every file below `root`, never descending into a skipped directory that is not vendored.
@@ -1089,12 +1051,20 @@ impl Tree {
     pub fn read(root: &Path, profile: &Profile) -> std::io::Result<Self> {
         let publish_script = Regex::new(PUBLISH_SCRIPT).map_err(std::io::Error::other)?;
         std::fs::read_dir(root)?;
-        let files = match git_files(root) {
-            Some(files) => files,
-            None => walked_files(root, profile)?,
+        let (files, submodules) = match git_files(root) {
+            Some(listed) => listed,
+            None => (walked_files(root, profile)?, BTreeSet::new()),
         };
         let mut tree = Tree::default();
         for path in files {
+            let submodule = submodules.contains(&path);
+            if submodule || path.ends_with('/') {
+                let path = path.trim_end_matches('/').to_string();
+                if placement(profile, &format!("{path}/x")) != Placement::Skipped {
+                    tree.nested.insert(path, submodule);
+                }
+                continue;
+            }
             match placement(profile, &path) {
                 Placement::Skipped => continue,
                 Placement::Vendored => {
@@ -1525,7 +1495,6 @@ struct Judgement<'a> {
     surfaces: Vec<Surface>,
     findings: Vec<KitFinding>,
     reported: Vec<String>,
-    policy_roles: Roles,
 }
 
 impl Judgement<'_> {
@@ -1570,19 +1539,38 @@ impl Judgement<'_> {
         best.map(|(i, _)| i)
     }
 
-    /// Every Mix project file the tree carries, with its text.
+    /// Whether `dir` lies below a directory that holds no app (examples, fixtures, tests).
+    fn not_app(&self, dir: &str) -> bool {
+        let ui = &self.profile.ui;
+        dir.split('/')
+            .any(|seg| ui.not_app_dirs.iter().any(|n| n == seg))
+    }
+
+    /// Every Mix project file the tree carries outside a directory that holds no app, with
+    /// its text: the candidates S0 makes surfaces of.
     fn mix_files(&self) -> impl Iterator<Item = (&str, &str)> {
         let mix = &self.profile.ui.mix_file;
         self.tree
             .texts
             .iter()
-            .filter(move |(p, _)| file_name(p) == mix)
+            .filter(move |(p, _)| file_name(p) == mix && !self.not_app(parent(p)))
             .map(|(p, t)| (p.as_str(), t.as_str()))
     }
 
-    /// Whether any Mix project of the tree depends on Phoenix LiveView.
+    /// The Mix project files S4 and the stacks count, as the counted package manifests are:
+    /// the root's and each surface's, never one under examples or fixtures.
+    fn counted_mix(&self) -> Vec<(&str, &str)> {
+        let root = self.profile.ui.mix_file.as_str();
+        self.mix_files()
+            .filter(|(p, _)| {
+                *p == root || self.surfaces.iter().any(|s| s.mix.as_deref() == Some(*p))
+            })
+            .collect()
+    }
+
+    /// Whether a counted Mix project depends on Phoenix LiveView.
     fn phoenix(&self) -> bool {
-        self.mix_files().any(|(_, t)| {
+        self.counted_mix().iter().any(|(_, t)| {
             self.profile
                 .ui
                 .mix_deps
@@ -2077,7 +2065,8 @@ impl Judgement<'_> {
             );
             return;
         };
-        if !self.re.v3_plugin.is_match(&text) {
+        let (bound_plugin, bound_content) = self.bound_helper_calls(&text);
+        if !self.re.v3_plugin.is_match(&text) && !bound_plugin {
             self.finding(
                 KitSignal::S2,
                 &path,
@@ -2085,7 +2074,7 @@ impl Judgement<'_> {
                 "add require('flowbite/plugin') to plugins",
             );
         }
-        if !self.re.v3_content.is_match(&text) {
+        if !self.re.v3_content.is_match(&text) && !bound_content {
             self.finding(
                 KitSignal::S2,
                 &path,
@@ -2093,6 +2082,30 @@ impl Judgement<'_> {
                 "add './node_modules/flowbite/**/*.js' to content",
             );
         }
+    }
+
+    /// Whether a Tailwind 3 configuration calls `.plugin()` and `.content()` on the very
+    /// identifier it binds to the kit's helper (`v3_binding`). The `regex` crate has no
+    /// backreference, so the identifier is captured first and the calls are then matched on
+    /// it by name: another object's `.plugin()` (`forms.plugin()`) passes nothing.
+    fn bound_helper_calls(&self, text: &str) -> (bool, bool) {
+        let mut plugin = false;
+        let mut content = false;
+        for c in self.re.v3_binding.captures_iter(text) {
+            let Some(name) = c.get(1).or_else(|| c.get(2)) else {
+                continue;
+            };
+            let name = regex::escape(name.as_str());
+            let call = |method: &str, args: &str| {
+                Regex::new(&format!(
+                    r"(^|[^\w.$]){name}\s*\.\s*{method}\(\s*{args}\s*\)"
+                ))
+                .is_ok_and(|re| re.is_match(text))
+            };
+            plugin |= call("plugin", "");
+            content |= call("content", r"(\{[^}]*\})?");
+        }
+        (plugin, content)
     }
 
     fn s3(&mut self, i: usize) {
@@ -2166,7 +2179,7 @@ impl Judgement<'_> {
                     }
                 }
             }
-            for (mix, text) in self.mix_files() {
+            for (mix, text) in self.counted_mix() {
                 for package in &kit.mix {
                     if mix_depends_on(text, package) {
                         found.push((
@@ -2259,14 +2272,11 @@ impl Judgement<'_> {
             .unwrap_or(layout)
     }
 
-    /// The root layouts, from the policy or the profile. An embedded-markup layout is one
-    /// only when it carries the sigil, and the templates it embeds are then judged with it,
-    /// never as layouts of their own.
-    fn layouts(&self, policy: &KitPolicy) -> Vec<String> {
-        let globs = policy
-            .layouts
-            .as_ref()
-            .unwrap_or(&self.profile.shell.layouts);
+    /// The root layouts, from the profile. An embedded-markup layout is one only when it
+    /// carries the sigil, and the templates of its directory are then no layouts of their
+    /// own: the app and root templates are judged with it, and the rest with nothing.
+    fn layouts(&self) -> Vec<String> {
+        let globs = &self.profile.shell.layouts;
         let compiled: Vec<Glob> = globs.iter().map(|g| Glob::new(g)).collect();
         let matched: Vec<String> = self
             .tree
@@ -2288,17 +2298,16 @@ impl Judgement<'_> {
             .collect()
     }
 
-    fn s5(&mut self, policy: &KitPolicy, layouts: &[String]) {
+    fn s5(&mut self, layouts: &[String]) {
         if layouts.is_empty() {
-            let globs = policy
-                .layouts
-                .as_ref()
-                .unwrap_or(&self.profile.shell.layouts);
+            let globs = self.profile.shell.layouts.join(", ");
             self.finding(
                 KitSignal::S5,
                 "",
-                format!("no root layout matches {}", globs.join(", ")),
-                "declare the root layouts under design_kit.layouts in .ai/repo/policy.yaml",
+                format!("no root layout matches {globs}"),
+                &format!(
+                    "draw the shell in a root layout at a path the profile names ({globs}); the layouts are the profile's, and the policy declares none"
+                ),
             );
             return;
         }
@@ -2310,8 +2319,8 @@ impl Judgement<'_> {
             let mut text = self.tree.text(layout).unwrap_or("").to_string();
             if self.embedded(layout) {
                 let dir = Self::templates_of(layout);
-                for (path, t) in &self.tree.texts {
-                    if parent(path) == dir && path.ends_with(".html.heex") {
+                for name in &self.profile.shell.embedded_templates {
+                    if let Some(t) = self.tree.text(&in_dir(dir, name)) {
                         text.push('\n');
                         text.push_str(t);
                     }
@@ -2330,10 +2339,12 @@ impl Judgement<'_> {
                     }
                 }
             }
-            let marketing = policy
-                .exempt
+            let marketing = self
+                .profile
+                .shell
+                .marketing_layouts
                 .iter()
-                .any(|e| e.is_marketing() && e.covers(layout));
+                .any(|g| Glob::new(g).matches(layout));
             if marketing {
                 self.marketing_shell(layout, &text);
             } else {
@@ -2428,25 +2439,8 @@ impl Judgement<'_> {
         ];
         let mut missing = Vec::new();
         for (role, alternatives) in roles {
-            let extra = match role {
-                "page" => &self.policy_roles.page,
-                "surface" => &self.policy_roles.surface,
-                _ => &self.policy_roles.border,
-            };
-            let met = alternatives
-                .iter()
-                .chain(extra.iter())
-                .any(|a| has_classes(&tokens, a));
-            if !met {
-                missing.push(format!(
-                    "{role} ({})",
-                    alternatives
-                        .iter()
-                        .chain(extra.iter())
-                        .cloned()
-                        .collect::<Vec<_>>()
-                        .join(" | ")
-                ));
+            if !alternatives.iter().any(|a| has_classes(&tokens, a)) {
+                missing.push(format!("{role} ({})", alternatives.join(" | ")));
             }
         }
         if !missing.is_empty() {
@@ -2454,7 +2448,7 @@ impl Judgement<'_> {
                 KitSignal::S5,
                 layout,
                 format!("{layout} does not carry the role(s) {}", missing.join(", ")),
-                "use the Pro grays for page, surface and border, or declare the token rule's aliases under design_kit.roles; a brand colour is the primary scale (ADR 0230)",
+                "use the Pro grays for page, surface and border, or the token rule's role aliases the profile names; a brand colour is the primary scale (ADR 0230)",
             );
         }
     }
@@ -2487,15 +2481,35 @@ impl Judgement<'_> {
                     }
                 }
             }
+            if let Some(re) = &m.dependency {
+                let manifests = self
+                    .tree
+                    .texts
+                    .keys()
+                    .filter(|p| file_name(p) == self.profile.ui.manifest);
+                'manifests: for manifest in manifests {
+                    for name in manifest_deps(self.tree, [manifest]).keys() {
+                        if re.is_match(name) {
+                            markers.push(format!("{manifest} declares {name} ({})", m.name));
+                            if first_path.is_empty() {
+                                first_path = manifest.clone();
+                            }
+                            break 'manifests;
+                        }
+                    }
+                }
+            }
         }
         let variant = decide(!markers.is_empty(), state);
         let mut findings = Vec::new();
         let why = (!variant.passes()).then_some(match (variant, state) {
-            (KitVariant::Unlicensed, _) => "the licence evidence says the licence is inactive",
             (_, LicenceState::Refused) => {
-                "the licence evidence was refused, so the judge cannot decide the variant"
+                "the design licence refused the tree: a public tree holds a licensed file's bytes"
             }
-            _ => "nothing judged the licence evidence, so the judge cannot decide the variant",
+            (KitVariant::Unlicensed, _) => {
+                "the design licence is inactive (no kit declared, a private tree without evidence, or no UI file), so they are unlicensed"
+            }
+            _ => "the design licence could not judge the tree, so the judge cannot decide the variant",
         });
         if let Some(why) = why {
             findings.push(KitFinding {
@@ -2507,7 +2521,7 @@ impl Judgement<'_> {
                     markers.join("; ")
                 ),
                 remedy: format!(
-                    "keep the licensed distribution out of the tree and adapt its markup into the product, or provide the {} evidence the design licence reads",
+                    "keep the licensed distribution out of the tree and adapt its markup into the product, or declare the kit under ui.kit and provide the {} evidence the design licence reads (majordomus design licence)",
                     licence.evidence
                 ),
             });
@@ -2541,7 +2555,6 @@ pub fn judge(
         surfaces: Vec::new(),
         findings: Vec::new(),
         reported: Vec::new(),
-        policy_roles: policy.roles.clone(),
     };
     let interface = j.interface();
     j.deps = manifest_deps(tree, &interface.counted);
@@ -2568,6 +2581,16 @@ pub fn judge(
         verdict: KitVerdict::NoUi,
         passes: true,
     };
+    for (path, submodule) in &tree.nested {
+        let what = if *submodule {
+            "a Git submodule"
+        } else {
+            "a Git repository nested in this one and not tracked by it"
+        };
+        report.notices.push(format!(
+            "{path} is {what}: it is judged in its own repository (majordomus design kit --repo {path}), and nothing below it is judged here"
+        ));
+    }
     let unexemptable = licence.map(|(_, f)| f).unwrap_or_default();
     if !report.ui {
         if !unexemptable.is_empty() {
@@ -2607,13 +2630,10 @@ pub fn judge(
     }
     j.s3_copies();
     j.s4();
-    let layouts = j.layouts(policy);
-    j.s5(policy, &layouts);
+    let layouts = j.layouts();
+    j.s5(&layouts);
     report.layouts = layouts;
     report.reported = std::mem::take(&mut j.reported);
-    for e in report.exemptions.iter_mut().filter(|e| e.is_marketing()) {
-        e.matched += report.layouts.iter().filter(|l| e.covers(l)).count();
-    }
     for finding in std::mem::take(&mut j.findings) {
         let cover = report.exemptions.iter_mut().find(|e| e.exempts(&finding));
         match cover {
@@ -2661,7 +2681,7 @@ pub fn inspect(root: &Path, share: &Path) -> Result<KitReport, String> {
         Ok(profile) => profile,
         Err(ProfileError::Unknown(id)) if policy.declared => {
             let reason = format!(
-                "{POLICY_KEY}.profile names {id}, and the distribution ships no {}",
+                "{POLICY_KEY}.kit names {id}, and the distribution ships no {}",
                 profile_source(&id)
             );
             return Ok(KitReport::bad_policy(&id, vec![reason]));
@@ -2794,24 +2814,100 @@ pub fn ci_workflow(paths: &BTreeSet<String>) -> Option<String> {
         .then(|| ".gitlab-ci.yml".to_string())
 }
 
-/// The policy with the `design_kit` block appended when it has none.
-pub fn policy_with_block(text: &str, profile: &str) -> Result<(String, AdoptAction), String> {
+/// The policy with `ui.kit` naming `profile`: set in the `ui:` block when the block names
+/// no kit, the block appended when there is none, and refused when it names another kit.
+/// Only the `kit` line is written; `ui.exempt` and the block's other keys are the
+/// repository's, and are left as they are.
+pub fn policy_with_kit(text: &str, profile: &str) -> Result<(String, AdoptAction), String> {
     let map = yaml::parse_mapping(text).map_err(|e| format!("{POLICY} does not parse: {e}"))?;
-    if let Some(block) = policy_block(&map) {
-        let named = block.get("profile").and_then(Value::as_str).unwrap_or("");
-        if named == profile {
-            return Ok((text.to_string(), AdoptAction::Unchanged));
+    let Some(block) = policy_block(&map) else {
+        let mut out = text.to_string();
+        if !out.is_empty() && !out.ends_with('\n') {
+            out.push('\n');
         }
+        out.push_str(&format!(
+            "\n# The user interface and its kit (I4336). `majordomus design kit adopt {profile}` wrote\n\
+             # `kit` (rule project.ui-uses-flowbite-pro, ADR 0230). Declare every exemption under\n\
+             # `exempt:`, each `- {{path: <glob>, because: <why>}}` with both keys.\n\
+             {POLICY_KEY}:\n  {}\n",
+            kit_line(profile)
+        ));
+        return Ok((out, AdoptAction::Created));
+    };
+    let named = block
+        .get("kit")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .trim();
+    if named == profile {
+        return Ok((text.to_string(), AdoptAction::Unchanged));
+    }
+    if !named.is_empty() {
         return Err(format!(
-            "{POLICY} already declares {POLICY_KEY} with profile '{named}'; change the block by hand to adopt {profile}"
+            "{POLICY} already declares {POLICY_KEY}.kit '{named}'; change it by hand to adopt {profile}"
         ));
     }
-    let mut out = text.to_string();
-    if !out.is_empty() && !out.ends_with('\n') {
-        out.push('\n');
+    let refuse = || {
+        format!(
+            "{POLICY}'s {POLICY_KEY}: block is not written as a block mapping adoption can extend; add `{}` under it by hand",
+            kit_line(profile)
+        )
+    };
+    let lines: Vec<&str> = text.split_inclusive('\n').collect();
+    let header = lines
+        .iter()
+        .position(|l| l.trim_end() == format!("{POLICY_KEY}:"))
+        .ok_or_else(refuse)?;
+    let mut end = header + 1;
+    while end < lines.len() {
+        let l = lines[end];
+        if !(l.trim().is_empty() || l.starts_with(' ') || l.starts_with('#')) {
+            break;
+        }
+        end += 1;
     }
-    out.push_str(&block_text(profile));
-    Ok((out, AdoptAction::Created))
+    let children: Vec<usize> = (header + 1..end)
+        .filter(|&i| {
+            let l = lines[i];
+            !l.trim().is_empty() && !l.trim_start().starts_with('#')
+        })
+        .collect();
+    let indent = children
+        .first()
+        .map(|&i| lines[i].len() - lines[i].trim_start().len())
+        .unwrap_or(2);
+    let kit_at = children.iter().copied().find(|&i| {
+        let l = lines[i];
+        l.len() - l.trim_start().len() == indent && l.trim_start().starts_with("kit:")
+    });
+    let line = format!("{}{}\n", " ".repeat(indent), kit_line(profile));
+    let mut out = String::new();
+    for (i, l) in lines.iter().enumerate() {
+        if Some(i) == kit_at {
+            out.push_str(&line);
+            continue;
+        }
+        out.push_str(l);
+        if i == header && kit_at.is_none() {
+            if !l.ends_with('\n') {
+                out.push('\n');
+            }
+            out.push_str(&line);
+        }
+    }
+    let written = yaml::parse_mapping(&out)
+        .ok()
+        .and_then(|m| {
+            policy_block(&m)
+                .and_then(|b| b.get("kit"))
+                .and_then(Value::as_str)
+                .map(str::to_string)
+        })
+        .filter(|k| k == profile);
+    if written.is_none() {
+        return Err(refuse());
+    }
+    Ok((out, AdoptAction::Updated))
 }
 
 /// One enforcement entry, as adoption declares it.
@@ -2996,29 +3092,11 @@ pub fn plan_adoption(
         }
     }
 
-    // the block is written only where the distribution's policy schema admits it, because
-    // doctor refuses every key the schema does not declare; a block already there is
-    // checked against the profile either way
-    let declared_block = yaml::parse_mapping(&policy)
-        .ok()
-        .is_some_and(|map| policy_block(&map).is_some());
-    let (with_block, block_detail) = if declared_block || schema_admits_block(share) {
-        let (text, action) =
-            policy_with_block(&policy, &profile.id).map_err(AdoptError::Refused)?;
-        (text, format!("{POLICY_KEY}: {action:?}").to_lowercase())
-    } else if profile.id == DEFAULT_PROFILE {
-        notes.push(format!(
-            "no {POLICY_KEY} block is written: the distribution's policy schema (share/{POLICY_SCHEMA}) does not declare one yet, and doctor refuses a key it does not declare; {DEFAULT_PROFILE} is the profile judged when the policy names none, and exemptions, layouts and roles wait for the policy keys of the design licence (I4336)"
-        ));
-        (
-            policy.clone(),
-            format!("{POLICY_KEY}: not written until the policy schema declares it (I4336)"),
-        )
-    } else {
-        return Err(AdoptError::Refused(format!(
-            "{} is not the default profile, so only a {POLICY_KEY} block can name it, and the distribution's policy schema (share/{POLICY_SCHEMA}) does not declare that block yet (I4336); adopt it once the schema does",
-            profile.id
-        )));
+    // `ui.kit` is the one key adoption writes; the policy schema declares the block
+    // (I4336), and the exemptions under it are the repository's to declare
+    let (with_block, block_detail) = {
+        let (text, action) = policy_with_kit(&policy, &profile.id).map_err(AdoptError::Refused)?;
+        (text, format!("{POLICY_KEY}.kit: {action:?}").to_lowercase())
     };
     let mut tree_paths = BTreeSet::new();
     if let Ok(entries) = std::fs::read_dir(root.join(".github/workflows")) {
@@ -3050,7 +3128,7 @@ pub fn plan_adoption(
     // what is written must read back: the block, the entries, and a policy the judge accepts
     let parsed = yaml::parse_mapping(&with_entries).map_err(|e| {
         AdoptError::Refused(format!(
-            "{POLICY} would not parse after adoption ({e}); add the design_kit block and the enforcement entries by hand"
+            "{POLICY} would not parse after adoption ({e}); add ui.kit and the enforcement entries by hand"
         ))
     })?;
     KitPolicy::from_policy_text(Some(&with_entries))
@@ -3580,41 +3658,61 @@ mod tests {
     }
 
     #[test]
-    fn s5_a_token_rule_declares_its_role_aliases() {
+    fn s5_the_role_aliases_are_the_profile_s() {
         let mut files = conformant();
+        // the token rule's alias the profile names passes
+        files.insert(
+            "index.html",
+            LAYOUT.replace("bg-gray-50 dark:bg-gray-900", "bg-page"),
+        );
+        assert!(judged(&files, &KitPolicy::absent()).passes);
+        // a class the profile does not name is a finding, and no policy key adds one
         files.insert(
             "index.html",
             LAYOUT.replace("bg-gray-50 dark:bg-gray-900", "bg-canvas"),
         );
-        let absent = judged(&files, &KitPolicy::absent());
-        assert!(absent.findings.iter().any(|f| f.signal == KitSignal::S5));
-        let policy = KitPolicy {
-            roles: Roles {
-                page: vec!["bg-canvas".into()],
-                ..Roles::default()
-            },
-            ..KitPolicy::absent()
-        };
-        assert!(judged(&files, &policy).passes);
+        let r = judged(&files, &KitPolicy::absent());
+        let s5: Vec<&KitFinding> = r
+            .findings
+            .iter()
+            .filter(|f| f.signal == KitSignal::S5)
+            .collect();
+        assert_eq!(s5.len(), 1, "{r:#?}");
+        assert!(s5[0]
+            .evidence
+            .contains("page (bg-gray-50 dark:bg-gray-900 | bg-page)"));
+        assert!(s5[0].remedy.contains("the profile names"), "{:?}", s5[0]);
+        assert!(
+            KitPolicy::from_policy_text(Some(
+                "ui:\n  kit: flowbite-pro\n  roles:\n    page: [bg-canvas]\n"
+            ))
+            .is_ok(),
+            "the block's other keys are not the judge's to read"
+        );
     }
 
     #[test]
-    fn s5_layouts_come_from_the_policy_and_none_is_a_finding() {
+    fn s5_layouts_come_from_the_profile_and_none_is_a_finding() {
         let mut files = conformant();
         let page = files.remove("index.html").unwrap();
         files.insert("public/app.html", page);
         let r = judged(&files, &KitPolicy::absent());
-        assert!(
-            r.findings.iter().any(|f| f.signal == KitSignal::S5
-                && f.path.is_empty()
-                && f.evidence.contains("no root layout")),
-            "{r:#?}"
-        );
-        let policy = KitPolicy {
-            layouts: Some(vec!["public/*.html".into()]),
-            ..KitPolicy::absent()
-        };
-        let r = judged(&files, &policy);
+        let none = r
+            .findings
+            .iter()
+            .find(|f| f.signal == KitSignal::S5 && f.evidence.contains("no root layout"))
+            .expect("no layout is a finding");
+        assert!(none.path.is_empty(), "{none:?}");
+        assert!(none.remedy.contains("the profile names"), "{none:?}");
+        let mut profile = profile();
+        profile.shell.layouts.push("public/*.html".into());
+        let r = judge(
+            &tree(&files),
+            &profile,
+            &KitPolicy::absent(),
+            LicenceState::NotJudged,
+        )
+        .unwrap();
         assert_eq!(r.layouts, ["public/app.html"]);
         assert!(r.passes, "{r:#?}");
     }
@@ -3654,45 +3752,47 @@ mod tests {
     }
 
     #[test]
-    fn an_exemption_moves_a_finding_and_says_why() {
+    fn an_exemption_moves_every_finding_at_its_path_and_says_why() {
         let mut files = conformant();
         files.insert("reel.html", "<div data-modal-toggle=\"m\"></div>".into());
         files.insert("src/main.js", "console.log(1);\n".into());
-        // the attribute carriers are index.html first; exempt S3 there
+        // the attribute carriers are index.html first: S3 is owed there
+        let unexempted = judged(&files, &KitPolicy::absent());
+        assert_eq!(
+            signals(&unexempted),
+            [(KitSignal::S3, "index.html".to_string())],
+            "{unexempted:#?}"
+        );
         let policy = KitPolicy {
             declared: true,
             exempt: vec![KitExemption {
                 path: "index.html".into(),
                 because: "a render canvas".into(),
-                signals: vec![KitSignal::S3],
-                shell: None,
                 matched: 0,
             }],
             ..KitPolicy::absent()
         };
         let r = judged(&files, &policy);
-        assert!(
-            r.findings.iter().all(|f| f.signal != KitSignal::S3),
-            "{r:#?}"
-        );
+        assert!(r.findings.is_empty(), "{r:#?}");
         assert_eq!(r.exempted.len(), 1);
         assert_eq!(r.exempted[0].because, "a render canvas");
+        assert_eq!(r.exempted[0].finding.signal, KitSignal::S3);
         assert_eq!(r.exemptions[0].matched, 1);
         assert!(r.passes);
 
-        // a signal it does not name is not exempted
+        // another path is not exempted
         let other = KitPolicy {
             exempt: vec![KitExemption {
-                signals: vec![KitSignal::S4],
+                path: "reel.html".into(),
                 ..policy.exempt[0].clone()
             }],
             ..policy.clone()
         };
-        assert!(!judged(&files, &other).passes);
+        let r = judged(&files, &other);
+        assert!(!r.passes && r.exemptions[0].matched == 0, "{r:#?}");
         // a glob covers a tree
         let glob = KitExemption {
             path: "*.html".into(),
-            signals: Vec::new(),
             ..policy.exempt[0].clone()
         };
         assert!(glob.covers("index.html") && !glob.covers("src/index.html"));
@@ -3704,26 +3804,20 @@ mod tests {
     }
 
     #[test]
-    fn a_marketing_layout_is_judged_by_its_navbar_and_footer() {
+    fn a_published_site_s_layout_is_judged_by_its_navbar_and_footer() {
         let mut files = conformant();
+        // a published site's layout, a marketing page by the profile, beside the app's
         files.insert(
-            "index.html",
+            "site/templates/base.html",
             "<html><body><nav data-collapse-toggle=\"menu\">brand</nav><main></main></body></html>"
                 .into(),
         );
-        files.insert("src/main.js", SCRIPT.into());
-        let policy = KitPolicy {
-            declared: true,
-            exempt: vec![KitExemption {
-                path: "index.html".into(),
-                because: "the landing page".into(),
-                signals: Vec::new(),
-                shell: Some("marketing".into()),
-                matched: 0,
-            }],
-            ..KitPolicy::absent()
-        };
-        let r = judged(&files, &policy);
+        let r = judged(&files, &KitPolicy::absent());
+        assert_eq!(
+            r.layouts,
+            ["index.html", "site/templates/base.html"],
+            "{r:#?}"
+        );
         let s5: Vec<&KitFinding> = r
             .findings
             .iter()
@@ -3732,15 +3826,28 @@ mod tests {
         assert_eq!(
             s5.len(),
             1,
-            "the footer is still owed, and the exemption does not hide it: {r:#?}"
+            "the footer is owed, and the application shell is not: {r:#?}"
         );
+        assert_eq!(s5[0].path, "site/templates/base.html");
         assert!(s5[0].evidence.contains("footer"));
-        assert_eq!(r.exemptions[0].matched, 1);
         files.insert(
-            "index.html",
+            "site/templates/base.html",
             "<nav data-collapse-toggle=\"menu\">brand</nav><footer>c</footer>".into(),
         );
-        assert!(judged(&files, &policy).passes);
+        let r = judged(&files, &KitPolicy::absent());
+        assert!(r.passes, "{r:#?}");
+        // a layout outside the marketing globs owes the application shell
+        files.insert(
+            "templates/base.html",
+            "<nav data-collapse-toggle=\"menu\">brand</nav><footer>c</footer>".into(),
+        );
+        let r = judged(&files, &KitPolicy::absent());
+        assert!(
+            r.findings
+                .iter()
+                .any(|f| f.path == "templates/base.html" && f.evidence.contains("fixed top navbar")),
+            "{r:#?}"
+        );
     }
 
     #[test]
@@ -3753,53 +3860,49 @@ mod tests {
             KitPolicy::from_policy_text(Some("version: 1\n")).unwrap(),
             KitPolicy::absent()
         );
+        // the skeleton's block declares no kit: nothing is adopted
+        let skeleton = "ui:\n  kit: \"\"\n  visibility: public\n  publish: []\n  evidence: []\n";
+        assert_eq!(
+            KitPolicy::from_policy_text(Some(skeleton)).unwrap(),
+            KitPolicy::absent()
+        );
         let ok = KitPolicy::from_policy_text(Some(
-            "design_kit:\n  profile: flowbite-pro\n  layouts: [index.html]\n  roles:\n    page: [bg-canvas]\n  exempt:\n    - path: reel.html\n      because: a render canvas\n      signals: [S5]\n    - path: landing.html\n      because: marketing\n      shell: marketing\n",
+            "ui:\n  kit: flowbite-pro\n  visibility: private\n  exempt:\n    - path: reel.html\n      because: a render canvas\n    - path: landing.html\n      because: the agency page\n",
         ))
         .unwrap();
         assert!(ok.declared);
-        assert_eq!(ok.layouts, Some(vec!["index.html".to_string()]));
-        assert_eq!(ok.roles.page, ["bg-canvas"]);
+        assert_eq!(ok.profile, "flowbite-pro");
         assert_eq!(ok.exempt.len(), 2);
-        assert_eq!(ok.exempt[0].signals, [KitSignal::S5]);
-        assert!(ok.exempt[1].is_marketing());
+        assert_eq!(ok.exempt[1].path, "landing.html");
+        assert_eq!(ok.exempt[1].because, "the agency page");
+        // exemptions are read whether or not a kit is adopted
+        let unadopted =
+            KitPolicy::from_policy_text(Some("ui:\n  exempt:\n    - path: a\n      because: b\n"))
+                .unwrap();
+        assert!(!unadopted.declared && unadopted.exempt.len() == 1);
+        assert_eq!(unadopted.profile, DEFAULT_PROFILE);
 
         let bad = KitPolicy::from_policy_text(Some(
-            "design_kit:\n  profile: ''\n  colour: blue\n  roles:\n    accent: [x]\n  exempt:\n    - path: reel.html\n    - because: why\n    - path: a\n      because: b\n      signals: [S9]\n      shell: admin\n      extra: 1\n",
+            "ui:\n  kit: [x]\n  exempt:\n    - path: reel.html\n    - because: why\n    - path: a\n      because: b\n      signals: [S1]\n      shell: marketing\n",
         ))
         .unwrap_err();
         let all = bad.join("\n");
         for expected in [
-            "profile names no profile",
-            "design_kit.colour",
-            "roles.accent",
+            "ui.kit is",
             "(reel.html) gives no because",
             "exempt[1] names no path",
-            "S9",
-            "shell is",
-            "exempt[2].extra",
+            "exempt[2].signals is not a key",
+            "exempt[2].shell is not a key",
         ] {
             assert!(all.contains(expected), "{expected} missing from:\n{all}");
         }
-        assert!(KitPolicy::from_policy_text(Some("design_kit: flowbite\n")).is_err());
+        assert!(KitPolicy::from_policy_text(Some("ui: flowbite\n")).is_err());
         assert!(
             KitPolicy::from_policy_text(Some("a:\n\tb: 1\n")).unwrap_err()[0]
                 .contains("does not parse")
         );
-        assert!(
-            KitPolicy::from_block(&serde_json::json!({"profile": "p", "exempt": "x"})).is_err()
-        );
-        assert!(KitPolicy::from_block(&serde_json::json!({"profile": "p", "roles": "x"})).is_err());
-        assert!(
-            KitPolicy::from_block(&serde_json::json!({"profile": "p", "layouts": "x"})).is_err()
-        );
-        assert!(
-            KitPolicy::from_block(&serde_json::json!({"profile": "p", "exempt": ["x"]})).is_err()
-        );
-        assert!(KitPolicy::from_block(&serde_json::json!({"profile": "p", "exempt": [{"path": "a", "because": "b", "signals": "S1"}]})).is_err());
-        assert!(
-            KitPolicy::from_block(&serde_json::json!({"profile": "p", "layouts": [1]})).is_err()
-        );
+        assert!(KitPolicy::from_block(&serde_json::json!({"kit": "p", "exempt": "x"})).is_err());
+        assert!(KitPolicy::from_block(&serde_json::json!({"kit": "p", "exempt": ["x"]})).is_err());
     }
 
     fn repository(files: &[(&str, &str)]) -> tempfile::TempDir {
@@ -3833,11 +3936,12 @@ mod tests {
         ]);
         let r = inspect(dir.path(), &share).unwrap();
         assert!(r.passes, "{r:#?}");
+        assert!(!r.policy_declared);
 
         std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
         std::fs::write(
             dir.path().join(POLICY),
-            "design_kit:\n  profile: flowbite-pro\n  exempt:\n    - path: index.html\n",
+            "ui:\n  kit: flowbite-pro\n  exempt:\n    - path: index.html\n",
         )
         .unwrap();
         let r = inspect(dir.path(), &share).unwrap();
@@ -3849,14 +3953,15 @@ mod tests {
             "a bad policy judges nothing: {r:#?}"
         );
 
-        std::fs::write(
-            dir.path().join(POLICY),
-            "design_kit:\n  profile: no-such-kit\n",
-        )
-        .unwrap();
+        std::fs::write(dir.path().join(POLICY), "ui:\n  kit: no-such-kit\n").unwrap();
         let r = inspect(dir.path(), &share).unwrap();
         assert_eq!(r.verdict, KitVerdict::BadPolicy);
+        assert!(r.policy_errors[0].contains("ui.kit names no-such-kit"));
         assert!(r.policy_errors[0].contains("share/design/kits/no-such-kit.yaml"));
+
+        std::fs::write(dir.path().join(POLICY), "ui:\n  kit: flowbite-pro\n").unwrap();
+        let r = inspect(dir.path(), &share).unwrap();
+        assert!(r.policy_declared && r.passes, "{r:#?}");
 
         std::fs::remove_file(dir.path().join(POLICY)).unwrap();
         let empty = tempfile::tempdir().unwrap();
@@ -3868,16 +3973,10 @@ mod tests {
 
     const POLICY_TEXT: &str = "version: 1\n\nenforcement:\n  - name: doctor-on-commit\n    path: majordomus\n    args: [doctor]\n    wired_by: git-hook:pre-commit\n\n# the projections\nprojections:\n  - provider: agents\n    target: AGENTS.md\n";
 
-    /// A distribution share with the shipped profile and rule template, and a policy schema
-    /// that declares the kit's block when `admits`.
-    fn share_with_schema(admits: bool) -> tempfile::TempDir {
+    /// A distribution share with the shipped profile and rule template.
+    fn shipped_share() -> tempfile::TempDir {
         let crate_share = crate::synthetic::crate_share();
         let read = |p: &str| std::fs::read_to_string(crate_share.join(p)).unwrap();
-        let schema = if admits {
-            format!(r#"{{"properties": {{"version": {{}}, "{POLICY_KEY}": {{}}}}}}"#)
-        } else {
-            r#"{"properties": {"version": {}}}"#.to_string()
-        };
         repository(&[
             (
                 "design/kits/flowbite-pro.yaml",
@@ -3887,73 +3986,70 @@ mod tests {
                 "design/kits/flowbite-pro.rule.md",
                 &read("design/kits/flowbite-pro.rule.md"),
             ),
-            (POLICY_SCHEMA, &schema),
         ])
     }
 
     #[test]
-    fn adoption_writes_no_block_the_policy_schema_does_not_declare() {
-        let closed = share_with_schema(false);
-        let dir = repository(&[(POLICY, POLICY_TEXT)]);
-        let r = adopt(dir.path(), closed.path(), DEFAULT_PROFILE, false).unwrap();
+    fn adoption_sets_the_kit_in_the_ui_block_and_writes_nothing_else_there() {
+        let share = shipped_share();
+        // the skeleton's block names no kit: adoption sets it and keeps every other key
+        let skeleton = format!(
+            "{POLICY_TEXT}\n# the user interface\nui:\n  kit: \"\"\n  visibility: public\n  publish: []\n  evidence: []\n\nscope:\n  - src\n"
+        );
+        let dir = repository(&[(POLICY, &skeleton)]);
+        let r = adopt(dir.path(), share.path(), DEFAULT_PROFILE, false).unwrap();
+        assert_eq!(
+            r.writes[1].detail,
+            "ui.kit: updated, design-kit-on-push: created"
+        );
         let policy = std::fs::read_to_string(dir.path().join(POLICY)).unwrap();
         let map = yaml::parse_mapping(&policy).unwrap();
-        assert!(map.get(POLICY_KEY).is_none(), "{policy}");
+        assert_eq!(map["ui"]["kit"], "flowbite-pro", "{policy}");
+        assert_eq!(map["ui"]["visibility"], "public");
+        assert_eq!(map["ui"]["evidence"], serde_json::json!([]));
         assert!(
-            map.keys()
-                .all(|k| ["version", "enforcement", "projections"].contains(&k.as_str())),
-            "every key the adopted policy carries is one the schema declares: {policy}"
+            map["ui"].get("exempt").is_none(),
+            "exemptions are the repository's"
         );
-        assert!(
-            r.notes
-                .iter()
-                .any(|n| n.contains("I4336") && n.contains(POLICY_SCHEMA)),
-            "{:?}",
-            r.notes
-        );
-        assert!(r.writes[1].detail.contains("not written"), "{:?}", r.writes);
-        let names: Vec<&str> = map["enforcement"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter_map(|e| e["name"].as_str())
-            .collect();
-        assert_eq!(names, ["doctor-on-commit", ON_PUSH]);
-        // the default profile is judged without the block
-        assert_eq!(
-            KitPolicy::from_policy_text(Some(&policy)).unwrap(),
-            KitPolicy::absent()
-        );
-        let again = adopt(dir.path(), closed.path(), DEFAULT_PROFILE, false).unwrap();
+        assert_eq!(map["scope"][0], "src", "the next block is kept");
+        assert!(policy.contains("# the user interface\nui:\n  kit: flowbite-pro\n  visibility"));
+        assert!(!policy.contains("design_kit"));
+        let read = KitPolicy::from_policy_text(Some(&policy)).unwrap();
+        assert!(read.declared && read.profile == DEFAULT_PROFILE);
+        let again = adopt(dir.path(), share.path(), DEFAULT_PROFILE, false).unwrap();
         assert!(again
             .writes
             .iter()
             .all(|w| w.action == AdoptAction::Unchanged));
 
-        // another profile can only be named by the block, so it waits for the schema
-        let other = repository(&[(POLICY, POLICY_TEXT)]);
-        let kit = closed.path().join("design/kits/other-kit.yaml");
-        let text = std::fs::read_to_string(closed.path().join("design/kits/flowbite-pro.yaml"))
-            .unwrap()
-            .replace("id: flowbite-pro", "id: other-kit");
-        std::fs::write(&kit, text).unwrap();
-        let err = adopt(other.path(), closed.path(), "other-kit", true).unwrap_err();
+        // a block without a kit line gains one, at the indentation of its keys, first
+        let (text, action) = policy_with_kit(
+            "ui:\n  visibility: private\n  exempt:\n    - path: a\n      because: b\nversion: 1\n",
+            "flowbite-pro",
+        )
+        .unwrap();
+        assert_eq!(action, AdoptAction::Updated);
         assert!(
-            matches!(&err, AdoptError::Refused(m) if m.contains("I4336")),
-            "{err:?}"
+            text.starts_with("ui:\n  kit: flowbite-pro\n  visibility: private\n"),
+            "{text}"
         );
-        // a block written by hand is still checked against the profile
-        let hand = repository(&[(POLICY, "design_kit:\n  profile: flowbite-pro\n")]);
-        let r = adopt(hand.path(), closed.path(), DEFAULT_PROFILE, true).unwrap();
+        let read = KitPolicy::from_policy_text(Some(&text)).unwrap();
+        assert_eq!(read.exempt.len(), 1);
+        // a kit another adoption named is the repository's decision, and is refused
+        assert!(policy_with_kit("ui:\n  kit: other-kit\n", "flowbite-pro")
+            .unwrap_err()
+            .contains("other-kit"));
+        // a block adoption cannot extend is refused rather than rewritten
         assert!(
-            r.writes[1].detail.starts_with("design_kit: unchanged"),
-            "{r:?}"
+            policy_with_kit("ui: {visibility: public}\n", "flowbite-pro")
+                .unwrap_err()
+                .contains("by hand")
         );
     }
 
     #[test]
-    fn adoption_writes_the_rule_the_block_and_the_entries_once() {
-        let open = share_with_schema(true);
+    fn adoption_writes_the_rule_the_kit_and_the_entries_once() {
+        let open = shipped_share();
         let share = open.path().to_path_buf();
         let dir = repository(&[
             (POLICY, POLICY_TEXT),
@@ -3978,6 +4074,11 @@ mod tests {
         );
         let actions: Vec<AdoptAction> = first.writes.iter().map(|w| w.action).collect();
         assert_eq!(actions, [AdoptAction::Created, AdoptAction::Updated]);
+        assert!(
+            first.writes[1].detail.starts_with("ui.kit: created"),
+            "{:?}",
+            first.writes
+        );
         let rule = std::fs::read_to_string(
             dir.path()
                 .join(RULES_DIR)
@@ -3987,7 +4088,13 @@ mod tests {
         assert!(rule.starts_with("---\nid: project.ui-uses-flowbite-pro\n"));
         let policy = std::fs::read_to_string(dir.path().join(POLICY)).unwrap();
         let map = yaml::parse_mapping(&policy).unwrap();
-        assert_eq!(map["design_kit"]["profile"], "flowbite-pro");
+        assert_eq!(map["ui"]["kit"], "flowbite-pro");
+        assert_eq!(
+            map["ui"].as_object().unwrap().len(),
+            1,
+            "adoption writes ui.kit and nothing else under ui: {policy}"
+        );
+        assert!(map.get("design_kit").is_none(), "{policy}");
         let names: Vec<&str> = map["enforcement"]
             .as_array()
             .unwrap()
@@ -4040,6 +4147,18 @@ mod tests {
             .notes
             .iter()
             .any(|n| n.contains("differs from the template")));
+
+        // another profile the distribution ships is adopted the same way
+        let kit = share.join("design/kits/other-kit.yaml");
+        let text = std::fs::read_to_string(share.join("design/kits/flowbite-pro.yaml"))
+            .unwrap()
+            .replace("id: flowbite-pro", "id: other-kit");
+        std::fs::write(&kit, text).unwrap();
+        let other = repository(&[(POLICY, POLICY_TEXT)]);
+        adopt(other.path(), &share, "other-kit", false).unwrap();
+        let map = yaml::parse_mapping(&std::fs::read_to_string(other.path().join(POLICY)).unwrap())
+            .unwrap();
+        assert_eq!(map["ui"]["kit"], "other-kit");
     }
 
     #[test]
@@ -4054,7 +4173,7 @@ mod tests {
             adopt(dir.path(), &share, "no-such-kit", false),
             Err(AdoptError::NotFound(_))
         ));
-        let other = repository(&[(POLICY, "design_kit:\n  profile: another\n")]);
+        let other = repository(&[(POLICY, "ui:\n  kit: another\n")]);
         let err = adopt(other.path(), &share, DEFAULT_PROFILE, false).unwrap_err();
         assert!(
             matches!(&err, AdoptError::Refused(m) if m.contains("another")),
@@ -4105,14 +4224,14 @@ mod tests {
         let (same, actions) = policy_with_enforcement(&out, &entries);
         assert_eq!(same, out);
         assert_eq!(actions[0].1, AdoptAction::Unchanged);
-        // the block itself
-        let (text, action) = policy_with_block("version: 1", "flowbite-pro").unwrap();
+        // the kit itself
+        let (text, action) = policy_with_kit("version: 1", "flowbite-pro").unwrap();
         assert_eq!(action, AdoptAction::Created);
         assert_eq!(
-            policy_with_block(&text, "flowbite-pro").unwrap().1,
+            policy_with_kit(&text, "flowbite-pro").unwrap().1,
             AdoptAction::Unchanged
         );
-        assert!(policy_with_block("a:\n\tb\n", "flowbite-pro").is_err());
+        assert!(policy_with_kit("a:\n\tb\n", "flowbite-pro").is_err());
     }
 
     #[test]
@@ -4439,12 +4558,21 @@ mod tests {
             (true, Active, Licensed),
             (true, Inactive, Unlicensed),
             (true, NotJudged, Undecided),
-            (true, Refused, Undecided),
+            (true, Refused, Unlicensed),
         ] {
             assert_eq!(decide(carries, state), variant, "{carries} {state:?}");
             assert_eq!(variant.passes(), matches!(variant, NotUsed | Licensed));
         }
-        assert_eq!(licence_state(Path::new("."), &profile()), NotJudged);
+        // the design licence's verdict, as agreed: active and inactive pass through, refused
+        // stays refused, not judged is undecided
+        for (verdict, state) in [
+            (licence::Verdict::Active, Active),
+            (licence::Verdict::Inactive, Inactive),
+            (licence::Verdict::Refused, Refused),
+            (licence::Verdict::NotJudged, NotJudged),
+        ] {
+            assert_eq!(licence_state_of(verdict), state);
+        }
 
         let mut files: Vec<(&str, &str)> = vec![
             ("package.json", PACKAGE),
@@ -4465,7 +4593,15 @@ mod tests {
         assert!(undecided.findings.iter().any(|f| f.signal == KitSignal::S1
             && f.path == PRO_DIR
             && f.evidence.contains("cannot decide")));
-        assert!(!judged_files(&files, Refused).passes);
+        let refused = judged_files(&files, Refused);
+        assert!(!refused.passes);
+        assert!(
+            refused
+                .findings
+                .iter()
+                .any(|f| f.path == PRO_DIR && f.evidence.contains("refused the tree")),
+            "{refused:#?}"
+        );
         let inactive = judged_files(&files, Inactive);
         assert_eq!(inactive.licence.unwrap().variant, Unlicensed);
         assert!(!inactive.passes);
@@ -4479,8 +4615,6 @@ mod tests {
             exempt: vec![KitExemption {
                 path: "design/".into(),
                 because: "kept for reference".into(),
-                signals: Vec::new(),
-                shell: None,
                 matched: 0,
             }],
             ..KitPolicy::absent()
@@ -4529,7 +4663,7 @@ mod tests {
         );
         assert!(Profile::parse(&empty)
             .unwrap_err()
-            .contains("neither a path nor a text"));
+            .contains("neither a path, a text nor a dependency"));
         let free = format!("{}{}", &text[..start], &text[end + 1..]);
         let p = Profile::parse(&free).expect("a free kit declares no licence");
         let r = judge(
@@ -4548,17 +4682,21 @@ mod tests {
 
     #[test]
     fn the_policy_is_read_through_one_function() {
-        let map = yaml::parse_mapping("design_kit:\n  profile: flowbite-pro\n").unwrap();
-        assert_eq!(policy_block(&map).unwrap()["profile"], "flowbite-pro");
+        let map = yaml::parse_mapping("ui:\n  kit: flowbite-pro\n").unwrap();
+        assert_eq!(policy_block(&map).unwrap()["kit"], "flowbite-pro");
         assert!(policy_block(&yaml::parse_mapping("version: 1\n").unwrap()).is_none());
         // adoption and judgement agree on the block, because both read it there
-        let (text, _) = policy_with_block("version: 1\n", "flowbite-pro").unwrap();
-        assert!(text.ends_with(&block_text("flowbite-pro")));
+        let (text, action) = policy_with_kit("version: 1\n", "flowbite-pro").unwrap();
+        assert_eq!(action, AdoptAction::Created);
+        assert!(text.ends_with(&format!("ui:\n  {}\n", kit_line("flowbite-pro"))));
         assert!(KitPolicy::from_policy_text(Some(&text)).unwrap().declared);
-        // and whether it may be written is the schema's to say
-        assert!(schema_admits_block(share_with_schema(true).path()));
-        assert!(!schema_admits_block(share_with_schema(false).path()));
-        assert!(!schema_admits_block(tempfile::tempdir().unwrap().path()));
+        assert_eq!(
+            policy_with_kit(&text, "flowbite-pro").unwrap(),
+            (text.clone(), AdoptAction::Unchanged)
+        );
+        assert!(policy_with_kit("a:\n\tb\n", "flowbite-pro").is_err());
+        // and the design licence reads the same key from the same block
+        assert_eq!(licence::UiPolicy::parse(&text).unwrap().kit, "flowbite-pro");
     }
 
     #[test]
@@ -4687,7 +4825,7 @@ mod tests {
                 .any(|f| f.signal == KitSignal::S4 && f.path == "apps/x_web/assets/package.json"),
             "{r:#?}"
         );
-        // and so is every mix.exs
+        // and so is the Mix project of each surface
         let r = judged_owned(&umbrella(&[(
             "apps/x_web/mix.exs",
             "defp deps, do: [{:phoenix_live_view, \"~> 1.0\"}, {:petal_components, \"~> 2.0\"}]\n",
@@ -4882,15 +5020,66 @@ mod tests {
                     "packages/site/src/App.svelte",
                     "<button data-dropdown-toggle=\"d\"></button><script>import 'flowbite';</script>",
                 ),
+                (
+                    "packages/site/src/app.css",
+                    "@import \"tailwindcss\";\n@plugin \"flowbite/plugin\";\n@source \"../node_modules/flowbite\";\n",
+                ),
             ],
             LicenceState::NotJudged,
         );
-        assert!(
-            r.findings.iter().all(|f| !(f.signal == KitSignal::S1
-                && f.path == "packages/site/package.json"
-                && f.evidence.contains("flowbite-react"))),
+        // the root declares react, so it is a surface of its own, and the binding it owes is
+        // React's; the workspace resolves the root's react and still owes the kit's package
+        let surfaces: Vec<(&str, KitSurfaceKind, Vec<String>, bool)> = r
+            .surfaces
+            .iter()
+            .map(|s| {
+                (
+                    s.dir.as_str(),
+                    s.kind,
+                    s.manifests.clone(),
+                    s.usage.is_empty(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            surfaces,
+            [
+                (
+                    "",
+                    KitSurfaceKind::Root,
+                    vec!["package.json".to_string()],
+                    true
+                ),
+                (
+                    "packages/site",
+                    KitSurfaceKind::Workspace,
+                    vec!["packages/site/package.json".to_string()],
+                    false
+                ),
+            ],
             "{r:#?}"
         );
+        assert_eq!(r.verdict, KitVerdict::Findings);
+        assert!(!r.passes);
+        assert_eq!(r.stacks, ["tailwind-4", "react"], "{r:#?}");
+        // every finding is the root's: none at the workspace, whose binding is the kit's own
+        let findings: Vec<(KitSignal, &str)> = r
+            .findings
+            .iter()
+            .map(|f| (f.signal, f.path.as_str()))
+            .collect();
+        assert_eq!(
+            findings,
+            [
+                (KitSignal::S1, "package.json"),
+                (KitSignal::S1, "package.json"),
+                (KitSignal::S2, "package.json"),
+                (KitSignal::S5, ""),
+            ],
+            "{r:#?}"
+        );
+        assert!(r.findings[0].evidence.contains("flowbite-react"), "{r:#?}");
+        assert!(r.findings.iter().all(|f| !f.path.starts_with("packages/")));
     }
 
     #[test]
@@ -4898,14 +5087,21 @@ mod tests {
         let ui = |files: &[(&str, &str)]| judged_files(files, LicenceState::NotJudged).ui;
         let checkout = "jobs:\n  b:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          path: docs\n      - uses: actions/cache@v4\n        with:\n          path: docs-cache\n";
         assert!(!ui(&[
-            ("docs/coverage/index.html", "<p></p>"),
+            ("docs/index.html", "<p></p>"),
             (".github/workflows/wiki.yml", checkout),
         ]));
         let gh_pages = "      - uses: peaceiris/actions-gh-pages@v4\n        with:\n          publish_dir: ./docs\n";
         assert!(ui(&[
-            ("docs/coverage/index.html", "<p></p>"),
+            ("docs/index.html", "<p></p>"),
             (".github/workflows/pages.yml", gh_pages),
         ]));
+        let artifact = "      - uses: actions/upload-pages-artifact@v3\n        with:\n          path: docs/\n";
+        assert!(ui(&[
+            ("docs/index.html", "<p></p>"),
+            (".github/workflows/pages.yml", artifact),
+        ]));
+        // and nothing at all publishes it
+        assert!(!ui(&[("docs/index.html", "<p></p>")]));
     }
 
     #[test]
@@ -4925,8 +5121,6 @@ mod tests {
             exempt: vec![KitExemption {
                 path: "package.json".into(),
                 because: "the stylesheet is built by the host".into(),
-                signals: vec![KitSignal::S2],
-                shell: None,
                 matched: 0,
             }],
             ..KitPolicy::absent()
@@ -5014,10 +5208,300 @@ mod tests {
 
     #[test]
     fn a_dependency_on_a_pro_package_is_a_licensed_marker() {
-        let manifest = r#"{"dependencies": {"flowbite-pro-admin": "file:../pro", "flowbite": "4", "tailwindcss": "4"}}"#;
-        let r = judged_files(&[("package.json", manifest)], LicenceState::NotJudged);
+        for section in [
+            "dependencies",
+            "devDependencies",
+            "peerDependencies",
+            "optionalDependencies",
+        ] {
+            let manifest = format!(
+                r#"{{"{section}": {{"flowbite-pro-admin": "file:../pro", "flowbite": "4", "tailwindcss": "4"}}}}"#
+            );
+            let r = judged_files(&[("package.json", &manifest)], LicenceState::NotJudged);
+            let l = r.licence.unwrap();
+            assert_eq!(l.variant, KitVariant::Undecided, "{section}: {l:?}");
+            assert_eq!(
+                l.markers,
+                ["package.json declares flowbite-pro-admin (a dependency on a Flowbite Pro package)"],
+                "{section}"
+            );
+        }
+        // any other key named like a Pro product is no dependency, and no marker
+        let scripts = r#"{"scripts": {"flowbite-pro-build": "node build.js"}, "config": {"flowbite-react-blocks": "x"}, "dependencies": {"flowbite": "4", "tailwindcss": "4"}}"#;
+        let r = judged_files(&[("package.json", scripts)], LicenceState::NotJudged);
         let l = r.licence.unwrap();
-        assert_eq!(l.variant, KitVariant::Undecided, "{l:?}");
-        assert!(l.markers.iter().any(|m| m.contains("dependency")), "{l:?}");
+        assert_eq!(l.variant, KitVariant::NotUsed, "{l:?}");
+        assert!(l.markers.is_empty(), "{l:?}");
+    }
+
+    #[test]
+    fn a_mix_project_under_examples_is_no_surface_and_counts_for_nothing() {
+        let demo =
+            "defp deps, do: [{:phoenix_live_view, \"~> 1.0\"}, {:petal_components, \"~> 2.0\"}]\n";
+        let mut files = conformant();
+        files.insert("examples/demo/mix.exs", demo.into());
+        let r = judged(&files, &KitPolicy::absent());
+        assert!(r.passes, "{r:#?}");
+        assert_eq!(r.stacks, ["tailwind-4"], "no phoenix: {r:#?}");
+        assert_eq!(r.surfaces.len(), 1, "{r:#?}");
+        // the same project outside a not-app directory is an app, and its kit is S4's
+        let mut files = conformant();
+        files.insert("apps/demo/mix.exs", demo.into());
+        let r = judged(&files, &KitPolicy::absent());
+        assert!(r.stacks.contains(&"phoenix".to_string()), "{r:#?}");
+        assert!(
+            r.findings
+                .iter()
+                .any(|f| f.signal == KitSignal::S4 && f.path == "apps/demo/mix.exs"),
+            "{r:#?}"
+        );
+        // and the root's own mix.exs always counts
+        let mut files = conformant();
+        files.insert("mix.exs", demo.into());
+        let r = judged(&files, &KitPolicy::absent());
+        assert!(
+            r.findings
+                .iter()
+                .any(|f| f.signal == KitSignal::S4 && f.path == "mix.exs"),
+            "{r:#?}"
+        );
+    }
+
+    #[test]
+    fn a_submodule_or_a_nested_repository_is_named_and_judged_in_its_own() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.name=t", "-c", "user.email=t@invalid"])
+                .args(args)
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        let share = crate::synthetic::crate_share();
+        let profile = profile();
+        let dir = repository(&[
+            ("README.md", "# a library\n"),
+            ("web/index.html", LAYOUT),
+            ("node_modules/x/index.html", "<p></p>"),
+        ]);
+        git(&dir.path().join("web"), &["init", "-q", "."]);
+        git(&dir.path().join("web"), &["add", "-A"]);
+        git(&dir.path().join("web"), &["commit", "-q", "-m", "web"]);
+        git(&dir.path().join("node_modules/x"), &["init", "-q", "."]);
+        git(dir.path(), &["init", "-q", "."]);
+        // untracked: a repository of its own nested in this one
+        let tree = Tree::read(dir.path(), &profile).unwrap();
+        assert_eq!(
+            tree.nested,
+            BTreeMap::from([("web".to_string(), false)]),
+            "one below a skipped directory is not named: {tree:?}"
+        );
+        assert!(!tree.paths.iter().any(|p| p.starts_with("web")), "{tree:?}");
+        let r = inspect(dir.path(), &share).unwrap();
+        assert!(!r.ui, "{r:#?}");
+        let notice = r
+            .notices
+            .iter()
+            .find(|n| n.starts_with("web is"))
+            .expect("the nested repository is named");
+        assert!(notice.contains("judged in its own repository"), "{notice}");
+        assert!(notice.contains("--repo web"), "{notice}");
+        // tracked as a submodule: its gitlink
+        let head = git(&dir.path().join("web"), &["rev-parse", "HEAD"]);
+        git(
+            dir.path(),
+            &[
+                "update-index",
+                "--add",
+                "--cacheinfo",
+                &format!("160000,{head},web"),
+            ],
+        );
+        let tree = Tree::read(dir.path(), &profile).unwrap();
+        assert_eq!(tree.nested, BTreeMap::from([("web".to_string(), true)]));
+        let r = inspect(dir.path(), &share).unwrap();
+        assert!(
+            r.notices
+                .iter()
+                .any(|n| n.starts_with("web is a Git submodule")),
+            "{r:#?}"
+        );
+        // without Git the walk reads it as the repository's own files
+        let walked = repository(&[("web/index.html", LAYOUT)]);
+        let tree = Tree::read(walked.path(), &profile).unwrap();
+        assert!(tree.nested.is_empty() && tree.paths.contains("web/index.html"));
+    }
+
+    #[test]
+    fn s2_flowbite_react_counts_only_the_calls_of_the_bound_helper() {
+        let v3 = r#"{"dependencies": {"react": "18", "flowbite-react": "0.10", "tailwindcss": "^3.4.0"}}"#;
+        let page = "import { Button } from 'flowbite-react';\nexport default () => <Button/>;\n";
+        let s2 = |config: &str| {
+            let r = judged_files(
+                &[
+                    ("package.json", v3),
+                    ("tailwind.config.js", config),
+                    ("src/index.html", "<div id=\"root\"></div>"),
+                    ("src/App.tsx", page),
+                ],
+                LicenceState::NotJudged,
+            );
+            r.findings
+                .iter()
+                .filter(|f| f.signal == KitSignal::S2)
+                .map(|f| f.evidence.clone())
+                .collect::<Vec<_>>()
+        };
+        // another object's plugin() and content() configure nothing of Flowbite's
+        let other = "const flowbite = require('flowbite-react/tailwind');\nconst forms = require('@tailwindcss/forms');\nconst typo = require('./typo');\nmodule.exports = {\n  content: ['./src/**/*.tsx', typo.content()],\n  plugins: [forms.plugin()],\n};\n";
+        let found = s2(other);
+        assert_eq!(found.len(), 2, "{found:?}");
+        assert!(
+            found.iter().any(|e| e.contains("flowbite/plugin")),
+            "{found:?}"
+        );
+        assert!(
+            found.iter().any(|e| e.contains("content glob")),
+            "{found:?}"
+        );
+        // a method of a longer name, or of a member, is not the helper's call either
+        let member = "const fb = require('flowbite-react/tailwind');\nmodule.exports = { content: [x.fb.content()], plugins: [myfb.plugin()] };\n";
+        assert_eq!(s2(member).len(), 2);
+        // the helper bound by an ES import, under any name
+        let esm = "import fbr from \"flowbite-react/tailwind\";\nexport default {\n  content: ['./src/**/*.tsx', fbr.content({ base: '../' })],\n  plugins: [fbr.plugin()],\n};\n";
+        assert!(s2(esm).is_empty(), "{:?}", s2(esm));
+        let star = "import * as fbr from 'flowbite-react/tailwind';\nexport default { content: [fbr.content()], plugins: [fbr.plugin()] };\n";
+        assert!(s2(star).is_empty(), "{:?}", s2(star));
+    }
+
+    #[test]
+    fn an_embedded_layout_is_judged_with_its_app_and_root_templates_only() {
+        let base = [
+            ("mix.exs", "[{:phoenix_live_view, \"~> 1.1\"}]"),
+            (
+                "assets/package.json",
+                r#"{"dependencies": {"flowbite": "4", "tailwindcss": "4"}}"#,
+            ),
+            ("assets/css/app.css", STYLE),
+            ("assets/js/app.js", SCRIPT),
+            ("lib/app_web/components/layouts/root.html.heex", ROOT_HEEX),
+        ];
+        // Layouts.app draws no shell; an email template in layouts/ carries one
+        let bare = "defmodule AppWeb.Layouts do\n  embed_templates \"layouts/*\"\n  def app(assigns) do\n    ~H\"\"\"\n<main><%= @inner_content %></main>\n\"\"\"\n  end\nend\n";
+        let mut files: Vec<(&str, &str)> = base.to_vec();
+        files.push(("lib/app_web/components/layouts.ex", bare));
+        files.push(("lib/app_web/components/layouts/email.html.heex", SHELL_HEEX));
+        let r = judged_files(&files, LicenceState::NotJudged);
+        assert_eq!(r.layouts, ["lib/app_web/components/layouts.ex"], "{r:#?}");
+        let s5: Vec<&KitFinding> = r
+            .findings
+            .iter()
+            .filter(|f| f.signal == KitSignal::S5)
+            .collect();
+        assert!(
+            s5.iter().any(|f| f.evidence.contains("fixed top navbar")),
+            "the email template supplies no shell: {r:#?}"
+        );
+        assert!(!r.passes);
+        // the app template the module embeds does
+        files.retain(|(p, _)| !p.ends_with("email.html.heex"));
+        files.push(("lib/app_web/components/layouts/app.html.heex", SHELL_HEEX));
+        let r = judged_files(&files, LicenceState::NotJudged);
+        assert_eq!(r.layouts, ["lib/app_web/components/layouts.ex"], "{r:#?}");
+        assert!(r.passes, "{r:#?}");
+    }
+
+    #[test]
+    fn the_licence_seam_is_the_design_licence_s_answer() {
+        let git = |dir: &Path, args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .arg("-C")
+                .arg(dir)
+                .args(args)
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .output()
+                .unwrap()
+                .status
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        let profile = profile();
+        // a kit declared on a public tree with a UI file and no evidence: not judged
+        let dir = repository(&[
+            (POLICY, "ui:\n  kit: flowbite-pro\n  visibility: public\n"),
+            ("index.html", LAYOUT),
+        ]);
+        git(dir.path(), &["init", "-q", "."]);
+        git(dir.path(), &["add", "-A"]);
+        assert_eq!(licence_state(dir.path(), &profile), LicenceState::NotJudged);
+        // no kit declared: inactive, which leaves licensed markers unlicensed
+        std::fs::write(dir.path().join(POLICY), "ui:\n  kit: \"\"\n").unwrap();
+        assert_eq!(licence_state(dir.path(), &profile), LicenceState::Inactive);
+        // a tree git cannot list cannot be judged
+        let bare = repository(&[(POLICY, "ui:\n  kit: flowbite-pro\n")]);
+        let state = licence_state(bare.path(), &profile);
+        assert!(
+            matches!(state, LicenceState::NotJudged | LicenceState::Inactive),
+            "{state:?}"
+        );
+        // evidence held and a licensed file in the public tree: refused
+        let home = tempfile::tempdir().unwrap();
+        let licensed = b"<aside>the licensed sidebar</aside>\n";
+        let digest = |b: &[u8]| {
+            use sha2::Digest;
+            let d = sha2::Sha256::digest(b);
+            d.iter().map(|x| format!("{x:02x}")).collect::<String>()
+        };
+        let norm: Vec<u8> = licensed
+            .iter()
+            .map(|&b| if b == b'\n' { b' ' } else { b })
+            .collect();
+        std::fs::write(
+            home.path().join("kit.tsv"),
+            format!(
+                "{}\t{}\tpro/sidebar.html\n",
+                digest(licensed),
+                digest(&norm)
+            ),
+        )
+        .unwrap();
+        std::fs::write(
+            dir.path().join(POLICY),
+            "ui:\n  kit: flowbite-pro\n  evidence: [\"~/kit.tsv\"]\n",
+        )
+        .unwrap();
+        std::fs::write(dir.path().join("copied.html"), licensed).unwrap();
+        git(dir.path(), &["add", "-A"]);
+        let policy = std::fs::read_to_string(dir.path().join(POLICY)).unwrap();
+        let report =
+            licence::assess_root(dir.path(), Some(&policy), None, Some(home.path()), None).unwrap();
+        assert_eq!(
+            licence_state_of(report.verdict),
+            LicenceState::Refused,
+            "{report:#?}"
+        );
+        std::fs::remove_file(dir.path().join("copied.html")).unwrap();
+        git(dir.path(), &["add", "-A"]);
+        let report =
+            licence::assess_root(dir.path(), Some(&policy), None, Some(home.path()), None).unwrap();
+        assert_eq!(licence_state_of(report.verdict), LicenceState::Active);
+        // a block the design licence cannot use is not judged
+        let report = licence::assess_root(
+            dir.path(),
+            Some("ui:\n  kit: flowbite-pro\n  evidence: [\"/abs/kit.tsv\"]\n"),
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        assert_eq!(licence_state_of(report.verdict), LicenceState::NotJudged);
     }
 }

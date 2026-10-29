@@ -20,7 +20,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 3 | [`modules/delivery.md`](modules/delivery.md) |
 | `deploy` | Deployment | behaviorally_verified | 5 | [`modules/deploy.md`](modules/deploy.md) |
-| `design` | Design system | behaviorally_verified | 6 | [`modules/design.md`](modules/design.md) |
+| `design` | Design system | behaviorally_verified | 7 | [`modules/design.md`](modules/design.md) |
 | `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
 | `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
@@ -109,6 +109,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `design.explain` | `design` | query | behaviorally_verified | `majordomus_design_explain` | — | `GET /api/v1/design/explain` | — | — | required |
 | `design.kit` | `design` | query | behaviorally_verified | `majordomus_design_kit` | — | `GET /api/v1/design/kit` | `majordomus design kit` | — | required |
 | `design.kit.adopt` | `design` | command | experimental | — | — | — | `majordomus design kit adopt` | — | waived (destructive) |
+| `design.licence` | `design` | query | behaviorally_verified | `majordomus_design_licence` | — | — | `majordomus design licence` | — | required |
 | `design.system` | `design` | query | behaviorally_verified | `majordomus_design` | `majordomus://design` | `GET /api/v1/design` | — | — | required |
 | `design.tokens` | `design` | query | behaviorally_verified | `majordomus_design_tokens` | — | `GET /api/v1/design/tokens` | — | — | required |
 | `devcontext.compile` | `devcontext` | query | behaviorally_verified | `majordomus_devcontext` | — | `GET /api/v1/devcontext` | `majordomus devcontext compile` | process, 16 entries | required |

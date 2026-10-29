@@ -219,6 +219,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:design.licence",
+      "path": "/evidence/capabilities/design-licence/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:design.system",
       "path": "/evidence/capabilities/design-system/"
     },
@@ -2634,6 +2639,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:design licence",
+      "path": "/evidence/commands/design-licence/"
+    },
+    {
+      "kind": "command",
       "subject": "command:devcontext compile",
       "path": "/evidence/commands/devcontext-compile/"
     },
@@ -4447,6 +4457,18 @@
       "programs": [],
       "members": [
         "command:design kit adopt"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:design.licence": {
+      "kind": "capability",
+      "id": "design.licence",
+      "page": "/evidence/capabilities/design-licence/",
+      "programs": [],
+      "members": [
+        "command:design licence"
       ],
       "routes": [],
       "mechanisms": [],
@@ -13878,6 +13900,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:design licence": {
+      "kind": "command",
+      "id": "design licence",
+      "page": "/evidence/commands/design-licence/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:devcontext compile": {
       "kind": "command",
       "id": "devcontext compile",
@@ -14276,6 +14317,18 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:44_model_doctrine",
           "path": "test/cases/44_model_doctrine.sh",
           "category": "e2e"
@@ -14452,6 +14505,24 @@
           "via": "negative",
           "test": "suite:391_skills_are_proven_capabilities",
           "path": "test/cases/391_skills_are_proven_capabilities.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4227_a_fleet_skill_is_proved_by_its_pack",
+          "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
           "category": "e2e"
         },
         {
@@ -15619,6 +15690,18 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:01_init",
           "path": "test/cases/01_init.sh",
@@ -15628,6 +15711,12 @@
           "via": "negative",
           "test": "suite:2979_a_personal_layer_changes_nothing_shared",
           "path": "test/cases/2979_a_personal_layer_changes_nothing_shared.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4226_ci_judges_from_the_kit_evidence_secret",
+          "path": "test/cases/4226_ci_judges_from_the_kit_evidence_secret.sh",
           "category": "e2e"
         }
       ],
@@ -17793,6 +17882,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:67_rule_dag",
           "path": "test/cases/67_rule_dag.sh",
           "category": "e2e"
@@ -17855,6 +17950,12 @@
           "via": "negative",
           "test": "suite:403_published_translation",
           "path": "test/cases/403_published_translation.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
           "category": "e2e"
         },
         {
@@ -18403,6 +18504,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:4227_a_fleet_skill_is_proved_by_its_pack",
+          "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:95_skills",
           "path": "test/cases/95_skills.sh",
           "category": "e2e"
@@ -18411,6 +18518,12 @@
           "via": "negative",
           "test": "suite:391_skills_are_proven_capabilities",
           "path": "test/cases/391_skills_are_proven_capabilities.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:4227_a_fleet_skill_is_proved_by_its_pack",
+          "path": "test/cases/4227_a_fleet_skill_is_proved_by_its_pack.sh",
           "category": "e2e"
         },
         {
@@ -18687,6 +18800,12 @@
           "via": "behaviour",
           "test": "suite:3405_a_misplaced_artifact_is_refused",
           "path": "test/cases/3405_a_misplaced_artifact_is_refused.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:4225_the_fleet_pack_installs_only_what_it_lists",
+          "path": "test/cases/4225_the_fleet_pack_installs_only_what_it_lists.sh",
           "category": "e2e"
         },
         {
@@ -20811,6 +20930,18 @@
       "programs": [],
       "members": [
         "capability:design.kit"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_design_licence": {
+      "kind": "mcp",
+      "id": "majordomus_design_licence",
+      "alias_of": "capability:design.licence",
+      "programs": [],
+      "members": [
+        "capability:design.licence"
       ],
       "routes": [],
       "mechanisms": [],
@@ -29774,6 +29905,7 @@
     "suite:417_the_suite_finishes_inside_its_bound",
     "suite:4199_a_case_that_compiles_never_starves_its_neighbours",
     "suite:4223_a_failed_cases_reason_reaches_the_artifact",
+    "suite:4224_a_licensed_source_never_reaches_a_public_tree",
     "suite:4334_the_ui_kit_is_checked_by_one_capability",
     "suite:46_cross_surface",
     "suite:47_mutation",

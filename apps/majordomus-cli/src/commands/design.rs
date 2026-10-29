@@ -28,13 +28,20 @@ pub const EXIT_FINDINGS: u8 = 10;
 /// The exit code of a policy that cannot be read.
 pub const EXIT_BAD_POLICY: u8 = 2;
 
-/// Run `majordomus design`.
+/// Run `majordomus design`: `kit` here, `licence` in [`super::design_licence`].
 pub fn run(args: DesignArgs) -> Result<u8> {
+    if matches!(args.command, DesignCommand::Licence(_)) {
+        return super::design_licence::run(args);
+    }
     run_to(args, &mut std::io::stdout().lock())
 }
 
 fn run_to(args: DesignArgs, w: &mut dyn Write) -> Result<u8> {
-    let DesignCommand::Kit(kit_args) = args.command;
+    let DesignCommand::Kit(kit_args) = args.command else {
+        return Err(Error::Protocol {
+            reason: "design kit was handed another design subcommand".to_string(),
+        });
+    };
     match kit_args.action {
         None => {
             let value = judged(&args.repo)?;
@@ -146,7 +153,7 @@ fn render(report: &KitReport) -> String {
     let policy = if report.policy_declared {
         "declared in .ai/repo/policy.yaml"
     } else {
-        "no design_kit block; the default profile"
+        "no ui.kit; the default profile"
     };
     out.push(format!(
         "design kit: {} ({policy}), {}",
@@ -351,9 +358,9 @@ mod tests {
         assert!(render(&report(KitVerdict::Clean)).contains("clean (0 exemption(s)"));
         let mut bad = report(KitVerdict::BadPolicy);
         bad.policy_declared = true;
-        bad.policy_errors = vec!["design_kit.exempt[0] gives no because".into()];
+        bad.policy_errors = vec!["ui.exempt[0] gives no because".into()];
         let t = render(&bad);
-        assert!(t.contains("POLICY  design_kit.exempt[0] gives no because"));
+        assert!(t.contains("POLICY  ui.exempt[0] gives no because"));
         assert!(t.contains("declared in .ai/repo/policy.yaml"));
         assert!(t.ends_with("nothing was judged"));
         let mut root = report(KitVerdict::Findings);

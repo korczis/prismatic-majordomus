@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 222 | 182 | 0 | 40 |
+| direct | 223 | 183 | 0 | 40 |
 | http | 213 | 182 | 0 | 31 |
-| mcp | 207 | 177 | 0 | 30 |
+| mcp | 208 | 178 | 0 | 30 |
 | system | 14 | 14 | 0 | 0 |
-| total | 656 | 555 | 0 | 101 |
+| total | 658 | 557 | 0 | 101 |
 
 ## Capabilities
 
@@ -54,6 +54,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `design.explain` | design | query | — | covered | covered | covered | `role`, `state` |
 | `design.kit` | design | query | — | covered | covered | covered | `default` |
 | `design.kit.adopt` | design | command | — | waived | — | — | — |
+| `design.licence` | design | query | — | covered | covered | — | `policy` |
 | `design.system` | design | query | — | covered | covered | covered | `default` |
 | `design.tokens` | design | query | — | covered | covered | covered | `all`, `roles` |
 | `devcontext.compile` | devcontext | query | process, 16 entries | covered | covered | covered | `no-seed`, `issue`, `milestone`, `intent`, `source-ranges` |

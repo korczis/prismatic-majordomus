@@ -31,10 +31,32 @@ repository writes itself still owes one.
 ```text
 project/                  rules this repository wrote
 vendor/majordomus/        the pinned Majordomus baseline; do not edit, upgrade explicitly
+vendor/fleet/             the owner's fleet pack, when one applies: rules/, kits/ and MANIFEST
 ```
 
 The vendored package carries `manifest.yaml` naming every rule file with its identity and
 content hash. A hand edit under `vendor/` is detected against that manifest and refused.
+
+The fleet pack is the owner's own package, kept outside every repository
+(`MAJORDOMUS_FLEET_PACK`, else `$XDG_CONFIG_HOME/majordomus/fleet`, else
+`~/.config/majordomus/fleet`). `init`, `migrate`, `rules vendor update` and `update` install
+only the files its manifest lists, and only where its `applies_to` matches: rules and kit
+profiles under `vendor/fleet/`, skills as `skills/fleet-<id>/`. `vendor/fleet/MANIFEST` is the
+stamp — an `# ai-fleet-stamp/v1` line and a `# version: <n>` line, then one
+`<sha256><TAB><installed path><TAB><kind><TAB><pack path>` row per installed file — so a hand
+edit is a doctor FAIL and an older copy than the pack a WARN. A row is read only where it names
+a place the fleet installs into (`skills/fleet-<id>/SKILL.md`, `vendor/fleet/rules/<id>.v<n>.md`,
+`vendor/fleet/kits/<kit>.yaml`); any other row is a doctor FAIL and is never moved or
+loaded. The effective set reads the fleet's rules between the baseline and `project/`, and a
+fleet rule may not claim the `majordomus` or `project` namespace. Into a public tree
+(`ui.visibility` in the policy) an entry marked `visibility: private` is skipped, and a file
+that matches the kit's licence evidence or names a home or absolute path refuses the install.
+A home path is `/Users/`, `/home/`, `$HOME`, `${HOME}` or `~/` before a non-space, anywhere on
+a line; an absolute path is `/root/`, `/opt/`, `/Volumes/`, `/private/`, `/mnt/`, `/srv/`,
+`/var/`, `/tmp/`, `/etc/`, `/usr/` or a drive such as `C:\`, at the start of a line or after a
+space, quote, parenthesis, `=`, `:` or backtick, so that the path of a URL is not one. A kit in
+play (the policy's, or a kit entry the tree would receive) with no evidence on this machine or
+in `MAJORDOMUS_KIT_EVIDENCE_<KIT>` refuses the install as not judged.
 
 ## Front matter
 

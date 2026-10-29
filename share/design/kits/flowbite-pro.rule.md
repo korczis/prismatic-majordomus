@@ -4,7 +4,7 @@ version: 1
 kind: rule
 title: Every user interface is built on Flowbite Pro
 description: Every user interface this repository builds or generates uses the owner's licensed Flowbite Pro shell, blocks and components on Tailwind and Flowbite, and no other UI kit; `majordomus design kit --check` judges the tree against the flowbite-pro profile in CI and before every push.
-statement: Build every user interface in this repository on Flowbite Pro, starting from the matching Pro template or block, with Flowbite as the dependency, its Tailwind plugin and source configured, Flowbite's JavaScript behind every interactive attribute, no second kit, and the Pro shell on every root layout; declare every exemption with its reason in the design_kit policy block, and never publish a Pro source file.
+statement: Build every user interface in this repository on Flowbite Pro, starting from the matching Pro template or block, with Flowbite as the dependency, its Tailwind plugin and source configured, Flowbite's JavaScript behind every interactive attribute, no second kit, and the Pro shell on every root layout; declare every exemption with its reason under ui.exempt in the policy, and never publish a Pro source file.
 status: active
 class: blocking
 depends_on: []
@@ -49,10 +49,10 @@ to follow it. This rule is therefore judged by a command, from markers in the tr
   `border-gray-200`/`dark:border-gray-700`, or the role aliases a token rule declares). A
   brand's colour is Tailwind's `primary` scale on the Pro structure (ADR 0230).
 - **Exemptions are declared, never silent.** `.ai/repo/policy.yaml` carries
-  `design_kit: {profile: flowbite-pro, exempt: [{path, because}]}`, once the policy schema
-  declares that block (adoption writes it then, I4336). An exemption with
-  `shell: marketing` judges a landing or marketing page by the Pro marketing blocks instead:
-  a navbar and a footer.
+  `ui: {kit: flowbite-pro, exempt: [{path, because}]}`; adoption writes `ui.kit`, and each
+  exemption is the repository's own entry, exactly a path and its reason, covering every
+  finding at that path. A published site's layout (under `site/`, `www/` or `docs/`) is a
+  marketing page, judged by the Pro marketing blocks instead: a navbar and a footer.
 - **Licence.** Pro markup is adapted into the owner's products. Pro source files (templates,
   blocks, bundles) are never committed to a public repository or published verbatim. Where
   the tree carries the licensed distribution itself, the licence evidence decides it, and a

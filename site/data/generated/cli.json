@@ -252,7 +252,7 @@
           "route": "/docs/cli/layout/"
         },
         {
-          "about": "The UI kit the repository's interface is built on: judged against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout), and declared in the repository as its rule, policy block and gates",
+          "about": "The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints",
           "command": "majordomus design",
           "name": "design",
           "route": "/docs/cli/design/"
@@ -36650,7 +36650,7 @@
       "usage": "majordomus layout check [OPTIONS]"
     },
     {
-      "about": "The UI kit the repository's interface is built on: judged against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout), and declared in the repository as its rule, policy block and gates",
+      "about": "The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints",
       "ancestors": [
         {
           "command": "majordomus",
@@ -36750,6 +36750,12 @@
           "command": "majordomus design kit",
           "name": "kit",
           "route": "/docs/cli/design/kit/"
+        },
+        {
+          "about": "Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed",
+          "command": "majordomus design licence",
+          "name": "licence",
+          "route": "/docs/cli/design/licence/"
         }
       ],
       "command": "majordomus design",
@@ -36882,7 +36888,7 @@
       ],
       "children": [
         {
-          "about": "Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and the design_kit policy block once the policy schema declares it; idempotent, and --dry-run writes nothing",
+          "about": "Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing",
           "command": "majordomus design kit adopt",
           "name": "adopt",
           "route": "/docs/cli/design/kit/adopt/"
@@ -36920,7 +36926,7 @@
       "usage": "majordomus design kit [OPTIONS] [COMMAND]"
     },
     {
-      "about": "Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and the design_kit policy block once the policy schema declares it; idempotent, and --dry-run writes nothing",
+      "about": "Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing",
       "ancestors": [
         {
           "command": "majordomus",
@@ -37069,7 +37075,7 @@
             "json"
           ],
           "command": "majordomus design kit adopt flowbite-pro --dry-run --format json",
-          "description": "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). The `design_kit` block is written once the policy schema declares it; until then a note says why it is not, and flowbite-pro is the profile judged when the policy names none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
+          "description": "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with `ui.kit: flowbite-pro` (set in its `ui:` block, or the block appended when there is none) and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). Exemptions under `ui.exempt` are the repository's to declare, and adoption writes none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
           "expectation": "exits 0; prints one JSON document carrying /writes, /notes, /dry_run",
           "id": "design-kit-adopt-dry-run",
           "setup": [],
@@ -37088,6 +37094,163 @@
       ],
       "route": "/docs/cli/design/kit/adopt/",
       "usage": "majordomus design kit adopt [OPTIONS] <PROFILE>"
+    },
+    {
+      "about": "Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus design",
+          "name": "design",
+          "route": "/docs/cli/design/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME",
+          "long": "evidence",
+          "name": "evidence",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "The same as --format json",
+          "long": "json",
+          "name": "json",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "JSON"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract); a layer none of which is tracked is read from the work tree",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus design licence",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "design",
+            "licence",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus design licence --format json",
+          "description": "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+          "expectation": "exits 0; prints one JSON document carrying /verdict, /fails, /kit, /visibility, /matches",
+          "id": "design-licence-json",
+          "setup": [],
+          "title": "Whether a public tree holds a licensed kit's files"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "licence",
+      "parent_route": "/docs/cli/design/",
+      "path": [
+        "majordomus",
+        "design",
+        "licence"
+      ],
+      "route": "/docs/cli/design/licence/",
+      "usage": "majordomus design licence [OPTIONS]"
     },
     {
       "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
@@ -40484,10 +40647,10 @@
     }
   ],
   "counts": {
-    "arguments": 1753,
-    "commands": 255,
-    "examples": 255,
-    "runnable": 222
+    "arguments": 1760,
+    "commands": 256,
+    "examples": 256,
+    "runnable": 223
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "1.0.0-alpha.9",

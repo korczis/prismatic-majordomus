@@ -119,7 +119,7 @@ pub enum Command {
     Shell(ShellArgs),
     /// The boundary between the layer's tracked and local halves, checked against the layouts their contracts declare: every path a contract excludes, named with the contract
     Layout(LayoutArgs),
-    /// The UI kit the repository's interface is built on: judged against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout), and declared in the repository as its rule, policy block and gates
+    /// The repository's user interface against its UI kit: `kit` judges it against a kit profile of the distribution signal by signal (dependency, Tailwind plugin and source, the kit's JavaScript, no other kit, the shell on every root layout) and `kit adopt` declares the profile; `licence` judges whether a public tree holds a licensed kit's files, from kit-evidence/v1 fingerprints
     Design(DesignArgs),
     /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
     Pack(PackArgs),
@@ -535,7 +535,7 @@ pub enum LayoutCommand {
 /// let Command::Design(args) = cli.command else { panic!("not the design command") };
 /// let args: DesignArgs = args;
 /// assert!(matches!(args.format, OutputFormat::Json));
-/// let DesignCommand::Kit(kit) = args.command;
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
 /// assert!(kit.check && kit.action.is_none());
 /// // the group runs nothing of its own
 /// assert!(Cli::try_parse_from(["majordomus", "design"]).is_err());
@@ -547,7 +547,7 @@ pub struct DesignArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `kit`. Required: the group runs nothing of its own.
+    /// `kit` or `licence`. Required: the group runs nothing of its own.
     pub command: DesignCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -557,7 +557,8 @@ pub struct DesignArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus design`: `kit` judges the repository's user interface
-/// against the kit profile its policy names, and `kit adopt` declares a profile in it.
+/// against the kit profile its policy names, and `kit adopt` declares a profile in it;
+/// `licence` judges whether a public tree holds a licensed kit's files.
 /// # Example
 ///
 /// ```
@@ -565,14 +566,22 @@ pub struct DesignArgs {
 /// use clap::Parser;
 /// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "flowbite-pro", "--dry-run"]).unwrap();
 /// let Command::Design(args) = cli.command else { panic!("not the design command") };
-/// let DesignCommand::Kit(kit) = args.command;
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
 /// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: true })));
 /// assert_eq!(KitProfileArg::FlowbitePro.name(), "flowbite-pro");
 /// assert!(Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "bootstrap"]).is_err());
+///
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence", "--evidence", "ev.tsv", "--json"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// assert_eq!(licence.evidence.as_deref(), Some(std::path::Path::new("ev.tsv")));
+/// assert!(licence.json);
 /// ```
 pub enum DesignCommand {
     /// Whether the interface is built on the kit: every finding with its signal, path, evidence and remedy; exit 0 when clean or when there is no interface, 10 on a finding under --check, 2 for a policy that cannot be read
     Kit(KitArgs),
+    /// Whether a public tree holds a licensed kit's files: active, inactive, not_judged or refused, each match with its file, licensed source and kind; exit 0 for active and inactive, 10 when refused, 12 when not judged (no evidence here, or a ui: block that cannot be used), 2 for evidence that cannot be read, 13 when the tree cannot be listed
+    Licence(LicenceArgs),
 }
 
 #[derive(Debug, Args)]
@@ -584,7 +593,7 @@ pub enum DesignCommand {
 /// use clap::Parser;
 /// let cli = Cli::try_parse_from(["majordomus", "design", "kit"]).unwrap();
 /// let Command::Design(args) = cli.command else { panic!("not the design command") };
-/// let DesignCommand::Kit(kit) = args.command;
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
 /// let kit: KitArgs = kit;
 /// assert!(!kit.check, "without --check the findings are reported and the exit is 0");
 /// ```
@@ -607,11 +616,11 @@ pub struct KitArgs {
 /// use clap::Parser;
 /// let cli = Cli::try_parse_from(["majordomus", "design", "kit", "adopt", "flowbite-pro"]).unwrap();
 /// let Command::Design(args) = cli.command else { panic!("not the design command") };
-/// let DesignCommand::Kit(kit) = args.command;
+/// let DesignCommand::Kit(kit) = args.command else { panic!("not design kit") };
 /// assert!(matches!(kit.action, Some(KitAction::Adopt { profile: KitProfileArg::FlowbitePro, dry_run: false })));
 /// ```
 pub enum KitAction {
-    /// Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and the design_kit policy block once the policy schema declares it; idempotent, and --dry-run writes nothing
+    /// Declare a kit profile in this repository: its rule under .ai/repo/rules/project/, the enforcement entries that run `design kit --check` in CI and before every push, and ui.kit in the policy's ui: block; idempotent, and --dry-run writes nothing
     Adopt {
         /// The kit profile, from share/design/kits/
         #[arg(value_enum)]
@@ -651,6 +660,30 @@ impl KitProfileArg {
             KitProfileArg::FlowbitePro => "flowbite-pro",
         }
     }
+}
+
+#[derive(Debug, Args)]
+/// `majordomus design licence`: the never-publish gate.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DesignCommand, LicenceArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "design", "licence"]).unwrap();
+/// let Command::Design(args) = cli.command else { panic!("not the design command") };
+/// let DesignCommand::Licence(licence) = args.command else { panic!("not design licence") };
+/// let licence: LicenceArgs = licence;
+/// // without --evidence the policy's ui.evidence entries are read
+/// assert!(licence.evidence.is_none() && !licence.json);
+/// ```
+pub struct LicenceArgs {
+    /// A kit-evidence/v1 file; absent reads the policy's ui.evidence entries under $HOME
+    #[arg(long, value_name = "FILE")]
+    pub evidence: Option<PathBuf>,
+
+    /// The same as --format json
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Args)]
@@ -6165,10 +6198,21 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "design-kit-adopt-dry-run",
             title: "What adopting Flowbite Pro would write, before anything is written",
-            description: "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). The `design_kit` block is written once the policy schema declares it; until then a note says why it is not, and flowbite-pro is the profile judged when the policy names none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
+            description: "Every file adoption touches with what it would do to it: the rule .ai/repo/rules/project/ui-uses-flowbite-pro.v1.md created from the distribution's template, and .ai/repo/policy.yaml updated with `ui.kit: flowbite-pro` (set in its `ui:` block, or the block appended when there is none) and the `design-kit-on-push` enforcement entry (this repository has no CI workflow, so the note says the `design-kit` entry waits for one). Exemptions under `ui.exempt` are the repository's to declare, and adoption writes none. `--dry-run` writes nothing; without it the same plan is written, and a second adoption reports every file unchanged.",
             argv: &["design", "kit", "adopt", "flowbite-pro", "--dry-run", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/writes", "/notes", "/dry_run"]),
+        }],
+    },
+    CommandExamples {
+        command: "design licence",
+        examples: &[ExampleDoc {
+            id: "design-licence-json",
+            title: "Whether a public tree holds a licensed kit's files",
+            description: "The same answer the MCP tool `majordomus_design_licence` returns: `/verdict` (`active`, `inactive`, `not_judged` or `refused`), `/fails`, the declared `/kit` and `/visibility`, why under `/reason`, and every file that holds a licensed file's bytes under `/matches`. This repository's policy declares no kit (`ui.kit` is empty), so the gate is skipped: the verdict is `inactive` and the exit is 0. A refusal exits 10, a public tree with a declared kit and no evidence exits 12, and an evidence file that cannot be read exits 2 naming the file and the line, never its content.",
+            argv: &["design", "licence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/verdict", "/fails", "/kit", "/visibility", "/matches"]),
         }],
     },
     CommandExamples {

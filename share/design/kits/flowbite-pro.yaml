@@ -11,9 +11,9 @@
 # Every regular expression below is the `regex` crate's syntax, written in single quotes so
 # that the YAML subset passes its backslashes through untouched. A repository adopts the
 # profile with `majordomus design kit adopt flowbite-pro`, which writes the rule from
-# flowbite-pro.rule.md beside this file and the two enforcement entries, and the
-# `design_kit` policy block once the distribution's policy schema admits it (I4336); it
-# narrows nothing here.
+# flowbite-pro.rule.md beside this file, the two enforcement entries and `ui.kit:
+# flowbite-pro` in the policy's `ui:` block (I4336); exemptions are the repository's own
+# `ui.exempt` entries, and nothing in the policy narrows this profile.
 schema: 1
 id: flowbite-pro
 title: Flowbite Pro on Tailwind 4 and Flowbite 4
@@ -97,12 +97,15 @@ wiring:
     v4_source: '@source\s+["''][^"'']*flowbite[^"'']*["'']'
     # Tailwind 3: tailwind.config.* with the plugin and a content glob over Flowbite. The
     # paths are relative to the surface's directory and to each of its manifests'. The entry
-    # is the directive or its postcss-import form; flowbite-react 0.10 configures both
-    # through flowbite-react/tailwind.
+    # is the directive or its postcss-import form. flowbite-react 0.10 configures both
+    # through flowbite-react/tailwind: `v3_binding` finds the identifier a configuration binds
+    # to it (capture group 1 or 2), and the plugin and the content are then owed as that
+    # identifier's `.plugin()` and `.content()`, never another object's.
     v3_entry: '(@tailwind\s+(base|components|utilities)|@import\s+["'']tailwindcss/(base|components|utilities)["''])'
     v3_configs: [tailwind.config.js, tailwind.config.cjs, tailwind.config.mjs, tailwind.config.ts, assets/tailwind.config.js, assets/tailwind.config.cjs, assets/tailwind.config.mjs, assets/tailwind.config.ts]
-    v3_plugin: '(?s)(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["'']|(require\(\s*["'']flowbite-react/tailwind["'']\s*\)|from\s+["'']flowbite-react/tailwind["'']).*\.plugin\(\s*\))'
-    v3_content: '(?s)(["''][^"'']*flowbite[^"'']*\*[^"'']*["'']|(require\(\s*["'']flowbite-react/tailwind["'']\s*\)|from\s+["'']flowbite-react/tailwind["'']).*\.content\(\s*(\{[^}]*\})?\s*\))'
+    v3_plugin: '(require\(\s*["'']flowbite(-react)?/plugin["'']\s*\)|from\s+["'']flowbite(-react)?/plugin["''])'
+    v3_content: '["''][^"'']*flowbite[^"'']*\*[^"'']*["'']'
+    v3_binding: '(?:\b(?:const|let|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*require\(\s*["'']flowbite-react/tailwind["'']\s*\)|\bimport\s+(?:\*\s+as\s+)?([A-Za-z_][A-Za-z0-9_]*)\s+from\s+["'']flowbite-react/tailwind["''])'
     # Tailwind compiled in the browser is not a build.
     play_cdn: '(cdn\.tailwindcss\.com|@tailwindcss/browser)'
     # Flowbite fetched from a CDN, with no package behind it.
@@ -135,8 +138,11 @@ licence:
       path: '(^|/)(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks-[a-z0-9.-]+|publisher-ui-blocks-[a-z0-9.-]+)(/|$)'
     - name: a manifest named after a Flowbite Pro product
       text: '"name"\s*:\s*"(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks[a-z0-9.-]*)"'
+    # Matched against dependency names only (dependencies, devDependencies,
+    # peerDependencies, optionalDependencies), so a script or any other key named like a Pro
+    # product is no marker.
     - name: a dependency on a Flowbite Pro package
-      text: '"(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks[a-z0-9.-]*)"\s*:\s*"'
+      dependency: '^(flowbite-pro-[a-z0-9.-]+|flowbite-react-blocks[a-z0-9.-]*)$'
 
 # S4: the kits that must not also be used. A name ending in `/` is an npm scope: every
 # package under it is that kit. An import names the package, or a path through a vendor/ or
@@ -178,27 +184,31 @@ reported:
     packages: [alpinejs]
     markup: '\bx-data\s*='
 
-# S5: the Pro shell on each root layout. A policy's `design_kit.layouts` replaces the
-# globs; a `*.html.heex` layout is judged together with the `root.html.heex` beside it,
-# because Phoenix splits the document from the shell. Phoenix 1.8 draws the app layout in
-# `layouts.ex` (`Layouts.app/1`): that file is a layout when it carries ~H, and it is judged
-# together with every `*.html.heex` of its `layouts/` directory, which are then no layouts
-# of their own.
+# S5: the Pro shell on each root layout. The layouts and the role aliases are the profile's
+# alone: the policy's `ui:` block declares neither (ADR 0230). A `*.html.heex` layout is
+# judged together with the `root.html.heex` beside it, because Phoenix splits the document
+# from the shell. Phoenix 1.8 draws the app layout in `layouts.ex` (`Layouts.app/1`): that
+# file is a layout when it carries ~H, and it is judged together with the app and root
+# templates of its `layouts/` directory (`embedded_templates`), which are then no layouts of
+# their own; another template there, such as an email's, supplies nothing. A layout under
+# `marketing_layouts`, a published site's, is judged by a navbar and a footer instead of the
+# application shell.
 shell:
   layouts: ['app/layout.tsx', 'src/app/layout.tsx', '**/components/layouts.ex', '**/components/layouts/app.html.heex', '**/templates/layout/app.html.heex', 'index.html', 'src/index.html', 'templates/base.html', '**/templates/base.html']
   companion: root.html.heex
+  embedded_templates: [app.html.heex, root.html.heex]
+  marketing_layouts: ['site/**', 'www/**', 'docs/**']
   fixed_nav: '<nav\b[^>]*\bclass(Name)?=["''{][^"''}]*\bfixed\b'
   sidebar: '<aside\b[^>]*\baria-label=["'']Sidebar["'']'
   # flowbite-react draws the sidebar and the breadcrumb as components.
   react_sidebar: '<Sidebar\b[^>]*\baria-label='
   breadcrumb: '<nav\b[^>]*\baria-label=["'']Breadcrumb["'']'
   react_breadcrumb: '<Breadcrumb\b'
-  # The marketing shell an exemption with `shell: marketing` judges instead.
+  # The marketing shell a layout under `marketing_layouts` is judged by instead.
   marketing_nav: '<nav\b'
   marketing_footer: '<footer\b'
   # Each role is met by every class of one alternative (a space-separated class list): the
-  # raw Pro utilities first, then the role aliases a token rule declares. A policy adds its
-  # own alternatives under design_kit.roles.
+  # raw Pro utilities first, then the role aliases a token rule declares.
   roles:
     page: ['bg-gray-50 dark:bg-gray-900', bg-page]
     surface: ['bg-white dark:bg-gray-800', bg-surface]

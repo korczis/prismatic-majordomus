@@ -1,6 +1,6 @@
 ---
 name: mj-design
-description: "Majordomus design: Whether the declared colours can be read; What a design token means; Whether the interface is built on the kit; The design system; The design tokens."
+description: "Majordomus design: Whether the declared colours can be read; What a design token means; Whether the interface is built on the kit; Whether a public tree holds a licensed kit's files; The design system; The design tokens."
 argument-hint: "[request]"
 ---
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
@@ -18,6 +18,7 @@ $ARGUMENTS
 | `design.contrast` | Whether the declared colours can be read | `majordomus_design_contrast` | — | reads |
 | `design.explain` | What a design token means | `majordomus_design_explain` | — | reads |
 | `design.kit` | Whether the interface is built on the kit | `majordomus_design_kit` | `majordomus design kit` | reads |
+| `design.licence` | Whether a public tree holds a licensed kit's files | `majordomus_design_licence` | `majordomus design licence` | reads |
 | `design.system` | The design system | `majordomus_design` | — | reads |
 | `design.tokens` | The design tokens | `majordomus_design_tokens` | — | reads |
 

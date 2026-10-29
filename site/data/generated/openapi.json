@@ -32407,7 +32407,7 @@
       "variants": []
     },
     {
-      "description": "One exemption of the policy.",
+      "description": "One exemption of the policy: `ui.exempt[n]`, exactly `{path, because}`.",
       "home": "design",
       "is_enum": false,
       "name": "KitExemption",
@@ -32420,27 +32420,11 @@
           "type": "string"
         },
         {
-          "description": "Why the path does not owe it.",
+          "description": "Why the path is not held to the kit.",
           "name": "because",
           "refs": [],
           "required": true,
           "type": "string"
-        },
-        {
-          "description": "Only these signals; empty is every signal.",
-          "name": "signals",
-          "refs": [
-            "KitSignal"
-          ],
-          "required": false,
-          "type": "array of KitSignal"
-        },
-        {
-          "description": "`marketing`: S5 judges a navbar and a footer instead of the application shell.",
-          "name": "shell",
-          "refs": [],
-          "required": false,
-          "type": "string | null"
         },
         {
           "description": "How many findings it moved to the exempted list.",
@@ -32720,7 +32704,6 @@
       "type": "\"S0\" | \"S1\" | \"S2\" | \"S3\" | \"S4\" | \"S5\"",
       "used_by": [],
       "used_by_schemas": [
-        "KitExemption",
         "KitFinding"
       ],
       "values": [
@@ -32844,11 +32827,11 @@
           "value": "licensed"
         },
         {
-          "description": "Licensed markers, and the licence is inactive: a finding.",
+          "description": "Licensed markers, and the licence is inactive or the design licence refused the\ntree: a finding.",
           "value": "unlicensed"
         },
         {
-          "description": "Licensed markers, and evidence nobody judged or that was refused: the judge cannot\ndecide, and that is a finding, never a pass.",
+          "description": "Licensed markers, and a licence nobody could judge: the judge cannot decide, and that\nis a finding, never a pass.",
           "value": "undecided"
         }
       ],
@@ -34022,7 +34005,7 @@
       "variants": []
     },
     {
-      "description": "What the licence evidence of a licensed kit says about a repository: the seam the design\nlicence (I4336) fills. Until it does, `licence_state` answers `not_judged`.",
+      "description": "What the design licence (I4336, `crate::design::licence`) says about a repository,\nas the judge of a licensed kit's markers reads it. `licence_state` maps its verdict.",
       "home": "design",
       "is_enum": true,
       "name": "LicenceState",
@@ -34034,19 +34017,19 @@
       ],
       "values": [
         {
-          "description": "The evidence was read and the licence holds.",
+          "description": "The design licence judged the tree with the evidence held and found it clean, or the\ntree is private: the licence holds.",
           "value": "active"
         },
         {
-          "description": "The evidence was read and the licence does not hold.",
+          "description": "The design licence judged nothing and needed to judge nothing: no kit is declared, a\nprivate tree without evidence, or no UI file. Licensed markers there are unlicensed.",
           "value": "inactive"
         },
         {
-          "description": "Nothing judged the evidence.",
+          "description": "The design licence owed a judgement and could not give one, or could not be asked:\nno evidence where a public tree owes it, a `ui:` block it cannot use, a tree it\ncannot list.",
           "value": "not_judged"
         },
         {
-          "description": "The evidence could not be judged: absent where it is owed, or unreadable.",
+          "description": "The design licence refused the tree: a public tree holds a licensed file's bytes.",
           "value": "refused"
         }
       ],
@@ -65955,7 +65938,7 @@
           "cache_detail": "",
           "cli": "design kit",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/design/kit\"",
-          "description": "The supervised repository's user interface judged against the kit profile its policy's `design_kit` block names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles. Each finding names its signal, path, evidence and remedy; each exemption the policy declares names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers, and where the tree carries one the licence evidence decides it: active passes, while inactive, refused or not judged (nothing judges the evidence until the design licence lands) is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore), skipping dependencies and build output and listing vendored directories by path only; no build and no network.",
+          "description": "The supervised repository's user interface judged against the kit profile its policy's `ui.kit` names (flowbite-pro when it names none), from markers in the tree and never the kit's own source: S0 whether there is an interface at all and its surfaces (the root's manifest or the one in assets/, every workspace the root manifest or pnpm-workspace.yaml declares, every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv; Phoenix LiveView in mix.exs, HEEx or HTML templates, a Next.js root layout; published pages: a root index.html, pages under site/, www/, public/, under a directory a Pages workflow or a deploy or build script publishes, and under docs/ when it is published), any other manifest with UI packages being a notice and never a finding; S1 the kit's package in each surface, its React binding for React and Next.js, and the kit in use in the surface's own files (an attribute the kit's JavaScript drives, a flowbite-react component, a call of the kit's API), because wiring alone passes nothing; S2 the Tailwind plugin and source (Tailwind 4's @plugin and @source, Tailwind 3's config), a Play CDN or a CDN-only kit being a finding; S3 the kit's JavaScript behind every data-drawer, dropdown, modal, tabs, collapse and tooltip attribute, a script that reads them itself being a re-implementation; S4 no other kit (daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui and Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation, Materialize), Alpine.js reported and not refused; S5 the shell on every root layout: a fixed top navbar, an aside labelled Sidebar that both drawer attributes name, a breadcrumb, and the page, surface and border roles, a published site's layout being judged by a navbar and a footer instead; the layouts, the roles and the marketing layouts are the profile's alone. Each finding names its signal, path, evidence and remedy; each exemption the policy declares under `ui.exempt`, exactly `{path, because}`, moves every finding at its path and names its reason and how many findings it covered. A licensed kit's profile declares its licensed markers (a distribution directory, a manifest named after a Pro product, a dependency on a Pro package), and where the tree carries one the design licence decides it: active passes, while inactive, refused or not judged is a finding no exemption moves, since a variant the judge cannot decide is never a pass. A repository without an interface passes vacuously; a policy that cannot be read is `bad_policy` and judges nothing. Reads the repository's files (in a Git work tree the tracked ones and the untracked ones Git does not ignore; a submodule or a nested repository is named in a notice and judged in its own repository), skipping dependencies and build output and listing vendored directories by path only; no build and no network.",
           "home": "design",
           "id": "design.kit",
           "kind": "query",

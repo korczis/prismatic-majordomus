@@ -332,12 +332,12 @@ Tailwind's `primary` scale.
 
 | signal | holds when |
 |---|---|
-| S0 | there is no user interface at all, and the rule then holds vacuously. Otherwise an interface was found, and cut into surfaces: the root's `package.json` (or the one in `assets`), every workspace the root declares (`workspaces`, or `pnpm-workspace.yaml`), and every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv. Phoenix LiveView in `mix.exs`, `*.heex`, `templates/*.html`, a Next.js `app/layout.tsx` and published pages (a root `index.html`; pages under `site`, `www` or `public`, under a directory a Pages workflow or a deploy script publishes, and under `docs` when it is published) count too. A manifest with UI packages that is no surface is a notice, never a finding |
+| S0 | there is no user interface at all, and the rule then holds vacuously. Otherwise an interface was found, and cut into surfaces: the root's `package.json` (or the one in `assets`), every workspace the root declares (`workspaces`, or `pnpm-workspace.yaml`), and every nested app manifest with markup in its own subtree outside examples, fixtures, tests, vendor, docs, deps and priv. Phoenix LiveView in `mix.exs`, `*.heex`, `templates/*.html`, a Next.js `app/layout.tsx` and published pages (a root `index.html`; pages under `site`, `www` or `public`, under a directory a Pages workflow or a deploy script publishes, and under `docs` when it is published) count too. A manifest with UI packages that is no surface is a notice, never a finding, and nothing under examples or fixtures counts, a Mix project included. A Git submodule or a nested repository is judged in its own repository: a notice names it |
 | S1 | each surface declares `flowbite`, or `flowbite-react` for React and Next.js, and uses it in its own files: an attribute Flowbite's JavaScript drives, a `flowbite-react` component or a call of its API. Wiring alone passes none of S1 to S3 |
-| S2 | under Tailwind 4, `@plugin "flowbite/plugin"` and an `@source` over Flowbite; under Tailwind 3, `require('flowbite/plugin')` and a content glob. A Play CDN or a CDN-only Flowbite is a finding |
+| S2 | under Tailwind 4, `@plugin "flowbite/plugin"` and an `@source` over Flowbite; under Tailwind 3, `require('flowbite/plugin')` and a content glob, or `.plugin()` and `.content()` called on the identifier bound to `flowbite-react/tailwind`. A Play CDN or a CDN-only Flowbite is a finding |
 | S3 | every `data-drawer-*`, `data-dropdown-*`, `data-modal-*`, `data-tabs-*`, `data-collapse-*` and `data-tooltip-*` attribute is driven by Flowbite's JavaScript, and no script reads those attributes itself |
 | S4 | no daisyUI, Bootstrap, Preline, TW Elements, shadcn/ui or Radix, Petal Components, Material UI, Ant Design, Bulma, Chakra UI, Foundation or Materialize. Alpine.js is reported, not refused |
-| S5 | every root layout carries a fixed top navbar, an `aside[aria-label="Sidebar"]` that both `data-drawer-target` and `data-drawer-toggle` name, a breadcrumb, and the page, surface and border roles |
+| S5 | every root layout carries a fixed top navbar, an `aside[aria-label="Sidebar"]` that both `data-drawer-target` and `data-drawer-toggle` name, a breadcrumb, and the page, surface and border roles; a published site's layout (under `site`, `www` or `docs`) a navbar and a footer. The layouts and the role aliases are the profile's; a Phoenix `layouts.ex` is judged with the app and root templates it embeds |
 
 </div>
 
@@ -355,39 +355,38 @@ interface, 10 a finding under `--check`, and 2 a policy that cannot be read.
 The profile's markers come in two kinds. Wiring markers (`wiring:`) connect the kit to a
 build, and usage markers (`usage:`) show it in use. Flowbite Pro is licensed, so the profile
 also declares its licensed markers (`licence:`): what in a tree is the licensed distribution
-itself rather than markup adapted from it. Where a tree carries one, the licence evidence
-decides. The judge receives it as `active`, `inactive`, `not_judged` or `refused`, and only
-`active` passes. A licence the judge cannot decide is a finding that no exemption moves.
-The design licence reads the evidence; until it lands, the answer is `not_judged`. The same
-answer is `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit`.
+itself rather than markup adapted from it, such as a Pro distribution directory or a
+dependency on a Pro package. Where a tree carries one, the design licence
+(`majordomus design licence`, I4336) decides: the judge asks its library function and reads
+its verdict as `active`, `inactive`, `refused` or `not_judged`. Only `active` passes;
+`inactive` and `refused` make the marker unlicensed, and `not_judged` (a public tree with a
+UI and no evidence on this machine) is undecided, a finding that no exemption moves. The
+same answer is `GET /api/v1/design/kit` and the MCP tool `majordomus_design_kit`.
 
 `adopt` writes the rule `project.ui-uses-flowbite-pro` from
-[the template](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/design/kits/flowbite-pro.rule.md). It adds the `design_kit` block
-to `.ai/repo/policy.yaml` once the distribution's policy schema declares it (until the
-design licence's policy keys, I4336, it writes none and says why, because doctor refuses a
-key the schema does not declare, and flowbite-pro is the profile judged when the policy
-names none), and two enforcement entries that run `design kit --check`:
+[the template](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/design/kits/flowbite-pro.rule.md). It sets `ui.kit: flowbite-pro` in
+the `ui:` block of `.ai/repo/policy.yaml`, the block the design licence declares and the
+skeleton seeds with no kit (or appends the block when there is none; a `ui.kit` naming
+another profile is refused, and with no kit adopted flowbite-pro is the profile judged), and
+two enforcement entries that run `design kit --check`:
 `design-kit-on-push` (the pre-push hook) and `design-kit` (the CI workflow, when there is
 one). It writes nothing that is already there, so a second run changes nothing. The rule ends
 with a section `In this repository` that is the repository's own: a later adoption brings
 the rest of the rule up to the template and keeps that section as the repository wrote it.
 `majordomus doctor` names each entry until the hook and the workflow invoke it.
 
-An exemption is declared in the block with its reason and is never silent. Every answer
-lists it, with the number of findings it covered:
+An exemption is the repository's own entry under `ui.exempt`, exactly a path and its
+reason, and is never silent: it moves every finding at its path to the exempted list, and
+every answer lists it with the number of findings it covered. A licensed marker's finding
+is never exempted.
 
 ```yaml
-design_kit:
-  profile: flowbite-pro
-  layouts: [lib/app_web/components/layouts/app.html.heex]   # instead of the profile's
-  roles:
-    page: [bg-page]                 # a token rule's alias for bg-gray-50 dark:bg-gray-900
+ui:
+  kit: flowbite-pro                 # written by adopt; "" adopts none
+  visibility: public                # the design licence's, as are publish and evidence
   exempt:
     - path: reel.html
       because: a render canvas, captured headless and never navigated
-    - path: index.html
-      because: the landing page
-      shell: marketing              # S5 judges the Pro marketing navbar and footer instead
 ```
 
 This repository has not adopted the rule yet. Its site's navigation is `site/nav.js`, a

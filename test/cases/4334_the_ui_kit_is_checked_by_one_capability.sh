@@ -16,20 +16,26 @@
 #      no breadcrumb
 #   a workspace wired, using nothing   exit 10, an S1 finding on its manifest; a manifest
 #                                      under examples/ is a notice, its kit never counted
-#   a licensed marker nobody judged    exit 10, an S1 finding, licence undecided
+#   a licensed marker, no kit adopted  exit 10, an S1 finding: the design licence is
+#                                      inactive, so the marker is unlicensed
 #   without --check                    the same findings, exit 0
 #   adopt --dry-run                    writes nothing
-#   adopt, then adopt again            the rule and the entries once, and no design_kit block
-#                                      while the policy schema declares none (I4336), so
-#                                      doctor accepts the adopted policy; the second run
-#                                      changes nothing
-#   an exemption with its reason       the finding moves to the exempted list, exit 0
+#   adopt, then adopt again            the rule, the entries and ui.kit in the skeleton's ui:
+#                                      block once, no design_kit key, doctor accepts the
+#                                      adopted policy; the second run changes nothing
+#   ... then check                     clean under its own ui block
+#   a licensed marker once adopted     exit 10, an S1 finding: a public tree with a UI and no
+#                                      evidence is not judged, so the licence is undecided
+#   an exemption with its reason       ui.exempt {path, because}: every finding at the path
+#                                      moves to the exempted list, exit 0, doctor accepts it
 #   adopt over a stale rule            the rule is brought up to the template, and its
 #                                      section 'In this repository' is kept
 #   an exemption without a reason      exit 2, nothing judged: no finding, no exemption, no
 #                                      surface
 #   ... and over a licensed marker     the finding stands, exit 10
-#   a published page                   an interface; a stray manifest is a notice
+#   a published page                   an interface; a stray manifest is a notice; docs/ is
+#                                      published only by a publish_dir or Pages step, never by
+#                                      a checkout's path; a nested repository is a notice
 #   a repository nobody supervises     judged through --repo by the same function
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
@@ -160,14 +166,15 @@ printf '%s' "$out" | jq -e '[.findings[] | select(.signal == "S4")] | length == 
   || { echo "    the example's kit was counted: $out"; exit 1; }
 expect S1 apps/web/package.json "a workspace wired and using nothing"
 
-# A licensed marker (a Flowbite Pro distribution in the tree) with licence evidence nobody
-# judged: the judge cannot decide the variant, and that is a finding, never a pass.
-mkdir -p design/flowbite-pro-admin-dashboard-1.2.0
-printf 'the distribution\n' > design/flowbite-pro-admin-dashboard-1.2.0/README.md
+# A licensed marker (a Flowbite Pro distribution in the tree) in a repository that adopts
+# no kit: the design licence is inactive (ui.kit is empty), so the marker is unlicensed.
+pro=design/flowbite-pro-admin-dashboard-1.2.0/README.md
+mkdir -p "$(dirname "$pro")"
+printf 'the distribution\n' > "$pro"
 out="$(kit)" || true
-printf '%s' "$out" | jq -e '.licence.state == "not_judged" and .licence.variant == "undecided"' >/dev/null \
-  || { echo "    the licence is not undecided: $out"; exit 1; }
-expect S1 design/flowbite-pro-admin-dashboard-1.2.0/README.md "a licensed marker nobody judged"
+printf '%s' "$out" | jq -e '.licence.state == "inactive" and .licence.variant == "unlicensed"' >/dev/null \
+  || { echo "    an unadopted kit's licensed marker is not unlicensed: $out"; exit 1; }
+expect S1 "$pro" "a licensed marker with no kit adopted"
 
 # without --check the findings are reported and the exit is 0
 edit package.json '{ sub(/, "flowbite": "\^4.0.1"/, ""); print }'
@@ -184,12 +191,14 @@ expect_exit 0 "$RB" design kit adopt flowbite-pro --format json || exit 1
 rule=.ai/repo/rules/project/ui-uses-flowbite-pro.v1.md
 expect_file "$rule" || exit 1
 cmp -s "$rule" "$ROOT/share/design/kits/flowbite-pro.rule.md" || { echo "    the rule is not the template"; exit 1; }
-# The policy schema declares no design_kit block until the design licence's keys (I4336), and
-# doctor refuses a key the schema does not declare: adoption writes none, says why, and the
-# adopted policy is one doctor reads.
-! grep -q '^design_kit:' .ai/repo/policy.yaml || { echo "    adoption wrote a block the policy schema does not declare"; exit 1; }
-"$RB" design kit adopt flowbite-pro --dry-run --format json 2>"$S/err" | jq -e '[.notes[] | select(test("I4336"))] | length == 1' >/dev/null \
-  || { echo "    adoption does not say why it wrote no block: $(cat "$S/err")"; exit 1; }
+# The kit is the ui: block's (I4336), which the skeleton seeds with no kit: adoption sets
+# ui.kit there, writes no other key under it and no design_kit block, and the adopted policy
+# is one doctor reads.
+ui_kit() { awk '/^ui:/ { u = 1; next } u && /^[^ #]/ { u = 0 } u && /^  kit: / { sub(/^  kit: /, ""); print }' .ai/repo/policy.yaml; }
+[ "$(ui_kit)" = flowbite-pro ] || { echo "    adoption did not set ui.kit: $(cat .ai/repo/policy.yaml)"; exit 1; }
+! grep -q '^design_kit:' .ai/repo/policy.yaml || { echo "    adoption wrote the retired design_kit block"; exit 1; }
+grep -q '^  visibility: public$' .ai/repo/policy.yaml || { echo "    adoption lost the ui block's other keys"; exit 1; }
+! grep -q '^  exempt:' .ai/repo/policy.yaml || { echo "    adoption wrote exemptions, which are the repository's"; exit 1; }
 "$MJ" doctor >"$S/doctor" 2>&1 || true
 grep -q 'parsed, version 1' "$S/doctor" || { echo "    doctor did not read the adopted policy: $(cat "$S/doctor")"; exit 1; }
 ! grep -q 'unknown keys' "$S/doctor" || { echo "    doctor refuses the adopted policy: $(grep 'unknown keys' "$S/doctor")"; exit 1; }
@@ -206,6 +215,17 @@ printf '%s' "$out" | jq -e '[.writes[] | select(.action != "unchanged")] | lengt
 out="$(kit)" && code=0 || code=$?
 [ "$code" = 0 ] && [ "$(printf '%s' "$out" | verdict)" = clean ] || {
   echo "    the adopted repository is not clean under its own policy (exit $code): $out"; exit 1; }
+printf '%s' "$out" | jq -e '.policy_declared and .profile == "flowbite-pro" and .licence.variant == "not_used"' >/dev/null \
+  || { echo "    the adopted kit is not the one judged: $out"; exit 1; }
+
+# Adopted, the tree is public, has a UI and holds no licence evidence: the design licence owes
+# a judgement it cannot give, so a licensed marker is undecided, never a pass.
+mkdir -p "$(dirname "$pro")"
+printf 'the distribution\n' > "$pro"
+out="$(kit)" || true
+printf '%s' "$out" | jq -e '.licence.state == "not_judged" and .licence.variant == "undecided"' >/dev/null \
+  || { echo "    the licence is not undecided: $out"; exit 1; }
+expect S1 "$pro" "a licensed marker nobody could judge"
 
 # The rule's last section is the repository's: over a stale rule, adoption brings the rest
 # up to the template and keeps that section as the repository wrote it.
@@ -225,22 +245,23 @@ printf '%s' "$out" | jq -e '[.writes[] | select(.action != "unchanged")] | lengt
 git checkout -q -- .
 
 # ---------------------------------------------------------------- exemptions
-# The block is written by hand here: the judge reads it, and doctor will accept it once the
-# policy schema declares it (I4336).
+# An exemption is the repository's own ui.exempt entry, exactly {path, because}: every finding
+# at its path moves to the exempted list, and doctor accepts the entry the schema declares.
 edit index.html '{ sub(/ aria-label="Breadcrumb"/, ""); print }'
-printf '\ndesign_kit:\n  profile: flowbite-pro\n' >> .ai/repo/policy.yaml
-edit .ai/repo/policy.yaml '{ print } /^  profile: flowbite-pro$/ { print "  exempt:"; print "    - path: index.html"; print "      because: the breadcrumb lives in the pages the shell frames"; print "      signals: [S5]" }'
-out="$(kit)" && code=0 || code=$?
-[ "$(printf '%s' "$out" | jq -r '.policy_declared')" = true ] || { echo "    the block is not read: $out"; exit 1; }
+edit .ai/repo/policy.yaml '{ print } /^  kit: flowbite-pro$/ { print "  exempt:"; print "    - path: index.html"; print "      because: the breadcrumb lives in the pages the shell frames" }'
 out="$(kit)" && code=0 || code=$?
 [ "$code" = 0 ] || { echo "    an exempted finding still refuses (exit $code): $out"; exit 1; }
-printf '%s' "$out" | jq -e '(.exempted | length) == 1 and .exempted[0].because != "" and .exemptions[0].matched == 1' >/dev/null \
+printf '%s' "$out" | jq -e '(.exempted | length) == 1 and .exempted[0].finding.signal == "S5" and .exempted[0].because != "" and .exemptions[0].matched == 1' >/dev/null \
   || { echo "    the exemption is not listed with its reason: $out"; exit 1; }
+printf '%s' "$out" | jq -e '.exemptions[0] | keys == ["because", "matched", "path"]' >/dev/null \
+  || { echo    "    an exemption carries more than its path and reason: $out"; exit 1; }
+"$MJ" doctor >"$S/doctor" 2>&1 || true
+! grep -q 'unknown keys' "$S/doctor" || { echo "    doctor refuses ui.exempt: $(grep 'unknown keys' "$S/doctor")"; exit 1; }
 
 # an exemption does not move a licence the judge cannot decide
-mkdir -p design/flowbite-pro-admin-dashboard-1.2.0
-printf 'the distribution\n' > design/flowbite-pro-admin-dashboard-1.2.0/README.md
-edit .ai/repo/policy.yaml '{ print } /^      signals: \[S5\]$/ { print "    - path: design"; print "      because: kept for reference" }'
+mkdir -p "$(dirname "$pro")"
+printf 'the distribution\n' > "$pro"
+edit .ai/repo/policy.yaml '{ print } /^      because: the breadcrumb/ { print "    - path: design"; print "      because: kept for reference" }'
 out="$(kit)" && code=0 || code=$?
 [ "$code" = 10 ] || { echo "    an exemption moved an undecided licence (exit $code): $out"; exit 1; }
 printf '%s' "$out" | jq -e '(.exempted | length) == 1 and ([.findings[] | select(.path | startswith("design/flowbite-pro-"))] | length) == 1' >/dev/null \
@@ -285,4 +306,25 @@ printf '<p>about</p>\n' > "$P/site/about.html"
 out="$("$RB" design kit --repo "$P" --format json 2>"$S/err")" || true
 printf '%s' "$out" | jq -e '.ui and ([.ui_evidence[] | select(test("published page"))] | length) == 1' >/dev/null \
   || { echo "    a published page is not an interface: $out"; exit 1; }
+
+# docs/ is published by a gh-pages publish_dir step, and not by a checkout whose path is docs
+D="$S/docs"
+mkdir -p "$D/docs" "$D/.github/workflows"
+( cd "$D" && git init -q . )
+printf '<p>manual</p>\n' > "$D/docs/index.html"
+printf 'jobs:\n  b:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          path: docs\n' > "$D/.github/workflows/wiki.yml"
+out="$("$RB" design kit --repo "$D" --format json 2>"$S/err")" || true
+[ "$(printf '%s' "$out" | verdict)" = no_ui ] || { echo "    a checkout's path published docs/: $out"; exit 1; }
+printf 'jobs:\n  p:\n    steps:\n      - uses: peaceiris/actions-gh-pages@v4\n        with:\n          publish_dir: ./docs\n' > "$D/.github/workflows/pages.yml"
+out="$("$RB" design kit --repo "$D" --format json 2>"$S/err")" || true
+printf '%s' "$out" | jq -e '.ui and ([.ui_evidence[] | select(test("docs/index.html"))] | length) == 1' >/dev/null \
+  || { echo "    a publish_dir step does not publish docs/: $out"; exit 1; }
+
+# a Git repository nested in the tree is named, and judged in its own repository
+mkdir -p "$D/web"
+( cd "$D/web" && git init -q . )
+printf '<p>web</p>\n' > "$D/web/index.html"
+out="$("$RB" design kit --repo "$D" --format json 2>"$S/err")" || true
+printf '%s' "$out" | jq -e '[.notices[] | select(startswith("web is") and test("judged in its own repository"))] | length == 1' >/dev/null \
+  || { echo "    the nested repository is not named in a notice: $out"; exit 1; }
 true
