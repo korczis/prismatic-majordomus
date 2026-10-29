@@ -623,7 +623,8 @@ W="$ROOT/.github/workflows/validate.yml"
 grep -q 'needs\.plan\.outputs\.' "$W" || { echo "    no job reads a plan output; this check has stopped checking anything"; exit 1; }
 missing=""
 for ref in $(grep -oE 'needs\.plan\.outputs\.[a-z_]+' "$W" | sed 's/.*\.//' | LC_ALL=C sort -u); do
-  grep -qE "^      $ref: \\\$\{\{ steps\.plan\.outputs\.$ref \}\}" "$W" || missing="$missing $ref"
+  # exposed by any step of the plan job: the gates by its `plan` step, the runner by its own (I4242)
+  grep -qE "^      $ref: \\\$\{\{ steps\.[a-z_-]+\.outputs\.$ref \}\}" "$W" || missing="$missing $ref"
 done
 [ -z "$missing" ] || { echo "    job(s) gated on plan output(s) the plan job never exposes:$missing"; exit 1; }
 

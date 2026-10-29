@@ -40,6 +40,12 @@ on:
         description: "empty: every gate, on-demand included. 'change': the gates of the head commit's own change, as a pull request's run plans them"
         required: false
         default: ''
+      # I4242: the runner of this one run, in place of the repository variable MJ_RUNNER — how
+      # a self-hosted pool is proved on a branch before the variable sends every run to it.
+      runner:
+        description: "empty: vars.MJ_RUNNER. A runner label (e.g. lundra), or a JSON list of labels"
+        required: false
+        default: ''
   schedule:
     # Every night, and this is the run that carries the on-demand gates: a gate nothing
     # selected for a while still has a run, and a gate no push can afford a runner for still
@@ -107,6 +113,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     outputs:
+      runner: ${{ steps.runner.outputs.runner }}
       mode: ${{ steps.plan.outputs.mode }}
       selected: ${{ steps.plan.outputs.selected }}
       shell_suite: ${{ steps.plan.outputs.shell_suite }}
@@ -189,6 +196,38 @@ jobs:
             echo
             jq -r 'if (.classes | length) > 0 then "Classes: " + (.classes | map("\(.id) (\(.paths | length))") | join(", ")) else "" end' plan.json
           } >> "$GITHUB_STEP_SUMMARY"
+      # I4242: the runner of the first wave (docs/CI.md, case 4242), decided once, here. The
+      # repository's own machines (MJ_RUNNER, e.g. lundra) are the first wave: they cost nothing
+      # per minute and do not share the account's hosted concurrency. A pull request from a fork
+      # is routed off them, because this repository is public and they are machines of the fleet;
+      # an unset or unreadable variable means GitHub-hosted. This is routing, not the control:
+      # a fork's run executes the pull request's own workflow file, so what keeps it off the
+      # fleet is the fork approval policy all_external_contributors (docs/CI.md). This job stays hosted so that a
+      # verdict is planned even when the pool is offline; the remedy for an offline pool is to
+      # unset MJ_RUNNER. Every job reads `needs.plan.outputs.runner || "ubuntu-latest"`, so a
+      # plan that failed still lets `ci` report. Case 4242 drives this step.
+      - id: runner
+        env:
+          CHOSEN: ${{ github.event.inputs.runner || vars.MJ_RUNNER }}
+          EVENT: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          runner='"ubuntu-latest"'
+          if [ "$EVENT" = pull_request ] && [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+            echo "::notice::a pull request from ${HEAD_REPO:-an unknown repository} runs on GitHub-hosted runners"
+          elif [ -n "${CHOSEN:-}" ]; then
+            case "$CHOSEN" in
+              '['*) labels=$CHOSEN ;;
+              *) labels=$(jq -cn --arg l "$CHOSEN" '["self-hosted", $l]') ;;
+            esac
+            if jq -e 'type == "array" and length > 0 and all(type == "string")' <<<"$labels" >/dev/null 2>&1; then
+              runner=$(jq -c . <<<"$labels")
+            else
+              echo "::warning::MJ_RUNNER is neither a runner label nor a JSON list of labels; GitHub-hosted runners"
+            fi
+          fi
+          echo "runner=$runner" >> "$GITHUB_OUTPUT"
+          echo "Runner of this run's jobs: \`$runner\`" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
       - uses: actions/upload-artifact@v4
         with:
           name: ci-plan
@@ -298,6 +337,8 @@ jobs:
   structure:
     needs: [plan, build]
     timeout-minutes: 55
+    # I4242: hosted, not the first wave: its 42 gates took 3214 s on lundra-3 against 36-48
+    # minutes hosted, and the job's bound cancelled them there (run 40613243708)
     runs-on: ubuntu-latest
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
@@ -526,11 +567,17 @@ jobs:
     # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
     # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
     timeout-minutes: 225
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -832,7 +879,7 @@ jobs:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
     timeout-minutes: 55
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -846,6 +893,12 @@ jobs:
       run:
         working-directory: apps/majordomus-cli
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # One commit deep. Until 2026-10-20 this was the whole history, every head and every tag,
       # for the differential's base alone, and on run 39438896504 that fetch did not return: it
       # waited out the job's 55 minutes and read as cancelled, with nothing measured. The
@@ -962,7 +1015,7 @@ jobs:
     needs: [plan, suite, rust, coverage, build]
     if: always() && ((needs.plan.outputs.shell_suite == 'true' && (needs.suite.result == 'success' || needs.suite.result == 'failure')) || (needs.plan.outputs.rust_check == 'true' && (needs.rust.result == 'success' || needs.rust.result == 'failure')))
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     permissions:
       contents: read
       # `gh workflow run pages.yml`, and nothing else of Actions
@@ -971,6 +1024,12 @@ jobs:
       # the head a pull request was built from, carried beside the merge commit that ran
       MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
         timeout-minutes: 10
@@ -1279,10 +1338,16 @@ jobs:
     needs: [plan, site-probe-shard]
     if: always() && needs.plan.outputs.site_probe == 'true'
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -1380,11 +1445,17 @@ jobs:
     needs: [plan, interaction-probe-shard]
     if: always() && needs.plan.outputs.interaction_probe == 'true'
     timeout-minutes: 10
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -1580,11 +1651,17 @@ jobs:
     if: always() && needs.plan.outputs.ui_audit == 'true'
     # the join is seconds; the report needs the executable, which the Rust cache restores
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -1658,13 +1735,13 @@ jobs:
   # selects it is a change to the crate or to share/cockpit/, and neither of those builds
   # the website.
   cockpit:
-    needs: plan
+    needs: [plan, build]
     if: needs.plan.outputs.cockpit_probe == 'true'
     # the probe crawls every route the server answers: 1048 s of its 1200 s bound on
     # 2026-10-19 (39285861377), then over it as the routes grew a fifth (6554 -> 7699 crawled);
     # the bound and the job keep a third's headroom
     timeout-minutes: 35
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1674,6 +1751,15 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # I4242: the executable the build job made once, not a cold debug build inside the
+      # probe's bound. On lundra-3 that build ran silent for all of the probe's 1800 s while
+      # other jobs and derives shared the host (run 40776563391): a self-hosted runner has no
+      # build cache (setup-rust skips it there) and the probe prints nothing until it serves.
+      - name: the executable the probe serves
+        uses: ./.github/actions/majordomus-bin
+        with:
+          exe: "true"
+          setup: "false"
       # the graph and topology pages load vendored libraries that are deliberately not
       # committed (two megabytes nothing on the critical path needs), so the runner has to
       # build them out of node_modules before a browser is pointed at those pages. Without
@@ -1716,11 +1802,17 @@ jobs:
     needs: [plan, build]
     if: needs.plan.outputs.mesh_lab == 'true'
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - id: rust
         name: the executable the nodes run
@@ -1907,7 +1999,7 @@ jobs:
     # pages-check's bounded wait for the deploy of this commit (PAGES_CHECK_DEPLOY_WAIT, twenty
     # minutes), its five-minute wait for gh-pages' head to be served, and the checks after them
     timeout-minutes: 35
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     env:
       # every gate's receipts, "<gate><TAB><step outcome><TAB><source>": what the ci verdict asks each selected gate for
       MJ_CI_RECEIPTS: ${{ github.workspace }}/receipts.tsv
@@ -1917,6 +2009,12 @@ jobs:
       # its last step cancels a branch's run that this job turned red, as every gate job's does
       actions: write
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
         timeout-minutes: 10
         with:
@@ -1965,8 +2063,14 @@ jobs:
     needs: [plan, build, rustdoc-surface, structure, suite, rust, coverage, bench, site, site-probe, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
-    runs-on: ubuntu-latest
+    runs-on: ${{ fromJSON(needs.plan.outputs.runner || '"ubuntu-latest"') }}
     steps:
+      # I4242: the scripts of every job run node, which a GitHub-hosted image carries and a
+      # self-hosted runner need not; the pool is given the Node setup-site pins (cockpit has it)
+      - if: runner.environment == 'self-hosted'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:

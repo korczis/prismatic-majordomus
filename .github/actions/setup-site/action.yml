@@ -28,8 +28,10 @@ runs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: npm
+        # I4242: a self-hosted runner keeps ~/.npm on its own disk; uploading it is the only cost
+        cache: ${{ runner.environment != 'self-hosted' && 'npm' || '' }}
     - id: modules
+      if: runner.environment != 'self-hosted'
       uses: actions/cache@v4
       with:
         path: node_modules
