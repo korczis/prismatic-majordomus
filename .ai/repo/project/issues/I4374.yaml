@@ -1,4 +1,4 @@
-id: I4365
+id: I4374
 milestone: development-runtime
 title: "A commit that changes the plan's records reports intent validate before it leaves the machine"
 slug: a-records-commit-reports-intent-validate
@@ -10,9 +10,9 @@ why: "On 2026-10-29 #2653 landed I4348, I4349, I4351, I4357 and I4359 with serve
 current_state: "On master 5370ee63d19 .githooks/pre-commit reports doctor and checks derived data; intent validate runs only as CI's intent-check gate in the rust job."
 desired_state: "A commit whose staged paths include .ai/repo/project/ prints intent validate's failures in the hook's report, with the gate's name and the reproduce line; a commit that touches nothing there pays nothing for it."
 scope:
-  - ".ai/repo/project/issues/I4365.yaml"
+  - ".ai/repo/project/issues/I4374.yaml"
   - ".githooks/pre-commit"
-  - "test/cases/4365_a_records_commit_reports_intent_validate.sh"
+  - "test/cases/4374_a_records_commit_reports_intent_validate.sh"
 non_scope:
   - "Refusing the commit: CI holds the verdict (I3830); the hook reports"
   - "Who may merge a pull request before its validate has run"
@@ -21,7 +21,7 @@ acceptance_criteria:
   - "A fixture commit that adds an issue with serves: [] under a milestone an intent realises prints issue_without_purpose from the hook"
   - "A commit that touches no file under .ai/repo/project/ does not run intent validate"
 validation:
-  - "bash test/run.sh 4365_a_records_commit_reports_intent_validate"
+  - "bash test/run.sh 4374_a_records_commit_reports_intent_validate"
 evidence_required:
   - ci
 risk: "Eight seconds more on a records commit; none on any other."
