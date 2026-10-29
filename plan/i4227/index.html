@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p1 · implementation profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/mcp-transports-are-reliable/" class="text-fg-brand underline">mcp-transports-are-reliable — Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I4227</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">An announce of a named claim drops the departed slots of the same worker (same client name and address) whose every claim it now holds under the same name, so a client that re-attaches on a timer no longer fills the board&#39;s departed retention and evicts the sessions that really left.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">On 2026-10-25 at 12:20Z the primary checkout&#39;s shared server (port 57351) listed 41 peers: 9 attached and 32 departed, and all 32 departed rows (p200-p232, last seen 0.5-5.6 h earlier) were one codex-chatgpt-mesh-coordinator bridge that re-attaches every ~10 minutes and announces the same claim chatgpt-bridge. The board keeps RETAINED = 32 departed slots (apps/majordomus-cli/src/peers.rs), dropping the oldest past that, so every real session that departed had its retained announcement evicted within one reconnect: the very thing retention exists to keep.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">PeerBoard::detach marks a slot with claims departed and drops the oldest departed slots past RETAINED; nothing recognises that a newer slot is the same worker saying the same thing.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">PeerBoard::announce_claim, for a named claim, removes departed slots with the announcer&#39;s client name and address (both absent counts as equal) whose claims are all named claims the announcer holds under the same names. A departed slot that also held an unnamed claim or another name, and another session with a different address that uses the same claim name, are kept.</p>
@@ -214,17 +211,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">a_departed_peer_that_a_later_announce_repeats_is_not_kept_test</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A departed row is dropped only when a newer row of the same client and address holds every claim it held under the same names, so nothing it said is lost; the newer row carries the current text of those claims.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">a_departed_peer_that_a_later_announce_repeats_is_not_kept_test</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --locked --manifest-path apps/majordomus-cli/Cargo.toml --lib peers::tests::a_departed_peer_that_a_later_announce_repeats_is_not_kept</td><td class="px-4 py-2 text-body">ok in master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf, job rust (2) 122655219231 (lib suite 4188 passed, 0 failed); the test departs a session, reconnects RETAINED+4 times and asserts the departed announcement is kept, the re-attached client is listed once, and an unnamed-claim slot and a different-address slot are kept; landed with train 8 (9215178a53b)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">81ef931</td></tr></tbody>
+    </table>
+  </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A departed row is dropped only when a newer row of the same client and address holds every claim it held under the same names, so nothing it said is lost; the newer row carries the current text of those claims.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:16:01Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:16:22Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:16:51Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/.ai/repo/project/issues/I4227.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I4227.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I4227</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I4227.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I4227.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I4227</code>.</p>
 </div>
 
 </div>
@@ -274,9 +276,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -284,7 +286,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

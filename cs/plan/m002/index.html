@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -173,12 +173,12 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
-<span class="text-sm text-body">2 ze 4 úkolů hotov · toto je aktivní milník</span></p>
+<span class="text-sm text-body">2 ze 6 úkolů hotov · toto je aktivní milník</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">hotovo</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zrušeno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -187,11 +187,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Problém</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Každý trvalý záznam je připsán úloze, která je v checkoutu aktivní, protože rozhodnutí, checkpoint i otázka čtou .majordomus/state/current.yaml, aby zjistily, čí práci patří. Jeden checkout sdílí několik pracovníků, takže záznam jmenuje toho, kdo tam úlohu spustil, ne toho, kdo spustil příkaz. Za jediný večer tři relace zapsaly pod aktivní úlohu jiné relace a jedno rozhodnutí se muselo dodatečně ručně zahodit, protože premisa, kterou zaznamenalo, patřila někomu jinému. Připsání je jediná vlastnost záznamu, kterou nelze později rekonstruovat: konverzace, která by ji rozhodla, je pryč.</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Výsledek</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Trvalý záznam buď jmenuje pracovníka, který ho vytvořil, nebo se odmítne, a záznam zapsaný z jedné relace nemůže nikdy dorazit připsaný úloze jiné relace.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Nezačato. lib/decision.sh, lib/checkpoint.sh a lib/question.sh každý určí aktivní úlohu z checkoutu a zapíšou ji do záznamu. Nic nerozliší dva workery sdílející tento checkout a nic nehlásí, že to nedokáže.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Přičtení je ověřitelné ze samotného záznamu. Kde nástroj nedokáže zjistit, kdo něco napsal, řekne to a odmítne, místo aby hádal z toho, co je právě aktivní.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Trvalý záznam buď jmenuje pracovníka, který ho vytvořil, nebo se odmítne, a záznam zapsaný z jedné relace nemůže nikdy dorazit připsaný úloze jiné relace.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Partly delivered. ADR 0164 (I0702) is accepted, and the six shell writers it names attribute through mj_record_attribution; case 3049 reproduces two workers in one checkout and asserts that each record names its own episode. Not yet true: the Rust writers (plan transitions through ledger.rs, continuity publish, reasoning record) still take the session from the pointer (I4291), and session close, finish, evidence, gate and the mesh join still attribute to the checkout&#39;s task (I4292). The attribution lives on the record&#39;s ledger line, not in the Markdown record, and with no episode open anywhere workers cannot be told apart, which ADR 0164 accepts; I0704 publishes those limits.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Přičtení je ověřitelné ze samotného záznamu. Kde nástroj nedokáže zjistit, kdo něco napsal, řekne to a odmítne, místo aby hádal z toho, co je právě aktivní.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rozsah</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">lib</li><li class="font-mono text-heading break-words">podíl</li><li class="font-mono text-heading break-words">test/cases</li><li class="font-mono text-heading break-words">dokumentace</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">lib</li><li class="font-mono text-heading break-words">podíl</li><li class="font-mono text-heading break-words">apps/majordomus-cli/src</li><li class="font-mono text-heading break-words">test/cases</li><li class="font-mono text-heading break-words">dokumentace</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Mimo rozsah</h2>
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Registr pojmenovaných pracovníků, person nebo agentů</li><li>Jakákoli identita, kterou musí repozitář udržovat nebo která přežije relaci, jež ji použila</li><li>Zamknutí checkoutu jednomu workerovi</li></ul>
@@ -232,7 +232,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         </tr>
         <tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i0703/" class="text-fg-brand hover:underline">I0703</a></td>
-          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs text-body">2</td>
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/plan/i0702/" class="text-fg-brand hover:underline">I0702</a></td>
@@ -246,6 +246,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/cs/plan/i0703/" class="text-fg-brand hover:underline">I0703</a></td>
           <td class="px-4 py-2 text-heading">Zveřejnit, co atribuce zaručuje a co stále nedokáže</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4291/" class="text-fg-brand hover:underline">I4291</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">The executable&#39;s record writers attribute a record as the shell&#39;s do</td>
+        </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4292/" class="text-fg-brand hover:underline">I4292</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">The shell writers ADR 0164 did not name attribute through mj_record_attribution</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -254,11 +270,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">graf závislostí M002</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-m002" data-diagram="m002" data-nodes="I0701 I0702 I0703 I0704">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-m002" data-diagram="m002" data-nodes="I0701 I0702 I0703 I0704 I4291 I4292">flowchart LR
     I0701[&quot;I0701&lt;br/&gt;Reproduce the misattribution as an executable case&quot;]:::done
     I0702[&quot;I0702&lt;br/&gt;Decide how a record is attributed, between named alternatives&quot;]:::done
-    I0703[&quot;I0703&lt;br/&gt;Implement the decision and prove it holds&quot;]:::ready
+    I0703[&quot;I0703&lt;br/&gt;Implement the decision and prove it holds&quot;]:::active
     I0704[&quot;I0704&lt;br/&gt;Publish what attribution guarantees, and what it still cannot&quot;]:::blocked
+    I4291[&quot;I4291&lt;br/&gt;The executable&#39;s record writers attribute a record as the shell&#39;s do&quot;]:::ready
+    I4292[&quot;I4292&lt;br/&gt;The shell writers ADR 0164 did not name attribute through mj_record_attribution&quot;]:::ready
     I0701 --&gt; I0702
     I0702 --&gt; I0703
     I0703 --&gt; I0704
@@ -269,11 +287,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram m002" aria-controls="diagram-m002" data-diagram-bar="diagram-m002" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-m002"><summary>Odkazuje z tohoto diagramu (4)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i0701/" data-node="I0701" data-kind="issue">I0701 Reprodukovat chybné přiřazení jako spustitelný případ</a></li><li><a href="https://majordomus.dev/cs/plan/i0702/" data-node="I0702" data-kind="issue">I0702 Rozhodnout, jak se záznam připisuje, mezi pojmenovanými alternativami</a></li><li><a href="https://majordomus.dev/cs/plan/i0703/" data-node="I0703" data-kind="issue">I0703 Implementovat rozhodnutí a prokázat, že platí</a></li><li><a href="https://majordomus.dev/cs/plan/i0704/" data-node="I0704" data-kind="issue">I0704 Publikovat, co přiřazení zaručuje a co stále nedokáže</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram m002" aria-controls="diagram-m002" data-diagram-bar="diagram-m002" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-m002"><summary>Odkazuje z tohoto diagramu (6)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i0701/" data-node="I0701" data-kind="issue">I0701 Reprodukovat chybné přiřazení jako spustitelný případ</a></li><li><a href="https://majordomus.dev/cs/plan/i0702/" data-node="I0702" data-kind="issue">I0702 Rozhodnout, jak se záznam připisuje, mezi pojmenovanými alternativami</a></li><li><a href="https://majordomus.dev/cs/plan/i0703/" data-node="I0703" data-kind="issue">I0703 Implementovat rozhodnutí a prokázat, že platí</a></li><li><a href="https://majordomus.dev/cs/plan/i0704/" data-node="I0704" data-kind="issue">I0704 Publikovat, co přiřazení zaručuje a co stále nedokáže</a></li><li><a href="https://majordomus.dev/cs/plan/i4291/" data-node="I4291" data-kind="issue">I4291 The executable's record writers attribute a record as the shell's do</a></li><li><a href="https://majordomus.dev/cs/plan/i4292/" data-node="I4292" data-kind="issue">I4292 The shell writers ADR 0164 did not name attribute through mj_record_attribution</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/.ai/repo/project/milestones/M002.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/M002.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show M002</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/milestones/M002.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/M002.yaml</a>. Přečtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show M002</code>.</p>
 </div>
 
 </div>
@@ -323,9 +341,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -333,7 +351,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

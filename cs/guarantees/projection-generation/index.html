@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -174,9 +174,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">deklarovaný stav</span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span>
-<span class="text-sm text-body">Deklarováno jako deterministické a blokující, implementováno a s uvedeným behaviorálním testem, který to má dokázat. Zda to zaznamenaný běh podporuje, říká verdikt důkazů zobrazený vedle.</span></p>
-    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">zaznamenané důkazy</span><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="projection-generation"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
-<span class="text-sm text-body">Deklarováno jako zaručené, ale nepodložené zaznamenaným během: test je pojmenován, ale žádný úspěšný běh nad současnými vstupy zaznamenán není. <a href="https://majordomus.dev/cs/evidence/" class="text-fg-brand underline">jak se zaznamenávají důkazy</a></span></p>
+<span class="text-sm text-body">Deklarováno jako deterministické a blokující, implementováno a s uvedeným behaviorálním testem, který to má dokázat. Zda to zaznamenaný běh podporuje, říká verdikt důkazů zobrazený vedle.</span></p><p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">zaznamenané důkazy</span><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="projection-generation"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
+<span class="text-sm text-body" data-ledger-supported="unsupported">Declared guaranteed, and not supported by the runs the committed ledger records: the test is named, and the ledger holds no passing run of the current inputs. <a href="https://majordomus.dev/cs/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
     <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">Dvojí spuštění update zanechá bajtově shodný soubor. Test ověřuje hash.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Odkaz na kotvu: what-it-means">Co to znamená</a></h2>
 <p><code>CLAUDE.md</code>, <code>AGENTS.md</code>, <code>GEMINI.md</code> a každý další cíl, který politika jmenuje, se nepíší ručně. <code>majordomus update</code> je generuje z jedné kanonické politiky, profilů a jednoho sdíleného textu těla, přes malou šablonu pro každého poskytovatele. Dvojí spuštění se stejnými vstupy vyprodukuje byte-identické soubory.</p>
@@ -189,7 +188,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Odkaz na kotvu: why-it-exists">Proč existuje</a></h2>
 <p>V jednom pracovním prostoru zhruba dvaceti repozitářů sdílely instrukční soubory dvou AI nástrojů ve stejném repozitáři mezi žádným a desetinou obsahu. Nebyly to duplikáty; byly to disjunktní příručky pravidel a která platila, záleželo na tom, který nástroj byl otevřen.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail vykreslený z <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/docs/claims/projection-generation.md" class="font-mono underline">docs/claims/projection-generation.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">Od tvrzení k důkazu</h2>
+    <p class="mt-2 text-xs text-body-subtle">Detail vykreslený z <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/docs/claims/projection-generation.md" class="font-mono underline">docs/claims/projection-generation.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">Od tvrzení k důkazu</h2>
     <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="projection-generation">
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; veřejné tvrzení</p>
@@ -199,18 +198,18 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; kanonické tvrzení</p>
         <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">projection-generation</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">deklarovaný stav: </span>zaručeno</span>
-<span class="text-body">v <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
-        <p class="mt-1 mb-0 min-w-0 break-all text-body">Definováno v <a href="https://majordomus.dev/cs/docs/design/" class="font-medium text-fg-brand hover:underline">přečtěte si to na tomto webu</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/docs/DESIGN.md" class="font-mono text-fg-brand hover:underline">docs/DESIGN.md</a></p>
+<span class="text-body">v <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Definováno v <a href="https://majordomus.dev/cs/docs/design/" class="font-medium text-fg-brand hover:underline">přečtěte si to na tomto webu</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/docs/DESIGN.md" class="font-mono text-fg-brand hover:underline">docs/DESIGN.md</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; implementace</p>
-        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/lib/update.sh" class="font-mono text-fg-brand hover:underline">lib/update.sh</a> · <a href="https://majordomus.dev/cs/commands/update/" class="font-medium text-fg-brand hover:underline">majordomus update</a></p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/lib/update.sh" class="font-mono text-fg-brand hover:underline">lib/update.sh</a> · <a href="https://majordomus.dev/cs/commands/update/" class="font-medium text-fg-brand hover:underline">majordomus update</a></p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; test a scénáře</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/test/cases/03_update.sh" class="font-mono text-fg-brand hover:underline">test/cases/03_update.sh</a></p><p class="mt-1 mb-0 text-body">Provedeno v <a href="https://majordomus.dev/cs/use-cases/keep-the-bootstrap-thin-and-within-budget/" class="font-medium text-fg-brand hover:underline">Udržet každý bootstrap providera tenký, generovaný a v rozpočtu</a>.</p>
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; test a scénáře</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/test/cases/03_update.sh" class="font-mono text-fg-brand hover:underline">test/cases/03_update.sh</a></p><p class="mt-1 mb-0 text-body">Provedeno v <a href="https://majordomus.dev/cs/use-cases/keep-the-bootstrap-thin-and-within-budget/" class="font-medium text-fg-brand hover:underline">Udržet každý bootstrap providera tenký, generovaný a v rozpočtu</a>.</p>
       </li>
       <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
-        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; zaznamenané běhy</p>
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the runs the committed ledger records</p>
         <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="projection-generation"><span aria-hidden="true">○</span><span class="sr-only">zaznamenané důkazy: </span>nespuštěno</span>
 <a href="https://majordomus.dev/cs/evidence/" class="text-fg-brand underline">jak se zaznamenávají důkazy</a></p>
       </li>
@@ -312,9 +311,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -322,7 +321,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

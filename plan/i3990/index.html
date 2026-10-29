@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -183,12 +183,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>DONE</span>
 <span class="text-sm text-body">wave 0 · p0 · implementation profile · runs alone</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/mcp-transports-are-reliable/" class="text-fg-brand underline">mcp-transports-are-reliable — Every MCP transport delivers each request at most once, bounds what it carries, and honours cancellation</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I3990</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Add a second layer of mesh liveness under the stream beat: a session that does real work (an MCP request other than ping and notifications/*, an announcement, a claim, or an explicit mesh.beat with the phase a long-running process is in) has a session_beat written for it carrying cooperation.session_ttl_seconds (default 600); every runtime ages the newest beat on its own clock and reads a held exclusive claim of a session silent past its ttl (plus the expiry on any runtime but the holder&#39;s) as suspended, refusing nobody, until the session beats again. Sessions are never closed for silence, advisory claims are untouched, and nothing is taken over or fenced (that waits for I3174&#39;s epoch). A session that never beat keeps the stream rule.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The owner ordered on 2026-10-22 that no work may stall because a peer waits on a permission dialog, crashed or hung. That day the executor of seat 5d held the integration lease, an exclusive mesh claim, for hours and never answered; the claim stayed live because a claim lived while its runtime beat, and the runtime beat on while the worker behind it waited on nobody. The stdio bridge pings every 20 s whatever its client is doing, so nothing a stalled client sends could tell the mesh it had stopped. The design — suspend claims, never close sessions; a typed beat with a phase for long-running processes; one rule for every transport; advisory-first — is the approved mesh review fc/p7 of 2026-10-23.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">mesh::state::fold expires a claim only when it is released, its session closes, or its stream stops beating (ADR 0067 decisions 7 and 8, rule project.mesh-cooperation-is-authenticated version 1). A session&#39;s last MCP message, ping included, refreshes its place on the board and nothing else.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">An exclusive claim of a session whose worker stops making progress reads suspended within cooperation.session_ttl_seconds on its holder&#39;s runtime and within that ttl plus the expiry everywhere else, while its runtime keeps beating; the scope is admitted to the next claimant; mesh.state, mesh.peers (with each session&#39;s progress age and phase), the Cockpit and /ui/mesh say so; a process waiting on CI keeps its claim with majordomus mesh beat --phase; a command-line claim that never beats and a claim of an older runtime are judged exactly as before.</p>
@@ -214,17 +211,22 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">a_claim_lapses_when_its_session_stops_progressing</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">a_claim_lapses_when_its_session_stops_progressing</td><td class="px-4 py-2 font-mono text-xs text-body">ci</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bash test/run.sh 3990_a_claim_lapses_when_its_session_stops_progressing; cargo test --lib (mesh::state, mesh::journal, mesh::cooperation, mcp::protocol)</td><td class="px-4 py-2 text-body">master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 at 6c79dcf68cf (success): case 3990 ok in 59 s in suite-shard (3), every hard-exit sub-claim of criteria 8 and 9 held; in rust (2) (job 122655219231) the unit tests of criteria 1-7 are ok (a_silent_exclusive_claim_is_suspended_while_its_runtime_beats, a_beat_within_its_ttl_holds_the_claim, a_session_beat_round_trips_and_is_aged_on_the_readers_clock, a_ping_is_not_progress, a_stalled_board_session_s_exclusive_claim_is_suspended_and_holds_again_on_progress, a_phase_changing_beater_writes_at_most_one_beat_a_quarter_of_the_ttl, a_resumed_holder_releases_a_claim_another_session_was_admitted_over and siblings); landed with train 8 (9215178a53b), unchanged since</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">81ef931</td></tr></tbody>
+    </table>
+  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:14:32Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:14:58Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:15:38Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/.ai/repo/project/issues/I3990.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3990.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3990</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I3990.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3990.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3990</code>.</p>
 </div>
 
 </div>
@@ -274,9 +276,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
         </ul>
       </div>
     </div>
@@ -284,7 +286,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -173,7 +173,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <p class="max-w-3xl text-body">Každá značka je odvozená. Funkce je na rozhraní, protože tam je promítnut schopnostní modul, shellový příkaz nebo druh objektu, který pojmenovává — cesta příkazové řádky, HTTP route, nástroj nebo zdroj MCP, oblast Cockpitu, dokument. Neříká to žádná stránka ani soubor.</p><div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm" tabindex="0">
-    <caption class="sr-only">Funkce proti rozhraním, jimiž jsou zpřístupněny, kolik z tvrzení, která každá jmenuje, je deklarováno jako zaručených s testem a kolik jich podporuje zaznamenaný běh</caption>
+    <caption class="sr-only">Features against the interfaces they are exposed through, how many of the claims each names are declared guaranteed with a test, and how many the runs the committed ledger records support</caption>
     <thead class="bg-neutral-primary-soft">
       <tr>
         <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Funkce</th>
@@ -182,7 +182,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/registry/mcp/" class="hover:text-fg-brand hover:underline">mcp</a></th>
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/cockpit/" class="hover:text-fg-brand hover:underline">cockpit</a></th>
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/cs/docs/" class="hover:text-fg-brand hover:underline">dokumentace</a></th><th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#declared-with-test" class="hover:text-fg-brand hover:underline">deklarováno + test</a></th>
-        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">podloženo během</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">supported in the ledger</a></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-default">
@@ -194,7 +194,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarujte jednou je zpřístupněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Deklarovat jednou je zpřístupněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="declare-once">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="declare-once">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/interfaces/" class="text-heading hover:text-fg-brand hover:underline">Rozhraní</a></th>
@@ -204,7 +204,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Rozhraní jsou vystavena v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Rozhraní je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">11/11<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="interfaces">0/11<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="interfaces">0/11<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/coordination/" class="text-heading hover:text-fg-brand hover:underline">Koordinace</a></th>
@@ -214,7 +214,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je zpřístupněna v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Koordinace je zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">5/5<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="coordination">0/5<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="coordination">0/5<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/worktrees/" class="text-heading hover:text-fg-brand hover:underline">Worktrees</a></th>
@@ -224,7 +224,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktree jsou zpřístupněny v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees je vystaveno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="worktrees">0/3<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="worktrees">0/3<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/mesh/" class="text-heading hover:text-fg-brand hover:underline">Mesh</a></th>
@@ -234,7 +234,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je vystaven v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh je vystaven v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="mesh">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="mesh">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/models/" class="text-heading hover:text-fg-brand hover:underline">Modely</a></th>
@@ -244,7 +244,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Models je zpřístupněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Modely jsou zpřístupněny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="models">0/3<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="models">0/3<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/economics/" class="text-heading hover:text-fg-brand hover:underline">Ekonomika</a></th>
@@ -254,7 +254,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Ekonomika je zpřístupněna v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Ekonomika je zveřejněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">2/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="economics">0/3<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="economics">0/3<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/reasoning/" class="text-heading hover:text-fg-brand hover:underline">Uvažování</a></th>
@@ -264,7 +264,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Uvažování je vystaveno přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Uvažování je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/7<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="reasoning">0/7<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="reasoning">0/7<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/continuity/" class="text-heading hover:text-fg-brand hover:underline">Kontinuita</a></th>
@@ -274,7 +274,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontinuita je zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">11/11<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="continuity">0/11<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="continuity">0/11<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/knowledge/" class="text-heading hover:text-fg-brand hover:underline">Znalosti</a></th>
@@ -284,7 +284,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou zpřístupněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Znalosti jsou zveřejněny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="knowledge">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="knowledge">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/doctrine/" class="text-heading hover:text-fg-brand hover:underline">Doktrína</a></th>
@@ -294,7 +294,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je zpřístupněna v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doktrína je zveřejněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">12/12<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="doctrine">0/12<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="doctrine">0/12<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/coverage/" class="text-heading hover:text-fg-brand hover:underline">Pokrytí</a></th>
@@ -304,7 +304,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Pokrytí je zveřejněno v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Pokrytí je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="coverage">0/1<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="coverage">0/1<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/finish-contract/" class="text-heading hover:text-fg-brand hover:underline">Kontrakt dokončení</a></th>
@@ -314,7 +314,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontrakt finish je zpřístupněn v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontrakt dokončení je zpřístupněn v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="finish-contract">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="finish-contract">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/policy/" class="text-heading hover:text-fg-brand hover:underline">Politika</a></th>
@@ -324,7 +324,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Politika je zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">10/14<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="policy">0/14<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="policy">0/14<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/observatory/" class="text-heading hover:text-fg-brand hover:underline">Observatory</a></th>
@@ -334,7 +334,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatory je vystaveno přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Observatory je zpřístupněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="observatory">0/1<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="observatory">0/1<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/ui/" class="text-heading hover:text-fg-brand hover:underline">UI</a></th>
@@ -344,7 +344,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je zpřístupněno v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="UI je zpřístupněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="ui">0/1<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="ui">0/1<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/cockpit/" class="text-heading hover:text-fg-brand hover:underline">Cockpit</a></th>
@@ -354,7 +354,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je zveřejněn v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit je zpřístupněn v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="cockpit">0/1<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="cockpit">0/1<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/provenance/" class="text-heading hover:text-fg-brand hover:underline">Původ</a></th>
@@ -364,7 +364,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Původ je zpřístupněn v Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Původ je zpřístupněn v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="provenance">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="provenance">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/install/" class="text-heading hover:text-fg-brand hover:underline">Instalace</a></th>
@@ -374,7 +374,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Instalace je zpřístupněna v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Instalace je zpřístupněna v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="install">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="install">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/planning/" class="text-heading hover:text-fg-brand hover:underline">Plánování</a></th>
@@ -384,7 +384,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je vystaveno přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Plánování je vystaveno přes dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">14/15<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="planning">0/15<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="planning">0/15<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/context/" class="text-heading hover:text-fg-brand hover:underline">Kontext</a></th>
@@ -394,7 +394,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontext je vystaven přes Cockpit">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Kontext je zpřístupněn v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">8/9<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="context">0/9<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="context">0/9<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/use-cases/" class="text-heading hover:text-fg-brand hover:underline">Případy užití</a></th>
@@ -404,7 +404,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Případy užití jsou vystaveny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">4/4<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="use-cases">0/4<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="use-cases">0/4<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/skills/" class="text-heading hover:text-fg-brand hover:underline">Dovednosti</a></th>
@@ -414,7 +414,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Dovednosti jsou zveřejněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Dovednosti jsou zpřístupněny v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="skills">0/3<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="skills">0/3<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/why/" class="text-heading hover:text-fg-brand hover:underline">Proč</a></th>
@@ -424,7 +424,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Proč je zpřístupněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Proč je zveřejněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="why">0/3<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="why">0/3<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/evidence/" class="text-heading hover:text-fg-brand hover:underline">Důkazy</a></th>
@@ -434,7 +434,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Důkazy jsou zpřístupněny v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">12/12<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="evidence">0/12<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="evidence">0/12<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/benchmarks/" class="text-heading hover:text-fg-brand hover:underline">Měření výkonu</a></th>
@@ -444,7 +444,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu je zveřejněno v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Měření výkonu jsou zpřístupněna v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/6<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="benchmarks">0/6<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="benchmarks">0/6<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/ci/" class="text-heading hover:text-fg-brand hover:underline">CI</a></th>
@@ -454,7 +454,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">není v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="CI je zpřístupněno v Dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/6<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="ci">0/6<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="ci">0/6<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/cs/features/commit/" class="text-heading hover:text-fg-brand hover:underline">Commity</a></th>
@@ -464,7 +464,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou zpřístupněny v Cockpitu">✓</span><span class="sr-only">v Cockpitu</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commity jsou zpřístupněny v dokumentaci">✓</span><span class="sr-only">v dokumentaci</span></td>
         <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> tvrzení deklarovaných jako zaručená s testem</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="commit">0/3<span class="sr-only"> tvrzení podpořených zaznamenaným během</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading"  data-ledger-supported="commit">0/3<span class="sr-only"> claims supported by the runs the committed ledger records</span></td>
       </tr>
     </tbody>
   </table>
@@ -473,8 +473,8 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <dl class="mt-6 grid max-w-3xl gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
   <dt id="declared-with-test" class="font-mono text-xs uppercase tracking-wide text-heading">deklarováno + test</dt>
   <dd class="text-body">Z tvrzení, která funkce jmenuje, kolik jich <code>docs/CLAIMS.yaml</code> deklaruje <code>guaranteed</code>, každé s testem, který je má dokázat. Deklarace, ne verdikt: nic zde neříká, že test běžel.</dd>
-  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">podloženo během</dt>
-  <dd class="text-body">Z týchž tvrzení, kolik jich podporuje zaznamenaný běh, jak jej <code>majordomus evidence show</code> odvozuje z ledgeru; <code>unknown</code>, když do tohoto sestavení nedorazily žádné důkazy. <a href="https://majordomus.dev/cs/evidence/" class="text-fg-brand underline">Jak se zaznamenávají důkazy</a>.</dd>
+  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">supported in the ledger</dt>
+  <dd class="text-body">Of the same claims, how many the runs the committed ledger records support, as <code>majordomus evidence show</code> derives it; <code>unknown</code> when no evidence reached this build. It can trail CI's newest run, the one the homepage and the evidence page count. <a href="https://majordomus.dev/cs/evidence/" class="text-fg-brand underline">How evidence is recorded</a>.</dd>
 </dl><h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">Kam patří každá část produktu</h2>
 <p class="mt-2 max-w-3xl text-body">Opačný směr: každý modul schopností spustitelného souboru, každý veřejný příkaz shellového nástroje a každý druh objektu vrstvy, s funkcemi, které jej jmenují. Řádek bez funkce je mezera, kterou tato stránka ukazuje, ne skrývá, a její zacelení je jeden odkaz v jednom souboru.</p>
 <section class="mt-8">
@@ -1036,7 +1036,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <p class="mt-1 max-w-3xl text-sm text-body">Druhy vrstvy, s objekty každého druhu, které toto repozitář drží.</p>
   <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">adr (166)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">adr (167)</span>
       <code class="font-mono text-xs text-body-subtle">adr</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
       </span>
@@ -1078,7 +1078,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">kritika (37)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">kritika (38)</span>
       <code class="font-mono text-xs text-body-subtle">critique</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
       </span>
@@ -1120,19 +1120,19 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">záměr (43)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">záměr (44)</span>
       <code class="font-mono text-xs text-body-subtle">intent</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">úkol (1036)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">úkol (1102)</span>
       <code class="font-mono text-xs text-body-subtle">issue</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">knowledge (58)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">knowledge (60)</span>
       <code class="font-mono text-xs text-body-subtle">knowledge</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/knowledge/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Znalosti</a>
       </span>
@@ -1144,7 +1144,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">milník (111)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">milník (113)</span>
       <code class="font-mono text-xs text-body-subtle">milestone</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/planning/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Plánování</a>
       </span>
@@ -1174,13 +1174,13 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">release-record (37)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">release-record (38)</span>
       <code class="font-mono text-xs text-body-subtle">release-record</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/install/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Instalace</a>
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">pravidlo (191)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">pravidlo (192)</span>
       <code class="font-mono text-xs text-body-subtle">rule</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/cs/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doktrína</a>
       </span>
@@ -1275,9 +1275,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -1285,7 +1285,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -173,10 +173,10 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--active relative" data-status="active"><span aria-hidden="true">•</span>AKTIVNÍ</span>
-<span class="text-sm text-body">5 z 6 úkolů hotovo</span></p>
+<span class="text-sm text-body">5 z 7 úkolů hotovo</span></p>
 
   <dl class="mt-8 grid grid-cols-2 gap-4 border-y border-default py-6 sm:grid-cols-5">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">1</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">připraveno</dt><dd class="mt-1 text-2xl font-semibold text-heading">2</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blokováno</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">aktivní</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verify</dt><dd class="mt-1 text-2xl font-semibold text-heading">0</dd></div>
@@ -270,6 +270,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
           <td class="px-4 py-2 font-mono text-xs text-body">—</td>
           <td class="px-4 py-2 text-heading">majordomus start odmítne úlohu, vlastníka nebo důvod, které záznam úlohy nemůže pojmout, a nezapíše nic</td>
         </tr>
+        <tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/cs/plan/i4323/" class="text-fg-brand hover:underline">I4323</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">0</td>
+          <td class="px-4 py-2 font-mono text-xs text-body">—</td>
+          <td class="px-4 py-2 text-heading">A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -278,13 +286,14 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   
 <figure class="not-format my-6 overflow-hidden rounded-base border border-default bg-neutral-primary-soft">
   <figcaption class="flex flex-wrap items-baseline justify-between gap-2 border-b border-default px-4 py-2"><span class="text-sm font-medium text-heading">graf závislostí failure-is-visible</span><span class="font-mono text-xs text-body-subtle">z .ai/repo/project</span></figcaption>
-  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-failure-is-visible" data-diagram="failure-is-visible" data-nodes="I2156 I2157 I2707 I2731 I2827 I3310">flowchart LR
+  <div class="overflow-x-auto p-4" tabindex="0"><pre class="mermaid m-0 bg-transparent font-mono text-xs text-heading" tabindex="0" id="diagram-failure-is-visible" data-diagram="failure-is-visible" data-nodes="I2156 I2157 I2707 I2731 I2827 I3310 I4323">flowchart LR
     I2156[&quot;I2156&lt;br/&gt;A slow or silent HTTP client cannot hold a server worker&quot;]:::done
     I2157[&quot;I2157&lt;br/&gt;Ready means ready: a lost lease, a degraded layer or a failing mesh is not reported ready&quot;]:::done
     I2707[&quot;I2707&lt;br/&gt;majordomus doctor reports a stale server, or says plainly that it checks governance only&quot;]:::done
     I2731[&quot;I2731&lt;br/&gt;Every failure class in the published failure table names its test or its stated limitation&quot;]:::done
     I2827[&quot;I2827&lt;br/&gt;A tool written a moment ago is run once its writer lets go&quot;]:::done
     I3310[&quot;I3310&lt;br/&gt;majordomus start refuses a task, owner or reason that the task record cannot hold, and writes nothing&quot;]:::ready
+    I4323[&quot;I4323&lt;br/&gt;A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update&quot;]:::ready
     I2157 --&gt; I2707
     classDef done stroke:#16a34a,fill:#dcfce7,color:#14532d,stroke-width:2px
     classDef active stroke:#2563eb,fill:#eff6ff,color:#1e3a8a,stroke-width:2px
@@ -293,11 +302,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     classDef planned stroke:#0891b2,fill:#ecfeff,color:#164e63,stroke-width:2px
     classDef blocked stroke:#b45309,fill:#fffbeb,color:#78350f,stroke-width:2px
     classDef cancelled stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px
-    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram failure-is-visible" aria-controls="diagram-failure-is-visible" data-diagram-bar="diagram-failure-is-visible" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-failure-is-visible"><summary>Odkazuje z tohoto diagramu (6)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2156/" data-node="I2156" data-kind="issue">I2156 Pomalý nebo mlčící HTTP klient nemůže držet worker serveru</a></li><li><a href="https://majordomus.dev/cs/plan/i2157/" data-node="I2157" data-kind="issue">I2157 Připraveno znamená připraveno: ztracené lease, degradovaná vrstva nebo selhávající mesh se nehlásí jako připraveno</a></li><li><a href="https://majordomus.dev/cs/plan/i2707/" data-node="I2707" data-kind="issue">I2707 majordomus doctor hlásí zastaralý server, nebo otevřeně říká, že kontroluje jen governance</a></li><li><a href="https://majordomus.dev/cs/plan/i2731/" data-node="I2731" data-kind="issue">I2731 Každá třída selhání v publikované tabulce selhání jmenuje svůj test nebo uvedené omezení</a></li><li><a href="https://majordomus.dev/cs/plan/i2827/" data-node="I2827" data-kind="issue">I2827 Nástroj napsaný před chvílí se spustí, až když ho jeho zapisovatel pustí</a></li><li><a href="https://majordomus.dev/cs/plan/i3310/" data-node="I3310" data-kind="issue">I3310 majordomus start odmítne úlohu, vlastníka nebo důvod, které záznam úlohy nemůže pojmout, a nezapíše nic</a></li></ul></details></div>
+    classDef superseded stroke:#6b7280,fill:#f9fafb,color:#374151,stroke-width:2px</pre><div class="mj-diagram-bar" role="toolbar" aria-label="Diagram failure-is-visible" aria-controls="diagram-failure-is-visible" data-diagram-bar="diagram-failure-is-visible" hidden><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-out" aria-label="Oddálit" title="Oddálit">−</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="zoom-in" aria-label="Přiblížit" title="Přiblížit">+</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="fit" aria-label="Přizpůsobit diagram rámu" title="Přizpůsobit diagram rámu">Přizpůsobit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="expand" aria-label="Zobrazit na celou obrazovku" title="Zobrazit na celou obrazovku">Rozbalit</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="download" aria-label="Stáhnout SVG" title="Stáhnout SVG">SVG</button><button type="button" class="mj-button mj-button--quiet" data-diagram-action="link" aria-label="Odkaz: zkopírovat adresu tohoto diagramu" title="Odkaz: zkopírovat adresu tohoto diagramu">Odkaz</button><span class="mj-diagram-status" role="status"></span></div><details class="mj-diagram-links" data-diagram-links="diagram-failure-is-visible"><summary>Odkazuje z tohoto diagramu (7)</summary><ul><li><a href="https://majordomus.dev/cs/plan/i2156/" data-node="I2156" data-kind="issue">I2156 Pomalý nebo mlčící HTTP klient nemůže držet worker serveru</a></li><li><a href="https://majordomus.dev/cs/plan/i2157/" data-node="I2157" data-kind="issue">I2157 Připraveno znamená připraveno: ztracené lease, degradovaná vrstva nebo selhávající mesh se nehlásí jako připraveno</a></li><li><a href="https://majordomus.dev/cs/plan/i2707/" data-node="I2707" data-kind="issue">I2707 majordomus doctor hlásí zastaralý server, nebo otevřeně říká, že kontroluje jen governance</a></li><li><a href="https://majordomus.dev/cs/plan/i2731/" data-node="I2731" data-kind="issue">I2731 Každá třída selhání v publikované tabulce selhání jmenuje svůj test nebo uvedené omezení</a></li><li><a href="https://majordomus.dev/cs/plan/i2827/" data-node="I2827" data-kind="issue">I2827 Nástroj napsaný před chvílí se spustí, až když ho jeho zapisovatel pustí</a></li><li><a href="https://majordomus.dev/cs/plan/i3310/" data-node="I3310" data-kind="issue">I3310 majordomus start odmítne úlohu, vlastníka nebo důvod, které záznam úlohy nemůže pojmout, a nezapíše nic</a></li><li><a href="https://majordomus.dev/cs/plan/i4323/" data-node="I4323" data-kind="issue">I4323 A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update</a></li></ul></details></div>
 </figure>
 
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/.ai/repo/project/milestones/failure-is-visible.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/failure-is-visible.yaml</a>. Načtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show failure-is-visible</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/milestones/failure-is-visible.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/milestones/failure-is-visible.yaml</a>. Načtěte jej zpět pomocí <code class="font-mono text-heading">majordomus plan show failure-is-visible</code>.</p>
 </div>
 
 </div>
@@ -347,9 +356,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -357,7 +366,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "81ef931a3e156907f1784c64c509884f565c17f0",
+  "commit": "51b38035a7162332304aef58fed25b98761f412b",
   "source_version": "1.0.0-alpha.9",
-  "registry_fingerprint": "94d253e6829b8786f6ebaaa99eef2ad528ac1f6fe638dee58bf27f44c7a308af"
+  "registry_fingerprint": "da31b40589f677a60c83f92eedaa4d77ca560c96663b428da48f11686010cce8"
  },
  "counts": {
-  "pages": 5988,
-  "capabilities": 3552,
+  "pages": 6128,
+  "capabilities": 3633,
   "cli_commands": 120,
   "http_routes": 212,
   "mcp_tools": 206,
-  "mcp_resources": 3389,
+  "mcp_resources": 3470,
   "modules": 94
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 166
+   "count": 167
   },
   {
    "kind": "application",
@@ -78,7 +78,7 @@
    "route": null,
    "title": null,
    "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
-   "count": 37
+   "count": 38
   },
   {
    "kind": "deployment",
@@ -150,7 +150,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
-   "count": 43
+   "count": 44
   },
   {
    "kind": "issue",
@@ -158,7 +158,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 1036
+   "count": 1102
   },
   {
    "kind": "knowledge",
@@ -166,7 +166,7 @@
    "route": null,
    "title": null,
    "reason": "Curated knowledge is written for the worker reading the layer, not for a visitor: it is the orientation a session starts from, and it changes with the work rather than with the product.",
-   "count": 58
+   "count": 60
   },
   {
    "kind": "mesh-declaration",
@@ -182,7 +182,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 111
+   "count": 113
   },
   {
    "kind": "moment",
@@ -222,7 +222,7 @@
    "route": "/changelog/",
    "title": null,
    "reason": null,
-   "count": 37
+   "count": 38
   },
   {
    "kind": "rule",
@@ -230,7 +230,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 191
+   "count": 192
   },
   {
    "kind": "scope",
@@ -270,7 +270,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 654
+   "count": 660
   },
   {
    "kind": "use-case",
@@ -1827,6 +1827,15 @@
    "section": "Decisions"
   },
   {
+   "route": "/adrs/adr-0227/",
+   "title": "The deployed stage reads the pointer where Pages published it",
+   "description": "The deployed stage reads the pointer where Pages published it",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0227",
+   "source": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
+   "section": "Decisions"
+  },
+  {
    "route": "/applications/",
    "title": "Applications",
    "description": "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description.",
@@ -3132,6 +3141,12 @@
    "route": "/cs/adrs/adr-0226/",
    "title": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
    "description": "A session joins the cluster before it works — current, announced and useful — and the repository says when it has not",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/adrs/adr-0227/",
+   "title": "The deployed stage reads the pointer where Pages published it",
+   "description": "The deployed stage reads the pointer where Pages published it",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -8007,6 +8022,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/a-finding-is-tracked-to-its-issue/",
+   "title": "a-finding-is-tracked-to-its-issue — A finding becomes a tracked plan issue whose GitHub projection links both ways, and every surface draws and highlights with the one library for the job",
+   "description": "A finding with a stable id and a verification state becomes a canonical issue through one capability that writes only through the plan's checked write; the issue's site page and its GitHub projection link to each other; every forge link on /ui and the Cockpit comes from one helper; the trace is drawn as a graph over its table; status colours follow status tokens; and the highlighter boundary is written down in a proposed ADR.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/a-finish-reads-the-criteria-its-work-serves/",
    "title": "a-finish-reads-the-criteria-its-work-serves — Finish čte to, čemu jeho práce slouží",
    "description": "Politika dokončení se ptá enginu záměrů, co platí pro práci, kterou úloha jmenovala, odmítne „dokončeno“, dokud je obsluhované kritérium nesplněno nebo je porušena pojistka tam, kde politika říká, že dokončeno znamená úplné, a o žádném záměru nerozhoduje.",
@@ -8058,6 +8079,12 @@
    "route": "/cs/plan/a-release-is-proven-end-to-end/",
    "title": "a-release-is-proven-end-to-end — O tom, zda lze commit vydat a zda jeho release dorazil, rozhoduje důkaz jedním čtením a jedním případem",
    "description": "release.readiness odpovídá před tagem z funkcí, které workflow spouští; site-deploy se nikdy nevrací o commit zpět; jeden případ provede čerstvý klon až k publikovaným důkazům; první commit záznamu po přistání I2717 je pozorován se zelenou úlohou důkazů.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/a-review-is-published-at-its-commit/",
+   "title": "a-review-is-published-at-its-commit — The quality report, its dependency evidence and the first due-diligence review are published at the commit they measured, every link pinned and proven",
+   "description": "A reader opens majordomus.dev, finds the public API conformance report and the dependency evidence of the deployed commit, and clicks from any finding to its line at that commit, to the commit that introduced the line and to its rule; the first due-diligence review sits beside them with a scorecard, a remediation roadmap and the facts on which two surfaces disagree.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -12508,8 +12535,8 @@
   },
   {
    "route": "/cs/plan/i3241/",
-   "title": "I3241 — Jen úloha, která čte historii, ji stáhne celou",
-   "description": "Deklarovat v gates.yaml, které kontroly čtou historii, a dát fetch-depth 0 jen úlohám, které některou z nich spouštějí.",
+   "title": "I3241 — Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s",
+   "description": "The default checkout of validate.yml is HEAD's ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -13895,7 +13922,7 @@
   {
    "route": "/cs/plan/i3825/",
    "title": "I3825 — A build refuses to start beside five others or below 35 GiB free",
-   "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember.",
+   "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember. The order of the admission floors in lib/rust_bin.sh is stated in I4354 and this issue follows it: disk_emergency below 10 GiB (I4355) first, then this 35 GiB floor, then the builder count, then the machine slot (I4006).",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -14499,6 +14526,12 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4226/",
+   "title": "I4226 — Case 1096 matches a page from a here-string, so a match is never read as a miss",
+   "description": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4227/",
    "title": "I4227 — A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect",
    "description": "An announce of a named claim drops the departed slots of the same worker (same client name and address) whose every claim it now holds under the same name, so a client that re-attaches on a timer no longer fills the board's departed retention and evicts the sessions that really left.",
@@ -14511,6 +14544,18 @@
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
+   "route": "/cs/plan/i4230/",
+   "title": "I4230 — Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+   "description": "When the volume has less free than the reclaim mark, mj_rust_bound_build_dir counts a unit idle for MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN minutes (default 10) as stale, so the bound can bring the shared build directory down while many worktrees build inside an hour.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4232/",
+   "title": "I4232 — A build of the portable core from the repository's root keeps the executable's rlib of it",
+   "description": "apps/majordomus-core declares an rlib only, so cargo names that rlib by its hash. `cargo test --manifest-path apps/majordomus-core/Cargo.toml`, run from the root where the shared build-dir applies, can then no longer replace the rlib every executable links. The wasm32 module is the cdylib that scripts/rust-check --portable-core asks for on its command line.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
    "route": "/cs/plan/i4241/",
    "title": "I4241 — A follower's shared read is keyed by its own server, so a follower of another context is never handed it",
    "description": "The blackboard snapshot and the pages of signals that followers share are keyed by the server's epoch as well as by what is asked, so two contexts in one process never read each other's board or cursor.",
@@ -14520,6 +14565,384 @@
    "route": "/cs/plan/i4244/",
    "title": "I4244 — Case 3383 holds the peers screen to its contract: the change, or the reading before it marked as catching up",
    "description": "The peers screen read right after an announce is accepted when it shows the change, or when it shows the earlier reading marked data-catching-up and a following read shows the change; an old reading served as current still fails the case.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4245/",
+   "title": "I4245 — The served-executable tests run the copy they just wrote once it is let go, not while a forked child holds it",
+   "description": "run_child in served_executable's tests starts the binary it has just copied through process::retrying_busy, so a child another test thread forked while the copy was open no longer fails the test with ETXTBSY.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4251/",
+   "title": "I4251 — capture install writes no Markdown link that leaves the adopting repository",
+   "description": "Link the brief mod's README to the published page of the session brief instead of `../../../../docs/BRIEF.md`, and prove that every Markdown link a mod writes resolves inside the repository it is installed into.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4253/",
+   "title": "I4253 — The remedy doctor names for an orphan skill is a command the shell runs",
+   "description": "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4258/",
+   "title": "I4258 — Documents below docs/ are knowledge without a hand-declared class each",
+   "description": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4265/",
+   "title": "I4265 — The hook line init prints runs doctor in its commit context",
+   "description": "init prints the commit-context form, and doctor's wiring check accepts it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4290/",
+   "title": "I4290 — The reconciliation names a record never created on GitHub apart from one deleted there",
+   "description": "scripts/github-sync tells two absences apart. A canonical record that was never projected reads never-created; a record whose identity marker GitHub once carried, and no longer serves, reads deleted-remotely. Each names what --apply would do before anything changes: create the first, refuse the second until a person decides. A case drives both against a fixture remote.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4291/",
+   "title": "I4291 — The executable's record writers attribute a record as the shell's do",
+   "description": "Every record the Rust executable writes names the caller's own episode by ADR 0164's resolution, never the checkout's session pointer, and relates the active task only when no other open episode opened it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4292/",
+   "title": "I4292 — The shell writers ADR 0164 did not name attribute through mj_record_attribution",
+   "description": "Every shell command that writes a durable record goes through mj_record_attribution, and one that cannot relate a task to its caller refuses by name, saying what to run instead.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4296/",
+   "title": "I4296 — A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes",
+   "description": "Every actions/checkout of .github/workflows/validate.yml that fetches the whole history (fetch-depth: 0) completes inside its own step bound on the hosted runners: the structure job fetches commits and trees only (filter: blob:none), because its gates read history as object ids, merge bases and paths and fetch the one past file they read on demand, and each full-history checkout is bounded at 20 minutes, still under its job's timeout.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4297/",
+   "title": "I4297 — The quality report records the commit and the tree it measured",
+   "description": "Add to QualityReport the commit, the tree digest and whether the measured checkout was dirty, read once when the measurement starts from the same git provenance the evidence ledger uses, and carry them on every transport quality.report already has. Showing the commit on the Cockpit quality page is I4311's, so that the first published page does not wait on the exclusive claim #2520 holds on apps/majordomus-cli/src/cockpit/pages.rs.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4298/",
+   "title": "I4298 — One forge-link component pins every commit, pull request, file and line reference on the site, and a reference it cannot prove is reported as text",
+   "description": "Extend the site's one forge-link component with commit, pull request and line forms, apply it wherever the site prints a commit, a pull request, a file or a test as text, refuse a branch-pinned fallback, teach scripts/ci/source-pin-check to ratchet inline repository_url/commit/ copies against its baseline, teach link-check to decide the pull request and line forms offline, render any reference it cannot prove as text listed in the build report, and make every page that cites a release pointer name the commit and path it read it at.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4299/",
+   "title": "I4299 — The site publishes the public API conformance report of the build commit, baselined findings included, with its provenance and a JSON download",
+   "description": "Write the quality report of the build commit into the site's data, refuse it when its recorded commit is not the build commit or its tree was dirty, and publish a /quality/ page labelled public API conformance: every finding including the baselined ones (marked baselined), each with its stable id (its baseline key: code, path and symbol, without the line), its verification state (confirmed, because each code is measured by the analyser rather than suspected), its code, rule, line link at the build commit, reproduce command and baseline state; a provenance block naming the commit, tree, analyser and version, the baseline file's identity at that commit, the exclusions and the denominators; the report itself as a JSON download; and two ECharts bar figures (findings by code, findings by top-level module) drawn over their tables.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4300/",
+   "title": "I4300 — A cargo-deny gate judges the crate's advisories, licences, bans and sources, every npm devDependency is pinned exactly, and the verdict is published",
+   "description": "Add a cargo-deny configuration at the repository root that judges advisories, licences (an allow list that admits the crate's present licences and refuses copyleft ones such as EUPL-1.2 and GPL), bans and sources for apps/majordomus-cli; declare a gate in .ai/repo/ci/gates.yaml that runs cargo deny check, with cargo-deny installed at a pinned version by .github/workflows/validate.yml beside the job's other tools (shellcheck at .github/workflows/validate.yml:320); add to scripts/site-check, beside its no-CDN rule (scripts/site-check:1020), a rule that refuses any non-exact version in package.json and fix cytoscape's caret pin; and publish the gate's last verdict at the build commit beside the conformance report on the /quality/ page I4299 adds, through scripts/generate-site-data and site/templates/quality.html, or not observed.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4301/",
+   "title": "I4301 — Each finding's cited line is blamed to the commit that introduced it, and the commit is linked",
+   "description": "For every finding the site publishes with a path and line, find the commit that introduced that line at the measured commit with git blame, offline during the site's data step, and publish it beside the finding as a link through the forge-link component; a line git cannot blame (a file outside the history, a shallow clone) is reported as not observed and rendered as text.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4302/",
+   "title": "I4302 — The crate declares a clippy lint table with a named subset of pedantic, nursery and restriction lints, and new debt is ratcheted",
+   "description": "Add a [lints.clippy] table to apps/majordomus-cli/Cargo.toml and a clippy configuration at the repository root that turn on a named subset of lints, each with its group: too_many_lines (pedantic), cognitive_complexity (nursery), unwrap_used and expect_used outside tests (restriction) and todo (restriction, which catches the todo!() macro and not a TODO comment), so the three allow(clippy::too_many_lines) attributes already in the code start to mean something; accept today's findings in .ai/repo/clippy-baseline.txt, which scripts/rust-check reads, so the gate refuses only new debt. This issue is the one gate for function length; I4303 does not measure it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4303/",
+   "title": "I4303 — quality.report reports long modules, module-wide dead-code allowances and TODO comments in product code",
+   "description": "Add violation codes to quality.report for a module longer than a declared limit (measured from syn spans), a module-wide #![allow(dead_code)], and a TODO, FIXME or HACK comment in non-test product code; give each a why and a remediation like the existing codes, and accept today's findings in .ai/repo/rust-quality-baseline.txt so the gate refuses only new ones.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4304/",
+   "title": "I4304 — A treemap shows where the findings concentrate, sized by lines and coloured from a sequential token ramp",
+   "description": "Add a sequential and a diverging colour ramp to the design tokens, projected by majordomus generate; replace the vendored ECharts common build with a custom build that adds the treemap series, still fetched lazily; teach site/charts.js a data-chart=treemap figure drawn from a table of modules (lines, findings, findings per thousand lines); and put that figure over its table on the /quality/ page I4299 adds; amend ADR 0152's list of chart forms.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4305/",
+   "title": "I4305 — The first due-diligence review is a record at the commit it measured, with a scorecard, a remediation roadmap and the facts two surfaces disagree about",
+   "description": "Decide, with majordomus decision and within project.optional-complexity, where a review record lives (the critique of an intent proposed for the review, or a section of the quality data), then record the first due-diligence review of the repository at the commit it measured in the critique finding shape that I4309 extends: a scorecard of dimensions (public API conformance, dependencies and licences, code smells, plan truthfulness, delivery and operations, secrets in history, coverage, test stability), each with its source, its verdict and the commit it was read at; a section of surface disagreements, each naming both readings, their sources and commits; the smells the plan observed, each a finding with severity, verification state and resolution issue; and a remediation roadmap ordered from the resolution issues' derived waves. Render it on the /quality/ page that I4299 adds, with every finding linked, and add to scripts/site-check the rule that fails a build whose review omits the scorecard, the roadmap or the disagreement section. No security-class finding is published before I4314's redaction has landed.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4306/",
+   "title": "I4306 — Every fence in an authored document carries a language, and a gate refuses one that does not",
+   "description": "Add a rule to scripts/ci/design-check that refuses an opening code fence with no language in an authored Markdown document (a plain block says text), and label the fences on master that have none, so the gate passes on master as a ban rather than a ratchet.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4307/",
+   "title": "I4307 — A proposed ADR 0228 writes the highlighter's licence boundary down: syntect in the executable, giallo only inside Zola's build",
+   "description": "Propose ADR 0228 with majordomus adr propose (number reserved on the board for this issue), as .ai/repo/adrs/0228-<slug>.md: the executable highlights with syntect (MIT), as ADR 0166 decision 7 says; giallo stays a build-time tool of Zola that never enters the executable; both emit one class vocabulary and one palette generated from the design tokens; ADR 0166 decision 7 is superseded only in naming the site's engine. Then extend I2747 rather than duplicate it: correct its objective, which calls syntect 'the engine Zola already uses for the site' while Zola 0.23 highlights the site with giallo, and its current_state, which blames share/ui/ui.js for the CDN highlighter that handbook/cs/extras10.js loads, and set its scope and acceptance to the ADR's boundary; and point the code section that open I3790 plans for docs/DESIGN_SYSTEM.md at the ADR, so the design book names the site's build-time highlighter, its palette and the boundary.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4308/",
+   "title": "I4308 — One capability proposes a canonical issue from a finding and writes it only through the plan's one checked write",
+   "description": "Declare one capability, on the command line and MCP, that takes a finding (a quality finding by the stable id I4299 publishes, its baseline key; a critique finding by intent and id) and builds a draft issue whose why cites the finding's id and verification state, whose validation is the finding's reproduce command and whose scope is the finding's path, then hands the draft to intents.draft_write (I3252), so the record is written only through the one checked write and its validators, never by a writer of its own; it refuses an issue id that is already a record and one that carries no id:issue claim on the board as I3974's survey reads it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4309/",
+   "title": "I4309 — A finding carries severity, a verification state and its measured commit, and a critical or high finding without a plan issue is refused by a rule and its gate",
+   "description": "Extend the critique finding shape with optional severity (critical, high, medium, low), verification (state confirmed or plausible, and the refuter's note when plausible) and the commit the finding was measured at, in share/schemas/majordomus/critique/critique.v1.schema.json and CritiqueRecord, with share/allow/critique.txt regenerated by majordomus generate; then add the rule project.review-findings-are-tracked, version 1, blocking: a finding of severity critical or high names the plan issue that resolves it, or is rejected with the owner's recorded reason; enforce it in intent validate as a FAIL naming the record and the finding id; and give the rule its proving test.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4310/",
+   "title": "I4310 — A site issue page links its GitHub projection, and the GitHub issue body links back to the record, the site and the evidence commit",
+   "description": "On each site issue and milestone page, link the GitHub projection through a search for the record marker github-sync writes (issues?q=\\\"majordomus:record I####\\\"), which needs no number and no network; teach link-check that form; and extend the issue body renderer so the GitHub body links the canonical record as a blob pinned to the landing commit, links the record's page on majordomus.dev, links each dependency row to its site page, and keeps the evidence table's commit column as a commit link. No closing keyword is written anywhere.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4311/",
+   "title": "I4311 — One Rust forge-URL helper builds every commit, pull request, file and line link on /ui and the Cockpit",
+   "description": "Make the forge-URL builder in apps/majordomus-cli/src/plan/flight.rs the one helper for commit, pull request, blob and line URLs pinned to a commit, replace the copies that format GitHub URLs by hand, and use it where /ui and the Cockpit print a commit or a path as text, so each becomes a link; make the Cockpit quality page name the commit its findings were measured at (the commit I4297 adds to the report), linked through the helper; extend case 1091 to decide the outbound forge links /ui emits.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4312/",
+   "title": "I4312 — The trace from issue to commit, pull request and finding is published and drawn with Cytoscape over its table",
+   "description": "Write the answer of trace.report into the site's data at the build commit and publish a /trace/ page whose tables list, per issue, its commits, its pull requests and the findings that name it, each linked through the forge-link component, with the same relation drawn by the existing site/graph.js (Cytoscape, loaded lazily) over those tables.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4313/",
+   "title": "I4313 — A /ui donut colours each slice by the status token its label means, never by its position",
+   "description": "Make the /ui donut and its legend take each slice's colour from the status role its label is filed under in the one declaration, status.states in share/design/tokens.yaml (:312), read through the compiled-in projection with role_of_state (apps/majordomus-cli/src/design/mod.rs:769), instead of from its position in TONES; a label with no filed role gets the neutral tone; replace status_tone's private mapping with the same lookup, filing any plan status word the declaration lacks in tokens.yaml.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4314/",
+   "title": "I4314 — A security finding shows only its title, severity and status on the site and in every published file",
+   "description": "Add a security class to the critique finding classes (CritiqueClass, apps/majordomus-cli/src/intent_review.rs:226-257, and the critique schema), write one redaction function in the crate that reduces a finding of that class to its title, severity and status, and apply the same reduction wherever a finding leaves the checkout through the site: the site's data, its pages (the /quality/ page included) and every published JSON (the /quality/ download included); keep the full finding in the checkout-local report; fail the site build when a published file carries a security finding's path, line, cited text or reproduce command.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4315/",
+   "title": "I4315 — The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red",
+   "description": "plan delivery reads releases/latest.json from the gh-pages commit the newest successful Pages deployment published, so an issue whose release that pointer names reads deployed; the Pages workflow refuses a snapshot whose publication source is unread.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4316/",
+   "title": "I4316 — New review surfaces start from a Flowbite Pro block, adapted, with every colour and type value read from the --mj-* tokens and no Pro source in the tree",
+   "description": "Record, as an amendment to ADR 0036, that a new page or screen of the review surfaces (/quality/, /trace/, the hotspot view and the /ui status charts) starts from the matching Flowbite Pro block, adapts its markup, takes every colour and type value from the --mj-* tokens, and commits no Flowbite Pro source verbatim; and add the check that refuses a Pro source file or a raw palette value in those templates.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4317/",
+   "title": "I4317 — The homepage's supported figure follows the recorded run's state, and /guarantees/ shows the same figure",
+   "description": "The count of guaranteed claims a recorded run supports is shown as a count only when the run confirms it: a run of the built commit that confirms its report shows the count, a run of an older commit that nothing of its own withholds shows it marked stale with its distance, and a run whose own state is stale or unknown (failures, a dirty tree, a refused or absent report) shows no number and says 'not confirmed', in the words /evidence/ uses. One definition of that word (site/templates/partials/run-figure.html) and one figure (site/templates/partials/supported-figure.html) serve the homepage, /evidence/, /guarantees/ and /guarantees/guaranteed/; the committed ledger's count those two pages also show says it is the ledger's; scripts/ci/homepage-check `declared` holds all of them to the run.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4318/",
+   "title": "I4318 — The homepage's count of machine-enforced rules agrees with /doctrines/",
+   "description": "Every homepage figure that counts the rules a machine enforces and the page it links say one number: the hero strip and the evidence chain read the rule package's blocking doctrines (site/data/generated/doctrines.json counts.blocking), the figure /doctrines/ shows under blocking, label it as blocking, and scripts/ci/homepage-check `figures` fails whenever a homepage figure differs from the figure its link target shows under the same data-figure key, or names a figure the check cannot read; /method/argument/ labels its count of this repository's resolved rules as that other set.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4320/",
+   "title": "I4320 — An evidence commit recorded on a branch is resolved to the commit that landed it, and is re-stamped with it",
+   "description": "plan validate judges the commit of every evidence entry on issues and milestones. A commit in the trunk's history (mj_commit_in_history, lib/common.sh:761-769) is fine, as today. For a commit outside it, plan validate asks the landed predicate of I4333 which trunk commit landed the branch that held it: the merge commit of the merged pull request whose commits include it, or the trunk commit with the same combined patch-id. When one is found, plan validate prints `INFO evidence_commit_landed <id> <covers> <sha> — landed as <trunk sha> (#<pr>|patch-id); re-stamp: majordomus plan evidence --restamp <id>`. When none is found, it prints `WARN evidence_commit_off_trunk <id> <covers> <sha> — not in <trunk>'s history and no landing found`. When the clone cannot decide (exit 2: shallow, or the object is missing), it prints `INFO evidence_commit_not_judged`. `majordomus plan evidence --restamp [<id>]` rewrites each resolved entry's commit: to its landing commit. It keeps recorded_at and the rest of the entry, and adds the landing to the ledger event, so the record holds a trunk commit after one follow-up commit on the trunk. Under `landing: squash`, plan evidence on a branch says that the commit will be resolved through its pull request once the branch lands.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4321/",
+   "title": "I4321 — A critique or gap file that fails its schema is named by intent validate, and never reads as no critique",
+   "description": "intent validate reads the index diagnostics on paths under .ai/repo/project/critiques/ and .ai/repo/project/gaps/. It reports each one as FAIL critique_invalid or FAIL gap_invalid, against the intent the file declares: its `intent:` value when the YAML parses, otherwise the filename stem. The finding names the file and the schema error. plan_not_critiqued is reported only for an intent that has no critique file at all, valid or not. The refusal to execute work on an intent whose only critique is invalid names critique_invalid as its reason.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4322/",
+   "title": "I4322 — plan validate and intent validate read the project through one discovery rule, and a record left untracked is named",
+   "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4323/",
+   "title": "I4323 — A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update",
+   "description": "lib/doctor.sh starts with a scratch preflight. It writes a probe through mktemp in ${TMPDIR:-/tmp} and in the repository's git directory, and reads the free space of both volumes with df -Pk. If a probe write fails, or free space is below a floor stated beside the check (overridable through an environment variable), doctor prints one `FAIL disk — no space left on device (<volume>: <free> free)` before any other check. Every check that reads a mktemp scratch file is then reported as `INFO <check> — not judged: disk`, never as a FAIL whose remedy writes. Those checks are the projection regions (doctor.sh:335), the canonical model (:1388), session front matter (lib/session.sh:1257), the rules vendor manifest (lib/rules.sh:372-373) and the context builder. The pre-commit hook line that init tells an adopter to add and doctor verifies (lib/init.sh:210-222, `majordomus doctor || exit $?`) therefore blocks the commit on the disk alone and names it as the cause. docs/MCP.md's failure table changes its 'the disk is full' row from 'limitation: not tested' to the case this issue adds, for doctor's part.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4324/",
+   "title": "I4324 — A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash",
+   "description": "Two changes to `majordomus worktree cleanup`. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4325/",
+   "title": "I4325 — node:test and Playwright are runners in code, so a claim proven by an adopter's JavaScript suite can be recorded, and an unproven intent names the runner set as its cause",
+   "description": "Two new variants of Runner (apps/majordomus-cli/src/evidence/mod.rs:207), each with a branch in TestId::of (:450) and a reader in the recorder (evidence/record.rs). This follows docs/EVIDENCE.md:87-89: a third runner is a code change, not configuration. Runner::Node is node's built-in test runner. Its paths are the file names `node --test` finds by default (`*.test.{js,mjs,cjs}`, `*-test.*`, `*_test.*`, `test-*.*`, `test.*`, and files under a `test/` directory), its id is `node:<path>`, and its report is the TAP stream of `node --test --test-reporter=tap`, one top-level test per file. Runner::Playwright is @playwright/test. Its paths are the `*.spec.{js,jsx,ts,tsx,mjs,cjs}` half of its default testMatch. The `*.test.*` half is left to node, so that no path belongs to two runners. Its report is the file its JSON reporter writes. `majordomus evidence record --origin ci --runner node|playwright --report <file>` reads the report at the commit and tree it was run on, and merges it into the ledger as record does for test/run.sh and cargo today. Majordomus never runs node or a browser itself. The runner answers EVIDENCE.md's objection, 'a runner nothing executes is a runner whose results nothing can record', because each variant comes with the reader for the report its runner writes. Second, separately: a criterion whose claim names a path no runner drives keeps that cause up to the intent. Today intent.rs:216-217 folds ProofState::Unrunnable and NoTest into IntentEvidenceState::NotRun, so closed_work_unproven (intent_realization.rs:795-805) says 'no recorded run'. After the change it says `criterion <c> cites <path>, which no runner drives (runners: suite test/cases/*.sh, crate apps/majordomus-cli/tests/*.rs, ...)`. A missing runner and a missing run then read differently.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4326/",
+   "title": "I4326 — The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name",
+   "description": "Three steps, each useful alone. (1) The monitor's GitHub source keeps queued and in-progress workflow runs, not only completed ones. Today workflow_run (apps/majordomus-cli/src/monitor/github.rs:307-310) returns None for every run whose status is not completed. With this step the monitor reports each repository's queue depth: runs queued, runs in progress, and the age of the oldest queued run. (2) From those reads across the repositories of the checkouts this host serves, plus any the policy lists, the monitor derives one forge_starved signal: queued > 0 and in progress == 0 in every one of them for longer than a bound stated beside the signal. The signal carries its start and the queued count per repository. It is kept separate from slot contention between this repository's own workflows (I2710, I2662) and from the wait before a run starts (I3202). Health reads it as a degraded dimension. (3) A blocked integration train, and a wait Majordomus itself manages on a workflow run, name the signal as their cause while it holds. I3903's planned cancellation of runs queued past their bound must not cancel a run while the signal holds. If I3903 lands first, this issue adds that exception there.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4327/",
+   "title": "I4327 — A session can declare that it takes reviews, an open review request lists who may answer it, and a repository with no eligible reviewer is a finding",
+   "description": "SessionInfo (apps/majordomus-cli/src/mesh/journal.rs:365) gains an optional `reviews` mandate: the repositories, and optionally the path prefixes, the session will review. A session declares it when it opens, through the mesh.session.open capability (MCP majordomus_mesh_session_open, HTTP POST /api/v1/mesh/sessions; it has no CLI projection today), and may change it later. A session that declares nothing takes no reviews. ReviewAnswered (journal.rs:661-671) gains a fourth answer, `declined`, beside approved, changes_requested and commented, with a note, so that 'not mine' is recorded and is never read as a verdict on the change. For each open review request, mesh state derives its eligible answerers: the live sessions whose mandate covers the request's repository and scope, minus the requesting session, minus sessions of the same task (a builder's own subagents), and minus any session that declined it. mesh state, mesh peers, the brief and /ui/mesh list them, and list the declines apart. mesh doctor and the brief print `WARN review_no_eligible_reviewer <repository> <request>` when the set is empty. The link FEATURES list (mesh/link.rs:63) is unchanged: `reviews` there means that a runtime's link protocol carries review events, and request_review's FeatureUnsupported refusal (mesh/cooperation.rs:4453-4470) keeps that meaning, with wording that no longer suggests the runtime will review.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4328/",
+   "title": "I4328 — A local task claim says how old it is, who holds it and whether its work has landed, and a stale one stops reading as overlap",
+   "description": "mj_report_overlap (lib/start.sh:182-195) is printed by `majordomus start` (lib/start.sh:170) and by `majordomus check --overlap` (lib/check.sh:48, :342-344). It qualifies each active task of another worktree with four facts: the age of its last checkpoint (checkpoint_at), its branch, whether a session is attached, and whether the branch has landed by the predicate of I4333. A claim whose branch has landed, or one that no session holds and whose checkpoint is older than a bound stated beside the check (default 7 days), prints `INFO overlap-stale <worktree> — claims <path>; task <id>, checkpoint <age> ago, <landed as <commit> (#<pr>)|unheld> (close it: majordomus finish in <worktree>)` instead of the live overlap line. A live claim's line gains its task id, age and branch.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4329/",
+   "title": "I4329 — plan list --json is the plan.issues shape with each issue's owner, `run` is in the top-level help, and docs/CLI.md states the JSON flags as they are",
+   "description": "Four narrow changes. (1) `majordomus plan list --json` emits the issue objects of the plan.issues capability, and drops the second shape built at lib/plan.sh:279-291, where depends_on and blocked_by are comma-joined strings and scope, serves, dependents and owner are missing. (2) PlanIssue (apps/majordomus-cli/src/plan.rs:366-413) carries the issue's declared `owner` (share/schemas/majordomus/issue/issue.v1.schema.json:48), so plan.issues gives it on every projection. (3) The top-level usage (bin/majordomus:38 onward) lists `run <capability> [--format json]`, which today is reachable only if one already knows it (apps/majordomus-cli/src/cli.rs:85). plan list's help names plan.issues as the full shape. (4) docs/CLI.md:35 says '`--json` on any read-only command emits one JSON object per finding', which is not true of the executable's commands. It is corrected to say which commands take --json and which take --format json, or both flags are accepted on every read-only command, whichever the owner chooses. A guard keeps the page and the parsers in agreement.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4330/",
+   "title": "I4330 — plan next and plan waves give each open issue its tail, and split the open graph into lanes with one take-next each",
+   "description": "apps/majordomus-cli/src/plan.rs computes a tail for every open issue: the length of the longest chain of open dependents after it, beside its wave, which is the longest path to it (plan.rs:375). plan.next and plan.ready rank READY issues by (tail descending, wave, priority, id) instead of (wave, priority, id) (plan.rs:567-580), so the first issue named is the one that unblocks the most remaining depth. plan.waves also splits the open graph into lanes: the weakly connected components of the open dependency graph, merged where their issues share a scope path (the I0004 serialisation). Each lane has its ready issues ordered by tail and one take_next. Every issue object on the CLI, HTTP and MCP carries its tail and its lane. ui/milestone.rs critical_path() (I2471) reads the same longest-chain function.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4331/",
+   "title": "I4331 — pack build never leaves an un-ignored copy of the repository in its work tree",
+   "description": "Before it writes, pack build checks its output directory with `git check-ignore`. That is the default <root>/tmp/packs/<repo>-<profile>-<commit12> (apps/majordomus-cli/src/pack/mod.rs:1189-1220) or the --out path. When the directory lies inside the work tree and is not ignored, pack build refuses and writes nothing. The refusal names the path and three remedies: ignore tmp/ in .gitignore, ignore it locally in .git/info/exclude (no commit needed), or pass --out with an ignored directory. On success, the output line names the path written and says that it is ignored. pack.verify keeps its rule that a pack is verified where it was built, inside the repository (inside(), apps/majordomus-cli/src/capability/builtin/pack.rs:115-133). That is why the fix is a refusal and not a new default outside the work tree. Writing under .git/ does not work either: in a linked worktree .git is a file, and the common git directory lies outside the work tree, where inside() refuses it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4332/",
+   "title": "I4332 — A release left half-published is named with its finishing step: tagged with no forge Release, or released with no successful deployment",
+   "description": "release.currency compares the newest v* tag the trunk contains with the forge releases that deploy.observed records (apps/majordomus-cli/src/deploy/observed.rs:120-152, ObservedRelease). A tag with no forge release gets a new stance, interrupted, beside current, owed and overdue. The brief and doctor print `WARN release <tag> tagged <age> ago with no forge Release — the publish stopped after its tag (finish: create the Release for <tag>, then its record)`. The second half-state is a tag that has a forge Release while the deployment of that release's commit failed or never happened. That means no ObservedDeployment (observed.rs:84-118) to the environment the release path declares (github-pages for a Pages site) at the tag's commit, or a newer one, has state success. That tag reads `WARN release <tag> released <age> ago, not deployed — <environment> at <sha>: <state>|none (finish: redeploy <tag>, then verify it)`. When no observation exists (no token, offline, never observed), the line carries the qualifier 'forge not observed' and never one of these stances. This is release.currency, which every adopter reads through the brief and doctor. It is separate from I2712, which concerns this repository's own scripts/ci/release-check.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4333/",
+   "title": "I4333 — Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands",
+   "description": "One function decides whether a branch, or a head commit, has landed on the trunk, and says how it decided. There are three ways. By ancestry, which is today's rule. By the forge: a pull request from this repository whose head is that tip is MERGED and its merge commit is in the trunk. integration/forge.rs merged_branches_of and deploy/observed.rs ObservedMergedPullRequest already read this. Offline: the patch-id (`git patch-id --stable`) of the branch's combined diff from its merge base equals the patch-id of one trunk commit after that merge base. That works only while the clone still holds the branch's commits. After the branch is deleted, the forge is the only rule that can still decide. policy.yaml gains `landing: merge | squash` (policy.v1 schema), with merge as the default. Under merge only ancestry is asked, so nothing changes. Under squash the forge and patch-id rules are asked too. A check that needs the forge and cannot read it answers 'not judged', never 'not landed'. Every reader that decides 'landed' today calls this function: worktree cleanup and topology (worktree/state.rs:514-536 merged_into, which runs `git branch --merged`, read by worktree/service.rs:835-840 cleanup_eligible), convergence (convergence/mod.rs:358, Disposition::Integrated), and the fallback of the release an issue landed in (plan.rs:1454 and lib/project.sh:191, `git log --merges --grep`). integration/relation.rs:139 patches_upstream adds the combined patch-id as a second test beside `git cherry`. The issues that need this predicate depend on it: I4320 (evidence commits), I4324 (finished worktrees) and I4328 (task claims).",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4338/",
+   "title": "I4338 — A pull request labelled hold gives its validate slot back to its train and never reads green on its own",
+   "description": "A validate run of a pull request that carries the hold label cancels itself in the plan job's first step, before any job asks for a runner, writes why to the step summary, and fails if the cancel does not take hold, so a train member never holds the one validate slot its train needs and never reaches a green ci that would let it land outside its train.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4341/",
+   "title": "I4341 — release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+   "description": "Make the excuse scripts/ci/release-check gives a published tag without a record monotonic over its grace: when proposed_record() finds no local release/record-<tag> ref it asks `git ls-remote --heads origin release/record-<tag>` and fetches that one ref, and release_in_flight() reads a GitHub release of the tag younger than RECORD_GRACE_HOURS as pending whatever its release run concluded.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4342/",
+   "title": "I4342 — A release's record lands without a person within two hours of its tag",
+   "description": "The record pull request a release opens gets its own pull_request run started without a person: the publish job opens it, or the drain closes and reopens it, with a GitHub App or fine-grained token the owner supplies, whose events start workflows, so that run posts `ci` on the record's head and branch protection counts it. release-check reports an unlanded record's age, and the release seat's check fails once a record has waited more than two hours, naming the pull request; that bound holds today, with or without the credential.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4343/",
+   "title": "I4343 — A build host's disk guard is observed live every five minutes, and the observation fails while it is not",
+   "description": "On a node the policy declares a build host, `mesh doctor --build-host` observes disk-guard.timer active, the ballast present, /var/lib/majordomus/disk-guard.json younger than 15 minutes and every declared drop-in present, and each missing item is a failure with a non-zero exit naming the item and `mesh build-cache provision`. Nobody has to ask: the provision installs build-host-observe.service with build-host-observe.timer, which runs that observation every five minutes, writes its verdict and failing items to /var/lib/majordomus/build-host.json and publishes it as a mesh event build_host_observed, which `mesh events` and `monitor` show. The build host layer is applied on lundra and the evidence is recorded on this issue. Lundra's baseline tenants (the korczis home, docker, minio and swap) are named in the policy, each with a bound the observation reads.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4344/",
+   "title": "I4344 — A CI runner's home stays under its cap during a job, not only between jobs",
+   "description": "Bound a self-hosted runner's build directory inside a job, not only around it. The build host policy gives each runner home's build directory a filesystem of its own size, a loop-mounted ext4 image or an XFS project quota the provision creates from the policy's per-home cap, so a job that outgrows it fails with ENOSPC inside its own home while the root filesystem keeps its floor. Around that hard bound: on runner.environment == 'self-hosted', .github/actions/setup-rust runs the build directory bound (mj_rust_bound_build_dir) before cargo and again in a post step; scripts/rust-coverage removes llvm-cov-target on a self-hosted runner once its report is exported; and every job that builds on a self-hosted runner samples its build directory every 30 s and writes the job summary facts `build-dir size` and `build-dir peak`.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4345/",
+   "title": "I4345 — A CI runner that systemd shows active while its listener crash-loops is recovered within five minutes",
+   "description": "The build host policy installs a root watchdog, runner-watchdog.service with runner-watchdog.timer, that for each actions.runner.* unit detects a listener crash loop or free space below the hard floor, then runs disk-guard's hard tier, releases the ballast (root may use the reserved ext4 blocks), restarts the unit and emits a mesh monitor event naming the runner; a runner GitHub reports offline is reported the same way.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4346/",
+   "title": "I4346 — Every sweep that deletes asks one liveness predicate, and it fails closed",
+   "description": "scripts/reap-orphans --targets, `majordomus worktree cleanup` and the build host's disk-guard decide liveness through one typed capability, worktree.liveness (`majordomus worktree liveness <path>`, declared in the worktree module and implemented in apps/majordomus-cli/src/worktree/liveness.rs), which answers keep or reclaim with its reason. worktree cleanup calls it in process; reap-orphans and disk-guard call the executable, disk-guard through the path disk-guard.service hands it, and keep everything when that executable is absent. A tree or build directory is live if a mesh or board claim names it, an open majordomus task exists in it, the derive lock's owner names it, a queue pid file or a running runner job names it, another process's CARGO_*_DIR or MAJORDOMUS_BIN points into it, or its index, HEAD or reflog changed within the idle window; an unreadable claim source or stat counts as live. No new shell unit is added.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4347/",
+   "title": "I4347 — A labeled event starts a gate job only for ci:full, so opening a train with its label runs its head once",
+   "description": "The first step of validate.yml's plan job yields when github.event.action == 'labeled' and the label is not ci:full, without replacing the `ci` conclusion an earlier run of the same head wrote; opening a pull request with its label produces one gate-running run per head.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4348/",
+   "title": "I4348 — Rule: a superseded or duplicate run never holds a pull request's validate group",
+   "description": "A blocking project rule, a-superseded-run-never-holds-a-validate-group, whose case fails when validate.yml keeps a per-pull-request group with cancel-in-progress: false while no supervising workflow with a workflow_run trigger and a schedule exists, when `labeled` reaches the gates without a label filter, or when the group expression is not keyed on pull_request.number; docs/CI.md lists the five dated occurrences it answers.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4349/",
+   "title": "I4349 — Checkout time and repository size have a budget, and a run past it is red",
+   "description": "Every validate run records a per-step checkout-seconds fact and a `repository kb` fact, with a baseline in scripts/ci-baseline; a new typed capability, integration.checkout_budget (`majordomus prs checkout-budget`, implemented in apps/majordomus-cli/src/integration/checkout_budget.rs), run as a gate in structure, fails when the p90 checkout time measured under concurrency passes 50% of its step bound or when the repository size passes its budget in .ai/repo/policy.yaml, and flags a re-run of a job that died at its checkout bound.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4351/",
+   "title": "I4351 — A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed",
+   "description": "Stop the history's growth from derived files: site/data/registry/registry.json, docs/generated/graph.json, site/data/generated/plan.json, docs/generated/registry.json, docs/generated/registry.yaml and the three openapi copies (site/data/generated/openapi.json, docs/generated/openapi.json, docs/generated/openapi.yaml) each either leave git (built where they are served) or are written to delta well (stable key order, one record per line, no volatile body fields), and each one that stays carries a max_delta_bytes in .ai/repo/policy.yaml; scripts/derive-check refuses an undeclared tracked derived file over 1 MB. A file that leaves git is built by its producer (scripts/generate-site-data or `majordomus generate`) where its readers (scripts/site-build, scripts/site-deploy, scripts/pages, scripts/ci/homepage-check) need it, and is listed in .gitignore. Which file takes which road is decided first in an ADR whose number is taken on the board when the work starts.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4353/",
+   "title": "I4353 — A train's top goes first on the runner pool, and resume never re-runs a held member",
+   "description": "scripts/ci/release-path gains a landing path beside the release path: while an integration/* run is queued or running, other pull requests' runs yield; `preempt` cancels queued pull_request runs that are not a top, never a push, schedule or dispatch run; `resume` waits until no top is in flight and skips a pull request that carries any hold label of LABEL_POLICY, read live from the forge.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4354/",
+   "title": "I4354 — Under disk pressure the shared build directory is reclaimed without cargo's lock, and a build is admitted before cargo takes it",
+   "description": "On a developer machine: a reclaim triggered by free space removes idle incremental sessions under rustc's own s-*.lock, with no age floor under pressure; a cargo shim, share/libexec/cargo-shim/cargo, first on PATH, admits a build before cargo takes its lock and holds new builds while a reclaim is pending; admission reclaims before it refuses, the shared build directory first and a worktree's target only below MAJORDOMUS_MIN_FREE_MB. Admission is one function in lib/rust_bin.sh, and this issue states the order of its floors, which every record that adds one follows: (1) disk_emergency below 10 GiB (I4355) refuses every build, with no override; (2) the machine floor of rule project.the-cooperation-model-is-the-owners-word clause 7, 35 GiB, read from rule data (I4006) and held by I3825, refuses a local build only after this issue's reclaim has run, naming the free space, the floor, the override and the offload route; (3) the builder count of clause 7 (I3825); (4) the machine slot (I4006). CI keeps its own floor and is refused by none of (2) to (4). This issue changes no number of clause 7. #2397 (I4006) and #2567 are fixed to match and land.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4355/",
+   "title": "I4355 — A machine announces its own disk emergency on the mesh and names who holds the build lock",
+   "description": "A watcher, `scripts/reap-orphans --watch`, run every 60 s by a launchd agent or systemd user timer the mesh enrolment installs, publishes an advisory claim machine/<id>/disk while free space is below 35 GiB and withdraws it at 40 GiB or more; below 10 GiB it lists the holders of debug/.cargo-build-lock (pid, worktree, age) and lib/rust_bin.sh refuses admission with reason disk_emergency. The watcher deletes nothing. Clause 7 of the cooperation rule stops saying the limit is owed and names the cases that hold it.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4356/",
+   "title": "I4356 — An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held",
+   "description": "An exclusive claim for a session nobody opened is refused with session_unknown, naming `mesh session open --client-pid auto`, instead of opening the session implicitly; `mesh claim` sends client_pid and client_started, accepted only when the serving runtime is on the caller's machine; claim() reads the fold back and returns an error carrying the state when the claim is not Held; a claim sent to a runtime that holds only a closed record of a session live elsewhere is refused or forwarded; an exclusive claim also excludes by its issue field; mj_mesh_task_claim stops ignoring the answer. No beat-only suspension is introduced until CLI holders have an automatic beat source.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4357/",
+   "title": "I4357 — Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
+   "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4358/",
+   "title": "I4358 — A seat is taken by `start --seat` under its provider session, kept between that session's tasks and lost with it, and an unbound seat is named by the doctor",
+   "description": "`majordomus start --seat release|landing|repair` takes, or keeps, the seat's exclusive claim under the mesh session that carries the task's provider_session digest, so I3072's derived join (a task is the seat's when release/seat is held by a mesh session whose provider_session equals the one start recorded) finds the seat's task with nothing declared; a start with no observable provider session is refused the seat. finish and abandon do not drop the claim at once: they shorten its expiry to a grace, and a `start --seat` of the same provider session inside the grace keeps it, so the seat never reads vacant between one session's tasks (I3072's reason) while a session that has stopped loses it within the grace. A mesh doctor check, unbound_exclusive_claims, fails on an exclusive claim whose provider session has no open task past the grace, naming the claim's runtime URL and the exact release command; the scope seat/release is refused as scope_not_a_seat; the hub's served version is checked against the newest tag. The cooperation rule says seats are taken this way, at v3.",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/plan/i4359/",
+   "title": "I4359 — Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented",
+   "description": "A blocking project rule, no-ci-routes-to-an-undeclared-runner-host, held at two points. In the repository, a typed capability, mesh.runner_routing (`majordomus mesh runner-routing`), run as a gate in structure, fails when a self-hosted label reachable from a workflow or from a repository variable's default names no policy node that declares its runner units, their homes, their caps and the guard, observation and watchdog timers. On the host, the build host policy installs a runner job-started hook (apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started, set as ACTIONS_RUNNER_HOOK_JOB_STARTED in the runner units' drop-in) that fails the job at its start, naming the failing item, while the host's latest observation (/var/lib/majordomus/build-host.json, written every five minutes by I4343) is missing, failing or older than 15 minutes; so a host whose guard has stopped takes no CI, and the refusal does not wait for anyone to ask. docs/CI.md gains a section 'Self-hosted runners' with the runbook of the 2026-10-28 recovery.",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -17748,6 +18171,12 @@
    "route": "/cs/rules/project-ui-derived-state-1/",
    "title": "Rozhraní ukazuje jen to, co je odvozeno, a neznámé se nikdy nekreslí jako zdravé",
    "description": "Rozhraní ukazuje jen to, co je odvozeno, a neznámé se nikdy nevykresluje jako zdravé",
+   "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
+  },
+  {
+   "route": "/cs/rules/project-ui-uses-flowbite-pro-1/",
+   "title": "Every user interface here is built on Flowbite Pro, through the mj tokens",
+   "description": "Every user interface here is built on Flowbite Pro, through the mj tokens",
    "section": "Prismatic Majordomus — Vaši AI agenti říkají, že je práce hotová. Majordomus je přiměje to dokázat"
   },
   {
@@ -23871,6 +24300,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/a-finding-is-tracked-to-its-issue/",
+   "title": "a-finding-is-tracked-to-its-issue — A finding becomes a tracked plan issue whose GitHub projection links both ways, and every surface draws and highlights with the one library for the job",
+   "description": "A finding with a stable id and a verification state becomes a canonical issue through one capability that writes only through the plan's checked write; the issue's site page and its GitHub projection link to each other; every forge link on /ui and the Cockpit comes from one helper; the trace is drawn as a graph over its table; status colours follow status tokens; and the highlighter boundary is written down in a proposed ADR.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/a-finish-reads-the-criteria-its-work-serves/",
    "title": "a-finish-reads-the-criteria-its-work-serves — A finish reads what its work serves",
    "description": "The completion policy asks the intent engine what stands for the work a task named, refuses completed while a served criterion is unmet or a guard is violated where the policy says completed means complete, and decides nothing about any intent.",
@@ -23922,6 +24357,12 @@
    "route": "/plan/a-release-is-proven-end-to-end/",
    "title": "a-release-is-proven-end-to-end — Whether a commit may be released, and whether its release arrived, is proved by one read and one case",
    "description": "release.readiness answers before a tag from the functions the workflow runs; site-deploy never goes back a commit; one case walks a fresh clone to published evidence; the first record commit after I2717 lands is observed with a green evidence job.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/a-review-is-published-at-its-commit/",
+   "title": "a-review-is-published-at-its-commit — The quality report, its dependency evidence and the first due-diligence review are published at the commit they measured, every link pinned and proven",
+   "description": "A reader opens majordomus.dev, finds the public API conformance report and the dependency evidence of the deployed commit, and clicks from any finding to its line at that commit, to the commit that introduced the line and to its rule; the first due-diligence review sits beside them with a scorecard, a remediation roadmap and the facts on which two surfaces disagree.",
    "section": "The plan"
   },
   {
@@ -28372,8 +28813,8 @@
   },
   {
    "route": "/plan/i3241/",
-   "title": "I3241 — Only a job that reads history fetches all of it",
-   "description": "Declare in gates.yaml which gates read history, and give fetch-depth 0 only to the jobs that run one of them.",
+   "title": "I3241 — Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s",
+   "description": "The default checkout of validate.yml is HEAD's ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.",
    "section": "The plan"
   },
   {
@@ -29759,7 +30200,7 @@
   {
    "route": "/plan/i3825/",
    "title": "I3825 — A build refuses to start beside five others or below 35 GiB free",
-   "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember.",
+   "description": "The build guard holds the two machine limits of rule project.the-cooperation-model-is-the-owners-word clause 7: no build starts while five builders already run on the machine or while less than 35 GiB is free, each refusal naming the limit, the measured value and the override, so the limits stop being numbers a session has to remember. The order of the admission floors in lib/rust_bin.sh is stated in I4354 and this issue follows it: disk_emergency below 10 GiB (I4355) first, then this 35 GiB floor, then the builder count, then the machine slot (I4006).",
    "section": "The plan"
   },
   {
@@ -30363,6 +30804,12 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4226/",
+   "title": "I4226 — Case 1096 matches a page from a here-string, so a match is never read as a miss",
+   "description": "Case 1096_no_screen_waits_for_a_source matches every page it reads with grep from a here-string instead of piping printf into grep -q, so the outcome of each check is grep's answer alone.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4227/",
    "title": "I4227 — A client that re-attaches and repeats its named claim keeps one departed row, not one per reconnect",
    "description": "An announce of a named claim drops the departed slots of the same worker (same client name and address) whose every claim it now holds under the same name, so a client that re-attaches on a timer no longer fills the board's departed retention and evicts the sessions that really left.",
@@ -30375,6 +30822,18 @@
    "section": "The plan"
   },
   {
+   "route": "/plan/i4230/",
+   "title": "I4230 — Below the reclaim mark, the shared build directory's bound evicts what is idle for minutes, not an hour",
+   "description": "When the volume has less free than the reclaim mark, mj_rust_bound_build_dir counts a unit idle for MAJORDOMUS_SHARED_BUILD_PRESSURE_IDLE_MIN minutes (default 10) as stale, so the bound can bring the shared build directory down while many worktrees build inside an hour.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4232/",
+   "title": "I4232 — A build of the portable core from the repository's root keeps the executable's rlib of it",
+   "description": "apps/majordomus-core declares an rlib only, so cargo names that rlib by its hash. `cargo test --manifest-path apps/majordomus-core/Cargo.toml`, run from the root where the shared build-dir applies, can then no longer replace the rlib every executable links. The wasm32 module is the cdylib that scripts/rust-check --portable-core asks for on its command line.",
+   "section": "The plan"
+  },
+  {
    "route": "/plan/i4241/",
    "title": "I4241 — A follower's shared read is keyed by its own server, so a follower of another context is never handed it",
    "description": "The blackboard snapshot and the pages of signals that followers share are keyed by the server's epoch as well as by what is asked, so two contexts in one process never read each other's board or cursor.",
@@ -30384,6 +30843,384 @@
    "route": "/plan/i4244/",
    "title": "I4244 — Case 3383 holds the peers screen to its contract: the change, or the reading before it marked as catching up",
    "description": "The peers screen read right after an announce is accepted when it shows the change, or when it shows the earlier reading marked data-catching-up and a following read shows the change; an old reading served as current still fails the case.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4245/",
+   "title": "I4245 — The served-executable tests run the copy they just wrote once it is let go, not while a forked child holds it",
+   "description": "run_child in served_executable's tests starts the binary it has just copied through process::retrying_busy, so a child another test thread forked while the copy was open no longer fails the test with ETXTBSY.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4251/",
+   "title": "I4251 — capture install writes no Markdown link that leaves the adopting repository",
+   "description": "Link the brief mod's README to the published page of the session brief instead of `../../../../docs/BRIEF.md`, and prove that every Markdown link a mod writes resolves inside the repository it is installed into.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4253/",
+   "title": "I4253 — The remedy doctor names for an orphan skill is a command the shell runs",
+   "description": "majordomus skills explain <id> hands the call to the executable, as `evidence` hands its subcommands, and every `reproduce:` doctor prints for skills is a command the shell accepts.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4258/",
+   "title": "I4258 — Documents below docs/ are knowledge without a hand-declared class each",
+   "description": "The skeleton discovers every Markdown file below docs/ once, without claiming a file another class claims.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4265/",
+   "title": "I4265 — The hook line init prints runs doctor in its commit context",
+   "description": "init prints the commit-context form, and doctor's wiring check accepts it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4290/",
+   "title": "I4290 — The reconciliation names a record never created on GitHub apart from one deleted there",
+   "description": "scripts/github-sync tells two absences apart. A canonical record that was never projected reads never-created; a record whose identity marker GitHub once carried, and no longer serves, reads deleted-remotely. Each names what --apply would do before anything changes: create the first, refuse the second until a person decides. A case drives both against a fixture remote.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4291/",
+   "title": "I4291 — The executable's record writers attribute a record as the shell's do",
+   "description": "Every record the Rust executable writes names the caller's own episode by ADR 0164's resolution, never the checkout's session pointer, and relates the active task only when no other open episode opened it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4292/",
+   "title": "I4292 — The shell writers ADR 0164 did not name attribute through mj_record_attribution",
+   "description": "Every shell command that writes a durable record goes through mj_record_attribution, and one that cannot relate a task to its caller refuses by name, saying what to run instead.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4296/",
+   "title": "I4296 — A full-history checkout of validate fits its bound: structure fetches no blobs, and every one has twenty minutes",
+   "description": "Every actions/checkout of .github/workflows/validate.yml that fetches the whole history (fetch-depth: 0) completes inside its own step bound on the hosted runners: the structure job fetches commits and trees only (filter: blob:none), because its gates read history as object ids, merge bases and paths and fetch the one past file they read on demand, and each full-history checkout is bounded at 20 minutes, still under its job's timeout.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4297/",
+   "title": "I4297 — The quality report records the commit and the tree it measured",
+   "description": "Add to QualityReport the commit, the tree digest and whether the measured checkout was dirty, read once when the measurement starts from the same git provenance the evidence ledger uses, and carry them on every transport quality.report already has. Showing the commit on the Cockpit quality page is I4311's, so that the first published page does not wait on the exclusive claim #2520 holds on apps/majordomus-cli/src/cockpit/pages.rs.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4298/",
+   "title": "I4298 — One forge-link component pins every commit, pull request, file and line reference on the site, and a reference it cannot prove is reported as text",
+   "description": "Extend the site's one forge-link component with commit, pull request and line forms, apply it wherever the site prints a commit, a pull request, a file or a test as text, refuse a branch-pinned fallback, teach scripts/ci/source-pin-check to ratchet inline repository_url/commit/ copies against its baseline, teach link-check to decide the pull request and line forms offline, render any reference it cannot prove as text listed in the build report, and make every page that cites a release pointer name the commit and path it read it at.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4299/",
+   "title": "I4299 — The site publishes the public API conformance report of the build commit, baselined findings included, with its provenance and a JSON download",
+   "description": "Write the quality report of the build commit into the site's data, refuse it when its recorded commit is not the build commit or its tree was dirty, and publish a /quality/ page labelled public API conformance: every finding including the baselined ones (marked baselined), each with its stable id (its baseline key: code, path and symbol, without the line), its verification state (confirmed, because each code is measured by the analyser rather than suspected), its code, rule, line link at the build commit, reproduce command and baseline state; a provenance block naming the commit, tree, analyser and version, the baseline file's identity at that commit, the exclusions and the denominators; the report itself as a JSON download; and two ECharts bar figures (findings by code, findings by top-level module) drawn over their tables.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4300/",
+   "title": "I4300 — A cargo-deny gate judges the crate's advisories, licences, bans and sources, every npm devDependency is pinned exactly, and the verdict is published",
+   "description": "Add a cargo-deny configuration at the repository root that judges advisories, licences (an allow list that admits the crate's present licences and refuses copyleft ones such as EUPL-1.2 and GPL), bans and sources for apps/majordomus-cli; declare a gate in .ai/repo/ci/gates.yaml that runs cargo deny check, with cargo-deny installed at a pinned version by .github/workflows/validate.yml beside the job's other tools (shellcheck at .github/workflows/validate.yml:320); add to scripts/site-check, beside its no-CDN rule (scripts/site-check:1020), a rule that refuses any non-exact version in package.json and fix cytoscape's caret pin; and publish the gate's last verdict at the build commit beside the conformance report on the /quality/ page I4299 adds, through scripts/generate-site-data and site/templates/quality.html, or not observed.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4301/",
+   "title": "I4301 — Each finding's cited line is blamed to the commit that introduced it, and the commit is linked",
+   "description": "For every finding the site publishes with a path and line, find the commit that introduced that line at the measured commit with git blame, offline during the site's data step, and publish it beside the finding as a link through the forge-link component; a line git cannot blame (a file outside the history, a shallow clone) is reported as not observed and rendered as text.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4302/",
+   "title": "I4302 — The crate declares a clippy lint table with a named subset of pedantic, nursery and restriction lints, and new debt is ratcheted",
+   "description": "Add a [lints.clippy] table to apps/majordomus-cli/Cargo.toml and a clippy configuration at the repository root that turn on a named subset of lints, each with its group: too_many_lines (pedantic), cognitive_complexity (nursery), unwrap_used and expect_used outside tests (restriction) and todo (restriction, which catches the todo!() macro and not a TODO comment), so the three allow(clippy::too_many_lines) attributes already in the code start to mean something; accept today's findings in .ai/repo/clippy-baseline.txt, which scripts/rust-check reads, so the gate refuses only new debt. This issue is the one gate for function length; I4303 does not measure it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4303/",
+   "title": "I4303 — quality.report reports long modules, module-wide dead-code allowances and TODO comments in product code",
+   "description": "Add violation codes to quality.report for a module longer than a declared limit (measured from syn spans), a module-wide #![allow(dead_code)], and a TODO, FIXME or HACK comment in non-test product code; give each a why and a remediation like the existing codes, and accept today's findings in .ai/repo/rust-quality-baseline.txt so the gate refuses only new ones.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4304/",
+   "title": "I4304 — A treemap shows where the findings concentrate, sized by lines and coloured from a sequential token ramp",
+   "description": "Add a sequential and a diverging colour ramp to the design tokens, projected by majordomus generate; replace the vendored ECharts common build with a custom build that adds the treemap series, still fetched lazily; teach site/charts.js a data-chart=treemap figure drawn from a table of modules (lines, findings, findings per thousand lines); and put that figure over its table on the /quality/ page I4299 adds; amend ADR 0152's list of chart forms.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4305/",
+   "title": "I4305 — The first due-diligence review is a record at the commit it measured, with a scorecard, a remediation roadmap and the facts two surfaces disagree about",
+   "description": "Decide, with majordomus decision and within project.optional-complexity, where a review record lives (the critique of an intent proposed for the review, or a section of the quality data), then record the first due-diligence review of the repository at the commit it measured in the critique finding shape that I4309 extends: a scorecard of dimensions (public API conformance, dependencies and licences, code smells, plan truthfulness, delivery and operations, secrets in history, coverage, test stability), each with its source, its verdict and the commit it was read at; a section of surface disagreements, each naming both readings, their sources and commits; the smells the plan observed, each a finding with severity, verification state and resolution issue; and a remediation roadmap ordered from the resolution issues' derived waves. Render it on the /quality/ page that I4299 adds, with every finding linked, and add to scripts/site-check the rule that fails a build whose review omits the scorecard, the roadmap or the disagreement section. No security-class finding is published before I4314's redaction has landed.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4306/",
+   "title": "I4306 — Every fence in an authored document carries a language, and a gate refuses one that does not",
+   "description": "Add a rule to scripts/ci/design-check that refuses an opening code fence with no language in an authored Markdown document (a plain block says text), and label the fences on master that have none, so the gate passes on master as a ban rather than a ratchet.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4307/",
+   "title": "I4307 — A proposed ADR 0228 writes the highlighter's licence boundary down: syntect in the executable, giallo only inside Zola's build",
+   "description": "Propose ADR 0228 with majordomus adr propose (number reserved on the board for this issue), as .ai/repo/adrs/0228-<slug>.md: the executable highlights with syntect (MIT), as ADR 0166 decision 7 says; giallo stays a build-time tool of Zola that never enters the executable; both emit one class vocabulary and one palette generated from the design tokens; ADR 0166 decision 7 is superseded only in naming the site's engine. Then extend I2747 rather than duplicate it: correct its objective, which calls syntect 'the engine Zola already uses for the site' while Zola 0.23 highlights the site with giallo, and its current_state, which blames share/ui/ui.js for the CDN highlighter that handbook/cs/extras10.js loads, and set its scope and acceptance to the ADR's boundary; and point the code section that open I3790 plans for docs/DESIGN_SYSTEM.md at the ADR, so the design book names the site's build-time highlighter, its palette and the boundary.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4308/",
+   "title": "I4308 — One capability proposes a canonical issue from a finding and writes it only through the plan's one checked write",
+   "description": "Declare one capability, on the command line and MCP, that takes a finding (a quality finding by the stable id I4299 publishes, its baseline key; a critique finding by intent and id) and builds a draft issue whose why cites the finding's id and verification state, whose validation is the finding's reproduce command and whose scope is the finding's path, then hands the draft to intents.draft_write (I3252), so the record is written only through the one checked write and its validators, never by a writer of its own; it refuses an issue id that is already a record and one that carries no id:issue claim on the board as I3974's survey reads it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4309/",
+   "title": "I4309 — A finding carries severity, a verification state and its measured commit, and a critical or high finding without a plan issue is refused by a rule and its gate",
+   "description": "Extend the critique finding shape with optional severity (critical, high, medium, low), verification (state confirmed or plausible, and the refuter's note when plausible) and the commit the finding was measured at, in share/schemas/majordomus/critique/critique.v1.schema.json and CritiqueRecord, with share/allow/critique.txt regenerated by majordomus generate; then add the rule project.review-findings-are-tracked, version 1, blocking: a finding of severity critical or high names the plan issue that resolves it, or is rejected with the owner's recorded reason; enforce it in intent validate as a FAIL naming the record and the finding id; and give the rule its proving test.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4310/",
+   "title": "I4310 — A site issue page links its GitHub projection, and the GitHub issue body links back to the record, the site and the evidence commit",
+   "description": "On each site issue and milestone page, link the GitHub projection through a search for the record marker github-sync writes (issues?q=\\\"majordomus:record I####\\\"), which needs no number and no network; teach link-check that form; and extend the issue body renderer so the GitHub body links the canonical record as a blob pinned to the landing commit, links the record's page on majordomus.dev, links each dependency row to its site page, and keeps the evidence table's commit column as a commit link. No closing keyword is written anywhere.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4311/",
+   "title": "I4311 — One Rust forge-URL helper builds every commit, pull request, file and line link on /ui and the Cockpit",
+   "description": "Make the forge-URL builder in apps/majordomus-cli/src/plan/flight.rs the one helper for commit, pull request, blob and line URLs pinned to a commit, replace the copies that format GitHub URLs by hand, and use it where /ui and the Cockpit print a commit or a path as text, so each becomes a link; make the Cockpit quality page name the commit its findings were measured at (the commit I4297 adds to the report), linked through the helper; extend case 1091 to decide the outbound forge links /ui emits.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4312/",
+   "title": "I4312 — The trace from issue to commit, pull request and finding is published and drawn with Cytoscape over its table",
+   "description": "Write the answer of trace.report into the site's data at the build commit and publish a /trace/ page whose tables list, per issue, its commits, its pull requests and the findings that name it, each linked through the forge-link component, with the same relation drawn by the existing site/graph.js (Cytoscape, loaded lazily) over those tables.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4313/",
+   "title": "I4313 — A /ui donut colours each slice by the status token its label means, never by its position",
+   "description": "Make the /ui donut and its legend take each slice's colour from the status role its label is filed under in the one declaration, status.states in share/design/tokens.yaml (:312), read through the compiled-in projection with role_of_state (apps/majordomus-cli/src/design/mod.rs:769), instead of from its position in TONES; a label with no filed role gets the neutral tone; replace status_tone's private mapping with the same lookup, filing any plan status word the declaration lacks in tokens.yaml.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4314/",
+   "title": "I4314 — A security finding shows only its title, severity and status on the site and in every published file",
+   "description": "Add a security class to the critique finding classes (CritiqueClass, apps/majordomus-cli/src/intent_review.rs:226-257, and the critique schema), write one redaction function in the crate that reduces a finding of that class to its title, severity and status, and apply the same reduction wherever a finding leaves the checkout through the site: the site's data, its pages (the /quality/ page included) and every published JSON (the /quality/ download included); keep the full finding in the checkout-local report; fail the site build when a published file carries a security finding's path, line, cited text or reproduce command.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4315/",
+   "title": "I4315 — The deployed stage reads the release pointer where the Pages deployment published it, and a deploy whose pointer it cannot read is red",
+   "description": "plan delivery reads releases/latest.json from the gh-pages commit the newest successful Pages deployment published, so an issue whose release that pointer names reads deployed; the Pages workflow refuses a snapshot whose publication source is unread.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4316/",
+   "title": "I4316 — New review surfaces start from a Flowbite Pro block, adapted, with every colour and type value read from the --mj-* tokens and no Pro source in the tree",
+   "description": "Record, as an amendment to ADR 0036, that a new page or screen of the review surfaces (/quality/, /trace/, the hotspot view and the /ui status charts) starts from the matching Flowbite Pro block, adapts its markup, takes every colour and type value from the --mj-* tokens, and commits no Flowbite Pro source verbatim; and add the check that refuses a Pro source file or a raw palette value in those templates.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4317/",
+   "title": "I4317 — The homepage's supported figure follows the recorded run's state, and /guarantees/ shows the same figure",
+   "description": "The count of guaranteed claims a recorded run supports is shown as a count only when the run confirms it: a run of the built commit that confirms its report shows the count, a run of an older commit that nothing of its own withholds shows it marked stale with its distance, and a run whose own state is stale or unknown (failures, a dirty tree, a refused or absent report) shows no number and says 'not confirmed', in the words /evidence/ uses. One definition of that word (site/templates/partials/run-figure.html) and one figure (site/templates/partials/supported-figure.html) serve the homepage, /evidence/, /guarantees/ and /guarantees/guaranteed/; the committed ledger's count those two pages also show says it is the ledger's; scripts/ci/homepage-check `declared` holds all of them to the run.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4318/",
+   "title": "I4318 — The homepage's count of machine-enforced rules agrees with /doctrines/",
+   "description": "Every homepage figure that counts the rules a machine enforces and the page it links say one number: the hero strip and the evidence chain read the rule package's blocking doctrines (site/data/generated/doctrines.json counts.blocking), the figure /doctrines/ shows under blocking, label it as blocking, and scripts/ci/homepage-check `figures` fails whenever a homepage figure differs from the figure its link target shows under the same data-figure key, or names a figure the check cannot read; /method/argument/ labels its count of this repository's resolved rules as that other set.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4320/",
+   "title": "I4320 — An evidence commit recorded on a branch is resolved to the commit that landed it, and is re-stamped with it",
+   "description": "plan validate judges the commit of every evidence entry on issues and milestones. A commit in the trunk's history (mj_commit_in_history, lib/common.sh:761-769) is fine, as today. For a commit outside it, plan validate asks the landed predicate of I4333 which trunk commit landed the branch that held it: the merge commit of the merged pull request whose commits include it, or the trunk commit with the same combined patch-id. When one is found, plan validate prints `INFO evidence_commit_landed <id> <covers> <sha> — landed as <trunk sha> (#<pr>|patch-id); re-stamp: majordomus plan evidence --restamp <id>`. When none is found, it prints `WARN evidence_commit_off_trunk <id> <covers> <sha> — not in <trunk>'s history and no landing found`. When the clone cannot decide (exit 2: shallow, or the object is missing), it prints `INFO evidence_commit_not_judged`. `majordomus plan evidence --restamp [<id>]` rewrites each resolved entry's commit: to its landing commit. It keeps recorded_at and the rest of the entry, and adds the landing to the ledger event, so the record holds a trunk commit after one follow-up commit on the trunk. Under `landing: squash`, plan evidence on a branch says that the commit will be resolved through its pull request once the branch lands.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4321/",
+   "title": "I4321 — A critique or gap file that fails its schema is named by intent validate, and never reads as no critique",
+   "description": "intent validate reads the index diagnostics on paths under .ai/repo/project/critiques/ and .ai/repo/project/gaps/. It reports each one as FAIL critique_invalid or FAIL gap_invalid, against the intent the file declares: its `intent:` value when the YAML parses, otherwise the filename stem. The finding names the file and the schema error. plan_not_critiqued is reported only for an intent that has no critique file at all, valid or not. The refusal to execute work on an intent whose only critique is invalid names critique_invalid as its reason.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4322/",
+   "title": "I4322 — plan validate and intent validate read the project through one discovery rule, and a record left untracked is named",
+   "description": "The shell plan model enumerates .ai/repo/project the way the executable's Index does: through `git ls-files` when the policy declares discovery vcs, and through the work tree otherwise. Today lib/project.sh:50-56 always uses `ls -1` of the work tree. After the change, `majordomus plan validate|status|list` and the plan.validate capability count the same records on every projection (CLI, MCP majordomus_plan_validate, HTTP /api/v1/plan/validate). Under vcs discovery, a file under .ai/repo that matches a class pathspec but is not tracked yields one diagnostic, untracked_record. plan validate, intent validate and doctor print it as `INFO untracked_record <path> — skipped until tracked (git add <path>)`.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4323/",
+   "title": "I4323 — A full disk is one finding in doctor and in the pre-commit hook, and no check it breaks prescribes majordomus update",
+   "description": "lib/doctor.sh starts with a scratch preflight. It writes a probe through mktemp in ${TMPDIR:-/tmp} and in the repository's git directory, and reads the free space of both volumes with df -Pk. If a probe write fails, or free space is below a floor stated beside the check (overridable through an environment variable), doctor prints one `FAIL disk — no space left on device (<volume>: <free> free)` before any other check. Every check that reads a mktemp scratch file is then reported as `INFO <check> — not judged: disk`, never as a FAIL whose remedy writes. Those checks are the projection regions (doctor.sh:335), the canonical model (:1388), session front matter (lib/session.sh:1257), the rules vendor manifest (lib/rules.sh:372-373) and the context builder. The pre-commit hook line that init tells an adopter to add and doctor verifies (lib/init.sh:210-222, `majordomus doctor || exit $?`) therefore blocks the commit on the disk alone and names it as the cause. docs/MCP.md's failure table changes its 'the disk is full' row from 'limitation: not tested' to the case this issue adds, for doctor's part.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4324/",
+   "title": "I4324 — A finished worktree's build output is reclaimed, node_modules and target/ included, whether its branch landed by merge or by squash",
+   "description": "Two changes to `majordomus worktree cleanup`. First, a worktree whose branch has landed by the predicate of I4333 is cleanup-eligible, so a branch squash-merged under `landing: squash` is offered, as one merged by merge commit is today. Second, a finished worktree that cleanup keeps (its branch landed, or it is idle past the sweep window, but its status is not empty) is offered for build-output reclaim: `majordomus worktree cleanup --build-output` lists, and with `--remove` deletes, its node_modules/ and target/ directories (any depth). A directory is reclaimed only when `git check-ignore` reports it ignored and git tracks no file under it. Reclaim runs under the guards I3832 already gives the removal: no process cwd, open file or command line inside, not named by the derive lock or a live mesh claim, idle past MAJORDOMUS_WORKTREE_SWEEP_IDLE_MIN, and under every cargo lock in a target/. The listing gives each directory's size, and the answer gives the total reclaimed. The worktree, its branch and every tracked or unignored file stay.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4325/",
+   "title": "I4325 — node:test and Playwright are runners in code, so a claim proven by an adopter's JavaScript suite can be recorded, and an unproven intent names the runner set as its cause",
+   "description": "Two new variants of Runner (apps/majordomus-cli/src/evidence/mod.rs:207), each with a branch in TestId::of (:450) and a reader in the recorder (evidence/record.rs). This follows docs/EVIDENCE.md:87-89: a third runner is a code change, not configuration. Runner::Node is node's built-in test runner. Its paths are the file names `node --test` finds by default (`*.test.{js,mjs,cjs}`, `*-test.*`, `*_test.*`, `test-*.*`, `test.*`, and files under a `test/` directory), its id is `node:<path>`, and its report is the TAP stream of `node --test --test-reporter=tap`, one top-level test per file. Runner::Playwright is @playwright/test. Its paths are the `*.spec.{js,jsx,ts,tsx,mjs,cjs}` half of its default testMatch. The `*.test.*` half is left to node, so that no path belongs to two runners. Its report is the file its JSON reporter writes. `majordomus evidence record --origin ci --runner node|playwright --report <file>` reads the report at the commit and tree it was run on, and merges it into the ledger as record does for test/run.sh and cargo today. Majordomus never runs node or a browser itself. The runner answers EVIDENCE.md's objection, 'a runner nothing executes is a runner whose results nothing can record', because each variant comes with the reader for the report its runner writes. Second, separately: a criterion whose claim names a path no runner drives keeps that cause up to the intent. Today intent.rs:216-217 folds ProofState::Unrunnable and NoTest into IntentEvidenceState::NotRun, so closed_work_unproven (intent_realization.rs:795-805) says 'no recorded run'. After the change it says `criterion <c> cites <path>, which no runner drives (runners: suite test/cases/*.sh, crate apps/majordomus-cli/tests/*.rs, ...)`. A missing runner and a missing run then read differently.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4326/",
+   "title": "I4326 — The monitor sees queued workflow runs, and a forge that has stopped starting jobs is one signal that integration waits name",
+   "description": "Three steps, each useful alone. (1) The monitor's GitHub source keeps queued and in-progress workflow runs, not only completed ones. Today workflow_run (apps/majordomus-cli/src/monitor/github.rs:307-310) returns None for every run whose status is not completed. With this step the monitor reports each repository's queue depth: runs queued, runs in progress, and the age of the oldest queued run. (2) From those reads across the repositories of the checkouts this host serves, plus any the policy lists, the monitor derives one forge_starved signal: queued > 0 and in progress == 0 in every one of them for longer than a bound stated beside the signal. The signal carries its start and the queued count per repository. It is kept separate from slot contention between this repository's own workflows (I2710, I2662) and from the wait before a run starts (I3202). Health reads it as a degraded dimension. (3) A blocked integration train, and a wait Majordomus itself manages on a workflow run, name the signal as their cause while it holds. I3903's planned cancellation of runs queued past their bound must not cancel a run while the signal holds. If I3903 lands first, this issue adds that exception there.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4327/",
+   "title": "I4327 — A session can declare that it takes reviews, an open review request lists who may answer it, and a repository with no eligible reviewer is a finding",
+   "description": "SessionInfo (apps/majordomus-cli/src/mesh/journal.rs:365) gains an optional `reviews` mandate: the repositories, and optionally the path prefixes, the session will review. A session declares it when it opens, through the mesh.session.open capability (MCP majordomus_mesh_session_open, HTTP POST /api/v1/mesh/sessions; it has no CLI projection today), and may change it later. A session that declares nothing takes no reviews. ReviewAnswered (journal.rs:661-671) gains a fourth answer, `declined`, beside approved, changes_requested and commented, with a note, so that 'not mine' is recorded and is never read as a verdict on the change. For each open review request, mesh state derives its eligible answerers: the live sessions whose mandate covers the request's repository and scope, minus the requesting session, minus sessions of the same task (a builder's own subagents), and minus any session that declined it. mesh state, mesh peers, the brief and /ui/mesh list them, and list the declines apart. mesh doctor and the brief print `WARN review_no_eligible_reviewer <repository> <request>` when the set is empty. The link FEATURES list (mesh/link.rs:63) is unchanged: `reviews` there means that a runtime's link protocol carries review events, and request_review's FeatureUnsupported refusal (mesh/cooperation.rs:4453-4470) keeps that meaning, with wording that no longer suggests the runtime will review.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4328/",
+   "title": "I4328 — A local task claim says how old it is, who holds it and whether its work has landed, and a stale one stops reading as overlap",
+   "description": "mj_report_overlap (lib/start.sh:182-195) is printed by `majordomus start` (lib/start.sh:170) and by `majordomus check --overlap` (lib/check.sh:48, :342-344). It qualifies each active task of another worktree with four facts: the age of its last checkpoint (checkpoint_at), its branch, whether a session is attached, and whether the branch has landed by the predicate of I4333. A claim whose branch has landed, or one that no session holds and whose checkpoint is older than a bound stated beside the check (default 7 days), prints `INFO overlap-stale <worktree> — claims <path>; task <id>, checkpoint <age> ago, <landed as <commit> (#<pr>)|unheld> (close it: majordomus finish in <worktree>)` instead of the live overlap line. A live claim's line gains its task id, age and branch.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4329/",
+   "title": "I4329 — plan list --json is the plan.issues shape with each issue's owner, `run` is in the top-level help, and docs/CLI.md states the JSON flags as they are",
+   "description": "Four narrow changes. (1) `majordomus plan list --json` emits the issue objects of the plan.issues capability, and drops the second shape built at lib/plan.sh:279-291, where depends_on and blocked_by are comma-joined strings and scope, serves, dependents and owner are missing. (2) PlanIssue (apps/majordomus-cli/src/plan.rs:366-413) carries the issue's declared `owner` (share/schemas/majordomus/issue/issue.v1.schema.json:48), so plan.issues gives it on every projection. (3) The top-level usage (bin/majordomus:38 onward) lists `run <capability> [--format json]`, which today is reachable only if one already knows it (apps/majordomus-cli/src/cli.rs:85). plan list's help names plan.issues as the full shape. (4) docs/CLI.md:35 says '`--json` on any read-only command emits one JSON object per finding', which is not true of the executable's commands. It is corrected to say which commands take --json and which take --format json, or both flags are accepted on every read-only command, whichever the owner chooses. A guard keeps the page and the parsers in agreement.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4330/",
+   "title": "I4330 — plan next and plan waves give each open issue its tail, and split the open graph into lanes with one take-next each",
+   "description": "apps/majordomus-cli/src/plan.rs computes a tail for every open issue: the length of the longest chain of open dependents after it, beside its wave, which is the longest path to it (plan.rs:375). plan.next and plan.ready rank READY issues by (tail descending, wave, priority, id) instead of (wave, priority, id) (plan.rs:567-580), so the first issue named is the one that unblocks the most remaining depth. plan.waves also splits the open graph into lanes: the weakly connected components of the open dependency graph, merged where their issues share a scope path (the I0004 serialisation). Each lane has its ready issues ordered by tail and one take_next. Every issue object on the CLI, HTTP and MCP carries its tail and its lane. ui/milestone.rs critical_path() (I2471) reads the same longest-chain function.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4331/",
+   "title": "I4331 — pack build never leaves an un-ignored copy of the repository in its work tree",
+   "description": "Before it writes, pack build checks its output directory with `git check-ignore`. That is the default <root>/tmp/packs/<repo>-<profile>-<commit12> (apps/majordomus-cli/src/pack/mod.rs:1189-1220) or the --out path. When the directory lies inside the work tree and is not ignored, pack build refuses and writes nothing. The refusal names the path and three remedies: ignore tmp/ in .gitignore, ignore it locally in .git/info/exclude (no commit needed), or pass --out with an ignored directory. On success, the output line names the path written and says that it is ignored. pack.verify keeps its rule that a pack is verified where it was built, inside the repository (inside(), apps/majordomus-cli/src/capability/builtin/pack.rs:115-133). That is why the fix is a refusal and not a new default outside the work tree. Writing under .git/ does not work either: in a linked worktree .git is a file, and the common git directory lies outside the work tree, where inside() refuses it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4332/",
+   "title": "I4332 — A release left half-published is named with its finishing step: tagged with no forge Release, or released with no successful deployment",
+   "description": "release.currency compares the newest v* tag the trunk contains with the forge releases that deploy.observed records (apps/majordomus-cli/src/deploy/observed.rs:120-152, ObservedRelease). A tag with no forge release gets a new stance, interrupted, beside current, owed and overdue. The brief and doctor print `WARN release <tag> tagged <age> ago with no forge Release — the publish stopped after its tag (finish: create the Release for <tag>, then its record)`. The second half-state is a tag that has a forge Release while the deployment of that release's commit failed or never happened. That means no ObservedDeployment (observed.rs:84-118) to the environment the release path declares (github-pages for a Pages site) at the tag's commit, or a newer one, has state success. That tag reads `WARN release <tag> released <age> ago, not deployed — <environment> at <sha>: <state>|none (finish: redeploy <tag>, then verify it)`. When no observation exists (no token, offline, never observed), the line carries the qualifier 'forge not observed' and never one of these stances. This is release.currency, which every adopter reads through the brief and doctor. It is separate from I2712, which concerns this repository's own scripts/ci/release-check.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4333/",
+   "title": "I4333 — Whether a branch has landed is one predicate that also holds after a squash merge, and a repository declares how it lands",
+   "description": "One function decides whether a branch, or a head commit, has landed on the trunk, and says how it decided. There are three ways. By ancestry, which is today's rule. By the forge: a pull request from this repository whose head is that tip is MERGED and its merge commit is in the trunk. integration/forge.rs merged_branches_of and deploy/observed.rs ObservedMergedPullRequest already read this. Offline: the patch-id (`git patch-id --stable`) of the branch's combined diff from its merge base equals the patch-id of one trunk commit after that merge base. That works only while the clone still holds the branch's commits. After the branch is deleted, the forge is the only rule that can still decide. policy.yaml gains `landing: merge | squash` (policy.v1 schema), with merge as the default. Under merge only ancestry is asked, so nothing changes. Under squash the forge and patch-id rules are asked too. A check that needs the forge and cannot read it answers 'not judged', never 'not landed'. Every reader that decides 'landed' today calls this function: worktree cleanup and topology (worktree/state.rs:514-536 merged_into, which runs `git branch --merged`, read by worktree/service.rs:835-840 cleanup_eligible), convergence (convergence/mod.rs:358, Disposition::Integrated), and the fallback of the release an issue landed in (plan.rs:1454 and lib/project.sh:191, `git log --merges --grep`). integration/relation.rs:139 patches_upstream adds the combined patch-id as a second test beside `git cherry`. The issues that need this predicate depend on it: I4320 (evidence commits), I4324 (finished worktrees) and I4328 (task claims).",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4338/",
+   "title": "I4338 — A pull request labelled hold gives its validate slot back to its train and never reads green on its own",
+   "description": "A validate run of a pull request that carries the hold label cancels itself in the plan job's first step, before any job asks for a runner, writes why to the step summary, and fails if the cancel does not take hold, so a train member never holds the one validate slot its train needs and never reaches a green ci that would let it land outside its train.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4341/",
+   "title": "I4341 — release-check excuses a tag without a record until its grace ends, whatever the job fetched and whenever the release run concluded",
+   "description": "Make the excuse scripts/ci/release-check gives a published tag without a record monotonic over its grace: when proposed_record() finds no local release/record-<tag> ref it asks `git ls-remote --heads origin release/record-<tag>` and fetches that one ref, and release_in_flight() reads a GitHub release of the tag younger than RECORD_GRACE_HOURS as pending whatever its release run concluded.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4342/",
+   "title": "I4342 — A release's record lands without a person within two hours of its tag",
+   "description": "The record pull request a release opens gets its own pull_request run started without a person: the publish job opens it, or the drain closes and reopens it, with a GitHub App or fine-grained token the owner supplies, whose events start workflows, so that run posts `ci` on the record's head and branch protection counts it. release-check reports an unlanded record's age, and the release seat's check fails once a record has waited more than two hours, naming the pull request; that bound holds today, with or without the credential.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4343/",
+   "title": "I4343 — A build host's disk guard is observed live every five minutes, and the observation fails while it is not",
+   "description": "On a node the policy declares a build host, `mesh doctor --build-host` observes disk-guard.timer active, the ballast present, /var/lib/majordomus/disk-guard.json younger than 15 minutes and every declared drop-in present, and each missing item is a failure with a non-zero exit naming the item and `mesh build-cache provision`. Nobody has to ask: the provision installs build-host-observe.service with build-host-observe.timer, which runs that observation every five minutes, writes its verdict and failing items to /var/lib/majordomus/build-host.json and publishes it as a mesh event build_host_observed, which `mesh events` and `monitor` show. The build host layer is applied on lundra and the evidence is recorded on this issue. Lundra's baseline tenants (the korczis home, docker, minio and swap) are named in the policy, each with a bound the observation reads.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4344/",
+   "title": "I4344 — A CI runner's home stays under its cap during a job, not only between jobs",
+   "description": "Bound a self-hosted runner's build directory inside a job, not only around it. The build host policy gives each runner home's build directory a filesystem of its own size, a loop-mounted ext4 image or an XFS project quota the provision creates from the policy's per-home cap, so a job that outgrows it fails with ENOSPC inside its own home while the root filesystem keeps its floor. Around that hard bound: on runner.environment == 'self-hosted', .github/actions/setup-rust runs the build directory bound (mj_rust_bound_build_dir) before cargo and again in a post step; scripts/rust-coverage removes llvm-cov-target on a self-hosted runner once its report is exported; and every job that builds on a self-hosted runner samples its build directory every 30 s and writes the job summary facts `build-dir size` and `build-dir peak`.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4345/",
+   "title": "I4345 — A CI runner that systemd shows active while its listener crash-loops is recovered within five minutes",
+   "description": "The build host policy installs a root watchdog, runner-watchdog.service with runner-watchdog.timer, that for each actions.runner.* unit detects a listener crash loop or free space below the hard floor, then runs disk-guard's hard tier, releases the ballast (root may use the reserved ext4 blocks), restarts the unit and emits a mesh monitor event naming the runner; a runner GitHub reports offline is reported the same way.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4346/",
+   "title": "I4346 — Every sweep that deletes asks one liveness predicate, and it fails closed",
+   "description": "scripts/reap-orphans --targets, `majordomus worktree cleanup` and the build host's disk-guard decide liveness through one typed capability, worktree.liveness (`majordomus worktree liveness <path>`, declared in the worktree module and implemented in apps/majordomus-cli/src/worktree/liveness.rs), which answers keep or reclaim with its reason. worktree cleanup calls it in process; reap-orphans and disk-guard call the executable, disk-guard through the path disk-guard.service hands it, and keep everything when that executable is absent. A tree or build directory is live if a mesh or board claim names it, an open majordomus task exists in it, the derive lock's owner names it, a queue pid file or a running runner job names it, another process's CARGO_*_DIR or MAJORDOMUS_BIN points into it, or its index, HEAD or reflog changed within the idle window; an unreadable claim source or stat counts as live. No new shell unit is added.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4347/",
+   "title": "I4347 — A labeled event starts a gate job only for ci:full, so opening a train with its label runs its head once",
+   "description": "The first step of validate.yml's plan job yields when github.event.action == 'labeled' and the label is not ci:full, without replacing the `ci` conclusion an earlier run of the same head wrote; opening a pull request with its label produces one gate-running run per head.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4348/",
+   "title": "I4348 — Rule: a superseded or duplicate run never holds a pull request's validate group",
+   "description": "A blocking project rule, a-superseded-run-never-holds-a-validate-group, whose case fails when validate.yml keeps a per-pull-request group with cancel-in-progress: false while no supervising workflow with a workflow_run trigger and a schedule exists, when `labeled` reaches the gates without a label filter, or when the group expression is not keyed on pull_request.number; docs/CI.md lists the five dated occurrences it answers.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4349/",
+   "title": "I4349 — Checkout time and repository size have a budget, and a run past it is red",
+   "description": "Every validate run records a per-step checkout-seconds fact and a `repository kb` fact, with a baseline in scripts/ci-baseline; a new typed capability, integration.checkout_budget (`majordomus prs checkout-budget`, implemented in apps/majordomus-cli/src/integration/checkout_budget.rs), run as a gate in structure, fails when the p90 checkout time measured under concurrency passes 50% of its step bound or when the repository size passes its budget in .ai/repo/policy.yaml, and flags a re-run of a job that died at its checkout bound.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4351/",
+   "title": "I4351 — A tracked derived file over 1 MB is declared with a delta budget, written to delta well, or built rather than committed",
+   "description": "Stop the history's growth from derived files: site/data/registry/registry.json, docs/generated/graph.json, site/data/generated/plan.json, docs/generated/registry.json, docs/generated/registry.yaml and the three openapi copies (site/data/generated/openapi.json, docs/generated/openapi.json, docs/generated/openapi.yaml) each either leave git (built where they are served) or are written to delta well (stable key order, one record per line, no volatile body fields), and each one that stays carries a max_delta_bytes in .ai/repo/policy.yaml; scripts/derive-check refuses an undeclared tracked derived file over 1 MB. A file that leaves git is built by its producer (scripts/generate-site-data or `majordomus generate`) where its readers (scripts/site-build, scripts/site-deploy, scripts/pages, scripts/ci/homepage-check) need it, and is listed in .gitignore. Which file takes which road is decided first in an ADR whose number is taken on the board when the work starts.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4353/",
+   "title": "I4353 — A train's top goes first on the runner pool, and resume never re-runs a held member",
+   "description": "scripts/ci/release-path gains a landing path beside the release path: while an integration/* run is queued or running, other pull requests' runs yield; `preempt` cancels queued pull_request runs that are not a top, never a push, schedule or dispatch run; `resume` waits until no top is in flight and skips a pull request that carries any hold label of LABEL_POLICY, read live from the forge.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4354/",
+   "title": "I4354 — Under disk pressure the shared build directory is reclaimed without cargo's lock, and a build is admitted before cargo takes it",
+   "description": "On a developer machine: a reclaim triggered by free space removes idle incremental sessions under rustc's own s-*.lock, with no age floor under pressure; a cargo shim, share/libexec/cargo-shim/cargo, first on PATH, admits a build before cargo takes its lock and holds new builds while a reclaim is pending; admission reclaims before it refuses, the shared build directory first and a worktree's target only below MAJORDOMUS_MIN_FREE_MB. Admission is one function in lib/rust_bin.sh, and this issue states the order of its floors, which every record that adds one follows: (1) disk_emergency below 10 GiB (I4355) refuses every build, with no override; (2) the machine floor of rule project.the-cooperation-model-is-the-owners-word clause 7, 35 GiB, read from rule data (I4006) and held by I3825, refuses a local build only after this issue's reclaim has run, naming the free space, the floor, the override and the offload route; (3) the builder count of clause 7 (I3825); (4) the machine slot (I4006). CI keeps its own floor and is refused by none of (2) to (4). This issue changes no number of clause 7. #2397 (I4006) and #2567 are fixed to match and land.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4355/",
+   "title": "I4355 — A machine announces its own disk emergency on the mesh and names who holds the build lock",
+   "description": "A watcher, `scripts/reap-orphans --watch`, run every 60 s by a launchd agent or systemd user timer the mesh enrolment installs, publishes an advisory claim machine/<id>/disk while free space is below 35 GiB and withdraws it at 40 GiB or more; below 10 GiB it lists the holders of debug/.cargo-build-lock (pid, worktree, age) and lib/rust_bin.sh refuses admission with reason disk_emergency. The watcher deletes nothing. Clause 7 of the cooperation rule stops saying the limit is owed and names the cases that hold it.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4356/",
+   "title": "I4356 — An exclusive claim is bound to a known session and its holder's process, and a claim is answered Written only when it is Held",
+   "description": "An exclusive claim for a session nobody opened is refused with session_unknown, naming `mesh session open --client-pid auto`, instead of opening the session implicitly; `mesh claim` sends client_pid and client_started, accepted only when the serving runtime is on the caller's machine; claim() reads the fold back and returns an error carrying the state when the claim is not Held; a claim sent to a runtime that holds only a closed record of a session live elsewhere is refused or forwarded; an exclusive claim also excludes by its issue field; mj_mesh_task_claim stops ignoring the answer. No beat-only suspension is introduced until CLI holders have an automatic beat source.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4357/",
+   "title": "I4357 — Issue, ADR and case numbers are reserved atomically at origin and checked at landing",
+   "description": "`next --kind issue|adr|case --reserve` reserves a number by creating refs/ids/<kind>/<n> on the forge (`gh api repos/{owner}/{repo}/git/refs -f ref=refs/ids/<kind>/<n> -f sha=<commit>`), which fails atomically with 422 when the ref exists and runs no local hook, and takes the next number on that refusal; .githooks/pre-push skips refs/ids/* as it skips refs/majordomus/*, so a reservation that does reach origin through git does no hook work; a required landing check refuses an id that is already on master or reserved under different content; the identifier gates (collision-check, adr-collision, case-numbers) run in a job that needs only plan, is exempt from the first-red cancel and checks out blobless.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4358/",
+   "title": "I4358 — A seat is taken by `start --seat` under its provider session, kept between that session's tasks and lost with it, and an unbound seat is named by the doctor",
+   "description": "`majordomus start --seat release|landing|repair` takes, or keeps, the seat's exclusive claim under the mesh session that carries the task's provider_session digest, so I3072's derived join (a task is the seat's when release/seat is held by a mesh session whose provider_session equals the one start recorded) finds the seat's task with nothing declared; a start with no observable provider session is refused the seat. finish and abandon do not drop the claim at once: they shorten its expiry to a grace, and a `start --seat` of the same provider session inside the grace keeps it, so the seat never reads vacant between one session's tasks (I3072's reason) while a session that has stopped loses it within the grace. A mesh doctor check, unbound_exclusive_claims, fails on an exclusive claim whose provider session has no open task past the grace, naming the claim's runtime URL and the exact release command; the scope seat/release is refused as scope_not_a_seat; the hub's served version is checked against the newest tag. The cooperation rule says seats are taken this way, at v3.",
+   "section": "The plan"
+  },
+  {
+   "route": "/plan/i4359/",
+   "title": "I4359 — Rule: no CI runs on a host whose runner layer is undeclared or whose guard is not observed live, and the runner layer is documented",
+   "description": "A blocking project rule, no-ci-routes-to-an-undeclared-runner-host, held at two points. In the repository, a typed capability, mesh.runner_routing (`majordomus mesh runner-routing`), run as a gate in structure, fails when a self-hosted label reachable from a workflow or from a repository variable's default names no policy node that declares its runner units, their homes, their caps and the guard, observation and watchdog timers. On the host, the build host policy installs a runner job-started hook (apps/majordomus-cli/assets/mesh-cache-provider/runner-job-started, set as ACTIONS_RUNNER_HOOK_JOB_STARTED in the runner units' drop-in) that fails the job at its start, naming the failing item, while the host's latest observation (/var/lib/majordomus/build-host.json, written every five minutes by I4343) is missing, failing or older than 15 minutes; so a host whose guard has stopped takes no CI, and the refusal does not wait for anyone to ask. docs/CI.md gains a section 'Self-hosted runners' with the runbook of the 2026-10-28 recovery.",
    "section": "The plan"
   },
   {
@@ -34161,6 +34998,15 @@
    "section": "Rules"
   },
   {
+   "route": "/rules/project-ui-uses-flowbite-pro-1/",
+   "title": "Every user interface here is built on Flowbite Pro, through the mj tokens",
+   "description": "Every user interface here is built on Flowbite Pro, through the mj tokens",
+   "kind": "rule",
+   "id": "majordomus://rule/project.ui-uses-flowbite-pro@1",
+   "source": ".ai/repo/rules/project/ui-uses-flowbite-pro.v1.md",
+   "section": "Rules"
+  },
+  {
    "route": "/rules/project-unknown-keys-are-errors-1/",
    "title": "Unknown configuration keys are errors",
    "description": "Unknown configuration keys are errors",
@@ -34244,7 +35090,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 1.0.0-alpha.9 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.9, built from commit 81ef931a3e156907f1784c64c509884f565c17f0: the public items of the library and of the executable, and the source they were built from.",
+   "description": "The rustdoc reference of majordomus-cli 1.0.0-alpha.9, built from commit 51b38035a7162332304aef58fed25b98761f412b: the public items of the library and of the executable, and the source they were built from.",
    "section": "majordomus-cli 1.0.0-alpha.9 — Rust API reference"
   },
   {

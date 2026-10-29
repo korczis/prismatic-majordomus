@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -172,12 +172,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--verify relative" data-status="verify"><span aria-hidden="true">!</span>OVĚŘIT</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done relative" data-status="done"><span aria-hidden="true">✓</span>HOTOVO</span>
 <span class="text-sm text-body">vlna 0 · p1 · profil implementation · bezpečné paralelně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/idd-reads-at-a-glance/" class="text-fg-brand underline">idd-reads-at-a-glance — Pracovní prostor intentů se čte na první pohled a vede všude, kam odkazuje</a>.</p>
-  <div class="mt-6 rounded-base border border-warning-subtle bg-warning-soft p-4">
-    <p class="text-sm text-fg-warning">Implementace je hotová a požadované důkazy ne. Zůstává tady, dokud za každým tokenem níže nestojí příkaz: dokončení se řídí důkazy, ne tvrzením.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Bring /ui/idd back under the warm p95 budget of .ai/repo/benchmarks/rust/policy.yaml without touching the budget. The &#39;What can run together?&#39; panel&#39;s shared-scope fold draws its first SHARED_SCOPE_SHOWN pairs and links to /ui/panels/shared-scope, a panel route that lists every pair; the screen borrows the plan&#39;s lists (view::items) instead of cloning them on every request.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">validate failed on master twice in a row, 91c0b5d5658 and 573df967bb5 (runs 39501132905-era and 39504455062): gate ui-audit, job ui, bench --check over budget, system.http.ui.idd warm p95 105.8 ms and system.http.live.ui.idd warm p95 106.5 ms against 100 ms. The screen of the-owner-directs-work-from-the-ui was 401 876 bytes, 296 216 of them the &#39;What can run together?&#39; panel: its folded details drew all 1058 shared-scope pairs, each message run through prose::inline, although I2900 says the pairs are one click away and never outweigh the waves they qualify. I3018 (9129c669709, landed in parallel) made the screen borrow the plan and brought master back green; the fold is what remains, and it keeps the screen&#39;s size from growing with the plan.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The fold renders every entry of plan.waves serialised_by_scope whose subject serves the intent; render clones plan.waves (1.6 MB) and plan.issues (1 MB) as Vec&lt;Value&gt; on each request.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The fold renders at most SHARED_SCOPE_SHOWN pairs and, past that, a link to /ui/panels/shared-scope?intent=&lt;id&gt; naming the total; the panel route lists them all; the screen reads the plan&#39;s arrays borrowed. bench system.http.ui.idd and system.http.live.ui.idd pass their budget on the CI runner.</p>
@@ -204,7 +201,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">pokrývá</th><th scope="col" class="px-4 py-2">typ</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">výsledek</th><th scope="col" class="px-4 py-2">u commitu</th></tr></thead>
-      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">shared_scope_fold_test</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --lib -- ui::idd::tests::the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest</td><td class="px-4 py-2 text-body">ok on d621aee642b (aarch64-darwin): the fold of 32 pairs draws 25, names the total and links to /ui/panels/shared-scope; lib ui:: 203 passed, 0 failed; clippy --lib --tests -D warnings clean. Local bench, debug, ci profile, load 39: system.http.ui.idd warm p95 8.2 ms (20.5 before), system.http.live.ui.idd 7.4 ms (25.0 before)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">d621aee</td></tr></tbody>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">shared_scope_fold_test</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">cargo test --lib -- ui::idd::tests::the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest</td><td class="px-4 py-2 text-body">ok on d621aee642b (aarch64-darwin): the fold of 32 pairs draws 25, names the total and links to /ui/panels/shared-scope; lib ui:: 203 passed, 0 failed; clippy --lib --tests -D warnings clean. Local bench, debug, ci profile, load 39: system.http.ui.idd warm p95 8.2 ms (20.5 before), system.http.live.ui.idd 7.4 ms (25.0 before)</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">d621aee</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">shared_scope_fold_test</td><td class="px-4 py-2 font-mono text-xs text-body">ruční</td><td class="px-4 py-2 font-mono text-xs text-body break-words">curl http://127.0.0.1:62328/ui/idd?intent=a-change-is-judged-in-minutes and /ui/panels/shared-scope?intent=a-change-is-judged-in-minutes (shared server of the primary checkout at 6c79dcf68cf, 1.0.0-alpha.9)</td><td class="px-4 py-2 text-body">the workspace states &#39;Shared scope: 37 pair(s)&#39;, draws 25 (SHARED_SCOPE_SHOWN) and links &#39;Open all 37 pairs&#39; to the panel; the panel, answered by the UI dispatcher (ui/mod.rs SHARED_SCOPE_PANEL route), lists all 37 pairs; ui::idd::tests::the_shared_scope_fold_draws_the_first_pairs_and_links_to_the_rest ok in master validate https://github.com/korczis/prismatic-majordomus/actions/runs/40573560939 (rust (2)); bench --check ui.idd warm p95 38.9 ms within the unchanged 100 ms budget in attempt 1 of run 40447094163 (ui-checks 122006729898); landed via #1841</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">81ef931</td></tr></tbody>
     </table>
   </div>
 
@@ -212,11 +209,11 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">zahájeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-21T02:39:44Z</dd></div>
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">ověřeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-21T02:51:16Z</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">dokončeno</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-28T12:28:19Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/.ai/repo/project/issues/I3840.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3840.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3840</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I3840.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3840.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I3840</code>.</p>
 </div>
 
 </div>
@@ -266,9 +263,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -276,7 +273,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>

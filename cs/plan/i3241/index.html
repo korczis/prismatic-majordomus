@@ -3,19 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>I3241 — Jen úloha, která čte historii, ji stáhne celou — Prismatic Majordomus</title>
-<meta name="description" content="Deklarovat v gates.yaml, které kontroly čtou historii, a dát fetch-depth 0 jen úlohám, které některou z nich spouštějí.">
+<title>I3241 — Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s — Prismatic Majordomus</title>
+<meta name="description" content="The default checkout of validate.yml is HEAD&#39;s ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.">
 <link rel="canonical" href="https://majordomus.dev/cs/plan/i3241/"><meta name="robots" content="noindex">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
-<meta property="og:title" content="I3241 — Jen úloha, která čte historii, ji stáhne celou — Prismatic Majordomus">
-<meta property="og:description" content="Deklarovat v gates.yaml, které kontroly čtou historii, a dát fetch-depth 0 jen úlohám, které některou z nich spouštějí.">
+<meta property="og:title" content="I3241 — Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s — Prismatic Majordomus">
+<meta property="og:description" content="The default checkout of validate.yml is HEAD&#39;s ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.">
 <meta property="og:url" content="https://majordomus.dev/cs/plan/i3241/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=fd5ae8ad425f2e5142c2">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0671195f60f1760d3132">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 <script>(function(){try{var K="mj-lang",L=["en","cs"],S="en",B="https://majordomus.dev",d=document.documentElement,k;try{k=localStorage.getItem(K)}catch(e){}
@@ -162,44 +162,45 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
     <li class="inline-flex items-center"><a href="https://majordomus.dev/cs/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Domů</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/cs/plan/" class="font-medium text-body hover:text-fg-brand">Plán</a></li>
     <li aria-hidden="true">/</li>
-    <li aria-current="page" class="font-medium text-heading">I3241 — Jen úloha, která čte historii, ji stáhne celou</li>
+    <li aria-current="page" class="font-medium text-heading">I3241 — Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s</li>
   </ol>
 </nav>
 
-    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">I3241 — Jen úloha, která čte historii, ji stáhne celou</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Deklarovat v gates.yaml, které kontroly čtou historii, a dát fetch-depth 0 jen úlohám, které některou z nich spouštějí.</p>
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">I3241 — Every checkout fetches only what its gates read, blobless by default, and no checkout takes more than 120 s</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The default checkout of validate.yml is HEAD&#39;s ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>BLOKOVÁNO</span>
-<span class="text-sm text-body">vlna 6 · p3 · implementační profil · bezpečné paralelně</span></p>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready relative" data-status="ready"><span aria-hidden="true">○</span>PŘIPRAVENO</span>
+<span class="text-sm text-body">vlna 0 · p0 · profil implementation · bezpečné paralelně</span></p>
   <p class="mt-3 text-sm text-body">Součást <a href="https://majordomus.dev/cs/plan/a-change-is-judged-in-minutes/" class="text-fg-brand underline">a-change-is-judged-in-minutes — Změna se odvodí za méně než sekundu a posoudí za minuty a nic, co se mohlo změnit, se nepřeskočí</a>.</p>
-  <div class="mt-6 rounded-base border border-danger-subtle bg-danger-soft p-4">
-    <p class="text-sm text-fg-danger-strong">Zablokováno. Tento úkol nemůže začít, dokud není hotovo <a href="https://majordomus.dev/cs/plan/i3242/" class="font-mono underline">I3242</a>. Stav je z toho odvozen, ne deklarován.</p>
+  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
+    <p class="text-sm text-body">Připraveno. Všechny závislosti jsou hotové, takže <code class="font-mono text-heading">majordomus plan start I3241</code> bude přijato.</p>
   </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cíl</h2>
-  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Deklarovat v gates.yaml, které kontroly čtou historii, a dát fetch-depth 0 jen úlohám, které některou z nich spouštějí.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">c228#3: plný fetch stojí 10-60 s na job u repozitáře o velikosti asi 1 GB. Rozšiřuje milník ci-critical-path. Zdroje: chatgpt-majordomus:c228#3, chatgpt-majordomus:c025#3.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Změřeno na masteru 707a04c, 2026-10-18: devět jobů validate.yml dělá checkout s fetch-depth 0 (structure, suite-shard, rust, coverage, evidence, site, macos, install, pages); job plan používá 2.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">fetch-depth sleduje model kontrol a případ odmítne plný fetch, který žádná kontrola nepotřebuje.</p>
+  <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The default checkout of validate.yml is HEAD&#39;s ancestry with `filter: blob:none`. Tags and other heads are fetched only by a job one of whose gates declares `history_reads` in gates.yaml: adr-collision (blobs on other heads), collision-check, the pages walk and version-matches-surface. scripts/ci/step-bound-check refuses a `fetch-depth: 0` checkout without `blob:none` unless its job declares a history_reads entry, and a fetch of `refs/heads/*` without a gate that reads other branches. 96_site_deploy works from a partial clone.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Proč</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">c228#3: a full fetch costs 10-60 s per job on a repository of about 1 GB. It extends milestone ci-critical-path. Sources: chatgpt-majordomus:c228#3, chatgpt-majordomus:c025#3. Raised from p3 to p0 on 2026-10-29 by the incident review of 2026-10-28 (incident 2, item N10): hosted validate checkouts timed out at 600 s six times across runs 40708407384 and 40733537887 (both attempts), because each of the seven `fetch-depth: 0` checkouts fetched 2.85 GiB (549 heads, every tag and every blob; registry.json alone is 1.76 GB packed) while many ran at once. #2633 (I4296) gives the structure job blob:none and a 20-minute bound, a mitigation for one job; this issue is the root fix for every job. It no longer waits for I3242: the 120 s ceiling is read from the run&#39;s own timings.tsv, not from I3242&#39;s baseline. The budget that keeps it true is I4349, and the growth that makes a full fetch expensive is I4351.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Aktuální stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Measured at 81ef931a3e1, 2026-10-29: .github/workflows/validate.yml carries seven `fetch-depth: 0` checkouts (lines 319, 428, 681, 978, 1096, 1786 and 1923), none with `filter: blob:none`; .ai/repo/ci/gates.yaml declares no history_reads; scripts/ci/step-bound-check refuses only a full-history checkout without a bound smaller than its job&#39;s (case 3749).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Cílový stav</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">fetch-depth and filter follow the gate model: a job fetches history only for a gate that declares it reads it, and blobs never by default; step-bound-check refuses a checkout the model does not justify; no checkout step of a validate run takes more than 120 s. Enforced by step-bound-check and case 3749 in the structure gate and in pre-commit.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Rozsah</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">.github/workflows/validate.yml</li><li class="font-mono text-heading break-words">.ai/repo/ci/gates.yaml</li><li class="font-mono text-heading break-words">scripts/ci-plan</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">.github/workflows/validate.yml</li><li class="font-mono text-heading break-words">.ai/repo/ci/gates.yaml</li><li class="font-mono text-heading break-words">scripts/ci-plan</li><li class="font-mono text-heading break-words">scripts/ci/step-bound-check</li><li class="font-mono text-heading break-words">test/cases/3749_a_full_history_checkout_is_bounded.sh</li><li class="font-mono text-heading break-words">test/cases/96_site_deploy.sh</li><li class="font-mono text-heading break-words">.ai/repo/project/issues/I3241.yaml</li><li class="font-mono text-heading break-words">docs/CI.md</li></ul>
   
+<h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Mimo rozsah</h2>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>A budget on checkout time and repository size (I4349)</li><li>Shrinking the derived files that make the history large (I4351)</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Závislosti</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/cs/plan/i3242/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I3242</span><span class="mj-badge mj-badge--blocked relative" data-status="blocked"><span aria-hidden="true">✕</span>ZABLOKOVÁNO</span> <span class="min-w-0 break-words text-sm text-heading">Kritická cesta pull requestu má commitnutou základní linii GitHubu a rozpočet na každou povinnou úlohu a souhrn běhu jmenuje svou kritickou cestu a každý stav cache</span></a></li>
-  </ul>
+  <p class="mt-2 text-sm text-body">Žádné. Tento úkol je kořenem grafu.</p>
 
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Kritéria přijetí</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Každé fetch-depth 0 je zdůvodněno deklarovanou kontrolou historie (případ)</li><li>Žádná kontrola čtoucí historii neselže z nedostatku historie</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li>Case 3749: step-bound-check fails on a `fetch-depth: 0` checkout without `filter: blob:none` in a job whose gates declare no history_reads entry, and passes once the job declares one</li><li>Case 3749: step-bound-check fails on a fetch of `refs/heads/*` in a job with no gate that reads other branches, and passes on a job that has one</li><li>Case 96_site_deploy passes from a partial clone (`git clone --filter=blob:none`)</li><li>No history-reading gate fails for want of history: adr-collision, collision-check, the pages walk and version-matches-surface pass in the validate run carrying the change</li><li>A validate run carrying the change has no checkout step over 120 s, read from its timings.tsv</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Validace</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/ci-plan --check</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">scripts/ci-plan --check</li><li class="font-mono text-heading break-words">bash test/run.sh 3749_a_full_history_checkout_is_bounded 96_site_deploy</li><li class="font-mono text-heading break-words">actionlint .github/workflows/validate.yml</li><li class="font-mono text-heading break-words">bin/majordomus plan validate</li></ul>
   
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Požadované důkazy</h2>
-<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">fetch_depth_follows_gates_case</li></ul>
+<ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">fetch_depth_follows_gates_case</li><li class="font-mono text-heading break-words">no_checkout_over_120_s</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Důkazy</h2>
   <p class="mt-2 text-sm text-body">Nic nezaznamenáno. Za každým tokenem výše musí stát příkaz nebo artefakt, než lze tento úkol dokončit; vyprávění se odmítá.</p>
@@ -212,7 +213,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Tato tři pole, důkazy výše a stav závislostí jsou vše, z čeho se stav skládá. Neexistuje žádné pole stavu, které by s nimi mohlo být v rozporu.</p>
 
-  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/.ai/repo/project/issues/I3241.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3241.yaml</a>. Přečtěte ho zpět pomocí <code class="font-mono text-heading">majordomus plan show I3241</code>.</p>
+  <p class="mt-8 text-sm text-body">Kanonický záznam: <a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/.ai/repo/project/issues/I3241.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I3241.yaml</a>. Přečtěte ho zpět pomocí <code class="font-mono text-heading">majordomus plan show I3241</code>.</p>
 </div>
 
 </div>
@@ -262,9 +263,9 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Projekt</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
-          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/81ef931a3e156907f1784c64c509884f565c17f0/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/LICENSE" class="hover:text-heading hover:underline">Licence MIT</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/SECURITY.md" class="hover:text-heading hover:underline">Bezpečnostní politika</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/51b38035a7162332304aef58fed25b98761f412b/CONTRIBUTING.md" class="hover:text-heading hover:underline">Průvodce pro přispěvatele</a></li>
         </ul>
       </div>
     </div>
@@ -272,7 +273,7 @@ for(var i=0;i<p.length;i++){if(p[i]===S)return;if(L.indexOf(p[i])>=0){var u=loca
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/cs/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/81ef931a3e156907f1784c64c509884f565c17f0" class="font-mono underline">81ef931</a> · inputs <span class="font-mono">39890eb4fa84</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus <span class="font-mono">v1.0.0-alpha.9</span> · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/51b38035a7162332304aef58fed25b98761f412b" class="font-mono underline">51b3803</a> · inputs <span class="font-mono">1f1d151d5ed2</span>. Facts, counts and inventories on this site are generated from the repository; the files written by hand hold words, order and settings, and <a href="https://majordomus.dev/cs/architecture/" class="underline">how this site is derived</a> names them.</p>
     </div>
   </div>
 </footer>
