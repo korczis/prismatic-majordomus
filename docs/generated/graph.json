@@ -75365,6 +75365,39 @@
         }
       },
       {
+        "id": "majordomus://issue/I4380",
+        "kind": "issue",
+        "label": "I4380",
+        "summary": "An optional step of the Pages publication never stops the deploy",
+        "route": "/cockpit/objects/issue/i4380",
+        "source": ".ai/repo/project/issues/I4380.yaml",
+        "facts": {
+          "created_at": "2026-10-29",
+          "depends_on": [],
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "ci-critical-path",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/project/issues/I4380.yaml",
+            ".github/workflows/pages.yml",
+            "scripts/pages",
+            "scripts/ci/step-bound-check",
+            "apps/majordomus-cli/src/integration/forge.rs",
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
+            "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+            "site/content/plan/I4380.md"
+          ],
+          "serves": [],
+          "slug": "a-pages-deploy-is-not-stopped-by-an-optional-step",
+          "updated_at": "2026-10-29"
+        }
+      },
+      {
         "id": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "label": "a-brief-is-reconciled-not-transcribed",
@@ -99757,6 +99790,13 @@
         "label": "test/cases/4337_a_changed_skill_raises_its_version.sh",
         "route": "/cockpit/objects/test/test-cases-4337-a-changed-skill-raises-its-version-sh",
         "source": "test/cases/4337_a_changed_skill_raises_its_version.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "kind": "test",
+        "label": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "route": "/cockpit/objects/test/test-cases-4380-an-optional-step-is-bounded-inside-its-own-bound-sh",
+        "source": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -139798,6 +139838,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I4380",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4380",
+        "target": "majordomus://milestone/ci-critical-path",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -146573,6 +146623,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -151674,8 +151729,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4156,
-      "edges": 9571,
+      "nodes": 4158,
+      "edges": 9574,
       "acyclic": false,
       "truncated": false
     }

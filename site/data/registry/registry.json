@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.10"
   },
   "registry": {
-    "fingerprint": "f770c4555ace27b3de773007c4d706e5db06dee1e0aebc2089b6f211100f7a02",
+    "fingerprint": "d3d3d59e22832397c9fa9356181fa62f984676543a2bbd3588a21b345795d424",
     "summary": {
-      "total": 3691,
+      "total": 3693,
       "builtin": 224,
-      "declarative": 3467,
+      "declarative": 3469,
       "by_kind": {
         "command": 38,
         "query": 186,
-        "resource": 3467
+        "resource": 3469
       },
       "by_stability": {
         "behaviorally_verified": 148,
         "experimental": 66,
-        "implemented": 3477
+        "implemented": 3479
       },
       "mcp_tools": 210,
-      "mcp_resources": 3524,
+      "mcp_resources": 3526,
       "http_routes": 215,
       "cli_commands": 124,
       "modules": 95,
@@ -92452,7 +92452,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1121,
+        "capabilities": 1122,
         "capability_ids": []
       },
       {
@@ -93064,7 +93064,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 666,
+        "capabilities": 667,
         "capability_ids": []
       },
       {
@@ -93156,7 +93156,7 @@
     ]
   },
   "index": {
-    "fingerprint": "795b54003a556ef8d4ffa0eb1929c963a55649beb7067ca12ded363fb22398c0",
+    "fingerprint": "60384971b11e79a189fffbb7cbb546b1906d0db52251cd85c1632d015e35a6b6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -93196,7 +93196,7 @@
       "gap": 5,
       "implementation": 53,
       "intent": 44,
-      "issue": 1121,
+      "issue": 1122,
       "knowledge": 86,
       "mesh-declaration": 1,
       "milestone": 113,
@@ -93210,7 +93210,7 @@
       "session": 93,
       "skill": 8,
       "taxonomy": 10,
-      "test": 666,
+      "test": 667,
       "use-case": 49,
       "workspace": 1
     },
@@ -95918,7 +95918,7 @@
         "path": ".ai/repo/adrs/0227-the-deployed-stage-reads-the-pointer-where-pages-published-i.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 5150,
+        "bytes": 5364,
         "tags": [
           "delivery",
           "pages",
@@ -100659,7 +100659,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 46386
+        "bytes": 46647
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -100668,7 +100668,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1015212
+        "bytes": 1020465
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -116947,6 +116947,17 @@
         "bytes": 2796
       },
       {
+        "uri": "majordomus://issue/I4380",
+        "kind": "issue",
+        "identity": "I4380",
+        "title": "An optional step of the Pages publication never stops the deploy",
+        "description": "A step of pages.yml that is written to degrade (`|| echo \\\"::warning ...\\\"`) degrades when it runs out of time instead of being killed: its command is bounded inside the step's own timeout-minutes, and scripts/ci/step-bound-check refuses one that is not. The trends reading reads its runs eight at a time with every forge call bounded, and `majordomus prs refresh` reads the open pull requests in GraphQL pages of 25 when the forge times out `gh pr list`'s page of a hundred (a gateway 504, GraphQL's own \\\"may be the result of a timeout\\\", or a body cut off on its way, \\\"unexpected end of JSON input\\\"). The ui-snapshot's forge observation is two degrading steps, each bounded from measured runs: a healthy forge is always observed, and a forge that cannot be asked leaves the PR Drain and Deployments screens saying the forge was not observed, and the site is still published.",
+        "path": ".ai/repo/project/issues/I4380.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 9234
+      },
+      {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
         "kind": "knowledge",
         "identity": "a-brief-is-reconciled-not-transcribed",
@@ -128060,7 +128071,7 @@
         "identity": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "path": "test/cases/3933_the_trends_are_read_from_the_runs_themselves.sh",
         "source_class": "case",
-        "bytes": 10783
+        "bytes": 16939
       },
       {
         "uri": "majordomus://test/test/cases/3939_the_executable_is_built_once_per_run.sh",
@@ -128485,6 +128496,14 @@
         "path": "test/cases/4337_a_changed_skill_raises_its_version.sh",
         "source_class": "case",
         "bytes": 3853
+      },
+      {
+        "uri": "majordomus://test/test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "kind": "test",
+        "identity": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "path": "test/cases/4380_an_optional_step_is_bounded_inside_its_own_bound.sh",
+        "source_class": "case",
+        "bytes": 12500
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -129324,7 +129343,7 @@
         "identity": "test/cases/742_only_an_outage_is_asked_again.sh",
         "path": "test/cases/742_only_an_outage_is_asked_again.sh",
         "source_class": "case",
-        "bytes": 7985
+        "bytes": 12162
       },
       {
         "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
@@ -131025,7 +131044,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1121
+      "objects": 1122
     },
     {
       "name": "knowledge",
@@ -131187,7 +131206,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 666
+      "objects": 667
     },
     {
       "name": "use-case",
