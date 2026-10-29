@@ -204,7 +204,9 @@ mkdir -p apps/majordomus-cli/target/debug runner
 stub="apps/majordomus-cli/target/debug/majordomus"
 judge() { # $1 FORGE_OBSERVED, then the stub's body
   printf '#!/usr/bin/env bash\n%s\n' "$2" > "$stub"; chmod +x "$stub"
-  FORGE_OBSERVED="$1" RUNNER_TEMP="$PWD/runner" bash -e stage.sh > stage.out 2>&1
+  : > summary.md
+  FORGE_OBSERVED="$1" FORGE_REASON="${3:-}" GITHUB_STEP_SUMMARY="$PWD/summary.md" \
+    RUNNER_TEMP="$PWD/runner" bash -e stage.sh > stage.out 2>&1
 }
 observe() { # the stub's body; writes observed to forge.out
   printf '#!/usr/bin/env bash\n%s\n' "$1" > "$stub"; chmod +x "$stub"
@@ -213,17 +215,26 @@ observe() { # the stub's body; writes observed to forge.out
 }
 command -v timeout >/dev/null 2>&1 || { echo "    timeout(1) is needed to run the forge step"; exit 1; }
 observe 'exit 12' || { echo "    a failed served forge failed its step"; cat served.out; exit 1; }
-grep -qx 'observed=false' forge.out && grep -q '::warning title=Forge not observed::.*(exit 12)' served.out \
+grep -qx 'observed=false' forge.out && grep -qx 'reason=served forge exit 12' forge.out \
+  && grep -q '::warning title=Forge not observed::.*(exit 12)' served.out \
   || { echo "    a failed served forge did not say it observed nothing"; cat forge.out served.out; exit 1; }
 observe 'exit 0' && grep -qx 'observed=true' forge.out \
   || { echo "    a served forge that answered did not say so"; cat forge.out; exit 1; }
 unread='echo "{\"sources\":[{\"name\":\"publication\",\"state\":\"unread\",\"detail\":\"neither path\"}],\"tallies\":{}}"'
 read_ok='echo "{\"sources\":[{\"name\":\"publication\",\"state\":\"read\",\"detail\":\"releases/latest.json\"}],\"tallies\":{}}"'
-judge false 'echo "plan delivery must not be asked" >&2; exit 3' \
+# an unobserved forge: the stage is unknown with its reason, in the log and the step
+# summary; what was counted is still shown; `deployed` is never judged, even when the
+# reader would call the publication unread
+counted='echo "{\"sources\":[{\"name\":\"publication\",\"state\":\"unread\",\"detail\":\"neither path\"}],\"tallies\":{\"done\":3}}"'
+judge false "$counted" 'served forge exit 12' \
   || { echo "    the forge was not observed and the deployed stage failed the job"; cat stage.out; exit 1; }
-grep -q '::warning title=The deployed stage is unknown::' stage.out \
-  && ! grep -q 'must not be asked' stage.out \
-  || { echo "    an unobserved forge did not leave the deployed stage unknown"; cat stage.out; exit 1; }
+grep -q '::warning title=The deployed stage is unknown::forge not observed (served forge exit 12)' stage.out \
+  && grep -q 'The deployed stage is unknown::forge not observed (served forge exit 12)' summary.md \
+  && grep -qx '{"done":3}' stage.out \
+  && ! grep -q 'deployed stage is unread' stage.out && ! grep -q '^publication:' stage.out \
+  || { echo "    an unobserved forge did not leave the deployed stage unknown, with its reason and tallies"; cat stage.out summary.md; exit 1; }
+judge false 'exit 3' 'served forge exit 124' \
+  || { echo "    an unobserved forge whose delivery read also failed failed the job"; cat stage.out; exit 1; }
 judge '' 'exit 3' || { echo "    a forge step that wrote no output failed the job"; cat stage.out; exit 1; }
 judge true "$unread" && { echo "    an unread publication after an observed forge stayed green"; cat stage.out; exit 1; }
 grep -q '::error title=The deployed stage is unread::neither path' stage.out \

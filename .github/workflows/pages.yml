@@ -368,6 +368,7 @@ jobs:
           else
             rc=$?
             echo "observed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=served forge exit $rc" >> "$GITHUB_OUTPUT"
             echo "::warning title=Forge not observed::majordomus served forge could not read the deployments and releases in time (exit $rc); the Deployments screen is published without them"
           fi
       # The deployed stage, read from what was just observed (I4315, ADR 0227). Every Pages
@@ -383,12 +384,19 @@ jobs:
         timeout-minutes: 3
         env:
           FORGE_OBSERVED: ${{ steps.forge.outputs.observed }}
+          FORGE_REASON: ${{ steps.forge.outputs.reason }}
         run: |
+          d="$RUNNER_TEMP/delivery.json"
           if [ "$FORGE_OBSERVED" != true ]; then
-            echo "::warning title=The deployed stage is unknown::served forge did not observe the deployments, so what Pages published was not judged; the publication goes on"
+            # Unknown, not wrong: `deployed` is not reported, what was counted still is.
+            line="::warning title=The deployed stage is unknown::forge not observed (${FORGE_REASON:-served forge wrote no answer})"
+            echo "$line"
+            [ -z "${GITHUB_STEP_SUMMARY:-}" ] || echo "$line" >> "$GITHUB_STEP_SUMMARY"
+            if apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d" 2>/dev/null; then
+              jq -c '.tallies' "$d" || true
+            fi
             exit 0
           fi
-          d="$RUNNER_TEMP/delivery.json"
           apps/majordomus-cli/target/debug/majordomus plan delivery --format json > "$d"
           state="$(jq -r '.sources[] | select(.name == "publication") | .state' "$d")"
           detail="$(jq -r '.sources[] | select(.name == "publication") | .detail' "$d")"
