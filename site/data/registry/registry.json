@@ -6,23 +6,23 @@
     "version": "1.0.0-alpha.9"
   },
   "registry": {
-    "fingerprint": "7b9129da8c0b0bc85674b7760462b467617337050bdc24d740b7dfc033e7bab5",
+    "fingerprint": "7690e6c747225be0dab6314e4e37fed2fdf43796303e978330c9a941963f1d9d",
     "summary": {
-      "total": 3566,
+      "total": 3571,
       "builtin": 220,
-      "declarative": 3346,
+      "declarative": 3351,
       "by_kind": {
         "command": 36,
         "query": 184,
-        "resource": 3346
+        "resource": 3351
       },
       "by_stability": {
         "behaviorally_verified": 147,
         "experimental": 63,
-        "implemented": 3356
+        "implemented": 3361
       },
       "mcp_tools": 206,
-      "mcp_resources": 3403,
+      "mcp_resources": 3408,
       "http_routes": 212,
       "cli_commands": 120,
       "modules": 94,
@@ -91383,7 +91383,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 1039,
+        "capabilities": 1040,
         "capability_ids": []
       },
       {
@@ -91391,7 +91391,7 @@
         "title": "knowledge",
         "description": "Declarative objects of kind 'knowledge' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 69,
+        "capabilities": 72,
         "capability_ids": []
       },
       {
@@ -91981,7 +91981,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 654,
+        "capabilities": 655,
         "capability_ids": []
       },
       {
@@ -92073,7 +92073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "69d2770e666bb66b7873d861e9062485d934d81669f8fed5fc77a13e64287cbc",
+    "fingerprint": "50777e8f706a6d90409ffd8ccd4f0b459dfd328272bafcd94588b1bff30462cf",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -92113,8 +92113,8 @@
       "gap": 5,
       "implementation": 52,
       "intent": 43,
-      "issue": 1039,
-      "knowledge": 69,
+      "issue": 1040,
+      "knowledge": 72,
       "mesh-declaration": 1,
       "milestone": 111,
       "moment": 38,
@@ -92127,7 +92127,7 @@
       "session": 91,
       "skill": 8,
       "taxonomy": 10,
-      "test": 654,
+      "test": 655,
       "use-case": 49,
       "workspace": 1
     },
@@ -99450,7 +99450,7 @@
         "title": "Knowledge — what an episode learned, derived at its boundary and promoted by a person",
         "path": "docs/KNOWLEDGE.md",
         "source_class": "document",
-        "bytes": 27464
+        "bytes": 29046
       },
       {
         "uri": "majordomus://document/docs/LAUNCH.md",
@@ -99558,7 +99558,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 1001979
+        "bytes": 1003961
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -114495,7 +114495,7 @@
         "path": ".ai/repo/project/issues/I3974.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4221
+        "bytes": 4413
       },
       {
         "uri": "majordomus://issue/I3975",
@@ -114891,29 +114891,40 @@
         "path": ".ai/repo/project/issues/I4337.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3576
+        "bytes": 5328
       },
       {
-        "uri": "majordomus://issue/I4339",
+        "uri": "majordomus://issue/I4360",
         "kind": "issue",
-        "identity": "I4339",
+        "identity": "I4360",
         "title": "monitor reports a GitHub run queued past its bound, not only the runs that completed",
-        "description": "`workflow_run` in apps/majordomus-cli/src/monitor/github.rs turns a run whose status is queued, waiting or in_progress and whose age is past the bound I3903 declares for it into one warning moment naming the run, its workflow, its head branch and the age, raised once per run; a completed run is read as before.",
-        "path": ".ai/repo/project/issues/I4339.yaml",
+        "description": "`workflow_run` in apps/majordomus-cli/src/monitor/github.rs turns a run whose status is queued, waiting or in_progress and whose age is past the bound I3903 declares for it into one warning moment naming the run, its workflow, its head branch and the age, raised once per run; a completed run is read as before. When the run waits for a self-hosted label and no runner of the repository is online (`actions/runners`), the moment names \\\"no runner online\\\" as the cause, so a watcher does not wait or re-run into a queue nothing serves.",
+        "path": ".ai/repo/project/issues/I4360.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1798
+        "bytes": 2360
       },
       {
-        "uri": "majordomus://issue/I4340",
+        "uri": "majordomus://issue/I4362",
         "kind": "issue",
-        "identity": "I4340",
-        "title": "An observation finds the episode that session start just opened in the same provider session",
-        "description": "`majordomus session start` run by hand inside a provider session and `majordomus knowledge observe` run after it resolve the same episode: either session start keys the episode by the provider session the environment names (as mj_open_session_id reads it), or mj_open_session_id falls back to the hand-opened episode of this worktree when no file carries the provider key. The refusal 'no episode is open in this checkout for this caller' is printed only when no episode of this worktree is open.",
-        "path": ".ai/repo/project/issues/I4340.yaml",
+        "identity": "I4362",
+        "title": "adr next and case-numbers next answer within a declared bound in a linked worktree",
+        "description": "`majordomus adr next` (lib/adr.sh) and `scripts/case-numbers next` declare the bound of their survey and keep it in a linked worktree of a repository with hundreds of refs and worktrees: past the bound each answers with what it surveyed, names every source it did not finish (the refs, the sibling worktrees, the board) and exits non-zero, rather than waiting without an end. The first step measures where the time goes in a linked worktree and records it in this issue before the code changes.",
+        "path": ".ai/repo/project/issues/I4362.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2232
+        "bytes": 2362
+      },
+      {
+        "uri": "majordomus://issue/I4363",
+        "kind": "issue",
+        "identity": "I4363",
+        "title": "A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s",
+        "description": "`majordomus monitor --follow` (and with `--until` or `--for`) that has nothing new to print blocks on its server's stream or sleeps on a declared interval between asks, so a follower parked for 10 s uses less than 1 s of CPU. The first step finds the loop that spins (apps/majordomus-cli/src/commands/monitor.rs and apps/majordomus-cli/src/monitor) and records it in this issue before the code changes.",
+        "path": ".ai/repo/project/issues/I4363.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2068
       },
       {
         "uri": "majordomus://knowledge/a-brief-is-reconciled-not-transcribed",
@@ -115671,6 +115682,36 @@
         ]
       },
       {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-054934dd2bd1",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-054934dd2bd1",
+        "title": "a parked monitor --follow spins instead of waiting: 1.25 s of CPU between its 3rd and 13th second with nothing to print (debug executable, 2026-10-29), 3.7 s per 10 s on 2026-10-24 when four or five of them held a machine's load near 64; sessions stopped using the stream docs/MONITOR.md tells them to follow and polled gh instead; owned by I4363",
+        "description": "Observed as defect about apps/majordomus-cli/src/commands/monitor.rs in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-054934dd2bd1.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2131,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-09ef2b8d8227",
+        "title": "an announce under a claim name replaces that claim's whole scope: every path left out is released and listed under released, so a heartbeat that resends part of a scope silently gives up the rest (five held branch claims on 2026-10-25); resend the claim's full scope and read released in the answer",
+        "description": "Observed as friction about apps/majordomus-cli/src/capability/builtin/peers.rs in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-09ef2b8d8227.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2150,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/s-20261028215857-d010-1050b82e9b61",
         "kind": "knowledge",
         "identity": "s-20261028215857-d010-1050b82e9b61",
@@ -115694,7 +115735,7 @@
         "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-3206646bca1a.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 2130,
+        "bytes": 2548,
         "tags": [
           "derived",
           "observation"
@@ -115739,7 +115780,7 @@
         "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-50190e0ffc82.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 2134,
+        "bytes": 2610,
         "tags": [
           "derived",
           "observation"
@@ -115776,6 +115817,21 @@
         ]
       },
       {
+        "uri": "majordomus://knowledge/s-20261028215857-d010-842498c07c03",
+        "kind": "knowledge",
+        "identity": "s-20261028215857-d010-842498c07c03",
+        "title": "a background task reported failed with exit 144 while its script, reparented to pid 1, kept a cargo build running for 25 minutes and was reported to a peer as stopped; a wrapper's exit is not its script's, so a task is not called dead until its script's pid is gone, and the script is stopped before its child so it cannot go on to commit",
+        "description": "Observed as friction about docs/BACKLOG.md in episode s-20261028215857-d010.",
+        "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-842498c07c03.md",
+        "section": "knowledge",
+        "source_class": "curated",
+        "bytes": 2098,
+        "tags": [
+          "derived",
+          "observation"
+        ]
+      },
+      {
         "uri": "majordomus://knowledge/s-20261028215857-d010-937198359654",
         "kind": "knowledge",
         "identity": "s-20261028215857-d010-937198359654",
@@ -115784,7 +115840,7 @@
         "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-937198359654.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 1510,
+        "bytes": 1480,
         "tags": [
           "derived",
           "observation"
@@ -115799,7 +115855,7 @@
         "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-a1658685aedc.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 1912,
+        "bytes": 2145,
         "tags": [
           "derived",
           "observation"
@@ -115814,7 +115870,7 @@
         "path": ".ai/repo/knowledge/curated/s-20261028215857-d010-bb378d3e4f15.md",
         "section": "knowledge",
         "source_class": "curated",
-        "bytes": 2011,
+        "bytes": 2084,
         "tags": [
           "derived",
           "observation"
@@ -122410,7 +122466,7 @@
         "path": ".ai/repo/skills/evolve/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 10667,
+        "bytes": 11735,
         "tags": [
           "knowledge",
           "review",
@@ -124065,7 +124121,7 @@
         "identity": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "path": "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
         "source_class": "case",
-        "bytes": 6729
+        "bytes": 8310
       },
       {
         "uri": "majordomus://test/test/cases/3006_diagrams_are_interactive_and_linkable.sh",
@@ -125681,7 +125737,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 9513
+        "bytes": 10670
       },
       {
         "uri": "majordomus://test/test/cases/3932_the_coverage_export_is_its_one_measurement.sh",
@@ -126026,6 +126082,14 @@
         "path": "test/cases/431_economics_claims_gated.sh",
         "source_class": "case",
         "bytes": 7105
+      },
+      {
+        "uri": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "kind": "test",
+        "identity": "test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "path": "test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "source_class": "case",
+        "bytes": 3853
       },
       {
         "uri": "majordomus://test/test/cases/43_plan_command.sh",
@@ -128566,7 +128630,7 @@
       "identity": [
         "id"
       ],
-      "objects": 1039
+      "objects": 1040
     },
     {
       "name": "knowledge",
@@ -128576,7 +128640,7 @@
       "identity": [
         "id"
       ],
-      "objects": 69
+      "objects": 72
     },
     {
       "name": "mesh-declaration",
@@ -128728,7 +128792,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 654
+      "objects": 655
     },
     {
       "name": "use-case",

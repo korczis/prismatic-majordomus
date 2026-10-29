@@ -69408,7 +69408,7 @@
             "merging-and-referencing-are-enforced#one-allocator"
           ],
           "slug": "one-allocator-for-every-number",
-          "updated_at": "2026-10-22",
+          "updated_at": "2026-10-29",
           "validation": [
             "bin/majordomus plan validate",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 99_adr",
@@ -70968,7 +70968,9 @@
           "acceptance_criteria": [
             "majordomus knowledge candidates lists no candidate of episode s-20261028215857-d010 and not s-20261019205653-344d-8a56a0a79628",
             "majordomus knowledge check and majordomus skills check pass",
-            "Case 3004 refuses an evolve skill that drops the memory harvest, the in-flight check, the board-first number or the self-evolving step"
+            "Case 3004 refuses an evolve skill that drops the memory harvest, the in-flight check, the board-first number or the self-evolving step, each pinned inside its own step",
+            "Case 4337 refuses a changed SKILL.md body whose version did not rise against the merge-base",
+            "Case 391 refuses a skill body that names a provider, and an implement skill whose phase 1 drops one of its four refusals"
           ],
           "created_at": "2026-10-28",
           "evidence_required": [
@@ -70985,30 +70987,37 @@
             "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh",
             "docs/HANDBOOK.md",
             ".ai/repo/project/issues/I4337.yaml",
-            ".ai/repo/project/issues/I4339.yaml",
-            ".ai/repo/project/issues/I4340.yaml"
+            ".ai/repo/project/issues/I4360.yaml",
+            ".ai/repo/project/issues/I4362.yaml",
+            ".ai/repo/project/issues/I4363.yaml",
+            ".ai/repo/project/issues/I3974.yaml",
+            "test/cases/391_skills_are_proven_capabilities.sh",
+            "test/cases/4337_a_changed_skill_raises_its_version.sh",
+            "docs/KNOWLEDGE.md"
           ],
           "slug": "the-evolve-skill-harvests-what-sessions-only-remembered",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "env -u MAJORDOMUS_SHARE majordomus knowledge check",
             "env -u MAJORDOMUS_SHARE majordomus skills check",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 3004_evolve_is_a_procedure_of_existing_commands",
             "env -u MAJORDOMUS_SHARE bash test/run.sh 391_skills_are_proven_capabilities",
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 4337_a_changed_skill_raises_its_version",
             "bin/majordomus plan validate"
           ]
         }
       },
       {
-        "id": "majordomus://issue/I4339",
+        "id": "majordomus://issue/I4360",
         "kind": "issue",
-        "label": "I4339",
+        "label": "I4360",
         "summary": "monitor reports a GitHub run queued past its bound, not only the runs that completed",
-        "route": "/cockpit/objects/issue/i4339",
-        "source": ".ai/repo/project/issues/I4339.yaml",
+        "route": "/cockpit/objects/issue/i4360",
+        "source": ".ai/repo/project/issues/I4360.yaml",
         "facts": {
           "acceptance_criteria": [
-            "A fixture run queued longer than its bound yields exactly one warning moment; one under its bound yields none; a completed run yields what it yields today"
+            "A fixture run queued longer than its bound yields exactly one warning moment; one under its bound yields none; a completed run yields what it yields today",
+            "A fixture run queued past its bound for a self-hosted label, with a runner list in which every runner is offline, yields a moment whose cause is no runner online"
           ],
           "created_at": "2026-10-28",
           "current_state": "Verified at 81ef931: apps/majordomus-cli/src/monitor/github.rs:307-309 returns None for any run whose status is not completed.",
@@ -71026,10 +71035,10 @@
           "scope": [
             "apps/majordomus-cli/src/monitor/github.rs",
             "docs/MONITOR.md",
-            ".ai/repo/project/issues/I4339.yaml"
+            ".ai/repo/project/issues/I4360.yaml"
           ],
           "slug": "monitor-reports-a-run-queued-past-its-bound",
-          "updated_at": "2026-10-28",
+          "updated_at": "2026-10-29",
           "validation": [
             "cargo test --lib monitor::github",
             "bin/majordomus plan validate"
@@ -71037,37 +71046,80 @@
         }
       },
       {
-        "id": "majordomus://issue/I4340",
+        "id": "majordomus://issue/I4362",
         "kind": "issue",
-        "label": "I4340",
-        "summary": "An observation finds the episode that session start just opened in the same provider session",
-        "route": "/cockpit/objects/issue/i4340",
-        "source": ".ai/repo/project/issues/I4340.yaml",
+        "label": "I4362",
+        "summary": "adr next and case-numbers next answer within a declared bound in a linked worktree",
+        "route": "/cockpit/objects/issue/i4362",
+        "source": ".ai/repo/project/issues/I4362.yaml",
         "facts": {
           "acceptance_criteria": [
-            "With CLAUDE_CODE_SESSION_ID set, `session start` then `knowledge observe` records the observation stamped with that episode",
-            "With two episodes of different keys open, observe still refuses rather than guessing",
-            "The evolve skill's MJ_SESSION_KEY remedy in step 1 is removed once the case passes"
+            "In a linked worktree of a fixture repository with 300 refs and 20 worktrees, `adr next` and `case-numbers next` each answer within their declared bound (a case times them)",
+            "A survey stopped at its bound exits non-zero and names each source it did not finish",
+            "The measured cause of the 2026-10-28 waits is recorded in this issue"
           ],
-          "created_at": "2026-10-28",
-          "current_state": "Verified at 81ef931 by code reading and the reproduction above: the writer of the episode and the reader of the observation derive its key from different sources.",
-          "desired_state": "A new case, its number announced on the board when it is taken, opens an episode by hand with a provider session variable set and records an observation without MJ_SESSION_KEY.",
+          "created_at": "2026-10-29",
+          "current_state": "Verified at ab447585c29 by reading lib/adr.sh and scripts/case-numbers: each surveys this tree, every sibling worktree, every ref and the peer board, with no time bound and no partial answer.",
+          "depends_on": [],
+          "desired_state": "Both allocators answer within their declared bound in a linked worktree, and a case measures it over a fixture with many refs and worktrees.",
           "evidence_required": [
             "suite"
           ],
-          "milestone": "knowledge-acts-on-what-it-learns",
+          "milestone": "merging-and-referencing-are-enforced",
+          "non_scope": [
+            "The single survey of every number kind and the typed board claim, owned by I3974"
+          ],
           "parallel_safe": true,
           "priority": "p2",
           "profile": "implementation",
           "scope": [
-            "lib/session.sh",
-            "lib/common.sh",
-            ".ai/repo/skills/evolve",
-            ".ai/repo/project/issues/I4340.yaml"
+            "lib/adr.sh",
+            "scripts/case-numbers",
+            "test/cases/271_adr_allocation.sh",
+            ".ai/repo/project/issues/I4362.yaml"
           ],
-          "slug": "an-observation-finds-the-episode-session-start-opened",
-          "updated_at": "2026-10-28",
+          "slug": "the-number-allocators-answer-within-a-bound",
+          "updated_at": "2026-10-29",
           "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 271_adr_allocation",
+            "bin/majordomus plan validate"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I4363",
+        "kind": "issue",
+        "label": "I4363",
+        "summary": "A parked monitor --follow waits on its source instead of spinning: under 1 s of CPU in 10 s",
+        "route": "/cockpit/objects/issue/i4363",
+        "source": ".ai/repo/project/issues/I4363.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A follower parked for 10 s with nothing to print uses less than 1 s of CPU, measured by a test that reads the process's CPU time twice, 10 s apart",
+            "A follower still prints a new moment within its declared interval"
+          ],
+          "created_at": "2026-10-29",
+          "current_state": "Verified at ab447585c29 by the measurement above (ps -o time, 10 s apart); no record owned the defect, and the stream's waiters were replaced by gh polling loops in sessions' private notes.",
+          "depends_on": [],
+          "desired_state": "A parked follower is idle, and a case or test measures its CPU time over an interval.",
+          "evidence_required": [
+            "suite"
+          ],
+          "milestone": "the-runtime-supervises-itself",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/commands/monitor.rs",
+            "apps/majordomus-cli/src/monitor",
+            "docs/MONITOR.md",
+            "test/cases/1051_a_followed_stream_can_be_waited_on.sh",
+            ".ai/repo/project/issues/I4363.yaml"
+          ],
+          "slug": "a-parked-monitor-follow-does-not-spin",
+          "updated_at": "2026-10-29",
+          "validation": [
+            "env -u MAJORDOMUS_SHARE bash test/run.sh 1051_a_followed_stream_can_be_waited_on",
             "bin/majordomus plan validate"
           ]
         }
@@ -71994,6 +72046,46 @@
         }
       },
       {
+        "id": "majordomus://knowledge/s-20261028215857-d010-054934dd2bd1",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-054934dd2bd1",
+        "summary": "a parked monitor --follow spins instead of waiting: 1.25 s of CPU between its 3rd and 13th second with nothing to print (debug executable, 2026-10-29), 3.7 s per 10 s on 2026-10-24 when four or five of them held a machine's load near 64; sessions stopped using the stream docs/MONITOR.md tells them to follow and polled gh instead; owned by I4363",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-054934dd2bd1",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-054934dd2bd1.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/commands/monitor.rs",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-09ef2b8d8227",
+        "summary": "an announce under a claim name replaces that claim's whole scope: every path left out is released and listed under released, so a heartbeat that resends part of a scope silently gives up the rest (five held branch claims on 2026-10-25); resend the claim's full scope and read released in the answer",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-09ef2b8d8227.md",
+        "status": "verified",
+        "facts": {
+          "about": "apps/majordomus-cli/src/capability/builtin/peers.rs",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/s-20261028215857-d010-1050b82e9b61",
         "kind": "knowledge",
         "label": "s-20261028215857-d010-1050b82e9b61",
@@ -72127,6 +72219,26 @@
           "date": "2026-10-28",
           "epistemics": "observed",
           "route": "project",
+          "tags": [
+            "derived",
+            "observation"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://knowledge/s-20261028215857-d010-842498c07c03",
+        "kind": "knowledge",
+        "label": "s-20261028215857-d010-842498c07c03",
+        "summary": "a background task reported failed with exit 144 while its script, reparented to pid 1, kept a cargo build running for 25 minutes and was reported to a peer as stopped; a wrapper's exit is not its script's, so a task is not called dead until its script's pid is gone, and the script is stopped before its child so it cannot go on to commit",
+        "route": "/cockpit/objects/knowledge/s-20261028215857-d010-842498c07c03",
+        "source": ".ai/repo/knowledge/curated/s-20261028215857-d010-842498c07c03.md",
+        "status": "verified",
+        "facts": {
+          "about": "docs/BACKLOG.md",
+          "class": "lesson",
+          "date": "2026-10-29",
+          "epistemics": "observed",
+          "route": "documentation",
           "tags": [
             "derived",
             "observation"
@@ -94819,6 +94931,13 @@
         "label": "test/cases/431_economics_claims_gated.sh",
         "route": "/cockpit/objects/test/test-cases-431-economics-claims-gated-sh",
         "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "kind": "test",
+        "label": "test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "route": "/cockpit/objects/test/test-cases-4337-a-changed-skill-raises-its-version-sh",
+        "source": "test/cases/4337_a_changed_skill_raises_its_version.sh"
       },
       {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
@@ -133565,28 +133684,38 @@
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I4339",
+        "source": "majordomus://issue/I4360",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://issue/I4339",
+        "source": "majordomus://issue/I4360",
         "target": "majordomus://issue/I3903",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://issue/I4339",
+        "source": "majordomus://issue/I4360",
         "target": "majordomus://milestone/the-runtime-supervises-itself",
         "kind": "belongs_to"
       },
       {
-        "source": "majordomus://issue/I4340",
+        "source": "majordomus://issue/I4362",
         "target": "kind:issue",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://issue/I4340",
-        "target": "majordomus://milestone/knowledge-acts-on-what-it-learns",
+        "source": "majordomus://issue/I4362",
+        "target": "majordomus://milestone/merging-and-referencing-are-enforced",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I4363",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I4363",
+        "target": "majordomus://milestone/the-runtime-supervises-itself",
         "kind": "belongs_to"
       },
       {
@@ -133840,6 +133969,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://knowledge/s-20261028215857-d010-054934dd2bd1",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-09ef2b8d8227",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://knowledge/s-20261028215857-d010-1050b82e9b61",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -133871,6 +134010,11 @@
       },
       {
         "source": "majordomus://knowledge/s-20261028215857-d010-7b1673ebf094",
+        "target": "kind:knowledge",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://knowledge/s-20261028215857-d010-842498c07c03",
         "target": "kind:knowledge",
         "kind": "is_a"
       },
@@ -140190,6 +140334,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/4337_a_changed_skill_raises_its_version.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -145271,8 +145420,8 @@
       }
     ],
     "metadata": {
-      "nodes": 4030,
-      "edges": 9279,
+      "nodes": 4035,
+      "edges": 9285,
       "acyclic": false,
       "truncated": false
     }

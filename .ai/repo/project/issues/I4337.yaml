@@ -6,9 +6,9 @@ priority: p2
 profile: implementation
 parallel_safe: true
 objective: "The ten lessons of 2026-10-28 and one met while reviewing them are each recorded with `majordomus knowledge observe`, derived, and decided; each promoted one is put where its kind lives or linked to the issue or pull request already fixing it. The evolve skill (version 2) gathers in step 1 what providers' memories and the peers' announcements and handovers hold since the last evolve, read as data; checks in step 2 for a lesson already in flight and links rather than duplicates; says in step 3 that a number is taken on the board first; and in step 7 evolves its own procedure when a run of it met friction. The implement skill (version 2) names the four refusals one session met more than once."
-why: "On 2026-10-28 most of a day's lessons lived only in an agent's private memory (563 files for this repository), where no rule, skill or briefing reads them; four collisions of issue and ADR numbers came from taking an allocator's answer without the board; and one session met the same four refusals more than once. Following the skill's own step 1 met a refusal it did not describe (I4340)."
+why: "On 2026-10-28 most of a day's lessons lived only in an agent's private memory (563 files for this repository), where no rule, skill or briefing reads them; four collisions of issue and ADR numbers came from taking an allocator's answer without the board; and one session met the same four refusals more than once. Following the skill's own step 1 met a refusal it did not describe (owned by pull request 2646). A review of the first push found that case 3004 pinned phrases the Output section also holds, that the skill named a provider's private path and the wrong one for a linked worktree, that it said nothing of approvals or private values found in a memory, and that nothing refused a changed skill whose version stayed."
 current_state: "Verified at 81ef931: .ai/repo/skills/evolve/SKILL.md version 1 gathers only candidates and the current session; .ai/repo/skills/implement/SKILL.md version 1 names none of the four repeated refusals; docs/HANDBOOK.md says an artifact is published by hand and nothing of what it cannot do; candidate s-20261019205653-344d-8a56a0a79628 awaited review."
-desired_state: "Eleven curated lessons s-20261028215857-d010-* promoted with evidence, candidate s-20261019205653-344d-8a56a0a79628 rejected as superseded by I3602; evolve and implement skills at version 2; case 3004 holds the new steps; docs/HANDBOOK.md states an artifact's two limits; lessons in flight linked to I3903, I4296, I3825, I3959, I3974, I4317 and I4318; the two remaining defects owed by I4339 and I4340."
+desired_state: "Eleven curated lessons s-20261028215857-d010-* promoted with evidence, candidate s-20261019205653-344d-8a56a0a79628 rejected as superseded by I3602; evolve and implement skills at version 2; case 3004 holds the new steps; docs/HANDBOOK.md states an artifact's two limits; lessons in flight linked to I3903, I4296, I3825, I3959, I3974, I4317 and I4318; the queued-run report owed by I4360, the session-key mismatch by pull request 2646, the allocators' unbounded wait by I4362, the monitor follower's spin by I4363, and I3974 extended to the mesh claims of every linked runtime; case 3004 pins each sentence inside its own step; case 4337 refuses a changed skill body whose version did not rise; case 391 refuses a provider named in a skill body and an implement skill without its four refusals; docs/KNOWLEDGE.md names where each provider remembers. Harvest of provider memory since the last evolve (a64709651cd, 2026-10-22): observed the monitor follower spin, the announce that replaces a claim's scope and the killed task wrapper; folded the runners-offline cause into I4360 and the swap drain into s-20261028215857-d010-50190e0ffc82; undecided: 69 memory files since 2026-10-22, some of which the eleven lessons of the first push may already hold."
 scope:
   - ".ai/repo/skills/evolve"
   - ".ai/repo/skills/implement"
@@ -16,22 +16,30 @@ scope:
   - "test/cases/3004_evolve_is_a_procedure_of_existing_commands.sh"
   - "docs/HANDBOOK.md"
   - ".ai/repo/project/issues/I4337.yaml"
-  - ".ai/repo/project/issues/I4339.yaml"
-  - ".ai/repo/project/issues/I4340.yaml"
+  - ".ai/repo/project/issues/I4360.yaml"
+  - ".ai/repo/project/issues/I4362.yaml"
+  - ".ai/repo/project/issues/I4363.yaml"
+  - ".ai/repo/project/issues/I3974.yaml"
+  - "test/cases/391_skills_are_proven_capabilities.sh"
+  - "test/cases/4337_a_changed_skill_raises_its_version.sh"
+  - "docs/KNOWLEDGE.md"
 non_scope:
   - "Fixing a lesson whose fix is in flight: I3903 (superseded and stuck runs), I4296 (full-history checkout bound), I3825 and I3959 (the 35 GiB build floor), I3974 (one allocator reading typed board claims), I4317 and I4318 (homepage figures)"
   - "Copying any memory file into the tree"
 acceptance_criteria:
   - "majordomus knowledge candidates lists no candidate of episode s-20261028215857-d010 and not s-20261019205653-344d-8a56a0a79628"
   - "majordomus knowledge check and majordomus skills check pass"
-  - "Case 3004 refuses an evolve skill that drops the memory harvest, the in-flight check, the board-first number or the self-evolving step"
+  - "Case 3004 refuses an evolve skill that drops the memory harvest, the in-flight check, the board-first number or the self-evolving step, each pinned inside its own step"
+  - "Case 4337 refuses a changed SKILL.md body whose version did not rise against the merge-base"
+  - "Case 391 refuses a skill body that names a provider, and an implement skill whose phase 1 drops one of its four refusals"
 validation:
   - "env -u MAJORDOMUS_SHARE majordomus knowledge check"
   - "env -u MAJORDOMUS_SHARE majordomus skills check"
   - "env -u MAJORDOMUS_SHARE bash test/run.sh 3004_evolve_is_a_procedure_of_existing_commands"
   - "env -u MAJORDOMUS_SHARE bash test/run.sh 391_skills_are_proven_capabilities"
+  - "env -u MAJORDOMUS_SHARE bash test/run.sh 4337_a_changed_skill_raises_its_version"
   - "bin/majordomus plan validate"
 evidence_required:
   - suite
 created_at: 2026-10-28
-updated_at: 2026-10-28
+updated_at: 2026-10-29
